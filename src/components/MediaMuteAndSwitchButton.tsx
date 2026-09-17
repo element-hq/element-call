@@ -15,6 +15,7 @@ import {
   type ReactElement,
 } from "react";
 import {
+  Alert,
   Button,
   Menu,
   MenuItem,
@@ -121,6 +122,11 @@ export interface MediaMuteAndSwitchButtonProps {
    */
   onRemoveBackgroundEffect?: (id: string) => void;
   /**
+   * Why the last file the user offered could not be used, if it could not.
+   * Shown with the grid, where they chose it.
+   */
+  backgroundEffectError?: string;
+  /**
    * For any toggle and option this method will be called.
    * So toggles need to be implemented by listening here and setting the right toggle item to `enabled`
    */
@@ -172,6 +178,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   onSelectBackgroundEffect,
   onAddBackgroundImage,
   onRemoveBackgroundEffect,
+  backgroundEffectError,
   onSelect,
 }) => {
   // Which device we have asked for but not yet been given. Carries the kind as
@@ -760,6 +767,13 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
                 <div role="none" className={styles.effectGrid}>
                   {effectTiles()}
                 </div>
+                {backgroundEffectError !== undefined && (
+                  // Beside the grid rather than over the call: the user is
+                  // looking here, having just chosen the file this is about.
+                  <div role="none" className={styles.effectError}>
+                    <Alert type="critical" title={backgroundEffectError} />
+                  </div>
+                )}
               </div>
             )}
         </div>

@@ -369,3 +369,8 @@ Please see LICENSE in the repository root for full details.
   flex: 1;
   min-inline-size: 0;
 }
+
+/* Sits under the tiles, inside the same margin they keep from the frame. */
+.effectError {
+  padding: 0 var(--cpd-space-4x) var(--cpd-space-4x);
+}

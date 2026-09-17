@@ -5,7 +5,14 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, type JSX, type Ref, useCallback, useMemo } from "react";
+import {
+  type FC,
+  type JSX,
+  type Ref,
+  useCallback,
+  useMemo,
+  useState,
+} from "react";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
 import { logger } from "matrix-js-sdk/lib/logger";
@@ -172,6 +179,27 @@ export const CallFooter: FC<FooterProps> = ({
   const backgroundEffect = useBehavior(vm.backgroundEffect$);
   const selectBackgroundEffect = useBehavior(vm.selectBackgroundEffect$);
   const { added, addBackground, removeBackground } = useAddedBackgrounds();
+  const [backgroundEffectError, setBackgroundEffectError] = useState<
+    string | undefined
+  >(undefined);
+
+  // Spelled out rather than built from the reason, so the extractor can find
+  // every string it has to translate.
+  const whyRefused = useCallback(
+    (e: unknown): string => {
+      if (e instanceof UnusableImage)
+        switch (e.reason) {
+          case "not-an-image":
+            return t("error.background_not_an_image");
+          case "animated":
+            return t("error.background_animated");
+          case "undecodable":
+            return t("error.background_undecodable");
+        }
+      return t("error.background_not_kept");
+    },
+    [t],
+  );
 
   const onRemoveBackgroundEffect = useCallback(
     (id: string): void => {
@@ -188,6 +216,7 @@ export const CallFooter: FC<FooterProps> = ({
     (file: File): void => {
       // Chosen for the user straight away: they picked this picture to use it,
       // and leaving it unselected would ask them to pick it twice.
+      setBackgroundEffectError(undefined);
       addBackground(file)
         .then((id) =>
           selectBackgroundEffect?.(serializeEffect({ kind: "added", id })),
@@ -196,6 +225,7 @@ export const CallFooter: FC<FooterProps> = ({
           // TODO: FR-021 wants the user told what went wrong. There is no
           // surface for that in the menu yet, and inventing one is design's
           // call, so for now this is only logged.
+          setBackgroundEffectError(whyRefused(e));
           logger.warn(
             e instanceof UnusableImage
               ? `Cannot use that file as a background: ${e.reason}`
@@ -204,7 +234,7 @@ export const CallFooter: FC<FooterProps> = ({
           );
         });
     },
-    [addBackground, selectBackgroundEffect],
+    [addBackground, selectBackgroundEffect, whyRefused],
   );
 
   // The catalogue is named here rather than in the view model: the names are
@@ -305,6 +335,7 @@ export const CallFooter: FC<FooterProps> = ({
             : undefined
         }
         onRemoveBackgroundEffect={onRemoveBackgroundEffect}
+        backgroundEffectError={backgroundEffectError}
       />,
     );
   } else {

@@ -1014,3 +1014,30 @@ export const RemovingWithLiveSelection: Story = {
     await expect(none).toHaveAttribute("aria-checked", "true");
   },
 };
+
+/** A file that could not be used, said where the user chose it. */
+export const BackgroundImageRefused: Story = {
+  args: {
+    ...BackgroundEffects.args,
+    backgroundEffectError: "Animated images cannot be used as a background",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
+    const body = within(document.body);
+
+    // Scoped to the open menu: a closed one leaves its own markup behind, and
+    // the first match in the document belongs to that rather than to this.
+    const menu = await body.findByRole("menu");
+    await waitFor(async () =>
+      expect(
+        menu.querySelector<HTMLElement>(`.${styles.effectError}`),
+      ).toHaveTextContent("Animated images cannot be used as a background"),
+    );
+    // The grid is still there to choose from: being refused a file changes
+    // nothing about the background in force.
+    await expect(
+      await body.findByRole("menuitemradio", { name: "None" }),
+    ).toHaveAttribute("aria-checked", "true");
+  },
+};
