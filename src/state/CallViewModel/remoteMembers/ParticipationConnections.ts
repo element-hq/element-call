@@ -18,7 +18,7 @@ import {
   type IConnectionManager,
 } from "./ConnectionManager";
 
-/** What this module needs from a {@link CallParticipation}. */
+/** What this module needs from a {@link RtcParticipationManager}. */
 export interface ParticipationConnectionsSource {
   /** The LiveKit rooms to hold, with a token for each, keyed by service URL. */
   connections$: Behavior<FfiConnectionWithMembers[]>;
@@ -26,7 +26,7 @@ export interface ParticipationConnectionsSource {
 
 interface Props {
   scope: ObservableScope;
-  participation: ParticipationConnectionsSource;
+  rtcParticipationManager: ParticipationConnectionsSource;
   connectionFactory: ConnectionFactory;
   /** Who we publish as. Connections only log it; the tokens come minted. */
   ownIdentity: { userId: string; deviceId: string };
@@ -42,7 +42,7 @@ interface Props {
  */
 export function createParticipationConnectionManager$({
   scope,
-  participation,
+  rtcParticipationManager,
   connectionFactory,
   ownIdentity,
   logger: parentLogger,
@@ -50,7 +50,7 @@ export function createParticipationConnectionManager$({
   const logger = parentLogger.getChild("[ParticipationConnections]");
 
   const connections$ = scope.behavior(
-    participation.connections$.pipe(
+    rtcParticipationManager.connections$.pipe(
       trackEpoch(),
       generateItemsWithEpoch(
         "ParticipationConnections connections$",

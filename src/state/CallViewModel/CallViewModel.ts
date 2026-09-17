@@ -168,7 +168,7 @@ import {
 } from "../media/RingingMediaViewModel.ts";
 import { type GridTileViewModel } from "../TileViewModel.ts";
 import { mapEpoch } from "../ObservableScope.ts";
-import { type CallParticipation } from "../rtc/CallParticipation.ts";
+import { type RtcParticipationManager } from "../rtc/RtcParticipationManager.ts";
 import { joinParamsFromConfig } from "../rtc/joinParams.ts";
 import { type FfiJoinParams } from "../../matrix-rtc-sdk";
 import { type ElementCallMatrixClientDriver } from "../../driver/ElementCallMatrixClientDriver.ts";
@@ -801,7 +801,7 @@ export function createJsClientCallViewModel$(
  *
  * {@link createJsClientCallViewModel$} builds it from matrix-js-sdk's
  * `MatrixRTCSession`; {@link createCallViewModel$} from a
- * {@link CallParticipation} over the drivers.
+ * {@link RtcParticipationManager} over the drivers.
  */
 export interface CallViewModelCore {
   localMembership: LocalMembership;
@@ -2025,7 +2025,7 @@ function assembleCallViewModel(
 }
 
 /**
- * The call view model over the host's drivers: a {@link CallParticipation}
+ * The call view model over the host's drivers: a {@link RtcParticipationManager}
  * (the crate: memberships, connections and their tokens, media keys, our own
  * membership) and an {@link ElementCallMatrixClientDriver} (the room's
  * members and metadata, the timeline for notifications).
@@ -2035,7 +2035,7 @@ function assembleCallViewModel(
  */
 export function createCallViewModel$(
   scope: ObservableScope,
-  participation: CallParticipation,
+  rtcParticipationManager: RtcParticipationManager,
   clientDriver: ElementCallMatrixClientDriver,
   mediaDevices: MediaDevices,
   muteStates: MuteStates,
@@ -2056,7 +2056,7 @@ export function createCallViewModel$(
   const livekitKeyProvider = getParticipationKeyProvider(
     options.encryptionSystem,
     scope,
-    participation,
+    rtcParticipationManager,
     logger,
   );
 
@@ -2078,7 +2078,7 @@ export function createCallViewModel$(
 
   const connectionManager = createParticipationConnectionManager$({
     scope,
-    participation,
+    rtcParticipationManager,
     connectionFactory,
     ownIdentity: { userId, deviceId },
     logger,
@@ -2086,7 +2086,7 @@ export function createCallViewModel$(
 
   const remoteMatrixLivekitMembers$ = createParticipationRemoteMembers$({
     scope,
-    participation,
+    rtcParticipationManager,
     connectionManager,
   });
 
@@ -2101,16 +2101,16 @@ export function createCallViewModel$(
   // Whether the homeserver takes sticky events decides how a failed first
   // send reads; assume it does until the driver says otherwise.
   let stickyEventsSupported = true;
-  clientDriver.getCapabilities().then(
-    (capabilities) => {
-      stickyEventsSupported = capabilities.stickyEvents;
+  clientDriver.getMatrixClientFeatures().then(
+    (features) => {
+      stickyEventsSupported = features.stickyEvents;
     },
-    (e) => logger.warn("Could not read the driver's capabilities", e),
+    (e) => logger.warn("Could not read the driver's Matrix client features", e),
   );
 
   const localMembership = createParticipationLocalMembership$({
     scope,
-    participation,
+    rtcParticipationManager,
     connectionManager,
     createPublisherFactory: (connection: Connection) =>
       new Publisher(
@@ -2151,7 +2151,7 @@ export function createCallViewModel$(
 
   const localMatrixLivekitMember$: Behavior<LocalMatrixLivekitMember | null> =
     scope.behavior(
-      participation.ownMembership$.pipe(
+      rtcParticipationManager.ownMembership$.pipe(
         map((membership) =>
           membership === null ? null : callMemberOf(membership),
         ),
@@ -2186,7 +2186,7 @@ export function createCallViewModel$(
     clientDriver,
   );
   const callMemberUserIds$ = scope.behavior(
-    participation.memberships$.pipe(
+    rtcParticipationManager.memberships$.pipe(
       mapEpoch((memberships) =>
         memberships.map((m) => ({ userId: m.member.userId })),
       ),
@@ -2207,7 +2207,7 @@ export function createCallViewModel$(
     matrixRoomMembers$,
     sentCallNotification$: createParticipationSentCallNotification$({
       scope,
-      participation,
+      rtcParticipationManager,
       timeline: clientDriver,
       options,
       logger,
@@ -2242,14 +2242,14 @@ export function createCallViewModel$(
 function getParticipationKeyProvider(
   e2eeSystem: EncryptionSystem,
   scope: ObservableScope,
-  participation: CallParticipation,
+  rtcParticipationManager: RtcParticipationManager,
   logger: Logger,
 ): BaseKeyProvider | undefined {
   if (e2eeSystem.kind === E2eeType.NONE) return undefined;
 
   if (e2eeSystem.kind === E2eeType.PER_PARTICIPANT) {
     const keyProvider = new ParticipationKeyProvider();
-    keyProvider.attach(scope, participation);
+    keyProvider.attach(scope, rtcParticipationManager);
     return keyProvider;
   } else if (e2eeSystem.kind === E2eeType.SHARED_KEY && e2eeSystem.secret) {
     const keyProvider = new ExternalE2EEKeyProvider();

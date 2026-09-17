@@ -37,7 +37,11 @@ export const Header: FC<HeaderProps> = ({
   ...rest
 }) => {
   return (
-    <header ref={ref} className={classNames(styles.header, className)} {...rest}>
+    <header
+      ref={ref}
+      className={classNames(styles.header, className)}
+      {...rest}
+    >
       {children}
     </header>
   );

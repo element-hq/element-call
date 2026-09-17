@@ -74,8 +74,8 @@ import { useHostBridge } from "../HostBridge.ts";
 import { useMuteStates } from "../state/useMuteStates.ts";
 import { useLeaveToHome } from "../LeaveToHomeContext.ts";
 import { useMatrixDrivers } from "../driver/MatrixDriverContext.tsx";
-import { useCallParticipation } from "../state/rtc/useCallParticipation.ts";
-import { type CallParticipation } from "../state/rtc/CallParticipation.ts";
+import { useRtcParticipationManager } from "../state/rtc/useRtcParticipationManager.ts";
+import { type RtcParticipationManager } from "../state/rtc/RtcParticipationManager.ts";
 import { participationConfig } from "../state/rtc/joinParams.ts";
 import { effectiveCallViewModelImplementation } from "../state/rtc/implementation.ts";
 import {
@@ -97,8 +97,8 @@ export const MUTE_PARTICIPANT_COUNT = 8;
 declare global {
   interface Window {
     rtcSession?: MatrixRTCSession;
-    /** The crate's participation, when the Rust implementation carries the call. */
-    matrixRtc?: { participation: CallParticipation };
+    /** The crate's participation manager, when the Rust implementation carries the call. */
+    matrixRtc?: { rtcParticipationManager: RtcParticipationManager };
   }
 }
 
@@ -202,6 +202,7 @@ const LoadedCallView: FC<LoadedProps> = ({
   const [implementation] = useState(() =>
     effectiveCallViewModelImplementation(),
   );
+  // this is the rustsdkmatrix rtc. So we should call it useRustRtcSdk
   const useMatrixRtc =
     implementation === CallViewModelImplementation.MatrixRtc ||
     rtcSession === undefined;
@@ -219,12 +220,12 @@ const LoadedCallView: FC<LoadedProps> = ({
         })
       : null,
   );
-  const participation = useCallParticipation(
+  const rtcParticipationManager = useRtcParticipationManager(
     useMatrixRtc ? drivers : null,
     participationConfigValue,
   );
   const participationMemberships = useBehavior(
-    participation?.memberships$ ?? NO_PARTICIPATION_MEMBERSHIPS,
+    rtcParticipationManager?.memberships$ ?? NO_PARTICIPATION_MEMBERSHIPS,
   );
   // The call's members, whichever side lists them; only who they are matters here.
   const memberUserIds = useMemo(
@@ -279,13 +280,15 @@ const LoadedCallView: FC<LoadedProps> = ({
   }, [rootElement]);
 
   useEffect(() => {
+    // Storing in the window to access it for the rageshake summary.
     if (rtcSession !== undefined) window.rtcSession = rtcSession;
-    if (participation !== null) window.matrixRtc = { participation };
+    if (rtcParticipationManager !== null)
+      window.matrixRtc = { rtcParticipationManager };
     return (): void => {
       delete window.rtcSession;
       delete window.matrixRtc;
     };
-  }, [rtcSession, participation]);
+  }, [rtcSession, rtcParticipationManager]);
 
   // TODO move this into the callViewModel LocalMembership.ts
   // We might actually not need this at all. Since we get into fatalError on those errors already?
@@ -504,8 +507,8 @@ const LoadedCallView: FC<LoadedProps> = ({
           roomId,
           latestMemberUserIds.current.length,
           sendInstantly,
-          participation !== null
-            ? participation.mediaKeyStatistics()
+          rtcParticipationManager !== null
+            ? rtcParticipationManager.mediaKeyStatistics()
             : rtcSession === undefined
               ? NO_MEDIA_KEY_STATISTICS
               : mediaKeyStatisticsOf(rtcSession),
@@ -556,7 +559,7 @@ const LoadedCallView: FC<LoadedProps> = ({
       roomId,
       latestMemberUserIds,
       rtcSession,
-      participation,
+      rtcParticipationManager,
       isPasswordlessUser,
       confineToRoom,
       returnToLobby,
@@ -604,7 +607,7 @@ const LoadedCallView: FC<LoadedProps> = ({
     <>
       {shareModal}
       <LobbyView
-        client={client}
+        developerSettingsClient={client}
         matrixInfo={matrixInfo}
         muteStates={muteStates}
         onEnter={() => setJoined(true)}
@@ -625,9 +628,9 @@ const LoadedCallView: FC<LoadedProps> = ({
       throw externalError;
     };
     body = <ErrorComponent />;
-  } else if (joined && useMatrixRtc && participation === null) {
+  } else if (joined && useMatrixRtc && rtcParticipationManager === null) {
     // Joined before the crate is ready (its wasm loads on first use): the
-    // call appears with the participation, a render later.
+    // call appears with the participation manager, a render later.
     body = null;
   } else if (joined) {
     body = (
@@ -637,7 +640,7 @@ const LoadedCallView: FC<LoadedProps> = ({
           client={client}
           matrixInfo={matrixInfo}
           rtcSession={rtcSession}
-          participation={participation}
+          rtcParticipationManager={rtcParticipationManager}
           roomId={roomId}
           onLeft={onLeft}
           muteStates={muteStates}
@@ -694,8 +697,8 @@ const LoadedCallView: FC<LoadedProps> = ({
       }}
       onError={(_error) => {
         const joinedViaCrate =
-          participation !== null &&
-          FfiStatus.Connected.instanceOf(participation.status$.value);
+          rtcParticipationManager !== null &&
+          FfiStatus.Connected.instanceOf(rtcParticipationManager.status$.value);
         if (rtcSession?.isJoined() === true || joinedViaCrate) onLeft("error");
         // If there is an error we need to be dismissible again. This is done in
         // `onLeft` as well; we need it here explicitly in case

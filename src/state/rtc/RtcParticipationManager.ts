@@ -56,7 +56,7 @@ export interface SlotPolicy {
 /** How long to wait for the seed, and for our own slot event to echo back. */
 const SLOT_WAIT_MS = 15_000;
 
-/** Media keys sent and received over a participation; see {@link CallParticipation.mediaKeyStatistics}. */
+/** Media keys sent and received over a participation; see {@link RtcParticipationManager.mediaKeyStatistics}. */
 export interface MediaKeyStatistics {
   sent: number;
   received: number;
@@ -64,7 +64,7 @@ export interface MediaKeyStatistics {
   receivedTotalAge: number;
 }
 
-export interface CallParticipationOptions {
+export interface RtcParticipationManagerOptions {
   /**
    * One manager per `(room, slot)`; Element Call has one slot per room.
    * Defaults to the slot for the config's dialect ({@link slotIdForCompat}).
@@ -82,18 +82,17 @@ export interface CallParticipationOptions {
 
 /**
  * Element Call's view of one participation in a MatrixRTC session: the
- * crate's `FfiParticipationManager` as behaviors. "Participation" is the
- * crate's word for the FFI side; this is the RxJS wrapper a call is built on.
+ * crate's `FfiParticipationManager` as behaviors.
+ * This is the RxJS wrapper a call is built on.
  *
- * The crate does everything Matrix: it projects the session from the
+ * The crates ParticipationManager does everything Matrix: it projects the session from the
  * driver's events, publishes and keeps alive our own membership, mints
  * transport tokens and exchanges media keys. This class owns the manager
  * for the scope's lifetime, seeds each behavior from the manager's getter and
  * keeps it current from the manager's listener, and ends the participation
  * (leaving if still joined) when the scope ends.
  */
- // TODO-RENAME: the call participationmanager wrapper represents the RtcParticipationManager
-export class CallParticipation {
+export class RtcParticipationManager {
   private readonly logger: Logger;
   private readonly matrixDriver: FfiMatrixDriver;
   private readonly manager: FfiParticipationManager;
@@ -140,10 +139,10 @@ export class CallParticipation {
     roomId: string,
     userId: string,
     deviceId: string,
-    options: CallParticipationOptions,
+    options: RtcParticipationManagerOptions,
   ) {
     this.logger = (options.logger ?? rootLogger).getChild(
-      "[CallParticipation]",
+      "[RtcParticipationManager]",
     );
     const rtcDriver =
       options.transportFallbackUrl === undefined

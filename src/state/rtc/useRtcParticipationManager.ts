@@ -15,12 +15,12 @@ import {
 } from "../../matrix-rtc-sdk";
 import { ObservableScope } from "../ObservableScope";
 import {
-  CallParticipation,
-  type CallParticipationOptions,
-} from "./CallParticipation";
+  RtcParticipationManager,
+  type RtcParticipationManagerOptions,
+} from "./RtcParticipationManager";
 
 /**
- * A {@link CallParticipation} for the mounted call view: created when the
+ * A {@link RtcParticipationManager} for the mounted call view: created when the
  * drivers or the configuration change, ended (leaving the session if still
  * joined) when the view unmounts. Null for the first render, like the other
  * scoped objects the views own.
@@ -35,14 +35,13 @@ import {
  * nearest error boundary shows it instead of the call silently never
  * starting.
  */
-export function useCallParticipation(
+export function useRtcParticipationManager(
   drivers: MatrixDrivers | null,
   config: FfiParticipationConfig | null,
-  options: Omit<CallParticipationOptions, "config"> = {},
-): CallParticipation | null {
-  const [participation, setParticipation] = useState<CallParticipation | null>(
-    null,
-  );
+  options: Omit<RtcParticipationManagerOptions, "config"> = {},
+): RtcParticipationManager | null {
+  const [rtcParticipationManager, setParticipation] =
+    useState<RtcParticipationManager | null>(null);
   const [loadError, setLoadError] = useState<unknown>(null);
   const { transportFallbackUrl, slotId } = options;
   useEffect(() => {
@@ -58,7 +57,7 @@ export function useCallParticipation(
         logger.info(
           `[Lifecycle] Creating the call participation for ${clientDriver.roomId} (compat ${config.compat})`,
         );
-        const participation = new CallParticipation(
+        const rtcParticipationManager = new RtcParticipationManager(
           scope,
           rtcDriver,
           clientDriver.roomId,
@@ -66,7 +65,7 @@ export function useCallParticipation(
           clientDriver.deviceId,
           { config, transportFallbackUrl, slotId },
         );
-        setParticipation(participation);
+        setParticipation(rtcParticipationManager);
       },
       (e: unknown) => {
         if (ended) return;
@@ -82,5 +81,5 @@ export function useCallParticipation(
     };
   }, [drivers, config, transportFallbackUrl, slotId]);
   if (loadError !== null) throw loadError;
-  return participation;
+  return rtcParticipationManager;
 }

@@ -76,7 +76,7 @@ export {
 
 /**
  * The crate's view of our membership, for `LocalMemberState.matrix` when the
- * call runs over a `CallParticipation` (matrix-js-sdk reports its own
+ * call runs over a `RtcParticipationManager` (matrix-js-sdk reports its own
  * `RTCSessionStatus` there).
  */
 export enum MatrixConnectionStatus {

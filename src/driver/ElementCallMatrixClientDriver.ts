@@ -24,7 +24,12 @@ Please see LICENSE in the repository root for full details.
 /** Removes the listener it was returned for. */
 export type Unsubscribe = () => void;
 
-export interface DriverCapabilities {
+/**
+ * What this client and its homeserver can do, as far as Element Call cares —
+ * not to be confused with widget capabilities, which are what a host *permits*
+ * rather than what the stack supports.
+ */
+export interface MatrixClientFeatures {
   /** The homeserver accepts sticky events (MSC4354). */
   stickyEvents: boolean;
   /**
@@ -145,7 +150,7 @@ export interface MediaDriver {
 
 /**
  * Everything Element Call asks of a Matrix client beyond MatrixRTC, bound to
- * one room. One object, sliced into the capabilities above the way the crate
+ * one room. One object, sliced into the driver interfaces above the way the crate
  * slices its own driver, so a piece of Element Call can ask for no more than
  * it needs.
  */
@@ -156,7 +161,8 @@ export interface ElementCallMatrixClientDriver
   readonly deviceId: string;
   /** The room this driver is bound to. */
   readonly roomId: string;
-  getCapabilities(): Promise<DriverCapabilities>;
+  /** What this client and homeserver support; see {@link MatrixClientFeatures}. */
+  getMatrixClientFeatures(): Promise<MatrixClientFeatures>;
   /** Free-form facts for a rageshake: crypto version, sync state, and so on. */
   getDiagnostics?(): Promise<Record<string, string>>;
 }

@@ -44,16 +44,16 @@ function raisedHand(
 }
 
 function setUp(): {
-  participation: FakeParticipation;
+  rtcParticipationManager: FakeParticipation;
   timeline: MockElementCallMatrixClientDriver;
   hands: () => Record<string, RaisedHandInfo>;
   reactions: () => string[];
 } {
-  const participation = new FakeParticipation();
+  const rtcParticipationManager = new FakeParticipation();
   const timeline = new MockElementCallMatrixClientDriver();
   const reader = new ParticipationReactionsReader(
     testScope(),
-    participation,
+    rtcParticipationManager,
     timeline,
   );
   let hands: Record<string, RaisedHandInfo> = {};
@@ -63,7 +63,7 @@ function setUp(): {
     (r) => (reactions = Object.values(r).map((v) => v.reactionOption.emoji)),
   );
   return {
-    participation,
+    rtcParticipationManager,
     timeline,
     hands: () => hands,
     reactions: () => reactions,
@@ -72,8 +72,8 @@ function setUp(): {
 
 describe("ParticipationReactionsReader", () => {
   it("raises and lowers a hand with the member's reaction and its redaction", () => {
-    const { participation, timeline, hands } = setUp();
-    participation.setMemberships([alice]);
+    const { rtcParticipationManager, timeline, hands } = setUp();
+    rtcParticipationManager.setMemberships([alice]);
     raisedHand(timeline);
     expect(hands()).toEqual({
       [aliceId]: {
@@ -94,8 +94,8 @@ describe("ParticipationReactionsReader", () => {
   });
 
   it("ignores a reaction that does not relate to the sender's own membership", () => {
-    const { participation, timeline, hands } = setUp();
-    participation.setMemberships([alice]);
+    const { rtcParticipationManager, timeline, hands } = setUp();
+    rtcParticipationManager.setMemberships([alice]);
     timeline.emitTimelineEvent({
       eventId: "$forged",
       type: "m.reaction",
@@ -113,26 +113,26 @@ describe("ParticipationReactionsReader", () => {
   });
 
   it("picks up a hand raised before we looked, and drops it when the member leaves", () => {
-    const { participation, timeline, hands } = setUp();
+    const { rtcParticipationManager, timeline, hands } = setUp();
     // The reaction is already in the room when the roster arrives.
     raisedHand(timeline);
     expect(hands()).toEqual({});
-    participation.setMemberships([alice]);
+    rtcParticipationManager.setMemberships([alice]);
     expect(Object.keys(hands())).toEqual([aliceId]);
-    participation.setMemberships([]);
+    rtcParticipationManager.setMemberships([]);
     expect(hands()).toEqual({});
   });
 
   it("re-resolves a hand when the member re-sends their membership", () => {
-    const { participation, timeline, hands } = setUp();
-    participation.setMemberships([alice]);
+    const { rtcParticipationManager, timeline, hands } = setUp();
+    rtcParticipationManager.setMemberships([alice]);
     raisedHand(timeline);
     expect(Object.keys(hands())).toEqual([aliceId]);
     // A new membership event without a hand on it: the hand goes.
     const resent = fakeMembership({
       member: { ...alice.member, eventId: "$alice-join-2" },
     });
-    participation.setMemberships([resent]);
+    rtcParticipationManager.setMemberships([resent]);
     expect(hands()).toEqual({});
     // Raised again on the new event: back.
     raisedHand(timeline, resent, "$hand-2");
@@ -140,8 +140,8 @@ describe("ParticipationReactionsReader", () => {
   });
 
   it("shows a reaction keyed by the member's media id", () => {
-    const { participation, timeline, reactions } = setUp();
-    participation.setMemberships([alice]);
+    const { rtcParticipationManager, timeline, reactions } = setUp();
+    rtcParticipationManager.setMemberships([alice]);
     timeline.emitTimelineEvent({
       eventId: "$reaction",
       type: ElementCallReactionEventType,

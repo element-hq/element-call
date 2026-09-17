@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 /**
- * `createCallViewModel$` over a real `CallParticipation` (the crate, through
+ * `createCallViewModel$` over a real `RtcParticipationManager` (the crate, through
  * the mock drivers) and mocked LiveKit connections: the Matrix side end to
  * end, from the user's join to the roster and back out.
  *
@@ -40,7 +40,7 @@ import {
 } from "../../utils/test";
 import { initMatrixRtcSdkForTests } from "../../utils/test-matrix-rtc";
 import { constant } from "../Behavior";
-import { CallParticipation } from "../rtc/CallParticipation";
+import { RtcParticipationManager } from "../rtc/RtcParticipationManager";
 import { joinParamsFromConfig, participationConfig } from "../rtc/joinParams";
 import { type CallViewModel, createCallViewModel$ } from "./CallViewModel";
 
@@ -61,7 +61,7 @@ const peer = {
 
 function createEnvironment(driver: MockRtcMatrixDriver): {
   vm: CallViewModel;
-  participation: CallParticipation;
+  rtcParticipationManager: RtcParticipationManager;
   clientDriver: MockElementCallMatrixClientDriver;
 } {
   const scope = testScope();
@@ -84,7 +84,7 @@ function createEnvironment(driver: MockRtcMatrixDriver): {
       },
     ],
   });
-  const participation = new CallParticipation(
+  const rtcParticipationManager = new RtcParticipationManager(
     scope,
     driver,
     driver.roomId,
@@ -107,7 +107,7 @@ function createEnvironment(driver: MockRtcMatrixDriver): {
     });
   const vm = createCallViewModel$(
     scope,
-    participation,
+    rtcParticipationManager,
     clientDriver,
     mockMediaDevices({}),
     mockMuteStates(),
@@ -141,10 +141,10 @@ function createEnvironment(driver: MockRtcMatrixDriver): {
     new BehaviorSubject<Record<string, ReactionInfo>>({}),
     constant({ processor: undefined, supported: false }),
   );
-  return { vm, participation, clientDriver };
+  return { vm, rtcParticipationManager, clientDriver };
 }
 
-describe("createCallViewModel$ over a CallParticipation", () => {
+describe("createCallViewModel$ over a RtcParticipationManager", () => {
   beforeAll(async () => {
     await initMatrixRtcSdkForTests();
   });
@@ -154,13 +154,13 @@ describe("createCallViewModel$ over a CallParticipation", () => {
     const driver = new MockRtcMatrixDriver({
       roomState: [slotEvent({ status: "open" })],
     });
-    const { vm, participation } = createEnvironment(driver);
+    const { vm, rtcParticipationManager } = createEnvironment(driver);
     expect(vm.participantCount$.value).toBe(0);
     expect(vm.connected$.value).toBe(false);
 
     vm.join();
     await waitFor("the crate to be connected", () =>
-      FfiStatus.Connected.instanceOf(participation.status$.value),
+      FfiStatus.Connected.instanceOf(rtcParticipationManager.status$.value),
     );
     // The crate discovered the transport and minted our token; the view
     // model holds a connection to it.
@@ -201,7 +201,7 @@ describe("createCallViewModel$ over a CallParticipation", () => {
 
     vm.leave();
     await waitFor("the crate to be disconnected", () =>
-      FfiStatus.Disconnected.instanceOf(participation.status$.value),
+      FfiStatus.Disconnected.instanceOf(rtcParticipationManager.status$.value),
     );
     await waitFor(
       "our tile to go",

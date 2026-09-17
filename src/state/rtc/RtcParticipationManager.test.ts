@@ -25,7 +25,7 @@ import {
 import { initMatrixRtcSdkForTests } from "../../utils/test-matrix-rtc";
 import { testScope } from "../../utils/test";
 import { ObservableScope } from "../ObservableScope";
-import { CallParticipation } from "./CallParticipation";
+import { RtcParticipationManager } from "./RtcParticipationManager";
 import { errorForStatus } from "./errors";
 import {
   compatForMode,
@@ -55,8 +55,8 @@ function create(
   driver: MockRtcMatrixDriver,
   overrides: { manageMediaKeys?: boolean; transportFallbackUrl?: string } = {},
   scope = testScope(),
-): CallParticipation {
-  return new CallParticipation(
+): RtcParticipationManager {
+  return new RtcParticipationManager(
     scope,
     driver,
     driver.roomId,
@@ -82,7 +82,7 @@ const peer = {
   memberId: "m-peer",
 };
 
-describe("CallParticipation", () => {
+describe("RtcParticipationManager", () => {
   beforeAll(async () => {
     await initMatrixRtcSdkForTests();
   });
@@ -90,7 +90,7 @@ describe("CallParticipation", () => {
   it("in compatibility mode joins with a legacy state event and no slot", async () => {
     // a room that never had a slot, as every pre-slot room is
     const driver = new MockRtcMatrixDriver();
-    const callParticipation = new CallParticipation(
+    const callParticipation = new RtcParticipationManager(
       testScope(),
       driver,
       driver.roomId,

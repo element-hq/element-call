@@ -34,7 +34,7 @@ import {
   type FfiStatus as FfiStatusType,
   type FfiTransportIntent,
 } from "../../../matrix-rtc-sdk";
-import { type SlotPolicy } from "../../rtc/CallParticipation.ts";
+import { type SlotPolicy } from "../../rtc/RtcParticipationManager.ts";
 import { type DisconnectContext, errorForStatus } from "../../rtc/errors.ts";
 import { publishOnLivekit } from "../../rtc/transportIntent.ts";
 import { type IConnectionManager } from "../remoteMembers/ConnectionManager.ts";
@@ -52,7 +52,7 @@ import {
 } from "./LocalMember.ts";
 import { type HomeserverDisconnectReason } from "./HomeserverConnected.ts";
 
-/** What our own membership needs from a {@link CallParticipation}. */
+/** What our own membership needs from a {@link RtcParticipationManager}. */
 export interface ParticipationLocalMemberSource {
   status$: Behavior<FfiStatusType>;
   connections$: Behavior<FfiConnectionWithMembers[]>;
@@ -68,7 +68,7 @@ export interface ParticipationLocalMemberSource {
 
 interface Props {
   scope: ObservableScope;
-  participation: ParticipationLocalMemberSource;
+  rtcParticipationManager: ParticipationLocalMemberSource;
   connectionManager: IConnectionManager;
   createPublisherFactory: (connection: Connection) => Publisher;
   muteStates: MuteStates;
@@ -143,7 +143,7 @@ function describeStatus(status: FfiStatusType): MatrixConnection {
 }
 
 /**
- * Our own membership over a {@link CallParticipation}: the crate publishes
+ * Our own membership over a {@link RtcParticipationManager}: the crate publishes
  * and keeps alive the membership, discovers the transport and mints its
  * token; this joins and leaves when the user asks, publishes our media on
  * the connection the crate gave us, and projects the crate's status onto the
@@ -151,7 +151,7 @@ function describeStatus(status: FfiStatusType): MatrixConnection {
  */
 export const createParticipationLocalMembership$ = ({
   scope,
-  participation,
+  rtcParticipationManager,
   connectionManager,
   createPublisherFactory,
   muteStates,
@@ -170,8 +170,8 @@ export const createParticipationLocalMembership$ = ({
   // The connection we publish on: the one the crate lists our own member on.
   const ownServiceUrl$ = scope.behavior(
     combineLatest([
-      participation.connections$,
-      participation.ownMemberId$,
+      rtcParticipationManager.connections$,
+      rtcParticipationManager.ownMemberId$,
     ]).pipe(
       map(
         ([connections, ownMemberId]) =>
@@ -205,7 +205,7 @@ export const createParticipationLocalMembership$ = ({
   );
 
   const matrixConnection$ = scope.behavior(
-    participation.status$.pipe(
+    rtcParticipationManager.status$.pipe(
       map(describeStatus),
       distinctUntilChanged(
         (a, b) =>
@@ -266,7 +266,7 @@ export const createParticipationLocalMembership$ = ({
       PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
       PosthogAnalytics.instance.eventCallStarted.track(roomId);
       try {
-        await participation.join(
+        await rtcParticipationManager.join(
           publishOnLivekit(customLivekitUrl || undefined),
           joinParams,
           slotPolicy$.value,
@@ -277,7 +277,7 @@ export const createParticipationLocalMembership$ = ({
           error instanceof ElementCallError
             ? error
             : (errorForStatus(
-                participation.status$.value,
+                rtcParticipationManager.status$.value,
                 disconnectContext(),
               ) ??
                 new MembershipManagerError(
@@ -288,7 +288,7 @@ export const createParticipationLocalMembership$ = ({
 
       return Promise.resolve(async (): Promise<void> => {
         try {
-          await participation.leave();
+          await rtcParticipationManager.leave();
         } catch (e) {
           logger.error("Error leaving the session", e);
         }
@@ -299,7 +299,7 @@ export const createParticipationLocalMembership$ = ({
   // The crate can end the participation on its own (the slot closed, the
   // manager stopped): while the user still wants to be in the call, that is
   // an error to show.
-  combineLatest([participation.status$, joinAndPublishRequested$])
+  combineLatest([rtcParticipationManager.status$, joinAndPublishRequested$])
     .pipe(scope.bind())
     .subscribe(([status, shouldConnect]) => {
       if (!shouldConnect) return;
@@ -398,7 +398,7 @@ export const createParticipationLocalMembership$ = ({
   // The call intent follows the camera (C11). Before the join the crate
   // refuses, which is expected.
   muteStates.video.enabled$.pipe(scope.bind()).subscribe((videoEnabled) => {
-    participation
+    rtcParticipationManager
       .updateApplication(videoEnabled ? "video" : "audio")
       .catch((e) => {
         logger.debug(

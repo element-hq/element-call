@@ -95,7 +95,7 @@ describe("JsSdkElementCallMatrixClientDriver", () => {
       expect.objectContaining({ displayName: "Moi" }),
     );
 
-    await expect(driver.getCapabilities()).resolves.toEqual({
+    await expect(driver.getMatrixClientFeatures()).resolves.toEqual({
       stickyEvents: true,
       verifiedEventOrigins: true,
       crossSigningVerdicts: true,
@@ -111,7 +111,7 @@ describe("JsSdkElementCallMatrixClientDriver", () => {
       asClient(fakeClient(true)),
       asRoom(fakeRoom()),
     );
-    await expect(driver.getCapabilities()).resolves.toMatchObject({
+    await expect(driver.getMatrixClientFeatures()).resolves.toMatchObject({
       verifiedEventOrigins: false,
       crossSigningVerdicts: false,
     });

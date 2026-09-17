@@ -14,7 +14,7 @@ import { MockElementCallMatrixClientDriver } from "../../driver/MockElementCallM
 import { MockRtcMatrixDriver } from "../../driver/MockRtcMatrixDriver";
 import { initMatrixRtcSdkForTests } from "../../utils/test-matrix-rtc";
 import { participationConfig } from "./joinParams";
-import { useCallParticipation } from "./useCallParticipation";
+import { useRtcParticipationManager } from "./useRtcParticipationManager";
 
 const config = participationConfig({
   mode: MatrixRTCMode.Matrix_2_0,
@@ -26,7 +26,7 @@ const config = participationConfig({
   },
 });
 
-describe("useCallParticipation", () => {
+describe("useRtcParticipationManager", () => {
   beforeAll(async () => {
     await initMatrixRtcSdkForTests();
   });
@@ -37,7 +37,7 @@ describe("useCallParticipation", () => {
       clientDriver: new MockElementCallMatrixClientDriver(),
     };
     const { result, rerender, unmount } = renderHook(
-      ({ drivers }) => useCallParticipation(drivers, config),
+      ({ drivers }) => useRtcParticipationManager(drivers, config),
       { initialProps: { drivers: null as MatrixDrivers | null } },
     );
     // Nothing without drivers (matrix-js-sdk carries the call).
@@ -45,12 +45,14 @@ describe("useCallParticipation", () => {
 
     rerender({ drivers });
     await waitFor(() => expect(result.current).not.toBeNull());
-    const participation = result.current!;
+    const rtcParticipationManager = result.current!;
     // It seeds the session from the driver right away.
-    await waitFor(() => expect(participation.session$.value.seeded).toBe(true));
+    await waitFor(() =>
+      expect(rtcParticipationManager.session$.value.seeded).toBe(true),
+    );
 
     unmount();
     // Ended: the manager is gone, its diagnostics say nothing.
-    expect(participation.debugSnapshot()).toBe("{}");
+    expect(rtcParticipationManager.debugSnapshot()).toBe("{}");
   });
 });

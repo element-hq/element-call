@@ -54,7 +54,7 @@ import { useAppBarPrimaryButtonIconKind } from "../AppBar";
 
 interface Props {
   /** The matrix-js-sdk client, for what the developer settings still read from it. */
-  client?: MatrixClient;
+  developerSettingsClient?: MatrixClient;
   matrixInfo: MatrixInfo;
   muteStates: MuteStates;
   onEnter: () => void;
@@ -67,7 +67,7 @@ interface Props {
 }
 
 export const LobbyView: FC<Props> = ({
-  client,
+  developerSettingsClient,
   matrixInfo,
   muteStates,
   onEnter,
@@ -260,7 +260,7 @@ export const LobbyView: FC<Props> = ({
         )}
       </div>
       <SettingsModal
-        client={client}
+        client={developerSettingsClient}
         open={settingsModalOpen}
         onDismiss={closeSettings}
         tab={settingsTab}

@@ -63,11 +63,11 @@ function recordingFactory(): {
 describe("createParticipationConnectionManager$", () => {
   it("opens one connection per service with the crate's token and keeps it across a refresh", () => {
     const scope = testScope();
-    const participation = new FakeParticipation();
+    const rtcParticipationManager = new FakeParticipation();
     const { factory, created } = recordingFactory();
     const manager = createParticipationConnectionManager$({
       scope,
-      participation,
+      rtcParticipationManager,
       connectionFactory: factory,
       ownIdentity: { userId: "@me:example.org", deviceId: "MYDEV" },
       logger,
@@ -76,7 +76,7 @@ describe("createParticipationConnectionManager$", () => {
       [],
     );
 
-    participation.connections$.next([
+    rtcParticipationManager.connections$.next([
       fakeConnection({ serviceUrl: "https://a", jwtToken: "t1" }),
     ]);
     expect(created).toEqual([
@@ -92,13 +92,13 @@ describe("createParticipationConnectionManager$", () => {
     ).toBe("https://a");
 
     // The crate refreshed the token: the same connection stays up.
-    participation.connections$.next([
+    rtcParticipationManager.connections$.next([
       fakeConnection({ serviceUrl: "https://a", jwtToken: "t2" }),
     ]);
     expect(created).toHaveLength(1);
 
     // A second service appears; the first is untouched.
-    participation.connections$.next([
+    rtcParticipationManager.connections$.next([
       fakeConnection({ serviceUrl: "https://a", jwtToken: "t2" }),
       fakeConnection({ serviceUrl: "https://b", jwtToken: "t3" }),
     ]);
@@ -111,7 +111,7 @@ describe("createParticipationConnectionManager$", () => {
     ).toHaveLength(2);
 
     // Everybody left the first service: its connection goes away.
-    participation.connections$.next([
+    rtcParticipationManager.connections$.next([
       fakeConnection({ serviceUrl: "https://b", jwtToken: "t3" }),
     ]);
     expect(

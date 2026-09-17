@@ -461,7 +461,7 @@ describe("the call implementation switch", () => {
     createCallView(nullHostBridge);
     await waitFor(() => expect(ActiveCall).toHaveBeenCalled());
     expect(
-      vi.mocked(ActiveCall).mock.calls.at(-1)?.[0].participation,
+      vi.mocked(ActiveCall).mock.calls.at(-1)?.[0].rtcParticipationManager,
     ).toBeNull();
     expect(window.matrixRtc).toBeUndefined();
   });
@@ -489,12 +489,16 @@ describe("the call implementation switch", () => {
     createCallView(nullHostBridge, true, { drivers });
     await waitFor(() =>
       expect(
-        vi.mocked(ActiveCall).mock.calls.at(-1)?.[0].participation,
+        vi.mocked(ActiveCall).mock.calls.at(-1)?.[0].rtcParticipationManager,
       ).not.toBeNull(),
     );
-    const { participation } = vi.mocked(ActiveCall).mock.calls.at(-1)![0];
-    expect(window.matrixRtc?.participation).toBe(participation);
+    const { rtcParticipationManager } = vi
+      .mocked(ActiveCall)
+      .mock.calls.at(-1)![0];
+    expect(window.matrixRtc?.rtcParticipationManager).toBe(
+      rtcParticipationManager,
+    );
     // The participation is bound to the drivers' room and identity.
-    expect(participation?.session$.value.roomId).toBe(roomId);
+    expect(rtcParticipationManager?.session$.value.roomId).toBe(roomId);
   });
 });

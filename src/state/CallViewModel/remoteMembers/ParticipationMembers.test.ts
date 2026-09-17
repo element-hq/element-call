@@ -56,8 +56,8 @@ describe("callMemberOf", () => {
 describe("createParticipationRemoteMembers$", () => {
   it("lists everyone but us, with their connection and participant", () => {
     const scope = testScope();
-    const participation = new FakeParticipation();
-    participation.ownMemberId$.next("m-me");
+    const rtcParticipationManager = new FakeParticipation();
+    rtcParticipationManager.ownMemberId$.next("m-me");
 
     const connection = new MockConnection(
       {
@@ -84,14 +84,14 @@ describe("createParticipationRemoteMembers$", () => {
 
     const members$ = createParticipationRemoteMembers$({
       scope,
-      participation,
+      rtcParticipationManager,
       connectionManager: {
         connectionManagerData$: constant(new Epoch(data, 1)),
       },
     });
     expect(members$.value.value).toEqual([]);
 
-    participation.setMemberships([
+    rtcParticipationManager.setMemberships([
       fakeMembership({ member: { memberId: "m-me", userId: "@me:x" } }),
       fakeMembership({
         member: { memberId: "m-peer", userId: "@peer:x" },

@@ -29,7 +29,7 @@ const RAISED_HAND_KEY = "🖐️";
 const REACTION_EVENT_TYPE = "m.reaction";
 const REDACTION_EVENT_TYPE = "m.room.redaction";
 
-/** What the reader needs from a {@link CallParticipation}. */
+/** What the reader needs from a {@link RtcParticipationManager}. */
 export interface ParticipationReactionsSource {
   memberships$: Behavior<Epoch<FfiMembership[]>>;
 }
@@ -45,7 +45,7 @@ function relationOf(content: Record<string, unknown>): Relation | undefined {
 }
 
 /**
- * Raised hands and reactions over a {@link CallParticipation} and the client
+ * Raised hands and reactions over a {@link RtcParticipationManager} and the client
  * driver's timeline: the counterpart of {@link ReactionsReader}, which reads
  * the same from a matrix-js-sdk session.
  *
@@ -68,7 +68,7 @@ export class ParticipationReactionsReader {
 
   public constructor(
     scope: ObservableScope,
-    participation: ParticipationReactionsSource,
+    rtcParticipationManager: ParticipationReactionsSource,
     private readonly timeline: Pick<
       TimelineDriver,
       "subscribeTimeline" | "getRelatedEvents"
@@ -88,7 +88,7 @@ export class ParticipationReactionsReader {
       });
 
     scope.onEnd(timeline.subscribeTimeline(this.handleEvent));
-    participation.memberships$
+    rtcParticipationManager.memberships$
       .pipe(scope.bind())
       .subscribe((memberships) => this.onMembershipsChanged(memberships.value));
   }

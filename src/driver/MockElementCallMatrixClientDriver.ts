@@ -12,7 +12,7 @@ Please see LICENSE in the repository root for full details.
  */
 
 import {
-  type DriverCapabilities,
+  type MatrixClientFeatures,
   type ElementCallMatrixClientDriver,
   type OwnProfile,
   type RoomInfo,
@@ -42,7 +42,7 @@ export interface MockElementCallMatrixClientDriverOptions {
   roomInfo?: Partial<RoomInfo>;
   members?: RoomMemberProfile[];
   ownProfile?: Partial<OwnProfile>;
-  capabilities?: Partial<DriverCapabilities>;
+  features?: Partial<MatrixClientFeatures>;
 }
 
 export class MockElementCallMatrixClientDriver implements ElementCallMatrixClientDriver {
@@ -51,7 +51,7 @@ export class MockElementCallMatrixClientDriver implements ElementCallMatrixClien
   public readonly roomId: string;
   public readonly outbound: ClientCall[] = [];
 
-  private capabilities: DriverCapabilities;
+  private features: MatrixClientFeatures;
   private roomInfo: RoomInfo;
   private members: RoomMemberProfile[];
   private ownProfile: OwnProfile;
@@ -71,11 +71,11 @@ export class MockElementCallMatrixClientDriver implements ElementCallMatrixClien
     this.userId = options.userId ?? MOCK_OWN_USER_ID;
     this.deviceId = options.deviceId ?? MOCK_OWN_DEVICE_ID;
     this.roomId = options.roomId ?? MOCK_ROOM_ID;
-    this.capabilities = {
+    this.features = {
       stickyEvents: true,
       verifiedEventOrigins: true,
       crossSigningVerdicts: true,
-      ...options.capabilities,
+      ...options.features,
     };
     this.roomInfo = {
       name: "Test room",
@@ -194,7 +194,7 @@ export class MockElementCallMatrixClientDriver implements ElementCallMatrixClien
     });
   }
 
-  // --- profile, media, capabilities --------------------------------------------
+  // --- profile, media, features --------------------------------------------
 
   public getOwnProfile(): OwnProfile {
     return this.ownProfile;
@@ -229,12 +229,14 @@ export class MockElementCallMatrixClientDriver implements ElementCallMatrixClien
     );
   }
 
-  public async getCapabilities(): Promise<DriverCapabilities> {
-    return Promise.resolve(this.capabilities);
+  public async getMatrixClientFeatures(): Promise<MatrixClientFeatures> {
+    return Promise.resolve(this.features);
   }
 
-  public setCapabilities(capabilities: Partial<DriverCapabilities>): void {
-    this.capabilities = { ...this.capabilities, ...capabilities };
+  public setMatrixClientFeatures(
+    features: Partial<MatrixClientFeatures>,
+  ): void {
+    this.features = { ...this.features, ...features };
   }
 }
 

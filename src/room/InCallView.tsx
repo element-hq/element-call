@@ -87,7 +87,7 @@ import { ObservableScope } from "../state/ObservableScope.ts";
 import { CallFooter, type FooterSnapshot } from "../components/CallFooter.tsx";
 import { SettingsIconButton } from "../button/Button.tsx";
 import { createCallFooterViewModel } from "../components/CallFooterViewModel.tsx";
-import { type CallParticipation } from "../state/rtc/CallParticipation.ts";
+import { type RtcParticipationManager } from "../state/rtc/RtcParticipationManager.ts";
 import { useOptionalMatrixDrivers } from "../driver/MatrixDriverContext.tsx";
 import { ParticipationReactionsReader } from "../reactions/ParticipationReactionsReader.ts";
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships.ts";
@@ -115,11 +115,11 @@ export interface ActiveCallProps extends Omit<
 > {
   e2eeSystem: EncryptionSystem;
   /**
-   * The crate's participation in the session when the Rust implementation
-   * carries this call (see `CallViewModelImplementation`); null when
+   * The crate's participation manager for the session when the Rust
+   * implementation carries this call (see `CallViewModelImplementation`); null when
    * matrix-js-sdk's `rtcSession` does.
    */
-  participation: CallParticipation | null;
+  rtcParticipationManager: RtcParticipationManager | null;
   // TODO refactor those reasons into an enum
   onLeft: (
     reason: "user" | "timeout" | "decline" | "allOthersLeft" | "error",
@@ -141,15 +141,15 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
   // The element we have to draw the call in: the page, or the container a host
   // gave us. Its size, not the window's, decides how the call is laid out.
   const rootElement = useRootElement();
-  // The drivers, where a host provided them; required with a participation.
+  // The drivers, where a host provided them; required with a participation manager.
   const drivers = useOptionalMatrixDrivers();
-  const { participation, rtcSession, client, roomId } = props;
-  if (participation !== null && drivers === null)
+  const { rtcParticipationManager, rtcSession, client, roomId } = props;
+  if (rtcParticipationManager !== null && drivers === null)
     throw new Error(
       "A call over the matrix-rtc crate needs the Matrix drivers to be provided",
     );
   if (
-    participation === null &&
+    rtcParticipationManager === null &&
     (rtcSession === undefined || client === undefined)
   )
     throw new Error(
@@ -173,18 +173,18 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     };
 
     let vm: CallViewModel;
-    if (participation !== null && drivers !== null) {
+    if (rtcParticipationManager !== null && drivers !== null) {
       rootLogger.info(
         `Call view model implementation: ${CallViewModelImplementation.MatrixRtc}`,
       );
       const reactionsReader = new ParticipationReactionsReader(
         scope,
-        participation,
+        rtcParticipationManager,
         drivers.clientDriver,
       );
       vm = createCallViewModel$(
         scope,
-        participation,
+        rtcParticipationManager,
         drivers.clientDriver,
         mediaDevices,
         props.muteStates,
@@ -232,7 +232,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     mediaDevices,
     trackProcessorState$,
     rootElement,
-    participation,
+    rtcParticipationManager,
     drivers,
   ]);
 
@@ -246,10 +246,10 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
   // Reactions relate to our current membership event, wherever that lives.
   const jsSdkMemberships = useMatrixRTCSessionMemberships(rtcSession);
   const ownParticipationMembership = useBehavior(
-    participation?.ownMembership$ ?? NO_OWN_MEMBERSHIP,
+    rtcParticipationManager?.ownMembership$ ?? NO_OWN_MEMBERSHIP,
   );
   const ownMembershipEventId =
-    participation !== null
+    rtcParticipationManager !== null
       ? ownParticipationMembership?.member.eventId
       : jsSdkMemberships.find(
           (m) =>
@@ -258,10 +258,10 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
         )?.eventId;
   const reactionsTimeline = useMemo(
     () =>
-      participation === null && client !== undefined
+      rtcParticipationManager === null && client !== undefined
         ? jsSdkReactionsTimeline(client, roomId)
         : drivers!.clientDriver,
-    [participation, drivers, client, roomId],
+    [rtcParticipationManager, drivers, client, roomId],
   );
 
   useEffect(() => {

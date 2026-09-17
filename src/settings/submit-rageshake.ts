@@ -221,9 +221,13 @@ export function useSubmitRageshake(
             logger.warn("Could not collect the driver's diagnostics", e);
           }
         }
-        const participation = window.matrixRtc?.participation;
-        if (participation)
-          body.append("matrix_rtc_snapshot", participation.debugSnapshot());
+        const rtcParticipationManager =
+          window.matrixRtc?.rtcParticipationManager;
+        if (rtcParticipationManager)
+          body.append(
+            "matrix_rtc_snapshot",
+            rtcParticipationManager.debugSnapshot(),
+          );
         body.append("hostname", window.location.hostname);
 
         if (client) {

@@ -30,11 +30,11 @@ const peer = fakeMembership({ member: { memberId: "m-peer" } });
 
 describe("createParticipationSentCallNotification$", () => {
   it("rings once our membership echoes back, if we were first, and again after a rejoin", async () => {
-    const participation = new FakeParticipation();
+    const rtcParticipationManager = new FakeParticipation();
     const timeline = new MockElementCallMatrixClientDriver();
     const sent$ = createParticipationSentCallNotification$({
       scope: testScope(),
-      participation,
+      rtcParticipationManager,
       timeline,
       options: { sendNotificationType: "ring", callIntent: "video" },
       logger,
@@ -42,8 +42,8 @@ describe("createParticipationSentCallNotification$", () => {
     expect(sent$.value).toBeNull();
 
     // Our echo arrives; the roster has only us.
-    participation.setMemberships([own]);
-    participation.ownMembership$.next(own);
+    rtcParticipationManager.setMemberships([own]);
+    rtcParticipationManager.ownMembership$.next(own);
     await waitFor("notification sent", () => sent$.value !== null);
     const [call] = timeline.calls("sendRoomEvent");
     expect(call.eventType).toBe(RTC_NOTIFICATION_EVENT_TYPE);
@@ -60,15 +60,15 @@ describe("createParticipationSentCallNotification$", () => {
     });
 
     // A refresh of our membership is not a join.
-    participation.ownMembership$.next({ ...own });
+    rtcParticipationManager.ownMembership$.next({ ...own });
     expect(timeline.calls("sendRoomEvent")).toHaveLength(1);
 
     // We leave and come back alone: the room rings again.
-    participation.ownMembership$.next(null);
-    participation.setMemberships([]);
+    rtcParticipationManager.ownMembership$.next(null);
+    rtcParticipationManager.setMemberships([]);
     expect(sent$.value).toBeNull();
-    participation.setMemberships([own]);
-    participation.ownMembership$.next(own);
+    rtcParticipationManager.setMemberships([own]);
+    rtcParticipationManager.ownMembership$.next(own);
     await waitFor(
       "second notification",
       () => timeline.calls("sendRoomEvent").length === 2,
@@ -76,34 +76,34 @@ describe("createParticipationSentCallNotification$", () => {
   });
 
   it("does not ring when somebody was in the session before us", async () => {
-    const participation = new FakeParticipation();
+    const rtcParticipationManager = new FakeParticipation();
     const timeline = new MockElementCallMatrixClientDriver();
     const sent$ = createParticipationSentCallNotification$({
       scope: testScope(),
-      participation,
+      rtcParticipationManager,
       timeline,
       options: { sendNotificationType: "ring" },
       logger,
     });
-    participation.setMemberships([peer, own]);
-    participation.ownMembership$.next(own);
+    rtcParticipationManager.setMemberships([peer, own]);
+    rtcParticipationManager.ownMembership$.next(own);
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(timeline.calls("sendRoomEvent")).toEqual([]);
     expect(sent$.value).toBeNull();
   });
 
   it("does nothing without a notification type", async () => {
-    const participation = new FakeParticipation();
+    const rtcParticipationManager = new FakeParticipation();
     const timeline = new MockElementCallMatrixClientDriver();
     createParticipationSentCallNotification$({
       scope: testScope(),
-      participation,
+      rtcParticipationManager,
       timeline,
       options: {},
       logger,
     });
-    participation.setMemberships([own]);
-    participation.ownMembership$.next(own);
+    rtcParticipationManager.setMemberships([own]);
+    rtcParticipationManager.ownMembership$.next(own);
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(timeline.calls("sendRoomEvent")).toEqual([]);
   });

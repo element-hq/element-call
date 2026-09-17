@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 /**
  * An {@link ElementCallMatrixClientDriver} over a matrix-js-sdk client: room
  * metadata and members, the room's timeline for reactions and notifications,
- * the user's own profile, authenticated thumbnails and capability probes.
+ * the user's own profile, authenticated thumbnails and feature probes.
  * Works on a full `MatrixClient` and on a `RoomWidgetClient`; the places
  * they differ are marked "widget".
  */
@@ -30,7 +30,7 @@ import { logger as rootLogger, type Logger } from "matrix-js-sdk/lib/logger";
 
 import { ELEMENT_CALL_SLOT_EVENT_TYPE } from "../../state/rtc/slot";
 import {
-  type DriverCapabilities,
+  type MatrixClientFeatures,
   type ElementCallMatrixClientDriver,
   type OwnProfile,
   type RoomInfo,
@@ -61,7 +61,7 @@ export class JsSdkElementCallMatrixClientDriver implements ElementCallMatrixClie
   private readonly logger: Logger;
   /** Widget: no crypto backend, no access token, events without metadata. */
   private readonly widget: boolean;
-  private capabilities: Promise<DriverCapabilities> | null = null;
+  private features: Promise<MatrixClientFeatures> | null = null;
 
   public constructor(
     private readonly client: MatrixClient,
@@ -302,14 +302,14 @@ export class JsSdkElementCallMatrixClientDriver implements ElementCallMatrixClie
     return URL.createObjectURL(await response.blob());
   }
 
-  // --- capabilities and diagnostics ------------------------------------------------
+  // --- features and diagnostics ------------------------------------------------
 
-  public async getCapabilities(): Promise<DriverCapabilities> {
-    this.capabilities ??= this.probeCapabilities();
-    return this.capabilities;
+  public async getMatrixClientFeatures(): Promise<MatrixClientFeatures> {
+    this.features ??= this.probeMatrixClientFeatures();
+    return this.features;
   }
 
-  private async probeCapabilities(): Promise<DriverCapabilities> {
+  private async probeMatrixClientFeatures(): Promise<MatrixClientFeatures> {
     const stickyEvents = await this.client
       .doesServerSupportUnstableFeature(UNSTABLE_MSC4354_STICKY_EVENTS)
       .catch((e: unknown) => {

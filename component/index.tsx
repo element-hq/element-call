@@ -104,7 +104,7 @@ export { supportedLanguages } from "./localization";
 export { type RtcMatrixDriver } from "../src/driver/RtcMatrixDriver";
 export {
   type ElementCallMatrixClientDriver,
-  type DriverCapabilities,
+  type MatrixClientFeatures,
   type RoomInfo,
   type RoomMemberProfile,
   type TimelineEvent,

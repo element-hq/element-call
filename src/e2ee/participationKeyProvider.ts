@@ -13,7 +13,7 @@ import { type Behavior } from "../state/Behavior";
 import { type Epoch, type ObservableScope } from "../state/ObservableScope";
 import { type FfiMediaKey, type FfiMembership } from "../matrix-rtc-sdk";
 
-/** What this provider needs from a {@link CallParticipation}. */
+/** What this provider needs from a {@link RtcParticipationManager}. */
 export interface ParticipationKeys {
   /** Every media key in use, ours and theirs, one per (member, index). */
   keyMap$: Behavior<FfiMediaKey[]>;
@@ -43,13 +43,13 @@ export class ParticipationKeyProvider extends BaseKeyProvider {
   /** Follow the participation's keys for as long as `scope` lives. */
   public attach(
     scope: ObservableScope,
-    participation: ParticipationKeys,
+    rtcParticipationManager: ParticipationKeys,
   ): void {
     combineLatest([
-      participation.keyMap$,
-      participation.memberships$,
-      participation.ownMemberId$,
-      participation.ownTransportIdentity$,
+      rtcParticipationManager.keyMap$,
+      rtcParticipationManager.memberships$,
+      rtcParticipationManager.ownMemberId$,
+      rtcParticipationManager.ownTransportIdentity$,
     ])
       .pipe(scope.bind())
       .subscribe(([keys, memberships, ownMemberId, ownIdentity]) => {

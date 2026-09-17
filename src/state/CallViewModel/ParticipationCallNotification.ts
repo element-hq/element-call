@@ -35,7 +35,7 @@ export const RTC_DECLINE_EVENT_TYPE = "org.matrix.msc4310.rtc.decline";
 /** How long a ring is offered for, as matrix-js-sdk has it. */
 export const NOTIFICATION_LIFETIME_MS = 90_000;
 
-/** What sending the notification needs from a {@link CallParticipation}. */
+/** What sending the notification needs from a {@link RtcParticipationManager}. */
 export interface ParticipationNotificationSource {
   ownMembership$: Behavior<FfiMembership | null>;
   memberships$: Behavior<Epoch<FfiMembership[]>>;
@@ -43,7 +43,7 @@ export interface ParticipationNotificationSource {
 
 interface Props {
   scope: ObservableScope;
-  participation: ParticipationNotificationSource;
+  rtcParticipationManager: ParticipationNotificationSource;
   timeline: TimelineDriver;
   options: {
     /** Whether and what kind of notification to send when joining the call. */
@@ -64,7 +64,7 @@ interface Props {
  */
 export function createParticipationSentCallNotification$({
   scope,
-  participation,
+  rtcParticipationManager,
   timeline,
   options: { sendNotificationType, callIntent },
   logger: parentLogger,
@@ -73,11 +73,11 @@ export function createParticipationSentCallNotification$({
   const sent$ = new BehaviorSubject<CallNotificationWrapper | null>(null);
   if (sendNotificationType === undefined) return scope.behavior(sent$);
 
-  participation.ownMembership$
+  rtcParticipationManager.ownMembership$
     .pipe(
       startWith(null),
       pairwise(),
-      withLatestFrom(participation.memberships$),
+      withLatestFrom(rtcParticipationManager.memberships$),
       scope.bind(),
     )
     .subscribe(([[previous, own], memberships]) => {

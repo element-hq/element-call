@@ -19,7 +19,7 @@ import { Epoch } from "../state/ObservableScope";
 
 /**
  * Hand-made values of the crate's records, for the modules that consume a
- * `CallParticipation`'s behaviors without needing the crate itself.
+ * `RtcParticipationManager`'s behaviors without needing the crate itself.
  */
 
 export function fakeMember(overrides: Partial<FfiMember> = {}): FfiMember {
@@ -81,7 +81,7 @@ export function fakeMediaKey(
 }
 
 /**
- * The behaviors of a `CallParticipation`, as subjects a test drives by hand.
+ * The behaviors of a `RtcParticipationManager`, as subjects a test drives by hand.
  * Modules take structural slices of the participation, so this stands in for
  * it wherever the crate is not what is under test.
  */

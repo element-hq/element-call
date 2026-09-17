@@ -18,7 +18,7 @@ import {
   type RemoteMatrixLivekitMember,
 } from "./MatrixLivekitMembers";
 
-/** What this module needs from a {@link CallParticipation}. */
+/** What this module needs from a {@link RtcParticipationManager}. */
 export interface ParticipationRoster {
   memberships$: Behavior<Epoch<FfiMembership[]>>;
   ownMemberId$: Behavior<string | null>;
@@ -41,7 +41,7 @@ export function callMemberOf(membership: FfiMembership): CallMember {
 
 interface Props {
   scope: ObservableScope;
-  participation: ParticipationRoster;
+  rtcParticipationManager: ParticipationRoster;
   connectionManager: IConnectionManager;
 }
 
@@ -52,13 +52,13 @@ interface Props {
  */
 export function createParticipationRemoteMembers$({
   scope,
-  participation,
+  rtcParticipationManager,
   connectionManager,
 }: Props): Behavior<Epoch<RemoteMatrixLivekitMember[]>> {
   return scope.behavior(
     combineLatest([
-      participation.memberships$,
-      participation.ownMemberId$,
+      rtcParticipationManager.memberships$,
+      rtcParticipationManager.ownMemberId$,
       connectionManager.connectionManagerData$,
     ]).pipe(
       map(

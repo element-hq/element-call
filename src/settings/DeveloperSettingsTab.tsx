@@ -146,8 +146,8 @@ export const DeveloperSettingsTab: FC<Props> = ({
           )
         : drivers !== null
           ? drivers.clientDriver
-              .getCapabilities()
-              .then((capabilities) => capabilities.stickyEvents)
+              .getMatrixClientFeatures()
+              .then((features) => features.stickyEvents)
           : Promise.resolve(false);
     probe
       .then((result) => {

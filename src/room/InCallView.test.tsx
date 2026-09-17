@@ -253,7 +253,7 @@ describe("ActiveCall", () => {
                 <ActiveCall
                   client={matrixRoom.client}
                   rtcSession={rtcSession.asMockedSession()}
-                  participation={null}
+                  rtcParticipationManager={null}
                   roomId={matrixRoom.roomId}
                   muteStates={mockMuteStates()}
                   matrixInfo={matrixInfo}
@@ -304,7 +304,7 @@ describe("ActiveCall", () => {
                     <ActiveCall
                       client={matrixRoom.client}
                       rtcSession={rtcSession.asMockedSession()}
-                      participation={null}
+                      rtcParticipationManager={null}
                       roomId={matrixRoom.roomId}
                       muteStates={mockMuteStates()}
                       matrixInfo={matrixInfo}

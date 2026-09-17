@@ -82,7 +82,7 @@ describe("MockElementCallMatrixClientDriver", () => {
       driver.thumbnailUrl("https://not-mxc", 96, 96, "crop"),
     ).resolves.toBeNull();
     expect(driver.roomId).toBe(MOCK_ROOM_ID);
-    await expect(driver.getCapabilities()).resolves.toMatchObject({
+    await expect(driver.getMatrixClientFeatures()).resolves.toMatchObject({
       stickyEvents: true,
     });
   });
