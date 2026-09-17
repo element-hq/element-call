@@ -10,11 +10,17 @@ Please see LICENSE in the repository root for full details.
   align-items: center;
   gap: var(--cpd-space-3x);
   padding-block: var(--cpd-space-2x);
-  /* Aligned with the device rows above: a menu item reserves a trailing column
-     for its chevron and gives its label an end margin, so the text stops well
-     short of the item's own padding. Without the same inset the bars run past
-     where the device names end. */
-  padding-inline-start: var(--cpd-space-4x);
+  /* The icon shares a centre with the radio controls in the device rows above,
+     which sit one 4x padding in from the menu's edge. Two things pull this row
+     out of line with them, and both come off the padding: the row is inset by a
+     border width so that the menu's frame stays visible behind it (see
+     `.stickyMeter`), and the icon is wider than a radio control, so it has to
+     start further left for the two to share a centre. Both are
+     measured in the MeterAlignsWithTheDeviceRows story rather than trusted:
+     jsdom lays nothing out, so only a real browser can hold this. */
+  padding-inline-start: calc(
+    var(--cpd-space-4x) - var(--cpd-border-width-1) - 2px
+  );
   padding-inline-end: calc(var(--cpd-space-4x) * 2 + var(--cpd-space-2x));
 }
 
@@ -67,4 +73,8 @@ Please see LICENSE in the repository root for full details.
 
 .message {
   color: var(--cpd-color-text-secondary);
+  /* A paragraph brings a margin below it, which in a centred row does not push
+     the text down but lifts it: the margin box is what gets centred, so the
+     words end up above the middle and the icon beside them looks low. */
+  margin-block: 0;
 }

@@ -125,6 +125,17 @@ export const NoDevice: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.queryByRole("meter")).toBeNull();
     await expect(canvas.getByText(/No microphone found/)).toBeVisible();
+
+    // The icon sits on the middle of the words, however many lines they run to.
+    // A paragraph's own margin would centre its margin box instead, leaving the
+    // text high and the icon looking low beside it.
+    const middle = (element: Element): number => {
+      const box = element.getBoundingClientRect();
+      return box.top + box.height / 2;
+    };
+    const icon = canvasElement.getElementsByClassName(styles.icon)[0];
+    const words = canvasElement.getElementsByClassName(styles.message)[0];
+    await expect(Math.abs(middle(icon) - middle(words))).toBeLessThanOrEqual(1);
   },
 };
 
