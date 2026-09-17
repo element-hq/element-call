@@ -11,6 +11,7 @@ import {
   type CSSProperties,
   type FC,
   useEffect,
+  useRef,
   type ReactElement,
 } from "react";
 import {
@@ -104,8 +105,12 @@ export interface MediaMuteAndSwitchButtonProps {
    * wherever background processing is unavailable.
    */
   onSelectBackgroundEffect?: (id: string) => void;
-  /** Called when the add tile is chosen. Omit to leave that tile out. */
-  onAddBackgroundImage?: () => void;
+  /**
+   * Called with the file the user chose from the add tile. Omit to leave that
+   * tile out. The picker lives here rather than with the caller because
+   * opening it takes the focus, which would otherwise dismiss the menu.
+   */
+  onAddBackgroundImage?: (file: File) => void;
   /**
    * For any toggle and option this method will be called.
    * So toggles need to be implemented by listening here and setting the right toggle item to `enabled`
@@ -162,6 +167,21 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   // Which device we have asked for but not yet been given. Carries the kind as
   // well as the id, because an input and an output can share an id: "default"
   // names both on Chrome.
+  // Held open across the file picker: a native dialog takes the focus, and the
+  // menu would take that as a click elsewhere and close behind it.
+  const [choosingFile, setChoosingFile] = useState(false);
+  const chooseFile = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const input = chooseFile.current;
+    if (!input) return;
+    // Dismissing the picker without choosing fires `cancel`, which React does
+    // not type, so it is listened for directly. Without it the menu would
+    // stay pinned open after a cancelled pick.
+    const done = (): void => setChoosingFile(false);
+    input.addEventListener("cancel", done);
+    return (): void => input.removeEventListener("cancel", done);
+  }, [onAddBackgroundImage]);
+
   const [plannedSelection, setPlannedSelection] = useState<{
     kind: "input" | "output";
     id: string;
@@ -528,7 +548,8 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
           }
           onSelect={(e) => {
             e.preventDefault();
-            onAddBackgroundImage();
+            setChoosingFile(true);
+            chooseFile.current?.click();
           }}
           key="add-background-image"
         />,
@@ -545,6 +566,21 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
     >
       {/* The mute button lives inside */}
       {button}
+      {onAddBackgroundImage !== undefined && (
+        <input
+          ref={chooseFile}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            // Cleared so the same file can be chosen twice in a row.
+            e.target.value = "";
+            setChoosingFile(false);
+            if (file) onAddBackgroundImage(file);
+          }}
+        />
+      )}
       <Menu
         className={styles.menu}
         title={title ?? defaultMenuTitle}
@@ -552,7 +588,11 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
         // sit on top of the first one. Kept for the accessible name only.
         showTitle={false}
         open={menuOpen}
-        onOpenChange={setMenuOpen}
+        onOpenChange={(open) => {
+          // Ignore the close the file picker provokes by taking the focus.
+          if (!open && choosingFile) return;
+          setMenuOpen(open);
+        }}
         side="top"
         trigger={
           <Button

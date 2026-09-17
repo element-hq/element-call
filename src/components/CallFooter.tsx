@@ -5,15 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import {
-  Fragment,
-  type FC,
-  type JSX,
-  type Ref,
-  useCallback,
-  useMemo,
-  useRef,
-} from "react";
+import { type FC, type JSX, type Ref, useCallback, useMemo } from "react";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
 import { logger } from "matrix-js-sdk/lib/logger";
@@ -180,29 +172,27 @@ export const CallFooter: FC<FooterProps> = ({
   const selectBackgroundEffect = useBehavior(vm.selectBackgroundEffect$);
   const { added, addBackground } = useAddedBackgrounds();
 
-  const chooseFile = useRef<HTMLInputElement>(null);
-  const onAddBackgroundImage = useCallback((): void => {
-    chooseFile.current?.click();
-  }, []);
-  const onFileChosen = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>): void => {
-      const file = event.target.files?.[0];
-      // Cleared so choosing the same file twice in a row still counts.
-      event.target.value = "";
-      if (!file) return;
-      addBackground(file).catch((e) => {
-        // TODO: FR-021 wants the user told what went wrong. There is no
-        // surface for that in the menu yet, and inventing one is design's
-        // call, so for now this is only logged.
-        logger.warn(
-          e instanceof UnusableImage
-            ? `Cannot use that file as a background: ${e.reason}`
-            : "Could not keep that background",
-          e,
-        );
-      });
+  const onAddBackgroundImage = useCallback(
+    (file: File): void => {
+      // Chosen for the user straight away: they picked this picture to use it,
+      // and leaving it unselected would ask them to pick it twice.
+      addBackground(file)
+        .then((id) =>
+          selectBackgroundEffect?.(serializeEffect({ kind: "added", id })),
+        )
+        .catch((e) => {
+          // TODO: FR-021 wants the user told what went wrong. There is no
+          // surface for that in the menu yet, and inventing one is design's
+          // call, so for now this is only logged.
+          logger.warn(
+            e instanceof UnusableImage
+              ? `Cannot use that file as a background: ${e.reason}`
+              : "Could not keep that background",
+            e,
+          );
+        });
     },
-    [addBackground],
+    [addBackground, selectBackgroundEffect],
   );
 
   // The catalogue is named here rather than in the view model: the names are
@@ -282,36 +272,26 @@ export const CallFooter: FC<FooterProps> = ({
 
   if ((videoOptions?.length ?? 0) > 0) {
     buttons.push(
-      <Fragment key="video">
-        {/* The picker the add tile opens. Hidden, and driven from the tile,
-            because a file input cannot be styled into one. */}
-        <input
-          ref={chooseFile}
-          type="file"
-          accept="image/*"
-          hidden
-          onChange={onFileChosen}
-        />
-        <MediaMuteAndSwitchButton
-          iconsAndLabels="video"
-          enabled={videoEnabled ?? false}
-          busy={videoBusy ?? false}
-          onMuteClick={toggleVideo}
-          options={videoOptions}
-          selectedOption={selectedVideo}
-          onSelect={selectVideoButtonOption}
-          backgroundEffects={backgroundEffects}
-          selectedBackgroundEffect={backgroundEffect}
-          onSelectBackgroundEffect={selectBackgroundEffect}
-          // Withheld once the device keeps as many as it will, which is what
-          // renders the add tile unavailable rather than letting it fail.
-          onAddBackgroundImage={
-            selectBackgroundEffect && added.length < maxAddedBackgrounds
-              ? onAddBackgroundImage
-              : undefined
-          }
-        />
-      </Fragment>,
+      <MediaMuteAndSwitchButton
+        key="video"
+        iconsAndLabels="video"
+        enabled={videoEnabled ?? false}
+        busy={videoBusy ?? false}
+        onMuteClick={toggleVideo}
+        options={videoOptions}
+        selectedOption={selectedVideo}
+        onSelect={selectVideoButtonOption}
+        backgroundEffects={backgroundEffects}
+        selectedBackgroundEffect={backgroundEffect}
+        onSelectBackgroundEffect={selectBackgroundEffect}
+        // Withheld once the device keeps as many as it will, which is what
+        // renders the add tile unavailable rather than letting it fail.
+        onAddBackgroundImage={
+          selectBackgroundEffect && added.length < maxAddedBackgrounds
+            ? onAddBackgroundImage
+            : undefined
+        }
+      />,
     );
   } else {
     buttons.push(

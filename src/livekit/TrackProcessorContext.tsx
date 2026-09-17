@@ -74,7 +74,7 @@ export interface AddedBackgrounds {
    * Keeps a file as a background. Rejects with `UnusableImage` for a file that
    * cannot be used, and `RangeError` once the device keeps as many as it will.
    */
-  addBackground: (file: Blob) => Promise<void>;
+  addBackground: (file: Blob) => Promise<string>;
   removeBackground: (id: string) => Promise<void>;
 }
 
@@ -189,7 +189,9 @@ function switchOptionsFor(
   ): SwitchBackgroundProcessorOptions =>
     // A background the device no longer has — removed, or storage cleared —
     // leaves the user with no effect rather than a pipeline drawing nothing.
-    imagePath ? { mode: "virtual-background", imagePath } : { mode: "disabled" };
+    imagePath
+      ? { mode: "virtual-background", imagePath }
+      : { mode: "disabled" };
 
   switch (effect.kind) {
     case "blur":
@@ -230,7 +232,9 @@ export const ProcessorProvider: FC<Props> = ({ children }) => {
   const reread = useCallback(async (): Promise<void> => {
     const kept = await store.list();
     urls.current.forEach((url) => URL.revokeObjectURL(url));
-    urls.current = kept.map((background) => URL.createObjectURL(background.image));
+    urls.current = kept.map((background) =>
+      URL.createObjectURL(background.image),
+    );
     setAdded(kept.map(({ id }, i) => ({ id, url: urls.current[i] })));
   }, [store]);
 
@@ -244,9 +248,10 @@ export const ProcessorProvider: FC<Props> = ({ children }) => {
   }, [reread]);
 
   const addBackground = useCallback(
-    async (file: Blob): Promise<void> => {
-      await store.add(file);
+    async (file: Blob): Promise<string> => {
+      const kept = await store.add(file);
       await reread();
+      return kept.id;
     },
     [store, reread],
   );
