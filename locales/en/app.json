@@ -3,6 +3,7 @@
     "user_menu": "User menu"
   },
   "action": {
+    "add_background_image": "Add image",
     "blur_background": "Blur background",
     "close": "Close",
     "copy_link": "Copy link",
@@ -212,6 +213,7 @@
     "auto_gain_control_label": "Automatic gain control",
     "background_blur_header": "Background",
     "background_blur_label": "Blur the background of the video",
+    "background_effects_header": "Background effects",
     "bitrate_label": "Bitrate",
     "blur_not_supported_by_browser": "(Background blur is not supported by this device.)",
     "camera_header": "Camera quality",

@@ -135,3 +135,176 @@ Please see LICENSE in the repository root for full details.
   outline: var(--cpd-border-width-2) solid var(--cpd-color-border-focused);
   outline-offset: calc(-1 * var(--cpd-border-width-2));
 }
+
+/*
+ * The Background effects grid.
+ *
+ * Three across matches the design and keeps a thumbnail readable at a glance;
+ * with no effect, blur, two shipped images and the add tile it also settles
+ * into a tidy three-by-three at the maximum number of images.
+ *
+ * minmax(0, 1fr) rather than 1fr: a grid track will not shrink below its
+ * content's minimum width by default, and a tile carrying a label is wider
+ * than a third of the menu, so plain 1fr lays out three full-width columns and
+ * clips two of them.
+ */
+.effectGrid {
+  display: grid;
+  /* A floor, not just a share. The menu sizes itself to its content, so
+     dividing whatever width the device names happen to need makes the tiles
+     narrower the shorter those names are; this makes the menu wide enough for
+     three proper tiles instead. */
+  grid-template-columns: repeat(3, minmax(84px, 1fr));
+  /* Every tile the same height, set by the tallest — the ones carrying a
+     label. Forcing a ratio instead clips the label as soon as the menu is
+     narrow enough that the ratio cannot hold it. */
+  grid-auto-rows: 1fr;
+  gap: var(--cpd-space-2x);
+  /* The same inset a menu heading and a device row carry, so the tiles line
+     their left edge up with the "B" of the heading above them and with the
+     radio buttons above that. Matching the surrounding boxes instead puts the
+     tiles to the left of both, since a heading insets its own text. */
+  padding: var(--cpd-space-2x) var(--cpd-space-4x) var(--cpd-space-3x);
+}
+
+/*
+ * A menu item lays itself out as a grid of chevron, icon and label in a row.
+ * A tile centres its glyph with the label beneath instead, so this has to
+ * outweigh that rule rather than sit beside it.
+ *
+ * The tiles are a little wider than tall, as the design draws them, and hold
+ * that shape whatever the menu measures.
+ */
+.effectGrid .effectTile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Glyph and label centre together as one group. Pinning the label to the
+     floor instead leaves the glyph riding high in the space above it. */
+  justify-content: center;
+  /* Measured against the design: the glyph sits a quarter of the tile wide,
+     with about a seventh of the tile's height between its ink and the label's.
+     The label's own leading is part of that distance, so the step here is
+     smaller than the ink gap it produces. */
+  gap: var(--cpd-space-1x);
+  block-size: auto;
+  min-block-size: 0;
+  min-inline-size: 0;
+  /* More room above and below than at the sides: the tile is wider than tall,
+     and the padding is what carries that proportion now the gap is set by the
+     design's spacing rather than by filling the box. */
+  padding: var(--cpd-space-3x) var(--cpd-space-2x);
+  overflow: hidden;
+  border: 2px solid var(--cpd-color-border-interactive-secondary);
+  border-radius: var(--cpd-space-2x);
+}
+
+/* The selection is drawn here and announced by the item's aria-checked, so it
+   never rests on colour alone. Matched to the specificity of the base tile
+   rule above, which also sets a border-color and would otherwise win.
+   The inset shadow thickens the frame without changing the tile's geometry,
+   which a wider border would, shifting every tile as the selection moves. */
+.effectGrid .effectTileSelected {
+  border-color: var(--cpd-color-border-accent);
+  box-shadow: inset 0 0 0 var(--cpd-border-width-1)
+    var(--cpd-color-border-accent);
+}
+
+.effectGrid .effectTile > * {
+  /* A menu item spaces its icon and label for a row, with the gap carried as a
+     right margin on each. Stacked in a tile that margin is dead space on one
+     side, which shifts the glyph and the label off the tile's centre. */
+  margin: 0;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.effectSwatch {
+  flex: 0 0 auto;
+  inline-size: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cpd-color-icon-secondary);
+}
+
+/* An image tile is the picture: it fills the tile rather than sitting in a box
+   inside one, which is what the design draws and what makes a background
+   recognisable at this size. */
+.effectThumb {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+/* Blur has no icon in the design system, and a hatch reads as "softened" in a
+   way a glyph does not. */
+.effectBlurGlyph {
+  /* Smaller than the glyph beside it, and than the design's own hatch measures.
+     The design's is an icon whose strokes shorten towards the corners, so it
+     leaves them empty and reads lighter; a uniform hatch fills its box and
+     reads heavier at the same size. */
+  inline-size: 18px;
+  block-size: 18px;
+  border-radius: var(--cpd-space-1x);
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--cpd-color-icon-secondary) 0 1.2px,
+    transparent 1.2px 3.15px
+  );
+}
+
+/* The tick marking the tile in force, standing where the glyph would.
+   Positioned, so it paints above the image, which is positioned itself and
+   would otherwise cover anything left in normal flow. */
+.effectCheck {
+  position: relative;
+  color: var(--cpd-color-icon-accent-primary);
+}
+
+/* On a picture it needs its own ground: a tick alone disappears into whatever
+   the image happens to be behind it. */
+.effectCheckOnImage {
+  border-radius: 50%;
+  background: var(--cpd-color-bg-canvas-default);
+  box-shadow: 0 0 0 var(--cpd-border-width-2)
+    var(--cpd-color-bg-canvas-default);
+}
+
+/* A menu item's label is sized for a row; in a tile the design sets it a step
+   smaller, against the glyph above it. */
+.effectLabel {
+  font: var(--cpd-font-body-sm-medium);
+  /* A menu item labels itself in the secondary colour, which reads as muted
+     under a glyph the design draws at full strength. */
+  color: var(--cpd-color-text-primary);
+}
+
+/* Named for assistive technology, not drawn: an image labels itself, and the
+   design gives the add tile a plus alone. */
+.effectLabelUnseen {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/*
+ * Unavailable. Opacity alone is not enough on an image tile: a washed-out
+ * photograph still reads as a photograph you could pick. Draining the colour
+ * as well says plainly that there is nothing to choose here.
+ */
+.effectGrid .effectTile[aria-disabled="true"] {
+  opacity: 0.55;
+}
+
+.effectGrid .effectTile[aria-disabled="true"] .effectThumb {
+  filter: grayscale(1);
+}

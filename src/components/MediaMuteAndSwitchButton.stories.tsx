@@ -768,3 +768,142 @@ export const FocusRingCoversTheBlurToggle: Story = {
     await expect(outlineWidth(toggle)).toBe(0);
   },
 };
+
+/**
+ * Stand-in background art, drawn here rather than imported, so these stories
+ * carry no asset of their own. The shipped images do not exist yet.
+ */
+const swatch = (from: string, to: string): string =>
+  `data:image/svg+xml;utf8,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="60">` +
+      `<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">` +
+      `<stop offset="0" stop-color="${from}"/>` +
+      `<stop offset="1" stop-color="${to}"/></linearGradient></defs>` +
+      `<rect width="80" height="60" fill="url(#g)"/></svg>`,
+  )}`;
+
+const backgroundEffects = [
+  { id: "none", label: "None", kind: "none" as const },
+  { id: "blur", label: "Blur", kind: "blur" as const },
+  {
+    id: "indoor",
+    label: "Indoor",
+    kind: "image" as const,
+    imageUrl: swatch("#d8c9a8", "#8a6f4a"),
+  },
+  {
+    id: "outdoor",
+    label: "Outdoor",
+    kind: "image" as const,
+    imageUrl: swatch("#9fd0e8", "#2f6f4f"),
+  },
+];
+
+/**
+ * The camera menu's Background effects section: no effect, blur, the shipped
+ * images, and the tile for adding your own.
+ */
+export const BackgroundEffects: Story = {
+  args: {
+    title: "Camera",
+    iconsAndLabels: "video",
+    enabled: true,
+    options: [
+      { label: { type: "name", name: "Camera 1" }, id: "1" },
+      { label: { type: "name", name: "Camera 2" }, id: "2" },
+    ],
+    selectedOption: "1",
+    onSelect: fn(),
+    backgroundEffects,
+    selectedBackgroundEffect: "none",
+    onSelectBackgroundEffect: fn(),
+    onAddBackgroundImage: fn(),
+  },
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
+
+    const blur = await within(document.body).findByRole("menuitemradio", {
+      name: "Blur",
+    });
+    await userEvent.click(blur);
+    await expect(args.onSelectBackgroundEffect).toHaveBeenCalledWith("blur");
+  },
+};
+
+/** An image is in force, so the grid marks it rather than no effect. */
+export const BackgroundImageChosen: Story = {
+  args: {
+    ...BackgroundEffects.args,
+    selectedBackgroundEffect: "outdoor",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
+
+    const chosen = await within(document.body).findByRole("menuitemradio", {
+      name: "Outdoor",
+    });
+    // The selection is announced, not only drawn.
+    await expect(chosen).toHaveAttribute("aria-checked", "true");
+  },
+};
+
+/**
+ * Where the browser or device cannot run background processing. The section
+ * keeps its shape and its tiles, and none of them can be chosen.
+ */
+export const BackgroundEffectsUnavailable: Story = {
+  args: {
+    ...BackgroundEffects.args,
+    onSelectBackgroundEffect: undefined,
+    onAddBackgroundImage: undefined,
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
+
+    const blur = await within(document.body).findByRole("menuitemradio", {
+      name: "Blur",
+    });
+    await waitFor(() => expect(blur).toHaveAttribute("aria-disabled", "true"));
+
+    // No effect needs no background processing, so it stays choosable.
+    const none = await within(document.body).findByRole("menuitemradio", {
+      name: "None",
+    });
+    await expect(none).not.toHaveAttribute("aria-disabled", "true");
+  },
+};
+
+/**
+ * A device name long enough to set the menu's width, so the tiles are seen at
+ * the widest the menu gets rather than only at the narrowest.
+ */
+export const BackgroundEffectsWithALongDeviceName: Story = {
+  args: {
+    ...BackgroundEffects.args,
+    options: [
+      {
+        label: {
+          type: "name",
+          name: "Logitech BRIO 4K Ultra HD Pro Business Webcam (046d:085e)",
+        },
+        id: "1",
+      },
+      { label: { type: "name", name: "Camera 2" }, id: "2" },
+    ],
+    selectedOption: "1",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
+
+    const none = await within(document.body).findByRole("menuitemradio", {
+      name: "None",
+    });
+    // Three tiles to a row however wide the name makes the menu.
+    const grid = none.parentElement!;
+    await expect(getComputedStyle(grid).gridTemplateColumns.split(" ")).toHaveLength(3);
+  },
+};

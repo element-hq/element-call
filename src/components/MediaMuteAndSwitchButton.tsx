@@ -25,6 +25,9 @@ import {
   ChevronUpIcon,
   ChevronDownIcon,
   SpinnerIcon,
+  BlockIcon,
+  PlusIcon,
+  CheckCircleSolidIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
@@ -45,6 +48,16 @@ import { useMicrophoneLevel } from "./useMicrophoneLevel";
 export interface MenuOptions {
   label: DeviceLabel | AudioOutputDeviceLabel;
   id: string;
+}
+
+/** One choice in the camera menu's Background effects section. */
+export interface BackgroundEffectOption {
+  id: string;
+  /** Shown under the tile, and the item's accessible name. */
+  label: string;
+  kind: "none" | "blur" | "image";
+  /** The thumbnail, for kind "image". Blur and no effect draw their own. */
+  imageUrl?: string;
 }
 
 export interface MediaMuteAndSwitchButtonProps {
@@ -78,6 +91,21 @@ export interface MediaMuteAndSwitchButtonProps {
   onSelectOutput?: (id: string) => void;
   videoBlurToggleClick?: () => void;
   videoBlurEnabled?: boolean;
+  /**
+   * Background effects, shown as a grid of tiles under the camera list. Camera
+   * menu only; omitted entirely for audio. An empty list leaves the section out.
+   */
+  backgroundEffects?: BackgroundEffectOption[];
+  /** The effect currently in force. */
+  selectedBackgroundEffect?: string;
+  /**
+   * Called when an effect is chosen. Undefined means no effect can be chosen
+   * here, and the section renders disabled, so the menu keeps the same shape
+   * wherever background processing is unavailable.
+   */
+  onSelectBackgroundEffect?: (id: string) => void;
+  /** Called when the add tile is chosen. Omit to leave that tile out. */
+  onAddBackgroundImage?: () => void;
   /**
    * For any toggle and option this method will be called.
    * So toggles need to be implemented by listening here and setting the right toggle item to `enabled`
@@ -125,6 +153,10 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   onSelectOutput,
   videoBlurEnabled,
   videoBlurToggleClick,
+  backgroundEffects,
+  selectedBackgroundEffect,
+  onSelectBackgroundEffect,
+  onAddBackgroundImage,
   onSelect,
 }) => {
   // Which device we have asked for but not yet been given. Carries the kind as
@@ -409,6 +441,101 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
     ));
   };
 
+  // The camera menu's Background effects section. Tiles rather than rows, but
+  // menuitemradio like the device list above, so the menu stays one keyboard
+  // model throughout and the selection is announced rather than only drawn.
+  const effectTiles = (): ReactElement[] => {
+    const list = backgroundEffects ?? [];
+    // Shown but not choosable where background processing is unavailable, so
+    // the menu keeps the same shape on every platform. No effect is the
+    // exception: it needs no processing, so it stays choosable and stays the
+    // one in force.
+    const unavailable = onSelectBackgroundEffect === undefined;
+    const tiles = list.map((effect) => (
+      <MenuItem
+        as="div"
+        hideChevron
+        disabled={unavailable && effect.kind !== "none"}
+        className={classNames(styles.effectTile, {
+          [styles.effectTileSelected]: selectedBackgroundEffect === effect.id,
+        })}
+        label={effect.label}
+        // An image is its own label, so its name is carried for assistive
+        // technology alone rather than drawn over the picture.
+        labelProps={{
+          className:
+            effect.kind === "image"
+              ? styles.effectLabelUnseen
+              : styles.effectLabel,
+        }}
+        Icon={
+          <span aria-hidden className={styles.effectSwatch}>
+            {effect.kind === "image" && (
+              <img
+                className={styles.effectThumb}
+                src={effect.imageUrl}
+                alt=""
+              />
+            )}
+            {selectedBackgroundEffect === effect.id ? (
+              // The tick stands where the glyph would, and on a picture it
+              // carries its own ground so it reads against whatever is behind
+              // it.
+              <CheckCircleSolidIcon
+                className={classNames(styles.effectCheck, {
+                  [styles.effectCheckOnImage]: effect.kind === "image",
+                })}
+                width={20}
+                height={20}
+              />
+            ) : (
+              <>
+                {effect.kind === "none" && <BlockIcon width={20} height={20} />}
+                {effect.kind === "blur" && (
+                  <span className={styles.effectBlurGlyph} />
+                )}
+              </>
+            )}
+          </span>
+        }
+        onSelect={(e) => {
+          e.preventDefault();
+          if (effect.id === selectedBackgroundEffect) return;
+          onSelectBackgroundEffect?.(effect.id);
+        }}
+        key={effect.id}
+        role="menuitemradio"
+        aria-checked={selectedBackgroundEffect === effect.id}
+      />
+    ));
+    // Adding is a command, not a choice, so it is a plain item among the tiles
+    // rather than another radio.
+    if (onAddBackgroundImage !== undefined)
+      tiles.push(
+        <MenuItem
+          as="div"
+          hideChevron
+          disabled={unavailable}
+          className={styles.effectTile}
+          label={t("action.add_background_image")}
+          // The design draws a plus alone; the name is kept for assistive
+          // technology, which has nothing else to go on.
+          labelProps={{ className: styles.effectLabelUnseen }}
+          Icon={
+            <span aria-hidden className={styles.effectSwatch}>
+              <PlusIcon width={24} height={24} />
+            </span>
+          }
+          onSelect={(e) => {
+            e.preventDefault();
+            onAddBackgroundImage();
+          }}
+          key="add-background-image"
+        />,
+      );
+    return tiles;
+  };
+
   return (
     <div
       className={classNames({
@@ -502,6 +629,26 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
               )}
             </div>
           </div>
+          {iconsAndLabels === "video" &&
+            backgroundEffects !== undefined &&
+            backgroundEffects.length > 0 && (
+              <>
+                <Separator />
+                <div
+                  role="group"
+                  aria-label={t("settings.background_effects_header")}
+                >
+                  <div aria-hidden className={styles.sectionHeading}>
+                    <MenuTitle
+                      title={t("settings.background_effects_header")}
+                    />
+                  </div>
+                  <div role="none" className={styles.effectGrid}>
+                    {effectTiles()}
+                  </div>
+                </div>
+              </>
+            )}
         </div>
         {toggles.length > 0 && <hr />}
         {toggles.map((toggle) => (
