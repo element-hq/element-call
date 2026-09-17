@@ -24,6 +24,45 @@ import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import { realpathSync } from "fs";
 import * as fs from "node:fs";
 
+/**
+ * Keeps a plugin's transform off MediaPipe's WASM loader.
+ *
+ * nodePolyfills rewrites any module mentioning `process`, and that loader does.
+ * It is a classic script whose whole job is to set `self.ModuleFactory`;
+ * rewritten as an ES module it sets nothing on `self`, and background effects
+ * then fail at runtime with "ModuleFactory not set". A production build is
+ * unaffected, because there the loader is emitted as a static asset and never
+ * passes through a transform, which is why this only bites in dev.
+ */
+function exceptMediaPipeWasm(plugins: PluginOption): PluginOption {
+  const isLoader = (id: string): boolean =>
+    id.includes("tasks-vision") && id.includes("wasm");
+  return (Array.isArray(plugins) ? plugins : [plugins]).map((plugin) => {
+    if (
+      !plugin ||
+      typeof plugin !== "object" ||
+      !("transform" in plugin) ||
+      typeof plugin.transform !== "function"
+    )
+      return plugin;
+    const transform = plugin.transform;
+    return {
+      ...plugin,
+      transform(this: unknown, code: string, id: string, options: unknown) {
+        if (isLoader(id)) return null;
+        return (
+          transform as (
+            this: unknown,
+            c: string,
+            i: string,
+            o: unknown,
+          ) => unknown
+        ).call(this, code, id, options);
+      },
+    } as PluginOption;
+  });
+}
+
 export const vitePluginsConfig = ({
   mode,
   html = true,
@@ -42,10 +81,12 @@ export const vitePluginsConfig = ({
     }),
     react(),
     wasm(),
-    nodePolyfills({
-      // Enables the 'events' module, which is required by the matrix-js-sdk
-      include: ["events"],
-    }),
+    exceptMediaPipeWasm(
+      nodePolyfills({
+        // Enables the 'events' module, which is required by the matrix-js-sdk
+        include: ["events"],
+      }),
+    ),
     svgrPlugin({
       svgrOptions: {
         // This enables ref forwarding on SVGR components, which is needed, for
