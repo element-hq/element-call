@@ -443,9 +443,9 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
         }
       >
         <div
+          ref={trackFocusModality}
           // Transparent to assistive technology, so the menu still sees its
           // items as its own children.
-          ref={trackFocusModality}
           role="none"
           className={styles.deviceList}
           style={

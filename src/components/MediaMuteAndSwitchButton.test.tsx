@@ -532,6 +532,40 @@ describe("MediaMuteAndSwitchButton", () => {
     expect(await axe(menu as HTMLElement)).toHaveNoViolations();
   });
 
+  test("puts the speaker section above the microphone section", async () => {
+    const user = userEvent.setup();
+    const { getByRole } = renderComponent(
+      <MediaMuteAndSwitchButton
+        title="Switcher"
+        iconsAndLabels="audio"
+        enabled={true}
+        options={[
+          { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
+          { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
+        ]}
+        selectedOption="mic1"
+        onSelect={vi.fn()}
+        outputOptions={[
+          { label: { type: "name", name: "Speakers" }, id: "spk1" },
+          { label: { type: "name", name: "Headset" }, id: "spk2" },
+        ]}
+        selectedOutputOption="spk1"
+        onSelectOutput={vi.fn()}
+      />,
+    );
+
+    await user.click(getByRole("button", { name: "Microphone" }));
+
+    const speakers = screen.getByRole("menuitemradio", { name: "Speakers" });
+    const microphone = screen.getByRole("menuitemradio", {
+      name: "Microphone 1",
+    });
+    expect(
+      speakers.compareDocumentPosition(microphone) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   test("lists speaker and microphone sections", async () => {
     const user = userEvent.setup();
     const { getByRole } = renderComponent(
