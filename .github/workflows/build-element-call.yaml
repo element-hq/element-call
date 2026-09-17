@@ -14,17 +14,13 @@ on:
         description: The build mode for vite. Must be either 'development' or 'production'
         required: false
         default: production
-    secrets:
-      SENTRY_ORG:
-        required: true
-      SENTRY_PROJECT:
-        required: true
-      SENTRY_URL:
-        required: true
-      SENTRY_AUTH_TOKEN:
-        required: true
-      CODECOV_TOKEN:
-        required: false
+    # No `secrets:` block: every caller passes `secrets: inherit`, so the
+    # repository's secrets reach this workflow without each one being declared
+    # here and threaded through by name at the call sites -- the same pattern
+    # build-and-publish-docker.yaml uses. A secret this workflow starts using
+    # then needs no change to the callers. The ones read below are
+    # MATRIX_RTC_NPM_TOKEN, SENTRY_ORG, SENTRY_PROJECT, SENTRY_URL,
+    # SENTRY_AUTH_TOKEN and CODECOV_TOKEN.
 
 jobs:
   build:
