@@ -175,7 +175,10 @@ Please see LICENSE in the repository root for full details.
      label. Forcing a ratio instead clips the label as soon as the menu is
      narrow enough that the ratio cannot hold it. */
   grid-auto-rows: 1fr;
-  gap: var(--cpd-space-2x);
+  /* Measured against the design, where the gap is about a sixth of a tile's
+     width. A step less than this read as tight, and left the remove cross on
+     the corner with little room of its own. */
+  gap: var(--cpd-space-3x);
   /* The same inset a menu heading and a device row carry, so the tiles line
      their left edge up with the "B" of the heading above them and with the
      radio buttons above that. Matching the surrounding boxes instead puts the
