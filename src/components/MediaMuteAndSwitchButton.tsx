@@ -187,6 +187,12 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   // Held open across the file picker: a native dialog takes the focus, and the
   // menu would take that as a click elsewhere and close behind it.
   const [choosingFile, setChoosingFile] = useState(false);
+
+  // The refusal belongs to the attempt that caused it. It stays while the menu
+  // is open, can be dismissed, and is gone by the time the menu is opened
+  // again: a message about a file chosen minutes ago explains nothing.
+  const [refusalSeen, setRefusalSeen] = useState(false);
+  useEffect(() => setRefusalSeen(false), [backgroundEffectError]);
   const chooseFile = useRef<HTMLInputElement>(null);
   useEffect(() => {
     const input = chooseFile.current;
@@ -657,6 +663,8 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
         onOpenChange={(open) => {
           // Ignore the close the file picker provokes by taking the focus.
           if (!open && choosingFile) return;
+          // A refusal does not outlive the menu it was shown in.
+          if (!open) setRefusalSeen(true);
           setMenuOpen(open);
         }}
         side="top"
@@ -767,11 +775,15 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
                 <div role="none" className={styles.effectGrid}>
                   {effectTiles()}
                 </div>
-                {backgroundEffectError !== undefined && (
+                {backgroundEffectError !== undefined && !refusalSeen && (
                   // Beside the grid rather than over the call: the user is
                   // looking here, having just chosen the file this is about.
                   <div role="none" className={styles.effectError}>
-                    <Alert type="critical" title={backgroundEffectError} />
+                    <Alert
+                      type="critical"
+                      title={backgroundEffectError}
+                      onClose={(): void => setRefusalSeen(true)}
+                    />
                   </div>
                 )}
               </div>

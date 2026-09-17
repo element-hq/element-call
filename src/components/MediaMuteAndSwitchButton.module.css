@@ -370,7 +370,10 @@ Please see LICENSE in the repository root for full details.
   min-inline-size: 0;
 }
 
-/* Sits under the tiles, inside the same margin they keep from the frame. */
+/* Sits under the tiles, inside the same margin they keep from the frame, and
+   with the same distance above it as below: the menu's own bottom padding
+   supplies the lower half, so only the upper half is set here. Without it the
+   message sits flush against the tiles with a gap twice its size underneath. */
 .effectError {
-  padding: 0 var(--cpd-space-4x) var(--cpd-space-4x);
+  padding: var(--cpd-space-4x) var(--cpd-space-4x) 0;
 }
