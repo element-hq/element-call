@@ -247,6 +247,49 @@ export const SpeakerAndMicrophoneSections: Story = {
       `.${styles.deviceList}`,
     )!;
     await expect(list.scrollHeight).toBe(list.clientHeight);
+
+    // Each section is headed by its own rule, running the full width of the
+    // menu rather than inset — and nothing divides the sections besides.
+    const menu = document.body.querySelector("[role='menu']")!;
+    await expect(
+      document.body.querySelectorAll("[role='separator']"),
+    ).toHaveLength(0);
+    const headings = document.body.querySelectorAll<HTMLElement>(
+      `.${styles.sectionHeading}`,
+    );
+    await expect(headings).toHaveLength(2);
+    const frame = menu.getBoundingClientRect();
+    for (const heading of headings) {
+      const rule = heading.querySelector("h3")!;
+      await expect(
+        Number.parseFloat(getComputedStyle(rule).borderBottomWidth),
+      ).toBeGreaterThan(0);
+      // Edge to edge, stopping only where the menu's frame is drawn.
+      const box = rule.getBoundingClientRect();
+      await expect(box.left - frame.left).toBeLessThanOrEqual(2);
+      await expect(frame.right - box.right).toBeLessThanOrEqual(2);
+    }
+
+    // A section's first device sits further below the rule than it does from
+    // the menu's edge. Stated as the relationship rather than a number: what
+    // the design asks for is the asymmetry, and Compound's own heading margin
+    // alone would make the two equal.
+    const control = document.body.querySelector("input[type='radio']")!;
+    const ruleBottom = headings[0]
+      .querySelector("h3")!
+      .getBoundingClientRect().bottom;
+    const box = control.getBoundingClientRect();
+    await expect(box.top - ruleBottom).toBeGreaterThan(box.left - frame.left);
+
+    // And one section stands further from the one above it than a heading does
+    // from its own first device — again the relationship, not a number.
+    const groups = document.body.querySelectorAll("[role='group']");
+    const speakers = groups[0].querySelectorAll("input[type='radio']");
+    const lastSpeaker = speakers[speakers.length - 1].getBoundingClientRect();
+    const nextHeading = groups[1]!.querySelector("h3")!.getBoundingClientRect();
+    await expect(nextHeading.top - lastSpeaker.bottom).toBeGreaterThan(
+      box.top - ruleBottom,
+    );
   },
 };
 

@@ -19,7 +19,6 @@ import {
   MenuItem,
   MenuTitle,
   RadioInput,
-  Separator,
   ToggleMenuItem,
 } from "@vector-im/compound-web";
 import {
@@ -478,7 +477,6 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
                   (n) => t("settings.devices.speaker_numbered", { n }),
                 )}
               </div>
-              <Separator />
             </>
           )}
           <div role="group" aria-label={optionsButtonLabel}>

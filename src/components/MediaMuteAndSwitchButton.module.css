@@ -41,20 +41,6 @@ Please see LICENSE in the repository root for full details.
   flex-direction: column;
 }
 
-/* Compound underlines every menu heading. The design has a single line, the
-   one dividing the speaker list from the microphone list, so the headings
-   carry none and that divider is drawn explicitly. */
-.menu h3 {
-  border-block-end: none;
-  padding-block-end: var(--cpd-space-2x);
-}
-
-/* The menu zeroes separator spacing, but the design gives the heading below
-   the divider room to breathe. */
-.menu [role="separator"] {
-  margin-block-end: var(--cpd-space-5x);
-}
-
 /* Only the device lists scroll; the level meter stays put beneath them.
    The bound comes from the measured height of the call area, set by the
    component: the menu is portalled outside the root, so neither a container
@@ -70,6 +56,30 @@ Please see LICENSE in the repository root for full details.
      Set by the component, which is the only thing that can measure them. */
   scroll-padding-block: var(--device-list-scroll-padding-start, 0)
     var(--device-list-scroll-padding-end, 0);
+}
+
+/* Each section is headed by its own rule, which Compound draws under a menu
+   heading already. The heading spans the whole menu — the menu has no padding
+   of its own — so that rule runs edge to edge, stopping only where the frame
+   is, rather than inset as a separator between the sections would be.
+
+   Compound's spacing around it is the design's too, bar one thing: the design
+   leaves a section's first device further below the rule than Compound does —
+   measured off the mock, 27px from the rule to the top of the control, against
+   the 16px that Compound's 8px margin and the row's own 8px padding give. The
+   difference goes below the rule, so the rule stays tight under its own text
+   where Compound put it. */
+.menu h3 {
+  margin-block-end: var(--cpd-space-5x);
+}
+
+/* One section is set much further from the one above it than Compound's 8px
+   heading margin allows: measured off the mock, 41px from the last device's
+   control to the next heading's text, against the 22px we had. Only between
+   sections — the first heading keeps Compound's spacing, because the menu's
+   own padding is already above it. */
+.deviceList [role="group"] + [role="group"] h3 {
+  margin-block-start: var(--cpd-space-7x);
 }
 
 /* Each section's heading stays at the top of the scrollport while any of that
