@@ -5,15 +5,17 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
   ATTACK_MS,
   METER_SEGMENTS,
+  observeMicrophoneState$,
   RELEASE_MS,
   segmentsForVolume,
   smoothVolume,
 } from "./MicrophoneLevel";
+import { restoreAudioCapture, stubAudioCapture } from "../utils/test";
 
 describe("segmentsForVolume", () => {
   test("shows nothing for silence", () => {
@@ -88,3 +90,73 @@ describe("smoothVolume", () => {
     expect(smoothVolume(0.5, 1, 0)).toBe(0.5);
   });
 });
+
+describe("observeMicrophoneState$", () => {
+  afterEach(restoreAudioCapture);
+
+  test("releases a capture the browser grants after nobody is watching", async () => {
+    const capture = stubAudioCapture();
+
+    const subscription = observeMicrophoneState$("mic1").subscribe();
+    // The user gives up on the permission prompt and closes the menu, and only
+    // then does the browser hand the microphone over.
+    subscription.unsubscribe();
+    capture.grant();
+    await vi.waitFor(() => expect(capture.track.stop).toHaveBeenCalled());
+  });
+
+  test("releases the capture and the audio context when the subscription ends", async () => {
+    const capture = stubAudioCapture();
+
+    const subscription = observeMicrophoneState$("mic1").subscribe();
+    capture.grant();
+    await vi.waitFor(() => expect(capture.contexts).toHaveLength(1));
+
+    subscription.unsubscribe();
+
+    expect(capture.track.stop).toHaveBeenCalled();
+    expect(capture.contexts[0].close).toHaveBeenCalled();
+  });
+
+  test("tells denied permission and a missing device apart", async () => {
+    for (const [name, expected] of [
+      ["NotAllowedError", "permission-denied"],
+      ["NotFoundError", "no-device"],
+    ] as const) {
+      const capture = stubAudioCapture();
+      capture.getUserMedia.mockRejectedValue(named(new Error(name), name));
+
+      const seen: string[] = [];
+      const subscription = observeMicrophoneState$("mic1").subscribe((state) =>
+        seen.push(state.type),
+      );
+      await vi.waitFor(() => expect(seen).toContain(expected));
+      subscription.unsubscribe();
+      restoreAudioCapture();
+    }
+  });
+
+  test("says nothing on a frame that did not change the level", async () => {
+    const capture = stubAudioCapture();
+
+    let emissions = 0;
+    const subscription = observeMicrophoneState$("mic1").subscribe(
+      () => emissions++,
+    );
+    capture.grant();
+    await vi.waitFor(() => expect(emissions).toBe(1));
+
+    // The analyser is read every animation frame, but the meter has only
+    // METER_SEGMENTS steps: a steady signal must not redraw the meter.
+    capture.drawFrames(20);
+    expect(emissions).toBe(1);
+
+    subscription.unsubscribe();
+  });
+});
+
+/** An error with the `name` the browser would give it, not just a message. */
+function named(error: Error, name: string): Error {
+  error.name = name;
+  return error;
+}
