@@ -214,27 +214,24 @@ export const CallFooter: FC<FooterProps> = ({
 
   const onAddBackgroundImage = useCallback(
     (file: File): void => {
-      // Chosen for the user straight away: they picked this picture to use it,
-      // and leaving it unselected would ask them to pick it twice.
+      // Added, not chosen. Whether picking a file should also put it on is
+      // still open, so this does the smaller thing: the image appears among
+      // the others and the user says when to wear it.
       setBackgroundEffectError(undefined);
-      addBackground(file)
-        .then((id) =>
-          selectBackgroundEffect?.(serializeEffect({ kind: "added", id })),
-        )
-        .catch((e) => {
-          // TODO: FR-021 wants the user told what went wrong. There is no
-          // surface for that in the menu yet, and inventing one is design's
-          // call, so for now this is only logged.
-          setBackgroundEffectError(whyRefused(e));
-          logger.warn(
-            e instanceof UnusableImage
-              ? `Cannot use that file as a background: ${e.reason}`
-              : "Could not keep that background",
-            e,
-          );
-        });
+      addBackground(file).catch((e) => {
+        // TODO: FR-021 wants the user told what went wrong. There is no
+        // surface for that in the menu yet, and inventing one is design's
+        // call, so for now this is only logged.
+        setBackgroundEffectError(whyRefused(e));
+        logger.warn(
+          e instanceof UnusableImage
+            ? `Cannot use that file as a background: ${e.reason}`
+            : "Could not keep that background",
+          e,
+        );
+      });
     },
-    [addBackground, selectBackgroundEffect, whyRefused],
+    [addBackground, whyRefused],
   );
 
   // The catalogue is named here rather than in the view model: the names are
