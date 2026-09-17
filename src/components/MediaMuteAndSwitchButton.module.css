@@ -216,12 +216,12 @@ Please see LICENSE in the repository root for full details.
 /* The selection is drawn here and announced by the item's aria-checked, so it
    never rests on colour alone. Matched to the specificity of the base tile
    rule above, which also sets a border-color and would otherwise win.
-   The inset shadow thickens the frame without changing the tile's geometry,
-   which a wider border would, shifting every tile as the selection moves. */
+   Colour alone, at the width every tile already carries: thickening it with an
+   inset shadow drew it inside the padding box, where an image tile's picture
+   sits, so the picture covered it and an added background wore a thinner frame
+   than no effect did. */
 .effectGrid .effectTileSelected {
   border-color: var(--cpd-color-border-accent);
-  box-shadow: inset 0 0 0 var(--cpd-border-width-1)
-    var(--cpd-color-border-accent);
 }
 
 .effectGrid .effectTile > * {
