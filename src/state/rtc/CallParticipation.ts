@@ -22,23 +22,12 @@ import {
   FfiStatus,
   type FfiConnectionWithMembers,
   type FfiJoinParams,
-  type FfiLivekitToken,
-  type FfiLivekitTokenRequest,
   type FfiMediaKey,
   type FfiMembership,
   type FfiParticipationConfig,
   type FfiRtcTransport,
-  type FfiSendEventResponse,
   type FfiSessionSnapshot,
-  type FfiToDeviceDelivery,
-  type FfiToDeviceRecipient,
-  type FfiHomeserverDelegationRequest,
-  type FfiTransportDelegationRequest,
   type FfiTransportIntent,
-  type ConnectivitySinkLike,
-  type RoomEventSinkLike,
-  type StateUpdateSinkLike,
-  type ToDeviceSinkLike,
 } from "../../matrix-rtc-sdk";
 import { type Behavior } from "../Behavior";
 import { Epoch, type ObservableScope, trackEpoch } from "../ObservableScope";
@@ -103,6 +92,7 @@ export interface CallParticipationOptions {
  * keeps it current from the manager's listener, and ends the participation
  * (leaving if still joined) when the scope ends.
  */
+ // TODO-RENAME: the call participationmanager wrapper represents the RtcParticipationManager
 export class CallParticipation {
   private readonly logger: Logger;
   private readonly matrixDriver: FfiMatrixDriver;
@@ -158,7 +148,7 @@ export class CallParticipation {
     const rtcDriver =
       options.transportFallbackUrl === undefined
         ? driver
-        : new TransportFallbackDriver(
+        : withTransportFallback(
             driver,
             options.transportFallbackUrl,
             this.logger,
@@ -403,154 +393,61 @@ function joinedOnly(memberships: FfiMembership[]): FfiMembership[] {
 }
 
 /**
+ * A driver that behaves like `inner` except for the methods in `overrides`.
+ * Everything else reaches `inner` untouched — every argument, including the
+ * `asyncOpts_` abort signal the bindings pass last, and any method the
+ * driver contract grows later — called on `inner` itself so that a method
+ * reading its own fields still works.
+ */
+function overrideDriver(
+  inner: RtcMatrixDriver,
+  overrides: Partial<RtcMatrixDriver>,
+): RtcMatrixDriver {
+  return new Proxy(inner, {
+    get: (target, property): unknown => {
+      if (Object.hasOwn(overrides, property))
+        return Reflect.get(overrides, property);
+      const value: unknown = Reflect.get(target, property, target);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  });
+}
+
+/**
  * Answers transport discovery with a configured LiveKit service URL when the
  * host's homeserver advertises none or cannot be asked — the precedence
  * Element Call has always had (homeserver first, `config.json` second) —
  * and delegates everything else to the host's driver untouched.
  */
-class TransportFallbackDriver implements RtcMatrixDriver {
-  public constructor(
-    private readonly inner: RtcMatrixDriver,
-    private readonly fallbackUrl: string,
-    private readonly logger: Logger,
-  ) {}
-
-  public async getRtcTransports(): Promise<FfiRtcTransport[]> {
-    let transports: FfiRtcTransport[] = [];
-    try {
-      transports = await this.inner.getRtcTransports();
-    } catch (e) {
-      this.logger.info(
-        "Transport discovery failed; falling back to the configured LiveKit service",
-        e,
+function withTransportFallback(
+  inner: RtcMatrixDriver,
+  fallbackUrl: string,
+  logger: Logger,
+): RtcMatrixDriver {
+  return overrideDriver(inner, {
+    async getRtcTransports(): Promise<FfiRtcTransport[]> {
+      let transports: FfiRtcTransport[] = [];
+      try {
+        transports = await inner.getRtcTransports();
+      } catch (e) {
+        logger.info(
+          "Transport discovery failed; falling back to the configured LiveKit service",
+          e,
+        );
+      }
+      if (transports.some((t) => t.transportType === LIVEKIT_TRANSPORT_TYPE))
+        return transports;
+      logger.info(
+        "The homeserver advertises no LiveKit transport; using the configured one",
       );
-    }
-    if (transports.some((t) => t.transportType === LIVEKIT_TRANSPORT_TYPE))
-      return transports;
-    this.logger.info(
-      "The homeserver advertises no LiveKit transport; using the configured one",
-    );
-    return [
-      {
-        transportType: LIVEKIT_TRANSPORT_TYPE,
-        propertiesJson: JSON.stringify({
-          livekit_service_url: this.fallbackUrl,
-        }),
-      },
-    ];
-  }
-
-  public async sendStickyEvent(
-    roomId: string,
-    eventType: string,
-    contentJson: string,
-    durationMs: bigint,
-  ): Promise<FfiSendEventResponse> {
-    return this.inner.sendStickyEvent(
-      roomId,
-      eventType,
-      contentJson,
-      durationMs,
-    );
-  }
-  public async sendStateEvent(
-    roomId: string,
-    eventType: string,
-    stateKey: string,
-    contentJson: string,
-  ): Promise<FfiSendEventResponse> {
-    return this.inner.sendStateEvent(roomId, eventType, stateKey, contentJson);
-  }
-  public async sendDelayedEvent(
-    roomId: string,
-    eventType: string,
-    contentJson: string,
-    delayMs: bigint,
-    stickyDurationMs: bigint | undefined,
-  ): Promise<string> {
-    return this.inner.sendDelayedEvent(
-      roomId,
-      eventType,
-      contentJson,
-      delayMs,
-      stickyDurationMs,
-    );
-  }
-  public async sendDelayedStateEvent(
-    roomId: string,
-    eventType: string,
-    stateKey: string,
-    contentJson: string,
-    delayMs: bigint,
-  ): Promise<string> {
-    return this.inner.sendDelayedStateEvent(
-      roomId,
-      eventType,
-      stateKey,
-      contentJson,
-      delayMs,
-    );
-  }
-  public async restartDelayedEvent(
-    roomId: string,
-    delayId: string,
-  ): Promise<void> {
-    return this.inner.restartDelayedEvent(roomId, delayId);
-  }
-  public async cancelDelayedEvent(
-    roomId: string,
-    delayId: string,
-  ): Promise<void> {
-    return this.inner.cancelDelayedEvent(roomId, delayId);
-  }
-  public async delegateDelayedLeaveViaHomeserver(
-    request: FfiHomeserverDelegationRequest,
-  ): Promise<void> {
-    return this.inner.delegateDelayedLeaveViaHomeserver(request);
-  }
-  public async delegateDelayedLeaveViaTransport(
-    request: FfiTransportDelegationRequest,
-  ): Promise<void> {
-    return this.inner.delegateDelayedLeaveViaTransport(request);
-  }
-  public async sendToDevice(
-    recipients: FfiToDeviceRecipient[],
-    eventType: string,
-    contentJson: string,
-  ): Promise<FfiToDeviceDelivery[]> {
-    return this.inner.sendToDevice(recipients, eventType, contentJson);
-  }
-  public async getLivekitToken(
-    request: FfiLivekitTokenRequest,
-  ): Promise<FfiLivekitToken> {
-    return this.inner.getLivekitToken(request);
-  }
-  public async readEvents(
-    eventType: string,
-    stateKey: string | undefined,
-    limit: number,
-  ): Promise<string[]> {
-    return this.inner.readEvents(eventType, stateKey, limit);
-  }
-  public async readState(
-    eventType: string,
-    stateKey: string | undefined,
-  ): Promise<string[]> {
-    return this.inner.readState(eventType, stateKey);
-  }
-  public subscribeRoomEvents(sink: RoomEventSinkLike): void {
-    this.inner.subscribeRoomEvents(sink);
-  }
-  public subscribeToDeviceEvents(sink: ToDeviceSinkLike): void {
-    this.inner.subscribeToDeviceEvents(sink);
-  }
-  public subscribeStateUpdates(sink: StateUpdateSinkLike): void {
-    this.inner.subscribeStateUpdates(sink);
-  }
-  public subscribeConnectivity(sink: ConnectivitySinkLike): void {
-    this.inner.subscribeConnectivity(sink);
-  }
-  public isHomeserverConnected(): boolean {
-    return this.inner.isHomeserverConnected();
-  }
+      return [
+        {
+          transportType: LIVEKIT_TRANSPORT_TYPE,
+          propertiesJson: JSON.stringify({
+            livekit_service_url: fallbackUrl,
+          }),
+        },
+      ];
+    },
+  });
 }
