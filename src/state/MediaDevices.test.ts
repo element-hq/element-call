@@ -169,8 +169,10 @@ describe("MediaDevices selection", () => {
     const available = devices.audioOutput.available$.value;
     // Default follows the operating system and re-points when it changes, so
     // it is its own choice rather than an alias for the device it resolves to.
+    // It carries no name of its own precisely because which device it resolves
+    // to is not knowable from here.
     expect(available.get("spk1")).toEqual({ type: "name", name: "Speakers" });
-    expect(available.get("")).toEqual({ type: "default", name: "Speakers" });
+    expect(available.get("")).toEqual({ type: "default", name: null });
   });
 
   test("selecting one device kind leaves the others unchanged", () => {
