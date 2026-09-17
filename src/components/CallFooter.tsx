@@ -94,6 +94,12 @@ export interface FooterState {
   videoBlurEnabled: boolean;
   /** The chosen background effect, in its stored form. */
   backgroundEffect: string;
+  /**
+   * Whether this footer is shown before joining. An image added there becomes
+   * the background at once; one added in a call waits to be chosen, because
+   * putting it on would change what everyone sees with no further word.
+   */
+  beforeJoining: boolean;
   showFooter: boolean;
 
   /* This is needed for WindowMode = "flat" */
@@ -178,6 +184,7 @@ export const CallFooter: FC<FooterProps> = ({
   const selectVideoButtonOption = useBehavior(vm.selectVideoButtonOption$);
   const backgroundEffect = useBehavior(vm.backgroundEffect$);
   const selectBackgroundEffect = useBehavior(vm.selectBackgroundEffect$);
+  const beforeJoining = useBehavior(vm.beforeJoining$);
   const { added, addBackground, removeBackground } = useAddedBackgrounds();
   const [backgroundEffectError, setBackgroundEffectError] = useState<
     string | undefined
@@ -214,24 +221,27 @@ export const CallFooter: FC<FooterProps> = ({
 
   const onAddBackgroundImage = useCallback(
     (file: File): void => {
-      // Added, not chosen. Whether picking a file should also put it on is
-      // still open, so this does the smaller thing: the image appears among
-      // the others and the user says when to wear it.
       setBackgroundEffectError(undefined);
-      addBackground(file).catch((e) => {
-        // TODO: FR-021 wants the user told what went wrong. There is no
-        // surface for that in the menu yet, and inventing one is design's
-        // call, so for now this is only logged.
-        setBackgroundEffectError(whyRefused(e));
-        logger.warn(
-          e instanceof UnusableImage
-            ? `Cannot use that file as a background: ${e.reason}`
-            : "Could not keep that background",
-          e,
-        );
-      });
+      addBackground(file)
+        .then((id) => {
+          // Before joining, nobody sees the change, so the picture goes on at
+          // once. In a call it waits to be chosen: otherwise choosing a file
+          // would change what everyone sees, with no further word from the
+          // user. Teams draws the line in the same place.
+          if (beforeJoining)
+            selectBackgroundEffect?.(serializeEffect({ kind: "added", id }));
+        })
+        .catch((e) => {
+          setBackgroundEffectError(whyRefused(e));
+          logger.warn(
+            e instanceof UnusableImage
+              ? `Cannot use that file as a background: ${e.reason}`
+              : "Could not keep that background",
+            e,
+          );
+        });
     },
-    [addBackground, whyRefused],
+    [addBackground, beforeJoining, selectBackgroundEffect, whyRefused],
   );
 
   // The catalogue is named here rather than in the view model: the names are

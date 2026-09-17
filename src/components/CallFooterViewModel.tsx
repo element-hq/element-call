@@ -180,6 +180,7 @@ export function createCallFooterViewModel(
   return {
     ...buildMuteBehaviors(scope, muteStates),
     ...buildDeviceBehaviors(scope, mediaDevices, disableDeviceSwitcher$),
+    beforeJoining$: constant(false),
     // candidat to move into the FooterViewModel
     showFooter$: callModel.showFooter$,
     hideControls$: constant(!showControls),
@@ -293,5 +294,6 @@ export function createLobbyFooterViewModel(
     }),
     ...buildMuteBehaviors(scope, muteStates),
     ...buildDeviceBehaviors(scope, mediaDevices, constant(false)),
+    beforeJoining$: constant(true),
   };
 }

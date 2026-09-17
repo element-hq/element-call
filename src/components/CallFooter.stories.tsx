@@ -136,6 +136,7 @@ export const Default: Story = {
     videoBlurEnabled: true,
     backgroundEffect: "none",
     selectBackgroundEffect: fn(),
+    beforeJoining: false,
     hangup: fn(),
     buttonSize: "lg",
     showFooter: true,
