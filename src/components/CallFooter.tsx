@@ -5,9 +5,18 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, type JSX, type Ref, useMemo } from "react";
+import {
+  Fragment,
+  type FC,
+  type JSX,
+  type Ref,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
@@ -28,7 +37,15 @@ import {
   MediaMuteAndSwitchButton,
   type MenuOptions,
 } from "./MediaMuteAndSwitchButton";
-import { shippedBackgrounds } from "../livekit/backgroundEffects";
+import {
+  serializeEffect,
+  shippedBackgrounds,
+} from "../livekit/backgroundEffects";
+import {
+  maxAddedBackgrounds,
+  UnusableImage,
+} from "../livekit/backgroundImages";
+import { useAddedBackgrounds } from "../livekit/TrackProcessorContext";
 import { type Behavior } from "../state/Behavior";
 import { type ViewModel } from "../state/ViewModel";
 import { useBehavior } from "../useBehavior";
@@ -161,6 +178,32 @@ export const CallFooter: FC<FooterProps> = ({
   const selectVideoButtonOption = useBehavior(vm.selectVideoButtonOption$);
   const backgroundEffect = useBehavior(vm.backgroundEffect$);
   const selectBackgroundEffect = useBehavior(vm.selectBackgroundEffect$);
+  const { added, addBackground } = useAddedBackgrounds();
+
+  const chooseFile = useRef<HTMLInputElement>(null);
+  const onAddBackgroundImage = useCallback((): void => {
+    chooseFile.current?.click();
+  }, []);
+  const onFileChosen = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>): void => {
+      const file = event.target.files?.[0];
+      // Cleared so choosing the same file twice in a row still counts.
+      event.target.value = "";
+      if (!file) return;
+      addBackground(file).catch((e) => {
+        // TODO: FR-021 wants the user told what went wrong. There is no
+        // surface for that in the menu yet, and inventing one is design's
+        // call, so for now this is only logged.
+        logger.warn(
+          e instanceof UnusableImage
+            ? `Cannot use that file as a background: ${e.reason}`
+            : "Could not keep that background",
+          e,
+        );
+      });
+    },
+    [addBackground],
+  );
 
   // The catalogue is named here rather than in the view model: the names are
   // for reading, and a view model has no business holding translated text.
@@ -169,15 +212,23 @@ export const CallFooter: FC<FooterProps> = ({
       { id: "none", kind: "none", label: t("action.background_effect_none") },
       { id: "blur", kind: "blur", label: t("action.background_effect_blur") },
       ...shippedBackgrounds.map((background, i) => ({
-        id: `image:${background.id}`,
+        id: serializeEffect({ kind: "shipped", id: background.id }),
         kind: "image" as const,
         // Numbered rather than named: the images are stand-ins, and naming
         // them here would invent names the design has not given them.
         label: t("action.background_effect_numbered", { n: i + 1 }),
         imageUrl: background.imagePath,
       })),
+      ...added.map((background, i) => ({
+        id: serializeEffect({ kind: "added", id: background.id }),
+        kind: "image" as const,
+        label: t("action.background_effect_numbered", {
+          n: shippedBackgrounds.length + i + 1,
+        }),
+        imageUrl: background.url,
+      })),
     ],
-    [t],
+    [t, added],
   );
   const buttonSize = useBehavior(vm.buttonSize$);
   const showLogo = useBehavior(vm.showLogo$);
@@ -231,19 +282,36 @@ export const CallFooter: FC<FooterProps> = ({
 
   if ((videoOptions?.length ?? 0) > 0) {
     buttons.push(
-      <MediaMuteAndSwitchButton
-        key="video"
-        iconsAndLabels="video"
-        enabled={videoEnabled ?? false}
-        busy={videoBusy ?? false}
-        onMuteClick={toggleVideo}
-        options={videoOptions}
-        selectedOption={selectedVideo}
-        onSelect={selectVideoButtonOption}
-        backgroundEffects={backgroundEffects}
-        selectedBackgroundEffect={backgroundEffect}
-        onSelectBackgroundEffect={selectBackgroundEffect}
-      />,
+      <Fragment key="video">
+        {/* The picker the add tile opens. Hidden, and driven from the tile,
+            because a file input cannot be styled into one. */}
+        <input
+          ref={chooseFile}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={onFileChosen}
+        />
+        <MediaMuteAndSwitchButton
+          iconsAndLabels="video"
+          enabled={videoEnabled ?? false}
+          busy={videoBusy ?? false}
+          onMuteClick={toggleVideo}
+          options={videoOptions}
+          selectedOption={selectedVideo}
+          onSelect={selectVideoButtonOption}
+          backgroundEffects={backgroundEffects}
+          selectedBackgroundEffect={backgroundEffect}
+          onSelectBackgroundEffect={selectBackgroundEffect}
+          // Withheld once the device keeps as many as it will, which is what
+          // renders the add tile unavailable rather than letting it fail.
+          onAddBackgroundImage={
+            selectBackgroundEffect && added.length < maxAddedBackgrounds
+              ? onAddBackgroundImage
+              : undefined
+          }
+        />
+      </Fragment>,
     );
   } else {
     buttons.push(

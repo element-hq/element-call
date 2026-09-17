@@ -19,7 +19,8 @@ describe("the chosen background effect", () => {
     for (const effect of [
       { kind: "none" } as const,
       { kind: "blur" } as const,
-      { kind: "image", id: shippedBackgrounds[0].id } as const,
+      { kind: "shipped", id: shippedBackgrounds[0].id } as const,
+      { kind: "added", id: "a-uuid" } as const,
     ])
       expect(parseEffect(serializeEffect(effect))).toEqual(effect);
   });
@@ -48,7 +49,8 @@ describe("the blur control in settings", () => {
     serializeEffect(on ? { kind: "blur" } : { kind: "none" });
 
   test("reads as off while an image background is in force", () => {
-    expect(shows(serializeEffect({ kind: "image", id: "indoor" }))).toBe(false);
+    expect(shows(serializeEffect({ kind: "shipped", id: "indoor" }))).toBe(false);
+    expect(shows(serializeEffect({ kind: "added", id: "a-uuid" }))).toBe(false);
   });
 
   test("reads as on while blur is in force", () => {

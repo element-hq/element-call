@@ -866,7 +866,9 @@ export const BackgroundEffectsUnavailable: Story = {
     const blur = await within(document.body).findByRole("menuitemradio", {
       name: "Blur",
     });
-    await waitFor(() => expect(blur).toHaveAttribute("aria-disabled", "true"));
+    await waitFor(async () =>
+      expect(blur).toHaveAttribute("aria-disabled", "true"),
+    );
 
     // No effect needs no background processing, so it stays choosable.
     const none = await within(document.body).findByRole("menuitemradio", {

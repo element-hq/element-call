@@ -17,8 +17,10 @@ import {
   type FC,
   type JSX,
   use,
+  useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { type LocalVideoTrack } from "livekit-client";
@@ -37,6 +39,7 @@ import {
   parseEffect,
   type BackgroundEffect,
 } from "./backgroundEffects";
+import { BackgroundImageStore } from "./backgroundImages";
 import { type Behavior } from "../state/Behavior";
 import { type ObservableScope } from "../state/ObservableScope";
 import { platform } from "../Platform";
@@ -45,10 +48,48 @@ import { platform } from "../Platform";
 // it is a combination of exposing observable and react hooks.
 // preferably we should not make this a context anymore and instead just a vm?
 
+/** A background the user added, as the view needs it: an id and a picture. */
+export interface AddedBackgroundImage {
+  id: string;
+  /** Lives as long as the provider does. */
+  url: string;
+}
+
+/**
+ * What the publishing side needs: whether effects can run at all, and the
+ * pipeline to attach. Deliberately not the backgrounds a user has added — the
+ * publisher has no use for those, and every test that stands in for this would
+ * have to carry them.
+ */
 export type ProcessorState = {
   supported: boolean | undefined;
   processor: undefined | ProcessorWrapper<BackgroundOptions>;
 };
+
+/** What the camera menu needs: the backgrounds this device keeps. */
+export interface AddedBackgrounds {
+  /** Oldest first. */
+  added: AddedBackgroundImage[];
+  /**
+   * Keeps a file as a background. Rejects with `UnusableImage` for a file that
+   * cannot be used, and `RangeError` once the device keeps as many as it will.
+   */
+  addBackground: (file: Blob) => Promise<void>;
+  removeBackground: (id: string) => Promise<void>;
+}
+
+const AddedBackgroundsContext = createContext<AddedBackgrounds | undefined>(
+  undefined,
+);
+
+export function useAddedBackgrounds(): AddedBackgrounds {
+  const value = use(AddedBackgroundsContext);
+  if (value === undefined)
+    throw new Error(
+      "useAddedBackgrounds must be used within a ProcessorProvider",
+    );
+  return value;
+}
 
 const ProcessorContext = createContext<ProcessorState | undefined>(undefined);
 
@@ -141,16 +182,22 @@ function supportsBackgroundProcessors(): boolean {
 /** Translates a chosen effect into the pipeline's own vocabulary. */
 function switchOptionsFor(
   effect: BackgroundEffect,
+  added: AddedBackgroundImage[],
 ): SwitchBackgroundProcessorOptions {
+  const withImage = (
+    imagePath: string | undefined,
+  ): SwitchBackgroundProcessorOptions =>
+    // A background the device no longer has — removed, or storage cleared —
+    // leaves the user with no effect rather than a pipeline drawing nothing.
+    imagePath ? { mode: "virtual-background", imagePath } : { mode: "disabled" };
+
   switch (effect.kind) {
     case "blur":
       return { mode: "background-blur", blurRadius };
-    case "image": {
-      const imagePath = imagePathFor(effect.id);
-      return imagePath
-        ? { mode: "virtual-background", imagePath }
-        : { mode: "disabled" };
-    }
+    case "shipped":
+      return withImage(imagePathFor(effect.id));
+    case "added":
+      return withImage(added.find((a) => a.id === effect.id)?.url);
     default:
       return { mode: "disabled" };
   }
@@ -172,6 +219,46 @@ export const ProcessorProvider: FC<Props> = ({ children }) => {
     [],
   );
 
+  // The backgrounds this device keeps. Their URLs live as long as the provider
+  // does, and are replaced wholesale whenever the set changes: an object URL
+  // outlives the blob it names unless it is revoked, and the alternative is
+  // tracking one lifetime per image.
+  const store = useMemo(() => new BackgroundImageStore(), []);
+  const [added, setAdded] = useState<AddedBackgroundImage[]>([]);
+  const urls = useRef<string[]>([]);
+
+  const reread = useCallback(async (): Promise<void> => {
+    const kept = await store.list();
+    urls.current.forEach((url) => URL.revokeObjectURL(url));
+    urls.current = kept.map((background) => URL.createObjectURL(background.image));
+    setAdded(kept.map(({ id }, i) => ({ id, url: urls.current[i] })));
+  }, [store]);
+
+  useEffect(() => {
+    reread().catch((e) => logger.warn("Could not read added backgrounds", e));
+    const opened = urls;
+    return (): void => {
+      opened.current.forEach((url) => URL.revokeObjectURL(url));
+      opened.current = [];
+    };
+  }, [reread]);
+
+  const addBackground = useCallback(
+    async (file: Blob): Promise<void> => {
+      await store.add(file);
+      await reread();
+    },
+    [store, reread],
+  );
+
+  const removeBackground = useCallback(
+    async (id: string): Promise<void> => {
+      await store.remove(id);
+      await reread();
+    },
+    [store, reread],
+  );
+
   // D5: nothing is attached until an effect is first chosen, so a user who
   // never chooses one pays neither the segmentation assets nor the time to
   // initialise them. Once attached it stays attached, including at no effect,
@@ -186,12 +273,16 @@ export const ProcessorProvider: FC<Props> = ({ children }) => {
 
   // D2: switch the running pipeline in place rather than tearing it down, so
   // the previous effect stays in force until the new one is live.
+  const options = useMemo(
+    () => switchOptionsFor(parseEffect(effectRaw), added),
+    [effectRaw, added],
+  );
   useEffect(() => {
     if (!supported || !attached) return;
     pipeline
-      .switchTo(switchOptionsFor(parseEffect(effectRaw)))
+      .switchTo(options)
       .catch((e) => logger.warn("Failed to switch background effect", e));
-  }, [pipeline, supported, attached, effectRaw]);
+  }, [pipeline, supported, attached, options]);
 
   // This is the actual state exposed through the context
   const processorState = useMemo(
@@ -202,5 +293,16 @@ export const ProcessorProvider: FC<Props> = ({ children }) => {
     [supported, attached, pipeline],
   );
 
-  return <ProcessorContext value={processorState}>{children}</ProcessorContext>;
+  const addedBackgrounds = useMemo(
+    () => ({ added, addBackground, removeBackground }),
+    [added, addBackground, removeBackground],
+  );
+
+  return (
+    <ProcessorContext value={processorState}>
+      <AddedBackgroundsContext value={addedBackgrounds}>
+        {children}
+      </AddedBackgroundsContext>
+    </ProcessorContext>
+  );
 };

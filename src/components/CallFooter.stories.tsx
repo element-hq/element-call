@@ -12,6 +12,7 @@ import { Link } from "@vector-im/compound-web";
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { CallFooter, type FooterSnapshot } from "./CallFooter";
+import { ProcessorProvider } from "../livekit/TrackProcessorContext";
 import inCallViewStyles from "../room/InCallView.module.css";
 import { useStaticViewModel } from "../state/ViewModel";
 import { ReactionsSenderContext } from "../reactions/useReactionsSender";
@@ -82,6 +83,15 @@ const fnArgType = {
 
 const meta = {
   component: CallFooterStoryWrapper,
+  // The footer reads the backgrounds this device keeps from the processor
+  // provider, the same way the lobby and the call do.
+  decorators: [
+    (Story): JSX.Element => (
+      <ProcessorProvider>
+        <Story />
+      </ProcessorProvider>
+    ),
+  ],
   argTypes: {
     layout: {
       control: "radio",
