@@ -647,7 +647,13 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
             </>
           )}
           <div role="group" aria-label={optionsButtonLabel}>
-            <div ref={heading} aria-hidden className={styles.sectionHeading}>
+            <div
+              ref={heading}
+              aria-hidden
+              className={classNames(styles.sectionHeading, {
+                [styles.sectionHeadingRuled]: iconsAndLabels === "video",
+              })}
+            >
               <MenuTitle title={optionsButtonLabel} />
             </div>
             {/* The camera menu rules off under each heading. The microphone
@@ -682,7 +688,13 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
                 role="group"
                 aria-label={t("settings.background_effects_header")}
               >
-                <div aria-hidden className={styles.sectionHeading}>
+                <div
+                  aria-hidden
+                  className={classNames(
+                    styles.sectionHeading,
+                    styles.sectionHeadingRuled,
+                  )}
+                >
                   <MenuTitle title={t("settings.background_effects_header")} />
                 </div>
                 <Separator className={styles.sectionRule} />

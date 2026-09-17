@@ -136,6 +136,12 @@ Please see LICENSE in the repository root for full details.
   outline-offset: calc(-1 * var(--cpd-border-width-2));
 }
 
+/* A heading that is ruled off sits closer to its rule than the menu's own
+   spacing allows, which is set for a heading with nothing under it. */
+.menu .sectionHeadingRuled h3 {
+  padding-block-end: var(--cpd-space-1x);
+}
+
 /* The rule under a section heading, drawn edge to edge. A separator insets
    itself by default, which leaves it floating short of the menu's sides.
    The menu also gives a separator room beneath it, for one dividing two
@@ -174,10 +180,11 @@ Please see LICENSE in the repository root for full details.
      their left edge up with the "B" of the heading above them and with the
      radio buttons above that. Matching the surrounding boxes instead puts the
      tiles to the left of both, since a heading insets its own text. */
-  /* No room of its own at the top: the rule above already sets the distance,
-     and adding to it puts the tiles further from their heading than the device
-     rows are from theirs. */
-  padding: 0 var(--cpd-space-4x) var(--cpd-space-3x);
+  /* The same distance to the menu's frame on every side. The rule above and
+     the menu's own bottom padding already supply part of that, so what is set
+     here is only the remainder: the sides carry it all, the top is topped up
+     over the rule's spacing, and the bottom is left to the menu. */
+  padding: var(--cpd-space-1x) var(--cpd-space-4x) 0;
 }
 
 /*
