@@ -375,5 +375,7 @@ Please see LICENSE in the repository root for full details.
    supplies the lower half, so only the upper half is set here. Without it the
    message sits flush against the tiles with a gap twice its size underneath. */
 .effectError {
-  padding: var(--cpd-space-4x) var(--cpd-space-4x) 0;
+  /* A step short of the margin it keeps at the sides: the menu is a column
+     with a gap of its own, which makes up the difference above. */
+  padding: var(--cpd-space-3x) var(--cpd-space-4x) 0;
 }

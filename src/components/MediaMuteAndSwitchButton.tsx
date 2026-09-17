@@ -775,20 +775,21 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
                 <div role="none" className={styles.effectGrid}>
                   {effectTiles()}
                 </div>
-                {backgroundEffectError !== undefined && !refusalSeen && (
-                  // Beside the grid rather than over the call: the user is
-                  // looking here, having just chosen the file this is about.
-                  <div role="none" className={styles.effectError}>
-                    <Alert
-                      type="critical"
-                      title={backgroundEffectError}
-                      onClose={(): void => setRefusalSeen(true)}
-                    />
-                  </div>
-                )}
               </div>
             )}
         </div>
+        {backgroundEffectError !== undefined && !refusalSeen && (
+          // Outside the list, which scrolls and is bounded by the call: inside
+          // it, a message could be cut off by the menu's own height or left
+          // below the fold, which is no way to tell someone something failed.
+          <div role="none" className={styles.effectError}>
+            <Alert
+              type="critical"
+              title={backgroundEffectError}
+              onClose={(): void => setRefusalSeen(true)}
+            />
+          </div>
+        )}
         {toggles.length > 0 && <hr />}
         {toggles.map((toggle) => (
           <ToggleMenuItem
