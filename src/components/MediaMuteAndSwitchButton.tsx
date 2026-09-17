@@ -256,49 +256,36 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
     if (menuOpen) devices.requestDeviceNames(); // No-op after the first call
   }, [menuOpen, devices]);
 
-  let button;
-  let toggles: { label: string; enabled: boolean; id: string }[] = [];
-  switch (iconsAndLabels) {
-    case "video":
-      button = (
-        <VideoButton
-          enabled={enabled ?? false}
-          busy={isBusy}
-          onClick={(e) => {
-            onMuteClick?.();
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-          disabled={isBusy || onMuteClick === undefined}
-          data-testid="incall_videomute"
-        />
-      );
-      if (videoBlurToggleClick !== undefined) {
-        toggles = [
+  // The mute control differs between the two only in which button it is and
+  // what it is called; how it behaves is the same, and was worth saying once.
+  const MuteButton = iconsAndLabels === "audio" ? MicButton : VideoButton;
+  const button = (
+    <MuteButton
+      enabled={enabled ?? false}
+      busy={isBusy}
+      onClick={(e) => {
+        onMuteClick?.();
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+      disabled={isBusy || onMuteClick === undefined}
+      data-testid={
+        iconsAndLabels === "audio" ? "incall_mute" : "incall_videomute"
+      }
+    />
+  );
+
+  // Only the camera menu carries a toggle, and only when the caller offers one.
+  const toggles =
+    iconsAndLabels === "video" && videoBlurToggleClick !== undefined
+      ? [
           {
             label: t("action.blur_background"),
             enabled: videoBlurEnabled ?? false,
             id: BLUR_ID,
           },
-        ];
-      }
-      break;
-    case "audio":
-      button = (
-        <MicButton
-          enabled={enabled ?? false}
-          busy={isBusy}
-          onClick={(e) => {
-            onMuteClick?.();
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-          disabled={isBusy || onMuteClick === undefined}
-          data-testid="incall_mute"
-        />
-      );
-      break;
-  }
+        ]
+      : [];
 
   let optionsButtonLabel: string;
   let defaultMenuTitle: string;
@@ -518,15 +505,15 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
             </div>
           </div>
         </div>
-        {(toggles?.length ?? 0) > 0 && <hr />}
-        {toggles?.map((toggle) => (
+        {toggles.length > 0 && <hr />}
+        {toggles.map((toggle) => (
           <ToggleMenuItem
             label={toggle.label}
             onSelect={(e) => {
               videoBlurToggleClick?.();
               e.preventDefault();
             }}
-            checked={toggle.enabled ?? false}
+            checked={toggle.enabled}
             key={toggle.id}
           />
         ))}
