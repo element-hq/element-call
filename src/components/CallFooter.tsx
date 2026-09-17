@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { type FC, type JSX, type Ref, useMemo } from "react";
 import classNames from "classnames";
+import { useTranslation } from "react-i18next";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
@@ -23,9 +24,11 @@ import {
 } from "../button";
 import styles from "./CallFooter.module.css";
 import {
+  type BackgroundEffectOption,
   MediaMuteAndSwitchButton,
   type MenuOptions,
 } from "./MediaMuteAndSwitchButton";
+import { shippedBackgrounds } from "../livekit/backgroundEffects";
 import { type Behavior } from "../state/Behavior";
 import { type ViewModel } from "../state/ViewModel";
 import { useBehavior } from "../useBehavior";
@@ -57,6 +60,8 @@ export interface FooterActions {
   /** Also controls if the videoMute button is disabled */
   toggleVideo: (() => void) | undefined;
   toggleBlur: (() => void) | undefined;
+  /** Undefined where background processing is unavailable. */
+  selectBackgroundEffect: ((id: string) => void) | undefined;
   toggleScreenSharing: (() => void) | undefined;
   /** Also controls if the settings button is visible */
   openSettings: (() => void) | undefined;
@@ -70,6 +75,8 @@ export interface FooterState {
   videoEnabled: boolean;
   videoBusy: boolean;
   videoBlurEnabled: boolean;
+  /** The chosen background effect, in its stored form. */
+  backgroundEffect: string;
   showFooter: boolean;
 
   /* This is needed for WindowMode = "flat" */
@@ -123,6 +130,7 @@ export const CallFooter: FC<FooterProps> = ({
   children,
   vm,
 }) => {
+  const { t } = useTranslation();
   const asOverlay = useBehavior(vm.asOverlay$);
   const showFooter = useBehavior(vm.showFooter$);
   const hideControls = useBehavior(vm.hideControls$);
@@ -151,8 +159,26 @@ export const CallFooter: FC<FooterProps> = ({
   const selectedAudioOutput = useBehavior(vm.selectedAudioOutput$);
   const selectAudioOutputOption = useBehavior(vm.selectAudioOutputOption$);
   const selectVideoButtonOption = useBehavior(vm.selectVideoButtonOption$);
-  const toggleBlur = useBehavior(vm.toggleBlur$);
-  const videoBlurEnabled = useBehavior(vm.videoBlurEnabled$);
+  const backgroundEffect = useBehavior(vm.backgroundEffect$);
+  const selectBackgroundEffect = useBehavior(vm.selectBackgroundEffect$);
+
+  // The catalogue is named here rather than in the view model: the names are
+  // for reading, and a view model has no business holding translated text.
+  const backgroundEffects = useMemo(
+    (): BackgroundEffectOption[] => [
+      { id: "none", kind: "none", label: t("action.background_effect_none") },
+      { id: "blur", kind: "blur", label: t("action.background_effect_blur") },
+      ...shippedBackgrounds.map((background, i) => ({
+        id: `image:${background.id}`,
+        kind: "image" as const,
+        // Numbered rather than named: the images are stand-ins, and naming
+        // them here would invent names the design has not given them.
+        label: t("action.background_effect_numbered", { n: i + 1 }),
+        imageUrl: background.imagePath,
+      })),
+    ],
+    [t],
+  );
   const buttonSize = useBehavior(vm.buttonSize$);
   const showLogo = useBehavior(vm.showLogo$);
 
@@ -214,8 +240,9 @@ export const CallFooter: FC<FooterProps> = ({
         options={videoOptions}
         selectedOption={selectedVideo}
         onSelect={selectVideoButtonOption}
-        videoBlurToggleClick={toggleBlur}
-        videoBlurEnabled={videoBlurEnabled}
+        backgroundEffects={backgroundEffects}
+        selectedBackgroundEffect={backgroundEffect}
+        onSelectBackgroundEffect={selectBackgroundEffect}
       />,
     );
   } else {

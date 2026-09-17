@@ -124,6 +124,8 @@ export const Default: Story = {
     toggleScreenSharing: fn(),
     toggleBlur: fn(),
     videoBlurEnabled: true,
+    backgroundEffect: "none",
+    selectBackgroundEffect: fn(),
     hangup: fn(),
     buttonSize: "lg",
     showFooter: true,

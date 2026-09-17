@@ -14,6 +14,7 @@ import { type MenuOptions } from "./MediaMuteAndSwitchButton";
 import { type MediaDevices } from "../state/MediaDevices";
 import {
   backgroundBlur as backgroundBlurSettings,
+  backgroundEffect as backgroundEffectSetting,
   debugTileLayout as debugTileLayoutSetting,
 } from "../settings/settings";
 import { type Behavior, constant } from "../state/Behavior";
@@ -76,6 +77,8 @@ function buildDeviceBehaviors(
   | "selectVideoButtonOption$"
   | "toggleBlur$"
   | "videoBlurEnabled$"
+  | "backgroundEffect$"
+  | "selectBackgroundEffect$"
 > {
   const options$ = (
     available$: Behavior<Map<string, MenuOptions["label"]>>,
@@ -128,6 +131,20 @@ function buildDeviceBehaviors(
       ),
     ),
     videoBlurEnabled$: backgroundBlurSettings.value$,
+    backgroundEffect$: backgroundEffectSetting.value$,
+    // Withholding the callback is what renders the section disabled, the same
+    // way the speaker section is disabled where no output can be chosen.
+    selectBackgroundEffect$: scope.behavior(
+      disableSwitcher$.pipe(
+        map((switcherDisabled) =>
+          !switcherDisabled && supportsBackgroundProcessors()
+            ? (id: string): void => {
+                backgroundEffectSetting.setValue(id);
+              }
+            : undefined,
+        ),
+      ),
+    ),
   };
 }
 

@@ -4,6 +4,9 @@
   },
   "action": {
     "add_background_image": "Add image",
+    "background_effect_blur": "Blur",
+    "background_effect_none": "None",
+    "background_effect_numbered": "Background {{n}}",
     "blur_background": "Blur background",
     "close": "Close",
     "copy_link": "Copy link",
