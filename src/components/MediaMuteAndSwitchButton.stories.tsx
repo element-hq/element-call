@@ -851,8 +851,7 @@ export const BackgroundEffects: Story = {
     const radio = document.body.querySelector("input[type='radio']")!;
     const tile = document.body.querySelector(`.${styles.effectTile}`)!;
     const under = (control: Element, rule: Element): number =>
-      control.getBoundingClientRect().top -
-      rule.getBoundingClientRect().bottom;
+      control.getBoundingClientRect().top - rule.getBoundingClientRect().bottom;
     await expect(
       Math.abs(under(radio, rules[0]) - under(tile, rules[1])),
     ).toBeLessThanOrEqual(1);
@@ -940,7 +939,9 @@ export const BackgroundEffectsWithALongDeviceName: Story = {
     });
     // Three tiles to a row however wide the name makes the menu.
     const grid = none.parentElement!;
-    await expect(getComputedStyle(grid).gridTemplateColumns.split(" ")).toHaveLength(3);
+    await expect(
+      getComputedStyle(grid).gridTemplateColumns.split(" "),
+    ).toHaveLength(3);
   },
 };
 

@@ -29,10 +29,7 @@ import { PreferencesSettingsTab } from "./PreferencesSettingsTab";
 import { Slider } from "../Slider";
 import { DeviceSelection } from "./DeviceSelection";
 import { useTrackProcessor } from "../livekit/TrackProcessorContext";
-import {
-  parseEffect,
-  serializeEffect,
-} from "../livekit/backgroundEffects";
+import { parseEffect, serializeEffect } from "../livekit/backgroundEffects";
 import {
   DeveloperSettingsTab,
   type DeveloperSettingsSnapshot,

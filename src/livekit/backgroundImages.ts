@@ -53,9 +53,8 @@ async function isAnimated(file: Blob): Promise<boolean> {
   try {
     const d = new decoder({ data: await file.arrayBuffer(), type: file.type });
     await (d as { completed: Promise<void> }).completed;
-    const track = (
-      d as { tracks: { selectedTrack?: { frameCount: number } } }
-    ).tracks.selectedTrack;
+    const track = (d as { tracks: { selectedTrack?: { frameCount: number } } })
+      .tracks.selectedTrack;
     return (track?.frameCount ?? 1) > 1;
   } catch (e) {
     logger.debug("Could not read frame count, judging by type", e);
@@ -72,8 +71,7 @@ async function isAnimated(file: Blob): Promise<boolean> {
  * shape and lose the rest of the picture for good.
  */
 export async function prepareImage(file: Blob): Promise<Blob> {
-  if (!file.type.startsWith("image/"))
-    throw new UnusableImage("not-an-image");
+  if (!file.type.startsWith("image/")) throw new UnusableImage("not-an-image");
   if (await isAnimated(file)) throw new UnusableImage("animated");
 
   let bitmap: ImageBitmap;

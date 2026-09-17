@@ -49,7 +49,9 @@ describe("the blur control in settings", () => {
     serializeEffect(on ? { kind: "blur" } : { kind: "none" });
 
   test("reads as off while an image background is in force", () => {
-    expect(shows(serializeEffect({ kind: "shipped", id: "indoor" }))).toBe(false);
+    expect(shows(serializeEffect({ kind: "shipped", id: "indoor" }))).toBe(
+      false,
+    );
     expect(shows(serializeEffect({ kind: "added", id: "a-uuid" }))).toBe(false);
   });
 

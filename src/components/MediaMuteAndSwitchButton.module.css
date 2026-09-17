@@ -280,8 +280,7 @@ Please see LICENSE in the repository root for full details.
 .effectCheckOnImage {
   border-radius: 50%;
   background: var(--cpd-color-bg-canvas-default);
-  box-shadow: 0 0 0 var(--cpd-border-width-2)
-    var(--cpd-color-bg-canvas-default);
+  box-shadow: 0 0 0 var(--cpd-border-width-2) var(--cpd-color-bg-canvas-default);
 }
 
 /* A menu item's label is sized for a row; in a tile the design sets it a step
