@@ -174,7 +174,10 @@ Please see LICENSE in the repository root for full details.
      their left edge up with the "B" of the heading above them and with the
      radio buttons above that. Matching the surrounding boxes instead puts the
      tiles to the left of both, since a heading insets its own text. */
-  padding: var(--cpd-space-2x) var(--cpd-space-4x) var(--cpd-space-3x);
+  /* No room of its own at the top: the rule above already sets the distance,
+     and adding to it puts the tiles further from their heading than the device
+     rows are from theirs. */
+  padding: 0 var(--cpd-space-4x) var(--cpd-space-3x);
 }
 
 /*
