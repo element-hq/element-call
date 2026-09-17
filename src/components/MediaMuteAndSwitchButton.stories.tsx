@@ -6,12 +6,14 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { fn, userEvent, waitFor, within, expect } from "storybook/test";
-import { type JSX } from "react";
+import { useEffect, useState, type FC, type JSX, type ReactNode } from "react";
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { MediaMuteAndSwitchButton } from "./MediaMuteAndSwitchButton";
 import styles from "./MediaMuteAndSwitchButton.module.css";
+import meterStyles from "./MicrophoneLevelMeter.module.css";
 import { MediaDevicesContext } from "../MediaDevicesContext";
+import { RootElementProvider } from "../RootElementContext";
 import { MediaDevices } from "../state/MediaDevices";
 import { globalScope } from "../state/ObservableScope";
 
@@ -19,12 +21,97 @@ const mediaDevices = new MediaDevices(globalScope, {
   controlledAudioDevices: false,
 });
 
+/**
+ * Gives these stories a microphone to read.
+ *
+ * The menu opens a capture of whichever device it has been told is selected,
+ * and the devices in a story are invented: asking for one by an id no hardware
+ * answers to fails, and the meter reports that — correctly — as there being no
+ * microphone. So the story provides one rather than borrowing the machine's: a
+ * wavering tone played into a real MediaStream, which the meter then runs its
+ * own analyser over. Nothing here stands in for the meter itself.
+ */
+const WithAMicrophone: FC<{ children: ReactNode }> = ({ children }) => {
+  useEffect(() => {
+    const context = new AudioContext();
+    const microphone = context.createMediaStreamDestination();
+    const tone = context.createOscillator();
+    const loudness = context.createGain();
+    // Swinging between about a third and two thirds of the range, so the meter
+    // reads as something live rather than as a level someone pinned there.
+    const swing = context.createOscillator();
+    const depth = context.createGain();
+    loudness.gain.value = 0.25;
+    depth.gain.value = 0.2;
+    swing.frequency.value = 0.6;
+    tone.frequency.value = 220;
+    swing.connect(depth).connect(loudness.gain);
+    tone.connect(loudness).connect(microphone);
+    tone.start();
+    swing.start();
+
+    const devices = navigator.mediaDevices;
+    const openedForReal = devices.getUserMedia.bind(devices);
+    const opened = Promise.resolve(microphone.stream);
+    // A fresh clone each time, so that a caller stopping its tracks when it is
+    // done does not take the microphone away from the next one.
+    devices.getUserMedia = async (): Promise<MediaStream> =>
+      (await opened).clone();
+
+    return (): void => {
+      devices.getUserMedia = openedForReal;
+      tone.stop();
+      swing.stop();
+      void context.close();
+    };
+  }, []);
+
+  return <>{children}</>;
+};
+
+/**
+ * Gives these stories the call area the menu belongs to.
+ *
+ * The menu sizes its device list against the space Element Call is drawn in,
+ * and takes that from a provider. Without one it falls back to the document
+ * body — which in a story is the whole of Storybook's frame, so the list is
+ * bounded by something far larger than the story it is drawn in and runs off
+ * the top of the canvas. Supplying a root is the same courtesy as supplying the
+ * devices: the story stands in for the call, so it has to say how big it is.
+ */
+const WithACallArea: FC<{ children: ReactNode }> = ({ children }) => {
+  const [callArea, setCallArea] = useState<HTMLElement | null>(null);
+  return (
+    <div
+      ref={setCallArea}
+      style={{
+        // The size of a call, not of a thumbnail: the device list is bounded to
+        // a share of this, so a small area makes even a two-device menu scroll,
+        // which no real call does. Tall enough to leave the menu room to open
+        // upward and still be wholly on screen in the story's frame.
+        blockSize: 720,
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "center",
+      }}
+    >
+      {callArea !== null && (
+        <RootElementProvider value={callArea}>{children}</RootElementProvider>
+      )}
+    </div>
+  );
+};
+
 const meta = {
   component: MediaMuteAndSwitchButton,
   decorators: [
     (Story): JSX.Element => (
       <MediaDevicesContext value={mediaDevices}>
-        <Story />
+        <WithACallArea>
+          <WithAMicrophone>
+            <Story />
+          </WithAMicrophone>
+        </WithACallArea>
       </MediaDevicesContext>
     ),
   ],
@@ -43,6 +130,16 @@ export const Default: Story = {
       { label: { type: "name", name: "Option 2" }, id: "2" },
     ],
     selectedOption: "1",
+    // The audio menu always has a speaker section: the footer hands it an
+    // output list whenever it draws the chevron at all, so a microphone menu
+    // with no speakers in it is a shape nothing in the app produces. Set here
+    // rather than in each story, since the others build on these.
+    outputOptions: [
+      { label: { type: "default", name: "Built-in Output" }, id: "default" },
+      { label: { type: "name", name: "Headset" }, id: "spk2" },
+    ],
+    selectedOutputOption: "default",
+    onSelectOutput: fn(),
     onMuteClick: fn(),
     onSelect: fn(),
   },
@@ -74,6 +171,7 @@ export const AudioMute: Story = {
 
 export const AudioUnmute: Story = {
   args: {
+    ...Default.args,
     title: "Microphone",
     iconsAndLabels: "audio",
     enabled: true,
@@ -81,7 +179,6 @@ export const AudioUnmute: Story = {
       { label: { type: "name", name: "Microphone 1" }, id: "1" },
       { label: { type: "name", name: "Microphone 2" }, id: "2" },
     ],
-
     selectedOption: "2",
   },
 };
@@ -142,6 +239,14 @@ export const SpeakerAndMicrophoneSections: Story = {
     });
     await userEvent.click(headset);
     await expect(args.onSelectOutput).toHaveBeenCalledWith("spk2");
+
+    // A handful of devices fits: only a list longer than the space it is given
+    // scrolls, and a menu that scrolled at four devices would be bounded by
+    // something far smaller than the call it is drawn in.
+    const list = document.body.querySelector<HTMLElement>(
+      `.${styles.deviceList}`,
+    )!;
+    await expect(list.scrollHeight).toBe(list.clientHeight);
   },
 };
 
@@ -200,6 +305,171 @@ export const OnlyOneDevice: Story = {
 };
 
 /**
+ * A device has been asked for and has not arrived. Nothing in either section
+ * can be picked until it does, so a second request cannot overtake the first.
+ */
+export const SelectionSettling: Story = {
+  args: {
+    ...Default.args,
+    title: "Microphone",
+    iconsAndLabels: "audio",
+    enabled: true,
+    options: [
+      { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
+      { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
+    ],
+    selectedOption: "mic1",
+    outputOptions: [
+      { label: { type: "name", name: "Speakers" }, id: "spk1" },
+      { label: { type: "name", name: "Headset" }, id: "spk2" },
+    ],
+    selectedOutputOption: "spk1",
+    onSelectOutput: fn(),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Microphone" }));
+    const menu = within(document.body);
+
+    // The story never changes `selectedOption`, which is what a device that has
+    // not taken effect yet looks like from here.
+    await userEvent.click(
+      await menu.findByRole("menuitemradio", { name: "Microphone 2" }),
+    );
+
+    await expect(await menu.findByLabelText("Activating…")).toBeVisible();
+    for (const item of menu.getAllByRole("menuitemradio"))
+      await expect(item).toHaveAttribute("aria-disabled", "true");
+  },
+};
+
+/**
+ * The focus ring belongs to the keyboard. Radix focuses whatever the pointer is
+ * over, so a ring that followed focus alone would trail the mouse.
+ *
+ * Asserted on the painted outline rather than on `data-focus-modality`: the
+ * attribute is what the stylesheet keys off, so asserting it would pass even
+ * with the rule deleted.
+ */
+export const KeyboardFocusRing: Story = {
+  args: {
+    ...Default.args,
+    title: "Microphone",
+    iconsAndLabels: "audio",
+    enabled: true,
+    options: [
+      { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
+      { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
+    ],
+    selectedOption: "mic1",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Microphone" }));
+    const menu = within(document.body);
+    const first = await menu.findByRole("menuitemradio", {
+      name: "Microphone 1",
+    });
+
+    // Opened by pointer: no ring, even though Radix has moved focus.
+    await expect(outlineWidth(first)).toBe(0);
+
+    await userEvent.keyboard("{ArrowDown}");
+    const focused = document.activeElement as HTMLElement;
+    await expect(focused).toHaveRole("menuitemradio");
+    await expect(outlineWidth(focused)).toBeGreaterThan(0);
+
+    // And the pointer takes it away again.
+    await userEvent.hover(first);
+    await expect(outlineWidth(document.activeElement as HTMLElement)).toBe(0);
+  },
+};
+
+/**
+ * More devices than the menu can show. The list scrolls, and the meter stays at
+ * the foot of the Microphone section rather than scrolling away with it.
+ */
+export const ManyDevices: Story = {
+  args: {
+    ...Default.args,
+    title: "Microphone",
+    iconsAndLabels: "audio",
+    enabled: true,
+    options: Array.from({ length: 20 }, (_, i) => ({
+      label: { type: "name" as const, name: `Microphone ${i + 1}` },
+      id: `mic${i + 1}`,
+    })),
+    selectedOption: "mic1",
+    outputOptions: Array.from({ length: 6 }, (_, i) => ({
+      label: { type: "name" as const, name: `Speaker ${i + 1}` },
+      id: `spk${i + 1}`,
+    })),
+    selectedOutputOption: "spk1",
+    onSelectOutput: fn(),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Microphone" }));
+    const menu = within(document.body);
+
+    // The scroll container and the opaque sticky wrapper, named rather than
+    // walked: the nesting between them is layout, and it moves. The wrapper
+    // rather than the meter itself, because this story is about where the meter
+    // sits, not what it reads — without a fake microphone, as on WebKit, it
+    // says it has no permission instead of showing a level.
+    const list = document.body.querySelector<HTMLElement>(
+      `.${styles.deviceList}`,
+    )!;
+    const sticky = await waitFor(() => {
+      const element = document.body.querySelector<HTMLElement>(
+        `.${styles.stickyMeter}`,
+      );
+      if (element === null) throw new Error("the meter has not rendered yet");
+      return element;
+    });
+    await expect(list.scrollHeight).toBeGreaterThan(list.clientHeight);
+
+    // Scrolled so the Microphone section starts at the top of the scrollport.
+    // Its devices then run past the bottom, which is the position that tells a
+    // pinned meter from one that simply happens to be the last element: at the
+    // very bottom of the list the two look identical.
+    const group = await menu.findByRole("group", { name: "Microphone" });
+    list.scrollTop +=
+      group.getBoundingClientRect().top - list.getBoundingClientRect().top;
+    await expect(list.scrollTop + list.clientHeight).toBeLessThan(
+      list.scrollHeight,
+    );
+
+    const scrollport = list.getBoundingClientRect();
+    const pinned = sticky.getBoundingClientRect();
+    await expect(pinned.bottom).toBeLessThanOrEqual(scrollport.bottom + 1);
+    await expect(pinned.top).toBeGreaterThanOrEqual(scrollport.top - 1);
+
+    // The whole menu is on screen. It opens upward from the foot of the call,
+    // so a list bounded by something bigger than the call — the document, say —
+    // runs off the top and takes the speakers with it.
+    const frame = document.body
+      .querySelector("[role='menu']")!
+      .getBoundingClientRect();
+    await expect(frame.top).toBeGreaterThanOrEqual(0);
+    await expect(frame.bottom).toBeLessThanOrEqual(window.innerHeight + 1);
+
+    // The meter is the one opaque thing in the menu, so it is the one thing
+    // that can cover the frame. Its box has to stay inside the menu's own. The
+    // paint itself needs a screenshot; this pins the geometry that decides it.
+    await expect(pinned.left).toBeGreaterThan(frame.left);
+    await expect(pinned.right).toBeLessThan(frame.right);
+  },
+};
+
+/** The painted outline width, in pixels, however the stylesheet spells it. */
+function outlineWidth(element: HTMLElement): number {
+  const { outlineStyle, outlineWidth } = getComputedStyle(element);
+  if (outlineStyle === "none") return 0;
+  return Number.parseFloat(outlineWidth) || 0;
+}
+
+/**
  * A platform that enumerates no output devices and offers no way to choose one
  * — Safari. The section still names where audio is going, disabled, rather than
  * leaving a heading with nothing under it.
@@ -229,6 +499,50 @@ export const OutputNotEnumerated: Story = {
     await expect(speakers).toHaveAttribute("aria-disabled", "true");
   },
 };
+
+/**
+ * The level meter's icon sits on the same centre line as the radio controls of
+ * the devices above it.
+ *
+ * Held here because it is a fact about two components side by side, and because
+ * layout decides it: the meter's row is inset to keep the menu's frame clear,
+ * and its icon is a different size from a radio control, so the padding that
+ * lines them up is arithmetic that would otherwise go stale in silence.
+ */
+export const MeterAlignsWithTheDeviceRows: Story = {
+  args: {
+    ...Default.args,
+    title: "Microphone",
+    iconsAndLabels: "audio",
+    enabled: true,
+    options: [
+      { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
+      { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
+    ],
+    selectedOption: "mic1",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Microphone" }));
+
+    const menu = document.body.querySelector("[role='menu']")!;
+    const radio = menu.querySelector("input[type='radio']")!;
+    const icon = await waitFor(() => {
+      const element = document.body.querySelector(`.${meterStyles.icon}`);
+      if (element === null) throw new Error("the meter has not rendered yet");
+      return element;
+    });
+
+    // A pixel of slack, for subpixel layout.
+    await expect(Math.abs(centre(icon) - centre(radio))).toBeLessThanOrEqual(1);
+  },
+};
+
+/** Where an element sits on the inline axis, at its middle. */
+function centre(element: Element): number {
+  const box = element.getBoundingClientRect();
+  return box.left + box.width / 2;
+}
 
 /**
  * Walking the device list with the keyboard, all the way to the last entry.
@@ -373,55 +687,6 @@ function overlapping(element: Element, overlays: Element[]): number {
       Math.min(box.bottom, over.bottom) - Math.max(box.top, over.top);
     return Math.max(worst, shared);
   }, 0);
-}
-
-/**
- * The focus ring belongs to the keyboard. Radix focuses whatever the pointer is
- * over, so a ring that followed focus alone would trail the mouse.
- *
- * Asserted on the painted outline rather than on `data-focus-modality`: the
- * attribute is what the stylesheet keys off, so asserting it would pass even
- * with the rule deleted.
- */
-export const KeyboardFocusRing: Story = {
-  args: {
-    ...Default.args,
-    title: "Microphone",
-    iconsAndLabels: "audio",
-    enabled: true,
-    options: [
-      { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
-      { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
-    ],
-    selectedOption: "mic1",
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await userEvent.click(canvas.getByRole("button", { name: "Microphone" }));
-    const menu = within(document.body);
-    const first = await menu.findByRole("menuitemradio", {
-      name: "Microphone 1",
-    });
-
-    // Opened by pointer: no ring, even though Radix has moved focus.
-    await expect(outlineWidth(first)).toBe(0);
-
-    await userEvent.keyboard("{ArrowDown}");
-    const focused = document.activeElement as HTMLElement;
-    await expect(focused).toHaveRole("menuitemradio");
-    await expect(outlineWidth(focused)).toBeGreaterThan(0);
-
-    // And the pointer takes it away again.
-    await userEvent.hover(first);
-    await expect(outlineWidth(document.activeElement as HTMLElement)).toBe(0);
-  },
-};
-
-/** The painted outline width, in pixels, however the stylesheet spells it. */
-function outlineWidth(element: HTMLElement): number {
-  const { outlineStyle, outlineWidth } = getComputedStyle(element);
-  if (outlineStyle === "none") return 0;
-  return Number.parseFloat(outlineWidth) || 0;
 }
 
 /**
