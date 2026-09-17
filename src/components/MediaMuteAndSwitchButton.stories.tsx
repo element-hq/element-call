@@ -960,3 +960,57 @@ export const AddedBackgroundsCanBeRemoved: Story = {
     );
   },
 };
+
+/**
+ * Removal where choosing a tile really changes what is in force, as it does in
+ * a call.
+ *
+ * The static stories cannot catch this: pressing the cross also reaches the
+ * tile, and with live selection that made the tile the one in force, which
+ * took the cross away before its own click landed. By mouse nothing happened;
+ * by keyboard it worked, because the keyboard never touches the cross.
+ */
+export const RemovingWithLiveSelection: Story = {
+  args: { ...AddedBackgroundsCanBeRemoved.args },
+  render: function WithLiveSelection(args): JSX.Element {
+    const [selected, setSelected] = useState("none");
+    const [effects, setEffects] = useState(args.backgroundEffects ?? []);
+    return (
+      <MediaMuteAndSwitchButton
+        {...args}
+        backgroundEffects={effects}
+        selectedBackgroundEffect={selected}
+        onSelectBackgroundEffect={setSelected}
+        onRemoveBackgroundEffect={(id): void =>
+          setEffects((current) => current.filter((o) => o.id !== id))
+        }
+      />
+    );
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
+    const body = within(document.body);
+
+    const tile = await body.findByRole("menuitemradio", {
+      name: "Background 4",
+    });
+    await userEvent.hover(tile);
+    // Beside the tile, not inside it: a control within a menu item would be
+    // invalid, and the item would take the click first.
+    const cross = tile.parentElement!.querySelector<HTMLElement>(
+      `.${styles.effectRemove}`,
+    )!;
+    await expect(cross).toBeVisible();
+    await userEvent.click(cross);
+
+    // Gone, and it did not make itself the one in force on the way out.
+    await waitFor(async () =>
+      expect(
+        body.queryByRole("menuitemradio", { name: "Background 4" }),
+      ).toBeNull(),
+    );
+    const none = await body.findByRole("menuitemradio", { name: "None" });
+    await expect(none).toHaveAttribute("aria-checked", "true");
+  },
+};

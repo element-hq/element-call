@@ -352,8 +352,20 @@ Please see LICENSE in the repository root for full details.
   cursor: pointer;
 }
 
-.effectGrid .effectTile:hover .effectRemove,
-.effectGrid .effectTile:focus-within .effectRemove,
-.menu[data-focus-modality="keyboard"] .effectTile:focus .effectRemove {
+.effectGrid .effectTileWrap:hover .effectRemove,
+.effectGrid .effectTileWrap:focus-within .effectRemove {
   display: flex;
+}
+
+/* Holds a tile that can be removed, so the cross can sit over it without
+   being inside the menu item. */
+.effectTileWrap {
+  position: relative;
+  display: flex;
+  min-inline-size: 0;
+}
+
+.effectGrid .effectTileWrap > .effectTile {
+  flex: 1;
+  min-inline-size: 0;
 }

@@ -488,99 +488,105 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
       onRemoveBackgroundEffect !== undefined &&
       selectedBackgroundEffect !== effect.id;
 
-    const tiles = list.map((effect) => (
-      <MenuItem
-        as="div"
-        hideChevron
-        disabled={unavailable && effect.kind !== "none"}
-        // The cross is drawn, not focusable: a control inside a menu item is
-        // invalid, and the item is what the arrow keys walk. Delete reaches
-        // the same action from the keyboard, announced by aria-keyshortcuts.
-        aria-keyshortcuts={canRemove(effect) ? "Delete" : undefined}
-        onKeyDown={
-          canRemove(effect)
-            ? (e: React.KeyboardEvent): void => {
-                if (e.key !== "Delete" && e.key !== "Backspace") return;
-                e.preventDefault();
-                onRemoveBackgroundEffect?.(effect.id);
-              }
-            : undefined
-        }
-        className={classNames(styles.effectTile, {
-          [styles.effectTileSelected]: selectedBackgroundEffect === effect.id,
-        })}
-        label={effect.label}
-        // An image is its own label, so its name is carried for assistive
-        // technology alone rather than drawn over the picture.
-        labelProps={{
-          className:
-            effect.kind === "image"
-              ? styles.effectLabelUnseen
-              : styles.effectLabel,
-        }}
-        Icon={
-          <span aria-hidden className={styles.effectSwatch}>
-            {effect.kind === "image" && (
-              <img
-                className={styles.effectThumb}
-                src={effect.imageUrl}
-                alt=""
-              />
-            )}
-            {canRemove(effect) && (
-              // Stands where the tick would on the one in force, so the corner
-              // of a tile means the same thing throughout: what this tile is
-              // doing, or what you can do to it.
-              /* eslint-disable-next-line jsx-a11y/click-events-have-key-events,
-                 jsx-a11y/no-static-element-interactions --
-                 Deliberately not a control. It sits inside the swatch, which
-                 is aria-hidden, so assistive technology never meets it; the
-                 keyboard reaches the same action through Delete on the item
-                 itself. Giving it a role and a tab stop would put a control
-                 inside a menu item, which is invalid, and would add a stop the
-                 arrow keys do not know about. */
-              <span
-                className={styles.effectRemove}
-                onPointerDown={(e): void => e.stopPropagation()}
-                onClick={(e): void => {
-                  e.stopPropagation();
+    const tiles = list.map((effect) => {
+      const tile = (
+        <MenuItem
+          as="div"
+          hideChevron
+          disabled={unavailable && effect.kind !== "none"}
+          // The cross is drawn, not focusable: a control inside a menu item is
+          // invalid, and the item is what the arrow keys walk. Delete reaches
+          // the same action from the keyboard, announced by aria-keyshortcuts.
+          aria-keyshortcuts={canRemove(effect) ? "Delete" : undefined}
+          onKeyDown={
+            canRemove(effect)
+              ? (e: React.KeyboardEvent): void => {
+                  if (e.key !== "Delete" && e.key !== "Backspace") return;
+                  e.preventDefault();
                   onRemoveBackgroundEffect?.(effect.id);
-                }}
-              >
-                <CloseIcon width={16} height={16} />
-              </span>
-            )}
-            {selectedBackgroundEffect === effect.id ? (
-              // The tick stands where the glyph would, and on a picture it
-              // carries its own ground so it reads against whatever is behind
-              // it.
-              <CheckCircleSolidIcon
-                className={classNames(styles.effectCheck, {
-                  [styles.effectCheckOnImage]: effect.kind === "image",
-                })}
-                width={20}
-                height={20}
-              />
-            ) : (
-              <>
-                {effect.kind === "none" && <BlockIcon width={20} height={20} />}
-                {effect.kind === "blur" && (
-                  <span className={styles.effectBlurGlyph} />
-                )}
-              </>
-            )}
+                }
+              : undefined
+          }
+          className={classNames(styles.effectTile, {
+            [styles.effectTileSelected]: selectedBackgroundEffect === effect.id,
+          })}
+          label={effect.label}
+          // An image is its own label, so its name is carried for assistive
+          // technology alone rather than drawn over the picture.
+          labelProps={{
+            className:
+              effect.kind === "image"
+                ? styles.effectLabelUnseen
+                : styles.effectLabel,
+          }}
+          Icon={
+            <span aria-hidden className={styles.effectSwatch}>
+              {effect.kind === "image" && (
+                <img
+                  className={styles.effectThumb}
+                  src={effect.imageUrl}
+                  alt=""
+                />
+              )}
+              {selectedBackgroundEffect === effect.id ? (
+                // The tick stands where the glyph would, and on a picture it
+                // carries its own ground so it reads against whatever is behind
+                // it.
+                <CheckCircleSolidIcon
+                  className={classNames(styles.effectCheck, {
+                    [styles.effectCheckOnImage]: effect.kind === "image",
+                  })}
+                  width={20}
+                  height={20}
+                />
+              ) : (
+                <>
+                  {effect.kind === "none" && (
+                    <BlockIcon width={20} height={20} />
+                  )}
+                  {effect.kind === "blur" && (
+                    <span className={styles.effectBlurGlyph} />
+                  )}
+                </>
+              )}
+            </span>
+          }
+          onSelect={(e) => {
+            e.preventDefault();
+            if (effect.id === selectedBackgroundEffect) return;
+            onSelectBackgroundEffect?.(effect.id);
+          }}
+          key={effect.id}
+          role="menuitemradio"
+          aria-checked={selectedBackgroundEffect === effect.id}
+        />
+      );
+      // The cross sits beside the item rather than inside it. Inside, its
+      // press and its click both reach the item first however they are
+      // handled, so the tile was chosen and the cross taken away before it
+      // could act: by mouse nothing happened, while the keyboard, which never
+      // touches it, worked.
+      return canRemove(effect) ? (
+        <div className={styles.effectTileWrap} key={effect.id}>
+          {tile}
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,
+              jsx-a11y/no-static-element-interactions --
+              Deliberately not a control: aria-hidden, so assistive technology
+              never meets it, and the keyboard reaches the same action through
+              Delete on the tile. A role and a tab stop here would add a stop
+              the menu's arrow keys know nothing about. */}
+          <span
+            aria-hidden
+            className={styles.effectRemove}
+            onClick={(): void => onRemoveBackgroundEffect?.(effect.id)}
+          >
+            <CloseIcon width={16} height={16} />
           </span>
-        }
-        onSelect={(e) => {
-          e.preventDefault();
-          if (effect.id === selectedBackgroundEffect) return;
-          onSelectBackgroundEffect?.(effect.id);
-        }}
-        key={effect.id}
-        role="menuitemradio"
-        aria-checked={selectedBackgroundEffect === effect.id}
-      />
-    ));
+        </div>
+      ) : (
+        tile
+      );
+    });
     // Adding is a command, not a choice, so it is a plain item among the tiles
     // rather than another radio.
     if (onAddBackgroundImage !== undefined)
