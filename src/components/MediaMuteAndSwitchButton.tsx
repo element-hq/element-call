@@ -28,6 +28,7 @@ import {
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
+import { distinctUntilChanged, map } from "rxjs";
 
 import styles from "./MediaMuteAndSwitchButton.module.css";
 import { MicButton, VideoButton } from "../button";
@@ -37,6 +38,7 @@ import {
 } from "../state/MediaDevices";
 import { useMediaDevices } from "../MediaDevicesContext";
 import { useRootElement } from "../RootElementContext";
+import { observeElementSize$ } from "../utils/elementSize";
 import { MicrophoneLevelMeter } from "./MicrophoneLevelMeter";
 import { useMicrophoneLevel } from "./useMicrophoneLevel";
 
@@ -92,6 +94,23 @@ const BLUR_ID = "blur";
  * platform that lists no outputs, so this is only ever shown, never sent.
  */
 const DEFAULT_OUTPUT_ID = "default";
+
+/**
+ * The share of the call area the device list may fill.
+ *
+ * The menu carries its headings and the level meter as well, and a list that
+ * took the whole call would hide the call it belongs to.
+ */
+const LIST_SHARE_OF_CALL = 0.6;
+
+/**
+ * The shortest the device list may be, whatever the call measures.
+ *
+ * A share alone collapses in a small call to a list that shows one device and
+ * gives no sign that there are others. Scrolling a short list is the better
+ * failure.
+ */
+const MIN_LIST_HEIGHT = 160;
 
 export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   title,
@@ -153,11 +172,25 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
     if (menuOpen) setFocusModality("pointer");
   }, [menuOpen]);
   useEffect(() => {
-    if (menuOpen)
-      setListMaxHeight(
-        Math.max(160, Math.round(rootElement.clientHeight * 0.6)),
-      );
+    if (!menuOpen) return;
+    // Followed rather than measured once: a host can resize the space Element
+    // Call is drawn in while the menu is open — a panel animating, a window
+    // dragged, a phone turned — and a bound taken on opening then describes a
+    // call area that no longer exists. Quantised before it reaches React, so a
+    // resize re-renders only when the bound itself moves.
+    const subscription = observeElementSize$(rootElement)
+      .pipe(
+        map(({ height }) =>
+          Math.max(MIN_LIST_HEIGHT, Math.round(height * LIST_SHARE_OF_CALL)),
+        ),
+        distinctUntilChanged(),
+      )
+      .subscribe(setListMaxHeight);
+    return (): void => subscription.unsubscribe();
   }, [menuOpen, rootElement]);
+
+  // Only while the menu is open, so nothing holds a second capture of the
+  // microphone for the length of a call.
   const microphoneState = useMicrophoneLevel(
     selectedOption,
     menuOpen && iconsAndLabels === "audio",
