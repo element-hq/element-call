@@ -328,3 +328,32 @@ Please see LICENSE in the repository root for full details.
 .effectGrid .effectTile[aria-disabled="true"] .effectThumb {
   filter: grayscale(1);
 }
+
+/*
+ * The cross that removes one of the user's own backgrounds.
+ *
+ * Shown on hover, and whenever the tile has the keyboard's attention, so the
+ * two ways of reaching it look the same. It carries its own ground for the
+ * same reason the tick does: it sits on a picture nobody chose.
+ */
+.effectRemove {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  translate: -50% -50%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  inline-size: 24px;
+  block-size: 24px;
+  border-radius: 50%;
+  background: var(--cpd-color-bg-canvas-default);
+  color: var(--cpd-color-icon-primary);
+  cursor: pointer;
+}
+
+.effectGrid .effectTile:hover .effectRemove,
+.effectGrid .effectTile:focus-within .effectRemove,
+.menu[data-focus-modality="keyboard"] .effectTile:focus .effectRemove {
+  display: flex;
+}

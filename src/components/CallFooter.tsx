@@ -30,6 +30,7 @@ import {
   type MenuOptions,
 } from "./MediaMuteAndSwitchButton";
 import {
+  parseEffect,
   serializeEffect,
   shippedBackgrounds,
 } from "../livekit/backgroundEffects";
@@ -170,7 +171,18 @@ export const CallFooter: FC<FooterProps> = ({
   const selectVideoButtonOption = useBehavior(vm.selectVideoButtonOption$);
   const backgroundEffect = useBehavior(vm.backgroundEffect$);
   const selectBackgroundEffect = useBehavior(vm.selectBackgroundEffect$);
-  const { added, addBackground } = useAddedBackgrounds();
+  const { added, addBackground, removeBackground } = useAddedBackgrounds();
+
+  const onRemoveBackgroundEffect = useCallback(
+    (id: string): void => {
+      const effect = parseEffect(id);
+      if (effect.kind !== "added") return;
+      removeBackground(effect.id).catch((e) =>
+        logger.warn("Could not remove that background", e),
+      );
+    },
+    [removeBackground],
+  );
 
   const onAddBackgroundImage = useCallback(
     (file: File): void => {
@@ -212,6 +224,7 @@ export const CallFooter: FC<FooterProps> = ({
       ...added.map((background, i) => ({
         id: serializeEffect({ kind: "added", id: background.id }),
         kind: "image" as const,
+        removable: true,
         label: t("action.background_effect_numbered", {
           n: shippedBackgrounds.length + i + 1,
         }),
@@ -291,6 +304,7 @@ export const CallFooter: FC<FooterProps> = ({
             ? onAddBackgroundImage
             : undefined
         }
+        onRemoveBackgroundEffect={onRemoveBackgroundEffect}
       />,
     );
   } else {

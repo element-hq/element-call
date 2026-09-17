@@ -909,3 +909,54 @@ export const BackgroundEffectsWithALongDeviceName: Story = {
     await expect(getComputedStyle(grid).gridTemplateColumns.split(" ")).toHaveLength(3);
   },
 };
+
+/**
+ * Backgrounds the user added are theirs to remove — except the one in force,
+ * which is what they are wearing.
+ */
+export const AddedBackgroundsCanBeRemoved: Story = {
+  args: {
+    ...BackgroundEffects.args,
+    backgroundEffects: [
+      ...backgroundEffects,
+      {
+        id: "added:one",
+        label: "Background 3",
+        kind: "image" as const,
+        imageUrl: swatch("#c2410c", "#7c2d12"),
+        removable: true,
+      },
+      {
+        id: "added:two",
+        label: "Background 4",
+        kind: "image" as const,
+        imageUrl: swatch("#1d4ed8", "#172554"),
+        removable: true,
+      },
+    ],
+    selectedBackgroundEffect: "added:one",
+    onRemoveBackgroundEffect: fn(),
+  },
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
+    const body = within(document.body);
+
+    // The one in force offers no removal.
+    const inForce = await body.findByRole("menuitemradio", {
+      name: "Background 3",
+    });
+    await expect(inForce).not.toHaveAttribute("aria-keyshortcuts");
+
+    // The other does, and says so, and Delete reaches it from the keyboard.
+    const other = await body.findByRole("menuitemradio", {
+      name: "Background 4",
+    });
+    await expect(other).toHaveAttribute("aria-keyshortcuts", "Delete");
+    other.focus();
+    await userEvent.keyboard("{Delete}");
+    await expect(args.onRemoveBackgroundEffect).toHaveBeenCalledWith(
+      "added:two",
+    );
+  },
+};

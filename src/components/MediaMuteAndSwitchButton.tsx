@@ -29,6 +29,7 @@ import {
   BlockIcon,
   PlusIcon,
   CheckCircleSolidIcon,
+  CloseIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
@@ -59,6 +60,8 @@ export interface BackgroundEffectOption {
   kind: "none" | "blur" | "image";
   /** The thumbnail, for kind "image". Blur and no effect draw their own. */
   imageUrl?: string;
+  /** Whether this one is the user's to remove. */
+  removable?: boolean;
 }
 
 export interface MediaMuteAndSwitchButtonProps {
@@ -112,6 +115,12 @@ export interface MediaMuteAndSwitchButtonProps {
    */
   onAddBackgroundImage?: (file: File) => void;
   /**
+   * Called to remove one of the user's own backgrounds. Omit to offer no
+   * removal. The one in force is never offered: it is what the user is
+   * wearing, and taking it away would leave them with nothing chosen.
+   */
+  onRemoveBackgroundEffect?: (id: string) => void;
+  /**
    * For any toggle and option this method will be called.
    * So toggles need to be implemented by listening here and setting the right toggle item to `enabled`
    */
@@ -162,6 +171,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   selectedBackgroundEffect,
   onSelectBackgroundEffect,
   onAddBackgroundImage,
+  onRemoveBackgroundEffect,
   onSelect,
 }) => {
   // Which device we have asked for but not yet been given. Carries the kind as
@@ -471,11 +481,31 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
     // exception: it needs no processing, so it stays choosable and stays the
     // one in force.
     const unavailable = onSelectBackgroundEffect === undefined;
+    // The one in force is never offered for removal: FR-025. Everything else
+    // the user added is theirs to take away.
+    const canRemove = (effect: BackgroundEffectOption): boolean =>
+      effect.removable === true &&
+      onRemoveBackgroundEffect !== undefined &&
+      selectedBackgroundEffect !== effect.id;
+
     const tiles = list.map((effect) => (
       <MenuItem
         as="div"
         hideChevron
         disabled={unavailable && effect.kind !== "none"}
+        // The cross is drawn, not focusable: a control inside a menu item is
+        // invalid, and the item is what the arrow keys walk. Delete reaches
+        // the same action from the keyboard, announced by aria-keyshortcuts.
+        aria-keyshortcuts={canRemove(effect) ? "Delete" : undefined}
+        onKeyDown={
+          canRemove(effect)
+            ? (e: React.KeyboardEvent): void => {
+                if (e.key !== "Delete" && e.key !== "Backspace") return;
+                e.preventDefault();
+                onRemoveBackgroundEffect?.(effect.id);
+              }
+            : undefined
+        }
         className={classNames(styles.effectTile, {
           [styles.effectTileSelected]: selectedBackgroundEffect === effect.id,
         })}
@@ -496,6 +526,29 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
                 src={effect.imageUrl}
                 alt=""
               />
+            )}
+            {canRemove(effect) && (
+              // Stands where the tick would on the one in force, so the corner
+              // of a tile means the same thing throughout: what this tile is
+              // doing, or what you can do to it.
+              /* eslint-disable-next-line jsx-a11y/click-events-have-key-events,
+                 jsx-a11y/no-static-element-interactions --
+                 Deliberately not a control. It sits inside the swatch, which
+                 is aria-hidden, so assistive technology never meets it; the
+                 keyboard reaches the same action through Delete on the item
+                 itself. Giving it a role and a tab stop would put a control
+                 inside a menu item, which is invalid, and would add a stop the
+                 arrow keys do not know about. */
+              <span
+                className={styles.effectRemove}
+                onPointerDown={(e): void => e.stopPropagation()}
+                onClick={(e): void => {
+                  e.stopPropagation();
+                  onRemoveBackgroundEffect?.(effect.id);
+                }}
+              >
+                <CloseIcon width={16} height={16} />
+              </span>
             )}
             {selectedBackgroundEffect === effect.id ? (
               // The tick stands where the glyph would, and on a picture it
