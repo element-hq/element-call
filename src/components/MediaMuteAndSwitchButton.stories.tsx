@@ -374,3 +374,89 @@ function overlapping(element: Element, overlays: Element[]): number {
     return Math.max(worst, shared);
   }, 0);
 }
+
+/**
+ * The focus ring belongs to the keyboard. Radix focuses whatever the pointer is
+ * over, so a ring that followed focus alone would trail the mouse.
+ *
+ * Asserted on the painted outline rather than on `data-focus-modality`: the
+ * attribute is what the stylesheet keys off, so asserting it would pass even
+ * with the rule deleted.
+ */
+export const KeyboardFocusRing: Story = {
+  args: {
+    ...Default.args,
+    title: "Microphone",
+    iconsAndLabels: "audio",
+    enabled: true,
+    options: [
+      { label: { type: "name", name: "Microphone 1" }, id: "mic1" },
+      { label: { type: "name", name: "Microphone 2" }, id: "mic2" },
+    ],
+    selectedOption: "mic1",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Microphone" }));
+    const menu = within(document.body);
+    const first = await menu.findByRole("menuitemradio", {
+      name: "Microphone 1",
+    });
+
+    // Opened by pointer: no ring, even though Radix has moved focus.
+    await expect(outlineWidth(first)).toBe(0);
+
+    await userEvent.keyboard("{ArrowDown}");
+    const focused = document.activeElement as HTMLElement;
+    await expect(focused).toHaveRole("menuitemradio");
+    await expect(outlineWidth(focused)).toBeGreaterThan(0);
+
+    // And the pointer takes it away again.
+    await userEvent.hover(first);
+    await expect(outlineWidth(document.activeElement as HTMLElement)).toBe(0);
+  },
+};
+
+/** The painted outline width, in pixels, however the stylesheet spells it. */
+function outlineWidth(element: HTMLElement): number {
+  const { outlineStyle, outlineWidth } = getComputedStyle(element);
+  if (outlineStyle === "none") return 0;
+  return Number.parseFloat(outlineWidth) || 0;
+}
+
+/**
+ * The camera menu's blur toggle, which the keyboard reaches after the cameras.
+ *
+ * It is a checkbox item and a child of the menu rather than of the device list,
+ * so a focus ring hung on the list alone left it with the browser's own —
+ * which follows the pointer, and is what the ring exists to replace.
+ */
+export const FocusRingCoversTheBlurToggle: Story = {
+  args: {
+    ...VideoUnmute.args,
+    iconsAndLabels: "video",
+    videoBlurEnabled: false,
+    videoBlurToggleClick: fn(),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
+    const toggle = await within(document.body).findByRole("menuitemcheckbox", {
+      name: /Blur background/,
+    });
+
+    // Arrowed down past the cameras to the toggle, which is the last thing in
+    // the menu.
+    for (let i = 0; i < 6 && document.activeElement !== toggle; i++)
+      await userEvent.keyboard("{ArrowDown}");
+    await expect(document.activeElement).toBe(toggle);
+    // The same ring the device rows get.
+    await expect(outlineWidth(toggle)).toBeGreaterThan(0);
+
+    // And the pointer takes it away again, with the toggle still focused — so
+    // there is something to light up and it is not lit.
+    await userEvent.hover(toggle);
+    await expect(document.activeElement).toBe(toggle);
+    await expect(outlineWidth(toggle)).toBe(0);
+  },
+};

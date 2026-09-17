@@ -139,39 +139,57 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   const isBusy = busy ?? false;
   const { t } = useTranslation();
   const devices = useMediaDevices();
-  // Only while the menu is open, so nothing holds a second capture of the
-  // microphone for the length of a call.
-  // The menu is portalled outside the call root, so nothing in the stylesheets
-  // can size it against the call. Measure the call area rather than the window,
-  // or the menu is wrong wherever Element Call is not the whole page. Measured
-  // when the menu opens: it is short-lived enough not to need watching.
+
   // Radix focuses whatever the pointer is over, so the browser's own
   // :focus-visible cannot tell us whether a person is navigating by keyboard:
   // Chromium answers yes to everything after any key press, Firefox answers no
   // to programmatic focus. Track it ourselves and let the styling follow.
-  const [focusModality, setFocusModality] = useState<"keyboard" | "pointer">(
-    "pointer",
+  /**
+   * Tracks which modality moved the focus, for as long as the list is mounted.
+   *
+   * A ref rather than an effect on `menuOpen`: that state is ours, the open
+   * menu is Radix's, and the two do not commit together — an effect keyed on
+   * ours can run before Radix has mounted the content, with nothing to attach
+   * to. The list existing is the honest signal that the menu is open.
+   *
+   * Recorded on the menu rather than held in state, because every item the menu
+   * can focus has to answer to it — the device rows and the camera menu's blur
+   * toggle, which is the menu's child and not the list's — and because which
+   * modality someone is using changes nothing that has to be rendered again.
+   */
+  const trackFocusModality = useCallback(
+    (list: HTMLDivElement | null): (() => void) | undefined => {
+      // Watched on the menu, not on the document. Element Call can be mounted
+      // more than once in a host's page, and the menu is portalled out of the
+      // call root, so a document listener would also answer for a key pressed
+      // in the other instance, or in the host's own page. The menu rather than
+      // the list, because the first arrow key arrives while the menu itself
+      // holds focus, above anything we render.
+      const menu = list?.closest<HTMLElement>('[role="menu"]');
+      if (menu === null || menu === undefined) return;
+      // Each opening starts over: the modality belongs to whoever is using this
+      // menu now, not to whoever last used it.
+      const record = (modality: "keyboard" | "pointer"): void => {
+        menu.dataset.focusModality = modality;
+      };
+      record("pointer");
+      const usedKeyboard = (): void => record("keyboard");
+      const usedPointer = (): void => record("pointer");
+      menu.addEventListener("keydown", usedKeyboard, true);
+      menu.addEventListener("pointermove", usedPointer, true);
+      return (): void => {
+        menu.removeEventListener("keydown", usedKeyboard, true);
+        menu.removeEventListener("pointermove", usedPointer, true);
+      };
+    },
+    [],
   );
-  useEffect(() => {
-    if (!menuOpen) return;
-    // Watched at the document, and only while the menu is open. Which modality
-    // someone is using is not a property of any one element: the first arrow
-    // key arrives while the menu itself holds focus, above anything we render,
-    // and Radix moves focus around as the pointer travels.
-    const usedKeyboard = (): void => setFocusModality("keyboard");
-    const usedPointer = (): void => setFocusModality("pointer");
-    document.addEventListener("keydown", usedKeyboard, true);
-    document.addEventListener("pointermove", usedPointer, true);
-    return (): void => {
-      document.removeEventListener("keydown", usedKeyboard, true);
-      document.removeEventListener("pointermove", usedPointer, true);
-    };
-  }, [menuOpen]);
+
+  // The menu is portalled outside the call root, so nothing in the stylesheets
+  // can size it against the call. Measure the call area rather than the window,
+  // or the menu is wrong wherever Element Call is not the whole page.
   const rootElement = useRootElement();
   const [listMaxHeight, setListMaxHeight] = useState<number>();
-  useEffect(() => {
-    if (menuOpen) setFocusModality("pointer");
-  }, [menuOpen]);
   useEffect(() => {
     if (!menuOpen) return;
     // Followed rather than measured once: a host can resize the space Element
@@ -440,9 +458,9 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
         <div
           // Transparent to assistive technology, so the menu still sees its
           // items as its own children.
+          ref={trackFocusModality}
           role="none"
           className={styles.deviceList}
-          data-focus-modality={focusModality}
           style={
             {
               "--device-list-max-height":
