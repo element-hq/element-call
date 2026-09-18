@@ -33,6 +33,19 @@ describe("the chosen background effect", () => {
     expect(parseEffect("")).toEqual({ kind: "none" });
   });
 
+  // The regression this guards is not hypothetical: the first stand-ins were
+  // the app's own overlay gradients, which have no opaque pixel in them at all,
+  // so as backgrounds their dark half was simply missing.
+  test("ships only opaque backgrounds", async () => {
+    const { readFile } = await import("node:fs/promises");
+    for (const background of shippedBackgrounds) {
+      const name = background.imagePath.split("/").pop()!.split("?")[0];
+      const bytes = await readFile(`src/graphics/${name}`);
+      // JPEG, which has no alpha channel to carry a hole in.
+      expect([bytes[0], bytes[1], bytes[2]]).toEqual([0xff, 0xd8, 0xff]);
+    }
+  });
+
   test("gives every shipped background an image to draw", () => {
     for (const background of shippedBackgrounds)
       expect(imagePathFor(background.id)).toBeTruthy();
