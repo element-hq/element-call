@@ -5,8 +5,17 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, type JSX, type Ref, useMemo } from "react";
+import {
+  type FC,
+  type JSX,
+  type Ref,
+  useCallback,
+  useMemo,
+  useState,
+} from "react";
 import classNames from "classnames";
+import { useTranslation } from "react-i18next";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
@@ -23,9 +32,24 @@ import {
 } from "../button";
 import styles from "./CallFooter.module.css";
 import {
+  type BackgroundEffectOption,
   MediaMuteAndSwitchButton,
   type MenuOptions,
 } from "./MediaMuteAndSwitchButton";
+import {
+  parseEffect,
+  serializeEffect,
+  shippedBackgrounds,
+} from "../livekit/backgroundEffects";
+import {
+  maxAddedBackgrounds,
+  UnusableImage,
+} from "../livekit/backgroundImages";
+import {
+  useAddedBackgrounds,
+  useBackgroundProcessing,
+} from "../livekit/TrackProcessorContext";
+import { usesFallbackProcessing } from "../livekit/backgroundProcessing";
 import { type Behavior } from "../state/Behavior";
 import { type ViewModel } from "../state/ViewModel";
 import { useBehavior } from "../useBehavior";
@@ -57,6 +81,8 @@ export interface FooterActions {
   /** Also controls if the videoMute button is disabled */
   toggleVideo: (() => void) | undefined;
   toggleBlur: (() => void) | undefined;
+  /** Undefined where background processing is unavailable. */
+  selectBackgroundEffect: ((id: string) => void) | undefined;
   toggleScreenSharing: (() => void) | undefined;
   /** Also controls if the settings button is visible */
   openSettings: (() => void) | undefined;
@@ -70,6 +96,14 @@ export interface FooterState {
   videoEnabled: boolean;
   videoBusy: boolean;
   videoBlurEnabled: boolean;
+  /** The chosen background effect, in its stored form. */
+  backgroundEffect: string;
+  /**
+   * Whether this footer is shown before joining. An image added there becomes
+   * the background at once; one added in a call waits to be chosen, because
+   * putting it on would change what everyone sees with no further word.
+   */
+  beforeJoining: boolean;
   showFooter: boolean;
 
   /* This is needed for WindowMode = "flat" */
@@ -99,11 +133,15 @@ export interface FooterState {
 
   /** Providing no options `[]` or `undefined` will imply that we dont have a audio fast switcher */
   audioOptions: MenuOptions[];
+  /** Output devices shown as their own section in the audio menu. */
+  audioOutputOptions: MenuOptions[];
   /** Providing no options `[]` or `undefined` will imply that we dont have a audio fast switcher */
   videoOptions: MenuOptions[];
   selectedAudio: string | undefined;
+  selectedAudioOutput: string | undefined;
   selectedVideo: string | undefined;
   selectAudioButtonOption: ((deviceId: string) => void) | undefined;
+  selectAudioOutputOption: ((deviceId: string) => void) | undefined;
   selectVideoButtonOption: ((option: string) => void) | undefined;
 }
 
@@ -119,6 +157,7 @@ export const CallFooter: FC<FooterProps> = ({
   children,
   vm,
 }) => {
+  const { t } = useTranslation();
   const asOverlay = useBehavior(vm.asOverlay$);
   const showFooter = useBehavior(vm.showFooter$);
   const hideControls = useBehavior(vm.hideControls$);
@@ -143,9 +182,112 @@ export const CallFooter: FC<FooterProps> = ({
   const audioOptions = useBehavior(vm.audioOptions$);
   const selectedAudio = useBehavior(vm.selectedAudio$);
   const selectAudioButtonOption = useBehavior(vm.selectAudioButtonOption$);
+  const audioOutputOptions = useBehavior(vm.audioOutputOptions$);
+  const selectedAudioOutput = useBehavior(vm.selectedAudioOutput$);
+  const selectAudioOutputOption = useBehavior(vm.selectAudioOutputOption$);
   const selectVideoButtonOption = useBehavior(vm.selectVideoButtonOption$);
-  const toggleBlur = useBehavior(vm.toggleBlur$);
-  const videoBlurEnabled = useBehavior(vm.videoBlurEnabled$);
+  const backgroundEffect = useBehavior(vm.backgroundEffect$);
+  const selectBackgroundEffect = useBehavior(vm.selectBackgroundEffect$);
+  const beforeJoining = useBehavior(vm.beforeJoining$);
+  const { added, addBackground, removeBackground } = useAddedBackgrounds();
+  const { settling } = useBackgroundProcessing();
+
+  // Said, not decided. Where only the slow path exists the effect still works,
+  // it costs frames — and the user is the only one who knows whether they would
+  // rather show the room they are sitting in. It stays put while the pipeline
+  // is being built: that wait is shown on the tile that was pressed, where a
+  // message that came and went would only flash once the assets are cached.
+  const backgroundEffectNotice = useMemo(
+    () =>
+      usesFallbackProcessing()
+        ? t("background_effects.slow_in_this_browser")
+        : undefined,
+    [t],
+  );
+  const [backgroundEffectError, setBackgroundEffectError] = useState<
+    string | undefined
+  >(undefined);
+
+  // Spelled out rather than built from the reason, so the extractor can find
+  // every string it has to translate.
+  const whyRefused = useCallback(
+    (e: unknown): string => {
+      if (e instanceof UnusableImage)
+        switch (e.reason) {
+          case "not-an-image":
+            return t("error.background_not_an_image");
+          case "animated":
+            return t("error.background_animated");
+          case "undecodable":
+            return t("error.background_undecodable");
+        }
+      return t("error.background_not_kept");
+    },
+    [t],
+  );
+
+  const onRemoveBackgroundEffect = useCallback(
+    (id: string): void => {
+      const effect = parseEffect(id);
+      if (effect.kind !== "added") return;
+      removeBackground(effect.id).catch((e) =>
+        logger.warn("Could not remove that background", e),
+      );
+    },
+    [removeBackground],
+  );
+
+  const onAddBackgroundImage = useCallback(
+    (file: File): void => {
+      setBackgroundEffectError(undefined);
+      addBackground(file)
+        .then((id) => {
+          // Before joining, nobody sees the change, so the picture goes on at
+          // once. In a call it waits to be chosen: otherwise choosing a file
+          // would change what everyone sees, with no further word from the
+          // user. Teams draws the line in the same place.
+          if (beforeJoining)
+            selectBackgroundEffect?.(serializeEffect({ kind: "added", id }));
+        })
+        .catch((e) => {
+          setBackgroundEffectError(whyRefused(e));
+          logger.warn(
+            e instanceof UnusableImage
+              ? `Cannot use that file as a background: ${e.reason}`
+              : "Could not keep that background",
+            e,
+          );
+        });
+    },
+    [addBackground, beforeJoining, selectBackgroundEffect, whyRefused],
+  );
+
+  // The catalogue is named here rather than in the view model: the names are
+  // for reading, and a view model has no business holding translated text.
+  const backgroundEffects = useMemo(
+    (): BackgroundEffectOption[] => [
+      { id: "none", kind: "none", label: t("action.background_effect_none") },
+      { id: "blur", kind: "blur", label: t("action.background_effect_blur") },
+      ...shippedBackgrounds.map((background, i) => ({
+        id: serializeEffect({ kind: "shipped", id: background.id }),
+        kind: "image" as const,
+        // Numbered rather than named: the images are stand-ins, and naming
+        // them here would invent names the design has not given them.
+        label: t("action.background_effect_numbered", { n: i + 1 }),
+        imageUrl: background.imagePath,
+      })),
+      ...added.map((background, i) => ({
+        id: serializeEffect({ kind: "added", id: background.id }),
+        kind: "image" as const,
+        removable: true,
+        label: t("action.background_effect_numbered", {
+          n: shippedBackgrounds.length + i + 1,
+        }),
+        imageUrl: background.url,
+      })),
+    ],
+    [t, added],
+  );
   const buttonSize = useBehavior(vm.buttonSize$);
   const showLogo = useBehavior(vm.showLogo$);
 
@@ -168,7 +310,6 @@ export const CallFooter: FC<FooterProps> = ({
   if ((audioOptions?.length ?? 0) > 0) {
     buttons.push(
       <MediaMuteAndSwitchButton
-        title={"Mic Source"}
         key="audio"
         iconsAndLabels="audio"
         enabled={audioEnabled ?? false}
@@ -178,6 +319,9 @@ export const CallFooter: FC<FooterProps> = ({
         options={audioOptions}
         selectedOption={selectedAudio}
         onSelect={selectAudioButtonOption}
+        outputOptions={audioOutputOptions}
+        selectedOutputOption={selectedAudioOutput}
+        onSelectOutput={selectAudioOutputOption}
       />,
     );
   } else {
@@ -197,7 +341,6 @@ export const CallFooter: FC<FooterProps> = ({
   if ((videoOptions?.length ?? 0) > 0) {
     buttons.push(
       <MediaMuteAndSwitchButton
-        title={"Camera Source"}
         key="video"
         iconsAndLabels="video"
         enabled={videoEnabled ?? false}
@@ -206,8 +349,20 @@ export const CallFooter: FC<FooterProps> = ({
         options={videoOptions}
         selectedOption={selectedVideo}
         onSelect={selectVideoButtonOption}
-        videoBlurToggleClick={toggleBlur}
-        videoBlurEnabled={videoBlurEnabled}
+        backgroundEffects={backgroundEffects}
+        selectedBackgroundEffect={backgroundEffect}
+        onSelectBackgroundEffect={selectBackgroundEffect}
+        // Withheld once the device keeps as many as it will, which is what
+        // renders the add tile unavailable rather than letting it fail.
+        onAddBackgroundImage={
+          selectBackgroundEffect && added.length < maxAddedBackgrounds
+            ? onAddBackgroundImage
+            : undefined
+        }
+        onRemoveBackgroundEffect={onRemoveBackgroundEffect}
+        backgroundEffectError={backgroundEffectError}
+        backgroundEffectNotice={backgroundEffectNotice}
+        backgroundEffectSettling={settling}
       />,
     );
   } else {

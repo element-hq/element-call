@@ -22,13 +22,14 @@ import { useHostBridge } from "../HostBridge";
 import {
   useSetting,
   soundEffectVolume as soundEffectVolumeSetting,
-  backgroundBlur as backgroundBlurSetting,
+  backgroundEffect as backgroundEffectSetting,
   developerMode,
 } from "./settings";
 import { PreferencesSettingsTab } from "./PreferencesSettingsTab";
 import { Slider } from "../Slider";
 import { DeviceSelection } from "./DeviceSelection";
 import { useTrackProcessor } from "../livekit/TrackProcessorContext";
+import { parseEffect, serializeEffect } from "../livekit/backgroundEffects";
 import {
   DeveloperSettingsTab,
   type DeveloperSettingsSnapshot,
@@ -83,7 +84,13 @@ export const SettingsModal: FC<Props> = ({
   const BlurCheckbox: React.FC = (): ReactNode => {
     const { supported } = useTrackProcessor();
 
-    const [blurActive, setBlurActive] = useSetting(backgroundBlurSetting);
+    // The same setting the camera menu's Background effects grid writes, so
+    // the two controls cannot disagree. An image background reads here as blur
+    // off, and turning blur on replaces it.
+    const [effect, setEffect] = useSetting(backgroundEffectSetting);
+    const blurActive = parseEffect(effect).kind === "blur";
+    const setBlurActive = (on: boolean): void =>
+      setEffect(serializeEffect(on ? { kind: "blur" } : { kind: "none" }));
 
     return (
       <>
@@ -97,7 +104,7 @@ export const SettingsModal: FC<Props> = ({
               supported ? "" : t("settings.blur_not_supported_by_browser")
             }
             type="checkbox"
-            checked={!!blurActive}
+            checked={blurActive}
             onChange={(b): void => setBlurActive(b.target.checked)}
             disabled={!supported}
           />
