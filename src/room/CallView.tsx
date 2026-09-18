@@ -223,6 +223,13 @@ const LoadedCallView: FC<LoadedProps> = ({
   const rtcParticipationManager = useRtcParticipationManager(
     useRustRtcSdk ? drivers : null,
     participationConfigValue,
+    {
+      // Element Call's own `config.json` LiveKit service, for a homeserver
+      // that advertises no transport: the precedence Element Call has always
+      // had, and the route by which a host (Element Web) hands over what it
+      // found in `.well-known`.
+      transportFallbackUrl: Config.get().livekit?.livekit_service_url,
+    },
   );
   const participationMemberships = useBehavior(
     rtcParticipationManager?.memberships$ ?? NO_PARTICIPATION_MEMBERSHIPS,
