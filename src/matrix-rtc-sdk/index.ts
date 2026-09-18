@@ -98,8 +98,15 @@ export async function initMatrixRtcSdk(
  * until needed. Asked for explicitly, rather than leaving the package to its
  * `import.meta.url` default, so that the dev server's dependency
  * pre-bundling, which rewrites module URLs, cannot lose track of it.
+ *
+ * `no-inline` because the library build would otherwise embed the wasm as a
+ * base64 `data:` URL: a megabyte in the JavaScript, and one a host's Content
+ * Security Policy may well refuse to `fetch` (Element Web's does). As a file
+ * next to the bundle, referenced through `import.meta.url`, the host's own
+ * bundler copies it along with everything else.
  */
 async function bundledWasm(): Promise<string> {
-  const { default: url } = await import("@element-hq/matrix-rtc/wasm?url");
+  const { default: url } =
+    await import("@element-hq/matrix-rtc/wasm?url&no-inline");
   return url;
 }
