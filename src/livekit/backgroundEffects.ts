@@ -5,8 +5,8 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import desktopGradient from "../graphics/desktop-gradient.png?url";
-import mobileGradient from "../graphics/mobile-gradient.png?url";
+import indoorStandIn from "../graphics/background-indoor-standin.jpg?url";
+import outdoorStandIn from "../graphics/background-outdoor-standin.jpg?url";
 
 /** How much to blur, when the chosen effect is blur. */
 export const blurRadius = 15;
@@ -17,11 +17,18 @@ export interface ShippedBackground {
 }
 
 // EXPLORATION SHORTCUT (S1): the two shipped backgrounds, one indoor and one
-// outdoor, do not exist yet. These stand-ins are existing gradient assets, so
-// the pipeline can be exercised and measured. Never port this.
+// outdoor, do not exist yet. These stand-ins are the app's own gradients, laid
+// on the canvas colour they are painted over and kept as JPEG.
+//
+// Not a detail: those gradients are overlay scrims, and measured, not one
+// pixel in either is opaque — where they look dark they are transparent. Used
+// directly as a background their dark half was simply absent, which is what
+// showed on the slow path. Flattening them is what makes them a picture rather
+// than a veil, and JPEG cannot carry transparency at all, so it cannot come
+// back. Never port this.
 export const shippedBackgrounds: ShippedBackground[] = [
-  { id: "indoor", imagePath: desktopGradient },
-  { id: "outdoor", imagePath: mobileGradient },
+  { id: "indoor", imagePath: indoorStandIn },
+  { id: "outdoor", imagePath: outdoorStandIn },
 ];
 
 export type BackgroundEffect =

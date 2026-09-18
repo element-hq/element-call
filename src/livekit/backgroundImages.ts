@@ -83,16 +83,24 @@ export async function prepareImage(file: Blob): Promise<Blob> {
   }
 
   try {
+    // Every picture goes through the canvas, not only the oversized ones: a
+    // background covers what is behind it, so it has to be opaque, and a
+    // picture with transparency in it — a logo, a screenshot with rounded
+    // corners — would otherwise be stored with its holes and drawn with them.
+    // Passing small files straight through is what kept them.
     const longest = Math.max(bitmap.width, bitmap.height);
-    if (longest <= maxStoredEdge) return file;
-
-    const scale = maxStoredEdge / longest;
+    const scale = Math.min(1, maxStoredEdge / longest);
     const canvas = new OffscreenCanvas(
       Math.round(bitmap.width * scale),
       Math.round(bitmap.height * scale),
     );
     const context = canvas.getContext("2d");
     if (!context) throw new UnusableImage("undecodable");
+    // The ground the picture is laid on, so nothing it does not cover is a
+    // hole. Black rather than white: an unfilled corner reads as the frame's
+    // own edge rather than as a lamp.
+    context.fillStyle = "black";
+    context.fillRect(0, 0, canvas.width, canvas.height);
     context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
     return await canvas.convertToBlob({ type: "image/webp", quality: 0.9 });
   } finally {
