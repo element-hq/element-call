@@ -909,6 +909,17 @@ export const BackgroundEffectsSlowInThisBrowser: Story = {
     await expect(
       await body.findByText(/runs background effects slowly/),
     ).toBeInTheDocument();
+
+    // It sits as far from the menu's foot as from its sides. The menu carries
+    // bottom padding of its own, so setting one here as well doubled the gap —
+    // stated as the relationship, which is what anyone would notice.
+    const menu = document.body.querySelector("[role='menu']")!;
+    const notice = menu.querySelector(`.${styles.effectNotice}`)!;
+    const frame = menu.getBoundingClientRect();
+    const box = notice.getBoundingClientRect();
+    await expect(Math.round(frame.bottom - box.bottom)).toBe(
+      Math.round(box.left - frame.left),
+    );
   },
 };
 

@@ -411,7 +411,10 @@ Please see LICENSE in the repository root for full details.
   display: flex;
   align-items: flex-start;
   gap: var(--cpd-space-3x);
-  margin: var(--cpd-space-2x) var(--cpd-space-4x) var(--cpd-space-4x);
+  /* Nothing below: the menu's own bottom padding is already the inset, and
+     setting one here as well made the gap under the notice twice the gap
+     beside it. The same reason the grid leaves its own bottom alone. */
+  margin: var(--cpd-space-2x) var(--cpd-space-4x) 0;
   padding: var(--cpd-space-3x);
   border-radius: var(--cpd-space-2x);
   background: var(--cpd-color-bg-subtle-secondary);
