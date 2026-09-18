@@ -8,7 +8,6 @@ Please see LICENSE in the repository root for full details.
 import {
   BackgroundProcessorWrapper,
   type ProcessorWrapper,
-  supportsBackgroundProcessors as supportsBackgroundProcessorsLivekitSdk,
   type BackgroundOptions,
   type SwitchBackgroundProcessorOptions,
 } from "@livekit/track-processors";
@@ -40,9 +39,9 @@ import {
   type BackgroundEffect,
 } from "./backgroundEffects";
 import { BackgroundImageStore } from "./backgroundImages";
+import { supportsBackgroundProcessors } from "./backgroundProcessing";
 import { type Behavior } from "../state/Behavior";
 import { type ObservableScope } from "../state/ObservableScope";
-import { platform } from "../Platform";
 
 //TODO-MULTI-SFU: This is not yet fully there.
 // it is a combination of exposing observable and react hooks.
@@ -173,10 +172,6 @@ export const useTrackProcessorSync = (
 
 interface Props {
   children: JSX.Element;
-}
-
-function supportsBackgroundProcessors(): boolean {
-  return supportsBackgroundProcessorsLivekitSdk() && platform === "desktop";
 }
 
 /** Translates a chosen effect into the pipeline's own vocabulary. */

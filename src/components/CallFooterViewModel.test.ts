@@ -14,7 +14,10 @@ import type { CallViewModel } from "../state/CallViewModel/CallViewModel";
 import type { Alignment, Layout } from "../state/layout-types";
 import type { SpotlightTileViewModel } from "../state/TileViewModel";
 import type { DeviceLabel } from "../state/MediaDevices";
-import { createCallFooterViewModel } from "./CallFooterViewModel";
+import {
+  createCallFooterViewModel,
+  createLobbyFooterViewModel,
+} from "./CallFooterViewModel";
 import { HeaderStyle } from "../UrlParams";
 
 const platformMock = vi.hoisted(() => vi.fn(() => "desktop"));
@@ -24,10 +27,12 @@ vi.mock("../Platform", () => ({
   },
 }));
 
-// Prevent supportsBackgroundProcessors from throwing in jsdom – it is not
-// exercised by these tests (only used in `videoToggles`, not `videoOptions`).
+// The SDK's own check needs WebGL and canvas APIs jsdom does not have. The
+// tests below drive it directly, because what they are about is the answer the
+// app gives on top of it.
+const sdkSupportMock = vi.hoisted(() => vi.fn(() => true));
 vi.mock("@livekit/track-processors", () => ({
-  supportsBackgroundProcessors: (): boolean => false,
+  supportsBackgroundProcessors: (): boolean => sdkSupportMock(),
 }));
 
 const outputSelectionMock = vi.hoisted(() => vi.fn(() => true));
@@ -226,6 +231,72 @@ describe("createCallFooterViewModel", () => {
           },
         },
       ]);
+    });
+  });
+  describe("background effects", () => {
+    // The lobby, deliberately: in a call the whole switcher is already
+    // withheld on a phone, so a check there passes whatever the verdict says.
+    // The lobby keeps its switcher, which is where a phone browser was offered
+    // every effect, given none of them, and told nothing.
+    function lobbyFor(
+      platform: string,
+    ): ReturnType<typeof createLobbyFooterViewModel> {
+      platformMock.mockReturnValue(platform);
+      return createLobbyFooterViewModel(
+        testScope(),
+        mockMuteStates(),
+        twoMicsAndOneCamMediaDevices,
+        /* openSettings */ undefined,
+        /* hangup */ undefined,
+        /* showLogo */ false,
+      );
+    }
+
+    it("offers nothing the pipeline would refuse to honour", () => {
+      sdkSupportMock.mockReturnValue(true);
+      const vm = lobbyFor("ios");
+
+      expect(vm.selectBackgroundEffect$.value).toBeUndefined();
+      expect(vm.toggleBlur$.value).toBeUndefined();
+    });
+
+    it("offers them where the pipeline will honour them", () => {
+      sdkSupportMock.mockReturnValue(true);
+      const vm = lobbyFor("desktop");
+
+      expect(vm.selectBackgroundEffect$.value).toBeDefined();
+      expect(vm.toggleBlur$.value).toBeDefined();
+    });
+
+    it("offers nothing where the browser itself cannot run them", () => {
+      sdkSupportMock.mockReturnValue(false);
+      const vm = lobbyFor("desktop");
+
+      expect(vm.selectBackgroundEffect$.value).toBeUndefined();
+      expect(vm.toggleBlur$.value).toBeUndefined();
+    });
+
+    it("availability is the same before and during a call", () => {
+      for (const supported of [true, false]) {
+        sdkSupportMock.mockReturnValue(supported);
+        platformMock.mockReturnValue("desktop");
+        const inCall = createCallFooterViewModel(
+          testScope(),
+          buildMinimalCallViewModel(gridLayout),
+          mockMuteStates(),
+          twoMicsAndOneCamMediaDevices,
+          /* reactionIdentifier */ undefined,
+          { showControls: true, header: HeaderStyle.Standard },
+        );
+        const lobby = lobbyFor("desktop");
+
+        const offeredInCall =
+          inCall.selectBackgroundEffect$.value !== undefined;
+        const offeredInLobby =
+          lobby.selectBackgroundEffect$.value !== undefined;
+        expect(offeredInLobby).toBe(offeredInCall);
+        expect(offeredInLobby).toBe(supported);
+      }
     });
   });
 });
