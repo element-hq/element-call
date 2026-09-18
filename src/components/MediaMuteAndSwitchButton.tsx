@@ -21,6 +21,7 @@ import {
   MenuItem,
   MenuTitle,
   RadioInput,
+  Tooltip,
   ToggleMenuItem,
 } from "@vector-im/compound-web";
 import {
@@ -582,19 +583,25 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
       return canRemove(effect) ? (
         <div className={styles.effectTileWrap} key={effect.id}>
           {tile}
-          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,
-              jsx-a11y/no-static-element-interactions --
-              Deliberately not a control: aria-hidden, so assistive technology
-              never meets it, and the keyboard reaches the same action through
-              Delete on the tile. A role and a tab stop here would add a stop
-              the menu's arrow keys know nothing about. */}
-          <span
-            aria-hidden
-            className={styles.effectRemove}
-            onClick={(): void => onRemoveBackgroundEffect?.(effect.id)}
-          >
-            <CloseIcon width={16} height={16} />
-          </span>
+          {/* The cross carries no words, so hovering it names what it does.
+              Interactive as far as the tooltip is concerned — that keeps it
+              from wrapping the cross in a tab stop of its own, which is the
+              one thing this must not grow. */}
+          <Tooltip label={t("action.remove")}>
+            {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,
+                jsx-a11y/no-static-element-interactions --
+                Deliberately not a control: aria-hidden, so assistive technology
+                never meets it, and the keyboard reaches the same action through
+                Delete on the tile. A role and a tab stop here would add a stop
+                the menu's arrow keys know nothing about. */}
+            <span
+              aria-hidden
+              className={styles.effectRemove}
+              onClick={(): void => onRemoveBackgroundEffect?.(effect.id)}
+            >
+              <CloseIcon width={20} height={20} />
+            </span>
+          </Tooltip>
         </div>
       ) : (
         tile

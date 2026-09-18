@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { fn, userEvent, waitFor, within, expect } from "storybook/test";
 import { useEffect, useState, type FC, type JSX, type ReactNode } from "react";
+import { TooltipProvider } from "@vector-im/compound-web";
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { MediaMuteAndSwitchButton } from "./MediaMuteAndSwitchButton";
@@ -105,14 +106,18 @@ const WithACallArea: FC<{ children: ReactNode }> = ({ children }) => {
 const meta = {
   component: MediaMuteAndSwitchButton,
   decorators: [
+    // The app puts one of these over everything; the remove cross needs it to
+    // be able to name itself.
     (Story): JSX.Element => (
-      <MediaDevicesContext value={mediaDevices}>
-        <WithACallArea>
-          <WithAMicrophone>
-            <Story />
-          </WithAMicrophone>
-        </WithACallArea>
-      </MediaDevicesContext>
+      <TooltipProvider>
+        <MediaDevicesContext value={mediaDevices}>
+          <WithACallArea>
+            <WithAMicrophone>
+              <Story />
+            </WithAMicrophone>
+          </WithACallArea>
+        </MediaDevicesContext>
+      </TooltipProvider>
     ),
   ],
 } satisfies Meta<typeof MediaMuteAndSwitchButton>;
@@ -992,6 +997,42 @@ export const AddedBackgroundsCanBeRemoved: Story = {
     await userEvent.keyboard("{Delete}");
     await expect(args.onRemoveBackgroundEffect).toHaveBeenCalledWith(
       "added:two",
+    );
+
+    // The cross the design drew: critical from the moment it is visible,
+    // rather than only once the pointer is on it, and sitting over the tile's
+    // top-right corner rather than inside it.
+    const wrap = other.closest(`.${styles.effectTileWrap}`)!;
+    await userEvent.hover(wrap);
+    const cross = wrap.querySelector<HTMLElement>(`.${styles.effectRemove}`)!;
+    // Read the token the way the browser will, so the comparison is against
+    // the colour itself and not against how the value happens to be spelled.
+    const token = (name: string): string => {
+      const probe = document.createElement("span");
+      probe.style.color = `var(${name})`;
+      cross.append(probe);
+      const value = getComputedStyle(probe).color;
+      probe.remove();
+      return value;
+    };
+    const rest = getComputedStyle(cross);
+    await expect(rest.color).toBe(token("--cpd-color-icon-critical-primary"));
+    const tile = other.getBoundingClientRect();
+    const box = cross.getBoundingClientRect();
+    await expect(box.right).toBeGreaterThan(tile.right);
+    await expect(box.top).toBeLessThan(tile.top);
+
+    // And it names itself once the pointer is on it. The ground turning
+    // critical under the pointer is not asserted here: a story drives the
+    // pointer with synthetic events, which never raise CSS hover — that one is
+    // measured against the design with a real pointer instead.
+    await userEvent.hover(cross);
+    await waitFor(async () =>
+      expect(
+        [...document.body.querySelectorAll("div")].some(
+          (d) => d.textContent === "Remove" && d.offsetParent !== null,
+        ),
+      ).toBe(true),
     );
   },
 };

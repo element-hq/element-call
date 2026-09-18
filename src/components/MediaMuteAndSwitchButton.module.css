@@ -330,27 +330,34 @@ Please see LICENSE in the repository root for full details.
      tile, so the one destructive action lived where the ordinary one does. */
   inset-block-start: 0;
   inset-inline-end: 0;
-  translate: 30% -30%;
+  /* It overhangs the corner by about a fifth of itself, as the design draws
+     it: enough to read as sitting on the tile rather than in it, little
+     enough that it never reaches the tile beside it. */
+  translate: 20% -20%;
   display: none;
   align-items: center;
   justify-content: center;
-  inline-size: 22px;
-  block-size: 22px;
+  inline-size: 28px;
+  block-size: 28px;
   border-radius: 50%;
   background: var(--cpd-color-bg-canvas-default);
-  color: var(--cpd-color-icon-primary);
-  box-shadow: 0 0 0 var(--cpd-border-width-1)
-    var(--cpd-color-border-interactive-secondary);
+  /* Red at rest, not only under the pointer. The design says what the button
+     does before you are on it, and the ground carries the hover instead. */
+  color: var(--cpd-color-icon-critical-primary);
+  /* Raised off the tile rather than outlined against it — Compound's own value
+     for a small raised surface, there being no shadow token. In a dark theme
+     it falls on a near-black ground and reads as nothing, which is how the
+     design draws it there too. */
+  box-shadow: 0 1.2px 2.4px 0 rgb(0 0 0 / 15%);
   cursor: pointer;
 }
 
-/* Red under the pointer: the corner separates it from choosing the tile, and
-   this says what it will do once you are there. */
+/* Under the pointer the ground turns critical and the shadow gives way to a
+   ring, so the button reads as pressable and as destructive at once. */
 .effectRemove:hover {
-  background: var(--cpd-color-bg-critical-subtle);
-  color: var(--cpd-color-icon-critical-primary);
+  background: var(--cpd-color-bg-critical-subtle-hovered);
   box-shadow: 0 0 0 var(--cpd-border-width-1)
-    var(--cpd-color-border-critical-primary);
+    var(--cpd-color-border-critical-subtle);
 }
 
 .effectGrid .effectTileWrap:hover .effectRemove,
