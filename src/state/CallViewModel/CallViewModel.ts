@@ -95,6 +95,7 @@ import {
   layoutShallowEquals,
   type Alignment,
   type GridLayoutMedia,
+  type GridMediaViewModel,
   type Layout,
   type LayoutMedia,
   type OneOnOneDesktopLayoutMedia,
@@ -162,6 +163,10 @@ import {
   createRingingMedia,
   type RingingMediaViewModel,
 } from "../media/RingingMediaViewModel.ts";
+import {
+  createUnknownParticipantMedia,
+  type UnknownParticipantMediaViewModel,
+} from "../media/UnknownParticipantMediaViewModel.ts";
 import { type GridTileViewModel } from "../TileViewModel.ts";
 
 //TODO
@@ -875,6 +880,61 @@ export function createCallViewModel$(
     ),
   );
 
+  /**
+   * Media for LiveKit participants that cannot be mapped to any MatrixRTC
+   * membership. MSC4143 asks us to surface these rather than ignore them, as
+   * they can signal an eavesdropping or impersonation attack.
+   *
+   * Participants are matched to memberships by identity alone rather than per
+   * transport, since a member legitimately shows up as a subscribe-only
+   * participant on every focus other than the one they publish to.
+   */
+  const unknownParticipantMedia$ = scope.behavior<
+    UnknownParticipantMediaViewModel[]
+  >(
+    combineLatest([
+      memberships$,
+      connectionManager.connectionManagerData$,
+    ]).pipe(
+      // Memberships and connections derive from the same epoch of session
+      // state; comparing them across epochs would flag members whose
+      // connection hasn't caught up yet.
+      filter(([memberships, data]) => memberships.epoch === data.epoch),
+      map(([memberships, data]) => {
+        const knownIdentities = new Set(
+          memberships.value.map((m) => m.rtcBackendIdentity),
+        );
+        return data.value.getConnections().flatMap((connection) =>
+          data.value
+            .getParticipantsForTransport(connection.transport)
+            .filter((p) => !knownIdentities.has(p.identity))
+            .map((p) => ({
+              focusUrl: connection.transport.livekit_service_url,
+              identity: p.identity,
+            })),
+        );
+      }),
+      generateItems(
+        "CallViewModel unknownParticipantMedia$",
+        function* (unknownParticipants) {
+          for (const { focusUrl, identity } of unknownParticipants)
+            yield { keys: [focusUrl, identity], data: undefined };
+        },
+        (_scope, _data$, focusUrl, identity) => {
+          logger.warn(
+            `LiveKit participant ${identity} on ${focusUrl} matches no MatrixRTC membership`,
+          );
+          return createUnknownParticipantMedia({
+            id: `unknown:${focusUrl}:${identity}`,
+            rtcBackendIdentity: identity,
+            focusUrl,
+          });
+        },
+      ),
+    ),
+    [],
+  );
+
   const ringingMedia$ = scope.behavior<RingingMediaViewModel | null>(
     ringAttempts$.pipe(
       switchMap(({ intent, recipient, outcome$ }) =>
@@ -1021,21 +1081,29 @@ export function createCallViewModel$(
     ),
   );
 
-  const grid$ = scope.behavior<UserMediaViewModel[]>(
-    userMedia$.pipe(
-      switchMap((mediaItems) => {
-        const bins = mediaItems.map((m) =>
-          m.bin$.pipe(map((bin) => [m, bin] as const)),
-        );
-        // Sort the media by bin order and generate a tile for each one
-        return bins.length === 0
-          ? of([])
-          : combineLatest(bins, (...bins) =>
-              bins.sort(([, bin1], [, bin2]) => bin1 - bin2).map(([m]) => m),
-            );
-      }),
-      distinctUntilChanged(shallowArrayEquals),
-    ),
+  const sortedUserMedia$: Observable<UserMediaViewModel[]> = userMedia$.pipe(
+    switchMap((mediaItems) => {
+      const bins = mediaItems.map((m) =>
+        m.bin$.pipe(map((bin) => [m, bin] as const)),
+      );
+      // Sort the media by bin order and generate a tile for each one
+      return bins.length === 0
+        ? of([])
+        : combineLatest(bins, (...bins) =>
+            bins.sort(([, bin1], [, bin2]) => bin1 - bin2).map(([m]) => m),
+          );
+    }),
+  );
+
+  const grid$ = scope.behavior<GridMediaViewModel[]>(
+    combineLatest(
+      [sortedUserMedia$, unknownParticipantMedia$],
+      // Unknown participants have no media to sort by, so they go last
+      (userMedia, unknownParticipants) => [
+        ...userMedia,
+        ...unknownParticipants,
+      ],
+    ).pipe(distinctUntilChanged(shallowArrayEquals)),
   );
 
   /**
@@ -1195,10 +1263,15 @@ export function createCallViewModel$(
     local: LocalUserMediaViewModel;
     remote: UserMediaViewModel | RingingMediaViewModel;
   } | null> = scope.behavior(
-    combineLatest([userMedia$, screenShares$]).pipe(
-      switchMap(([userMedia, screenShares]) => {
-        // One-on-one layout only supports 2 user media, no screen shares
-        if (userMedia.length <= 2 && screenShares.length === 0) {
+    combineLatest([userMedia$, screenShares$, unknownParticipantMedia$]).pipe(
+      switchMap(([userMedia, screenShares, unknownParticipants]) => {
+        // One-on-one layout only supports 2 user media, no screen shares, and
+        // must never hide an unknown participant
+        if (
+          userMedia.length <= 2 &&
+          screenShares.length === 0 &&
+          unknownParticipants.length === 0
+        ) {
           const local = userMedia.find(
             (vm): vm is WrappedUserMediaViewModel & LocalUserMediaViewModel =>
               vm.type === "user" && vm.local,

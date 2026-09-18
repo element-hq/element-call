@@ -32,6 +32,7 @@ import {
   createRingingMedia,
   type RingingMediaViewModel,
 } from "../state/media/RingingMediaViewModel";
+import { createUnknownParticipantMedia } from "../state/media/UnknownParticipantMediaViewModel";
 
 global.IntersectionObserver = class MockIntersectionObserver {
   public observe(): void {}
@@ -164,4 +165,34 @@ test("GridTile displays ringing media", async () => {
   // Alice declines the call
   act(() => pickupState$.next("decline"));
   screen.getByText("Call ended");
+});
+
+test("GridTile displays an unknown participant", async () => {
+  const vm = createUnknownParticipantMedia({
+    id: "unknown:https://rtc-example.org:rogue",
+    rtcBackendIdentity: "rogue",
+    focusUrl: "https://rtc-example.org",
+  });
+
+  const { container } = render(
+    <ReactionsSenderProvider vm={callVm} rtcSession={fakeRtcSession}>
+      <GridTile
+        vm={new GridTileViewModel(constant(vm))}
+        onOpenProfile={() => {}}
+        targetWidth={300}
+        targetHeight={200}
+        showSpeakingIndicators
+        showNameTags
+        showRingingStatus
+        showOutline
+        focusable
+      />
+    </ReactionsSenderProvider>,
+  );
+  expect(await axe(container)).toHaveNoViolations();
+  // The tile is labelled as unknown rather than after its LiveKit identity
+  screen.getByText("Unknown participant");
+  expect(screen.queryByText("rogue")).toBeNull();
+  // There is no user to show an avatar for
+  expect(container.querySelector("[data-style]")).toBeNull();
 });

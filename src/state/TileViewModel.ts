@@ -10,7 +10,13 @@ import { BehaviorSubject } from "rxjs";
 import { type Behavior } from "./Behavior";
 import { type MediaViewModel } from "./media/MediaViewModel";
 import { type RingingMediaViewModel } from "./media/RingingMediaViewModel";
+import { type UnknownParticipantMediaViewModel } from "./media/UnknownParticipantMediaViewModel";
 import { type UserMediaViewModel } from "./media/UserMediaViewModel";
+
+export type GridTileMediaViewModel =
+  | UserMediaViewModel
+  | RingingMediaViewModel
+  | UnknownParticipantMediaViewModel;
 
 let nextId = 0;
 function createId(): string {
@@ -23,9 +29,7 @@ export class GridTileViewModel {
   public readonly showOutline$: Behavior<boolean> = this._showOutline$;
 
   public constructor(
-    public readonly media$: Behavior<
-      UserMediaViewModel | RingingMediaViewModel
-    >,
+    public readonly media$: Behavior<GridTileMediaViewModel>,
   ) {}
 
   public setShowOutline(value: boolean): void {
