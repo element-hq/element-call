@@ -888,6 +888,133 @@ export const BackgroundImageChosen: Story = {
 };
 
 /**
+ * Where the browser runs effects the slow way. They are offered and they work
+ * — the cost is smoothness, and the reason to pay it is privacy, so the user
+ * is told rather than refused.
+ */
+export const BackgroundEffectsSlowInThisBrowser: Story = {
+  args: {
+    ...BackgroundEffects.args,
+    backgroundEffectNotice:
+      "This browser runs background effects slowly, so other people may see your video stutter.",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
+    const body = within(document.body);
+
+    // Said, not enforced: everything is still choosable.
+    const blur = await body.findByRole("menuitemradio", { name: "Blur" });
+    await expect(blur).not.toHaveAttribute("aria-disabled", "true");
+    await expect(
+      await body.findByText(/runs background effects slowly/),
+    ).toBeInTheDocument();
+  },
+};
+
+/**
+ * The sequence a user sees on the first effect of a session.
+ *
+ * The tile that was pressed spins where its tick will go, until a frame has
+ * actually come out of the pipeline: about three seconds of building, and on
+ * Safari another twelve to fifteen while the page holds still. The spinner
+ * turns by rotating, which a browser composites, so it keeps moving through a
+ * pause that has stopped everything else.
+ *
+ * On the tile rather than in a message, because once the assets are cached the
+ * wait is a fraction of a second, and a message that appears and vanishes that
+ * fast is noise. A spinner that brief just looks like a control responding.
+ *
+ * Shortened here to a second and a half. Later effects skip it entirely:
+ * switching a built pipeline costs nothing.
+ */
+export const BackgroundEffectsSettling: Story = {
+  args: {
+    ...BackgroundEffects.args,
+    backgroundEffectNotice:
+      "This browser runs background effects slowly, so other people may see your video stutter.",
+  },
+  render: function Settling(args): JSX.Element {
+    const [settling, setSettling] = useState(false);
+    const [built, setBuilt] = useState(false);
+    const [selected, setSelected] = useState(args.selectedBackgroundEffect);
+    return (
+      <MediaMuteAndSwitchButton
+        {...args}
+        selectedBackgroundEffect={selected}
+        backgroundEffectSettling={settling}
+        onSelectBackgroundEffect={(id): void => {
+          args.onSelectBackgroundEffect?.(id);
+          setSelected(id);
+          if (built || id === "none") return;
+          setSettling(true);
+          setBuilt(true);
+          window.setTimeout(() => setSettling(false), 1500);
+        }}
+      />
+    );
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
+    const body = within(document.body);
+
+    // What the browser costs stays put throughout — it is true before, during
+    // and after.
+    await expect(
+      await body.findByText(/runs background effects slowly/),
+    ).toBeInTheDocument();
+
+    const blur = await body.findByRole("menuitemradio", { name: "Blur" });
+    await userEvent.click(blur);
+
+    // The pressed tile is busy, and has no tick yet.
+    await waitFor(async () =>
+      expect(blur.querySelector(`.${styles.effectBusy}`)).toBeInTheDocument(),
+    );
+    await expect(
+      await body.findByText(/runs background effects slowly/),
+    ).toBeInTheDocument();
+
+    // Then the tick, once a frame has come out.
+    await waitFor(
+      async () =>
+        expect(
+          blur.querySelector(`.${styles.effectBusy}`),
+        ).not.toBeInTheDocument(),
+      { timeout: 5000 },
+    );
+    await expect(blur).toHaveAttribute("aria-checked", "true");
+  },
+};
+
+/**
+ * A refusal and a notice at once. The refusal is about what the user just did
+ * and takes the space; the notice is about the browser and will still be true
+ * the next time they open the menu.
+ */
+export const BackgroundImageRefusedOverANotice: Story = {
+  args: {
+    ...BackgroundEffects.args,
+    backgroundEffectNotice:
+      "This browser runs background effects slowly, so other people may see your video stutter.",
+    backgroundEffectError: "That file is not an image.",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
+    const body = within(document.body);
+
+    await expect(
+      await body.findByText("That file is not an image."),
+    ).toBeInTheDocument();
+    await expect(
+      body.queryByText(/runs background effects slowly/),
+    ).not.toBeInTheDocument();
+  },
+};
+
+/**
  * Where the browser or device cannot run background processing. The section
  * keeps its shape and its tiles, and none of them can be chosen.
  */

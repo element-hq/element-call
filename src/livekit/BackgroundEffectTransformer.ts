@@ -54,6 +54,29 @@ const wasmFileset: WasmFileset = {
  * only the SIMD ones.
  */
 export class BackgroundEffectTransformer extends BackgroundTransformer {
+  /**
+   * Called once, when a frame has actually come out of the pipeline.
+   *
+   * The promises say nothing useful about when that happens. Measured on four
+   * devices, attaching resolves in about three seconds and switching in none
+   * at all, and then a browser on the slow path spends another twelve to
+   * fifteen seconds before the first frame appears. Only the frame itself
+   * marks the end of the wait.
+   */
+  public onFirstFrame: (() => void) | undefined;
+  private produced = false;
+
+  public override async transform(
+    frame: VideoFrame,
+    controller: TransformStreamDefaultController<VideoFrame>,
+  ): Promise<void> {
+    await super.transform(frame, controller);
+    if (!this.produced) {
+      this.produced = true;
+      this.onFirstFrame?.();
+    }
+  }
+
   public async init({
     outputCanvas,
     inputElement: inputVideo,

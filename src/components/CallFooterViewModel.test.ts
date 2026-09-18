@@ -252,12 +252,16 @@ describe("createCallFooterViewModel", () => {
       );
     }
 
-    it("offers nothing the pipeline would refuse to honour", () => {
+    // A phone is offered them, and that is the point of asking the browser
+    // rather than the platform: measured, a phone on the fast path held 99% of
+    // its frame rate while a desktop on the slow one held 73%, so refusing by
+    // platform refused the better device and allowed the worse.
+    it("offers them on a phone whose browser can run them", () => {
       sdkSupportMock.mockReturnValue(true);
       const vm = lobbyFor("ios");
 
-      expect(vm.selectBackgroundEffect$.value).toBeUndefined();
-      expect(vm.toggleBlur$.value).toBeUndefined();
+      expect(vm.selectBackgroundEffect$.value).toBeDefined();
+      expect(vm.toggleBlur$.value).toBeDefined();
     });
 
     it("offers them where the pipeline will honour them", () => {

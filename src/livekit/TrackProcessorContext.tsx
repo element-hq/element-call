@@ -77,6 +77,30 @@ export interface AddedBackgrounds {
   removeBackground: (id: string) => Promise<void>;
 }
 
+/** What the camera menu needs to know about the pipeline itself. */
+export interface BackgroundProcessing {
+  /**
+   * Whether the pipeline is still being built. Only ever true once a session,
+   * and only the first time an effect is chosen: building it fetches, compiles
+   * and sets up the segmenter, which on some browsers holds the page still for
+   * long enough that saying nothing looks like a crash.
+   */
+  settling: boolean;
+}
+
+const BackgroundProcessingContext = createContext<
+  BackgroundProcessing | undefined
+>(undefined);
+
+export function useBackgroundProcessing(): BackgroundProcessing {
+  const value = use(BackgroundProcessingContext);
+  if (value === undefined)
+    throw new Error(
+      "useBackgroundProcessing must be used within a ProcessorProvider",
+    );
+  return value;
+}
+
 const AddedBackgroundsContext = createContext<AddedBackgrounds | undefined>(
   undefined,
 );
@@ -207,13 +231,13 @@ export const ProcessorProvider: FC<Props> = ({ children }) => {
   // One pipeline for the lifetime of the app, so the pre-join preview and the
   // call share it and its priming frame is spent before anything is published
   // (D4).
-  const pipeline = useMemo(
-    () =>
-      new BackgroundProcessorWrapper(
-        new BackgroundEffectTransformer({ backgroundDisabled: true }),
-        "background-effect",
-      ),
+  const transformer = useMemo(
+    () => new BackgroundEffectTransformer({ backgroundDisabled: true }),
     [],
+  );
+  const pipeline = useMemo(
+    () => new BackgroundProcessorWrapper(transformer, "background-effect"),
+    [transformer],
   );
 
   // The backgrounds this device keeps. Their URLs live as long as the provider
@@ -284,6 +308,20 @@ export const ProcessorProvider: FC<Props> = ({ children }) => {
       .catch((e) => logger.warn("Failed to switch background effect", e));
   }, [pipeline, supported, attached, options]);
 
+  // The wait runs from deciding to attach until a frame actually comes out,
+  // which is the only thing that marks the end of it: the promises resolve
+  // while the segmenter is still being built, and on the slow path the page
+  // then holds still for another twelve to fifteen seconds. Bounded by the
+  // frame rather than by a timer, so it cannot end early and claim to be ready.
+  const [producedAFrame, setProducedAFrame] = useState(false);
+  useEffect(() => {
+    transformer.onFirstFrame = (): void => setProducedAFrame(true);
+    return (): void => {
+      transformer.onFirstFrame = undefined;
+    };
+  }, [transformer]);
+  const settling = supported === true && attached && !producedAFrame;
+
   // This is the actual state exposed through the context
   const processorState = useMemo(
     () => ({
@@ -298,10 +336,14 @@ export const ProcessorProvider: FC<Props> = ({ children }) => {
     [added, addBackground, removeBackground],
   );
 
+  const backgroundProcessing = useMemo(() => ({ settling }), [settling]);
+
   return (
     <ProcessorContext value={processorState}>
       <AddedBackgroundsContext value={addedBackgrounds}>
-        {children}
+        <BackgroundProcessingContext value={backgroundProcessing}>
+          {children}
+        </BackgroundProcessingContext>
       </AddedBackgroundsContext>
     </ProcessorContext>
   );

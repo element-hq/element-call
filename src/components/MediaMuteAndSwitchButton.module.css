@@ -387,3 +387,13 @@ Please see LICENSE in the repository root for full details.
      with a gap of its own, which makes up the difference above. */
   padding: var(--cpd-space-3x) var(--cpd-space-4x) 0;
 }
+
+/* The spinner stands exactly where the tick will, so the tile does not shift
+   when one becomes the other. */
+.effectBusy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 20px;
+  block-size: 20px;
+}

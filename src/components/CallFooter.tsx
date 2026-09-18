@@ -45,7 +45,11 @@ import {
   maxAddedBackgrounds,
   UnusableImage,
 } from "../livekit/backgroundImages";
-import { useAddedBackgrounds } from "../livekit/TrackProcessorContext";
+import {
+  useAddedBackgrounds,
+  useBackgroundProcessing,
+} from "../livekit/TrackProcessorContext";
+import { usesFallbackProcessing } from "../livekit/backgroundProcessing";
 import { type Behavior } from "../state/Behavior";
 import { type ViewModel } from "../state/ViewModel";
 import { useBehavior } from "../useBehavior";
@@ -186,6 +190,20 @@ export const CallFooter: FC<FooterProps> = ({
   const selectBackgroundEffect = useBehavior(vm.selectBackgroundEffect$);
   const beforeJoining = useBehavior(vm.beforeJoining$);
   const { added, addBackground, removeBackground } = useAddedBackgrounds();
+  const { settling } = useBackgroundProcessing();
+
+  // Said, not decided. Where only the slow path exists the effect still works,
+  // it costs frames — and the user is the only one who knows whether they would
+  // rather show the room they are sitting in. It stays put while the pipeline
+  // is being built: that wait is shown on the tile that was pressed, where a
+  // message that came and went would only flash once the assets are cached.
+  const backgroundEffectNotice = useMemo(
+    () =>
+      usesFallbackProcessing()
+        ? t("background_effects.slow_in_this_browser")
+        : undefined,
+    [t],
+  );
   const [backgroundEffectError, setBackgroundEffectError] = useState<
     string | undefined
   >(undefined);
@@ -343,6 +361,8 @@ export const CallFooter: FC<FooterProps> = ({
         }
         onRemoveBackgroundEffect={onRemoveBackgroundEffect}
         backgroundEffectError={backgroundEffectError}
+        backgroundEffectNotice={backgroundEffectNotice}
+        backgroundEffectSettling={settling}
       />,
     );
   } else {

@@ -19,6 +19,7 @@ import {
   Button,
   Menu,
   MenuItem,
+  InlineSpinner,
   MenuTitle,
   RadioInput,
   Tooltip,
@@ -128,6 +129,20 @@ export interface MediaMuteAndSwitchButtonProps {
    */
   backgroundEffectError?: string;
   /**
+   * What the user should know before choosing, if anything — that effects run
+   * slowly in this browser, say. Told, not decided for them: the cost is
+   * smoothness and the reason to pay it is privacy, and only they know which
+   * they would rather have.
+   */
+  backgroundEffectNotice?: string;
+  /**
+   * Whether the pipeline is still being built, which happens once a session on
+   * the first effect chosen. Shown on that effect's own tile, in place of its
+   * tick, rather than as a message: it belongs to what the user just pressed,
+   * and where the wait is short a message would only flash.
+   */
+  backgroundEffectSettling?: boolean;
+  /**
    * For any toggle and option this method will be called.
    * So toggles need to be implemented by listening here and setting the right toggle item to `enabled`
    */
@@ -180,6 +195,8 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   onAddBackgroundImage,
   onRemoveBackgroundEffect,
   backgroundEffectError,
+  backgroundEffectNotice,
+  backgroundEffectSettling,
   onSelect,
 }) => {
   // Which device we have asked for but not yet been given. Carries the kind as
@@ -542,7 +559,21 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
                   alt=""
                 />
               )}
-              {selectedBackgroundEffect === effect.id ? (
+              {selectedBackgroundEffect === effect.id &&
+              backgroundEffectSettling ? (
+                // Before the tick, on the tile that was pressed: the feedback
+                // belongs to the thing the user acted on. It spins by rotating,
+                // which a browser composites, so it keeps turning through the
+                // pause where the page itself has stopped — the difference
+                // between looking busy and looking crashed.
+                <span
+                  className={classNames(styles.effectCheck, styles.effectBusy, {
+                    [styles.effectCheckOnImage]: effect.kind === "image",
+                  })}
+                >
+                  <InlineSpinner size={20} />
+                </span>
+              ) : selectedBackgroundEffect === effect.id ? (
                 // The tick stands where the glyph would, and on a picture it
                 // carries its own ground so it reads against whatever is behind
                 // it.
@@ -777,6 +808,16 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
                 title={backgroundEffectError}
                 onClose={(): void => setRefusalSeen(true)}
               />
+            </div>
+          )}
+        {backgroundEffectError === undefined &&
+          backgroundEffectNotice !== undefined && (
+            // Never both at once: a refusal is about what the user just did and
+            // wins the space, where this is about the browser and will still be
+            // true next time. Not dismissible for the same reason — there is
+            // nothing to dismiss, only something to know.
+            <div role="none" className={styles.effectError}>
+              <Alert type="info" title={backgroundEffectNotice} />
             </div>
           )}
         {toggles.length > 0 && <hr />}
