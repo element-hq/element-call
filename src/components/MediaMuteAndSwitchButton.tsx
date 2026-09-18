@@ -25,11 +25,11 @@ import { useTranslation } from "react-i18next";
 
 import styles from "./MediaMuteAndSwitchButton.module.css";
 import { MicButton, VideoButton } from "../button";
-import { type DeviceLabel } from "../state/MediaDevices";
+import { type AudioInputDeviceLabel } from "../state/MediaDevices";
 import { useMediaDevices } from "../MediaDevicesContext";
 
 export interface MenuOptions {
-  label: DeviceLabel;
+  label: AudioInputDeviceLabel;
   id: string;
 }
 
@@ -179,6 +179,9 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
               break;
             case "number":
               labelText = numberedLabel(label.number);
+              break;
+            case "default":
+              labelText = t("settings.devices.default");
               break;
           }
           return (
