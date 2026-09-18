@@ -84,7 +84,7 @@ function renderLobbyView(
   const hideHeader = withAppBar ? true : false;
   const lobbyView = (
     <LobbyView
-      client={mockClient}
+      developerSettingsClient={mockClient}
       matrixInfo={matrixInfo}
       muteStates={muteStates}
       onEnter={() => {}}

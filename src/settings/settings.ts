@@ -11,7 +11,10 @@ import { BehaviorSubject } from "rxjs";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { type Behavior } from "../state/Behavior";
 import { useBehavior } from "../useBehavior";
-import { MatrixRTCMode } from "../config/ConfigOptions";
+import {
+  CallViewModelImplementation,
+  MatrixRTCMode,
+} from "../config/ConfigOptions";
 
 export class Setting<T> {
   public constructor(
@@ -152,6 +155,18 @@ export const matrixRTCMode = new Setting<MatrixRTCMode>(
   "matrix-rtc-mode",
   MatrixRTCMode.Compatibility,
 );
+
+/**
+ * Which implementation carries the call (see
+ * {@link CallViewModelImplementation}). Sampled when the call view mounts;
+ * `config.json` may pin it. Defaults to matrix-js-sdk until the crate path
+ * has passed its gate.
+ */
+export const callViewModelImplementation =
+  new Setting<CallViewModelImplementation>(
+    "call-view-model-implementation",
+    CallViewModelImplementation.MatrixJsSdk,
+  );
 
 export const customLivekitUrl = new Setting<string | null>(
   "custom-livekit-url",

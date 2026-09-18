@@ -37,7 +37,6 @@ import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 
 import { type Behavior } from "../Behavior";
 import { type Epoch, type ObservableScope } from "../ObservableScope";
-import { type RoomMemberMap } from "./remoteMembers/MatrixMemberMetadata";
 
 export type AutoLeaveReason = "allOthersLeft" | "timeout" | "decline";
 
@@ -69,24 +68,42 @@ export function createSentCallNotification$(
   return sentCallNotification$;
 }
 
+/** A received `org.matrix.msc4310.rtc.decline`, as far as ringing cares. */
+export interface DeclineEvent {
+  sender: string;
+  /** The `m.relates_to` of the event, when it has one. */
+  relatesTo: { relType?: string; eventId?: string } | undefined;
+}
+
 export function createReceivedDecline$(
   matrixRoom: MatrixRoom,
-): Observable<Parameters<EventTimelineSetHandlerMap[RoomEvent.Timeline]>> {
+): Observable<DeclineEvent> {
   return (
     fromEvent(matrixRoom, RoomEvent.Timeline) as Observable<
       Parameters<EventTimelineSetHandlerMap[RoomEvent.Timeline]>
     >
-  ).pipe(filter(([event]) => event.getType() === EventType.RTCDecline));
+  ).pipe(
+    filter(([event]) => event.getType() === EventType.RTCDecline),
+    map(([event]) => {
+      const relation = event.getRelation();
+      return {
+        sender: event.getSender() ?? "",
+        relatesTo: relation
+          ? { relType: relation.rel_type, eventId: relation.event_id }
+          : undefined,
+      };
+    }),
+  );
 }
 
 export interface Props {
   scope: ObservableScope;
-  memberships$: Behavior<Epoch<CallMembership[]>>;
-  matrixRoomMembers$: Behavior<RoomMemberMap>;
+  /** The call's members; only who they are matters here. */
+  memberships$: Behavior<Epoch<Pick<CallMembership, "userId">[]>>;
+  /** The room's members; only who they are matters here. */
+  matrixRoomMembers$: Behavior<ReadonlyMap<string, unknown>>;
   sentCallNotification$: Observable<CallNotificationWrapper | null>;
-  receivedDecline$: Observable<
-    Parameters<EventTimelineSetHandlerMap[RoomEvent.Timeline]>
-  >;
+  receivedDecline$: Observable<DeclineEvent>;
   options: { waitForCallPickup?: boolean; autoLeaveWhenOthersLeft?: boolean };
   localUser: { deviceId: string; userId: string };
 }
@@ -147,10 +164,10 @@ export function createCallNotificationLifecycle$({
         // Call is declined when we receive a decline event
         const decline$ = receivedDecline$.pipe(
           filter(
-            ([event]) =>
-              event.getRelation()?.rel_type === "m.reference" &&
-              event.getRelation()?.event_id === notificationEvent.event_id &&
-              event.getSender() === recipient,
+            (event) =>
+              event.relatesTo?.relType === "m.reference" &&
+              event.relatesTo.eventId === notificationEvent.event_id &&
+              event.sender === recipient,
           ),
           map(() => "decline" as const),
         );

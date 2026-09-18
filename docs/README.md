@@ -9,6 +9,7 @@ This folder contains documentation for setup, usage, and development of Element 
 - [MatrixRTC modes](./matrix_rtc_modes.md)
 - [Self-Hosting](./self_hosting.md)
 - [Developing with linked packages](./linking.md)
+- [The MatrixRTC SDK package](./matrix_rtc_sdk.md) (registry token, CI, local crate)
 
 ### Writing code for Element Call (agent-readable conventions)
 

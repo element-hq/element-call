@@ -26,6 +26,12 @@ export default {
     // This is a shell built-in.
     "printf",
   ],
+  ignore: [
+    // The host-facing driver seam, landed ahead of its consumers (the
+    // `CallParticipation` layer and the hosts, see element-call-oxidation-plan.md)
+    "src/driver/**",
+    "src/state/rtc/**",
+  ],
   ignoreFiles: [
     "scripts/.pnpmfile.cjs",
     // Deliberately added prior to any component or business logic

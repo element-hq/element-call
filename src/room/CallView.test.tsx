@@ -11,6 +11,7 @@ Please see LICENSE in the repository root for full details.
 
 import {
   beforeEach,
+  describe,
   expect,
   type MockedFunction,
   onTestFinished,
@@ -64,6 +65,15 @@ import { MatrixRTCTransportMissingError } from "../utils/errors";
 import { ProcessorProvider } from "../livekit/TrackProcessorContext";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { constant } from "../state/Behavior";
+import {
+  type MatrixDrivers,
+  MatrixDriverProvider,
+} from "../driver/MatrixDriverContext";
+import { MockRtcMatrixDriver } from "../driver/MockRtcMatrixDriver";
+import { MockElementCallMatrixClientDriver } from "../driver/MockElementCallMatrixClientDriver";
+import { initMatrixRtcSdkForTests } from "../utils/test-matrix-rtc";
+import { callViewModelImplementation } from "../settings/settings";
+import { CallViewModelImplementation } from "../config/ConfigOptions";
 
 vi.mock("../soundUtils");
 vi.mock("../useAudioContext");
@@ -138,6 +148,23 @@ beforeEach(() => {
   );
 });
 
+/** Mock drivers over the same room and identity as the mocked session. */
+function defaultDrivers(): MatrixDrivers {
+  return {
+    rtcDriver: new MockRtcMatrixDriver({
+      userId: localRtcMember.userId,
+      deviceId: localRtcMember.deviceId,
+      roomId,
+    }),
+    clientDriver: new MockElementCallMatrixClientDriver({
+      userId: localRtcMember.userId,
+      deviceId: localRtcMember.deviceId,
+      roomId,
+      roomInfo: { joinRule: "invite" },
+    }),
+  };
+}
+
 function createCallView(
   hostBridge: HostBridge,
   joined = true,
@@ -145,6 +172,8 @@ function createCallView(
     withErrorBoundary?: boolean;
     /** Wait for the host to say when to join, rather than joining at once. */
     preload?: boolean;
+    /** The host's drivers, for the matrix-rtc implementation. */
+    drivers?: MatrixDrivers;
   } = {},
 ): {
   rtcSession: MatrixRTCSession;
@@ -194,13 +223,15 @@ function createCallView(
         <TooltipProvider>
           <MediaDevicesContext value={mockMediaDevices({})}>
             <ProcessorProvider>
-              {options.withErrorBoundary ? (
-                <GroupCallErrorBoundary recoveryActionHandler={vi.fn()}>
-                  {callView}
-                </GroupCallErrorBoundary>
-              ) : (
-                callView
-              )}
+              <MatrixDriverProvider value={options.drivers ?? defaultDrivers()}>
+                {options.withErrorBoundary ? (
+                  <GroupCallErrorBoundary recoveryActionHandler={vi.fn()}>
+                    {callView}
+                  </GroupCallErrorBoundary>
+                ) : (
+                  callView
+                )}
+              </MatrixDriverProvider>
             </ProcessorProvider>
           </MediaDevicesContext>
         </TooltipProvider>
@@ -423,4 +454,51 @@ test("user can reconnect after a membership manager error", async () => {
   );
   // In-call controls should be visible again
   await waitFor(() => screen.getByRole("button", { name: "Leave" }));
+});
+
+describe("the call implementation switch", () => {
+  test("matrix-js-sdk carries the call by default: no participation", async () => {
+    createCallView(nullHostBridge);
+    await waitFor(() => expect(ActiveCall).toHaveBeenCalled());
+    expect(
+      vi.mocked(ActiveCall).mock.calls.at(-1)?.[0].rtcParticipationManager,
+    ).toBeNull();
+    expect(window.matrixRtc).toBeUndefined();
+  });
+
+  test("with matrix-rtc selected and drivers provided, the crate carries the call", async () => {
+    await initMatrixRtcSdkForTests();
+    callViewModelImplementation.setValue(CallViewModelImplementation.MatrixRtc);
+    onTestFinished(() =>
+      callViewModelImplementation.setValue(
+        CallViewModelImplementation.MatrixJsSdk,
+      ),
+    );
+    const drivers: MatrixDrivers = {
+      rtcDriver: new MockRtcMatrixDriver({
+        userId: localRtcMember.userId,
+        deviceId: localRtcMember.deviceId,
+        roomId,
+      }),
+      clientDriver: new MockElementCallMatrixClientDriver({
+        userId: localRtcMember.userId,
+        deviceId: localRtcMember.deviceId,
+        roomId,
+      }),
+    };
+    createCallView(nullHostBridge, true, { drivers });
+    await waitFor(() =>
+      expect(
+        vi.mocked(ActiveCall).mock.calls.at(-1)?.[0].rtcParticipationManager,
+      ).not.toBeNull(),
+    );
+    const { rtcParticipationManager } = vi
+      .mocked(ActiveCall)
+      .mock.calls.at(-1)![0];
+    expect(window.matrixRtc?.rtcParticipationManager).toBe(
+      rtcParticipationManager,
+    );
+    // The participation is bound to the drivers' room and identity.
+    expect(rtcParticipationManager?.session$.value.roomId).toBe(roomId);
+  });
 });

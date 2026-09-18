@@ -21,6 +21,8 @@ export enum ErrorCode {
   INSUFFICIENT_CAPACITY_ERROR = "INSUFFICIENT_CAPACITY_ERROR",
   E2EE_NOT_SUPPORTED = "E2EE_NOT_SUPPORTED",
   STICKY_EVENTS_NOT_SUPPORTED = "STICKY_EVENTS_NOT_SUPPORTED",
+  /** The room has no open MatrixRTC slot and the user may not open one. */
+  NO_OPEN_SLOT = "NO_OPEN_SLOT",
   OPEN_ID_ERROR = "OPEN_ID_ERROR",
   NO_MATRIX_2_AUTHORIZATION_SERVICE = "NO_MATRIX_2_0_AUTHORIZATION_SERVICE",
   SFU_ERROR = "SFU_ERROR",
@@ -137,6 +139,20 @@ export class StickyEventsRequiredError extends ElementCallError {
       ErrorCode.STICKY_EVENTS_NOT_SUPPORTED,
       ErrorCategory.CONFIGURATION_ISSUE,
       i18n.t("error.sticky_events_required_description"),
+    );
+  }
+}
+/**
+ * A call needs an open MatrixRTC slot in the room. Nobody has opened one, and
+ * this user lacks the power level to send the slot state event.
+ */
+export class NoOpenSlotError extends ElementCallError {
+  public constructor() {
+    super(
+      i18n.t("error.no_open_slot"),
+      ErrorCode.NO_OPEN_SLOT,
+      ErrorCategory.CONFIGURATION_ISSUE,
+      i18n.t("error.no_open_slot_description"),
     );
   }
 }

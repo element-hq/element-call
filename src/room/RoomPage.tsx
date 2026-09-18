@@ -6,7 +6,14 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, useEffect, useState, type ReactNode, useRef } from "react";
+import {
+  type ComponentProps,
+  type FC,
+  useEffect,
+  useState,
+  type ReactNode,
+  useRef,
+} from "react";
 import { type MatrixError } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { Trans, useTranslation } from "react-i18next";
@@ -16,6 +23,10 @@ import { useClientLegacy } from "../ClientContext";
 import { ErrorPage, FullScreenView, LoadingPage } from "../FullScreenView";
 import { RoomAuthView } from "./RoomAuthView";
 import { CallView } from "./CallView";
+import { type MatrixClient } from "matrix-js-sdk";
+import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
+import { MatrixDriverProvider } from "../driver/MatrixDriverContext";
+import { useJsSdkDrivers } from "../driver/jsSdk/useJsSdkDrivers";
 import { useRoomIdentifier, useUrlParams } from "../UrlParams";
 import { useRegisterPasswordlessUser } from "../auth/useRegisterPasswordlessUser";
 import { HomePage } from "../home/HomePage";
@@ -102,7 +113,7 @@ export const RoomPage: FC = (): ReactNode => {
     switch (groupCallState.kind) {
       case "loaded":
         return (
-          <CallView
+          <LoadedCall
             client={client!}
             rtcSession={groupCallState.rtcSession}
             isPasswordlessUser={passwordlessUser}
@@ -189,4 +200,22 @@ export const RoomPage: FC = (): ReactNode => {
   // TODO: This doesn't belong here, the app routes need to be reworked
   if (!roomIdOrAlias) return <HomePage />;
   return groupCallView();
+};
+
+/**
+ * The call, with the matrix-js-sdk drivers over this page's client provided
+ * for the Rust implementation (see `CallViewModelImplementation`).
+ */
+const LoadedCall: FC<
+  ComponentProps<typeof CallView> & {
+    client: MatrixClient;
+    rtcSession: MatrixRTCSession;
+  }
+> = (props) => {
+  const drivers = useJsSdkDrivers(props.client, props.rtcSession.room);
+  return (
+    <MatrixDriverProvider value={drivers}>
+      <CallView {...props} />
+    </MatrixDriverProvider>
+  );
 };

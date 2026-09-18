@@ -7,25 +7,27 @@ Please see LICENSE in the repository root for full details.
 
 import { render, screen } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
-import { type Room } from "matrix-js-sdk";
 import { axe } from "vitest-axe";
 import { BrowserRouter } from "react-router-dom";
 import userEvent from "@testing-library/user-event";
 
 import { InviteModal } from "./InviteModal";
+import { E2eeType } from "../e2ee/e2eeType";
 
 // Used by copy-to-clipboard
 window.prompt = (): null => null;
 
 test("InviteModal is accessible", async () => {
   const user = userEvent.setup();
-  const room = {
-    roomId: "!a:example.org",
-    name: "Mission Control",
-  } as unknown as Room;
   const onDismiss = vi.fn();
   const { container } = render(
-    <InviteModal room={room} open={true} onDismiss={onDismiss} />,
+    <InviteModal
+      roomId="!a:example.org"
+      roomName="Mission Control"
+      e2eeSystem={{ kind: E2eeType.NONE }}
+      open={true}
+      onDismiss={onDismiss}
+    />,
     { wrapper: BrowserRouter },
   );
 

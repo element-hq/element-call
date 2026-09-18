@@ -45,6 +45,7 @@ import {
   muteAllAudio as muteAllAudioSetting,
   alwaysShowIphoneEarpiece as alwaysShowIphoneEarpieceSetting,
   matrixRTCMode as matrixRTCModeSetting,
+  callViewModelImplementation as callViewModelImplementationSetting,
   customLivekitUrl as customLivekitUrlSetting,
   advancedScreenShare as advancedScreenShareSetting,
   screenShareResolution as screenShareResolutionSetting,
@@ -62,12 +63,17 @@ import {
   type VideoCodec,
   enableExtendedLivekitLogs as enableExtendedLivekitLogsSetting,
 } from "./settings";
-import { MatrixRTCMode } from "../config/ConfigOptions";
+import {
+  CallViewModelImplementation,
+  MatrixRTCMode,
+} from "../config/ConfigOptions";
 import styles from "./DeveloperSettingsTab.module.css";
 import settingsStyles from "./SettingsModal.module.css";
 import { Slider } from "../Slider";
 import { useUrlParams } from "../UrlParams";
 import { getSFUConfigWithOpenID } from "../livekit/openIDSFU";
+import { useOptionalMatrixDrivers } from "../driver/MatrixDriverContext";
+import { ELEMENT_CALL_SLOT_ID } from "../state/rtc/slot";
 import { useBehavior } from "../useBehavior";
 import { type ViewModel } from "../state/ViewModel.ts";
 
@@ -103,7 +109,8 @@ const KeyRotationStatus: FC<{ info: KeyRotationInfo }> = ({ info }) => (
 );
 
 interface Props {
-  client: MatrixClient;
+  /** The matrix-js-sdk client, when the host has one; the drivers otherwise. */
+  client?: MatrixClient;
   roomId?: string;
   livekitRooms?: {
     room: LivekitRoom;
@@ -129,17 +136,40 @@ export const DeveloperSettingsTab: FC<Props> = ({
     debugTileLayoutSetting,
   );
 
+  const drivers = useOptionalMatrixDrivers();
   const [stickyEventsSupported, setStickyEventsSupported] = useState(false);
   useEffect(() => {
-    client
-      .doesServerSupportUnstableFeature(UNSTABLE_MSC4354_STICKY_EVENTS)
+    const probe =
+      client !== undefined
+        ? client.doesServerSupportUnstableFeature(
+            UNSTABLE_MSC4354_STICKY_EVENTS,
+          )
+        : drivers !== null
+          ? drivers.clientDriver
+              .getMatrixClientFeatures()
+              .then((features) => features.stickyEvents)
+          : Promise.resolve(false);
+    probe
       .then((result) => {
         setStickyEventsSupported(result);
       })
       .catch((ex) => {
         logger.warn("Failed to check if sticky events are supported", ex);
       });
-  }, [client]);
+  }, [client, drivers]);
+  // What the host knows about itself, for the facts below.
+  const [diagnostics, setDiagnostics] = useState<Record<string, string>>({});
+  useEffect(() => {
+    drivers?.clientDriver
+      .getDiagnostics?.()
+      .then(setDiagnostics)
+      .catch((ex) =>
+        logger.warn("Could not read the driver's diagnostics", ex),
+      );
+  }, [drivers]);
+  const ownUserId = client?.getUserId() ?? drivers?.clientDriver.userId ?? null;
+  const ownDeviceId =
+    client?.getDeviceId() ?? drivers?.clientDriver.deviceId ?? null;
 
   const [matrixRTCMode, setMatrixRTCMode] = useSetting(matrixRTCModeSetting);
   const matrixRTCModeRadioGroup = useId();
@@ -154,6 +184,20 @@ export const DeveloperSettingsTab: FC<Props> = ({
     | undefined;
   const matrixRTCModeForced = configMatrixRTCMode !== undefined;
   const effectiveMatrixRTCMode = configMatrixRTCMode ?? matrixRTCMode;
+
+  const [implementation, setImplementation] = useSetting(
+    callViewModelImplementationSetting,
+  );
+  const implementationRadioGroup = useId();
+  const onImplementationChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      setImplementation(e.target.value as CallViewModelImplementation);
+    },
+    [setImplementation],
+  );
+  const configImplementation = Config.get().call_view_model_implementation;
+  const implementationForced = configImplementation !== undefined;
+  const effectiveImplementation = configImplementation ?? implementation;
 
   const [showConnectionStats, setShowConnectionStats] = useSetting(
     showConnectionStatsSetting,
@@ -387,17 +431,20 @@ export const DeveloperSettingsTab: FC<Props> = ({
       </p>
       <p>
         {t("developer_mode.crypto_version", {
-          version: client.getCrypto()?.getVersion() || "unknown",
+          version:
+            client?.getCrypto()?.getVersion() ||
+            diagnostics.crypto_version ||
+            "unknown",
         })}
       </p>
       <p>
         {t("developer_mode.matrix_id", {
-          id: client.getUserId() || "unknown",
+          id: ownUserId || "unknown",
         })}
       </p>
       <p>
         {t("developer_mode.device_id", {
-          id: client.getDeviceId() || "unknown",
+          id: ownDeviceId || "unknown",
         })}
       </p>
       {keyRotation !== null && <KeyRotationStatus info={keyRotation} />}
@@ -512,25 +559,45 @@ export const DeveloperSettingsTab: FC<Props> = ({
             }
 
             try {
-              const userId = client.getUserId();
-              const deviceId = client.getDeviceId();
-
-              if (userId === null || deviceId === null) {
+              if (ownUserId === null || ownDeviceId === null) {
                 throw new Error("Invalid user or device ID");
               }
-              await getSFUConfigWithOpenID(
-                client,
-                { userId, deviceId, memberId: "" },
-                customLivekitUrlTextBuffer,
-                roomId,
-              );
+              if (client !== undefined) {
+                await getSFUConfigWithOpenID(
+                  client,
+                  { userId: ownUserId, deviceId: ownDeviceId, memberId: "" },
+                  customLivekitUrlTextBuffer,
+                  roomId,
+                );
+              } else if (drivers !== null) {
+                // Ask the service for a token the way the crate would.
+                await drivers.rtcDriver.getLivekitToken({
+                  url: customLivekitUrlTextBuffer,
+                  roomId,
+                  slotId: ELEMENT_CALL_SLOT_ID,
+                  memberJson: JSON.stringify({
+                    id: "",
+                    claimed_user_id: ownUserId,
+                    claimed_device_id: ownDeviceId,
+                  }),
+                  legacySfuGet: false,
+                });
+              }
               setCustomLivekitUrlUpdateError(null);
               setCustomLivekitUrl(customLivekitUrlTextBuffer);
             } catch {
               setCustomLivekitUrlUpdateError("invalid URL (did not update)");
             }
           },
-          [customLivekitUrlTextBuffer, setCustomLivekitUrl, client, roomId],
+          [
+            customLivekitUrlTextBuffer,
+            setCustomLivekitUrl,
+            client,
+            drivers,
+            roomId,
+            ownUserId,
+            ownDeviceId,
+          ],
         )}
         value={customLivekitUrlTextBuffer ?? ""}
         onChange={useCallback(
@@ -587,6 +654,63 @@ export const DeveloperSettingsTab: FC<Props> = ({
           <Label>{t("developer_mode.matrixRTCMode.Matrix_2_0.label")}</Label>
           <HelpMessage>
             {t("developer_mode.matrixRTCMode.Matrix_2_0.description")}
+          </HelpMessage>
+        </InlineField>
+      </Form>
+      <Separator />
+      <Heading as="h3" type="body" weight="semibold" size="lg">
+        {t("developer_mode.callViewModelImplementation.title")}
+      </Heading>
+      {implementationForced && (
+        <p>{t("developer_mode.callViewModelImplementation.forced")}</p>
+      )}
+      <Form>
+        <InlineField
+          name={implementationRadioGroup}
+          control={
+            <RadioControl
+              checked={
+                effectiveImplementation ===
+                CallViewModelImplementation.MatrixJsSdk
+              }
+              value={CallViewModelImplementation.MatrixJsSdk}
+              disabled={implementationForced}
+              onChange={onImplementationChange}
+            />
+          }
+        >
+          <Label>
+            {t(
+              "developer_mode.callViewModelImplementation.matrix_js_sdk.label",
+            )}
+          </Label>
+          <HelpMessage>
+            {t(
+              "developer_mode.callViewModelImplementation.matrix_js_sdk.description",
+            )}
+          </HelpMessage>
+        </InlineField>
+        <InlineField
+          name={implementationRadioGroup}
+          control={
+            <RadioControl
+              checked={
+                effectiveImplementation ===
+                CallViewModelImplementation.MatrixRtc
+              }
+              value={CallViewModelImplementation.MatrixRtc}
+              disabled={implementationForced}
+              onChange={onImplementationChange}
+            />
+          }
+        >
+          <Label>
+            {t("developer_mode.callViewModelImplementation.matrix_rtc.label")}
+          </Label>
+          <HelpMessage>
+            {t(
+              "developer_mode.callViewModelImplementation.matrix_rtc.description",
+            )}
           </HelpMessage>
         </InlineField>
       </Form>

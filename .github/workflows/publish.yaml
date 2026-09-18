@@ -13,11 +13,7 @@ jobs:
     with:
       package: full
       vite_app_version: ${{ github.event.release.tag_name }} # Using ${{ env.VERSION }} here doesn't work
-    secrets:
-      SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-      SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
-      SENTRY_URL: ${{ secrets.SENTRY_URL }}
-      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+    secrets: inherit
 
   publish_tarball:
     needs: build_element_call

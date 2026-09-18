@@ -36,26 +36,6 @@ export function useEventTarget<T extends Event>(
 }
 
 /**
- * Shortcut for registering a listener on a TypedEventEmitter.
- */
-export function useTypedEventEmitter<
-  Events extends string,
-  Arguments extends ListenerMap<Events>,
-  T extends Events,
->(
-  emitter: TypedEventEmitter<Events, Arguments>,
-  eventType: T,
-  listener: Listener<Events, Arguments, T>,
-): void {
-  useEffect(() => {
-    emitter.on(eventType, listener);
-    return (): void => {
-      emitter.off(eventType, listener);
-    };
-  }, [emitter, eventType, listener]);
-}
-
-/**
  * Reactively tracks a value which is recalculated whenever the provided event
  * emitter emits an event. This is useful for bridging state from matrix-js-sdk
  * into React.

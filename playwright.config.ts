@@ -19,6 +19,32 @@ const baseURL = process.env.USE_DOCKER
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+/**
+ * Which MatrixRTC implementation carries the calls under test, `matrix-js-sdk`
+ * or `matrix-rtc` (see `CallViewModelImplementation` in
+ * src/config/ConfigOptions.ts). Unset, Element Call's default applies. Set,
+ * every browser context starts with the developer setting in local storage,
+ * so the whole suite runs on that implementation.
+ */
+const callViewModelImplementation = process.env.CALL_VIEW_MODEL_IMPLEMENTATION;
+const storageState =
+  callViewModelImplementation === undefined
+    ? undefined
+    : {
+        cookies: [],
+        origins: [
+          {
+            origin: baseURL,
+            localStorage: [
+              {
+                name: "matrix-setting-call-view-model-implementation",
+                value: JSON.stringify(callViewModelImplementation),
+              },
+            ],
+          },
+        ],
+      };
+
 // Needed by the synapse admin API called in fixtures
 process.env.NODE_EXTRA_CA_CERTS = join(
   __dirname,
@@ -44,6 +70,7 @@ export default defineConfig({
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL,
+    storageState,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",

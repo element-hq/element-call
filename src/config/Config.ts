@@ -15,10 +15,13 @@ import {
   type ResolvedConfigOptions,
 } from "./ConfigOptions";
 import { isFailure } from "../utils/fetch";
-import { MatrixRTCMode } from "./ConfigOptions";
+import { CallViewModelImplementation, MatrixRTCMode } from "./ConfigOptions";
 
 const VALID_MATRIX_RTC_MODES: ReadonlySet<string> = new Set(
   Object.values(MatrixRTCMode),
+);
+const VALID_CALL_VIEW_MODEL_IMPLEMENTATIONS: ReadonlySet<string> = new Set(
+  Object.values(CallViewModelImplementation),
 );
 
 export class Config {
@@ -135,6 +138,16 @@ export function validateConfig(config: ConfigOptions): ConfigOptions {
       `Ignoring invalid matrix_rtc_mode in config.json: ${String(mode)}`,
     );
     delete config.matrix_rtc_mode;
+  }
+  const implementation = config.call_view_model_implementation;
+  if (
+    implementation !== undefined &&
+    !VALID_CALL_VIEW_MODEL_IMPLEMENTATIONS.has(implementation)
+  ) {
+    logger.warn(
+      `Ignoring invalid call_view_model_implementation in config.json: ${String(implementation)}`,
+    );
+    delete config.call_view_model_implementation;
   }
   return config;
 }

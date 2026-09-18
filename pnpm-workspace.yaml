@@ -3,6 +3,8 @@ supportedArchitectures:
   cpu: [current, arm64]
   libc: [current, glibc]
 minimumReleaseAgeExclude:
+  # The MatrixRTC SDK is consumed as `next` pre-releases straight from its CI
+  - "@billcarsonfr/matrix-rtc"
   - "@vector-im/compound-design-tokens"
   - "@vector-im/compound-web"
   - matrix-js-sdk

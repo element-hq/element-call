@@ -57,7 +57,7 @@ export class ECConnectionFactory implements ConnectionFactory {
   /**
    * Creates a ConnectionFactory for LiveKit connections.
    *
-   * @param client - The OpenID client parts for authentication, needed to get openID and JWT tokens.
+   * @param client - The OpenID client parts for authentication, needed to get openID and JWT tokens. `null` when every connection is created with its token (the crate mints them).
    * @param roomId - The current room ID.
    * @param devices - Used for video/audio out/in capture options.
    * @param processorState$ - Effects like background blur (only for publishing connection?)
@@ -66,7 +66,7 @@ export class ECConnectionFactory implements ConnectionFactory {
    * @param livekitRoomFactory - Optional factory function (for testing) to create LivekitRoom instances. If not provided, a default factory is used.
    */
   public constructor(
-    private client: OpenIDClientParts,
+    private client: OpenIDClientParts | null,
     private readonly roomId: string,
     private devices: MediaDevices,
     private processorState$: Behavior<ProcessorState>,

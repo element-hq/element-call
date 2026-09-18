@@ -57,6 +57,8 @@ export default defineConfig((configEnv) =>
             "src/utils/test.ts",
             "src/utils/test-viewmodel.ts",
             "src/utils/test-fixtures.ts",
+            "src/utils/test-matrix-rtc.ts",
+            "src/utils/test-participation.ts",
             "playwright/**",
           ],
         },
