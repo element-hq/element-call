@@ -6,8 +6,18 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type RemoteParticipant } from "livekit-client";
-import { combineLatest, map, of, switchMap } from "rxjs";
+import { type RemoteParticipant, Track, TrackEvent } from "livekit-client";
+import { observeParticipantMedia } from "@livekit/components-core";
+import {
+  combineLatest,
+  distinctUntilChanged,
+  fromEvent,
+  map,
+  NEVER,
+  of,
+  startWith,
+  switchMap,
+} from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import { type Behavior } from "../Behavior";
@@ -60,14 +70,54 @@ export function createRemoteUserMedia(
     logger.info(`[RemoteUserMedia ${inputs.id}] waitingForMedia=${waiting}`);
   });
 
+  // Emits whenever an audio element is attached to this participant's
+  // microphone track: a new subscription after they rejoin or reconnect, or
+  // their first unmute if they joined muted (EC only publishes the track
+  // then). The requested volume has to be applied again at that point.
+  // livekit-client stores the volume on the RemoteAudioTrack and re-applies
+  // it on attach, except that a stored volume of 0 is dropped by a truthiness
+  // check (RemoteAudioTrack.attach: `if (this.elementVolume)`), so "mute for
+  // me" would otherwise be lost as soon as a new track arrives.
+  const audioElementAttached$ = inputs.participant$.pipe(
+    switchMap((p) =>
+      p === null
+        ? NEVER
+        : observeParticipantMedia(p).pipe(
+            map(() => p.getTrackPublication(Track.Source.Microphone)?.track),
+            distinctUntilChanged(),
+            switchMap((track) =>
+              track === undefined
+                ? NEVER
+                : fromEvent(track, TrackEvent.ElementAttached),
+            ),
+          ),
+    ),
+  );
+
+  const volumeControls = createVolumeControls(scope, {
+    pretendToBeDisconnected$,
+    sink$: scope.behavior(
+      combineLatest([
+        inputs.participant$,
+        audioElementAttached$.pipe(startWith(null)),
+      ]).pipe(
+        map(([p, attached]) => (volume) => {
+          if (attached !== null)
+            logger.info(
+              `[RemoteUserMedia ${inputs.id}] re-applying playback volume ${volume} after audio element attach`,
+            );
+          p?.setVolume(volume);
+        }),
+      ),
+    ),
+  });
+  volumeControls.playbackMuted$.pipe(scope.bind()).subscribe((muted) => {
+    logger.info(`[RemoteUserMedia ${inputs.id}] playbackMuted=${muted}`);
+  });
+
   return {
     ...baseUserMedia,
-    ...createVolumeControls(scope, {
-      pretendToBeDisconnected$,
-      sink$: scope.behavior(
-        inputs.participant$.pipe(map((p) => (volume) => p?.setVolume(volume))),
-      ),
-    }),
+    ...volumeControls,
     local: false,
     speaking$: scope.behavior(
       pretendToBeDisconnected$.pipe(
