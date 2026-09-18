@@ -203,13 +203,13 @@ const LoadedCallView: FC<LoadedProps> = ({
     effectiveCallViewModelImplementation(),
   );
   // this is the rustsdkmatrix rtc. So we should call it useRustRtcSdk
-  const useMatrixRtc =
+  const useRustRtcSdk =
     implementation === CallViewModelImplementation.MatrixRtc ||
     rtcSession === undefined;
   // Sampled once, like the implementation: the participation is the call,
   // and rebuilding it for a later change of these would leave and rejoin.
   const [participationConfigValue] = useState(() =>
-    useMatrixRtc
+    useRustRtcSdk
       ? participationConfig({
           // matrix_rtc_mode in config.json overrides the user's choice.
           mode:
@@ -221,7 +221,7 @@ const LoadedCallView: FC<LoadedProps> = ({
       : null,
   );
   const rtcParticipationManager = useRtcParticipationManager(
-    useMatrixRtc ? drivers : null,
+    useRustRtcSdk ? drivers : null,
     participationConfigValue,
   );
   const participationMemberships = useBehavior(
@@ -230,10 +230,10 @@ const LoadedCallView: FC<LoadedProps> = ({
   // The call's members, whichever side lists them; only who they are matters here.
   const memberUserIds = useMemo(
     () =>
-      useMatrixRtc
+      useRustRtcSdk
         ? participationMemberships.value.map((m) => m.member.userId)
         : jsSdkMemberships.map((m) => m.userId!),
-    [useMatrixRtc, participationMemberships, jsSdkMemberships],
+    [useRustRtcSdk, participationMemberships, jsSdkMemberships],
   );
   const rootElement = useRootElement();
   const hostBridge = useHostBridge();
@@ -256,11 +256,11 @@ const LoadedCallView: FC<LoadedProps> = ({
   const mutedForCallSize = useRef(false);
   useEffect(() => {
     if (mutedForCallSize.current) return;
-    if (useMatrixRtc && !participationMemberships.value.length) return;
+    if (useRustRtcSdk && !participationMemberships.value.length) return;
     mutedForCallSize.current = true;
     if (memberUserIds.length >= MUTE_PARTICIPANT_COUNT)
       muteStates.audio.setEnabled$.value?.(false);
-  }, [useMatrixRtc, participationMemberships, memberUserIds, muteStates]);
+  }, [useRustRtcSdk, participationMemberships, memberUserIds, muteStates]);
 
   useEffect(() => {
     logger.info("[Lifecycle] CallView Component mounted");
@@ -628,7 +628,7 @@ const LoadedCallView: FC<LoadedProps> = ({
       throw externalError;
     };
     body = <ErrorComponent />;
-  } else if (joined && useMatrixRtc && rtcParticipationManager === null) {
+  } else if (joined && useRustRtcSdk && rtcParticipationManager === null) {
     // Joined before the crate is ready (its wasm loads on first use): the
     // call appears with the participation manager, a render later.
     body = null;
