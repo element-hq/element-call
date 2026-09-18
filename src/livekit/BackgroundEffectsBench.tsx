@@ -69,6 +69,10 @@ interface Run {
   buckets: Bucket[];
   /** Worst observed delay on a 100ms timer: the main thread's own stutter. */
   worstTimerLagMs: number;
+  /** The longest the picture simply stopped, in milliseconds. */
+  worstFrameGapMs: number;
+  /** From asking for the run to the first frame on screen. */
+  firstFrameMs: number | null;
   frames: number;
   seconds: number;
 }
@@ -225,8 +229,10 @@ export const BackgroundEffectsBench: FC = () => {
         <div key={i} style={{ marginBlockStart: 12 }}>
           <strong>{run.effect}</strong>: mean {run.meanFps.toFixed(1)}fps, worst{" "}
           {run.worstFps.toFixed(1)}fps
-          {run.startupMs !== null && <> , started in {run.startupMs}ms</>}, main
-          thread stalled up to {run.worstTimerLagMs}ms
+          {run.startupMs !== null && <>, pipeline ready in {run.startupMs}ms</>}
+          , first frame at {run.firstFrameMs ?? "?"}ms, picture stopped for up
+          to {run.worstFrameGapMs}ms, main thread stalled up to{" "}
+          {run.worstTimerLagMs}ms
         </div>
       ))}
       {runs.length > 0 && (
@@ -255,16 +261,20 @@ async function countFrames(
     | "worstFps"
     | "buckets"
     | "worstTimerLagMs"
+    | "worstFrameGapMs"
+    | "firstFrameMs"
     | "frames"
     | "seconds"
   >
 > {
   return new Promise((resolve) => {
     const buckets: Bucket[] = [];
+    const startedAt = performance.now();
     let frames = 0;
     let inBucket = 0;
-    let started: number | null = null;
-    let bucketStarted = 0;
+    let firstFrameMs: number | null = null;
+    let lastFrameAt = startedAt;
+    let worstFrameGapMs = 0;
 
     // A phone that is struggling stalls its main thread, and a timer is the
     // cheapest witness to that: Safari has no long-task observer.
@@ -279,19 +289,28 @@ async function countFrames(
       lastTick = now;
     }, 100);
 
+    // On the clock, not on the frames. Closing a bucket only when a frame
+    // arrives cannot report a stretch with no frames in it at all — the first
+    // measurement on a phone spent fourteen seconds inside one bucket and
+    // reported it as a seventh of a frame per second rather than as a freeze.
+    const bucketer = window.setInterval(() => {
+      const at = Math.round((performance.now() - startedAt) / 1000);
+      buckets.push({ at, fps: inBucket / bucketSeconds });
+      inBucket = 0;
+      onProgress(at);
+    }, bucketSeconds * 1000);
+
     const finish = (): void => {
       window.clearInterval(ticker);
-      const elapsed =
-        started === null ? 0 : (performance.now() - started) / 1000;
+      window.clearInterval(bucketer);
+      const elapsed = (performance.now() - startedAt) / 1000;
       resolve({
         meanFps: elapsed > 0 ? frames / elapsed : 0,
-        worstFps: buckets.length
-          ? Math.min(...buckets.map((b) => b.fps))
-          : elapsed > 0
-            ? frames / elapsed
-            : 0,
+        worstFps: buckets.length ? Math.min(...buckets.map((b) => b.fps)) : 0,
         buckets,
         worstTimerLagMs,
+        worstFrameGapMs: Math.round(worstFrameGapMs),
+        firstFrameMs: firstFrameMs === null ? null : Math.round(firstFrameMs),
         frames,
         seconds: Math.round(elapsed),
       });
@@ -299,37 +318,33 @@ async function countFrames(
 
     const onFrame = (): void => {
       const now = performance.now();
-      if (started === null) {
-        started = now;
-        bucketStarted = now;
-      }
+      firstFrameMs ??= now - startedAt;
+      worstFrameGapMs = Math.max(worstFrameGapMs, now - lastFrameAt);
+      lastFrameAt = now;
       frames += 1;
       inBucket += 1;
-      if (now - bucketStarted >= bucketSeconds * 1000) {
-        buckets.push({
-          at: Math.round((now - started) / 1000),
-          fps: inBucket / ((now - bucketStarted) / 1000),
-        });
-        onProgress(Math.round((now - started) / 1000));
-        inBucket = 0;
-        bucketStarted = now;
-      }
-      if (now - started >= seconds * 1000) return finish();
+      if (now - startedAt >= seconds * 1000) return finish();
       element.requestVideoFrameCallback(onFrame);
     };
 
     if (!("requestVideoFrameCallback" in element)) {
       window.clearInterval(ticker);
+      window.clearInterval(bucketer);
       resolve({
         meanFps: 0,
         worstFps: 0,
         buckets: [],
         worstTimerLagMs: 0,
+        worstFrameGapMs: 0,
+        firstFrameMs: null,
         frames: 0,
         seconds: 0,
       });
       return;
     }
     element.requestVideoFrameCallback(onFrame);
+    // A freeze can outlast the run: without this, a device that never presents
+    // another frame never finishes and reports nothing at all.
+    window.setTimeout(finish, seconds * 1000 + 2000);
   });
 }
