@@ -86,7 +86,7 @@ export class ECConnectionFactory implements ConnectionFactory {
         },
         controlledAudioDevices: this.controlledAudioDevices,
       });
-      logger.info("[ECConnectionFactory] livekit room options: ", roomOptions);
+      // logger.info("[ECConnectionFactory] livekit room options: ", roomOptions);
       return new LivekitRoom(roomOptions);
     };
     this.livekitRoomFactory = livekitRoomFactory ?? defaultFactory;
