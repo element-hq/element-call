@@ -33,6 +33,7 @@ import {
   PlusIcon,
   CheckCircleSolidIcon,
   CloseIcon,
+  InfoIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
@@ -815,9 +816,12 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
             // Never both at once: a refusal is about what the user just did and
             // wins the space, where this is about the browser and will still be
             // true next time. Not dismissible for the same reason — there is
-            // nothing to dismiss, only something to know.
-            <div role="none" className={styles.effectError}>
-              <Alert type="info" title={backgroundEffectNotice} />
+            // nothing to dismiss, only something to know, and it is drawn to be
+            // read once rather than to interrupt: a subtle ground, an outline
+            // mark and text at its ordinary weight, as the design has it.
+            <div role="none" className={styles.effectNotice}>
+              <InfoIcon width={20} height={20} />
+              <span>{backgroundEffectNotice}</span>
             </div>
           )}
         {toggles.length > 0 && <hr />}

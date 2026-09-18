@@ -397,3 +397,29 @@ Please see LICENSE in the repository root for full details.
   inline-size: 20px;
   block-size: 20px;
 }
+
+/*
+ * What the browser costs, said quietly.
+ *
+ * Measured off the design: the subtle secondary ground, held the same sixteen
+ * pixels from the menu's sides as the grid above it, with the mark and the
+ * text on one line's baseline and the text at its ordinary weight. Not an
+ * alert — an alert is for something that just happened, and this was true
+ * before the menu opened and will be true after it closes.
+ */
+.effectNotice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--cpd-space-3x);
+  margin: var(--cpd-space-2x) var(--cpd-space-4x) var(--cpd-space-4x);
+  padding: var(--cpd-space-3x);
+  border-radius: var(--cpd-space-2x);
+  background: var(--cpd-color-bg-subtle-secondary);
+  color: var(--cpd-color-text-primary);
+  font: var(--cpd-font-body-md-regular);
+}
+
+.effectNotice > svg {
+  flex-shrink: 0;
+  color: var(--cpd-color-icon-secondary);
+}
