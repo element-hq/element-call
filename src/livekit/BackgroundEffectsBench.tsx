@@ -61,8 +61,27 @@ interface Run {
   sdkWouldAllow: boolean;
   capture: { width?: number; height?: number; frameRate?: number };
   processed: { width?: number; height?: number; frameRate?: number };
-  /** Milliseconds from asking for the effect to the first frame carrying it. */
+  /** Milliseconds from asking for the effect until the pipeline reports ready. */
   startupMs: number | null;
+  /**
+   * Where that time went: attaching builds the segmenter — fetching its
+   * assets, compiling the WASM, setting up the GPU — while switching only
+   * tells an already-built one what to draw. Split, because the two have
+   * different answers: one can be paid ahead of time, the other cannot.
+   */
+  attachMs: number | null;
+  switchMs: number | null;
+  /**
+   * The segmenter's own assets, as the browser saw them. A transfer size of
+   * zero means the bytes came from cache and no network was involved, which is
+   * what separates "the first time on this device" from "every time".
+   */
+  assets: {
+    name: string;
+    transferredBytes: number;
+    bytes: number;
+    ms: number;
+  }[];
   meanFps: number;
   /** The worst five-second stretch — where throttling shows up first. */
   worstFps: number;
@@ -115,6 +134,8 @@ export const BackgroundEffectsBench: FC = () => {
         const capture = track.mediaStreamTrack.getSettings();
 
         let startupMs: number | null = null;
+        let attachMs: number | null = null;
+        let switchMs: number | null = null;
         if (effect !== "none") {
           setStatus("Starting the pipeline…");
           const askedAt = performance.now();
@@ -123,8 +144,12 @@ export const BackgroundEffectsBench: FC = () => {
             "background-effect-bench",
           );
           await track.setProcessor(pipeline);
+          const attachedAt = performance.now();
           await pipeline.switchTo(optionsFor(effect));
-          startupMs = Math.round(performance.now() - askedAt);
+          const readyAt = performance.now();
+          attachMs = Math.round(attachedAt - askedAt);
+          switchMs = Math.round(readyAt - attachedAt);
+          startupMs = Math.round(readyAt - askedAt);
         }
 
         const element = video.current!;
@@ -157,6 +182,9 @@ export const BackgroundEffectsBench: FC = () => {
               frameRate: processed.frameRate,
             },
             startupMs,
+            attachMs,
+            switchMs,
+            assets: segmenterAssets(),
             ...result,
           },
         ]);
@@ -229,7 +257,12 @@ export const BackgroundEffectsBench: FC = () => {
         <div key={i} style={{ marginBlockStart: 12 }}>
           <strong>{run.effect}</strong>: mean {run.meanFps.toFixed(1)}fps, worst{" "}
           {run.worstFps.toFixed(1)}fps
-          {run.startupMs !== null && <>, pipeline ready in {run.startupMs}ms</>}
+          {run.startupMs !== null && (
+            <>
+              , ready in {run.startupMs}ms ({run.attachMs}ms attaching,{" "}
+              {run.switchMs}ms switching)
+            </>
+          )}
           , first frame at {run.firstFrameMs ?? "?"}ms, picture stopped for up
           to {run.worstFrameGapMs}ms, main thread stalled up to{" "}
           {run.worstTimerLagMs}ms
@@ -245,6 +278,24 @@ export const BackgroundEffectsBench: FC = () => {
     </div>
   );
 };
+
+/**
+ * What the browser did to fetch the segmenter: bytes over the wire, bytes
+ * total, and how long each took. Same-origin, so the sizes are not hidden.
+ */
+function segmenterAssets(): Run["assets"] {
+  return performance
+    .getEntriesByType("resource")
+    .filter((e): e is PerformanceResourceTiming =>
+      /\.(wasm|tflite|task|binarypb)(\?|$)/.test(e.name),
+    )
+    .map((e) => ({
+      name: e.name.slice(e.name.lastIndexOf("/") + 1),
+      transferredBytes: e.transferSize,
+      bytes: e.encodedBodySize,
+      ms: Math.round(e.duration),
+    }));
+}
 
 /**
  * Counts frames as the video actually presents them, which is the rate the
