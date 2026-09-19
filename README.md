@@ -34,16 +34,16 @@ You can find the latest development version continuously deployed to
 ## ✨ Key Features
 
 ✅ **Decentralized & Federated** – No central authority; works across Matrix
-homeservers.  
-✅ **End-to-End Encrypted** – Secure and private calls.  
+homeservers.
+✅ **End-to-End Encrypted** – Secure and private calls.
 ✅ **Standalone, Widget & Component Mode** – Use as an independent app, embed
 in Matrix clients as a widget, or (experimentally) mount it as a React component
-inside your own application.  
-✅ **WebRTC-based** – No additional software required.  
+inside your own application.
+✅ **WebRTC-based** – No additional software required.
 ✅ **Scalable with LiveKit** – Supports large meetings via SFU
-([MSC4195: MatrixRTC using LiveKit backend](https://github.com/hughns/matrix-spec-proposals/blob/hughns/matrixrtc-livekit/proposals/4195-matrixrtc-livekit.md)).  
+([MSC4195: MatrixRTC using LiveKit backend](https://github.com/hughns/matrix-spec-proposals/blob/hughns/matrixrtc-livekit/proposals/4195-matrixrtc-livekit.md)).
 ✅ **Raise Hand** – Participants can signal when they want to speak, helping to
-organize the flow of the meeting.  
+organize the flow of the meeting.
 ✅ **Emoji Reactions** – Users can react with emojis 👍️ 🎉 👏 🤘, adding
 engagement and interactivity to the conversation.
 
@@ -308,6 +308,23 @@ root. The host imports the component from
 `@element-hq/element-call-component/style.css`, and has to provide `react`,
 `react-dom`, `matrix-js-sdk` and `livekit-client` itself, since the bundle leaves
 them external.
+
+The component is large, and a host will usually load it lazily, only once a
+call is shown. Everything a host needs in order to talk about a call before
+then is also exported
+from `@element-hq/element-call-component/api` (a small entry point that does not
+load the component).
+
+- props and the types they are made of
+- the handle
+- the host bridge
+- `UserIntent`
+- `HeaderStyle`
+- `BackgroundStyle` enums
+- `configurationForIntent`, the defaults each intent implies
+  Import from it wherever a value such as
+  `BackgroundStyle.Solid` is needed on a path that must stay light; the main
+  entry point re-exports all of it too.
 
 ### Backend
 
