@@ -18,7 +18,7 @@ import { type MatrixClient } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import {
-  ElementCall,
+  ElementCallClientBased,
   type ElementCallHandle,
   supportedLanguages,
 } from "../index";
@@ -160,7 +160,7 @@ const Pane: FC<{
       one of the things we cannot find out from the standalone app */}
       <div className={styles.paneCall} data-testid="call-container">
         {mounted && (
-          <ElementCall
+          <ElementCallClientBased
             ref={handle}
             client={session.client}
             roomId={roomId}

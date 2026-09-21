@@ -17,7 +17,10 @@ import { type CallViewModel } from "../state/CallViewModel/CallViewModel";
 import { getBasicCallViewModelEnvironment } from "../utils/test-viewmodel";
 import { alice, local, localRtcMember } from "../utils/test-fixtures";
 import { type MockRTCSession } from "../utils/test";
-import { ReactionsSenderProvider } from "../reactions/useReactionsSender";
+import {
+  jsSdkReactionsTimeline,
+  ReactionsSenderProvider,
+} from "../reactions/useReactionsSender";
 import { initializeWidget } from "../widget";
 initializeWidget();
 vi.mock("livekit-client/e2ee-worker?worker");
@@ -35,7 +38,12 @@ function TestComponent({
     <TooltipProvider>
       <ReactionsSenderProvider
         vm={vm}
-        rtcSession={rtcSession.asMockedSession()}
+        ownIdentifier={localIdent}
+        ownMembershipEventId={localRtcMember.eventId}
+        timeline={jsSdkReactionsTimeline(
+          rtcSession.room.client,
+          rtcSession.room.roomId,
+        )}
       >
         <ReactionToggleButton
           reactionData={{

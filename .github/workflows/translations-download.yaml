@@ -25,6 +25,14 @@ jobs:
           cache: "pnpm"
           node-version-file: ".node-version"
 
+      - name: Authenticate to GitHub Packages
+        # The MatrixRTC SDK (@billcarsonfr/matrix-rtc, see .npmrc) is on the GitHub
+        # Packages npm registry, which needs a token with read:packages even for
+        # public packages. A workflow's GITHUB_TOKEN only reaches packages of its own
+        # repository, so this is a personal access token kept as a repository secret.
+        env:
+          NPM_REGISTRY_TOKEN: ${{ secrets.MATRIX_RTC_NPM_TOKEN }}
+        run: echo "//npm.pkg.github.com/:_authToken=${NPM_REGISTRY_TOKEN}" >> ~/.npmrc
       - name: Install Deps
         # ignore-pnpmfile should never be commited. Make CI crash if it happened (`pnpmfileChecksum` is present)
         run: "pnpm install --frozen-lockfile --ignore-pnpmfile"

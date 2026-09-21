@@ -9,7 +9,11 @@ import { describe, expect, it, vi, afterEach } from "vitest";
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import { Config, validateConfig } from "./Config";
-import { DEFAULT_CONFIG, MatrixRTCMode } from "./ConfigOptions";
+import {
+  CallViewModelImplementation,
+  DEFAULT_CONFIG,
+  MatrixRTCMode,
+} from "./ConfigOptions";
 
 describe("validateConfig", () => {
   afterEach(() => {
@@ -99,5 +103,23 @@ describe("Config.initWith", () => {
     Config.initWith({ ssla: "https://first.invalid/ssla" });
     Config.initWith({ ssla: "https://second.invalid/ssla" });
     expect(Config.get().ssla).toBe("https://second.invalid/ssla");
+  });
+});
+
+describe("validateConfig call_view_model_implementation", () => {
+  it.each(Object.values(CallViewModelImplementation))(
+    "keeps a valid call_view_model_implementation value (%s)",
+    (value) => {
+      const result = validateConfig({ call_view_model_implementation: value });
+      expect(result.call_view_model_implementation).toBe(value);
+    },
+  );
+
+  it("drops an unknown call_view_model_implementation value", () => {
+    const result = validateConfig({
+      call_view_model_implementation:
+        "yes-please" as unknown as CallViewModelImplementation,
+    });
+    expect(result.call_view_model_implementation).toBeUndefined();
   });
 });

@@ -58,6 +58,18 @@
   },
   "developer_mode": {
     "always_show_iphone_earpiece": "Show iPhone earpiece option on all platforms",
+    "callViewModelImplementation": {
+      "forced": "Your deployment pins the call implementation.",
+      "matrix_js_sdk": {
+        "description": "The MatrixRTC session of matrix-js-sdk carries the call, as before",
+        "label": "matrix-js-sdk"
+      },
+      "matrix_rtc": {
+        "description": "The Rust matrix-rtc crate carries the call through the host's drivers",
+        "label": "matrix-rtc (Rust)"
+      },
+      "title": "Call implementation"
+    },
     "crypto_version": "Crypto version: {{version}}",
     "custom_livekit_url": {
       "current_url": "Currently set to: ",
@@ -90,7 +102,6 @@
     "show_connection_stats": "Show connection statistics",
     "url_params": "URL parameters"
   },
-  "disconnected_banner": "Connectivity to the server has been lost.",
   "error": {
     "call_is_not_supported": "Call is not supported",
     "call_not_found": "Call not found",
@@ -110,6 +121,8 @@
     "membership_manager": "Membership Manager Error",
     "membership_manager_description": "The Membership Manager had to shut down. This is caused by many consecutive failed network requests.",
     "no_matrix_2_authorization_service": "The authorization service for your media server (SFU) is out of date.",
+    "no_open_slot": "No call to join here",
+    "no_open_slot_description": "Nobody has started a call in this room yet, and you do not have permission to start one. Ask a room admin to start the call, or to allow you to start calls.",
     "open_elsewhere": "Opened in another tab",
     "open_elsewhere_description": "{{brand}} has been opened in another tab. If that doesn't sound right, try reloading the page.",
     "peer_connection_timeout": "Connection timeout",

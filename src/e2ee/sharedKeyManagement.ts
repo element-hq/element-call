@@ -87,8 +87,16 @@ export type SharedSecret = { kind: E2eeType.SHARED_KEY; secret: string };
 export type PerParticipantE2EE = { kind: E2eeType.PER_PARTICIPANT };
 export type EncryptionSystem = Unencrypted | SharedSecret | PerParticipantE2EE;
 
-export function useRoomEncryptionSystem(roomId: string): EncryptionSystem {
-  const { client } = useClient();
+/**
+ * The encryption system for a room whose `m.room.encryption` state the
+ * caller already knows: a shared secret from the URL or storage wins, else
+ * per-participant keys in an encrypted room, else nothing. The call tree
+ * reads `roomEncrypted` from the client driver's room info.
+ */
+export function useEncryptionSystemFor(
+  roomId: string,
+  roomEncrypted: boolean,
+): EncryptionSystem {
   const { roomId: paramsRoomId, password } = useUrlParams();
 
   const [storedPassword] = useRoomSharedKey(
@@ -100,18 +108,29 @@ export function useRoomEncryptionSystem(roomId: string): EncryptionSystem {
     keyForRoom(roomId, paramsRoomId, password) ?? undefined,
   );
 
-  const room = client?.getRoom(roomId);
-  const e2eeSystem = <EncryptionSystem>useMemo(() => {
-    if (!room) return { kind: E2eeType.NONE };
+  return <EncryptionSystem>useMemo(() => {
     if (storedPassword)
       return {
         kind: E2eeType.SHARED_KEY,
         secret: storedPassword,
       };
-    if (room.hasEncryptionStateEvent()) {
+    if (roomEncrypted) {
       return { kind: E2eeType.PER_PARTICIPANT };
     }
     return { kind: E2eeType.NONE };
-  }, [room, storedPassword]);
-  return e2eeSystem;
+  }, [roomEncrypted, storedPassword]);
+}
+
+/** {@link useEncryptionSystemFor} over the client's room; nothing for a room it does not know. */
+export function useRoomEncryptionSystem(roomId: string): EncryptionSystem {
+  const { client } = useClient();
+  const room = client?.getRoom(roomId);
+  const e2eeSystem = useEncryptionSystemFor(
+    roomId,
+    room?.hasEncryptionStateEvent() ?? false,
+  );
+  return useMemo(
+    () => (room ? e2eeSystem : { kind: E2eeType.NONE }),
+    [room, e2eeSystem],
+  );
 }

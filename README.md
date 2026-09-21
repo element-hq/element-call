@@ -206,6 +206,19 @@ corepack enable
 pnpm install
 ```
 
+`pnpm install` currently needs a GitHub token: the MatrixRTC SDK
+(`@element-hq/matrix-rtc`) is, as a stop-gap until it is published to npmjs.com,
+an npm package on the GitHub Packages registry, which rejects anonymous
+requests even for public packages. Create a classic personal access token with
+the `read:packages` scope and add it to your user-level npm config once:
+
+```sh
+echo "//npm.pkg.github.com/:_authToken=<your token>" >> ~/.npmrc
+```
+
+See [The MatrixRTC SDK package](./docs/matrix_rtc_sdk.md) for the details, CI
+setup and developing against a local crate.
+
 To use it, create a local config by, e.g.,
 `cp ./config/config.devenv.json ./public/config.json` and adapt it if necessary.
 The `config.devenv.json` config should work with the backend development
@@ -220,6 +233,7 @@ pnpm dev
 See also:
 
 - [Developing with linked packages](./docs/linking.md)
+- [The MatrixRTC SDK package](./docs/matrix_rtc_sdk.md)
 
 #### Element Call as a component (experimental)
 
@@ -298,7 +312,9 @@ The package is not published yet. A host installs it as a git dependency on the
 
 whose `prepare` script runs the build on install. That build needs pnpm (via
 Corepack) on the host's machine, runs a full `pnpm install` of this repository
-and is memory-hungry, since it inherits the `--max-old-space-size` setting of
+(so the host needs the GitHub Packages token described in
+[The MatrixRTC SDK package](./docs/matrix_rtc_sdk.md) as well) and is
+memory-hungry, since it inherits the `--max-old-space-size` setting of
 the app build; the host's pnpm also has to allow it to run at all
 (`allowBuilds` in its `pnpm-workspace.yaml`). Note that `component/` is a pnpm
 project of its own for this reason, so pnpm commands run from inside that

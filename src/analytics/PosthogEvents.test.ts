@@ -19,6 +19,7 @@ import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 
 import { PosthogAnalytics } from "./PosthogAnalytics";
 import {
+  mediaKeyStatisticsOf,
   CallEndedTracker,
   CallReconnectingTracker,
   type CallReconnectingReason,
@@ -67,7 +68,7 @@ describe("CallEnded", () => {
     const tracker = new CallEndedTracker();
     const mockSession = createMockRtcSession();
 
-    tracker.track("test-call-id", 2, false, mockSession);
+    tracker.track("test-call-id", 2, false, mediaKeyStatisticsOf(mockSession));
 
     expect(warnSpy).toHaveBeenCalledWith(
       "[PosthogEvents] Failed to send posthog callEnded event due to missing startTime",
@@ -81,7 +82,7 @@ describe("CallEnded", () => {
 
     tracker.cacheStartCall(new Date(Date.now() - 60000));
     tracker.cacheParticipantCountChanged(5);
-    tracker.track("test-call-id", 3, true, mockSession);
+    tracker.track("test-call-id", 3, true, mediaKeyStatisticsOf(mockSession));
 
     expect(PosthogAnalytics.instance.trackEvent).toHaveBeenCalledWith(
       {
@@ -111,7 +112,7 @@ describe("CallEnded", () => {
     tracker.cacheParticipantCountChanged(3);
     tracker.cacheParticipantCountChanged(7);
     tracker.cacheParticipantCountChanged(2);
-    tracker.track("test-call-id", 1, false, mockSession);
+    tracker.track("test-call-id", 1, false, mediaKeyStatisticsOf(mockSession));
 
     expect(PosthogAnalytics.instance.trackEvent).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -128,7 +129,7 @@ describe("CallEnded", () => {
     });
 
     tracker.cacheStartCall(new Date());
-    tracker.track("test-call-id", 1, false, mockSession);
+    tracker.track("test-call-id", 1, false, mediaKeyStatisticsOf(mockSession));
 
     expect(PosthogAnalytics.instance.trackEvent).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -146,7 +147,7 @@ describe("CallEnded", () => {
     });
 
     tracker.cacheStartCall(new Date());
-    tracker.track("test-call-id", 1, false, mockSession);
+    tracker.track("test-call-id", 1, false, mediaKeyStatisticsOf(mockSession));
 
     expect(PosthogAnalytics.instance.trackEvent).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -161,7 +162,7 @@ describe("CallEnded", () => {
     const mockSession = createMockRtcSession();
 
     tracker.cacheStartCall(new Date());
-    tracker.track("test-call-id", 1, false, mockSession);
+    tracker.track("test-call-id", 1, false, mediaKeyStatisticsOf(mockSession));
 
     expect(PosthogAnalytics.instance.trackEvent).toHaveBeenCalledWith(
       expect.anything(),
@@ -178,7 +179,7 @@ describe("CallEnded", () => {
     tracker.cacheReconnecting("sync");
     tracker.cacheReconnecting("livekit");
     tracker.cacheReconnecting("membership");
-    tracker.track("test-call-id", 1, false, mockSession);
+    tracker.track("test-call-id", 1, false, mediaKeyStatisticsOf(mockSession));
 
     expect(PosthogAnalytics.instance.trackEvent).toHaveBeenCalledWith(
       expect.objectContaining({

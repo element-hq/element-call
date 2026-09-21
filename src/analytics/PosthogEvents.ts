@@ -15,6 +15,34 @@ import {
   RegistrationType,
 } from "./PosthogAnalytics";
 
+/** How many media keys went out and came in over a call, for the ended event. */
+export interface MediaKeyStatistics {
+  sent: number;
+  received: number;
+  /** Sum of the ages of the received keys, in ms; averaged on send. */
+  receivedTotalAge: number;
+}
+
+/** No key statistics (the Rust crate does not count them yet). */
+export const NO_MEDIA_KEY_STATISTICS: MediaKeyStatistics = {
+  sent: 0,
+  received: 0,
+  receivedTotalAge: 0,
+};
+
+/** {@link MediaKeyStatistics} from a matrix-js-sdk session. */
+export function mediaKeyStatisticsOf(
+  rtcSession: MatrixRTCSession,
+): MediaKeyStatistics {
+  const { counters, totals } = rtcSession.statistics;
+  return {
+    sent: counters.roomEventEncryptionKeysSent,
+    received: counters.roomEventEncryptionKeysReceived,
+    // Only meaningful with received keys; a mocked session may not carry it.
+    receivedTotalAge: totals?.roomEventEncryptionKeysReceivedTotalAge ?? 0,
+  };
+}
+
 interface CallEnded extends IPosthogEvent {
   eventName: "CallEnded";
   // the callId posthog key is essentially a Matrix roomId
@@ -80,7 +108,7 @@ export class CallEndedTracker {
     callId: string,
     callParticipantsNow: number,
     sendInstantly: boolean,
-    rtcSession: MatrixRTCSession,
+    keys: MediaKeyStatistics,
   ): void {
     if (this.cache.startTime) {
       PosthogAnalytics.instance.trackEvent<CallEnded>(
@@ -90,16 +118,10 @@ export class CallEndedTracker {
           callParticipantsMax: this.cache.maxParticipantsCount,
           callParticipantsOnLeave: callParticipantsNow,
           callDuration: (Date.now() - this.cache.startTime.getTime()) / 1000,
-          roomEventEncryptionKeysSent:
-            rtcSession.statistics.counters.roomEventEncryptionKeysSent,
-          roomEventEncryptionKeysReceived:
-            rtcSession.statistics.counters.roomEventEncryptionKeysReceived,
+          roomEventEncryptionKeysSent: keys.sent,
+          roomEventEncryptionKeysReceived: keys.received,
           roomEventEncryptionKeysReceivedAverageAge:
-            rtcSession.statistics.counters.roomEventEncryptionKeysReceived > 0
-              ? rtcSession.statistics.totals
-                  .roomEventEncryptionKeysReceivedTotalAge /
-                rtcSession.statistics.counters.roomEventEncryptionKeysReceived
-              : 0,
+            keys.received > 0 ? keys.receivedTotalAge / keys.received : 0,
           callReconnectingCount: this.cache.reconnectingCount,
           callReconnectingCountSync: this.cache.reconnectingCountByReason.sync,
           callReconnectingCountMembership:

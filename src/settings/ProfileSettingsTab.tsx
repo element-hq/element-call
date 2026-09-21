@@ -5,23 +5,48 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, useCallback, useEffect, useMemo, useRef } from "react";
-import { type MatrixClient } from "matrix-js-sdk";
+import { type FC, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { logger } from "matrix-js-sdk/lib/logger";
 
-import { useProfile } from "../profile/useProfile";
+import { useOwnProfile } from "../profile/useOwnProfile";
+import { useMatrixDrivers } from "../driver/MatrixDriverContext";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { AvatarInputField } from "../input/AvatarInputField";
 import styles from "./ProfileSettingsTab.module.css";
 
-interface Props {
-  client: MatrixClient;
-}
-export const ProfileSettingsTab: FC<Props> = ({ client }) => {
+export const ProfileSettingsTab: FC = () => {
   const { t } = useTranslation();
-  const { error, displayName, avatarUrl, saveProfile } = useProfile(client);
-  const userId = useMemo(() => client.getUserId(), [client]);
+  const { clientDriver } = useMatrixDrivers();
+  const { displayName, avatarUrl } = useOwnProfile();
+  const userId = clientDriver.userId;
+  const [error, setError] = useState<Error | undefined>(undefined);
+  // The driver may offer no way to edit the profile; then it is shown as is.
+  const canEdit =
+    clientDriver.setDisplayName !== undefined &&
+    clientDriver.setAvatar !== undefined;
+  const saveProfile = useCallback(
+    async ({
+      displayName,
+      avatar,
+      removeAvatar,
+    }: {
+      displayName: string;
+      avatar: Blob | undefined;
+      removeAvatar: boolean;
+    }): Promise<void> => {
+      try {
+        await clientDriver.setDisplayName?.(displayName);
+        if (removeAvatar) await clientDriver.setAvatar?.(null);
+        else if (avatar) await clientDriver.setAvatar?.(avatar);
+        setError(undefined);
+      } catch (e) {
+        setError(e instanceof Error ? e : new Error(String(e)));
+        throw e;
+      }
+    },
+    [clientDriver],
+  );
 
   const formRef = useRef<HTMLFormElement | null>(null);
 
@@ -58,9 +83,7 @@ export const ProfileSettingsTab: FC<Props> = ({ client }) => {
 
         saveProfile({
           displayName,
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          avatar: avatar && avatarSize > 0 ? avatar : undefined,
+          avatar: avatar instanceof Blob && avatarSize > 0 ? avatar : undefined,
           removeAvatar: removeAvatar.current && (!avatar || avatarSize === 0),
         }).catch((e) => {
           logger.error("Failed to save profile", e);
@@ -72,15 +95,16 @@ export const ProfileSettingsTab: FC<Props> = ({ client }) => {
   return (
     <form onChange={onFormChange} ref={formRef} className={styles.content}>
       <FieldRow className={styles.avatarFieldRow}>
-        {userId && displayName && (
+        {displayName && (
           <AvatarInputField
             id="avatar"
             name="avatar"
             label={t("common.avatar")}
-            avatarUrl={avatarUrl}
+            avatarUrl={avatarUrl ?? undefined}
             userId={userId}
             displayName={displayName}
             onRemoveAvatar={onRemoveAvatar}
+            disabled={!canEdit}
           />
         )}
       </FieldRow>
@@ -91,7 +115,7 @@ export const ProfileSettingsTab: FC<Props> = ({ client }) => {
           label={t("common.username")}
           type="text"
           disabled
-          value={client.getUserId()!}
+          value={userId}
         />
       </FieldRow>
       <FieldRow>
@@ -101,9 +125,10 @@ export const ProfileSettingsTab: FC<Props> = ({ client }) => {
           label={t("common.display_name")}
           type="text"
           required
+          disabled={!canEdit}
           autoComplete="off"
           placeholder={t("common.display_name")}
-          defaultValue={displayName}
+          defaultValue={displayName ?? undefined}
           data-testid="profile_displayname"
         />
       </FieldRow>

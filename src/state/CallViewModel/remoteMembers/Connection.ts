@@ -53,8 +53,12 @@ export interface ConnectionOpts {
   ownMembershipIdentity: CallMembershipIdentityParts;
   /** The media transport to connect to. */
   transport: LivekitTransportConfig;
-  /** The Matrix client to use for OpenID and SFU config requests. */
-  client: OpenIDClientParts;
+  /**
+   * The Matrix client to use for OpenID and SFU config requests. `null` when
+   * every connection comes with its token already (the crate mints them), in
+   * which case a connection without `existingSFUConfig` cannot start.
+   */
+  client: OpenIDClientParts | null;
   /** The room ID this connection is associated with. */
   roomId: string;
   /** The observable scope to use for this connection. */
@@ -137,7 +141,7 @@ export class Connection {
   protected stopped = false;
 
   // TODO: can we just keep the ConnectionOpts object instead of spreading?
-  private readonly client: OpenIDClientParts;
+  private readonly client: OpenIDClientParts | null;
   private readonly roomId: string;
   private readonly logger: Logger;
   private readonly ownMembershipIdentity: CallMembershipIdentityParts;
@@ -398,6 +402,10 @@ export class Connection {
   protected async getSFUConfigForRemoteConnection(): Promise<SFUConfig> {
     // This will only be called for sfu's where we do not publish ourselves.
     // For the local connection we will use the existingJwtTokenData
+    if (this.client === null)
+      throw new FailedToStartError(
+        "No token for this connection and no client to fetch one with",
+      );
     return await getSFUConfigWithOpenID(
       this.client,
       this.ownMembershipIdentity,

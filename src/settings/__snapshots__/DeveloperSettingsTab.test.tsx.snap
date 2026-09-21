@@ -30,7 +30,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       class="_field_1bd8c0 _inputField_1bd8c0"
     >
       <input
-        aria-describedby="_r_1_"
+        aria-describedby="_r_2_"
         id="duplicateTiles"
         min="0"
         type="number"
@@ -50,7 +50,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       class="_field_1bd8c0 _checkboxField_1bd8c0"
     >
       <input
-        aria-describedby="_r_2_"
+        aria-describedby="_r_3_"
         id="debugTileLayout"
         type="checkbox"
       />
@@ -87,7 +87,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       class="_field_1bd8c0 _checkboxField_1bd8c0"
     >
       <input
-        aria-describedby="_r_3_"
+        aria-describedby="_r_4_"
         id="showConnectionStats"
         type="checkbox"
       />
@@ -124,7 +124,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       class="_field_1bd8c0 _checkboxField_1bd8c0"
     >
       <input
-        aria-describedby="_r_4_"
+        aria-describedby="_r_5_"
         id="muteAllAudio"
         type="checkbox"
       />
@@ -162,7 +162,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       class="_field_1bd8c0 _checkboxField_1bd8c0"
     >
       <input
-        aria-describedby="_r_5_"
+        aria-describedby="_r_6_"
         id="alwaysShowIphoneEarpiece"
         type="checkbox"
       />
@@ -199,7 +199,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       class="_field_1bd8c0 _checkboxField_1bd8c0"
     >
       <input
-        aria-describedby="_r_6_"
+        aria-describedby="_r_7_"
         id="enableLivekitExtendedLogs"
         type="checkbox"
       />
@@ -237,7 +237,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
     >
       <label
         class="_label_1o4d9_60"
-        for="radix-_r_7_"
+        for="radix-_r_8_"
       >
         Custom Livekit-url
       </label>
@@ -245,9 +245,9 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
         class="_controls_17lij_8"
       >
         <input
-          aria-describedby="radix-_r_8_"
+          aria-describedby="radix-_r_9_"
           class="_control_d83jn_10"
-          id="radix-_r_7_"
+          id="radix-_r_8_"
           name="input"
           title=""
           value=""
@@ -255,7 +255,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       </div>
       <span
         class="_message_1o4d9_86 _help-message_1o4d9_92"
-        id="radix-_r_8_"
+        id="radix-_r_9_"
       >
         Currently, no overwrite is set. Url from config is used.
       </span>
@@ -285,10 +285,10 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
           class="_container_1ug7n_10"
         >
           <input
-            aria-describedby="radix-_r_a_ radix-_r_c_"
+            aria-describedby="radix-_r_b_ radix-_r_d_"
             checked=""
             class="_input_1ug7n_18"
-            id="radix-_r_9_"
+            id="radix-_r_a_"
             name="_r_0_"
             title=""
             type="radio"
@@ -304,13 +304,13 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       >
         <label
           class="_label_1o4d9_60"
-          for="radix-_r_9_"
+          for="radix-_r_a_"
         >
           Compatibility: state events & multi SFU
         </label>
         <span
           class="_message_1o4d9_86 _help-message_1o4d9_92"
-          id="radix-_r_a_"
+          id="radix-_r_b_"
         >
           Compatible with homeservers that do not support sticky events (but all other EC clients are v0.17.0 or later)
         </span>
@@ -326,9 +326,9 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
           class="_container_1ug7n_10"
         >
           <input
-            aria-describedby="radix-_r_a_ radix-_r_c_"
+            aria-describedby="radix-_r_b_ radix-_r_d_"
             class="_input_1ug7n_18"
-            id="radix-_r_b_"
+            id="radix-_r_c_"
             name="_r_0_"
             title=""
             type="radio"
@@ -344,15 +344,111 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       >
         <label
           class="_label_1o4d9_60"
-          for="radix-_r_b_"
+          for="radix-_r_c_"
         >
           Matrix 2.0: sticky events & multi SFU
         </label>
         <span
           class="_message_1o4d9_86 _help-message_1o4d9_92"
-          id="radix-_r_c_"
+          id="radix-_r_d_"
         >
           Compatible only with homservers supporting sticky events and all EC clients v0.17.0 or later
+        </span>
+      </div>
+    </div>
+  </form>
+  <div
+    class="_separator_13qwf_8"
+    data-kind="primary"
+    data-orientation="horizontal"
+    role="separator"
+  />
+  <h3
+    class="_typography_6v6n8_153 _font-body-lg-semibold_6v6n8_74"
+  >
+    Call implementation
+  </h3>
+  <form
+    class="_root_1o4d9_17"
+  >
+    <div
+      class="_inline-field_1o4d9_33"
+    >
+      <div
+        class="_inline-field-control_1o4d9_45"
+      >
+        <div
+          class="_container_1ug7n_10"
+        >
+          <input
+            aria-describedby="radix-_r_f_ radix-_r_h_"
+            checked=""
+            class="_input_1ug7n_18"
+            id="radix-_r_e_"
+            name="_r_1_"
+            title=""
+            type="radio"
+            value="matrix-js-sdk"
+          />
+          <div
+            class="_ui_1ug7n_19"
+          />
+        </div>
+      </div>
+      <div
+        class="_inline-field-body_1o4d9_39"
+      >
+        <label
+          class="_label_1o4d9_60"
+          for="radix-_r_e_"
+        >
+          matrix-js-sdk
+        </label>
+        <span
+          class="_message_1o4d9_86 _help-message_1o4d9_92"
+          id="radix-_r_f_"
+        >
+          The MatrixRTC session of matrix-js-sdk carries the call, as before
+        </span>
+      </div>
+    </div>
+    <div
+      class="_inline-field_1o4d9_33"
+    >
+      <div
+        class="_inline-field-control_1o4d9_45"
+      >
+        <div
+          class="_container_1ug7n_10"
+        >
+          <input
+            aria-describedby="radix-_r_f_ radix-_r_h_"
+            class="_input_1ug7n_18"
+            id="radix-_r_g_"
+            name="_r_1_"
+            title=""
+            type="radio"
+            value="matrix-rtc"
+          />
+          <div
+            class="_ui_1ug7n_19"
+          />
+        </div>
+      </div>
+      <div
+        class="_inline-field-body_1o4d9_39"
+      >
+        <label
+          class="_label_1o4d9_60"
+          for="radix-_r_g_"
+        >
+          matrix-rtc (Rust)
+        </label>
+        <span
+          class="_message_1o4d9_86 _help-message_1o4d9_92"
+          id="radix-_r_h_"
+        >
+          The Rust matrix-rtc crate carries the call through the host's drivers
         </span>
       </div>
     </div>
@@ -459,7 +555,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       class="_field_1bd8c0 _checkboxField_1bd8c0"
     >
       <input
-        aria-describedby="_r_i_"
+        aria-describedby="_r_n_"
         id="cameraToggle"
         type="checkbox"
       />
@@ -489,7 +585,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       </label>
       <p
         class="_description_1bd8c0"
-        id="_r_i_"
+        id="_r_n_"
       >
         Configure resolution, framerate, bitrate, and codec for camera video. Changes apply on next call join.
       </p>
@@ -511,7 +607,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       class="_field_1bd8c0 _checkboxField_1bd8c0"
     >
       <input
-        aria-describedby="_r_j_"
+        aria-describedby="_r_o_"
         id="screenShareToggle"
         type="checkbox"
       />
@@ -541,7 +637,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       </label>
       <p
         class="_description_1bd8c0"
-        id="_r_j_"
+        id="_r_o_"
       >
         Configure resolution, framerate, bitrate, and codec for screen sharing
       </p>
@@ -566,7 +662,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       class="_field_1bd8c0 _checkboxField_1bd8c0"
     >
       <input
-        aria-describedby="_r_k_"
+        aria-describedby="_r_p_"
         checked=""
         id="echoCancellation"
         type="checkbox"
@@ -604,7 +700,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       class="_field_1bd8c0 _checkboxField_1bd8c0"
     >
       <input
-        aria-describedby="_r_l_"
+        aria-describedby="_r_q_"
         checked=""
         id="noiseSuppression"
         type="checkbox"
@@ -642,7 +738,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       class="_field_1bd8c0 _checkboxField_1bd8c0"
     >
       <input
-        aria-describedby="_r_m_"
+        aria-describedby="_r_r_"
         checked=""
         id="autoGainControl"
         type="checkbox"

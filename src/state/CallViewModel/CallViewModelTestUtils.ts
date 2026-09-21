@@ -26,7 +26,7 @@ import { E2eeType } from "../../e2ee/e2eeType";
 import { type RaisedHandInfo, type ReactionInfo } from "../../reactions";
 import {
   type CallViewModel,
-  createCallViewModel$,
+  createJsClientCallViewModel$,
   type CallViewModelOptions,
 } from "./CallViewModel";
 import {
@@ -197,7 +197,7 @@ export function withCallViewModel(mode: MatrixRTCMode) {
         setE2EEEnabled: async () => Promise.resolve(),
       });
 
-    const vm = createCallViewModel$(
+    const vm = createJsClientCallViewModel$(
       testScope(),
       rtcSession.asMockedSession(),
       room,

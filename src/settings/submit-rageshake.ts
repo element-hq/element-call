@@ -23,6 +23,8 @@ import { deepCompare } from "matrix-js-sdk/lib/utils";
 import { advancedCamera as advancedCameraSetting } from "./settings";
 import { advancedScreenShare as advancedScreenShareSetting } from "./settings";
 import { DEFAULT_CONFIG } from "../config/ConfigOptions";
+import { effectiveCallViewModelImplementation } from "../state/rtc/implementation";
+import { useOptionalMatrixDrivers } from "../driver/MatrixDriverContext";
 const gzip = async (text: string): Promise<Blob> => {
   // pako is relatively large (200KB), so we only import it when needed
   const { gzip: pakoGzip } = await import("pako");
@@ -143,6 +145,7 @@ export function useSubmitRageshake(
   available: boolean;
 } {
   const { client } = useClient();
+  const drivers = useOptionalMatrixDrivers();
 
   const [{ sending, sent, error }, setState] = useState<{
     sending: boolean;
@@ -202,6 +205,29 @@ export function useSubmitRageshake(
         body.append("installed_pwa", "false");
         body.append("touch_input", touchInput);
         body.append("call_backend", "livekit");
+        body.append(
+          "call_view_model_implementation",
+          effectiveCallViewModelImplementation(),
+        );
+        // What the host's drivers know, and the crate's own view of the
+        // call when it carries it.
+        if (drivers?.clientDriver.getDiagnostics) {
+          try {
+            for (const [key, value] of Object.entries(
+              await drivers.clientDriver.getDiagnostics(),
+            ))
+              body.append(`driver_${key}`, value);
+          } catch (e) {
+            logger.warn("Could not collect the driver's diagnostics", e);
+          }
+        }
+        const rtcParticipationManager =
+          window.matrixRtc?.rtcParticipationManager;
+        if (rtcParticipationManager)
+          body.append(
+            "matrix_rtc_snapshot",
+            rtcParticipationManager.debugSnapshot(),
+          );
         body.append("hostname", window.location.hostname);
 
         if (client) {
@@ -316,7 +342,7 @@ export function useSubmitRageshake(
         logger.error(error);
       }
     },
-    [client, sending, injectedGetRageshakeSubmitUrl],
+    [client, drivers, sending, injectedGetRageshakeSubmitUrl],
   );
 
   return {
@@ -333,19 +359,24 @@ export function useRageshakeRequest(): (
   rageshakeRequestId: string,
 ) => void {
   const { client } = useClient();
+  const drivers = useOptionalMatrixDrivers();
 
   const sendRageshakeRequest = useCallback(
     (roomId: string, rageshakeRequestId: string) => {
-      client!
-        // @ts-expect-error - org.matrix.rageshake_request is not part of `keyof TimelineEvents` but it is okay to sent a custom event.
-        .sendEvent(roomId, "org.matrix.rageshake_request", {
-          request_id: rageshakeRequestId,
-        })
-        .catch((e) => {
-          logger.error("Failed to send org.matrix.rageshake_request event", e);
-        });
+      const content = { request_id: rageshakeRequestId };
+      const sent: Promise<unknown> =
+        drivers !== null
+          ? drivers.clientDriver.sendRoomEvent(
+              "org.matrix.rageshake_request",
+              content,
+            )
+          : // @ts-expect-error - org.matrix.rageshake_request is not part of `keyof TimelineEvents` but it is okay to sent a custom event.
+            client!.sendEvent(roomId, "org.matrix.rageshake_request", content);
+      sent.catch((e: unknown) => {
+        logger.error("Failed to send org.matrix.rageshake_request event", e);
+      });
     },
-    [client],
+    [client, drivers],
   );
   return sendRageshakeRequest;
 }
@@ -356,9 +387,22 @@ export function useRageshakeRequestModal(
   const [open, setOpen] = useState(false);
   const onDismiss = useCallback(() => setOpen(false), [setOpen]);
   const { client } = useClient();
+  const drivers = useOptionalMatrixDrivers();
   const [rageshakeRequestId, setRageshakeRequestId] = useState<string>();
 
   useEffect(() => {
+    if (drivers !== null) {
+      const { clientDriver } = drivers;
+      return clientDriver.subscribeTimeline((event) => {
+        if (
+          event.type === "org.matrix.rageshake_request" &&
+          event.sender !== clientDriver.userId
+        ) {
+          setRageshakeRequestId(event.content.request_id as string);
+          setOpen(true);
+        }
+      });
+    }
     if (!client) return;
 
     const onEvent = (event: MatrixEvent): void => {
@@ -379,7 +423,7 @@ export function useRageshakeRequestModal(
     return (): void => {
       client.removeListener(ClientEvent.Event, onEvent);
     };
-  }, [setOpen, roomId, client]);
+  }, [setOpen, roomId, client, drivers]);
 
   return {
     rageshakeRequestId: rageshakeRequestId ?? "",

@@ -64,7 +64,7 @@ export const KnockLobbyView: FC<Props> = ({
 
   return (
     <LobbyView
-      client={client}
+      developerSettingsClient={client}
       matrixInfo={{
         userId: client.getUserId() ?? "",
         displayName: profile.displayName,

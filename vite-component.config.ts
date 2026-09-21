@@ -37,6 +37,11 @@ export default defineConfig(({ mode }) => {
     // A host's document is not ours to style: everything in the stylesheet is
     // confined to the element Element Call is mounted in
     css: { postcss: { plugins: [scopeStylesToRoot()] } },
+    // A library does not know where its host will serve it from, so the few
+    // assets that are not inlined (the MatrixRTC wasm) are addressed relative
+    // to the bundle, through `import.meta.url`, which a host's bundler follows.
+    // With the default `/` they would be absolute paths on the host's origin.
+    base: "./",
     build: {
       // Into the package directory, so that `component/package.json` describes
       // what sits next to it and the directory can be installed as a package

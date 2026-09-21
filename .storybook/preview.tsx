@@ -10,6 +10,7 @@ import { TooltipProvider } from "@vector-im/compound-web";
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import EN from "../locales/en/app.json";
+import { Config } from "../src/config/Config";
 import { initReactI18next } from "react-i18next";
 import { i18n } from "../src/utils/i18n";
 import "../src/index.css";
@@ -34,6 +35,10 @@ i18n
     },
   })
   .catch((e) => logger.warn("Failed to init i18n for stories", e));
+
+// Stories run without a config.json; the defaults stand in, as they do for
+// a component host that passes none.
+Config.initWith({});
 
 const preview: Preview = {
   parameters: {

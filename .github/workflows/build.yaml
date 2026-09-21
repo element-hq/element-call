@@ -15,12 +15,7 @@ jobs:
       package: full
       vite_app_version: ${{ github.event.release.tag_name || github.sha }}
       build_mode: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'development build') && 'development' || 'production' }}
-    secrets:
-      SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-      SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
-      SENTRY_URL: ${{ secrets.SENTRY_URL }}
-      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    secrets: inherit
   deploy_develop:
     # Deploy main branch to call.element.dev after build completes
     if: github.ref == 'refs/heads/main'
@@ -65,12 +60,7 @@ jobs:
       package: embedded
       vite_app_version: ${{ github.event.release.tag_name || github.sha }}
       build_mode: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'development build') && 'development' || 'production' }}
-    secrets:
-      SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-      SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
-      SENTRY_URL: ${{ secrets.SENTRY_URL }}
-      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    secrets: inherit
 
   build_sdk_element_call:
     # Use the embedded package vite build
@@ -79,12 +69,7 @@ jobs:
       package: sdk
       vite_app_version: ${{ github.event.release.tag_name || github.sha }}
       build_mode: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'development build') && 'development' || 'production' }}
-    secrets:
-      SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-      SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
-      SENTRY_URL: ${{ secrets.SENTRY_URL }}
-      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    secrets: inherit
 
   build_storybook:
     name: Build Storybook
@@ -102,6 +87,14 @@ jobs:
         with:
           cache: "pnpm"
           node-version-file: ".node-version"
+      - name: Authenticate to GitHub Packages
+        # The MatrixRTC SDK (@billcarsonfr/matrix-rtc, see .npmrc) is on the GitHub
+        # Packages npm registry, which needs a token with read:packages even for
+        # public packages. A workflow's GITHUB_TOKEN only reaches packages of its own
+        # repository, so this is a personal access token kept as a repository secret.
+        env:
+          NPM_REGISTRY_TOKEN: ${{ secrets.MATRIX_RTC_NPM_TOKEN }}
+        run: echo "//npm.pkg.github.com/:_authToken=${NPM_REGISTRY_TOKEN}" >> ~/.npmrc
       - name: Install dependencies
         run: "pnpm install --frozen-lockfile --ignore-pnpmfile"
       - name: Build Storybook
