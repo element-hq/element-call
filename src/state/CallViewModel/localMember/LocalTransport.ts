@@ -5,17 +5,11 @@ SPDX-License-IdFentifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import {
-  type CallMembership,
-  type LivekitTransportConfig,
-} from "matrix-js-sdk/lib/matrixrtc";
+import { type LivekitTransportConfig } from "matrix-js-sdk/lib/matrixrtc";
 import { type MatrixClient } from "matrix-js-sdk";
-import { distinctUntilChanged, from, map, of, switchMap } from "rxjs";
 import { logger as rootLogger, type Logger } from "matrix-js-sdk/lib/logger";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
-import { type Behavior } from "../../Behavior.ts";
-import { type Epoch, type ObservableScope } from "../../ObservableScope.ts";
 import { Config } from "../../../config/Config.ts";
 import {
   FailToGetOpenIdToken,
@@ -27,19 +21,12 @@ import {
   type SFUConfig,
   type OpenIDClientParts,
 } from "../../../livekit/openIDSFU.ts";
-import { areLivekitTransportsEqual } from "../remoteMembers/MatrixLivekitMembers.ts";
 import { customLivekitUrl } from "../../../settings/settings.ts";
 import { RtcTransportAutoDiscovery } from "./RtcTransportAutoDiscovery.ts";
 import { type MatrixRTCMode } from "../../../config/ConfigOptions.ts";
 
-/*
- * It figures out “which LiveKit focus URL/alias the local user should use,”
- * and ensures the SFU path is primed before advertising that choice.
- */
 interface Props {
-  scope: ObservableScope;
   ownMembershipIdentity: CallMembershipIdentityParts;
-  memberships$: Behavior<Epoch<CallMembership[]>>;
   client: Pick<MatrixClient, "getDomain" | "_unstable_getRTCTransports"> &
     OpenIDClientParts;
   // Used by the jwt service to create the livekit room and compute the livekit alias.
@@ -68,114 +55,65 @@ interface Props {
 //
 // 2.
 // We need to make sure we do not sent livekit_alias in sticky events and that we drop all code for sending state events!
-export interface LocalTransportWithSFUConfig {
+export interface LocalTransport {
   transport: LivekitTransportConfig;
   sfuConfig: SFUConfig;
 }
 
-export function isLocalTransportWithSFUConfig(
-  obj: LivekitTransportConfig | LocalTransportWithSFUConfig,
-): obj is LocalTransportWithSFUConfig {
+export function isLocalTransport(
+  obj: LivekitTransportConfig | LocalTransport,
+): obj is LocalTransport {
   return "transport" in obj && "sfuConfig" in obj;
 }
 
-export interface LocalTransport {
-  /**
-   * The transport to be advertised in our MatrixRTC membership. `null` when not
-   * yet fetched/validated.
-   */
-  advertised$: Behavior<LivekitTransportConfig | null>;
-  /**
-   * The transport to connect to and publish media on. `null` when not yet known
-   * or available.
-   */
-  active$: Behavior<LocalTransportWithSFUConfig | null>;
-}
-
 /**
- * Connects to the JWT service and determines the transports that the local member should use.
+ * Connects to the JWT service and determines the transport that the local member should use.
  *
  * @prop useOldJwtEndpoint Whether to set forceOldJwtEndpoint on the returned transport and to use the old JWT endpoint.
  * This is used when the connection manager needs to know if it has to use the legacy endpoint which implies a string concatenated rtcBackendIdentity.
  * (which is expected for non sticky event based rtc member events)
- * @returns The transport to advertise in the local MatrixRTC membership, along with the transport to actively publish media to.
+ * @returns The transport to advertise in our MatrixRTC membership and publish media on.
  * @throws MatrixRTCTransportMissingError | FailToGetOpenIdToken
  */
-export const createLocalTransport$ = ({
-  scope,
-  memberships$,
+export async function getLocalTransport({
   ownMembershipIdentity,
   client,
   roomId,
   matrixRTCMode,
-}: Props): LocalTransport => {
+}: Props): Promise<LocalTransport> {
   const logger = rootLogger.getChild("[LocalTransport]");
-
-  const transportDiscovery = new RtcTransportAutoDiscovery({
+  const discovery = new RtcTransportAutoDiscovery({
     client: client,
     resolvedConfig: Config.get(),
     logger: logger,
   });
+  const customUrl = customLivekitUrl.value$.value;
 
-  // Get the preferred transport from the current deployment.
-  const discoveredTransport$ = from(
-    transportDiscovery.discoverPreferredTransport(),
-  );
+  // Respect the user's custom URL, if set
+  const transport: LivekitTransportConfig | null = customUrl
+    ? { type: "livekit", livekit_service_url: customUrl }
+    : await discovery.discoverPreferredTransport();
 
-  const preferredConfig$ = customLivekitUrl.value$.pipe(
-    switchMap((customUrl) => {
-      if (customUrl) {
-        return of({
-          type: "livekit",
-          livekit_service_url: customUrl,
-        } as LivekitTransportConfig);
-      } else {
-        return discoveredTransport$;
-      }
-    }),
-    map((config) => {
-      if (!config) {
-        // Bubbled up from the preferredConfig$ observable.
-        throw new MatrixRTCTransportMissingError(client.getDomain() ?? "");
-      }
-      return config;
-    }),
-    distinctUntilChanged(areLivekitTransportsEqual),
-  );
+  if (transport === null)
+    throw new MatrixRTCTransportMissingError(client.getDomain() ?? "");
 
-  const preferredTransport$ = preferredConfig$.pipe(
-    switchMap(async (transport) => {
-      try {
-        return await doOpenIdAndJWTFromUrl(
-          transport,
-          matrixRTCMode,
-          ownMembershipIdentity,
-          roomId,
-          client,
-          logger,
-        );
-      } catch (e) {
-        logger.error(
-          `Failed to authenticate to transport ${transport.livekit_service_url}`,
-          e,
-        );
-        throw mapAuthErrorToUserFriendlyError(e);
-      }
-    }),
-  );
-
-  // Always publish on and advertise the preferred transport.
-  return {
-    advertised$: scope.behavior(
-      preferredTransport$.pipe(
-        map((t) => t.transport),
-        distinctUntilChanged(areLivekitTransportsEqual),
-      ),
-      null,
-    ),
-    active$: scope.behavior(preferredTransport$, null),
-  };
-};
+  try {
+    return await doOpenIdAndJWTFromUrl(
+      transport,
+      matrixRTCMode,
+      ownMembershipIdentity,
+      roomId,
+      client,
+      logger,
+    );
+  } catch (e) {
+    logger.error(
+      `Failed to authenticate to transport ${transport.livekit_service_url}`,
+      e,
+    );
+    throw mapAuthErrorToUserFriendlyError(e);
+  }
+}
 
 /**
  *  Utility to ensure the user can authenticate with the SFU.
@@ -199,7 +137,7 @@ async function doOpenIdAndJWTFromUrl(
   roomId: string,
   client: Pick<MatrixClient, "_unstable_getRTCTransports"> & OpenIDClientParts,
   logger?: Logger,
-): Promise<LocalTransportWithSFUConfig> {
+): Promise<LocalTransport> {
   const sfuConfig = await getSFUConfigWithOpenID(
     client,
     membership,

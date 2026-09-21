@@ -8,7 +8,6 @@ Please see LICENSE in the repository root for full details.
 import {
   type Observable,
   audit,
-  combineLatest,
   concat,
   defer,
   filter,
@@ -111,14 +110,6 @@ export function getValue<T>(state$: Observable<T>): T {
   state$.subscribe((x) => (value = x)).unsubscribe();
   if (value === nothing) throw new Error("Not a state Observable");
   return value;
-}
-
-/**
- * Creates an Observable that has a value of true whenever some of its inputs
- * are true.
- */
-export function or$(...inputs: Observable<boolean>[]): Observable<boolean> {
-  return combineLatest(inputs, (...flags) => flags.some((flag) => flag));
 }
 
 /**

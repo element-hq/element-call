@@ -38,6 +38,10 @@ import {
   startWith,
   switchMap,
   tap,
+  NEVER,
+  concat,
+  race,
+  Subject,
 } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
@@ -77,8 +81,6 @@ import {
 } from "../remoteMembers/Connection.ts";
 import { type HomeserverConnected } from "./HomeserverConnected.ts";
 import { type LocalTransport } from "./LocalTransport.ts";
-import { areLivekitTransportsEqual } from "../remoteMembers/MatrixLivekitMembers.ts";
-import { or$ } from "../../../utils/observable.ts";
 import { getSFUConfigWithOpenID } from "../../../livekit/openIDSFU.ts";
 
 export enum TransportState {
@@ -148,7 +150,7 @@ interface Props {
   homeserverConnected: HomeserverConnected;
   roomId: string;
   ownMembershipIdentity: CallMembershipIdentityParts;
-  localTransport: LocalTransport;
+  localTransport$: Observable<LocalTransport>;
   client: Pick<MatrixClient, "getDeviceId" | "getOpenIdToken">;
   matrixRTCSession: Pick<
     MatrixRTCSession,
@@ -194,7 +196,7 @@ interface Props {
 export const createLocalMembership$ = ({
   scope,
   connectionManager,
-  localTransport,
+  localTransport$: localTransportWithErrors$,
   homeserverConnected,
   createPublisherFactory,
   joinMatrixRTC,
@@ -252,20 +254,24 @@ export const createLocalMembership$ = ({
   const logger = parentLogger.getChild("[LocalMembership]");
   logger.debug(`Creating local membership..`);
 
-  // We consider error on the transport as fatal.
-  // Whether it is the active transport or the preferred transport.
-  const handleTransportError = (e: unknown): Observable<null> => {
-    let error: ElementCallError;
-    if (e instanceof ElementCallError) {
-      error = e;
-    } else {
-      error = new UnknownCallError(
-        e instanceof Error ? e : new Error("Unknown error from localTransport"),
-      );
-    }
-    setTransportError(error);
-    return of(null);
-  };
+  // Unwrap the local transport and set the state of the LocalMembership to error in case the transport is an error.
+  const fatalTransportError$ = new Subject<ElementCallError>();
+  const localTransport$ = localTransportWithErrors$.pipe(
+    catchError((e: unknown) => {
+      let error: ElementCallError;
+      if (e instanceof ElementCallError) {
+        error = e;
+      } else {
+        error = new UnknownCallError(
+          e instanceof Error
+            ? e
+            : new Error("Unknown error from localTransport"),
+        );
+      }
+      fatalTransportError$.next(error);
+      return NEVER; // Make this Observable swallow the error
+    }),
+  );
 
   async function checkDelegationSupport(
     endpointUrl: string,
@@ -303,58 +309,40 @@ export const createLocalMembership$ = ({
 
   // The transport that we will advertise in our membership, paired with info as
   // to whether delayed event delegation is supported
-  const joinParams$ = localTransport.advertised$.pipe(
-    catchError(handleTransportError),
-    distinctUntilChanged(areLivekitTransportsEqual),
-    switchMap((transport) => {
-      if (transport === null) return of(null);
-      const transportSupportsDelegation = checkDelegationSupport(
-        transport.livekit_service_url + "/delegate_delayed_leave",
-        `transport ${transport.livekit_service_url}`,
-      );
-      return or$(
-        from(homeserverSupportsDelegation),
-        from(transportSupportsDelegation),
-      ).pipe(
-        map((delegationSupported) => ({ transport, delegationSupported })),
-        startWith(null),
-      );
-    }),
-  );
-
-  // Unwrap the local transport and set the state of the LocalMembership to error in case the transport is an error.
-  const activeTransport$ = scope.behavior(
-    combineLatest([localTransport.active$, localTransport.advertised$]).pipe(
-      map(([active, advertised]) => {
-        // Our policy is to not publish to another transport if our prefered transport is miss-configured
-        if (advertised == null) return null;
-
-        return active?.transport ?? null;
+  const joinParams$ = scope.behavior(
+    localTransport$.pipe(
+      switchMap(async ({ transport }) => {
+        const transportSupportsDelegation = checkDelegationSupport(
+          transport.livekit_service_url + "/delegate_delayed_leave",
+          `transport ${transport.livekit_service_url}`,
+        );
+        return {
+          transport,
+          delegationSupported:
+            (await homeserverSupportsDelegation) ||
+            (await transportSupportsDelegation),
+        };
       }),
-      catchError(handleTransportError),
-      distinctUntilChanged(areLivekitTransportsEqual),
     ),
+    null,
   );
 
   // Drop Epoch data here since we will not combine this anymore
   const localConnection$ = scope.behavior(
     combineLatest([
       connectionManager.connectionManagerData$,
-      activeTransport$,
+      localTransport$,
     ]).pipe(
-      map(([{ value: connectionData }, localTransport]) => {
-        if (localTransport === null) {
-          return null;
-        }
-
-        return connectionData.getConnectionForTransport(localTransport);
-      }),
+      map(([{ value: connectionData }, { transport }]) =>
+        connectionData.getConnectionForTransport(transport),
+      ),
       tap((connection) => {
         logger.info(
           `Local connection updated: ${connection?.transport?.livekit_service_url}`,
         );
       }),
     ),
+    null,
   );
 
   // Tracks error that happen when creating the local tracks.
@@ -490,18 +478,6 @@ export const createLocalMembership$ = ({
     }
   };
 
-  const fatalTransportError$ = new BehaviorSubject<ElementCallError | null>(
-    null,
-  );
-
-  const setTransportError = (e: ElementCallError): void => {
-    if (fatalTransportError$.value !== null) {
-      logger.error("Multiple Transport Errors:", e);
-    } else {
-      fatalTransportError$.next(e);
-    }
-  };
-
   const localConnectionState$ = localConnection$.pipe(
     switchMap((connection) => (connection ? connection.state$ : of(null))),
   );
@@ -509,38 +485,29 @@ export const createLocalMembership$ = ({
   const mediaState$: Behavior<LocalMemberMediaState> = scope.behavior(
     combineLatest([
       localConnectionState$,
-      activeTransport$,
       joinAndPublishRequested$,
       from(trackStartRequested.promise).pipe(
         map(() => true),
         startWith(false),
       ),
     ]).pipe(
-      map(
-        ([
-          localConnectionState,
-          localTransport,
-          shouldPublish,
-          shouldStartTracks,
-        ]) => {
-          if (!localTransport) return null;
-          const trackState: TrackState = shouldStartTracks
-            ? TrackState.Ready
-            : TrackState.WaitingForUser;
+      map(([localConnectionState, shouldPublish, shouldStartTracks]) => {
+        const trackState: TrackState = shouldStartTracks
+          ? TrackState.Ready
+          : TrackState.WaitingForUser;
 
-          if (
-            localConnectionState !== ConnectionState.LivekitConnected ||
-            trackState !== TrackState.Ready
-          )
-            return {
-              connection: localConnectionState,
-              tracks: trackState,
-            };
-          if (!shouldPublish) return PublishState.WaitingForUser;
-          // if (!publishing) return PublishState.Starting;
-          return PublishState.Publishing;
-        },
-      ),
+        if (
+          localConnectionState !== ConnectionState.LivekitConnected ||
+          trackState !== TrackState.Ready
+        )
+          return {
+            connection: localConnectionState,
+            tracks: trackState,
+          };
+        if (!shouldPublish) return PublishState.WaitingForUser;
+        // if (!publishing) return PublishState.Starting;
+        return PublishState.Publishing;
+      }),
       distinctUntilChanged(deepCompare),
     ),
   );
@@ -554,30 +521,36 @@ export const createLocalMembership$ = ({
   };
 
   const localMemberState$ = scope.behavior<LocalMemberState>(
-    combineLatest([
-      mediaState$,
-      homeserverConnected.rtsSession$,
-      fatalMatrixError$,
-      fatalTransportError$,
-      publishError$,
-    ]).pipe(
-      map(
-        ([
-          mediaState,
-          rtcSessionStatus,
-          fatalMatrixError,
-          fatalTransportError,
-          publishError,
-        ]) => {
-          if (fatalTransportError !== null) return fatalTransportError;
-          // `mediaState` will be 'null' until the transport/connection appears.
-          if (mediaState && rtcSessionStatus)
-            return {
-              matrix: fatalMatrixError ?? rtcSessionStatus,
-              media: publishError ?? mediaState,
-            };
-          return TransportState.Waiting;
-        },
+    concat(
+      // Waiting until…
+      of(TransportState.Waiting),
+      race(
+        // either there is a fatal transport error
+        fatalTransportError$,
+        // or the transport is available.
+        localTransport$.pipe(
+          switchMap(() =>
+            // Once available, track session/media state.
+            combineLatest([
+              mediaState$,
+              homeserverConnected.rtsSession$,
+              fatalMatrixError$,
+              publishError$,
+            ]).pipe(
+              map(
+                ([
+                  mediaState,
+                  rtcSessionStatus,
+                  fatalMatrixError,
+                  publishError,
+                ]) => ({
+                  matrix: fatalMatrixError ?? rtcSessionStatus,
+                  media: publishError ?? mediaState,
+                }),
+              ),
+            ),
+          ),
+        ),
       ),
     ),
   );
