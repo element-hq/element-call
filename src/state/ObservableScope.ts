@@ -18,7 +18,6 @@ import {
   share,
   take,
   takeUntil,
-  shareReplay,
 } from "rxjs";
 
 import { logger } from "matrix-js-sdk/lib/logger";
@@ -67,17 +66,6 @@ export class ObservableScope {
    */
   public readonly share: MonoTypeOperator = (input$) =>
     input$.pipe(this.bindImpl, this.shareImpl);
-
-  private readonly shareReplayImpl: MonoTypeOperator = shareReplay({
-    bufferSize: 1,
-    refCount: false,
-  });
-  /**
-   * Shares (multicasts) the Observable as a hot Observable, replaying the most
-   * recently emitted value upon subscription.
-   */
-  public readonly shareReplay: MonoTypeOperator = (input$) =>
-    input$.pipe(this.bindImpl, this.shareReplayImpl);
 
   /**
    * Converts an Observable to a Behavior. If no initial value is specified, the
