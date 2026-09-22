@@ -987,9 +987,6 @@ export function enterRTCSession(
     matrix_rtc_session: sessionConfig,
   } = Config.get();
   const retryInterval = sessionConfig.network_error_retry_ms;
-  const multiSFU =
-    matrixRTCMode === MatrixRTCMode.Compatibility ||
-    matrixRTCMode === MatrixRTCMode.Matrix_2_0;
 
   // For backwards compatibility with Element Call versions that do not do Matrix 2.0,
   // we add the livekit alias to the transport.
@@ -1016,8 +1013,8 @@ export function enterRTCSession(
 
   rtcSession.joinRTCSession(
     ownMembershipIdentity,
-    multiSFU ? [] : [backwardCompatibleTransport],
-    multiSFU ? backwardCompatibleTransport : undefined,
+    [],
+    backwardCompatibleTransport,
     {
       notificationType,
       callIntent,
