@@ -204,7 +204,6 @@ export const ReactionSet: ReactionOption[] = [
       mp3: baduntssSoundMp3,
     },
   },
-  ,
   {
     emoji: "🔔",
     name: "bell",
