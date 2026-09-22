@@ -13,6 +13,7 @@ import { Link } from "@vector-im/compound-web";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { CallFooter, type FooterSnapshot } from "./CallFooter";
 import inCallViewStyles from "../room/InCallView.module.css";
+import styles from "./CallFooter.module.css";
 import { useStaticViewModel } from "../state/ViewModel";
 import { ReactionsSenderContext } from "../reactions/useReactionsSender";
 import { type ReactionOption } from "../reactions";
@@ -172,6 +173,41 @@ export const WithAudioAndVideoOptions: Story = {
     selectedAudio: "2",
     selectedAudioOutput: "default",
     selectedVideo: "1",
+  },
+};
+
+export const StaysWhileAMenuIsOpen: Story = {
+  ...Default,
+  args: {
+    ...WithAudioAndVideoOptions.args,
+    // As it is in a short window, where the footer overlays the call and hides
+    // itself once nothing is happening.
+    asOverlay: true,
+    showFooter: true,
+  },
+  play: async ({ canvasElement }): Promise<void> => {
+    const footer = canvasElement.querySelector<HTMLElement>(
+      '[data-testid="footer-container"]',
+    )!;
+    await userEvent.click(
+      within(canvasElement).getByRole("button", { name: "Microphone" }),
+    );
+    await expect(document.body.querySelector('[role="menu"]')).not.toBeNull();
+
+    // The call now decides to hide the footer, which is the class it does it
+    // with. The menu is portalled out of the footer, so the focus inside it is
+    // not something the footer can see: without the trigger's aria-expanded to
+    // go on, this would fade the footer out and take the menu's anchor with it.
+    // The call now decides to hide the footer, which is the class it does that
+    // with. The menu is portalled out of the footer, so the focus inside it is
+    // not something the footer can see: without the trigger's aria-expanded to
+    // go on, this fades the footer out and takes the menu's anchor with it.
+    footer.classList.add(styles.hidden);
+
+    // The footer fades over 0.15s, so a reading taken now is the value it
+    // started from whatever happens next. Let the transition finish first.
+    await new Promise((settled) => setTimeout(settled, 400));
+    await expect(getComputedStyle(footer).opacity).toBe("1");
   },
 };
 
