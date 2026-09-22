@@ -9,7 +9,7 @@ import { defineConfig, searchForWorkspaceRoot } from "vite";
 import { realpathSync } from "node:fs";
 import * as fs from "node:fs";
 
-import { vitePluginsConfig } from "./vite.config";
+import { vitePluginsConfig } from "./vite.config.ts";
 import { scopeStylesToRoot } from "./component/build/scopeStylesToRoot";
 
 // Serves the harness under `component/dev`, which embeds Element Call as a
