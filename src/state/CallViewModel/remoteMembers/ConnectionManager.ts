@@ -179,7 +179,8 @@ export function createConnectionManager$({
         function* (transports) {
           for (const transport of transports) {
             if (isLocalTransport(transport)) {
-              // This is the local transport; only the `LocalTransportWithSFUConfig` has a `sfuConfig` field.
+              // This is the local transport; only the `LocalTransport`
+              // interface has a `sfuConfig` field.
               yield {
                 keys: [
                   transport.transport.livekit_service_url,

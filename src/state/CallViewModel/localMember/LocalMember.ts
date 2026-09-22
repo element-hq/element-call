@@ -658,7 +658,7 @@ export const createLocalMembership$ = ({
       });
   });
 
-  // Keep matrix rtc session in sync with advertisedTransport$, connectRequested$
+  // Join and leave the session as needed
   scope.reconcile(
     scope.behavior(combineLatest([joinParams$, joinAndPublishRequested$])),
     async ([joinParams, shouldConnect]) => {

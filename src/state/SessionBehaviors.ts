@@ -22,6 +22,10 @@ import {
 } from "./ObservableScope";
 import { type Behavior } from "./Behavior";
 
+/**
+ * Tracks the transports used by ourselves, plus all other MatrixRTC session
+ * members.
+ */
 export const membershipsAndTransports$ = (
   scope: ObservableScope,
   memberships$: Behavior<Epoch<CallMembership[]>>,
@@ -31,14 +35,6 @@ export const membershipsAndTransports$ = (
   >;
   transports$: Behavior<Epoch<LivekitTransportConfig[]>>;
 } => {
-  /**
-   * Lists the transports used by ourselves, plus all other MatrixRTC session
-   * members.
-   * For completeness this also lists the preferred transport and
-   * whether we are in multi-SFU mode or sticky events mode.
-   * `advertisedTransport$` reads these values together, so bundling them avoids inconsistent state or
-   * excessive updates when using RxJS.
-   */
   const membershipsWithTransport$: Behavior<
     Epoch<
       {
