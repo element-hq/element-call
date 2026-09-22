@@ -16,7 +16,6 @@ import {
 import { type Room as MatrixRoom } from "matrix-js-sdk";
 import {
   BehaviorSubject,
-  catchError,
   combineLatest,
   distinctUntilChanged,
   filter,
@@ -39,6 +38,7 @@ import {
   throttleTime,
   timer,
   takeUntil,
+  from,
 } from "rxjs";
 import { type Logger, logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import {
@@ -112,7 +112,7 @@ import {
   TransportState,
 } from "./localMember/LocalMember.ts";
 import {
-  createLocalTransport$,
+  getLocalTransport,
   type LocalTransport,
 } from "./localMember/LocalTransport.ts";
 import {
@@ -573,16 +573,16 @@ export function createCallViewModel$(
         : `${userId}:${deviceId}`,
   };
 
-  const localTransport =
-    options.localTransport ??
-    createLocalTransport$({
-      scope: scope,
-      memberships$: memberships$,
-      ownMembershipIdentity,
-      client,
-      roomId: matrixRoom.roomId,
-      matrixRTCMode,
-    });
+  const localTransport$ = options.localTransport
+    ? constant(options.localTransport)
+    : from(
+        getLocalTransport({
+          ownMembershipIdentity,
+          client,
+          roomId: matrixRoom.roomId,
+          matrixRTCMode,
+        }),
+      );
 
   const connectionFactory =
     options.connectionFactory ??
@@ -599,17 +599,7 @@ export function createCallViewModel$(
   const connectionManager = createConnectionManager$({
     scope: scope,
     connectionFactory: connectionFactory,
-    localTransport$: scope.behavior(
-      localTransport.active$.pipe(
-        catchError((e: unknown) => {
-          logger.info(
-            "could not pass local transport to createConnectionManager$. localTransport$ threw an error",
-            e,
-          );
-          return of(null);
-        }),
-      ),
-    ),
+    localTransport$,
     remoteTransports$: membershipsAndTransports.transports$,
     logger: logger,
     ownMembershipIdentity,
@@ -665,7 +655,7 @@ export function createCallViewModel$(
     connectionManager,
     client,
     matrixRTCSession,
-    localTransport,
+    localTransport$,
     roomId: matrixRoom.roomId,
     hideScreensharing,
     hostBridge,

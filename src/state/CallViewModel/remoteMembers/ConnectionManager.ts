@@ -7,7 +7,16 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type LivekitTransportConfig } from "matrix-js-sdk/lib/matrixrtc";
-import { combineLatest, map, of, switchMap } from "rxjs";
+import {
+  combineLatest,
+  map,
+  type Observable,
+  of,
+  switchMap,
+  startWith,
+  catchError,
+  NEVER,
+} from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import { type RemoteParticipant } from "livekit-client";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
@@ -19,8 +28,8 @@ import { generateItemsWithEpoch } from "../../../utils/observable.ts";
 import { areLivekitTransportsEqual } from "./MatrixLivekitMembers.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
 import {
-  isLocalTransportWithSFUConfig,
-  type LocalTransportWithSFUConfig,
+  isLocalTransport,
+  type LocalTransport,
 } from "../localMember/LocalTransport.ts";
 import { type SFUConfig } from "../../../livekit/openIDSFU.ts";
 
@@ -78,7 +87,7 @@ export class ConnectionManagerData {
 interface Props {
   scope: ObservableScope;
   connectionFactory: ConnectionFactory;
-  localTransport$: Behavior<LocalTransportWithSFUConfig | null>;
+  localTransport$: Observable<LocalTransport>;
   remoteTransports$: Behavior<Epoch<LivekitTransportConfig[]>>;
 
   logger: Logger;
@@ -121,6 +130,14 @@ export function createConnectionManager$({
   const logger = parentLogger.getChild("[ConnectionManager]");
   // TODO logger: only construct one logger from the client and make it compatible via a EC specific sing
 
+  const localTransportAsArray$ = localTransport$.pipe(
+    // LocalMember already surfaces local transport errors properly in the UI,
+    // here we can just swallow them
+    catchError(() => NEVER),
+    map((transport) => [transport]),
+    startWith([]),
+  );
+
   /**
    * All transports currently managed by the ConnectionManager.
    *
@@ -130,16 +147,12 @@ export function createConnectionManager$({
    * externally this is modified via `registerTransports()`.
    */
   const localAndRemoteTransports$: Behavior<
-    Epoch<(LivekitTransportConfig | LocalTransportWithSFUConfig)[]>
+    Epoch<(LivekitTransportConfig | LocalTransport)[]>
   > = scope.behavior(
-    combineLatest([remoteTransports$, localTransport$]).pipe(
+    combineLatest([localTransportAsArray$, remoteTransports$]).pipe(
       // Combine local and remote transports into one transport array
       // and set the forceOldJwtEndpoint property on the local transport
-      map(([remoteTransports, localTransport]) => {
-        let localTransportAsArray: LocalTransportWithSFUConfig[] = [];
-        if (localTransport) {
-          localTransportAsArray = [localTransport];
-        }
+      map(([localTransportAsArray, remoteTransports]) => {
         const dedupedRemote = removeDuplicateTransports(remoteTransports.value);
         const remoteWithoutLocal = dedupedRemote.filter(
           (transport) =>
@@ -170,8 +183,9 @@ export function createConnectionManager$({
         "ConnectionManager connections$",
         function* (transports) {
           for (const transport of transports) {
-            if (isLocalTransportWithSFUConfig(transport)) {
-              // This is the local transport; only the `LocalTransportWithSFUConfig` has a `sfuConfig` field.
+            if (isLocalTransport(transport)) {
+              // This is the local transport; only the `LocalTransport`
+              // interface has a `sfuConfig` field.
               yield {
                 keys: [
                   transport.transport.livekit_service_url,
