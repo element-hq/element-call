@@ -8,6 +8,7 @@ import { map, type Observable, of, type SchedulerLike } from "rxjs";
 import { type RunHelpers, TestScheduler } from "rxjs/testing";
 import {
   expect,
+  type Mock,
   type MockedObject,
   type MockInstance,
   onTestFinished,
@@ -589,4 +590,108 @@ export function mockMuteStates(
 export class MockConnection extends Connection {
   public async start(): Promise<void> {}
   public async stop(): Promise<void> {}
+}
+
+export interface StubbedCapture {
+  getUserMedia: Mock;
+  /** Hands the microphone over, as the browser does once permission is given. */
+  grant: () => void;
+  track: { stop: Mock };
+  contexts: { close: Mock }[];
+  /** Runs the animation frames the level meter reads on, in order. */
+  drawFrames: (count: number) => void;
+  /**
+   * Sets how loud the microphone is, 0 for silence and 1 for full scale.
+   * Takes effect on the next frame drawn.
+   */
+  speak: (amplitude: number) => void;
+}
+
+/**
+ * Stubs just enough of the capture and Web Audio APIs for a microphone level to
+ * be read, with the grant held back so a test decides when — or whether — it
+ * lands, and with animation frames driven by hand rather than by a clock.
+ *
+ * Call {@link restoreAudioCapture} afterwards, or every later test in the run
+ * inherits the stub.
+ */
+export function stubAudioCapture(): StubbedCapture {
+  const track = { stop: vi.fn() };
+  const contexts: { close: Mock }[] = [];
+  let grant = (): void => {};
+  const granted = new Promise<MediaStream>((resolve) => {
+    grant = (): void =>
+      resolve({ getTracks: () => [track] } as unknown as MediaStream);
+  });
+
+  const frames: FrameRequestCallback[] = [];
+  let amplitude = 0;
+  vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
+    frames.push(callback);
+    return frames.length;
+  });
+  vi.stubGlobal("cancelAnimationFrame", vi.fn());
+  vi.stubGlobal(
+    "AudioContext",
+    class {
+      public readonly state = "running";
+      public readonly close = vi.fn();
+      public constructor() {
+        contexts.push(this);
+      }
+      public createAnalyser(): object {
+        return {
+          fftSize: 1024,
+          getByteTimeDomainData: (samples: Uint8Array): void => {
+            // Digital silence is the midpoint of the range and not zero: a
+            // buffer left at zero reads as a full-scale waveform.
+            if (amplitude <= 0) {
+              samples.fill(128);
+              return;
+            }
+            const peak = Math.round(Math.min(1, amplitude) * 127);
+            for (let i = 0; i < samples.length; i++)
+              samples[i] = 128 + (i % 2 ? peak : -peak);
+          },
+        };
+      }
+      public createMediaStreamSource(): object {
+        return { connect: (): void => {} };
+      }
+    },
+  );
+  // Only this property: replacing navigator wholesale drops the getters on its
+  // prototype, such as userAgent.
+  Object.defineProperty(navigator, "mediaDevices", {
+    configurable: true,
+    value: { getUserMedia: vi.fn().mockReturnValue(granted) },
+  });
+
+  return {
+    getUserMedia: navigator.mediaDevices.getUserMedia as unknown as Mock,
+    grant: () => grant(),
+    track,
+    contexts,
+    drawFrames: (count): void => {
+      for (let i = 0; i < count; i++) frames.shift()?.(i);
+    },
+    speak: (next): void => {
+      amplitude = next;
+    },
+  };
+}
+
+const realMediaDevices = Object.getOwnPropertyDescriptor(
+  navigator,
+  "mediaDevices",
+);
+
+/** Undoes {@link stubAudioCapture}. */
+export function restoreAudioCapture(): void {
+  vi.unstubAllGlobals();
+  if (realMediaDevices === undefined) {
+    Reflect.deleteProperty(navigator, "mediaDevices");
+  } else {
+    Object.defineProperty(navigator, "mediaDevices", realMediaDevices);
+  }
 }
