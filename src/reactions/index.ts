@@ -205,7 +205,7 @@ export const ReactionSet: ReactionOption[] = [
     },
   },
   {
-    emoji: "🔔",
+    emoji: "🛎️",
     name: "bell",
     alias: ["ding"],
     sound: {
