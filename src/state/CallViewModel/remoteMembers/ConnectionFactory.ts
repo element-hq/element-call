@@ -174,7 +174,9 @@ function generateRoomOption({
     publishDefaults,
     audioCaptureDefaults: {
       ...liveKitOptions.audioCaptureDefaults,
-      deviceId: devices.audioInput.selected$.value?.id,
+      // "" is the virtual browser default: leave the constraint out so the
+      // browser captures from the OS default input.
+      deviceId: devices.audioInput.selected$.value?.id || undefined,
       echoCancellation: echoCancellationSetting.getValue(),
       noiseSuppression: noiseSuppressionSetting.getValue(),
       autoGainControl: autoGainControlSetting.getValue(),

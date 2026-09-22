@@ -355,8 +355,19 @@ export class Publisher {
     const syncDevice = (
       kind: MediaDeviceKind,
       selected$: Observable<SelectedDevice | undefined>,
-    ): Subscription =>
-      selected$.pipe(scope.bind()).subscribe((device) => {
+    ): Subscription => {
+      // The ID we last asked LiveKit for. Needed for the virtual browser
+      // default input ("") because LiveKit reports the physical device it
+      // ended up capturing from, which never equals "".
+      // ConnectionFactory already applied the selection when the room was
+      // created; a browser-default input is represented there by an absent
+      // deviceId.
+      let requestedId: string | undefined =
+        kind === "audioinput" &&
+        lkRoom.options.audioCaptureDefaults?.deviceId === undefined
+          ? ""
+          : undefined;
+      return selected$.pipe(scope.bind()).subscribe((device) => {
         if (lkRoom.state != LivekitConnectionState.Connected) return;
         // if (this.connectionState$.value !== ConnectionState.Connected) return;
         this.logger.info(
@@ -365,20 +376,41 @@ export class Publisher {
           " !== ",
           device?.id,
         );
-        if (
-          device !== undefined &&
-          lkRoom.getActiveDevice(kind) !== device.id
+        if (device === undefined) return;
+        const browserDefaultInput = device.id === "" && kind !== "audiooutput";
+        // While we capture from the browser default, LiveKit reports the
+        // physical device it resolved to, which can be any of the devices the
+        // user could also pick explicitly. getActiveDevice therefore can't
+        // tell an explicit pin apart from the default resolving to the same
+        // device, and only requestedId can: without this, picking the device
+        // the default happens to use would leave the loose constraint in
+        // place, and the capture would keep following the OS default.
+        const capturingBrowserDefault = requestedId === "";
+        if (browserDefaultInput) {
+          if (capturingBrowserDefault) return;
+        } else if (
+          !capturingBrowserDefault &&
+          lkRoom.getActiveDevice(kind) === device.id
         ) {
-          lkRoom
-            .switchActiveDevice(kind, device.id)
-            .catch((e: Error) =>
-              this.logger.error(
-                `Failed to sync ${kind} device with LiveKit`,
-                e,
-              ),
-            );
+          return;
         }
+        const previousRequestedId = requestedId;
+        requestedId = device.id;
+        // For the browser default input, ask for "default" as a non-exact
+        // constraint: browsers that have no such device ignore it and capture
+        // from the OS default input.
+        (browserDefaultInput
+          ? lkRoom.switchActiveDevice(kind, "default", false)
+          : lkRoom.switchActiveDevice(kind, device.id)
+        ).catch((e: Error) => {
+          // LiveKit keeps capturing from the previous device, so record that
+          // again to leave the next selection of this device something to do.
+          // A selection made while the switch was in flight wins, though.
+          if (requestedId === device.id) requestedId = previousRequestedId;
+          this.logger.error(`Failed to sync ${kind} device with LiveKit`, e);
+        });
       });
+    };
 
     syncDevice("audioinput", devices.audioInput.selected$);
     if (!controlledAudioDevices)
