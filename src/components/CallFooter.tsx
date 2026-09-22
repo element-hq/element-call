@@ -99,11 +99,15 @@ export interface FooterState {
 
   /** Providing no options `[]` or `undefined` will imply that we dont have a audio fast switcher */
   audioOptions: MenuOptions[];
+  /** Output devices shown as their own section in the audio menu. */
+  audioOutputOptions: MenuOptions[];
   /** Providing no options `[]` or `undefined` will imply that we dont have a audio fast switcher */
   videoOptions: MenuOptions[];
   selectedAudio: string | undefined;
+  selectedAudioOutput: string | undefined;
   selectedVideo: string | undefined;
   selectAudioButtonOption: ((deviceId: string) => void) | undefined;
+  selectAudioOutputOption: ((deviceId: string) => void) | undefined;
   selectVideoButtonOption: ((option: string) => void) | undefined;
 }
 
@@ -143,6 +147,9 @@ export const CallFooter: FC<FooterProps> = ({
   const audioOptions = useBehavior(vm.audioOptions$);
   const selectedAudio = useBehavior(vm.selectedAudio$);
   const selectAudioButtonOption = useBehavior(vm.selectAudioButtonOption$);
+  const audioOutputOptions = useBehavior(vm.audioOutputOptions$);
+  const selectedAudioOutput = useBehavior(vm.selectedAudioOutput$);
+  const selectAudioOutputOption = useBehavior(vm.selectAudioOutputOption$);
   const selectVideoButtonOption = useBehavior(vm.selectVideoButtonOption$);
   const toggleBlur = useBehavior(vm.toggleBlur$);
   const videoBlurEnabled = useBehavior(vm.videoBlurEnabled$);
@@ -168,7 +175,6 @@ export const CallFooter: FC<FooterProps> = ({
   if ((audioOptions?.length ?? 0) > 0) {
     buttons.push(
       <MediaMuteAndSwitchButton
-        title={"Mic Source"}
         key="audio"
         iconsAndLabels="audio"
         enabled={audioEnabled ?? false}
@@ -178,6 +184,9 @@ export const CallFooter: FC<FooterProps> = ({
         options={audioOptions}
         selectedOption={selectedAudio}
         onSelect={selectAudioButtonOption}
+        outputOptions={audioOutputOptions}
+        selectedOutputOption={selectedAudioOutput}
+        onSelectOutput={selectAudioOutputOption}
       />,
     );
   } else {
@@ -197,7 +206,6 @@ export const CallFooter: FC<FooterProps> = ({
   if ((videoOptions?.length ?? 0) > 0) {
     buttons.push(
       <MediaMuteAndSwitchButton
-        title={"Camera Source"}
         key="video"
         iconsAndLabels="video"
         enabled={videoEnabled ?? false}

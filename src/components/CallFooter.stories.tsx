@@ -137,10 +137,13 @@ export const Default: Story = {
     debugTileLayout: false,
     tileStoreGeneration: undefined,
     audioOptions: [],
+    audioOutputOptions: [],
     videoOptions: [],
     selectedAudio: undefined,
+    selectedAudioOutput: undefined,
     selectedVideo: undefined,
     selectAudioButtonOption: undefined,
+    selectAudioOutputOption: undefined,
     selectVideoButtonOption: undefined,
   },
   parameters: {
@@ -158,11 +161,16 @@ export const WithAudioAndVideoOptions: Story = {
       { label: { type: "name", name: "Microphone 1" }, id: "1" },
       { label: { type: "name", name: "Microphone 2" }, id: "2" },
     ],
+    audioOutputOptions: [
+      { label: { type: "default", name: "Built-in Output" }, id: "default" },
+      { label: { type: "name", name: "Headset" }, id: "2" },
+    ],
     videoOptions: [
       { label: { type: "name", name: "Camera 1" }, id: "1" },
       { label: { type: "name", name: "Camera 2" }, id: "2" },
     ],
     selectedAudio: "2",
+    selectedAudioOutput: "default",
     selectedVideo: "1",
   },
 };
