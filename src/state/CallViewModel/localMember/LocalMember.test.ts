@@ -156,8 +156,7 @@ describe("enterRTCSession", () => {
         memberId: "@alice:example.org:DEVICE",
         userId: "@alice:example.org",
       },
-      [],
-      transport,
+      [transport],
       expect.objectContaining({ manageMediaKeys: true }),
     );
   });
@@ -177,7 +176,6 @@ describe("enterRTCSession", () => {
 
     expect(mockedSession.joinRTCSession).toHaveBeenLastCalledWith(
       expect.any(Object),
-      [],
       expect.any(Object),
       expect.objectContaining({
         keyRotationParticipantLimit: 50,
@@ -189,7 +187,6 @@ describe("enterRTCSession", () => {
     enterRTCSession(mockedSession, ownMemberMock, transport, options);
 
     expect(mockedSession.joinRTCSession).toHaveBeenLastCalledWith(
-      expect.anything(),
       expect.anything(),
       expect.anything(),
       expect.objectContaining({

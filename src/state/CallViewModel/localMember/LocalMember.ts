@@ -998,7 +998,7 @@ export function enterRTCSession(
   // Multi-sfu does not need a preferred foci list. just the focus that is actually used.
   // TODO where/how do we track errors originating from the ongoing rtcSession?
 
-  rtcSession.joinRTCSession(ownMembershipIdentity, [], transport, {
+  rtcSession.joinRTCSession(ownMembershipIdentity, [transport], {
     notificationType,
     callIntent,
     manageMediaKeys: encryptMedia,

@@ -124,7 +124,7 @@ function createEpochedMemberships$(m$: Observable<CallMembership[]>): {
   const membershipsWithTransport$ = memberships$.pipe(
     mapEpoch((members) => {
       return members.map((m) => {
-        const tr = m.getTransport(m);
+        const tr = m.getTransport();
         return {
           membership: m,
           transport:
@@ -150,7 +150,7 @@ test("should signal participant on a connection that is publishing", async () =>
   );
 
   const connection = {
-    transport: bobMembership.getTransport(bobMembership),
+    transport: bobMembership.getTransport(),
   } as unknown as Connection;
   const dataWithPublisher = new ConnectionManagerData();
   dataWithPublisher.add(connection, [
@@ -193,7 +193,7 @@ test("should signal participant on a connection that is not publishing", async (
   );
 
   const connection = {
-    transport: bobMembership.getTransport(bobMembership),
+    transport: bobMembership.getTransport(),
   } as unknown as Connection;
   const dataWithPublisher = new ConnectionManagerData();
   dataWithPublisher.add(connection, []);

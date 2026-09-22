@@ -46,8 +46,7 @@ export const membershipsAndTransports$ = (
     memberships$.pipe(
       mapEpoch((memberships) => {
         return memberships.map((membership) => {
-          const oldestMembership = memberships[0] ?? membership;
-          const transport = membership.getTransport(oldestMembership);
+          const transport = membership.getTransport();
           return {
             membership,
             transport: isLivekitTransport(transport) ? transport : undefined,
