@@ -14,6 +14,8 @@ import {
   of,
   switchMap,
   startWith,
+  catchError,
+  NEVER,
 } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import { type RemoteParticipant } from "livekit-client";
@@ -129,6 +131,9 @@ export function createConnectionManager$({
   // TODO logger: only construct one logger from the client and make it compatible via a EC specific sing
 
   const localTransportAsArray$ = localTransport$.pipe(
+    // LocalMember already surfaces local transport errors properly in the UI,
+    // here we can just swallow them
+    catchError(() => NEVER),
     map((transport) => [transport]),
     startWith([]),
   );
