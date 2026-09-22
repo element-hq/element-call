@@ -7,10 +7,10 @@ Please see LICENSE in the repository root for full details.
 
 import {
   type CallMembership,
-  type LivekitTransportConfig,
+  type LivekitTransport,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
-  isLivekitTransportConfig,
+  isLivekitTransport,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { fromEvent } from "rxjs";
 
@@ -31,15 +31,15 @@ export const membershipsAndTransports$ = (
   memberships$: Behavior<Epoch<CallMembership[]>>,
 ): {
   membershipsWithTransport$: Behavior<
-    Epoch<{ membership: CallMembership; transport?: LivekitTransportConfig }[]>
+    Epoch<{ membership: CallMembership; transport?: LivekitTransport }[]>
   >;
-  transports$: Behavior<Epoch<LivekitTransportConfig[]>>;
+  transports$: Behavior<Epoch<LivekitTransport[]>>;
 } => {
   const membershipsWithTransport$: Behavior<
     Epoch<
       {
         membership: CallMembership;
-        transport: LivekitTransportConfig | undefined;
+        transport: LivekitTransport | undefined;
       }[]
     >
   > = scope.behavior(
@@ -50,16 +50,14 @@ export const membershipsAndTransports$ = (
           const transport = membership.getTransport(oldestMembership);
           return {
             membership,
-            transport: isLivekitTransportConfig(transport)
-              ? transport
-              : undefined,
+            transport: isLivekitTransport(transport) ? transport : undefined,
           };
         });
       }),
     ),
   );
 
-  const transports$: Behavior<Epoch<LivekitTransportConfig[]>> = scope.behavior(
+  const transports$: Behavior<Epoch<LivekitTransport[]>> = scope.behavior(
     membershipsWithTransport$.pipe(
       mapEpoch((mts) => mts.flatMap(({ transport: t }) => (t ? [t] : []))),
     ),

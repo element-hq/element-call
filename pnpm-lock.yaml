@@ -191,8 +191,8 @@ importers:
         specifier: ^1.9.1
         version: 1.9.2
       matrix-js-sdk:
-        specifier: github:matrix-org/matrix-js-sdk#develop
-        version: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/24929be0e741be6a5d0a7226f1c682e245263b8a
+        specifier: github:matrix-org/matrix-js-sdk#robin/remove-livekit-alias
+        version: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/24eacbcef2efaa5f4a89857ed028047332d2a70c
       matrix-widget-api:
         specifier: ^1.18.0
         version: 1.19.0
@@ -1194,8 +1194,8 @@ packages:
       '@types/dom-mediacapture-transform': ^0.1.9
       livekit-client: ^1.12.0 || ^2.1.0
 
-  '@matrix-org/matrix-sdk-crypto-wasm@18.5.0':
-    resolution: {integrity: sha512-E826Hy1rG26LanPjtSsOiVRcVoHfSgPgj2r2Xsb5RPScpaKi9XJADQ0u3dNjRCitZPX4oyLNl1FDd5AfDlmIwQ==}
+  '@matrix-org/matrix-sdk-crypto-wasm@18.9.0':
+    resolution: {integrity: sha512-NtLzNDTEfNASBjNCTGZHuk7N0jrQhS6Zx2CM857rCHZYYh/rpbKGQNrJ7azktm4S1P5Jy3WU3nwJTGohGw26qQ==}
     engines: {node: '>= 18'}
 
   '@mdx-js/react@3.1.1':
@@ -4680,9 +4680,9 @@ packages:
   matrix-events-sdk@0.0.1:
     resolution: {integrity: sha512-1QEOsXO+bhyCroIe2/A5OwaxHvBm7EsSQ46DEDn8RBIfQwN5HWBpFvyWWR4QY0KHPPnnJdI99wgRiAl7Ad5qaA==}
 
-  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/24929be0e741be6a5d0a7226f1c682e245263b8a:
-    resolution: {gitHosted: true, integrity: sha512-0EGwbXzvG88sBOxq4ZlCRwT4VpQj2xkizfyy0A3bTSK0ysb6/gXJ/o1WPFoqCjRGMDgPq4gAsk92xGtHA7EhPg==, tarball: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/24929be0e741be6a5d0a7226f1c682e245263b8a}
-    version: 42.2.0
+  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/24eacbcef2efaa5f4a89857ed028047332d2a70c:
+    resolution: {gitHosted: true, integrity: sha512-lQeZIDw2OXZeRy0WvjMkT6ZfKWIpsuzCzU9MsfU4h/gTe6jdYRGjf6BRhg9/BOJ0S12lsvcEYslxzcB+usBILA==, tarball: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/24eacbcef2efaa5f4a89857ed028047332d2a70c}
+    version: 42.3.0
     engines: {node: '>=22.0.0'}
 
   matrix-widget-api@1.19.0:
@@ -7101,7 +7101,7 @@ snapshots:
       '@types/dom-mediacapture-transform': 0.1.11
       livekit-client: 2.22.3(@types/dom-mediacapture-record@1.0.22)
 
-  '@matrix-org/matrix-sdk-crypto-wasm@18.5.0': {}
+  '@matrix-org/matrix-sdk-crypto-wasm@18.9.0': {}
 
   '@mdx-js/react@3.1.1(@types/react@19.2.18)(react@19.2.8)':
     dependencies:
@@ -10249,10 +10249,10 @@ snapshots:
 
   matrix-events-sdk@0.0.1: {}
 
-  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/24929be0e741be6a5d0a7226f1c682e245263b8a:
+  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/24eacbcef2efaa5f4a89857ed028047332d2a70c:
     dependencies:
       '@babel/runtime': 8.0.0
-      '@matrix-org/matrix-sdk-crypto-wasm': 18.5.0
+      '@matrix-org/matrix-sdk-crypto-wasm': 18.9.0
       another-json: 0.2.0
       bs58: 6.0.0
       content-type: 3.0.0

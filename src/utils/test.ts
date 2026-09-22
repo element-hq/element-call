@@ -212,7 +212,6 @@ export function mockEmitter<T>(): EmitterMock<T> {
 export const exampleTransport: LivekitTransport = {
   type: "livekit",
   livekit_service_url: "https://lk.example.org",
-  livekit_alias: "!alias:example.org",
 };
 
 export const exampleSfuConfig: SFUConfig = {

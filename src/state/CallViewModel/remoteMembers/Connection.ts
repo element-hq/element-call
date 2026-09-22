@@ -22,7 +22,7 @@ import {
   type Track,
   type TrackPublication,
 } from "livekit-client";
-import { type LivekitTransportConfig } from "matrix-js-sdk/lib/matrixrtc";
+import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { BehaviorSubject, map } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
@@ -52,7 +52,7 @@ export interface ConnectionOpts {
   /** The identity parts to use on this connection */
   ownMembershipIdentity: CallMembershipIdentityParts;
   /** The media transport to connect to. */
-  transport: LivekitTransportConfig;
+  transport: LivekitTransport;
   /** The Matrix client to use for OpenID and SFU config requests. */
   client: OpenIDClientParts;
   /** The room ID this connection is associated with. */
@@ -107,7 +107,7 @@ export class Connection {
   /**
    * The media transport to connect to.
    */
-  public readonly transport: LivekitTransportConfig;
+  public readonly transport: LivekitTransport;
 
   public readonly livekitRoom: LivekitRoom;
 

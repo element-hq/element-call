@@ -30,7 +30,7 @@ import fetchMock from "fetch-mock";
 import EventEmitter from "events";
 import { type IOpenIDToken } from "matrix-js-sdk";
 import { logger, type Logger } from "matrix-js-sdk/lib/logger";
-import { type LivekitTransportConfig } from "matrix-js-sdk/lib/matrixrtc";
+import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 
 import {
   Connection,
@@ -57,7 +57,7 @@ let fakeLocalParticipant: MockedObject<LocalParticipant>;
 
 const ROOM_ID = "!roomID:example.org";
 
-const livekitFocus: LivekitTransportConfig = {
+const livekitFocus: LivekitTransport = {
   livekit_service_url: "https://matrix-rtc.example.org/livekit/jwt",
   type: "livekit",
 };
@@ -228,9 +228,7 @@ describe("Start connection states", () => {
     capturedState = capturedStates.pop();
     if (capturedState instanceof Error) {
       expect(capturedState.message).toEqual("Something went wrong");
-      expect(connection.transport.livekit_alias).toEqual(
-        livekitFocus.livekit_alias,
-      );
+      expect(connection.transport).toEqual(livekitFocus);
     } else {
       expect.fail("Expected FailedToStart state but got " + capturedState);
     }
@@ -290,9 +288,7 @@ describe("Start connection states", () => {
       expect(capturedState.cause.message).toContain(
         "Failed to look up user info from homeserver",
       );
-      expect(connection.transport.livekit_alias).toEqual(
-        livekitFocus.livekit_alias,
-      );
+      expect(connection.transport).toEqual(livekitFocus);
     } else {
       expect.fail("Expected FailedToStart state but got " + capturedState);
     }
@@ -357,9 +353,7 @@ describe("Start connection states", () => {
       expect(capturedState.cause.message).toContain(
         "Failed to connect to livekit",
       );
-      expect(connection.transport.livekit_alias).toEqual(
-        livekitFocus.livekit_alias,
-      );
+      expect(connection.transport).toEqual(livekitFocus);
     } else {
       expect.fail(
         "Expected FailedToStart state but got " + JSON.stringify(capturedState),

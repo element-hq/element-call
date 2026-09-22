@@ -42,13 +42,11 @@ const fallbackMemberId = (userId: string, deviceId: string): string =>
 const transportA: LivekitTransport = {
   type: "livekit",
   livekit_service_url: "https://lk.example.org",
-  livekit_alias: "!alias:example.org",
 };
 
 const transportB: LivekitTransport = {
   type: "livekit",
   livekit_service_url: "https://lk.sample.com",
-  livekit_alias: "!alias:sample.com",
 };
 
 const bobMembership = mockRtcMembership("@bob:example.org", "DEV000", {
