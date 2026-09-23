@@ -1075,6 +1075,67 @@ export const BackgroundEffectsHeadingStaysOverTheGrid: Story = {
 };
 
 /**
+ * The list says there is more, at whichever edge there is more. The platform
+ * fades its scrollbar out after a moment, and with a trackpad on a Mac there
+ * was then nothing to say the list scrolled — the backgrounds seemed to stop.
+ */
+export const BackgroundEffectsShowThereIsMore: Story = {
+  args: BackgroundEffectsHeadingStaysOverTheGrid.args,
+  parameters: { callAreaHeight: 400 },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
+    await within(document.body).findByRole("menuitemradio", { name: "Blur" });
+
+    const menu = document.body.querySelector("[role='menu']")!;
+    const list = menu.querySelector<HTMLElement>(`.${styles.deviceList}`)!;
+    const top = list.querySelector<HTMLElement>(`.${styles.scrollEdgeTop}`)!;
+    const bottom = list.querySelector<HTMLElement>(
+      `.${styles.scrollEdgeBottom}`,
+    )!;
+    const shown = (edge: HTMLElement): boolean =>
+      edge.classList.contains(styles.scrollEdgeShown);
+
+    // Opened at the top: more below, nothing above.
+    await waitFor(async () => expect(shown(bottom)).toBe(true));
+    await expect(shown(top)).toBe(false);
+    // And the fade is at the foot of what is in view, not of the content.
+    await expect(
+      Math.round(
+        list.getBoundingClientRect().bottom -
+          bottom.getBoundingClientRect().bottom,
+      ),
+    ).toBeLessThanOrEqual(1);
+
+    // At the end: nothing below, more above.
+    list.scrollTop = list.scrollHeight;
+    await waitFor(async () => expect(shown(bottom)).toBe(false));
+    await waitFor(async () => expect(shown(top)).toBe(true));
+
+    // Standing just below the heading holding the top, where the content comes
+    // out from under it — not behind the heading, where it could not be seen.
+    const headings = list.querySelectorAll<HTMLElement>(
+      `.${styles.sectionHeading}`,
+    );
+    const stuck = [...headings].find(
+      (h) =>
+        Math.abs(
+          h.getBoundingClientRect().top - list.getBoundingClientRect().top,
+        ) < 2,
+    )!;
+    await expect(stuck).toBeDefined();
+    await waitFor(async () =>
+      expect(
+        Math.round(
+          top.getBoundingClientRect().top -
+            stuck.getBoundingClientRect().bottom,
+        ),
+      ).toBe(0),
+    );
+  },
+};
+
+/**
  * The sequence a user sees on the first effect of a session.
  *
  * The tile that was pressed spins where its tick will go, until a frame has

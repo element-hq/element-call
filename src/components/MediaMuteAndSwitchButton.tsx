@@ -14,6 +14,7 @@ import {
   useRef,
   type ReactElement,
   type ReactNode,
+  useLayoutEffect,
 } from "react";
 import {
   Alert,
@@ -332,6 +333,62 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
       .subscribe(setListShare);
     return (): void => subscription.unsubscribe();
   }, [menuOpen, rootElement]);
+
+  // Whether the list has more to show above or below what is in view, and how
+  // tall the heading stuck at its top is. Said with a fade at each edge rather
+  // than left to the scrollbar, which the platform fades away after a moment —
+  // with a trackpad on a Mac there is otherwise nothing to say the list scrolls
+  // at all. Worked out from the list itself, on scrolling, on resizing and
+  // after every render, since adding or removing a background changes its
+  // length without doing either.
+  const [listElement, setListElement] = useState<HTMLDivElement | null>(null);
+  const listRef = useCallback(
+    (list: HTMLDivElement | null): (() => void) | undefined => {
+      setListElement(list);
+      return trackFocusModality(list);
+    },
+    [trackFocusModality],
+  );
+  const [edges, setEdges] = useState({ above: false, below: false, stuck: 0 });
+  const measureEdges = useCallback((): void => {
+    if (listElement === null) return;
+    const above = listElement.scrollTop > 0;
+    const below =
+      listElement.scrollTop + listElement.clientHeight <
+      listElement.scrollHeight - 1;
+    // The heading holding the top is the one at the list's own top edge, give
+    // or take the border width it keeps clear of the frame.
+    const top = listElement.getBoundingClientRect().top;
+    let stuck = 0;
+    if (above)
+      for (const heading of listElement.querySelectorAll<HTMLElement>(
+        `.${styles.sectionHeading}`,
+      )) {
+        const box = heading.getBoundingClientRect();
+        // How far down it reaches, to the fraction: a heading's line height
+        // lands it on half pixels, and rounding left the fade half a pixel
+        // short of it or over it.
+        if (Math.abs(box.top - top) < 2) stuck = box.bottom - top;
+      }
+    setEdges((previous) =>
+      previous.above === above &&
+      previous.below === below &&
+      previous.stuck === stuck
+        ? previous
+        : { above, below, stuck },
+    );
+  }, [listElement]);
+  useLayoutEffect(measureEdges);
+  useEffect(() => {
+    if (listElement === null) return;
+    listElement.addEventListener("scroll", measureEdges, { passive: true });
+    const subscription =
+      observeElementSize$(listElement).subscribe(measureEdges);
+    return (): void => {
+      listElement.removeEventListener("scroll", measureEdges);
+      subscription.unsubscribe();
+    };
+  }, [listElement, measureEdges]);
 
   const [cameraMenuWidth, setCameraMenuWidth] = useState(CAMERA_MENU_WIDTH);
   useEffect(() => {
@@ -812,7 +869,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
             beneath it, because it is what the choosing below is for. */}
         {previewPinned && preview}
         <div
-          ref={trackFocusModality}
+          ref={listRef}
           // Transparent to assistive technology, so the menu still sees its
           // items as its own children.
           role="none"
@@ -831,9 +888,18 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
                 meterHeight === undefined ? undefined : `${meterHeight}px`,
               "--device-list-scroll-padding-start":
                 headingHeight === undefined ? undefined : `${headingHeight}px`,
+              "--device-list-stuck-heading-height": `${edges.stuck}px`,
             } as CSSProperties
           }
         >
+          {iconsAndLabels === "video" && (
+            <div
+              aria-hidden
+              className={classNames(styles.scrollEdge, styles.scrollEdgeTop, {
+                [styles.scrollEdgeShown]: edges.above,
+              })}
+            />
+          )}
           {hasPreview && !previewPinned && preview}
           {iconsAndLabels === "audio" && speakerOptions && (
             <>
@@ -894,6 +960,18 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
                 </div>
               </div>
             )}
+          {iconsAndLabels === "video" && (
+            <div
+              aria-hidden
+              className={classNames(
+                styles.scrollEdge,
+                styles.scrollEdgeBottom,
+                {
+                  [styles.scrollEdgeShown]: edges.below,
+                },
+              )}
+            />
+          )}
         </div>
         {backgroundEffectError !== undefined &&
           !refusalSeen && (

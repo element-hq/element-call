@@ -535,3 +535,54 @@ Please see LICENSE in the repository root for full details.
 .selfPreview > .mirrored {
   transform: scaleX(-1);
 }
+
+/*
+ * A fade at each edge of the list while there is more that way.
+ *
+ * In place of the scrollbar, which the platform fades out after a moment: with
+ * a trackpad on a Mac there was otherwise nothing to say that the list scrolls,
+ * and it looked as though the backgrounds simply stopped. Sticky, so each holds
+ * its edge of what is in view, and taking no room: each gives back its own
+ * height in a margin. Over the content, so the rows and tiles fade into it
+ * rather than past it, since they are opaque and a background would not show.
+ *
+ * The top one stands below whichever heading holds the top of the list, which
+ * is where the content is coming out from under.
+ */
+.scrollEdge {
+  position: sticky;
+  z-index: 1;
+  block-size: var(--cpd-space-6x);
+  pointer-events: none;
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .scrollEdge {
+    transition: opacity 150ms ease-out;
+  }
+}
+
+.scrollEdgeShown {
+  opacity: 1;
+}
+
+.scrollEdgeTop {
+  inset-block-start: var(--device-list-stuck-heading-height, 0);
+  margin-block-end: calc(-1 * var(--cpd-space-6x));
+  background: linear-gradient(
+    to bottom,
+    var(--cpd-color-bg-canvas-default),
+    transparent
+  );
+}
+
+.scrollEdgeBottom {
+  inset-block-end: 0;
+  margin-block-start: calc(-1 * var(--cpd-space-6x));
+  background: linear-gradient(
+    to top,
+    var(--cpd-color-bg-canvas-default),
+    transparent
+  );
+}
