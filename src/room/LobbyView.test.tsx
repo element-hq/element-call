@@ -20,7 +20,12 @@ import {
 
 import { LobbyView } from "./LobbyView";
 import { E2eeType } from "../e2ee/e2eeType";
-import { mockMediaDevices, mockMuteStates } from "../utils/test";
+import {
+  mockMediaDevices,
+  mockMuteStates,
+  restoreAudioCapture,
+  stubAudioCapture,
+} from "../utils/test";
 import { type MediaDevices } from "../state/MediaDevices";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { type ProcessorState } from "../livekit/TrackProcessorContext";
@@ -184,48 +189,11 @@ describe("LobbyView", () => {
 });
 
 describe("LobbyView microphone level", () => {
-  const realMediaDevices = Object.getOwnPropertyDescriptor(
-    navigator,
-    "mediaDevices",
-  );
-
-  afterEach(() => {
-    vi.unstubAllGlobals();
-    if (realMediaDevices === undefined) {
-      Reflect.deleteProperty(navigator, "mediaDevices");
-    } else {
-      Object.defineProperty(navigator, "mediaDevices", realMediaDevices);
-    }
-  });
-
-  function stubAudioCapture(): void {
-    vi.stubGlobal(
-      "AudioContext",
-      class {
-        public readonly state = "running";
-        public createAnalyser(): object {
-          return {
-            fftSize: 1024,
-            getByteTimeDomainData: (): void => {},
-          };
-        }
-        public createMediaStreamSource(): object {
-          return { connect: (): void => {} };
-        }
-        public close(): void {}
-      },
-    );
-    // Only this property: replacing navigator loses getters like userAgent.
-    Object.defineProperty(navigator, "mediaDevices", {
-      configurable: true,
-      value: {
-        getUserMedia: vi.fn().mockResolvedValue({ getTracks: () => [] }),
-      },
-    });
-  }
+  afterEach(restoreAudioCapture);
 
   it("shows the microphone level meter", async () => {
-    stubAudioCapture();
+    const capture = stubAudioCapture();
+    capture.grant();
     const user = userEvent.setup();
     const { getByRole } = renderLobbyView({}, false, "desktop", {
       requestDeviceNames: (): void => {},
