@@ -188,13 +188,27 @@ const MIN_LIST_HEIGHT = 160;
 /**
  * The most the self-preview may take, which is also what it costs the list.
  *
- * Its fixed height: sixteen by nine across the menu at its narrowest, and
- * cropped wider as the menu widens, so it never costs more than this. The
+ * Its fixed height: sixteen by nine across the camera menu's width, less the
+ * frame, so it never costs more than this. The
  * preview is paid for out of the list's share rather than on top of it, so the
  * menu is never taller for having one: where the list could not keep its floor
  * after paying, there is no preview at all.
  */
-const PREVIEW_BLOCK = 176;
+const PREVIEW_BLOCK = 166;
+
+/**
+ * The camera menu's width, as design sets it.
+ *
+ * Fixed rather than sized to its content, so a long device name wraps instead
+ * of widening the menu over more of the picture the user is trying to judge,
+ * and so the self-preview is always the sixteen by nine it is drawn at. Less
+ * only where the call area itself is narrower — the menu has to stay inside
+ * it — which is why it is measured rather than written into the stylesheet.
+ */
+const CAMERA_MENU_WIDTH = 296;
+
+/** Clear space kept between the menu and the call area's sides. */
+const CAMERA_MENU_MARGIN = 16;
 
 export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   title,
@@ -318,6 +332,23 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
       .subscribe(setListShare);
     return (): void => subscription.unsubscribe();
   }, [menuOpen, rootElement]);
+
+  const [cameraMenuWidth, setCameraMenuWidth] = useState(CAMERA_MENU_WIDTH);
+  useEffect(() => {
+    if (!menuOpen || iconsAndLabels !== "video") return;
+    const subscription = observeElementSize$(rootElement)
+      .pipe(
+        map(({ width }) =>
+          Math.min(
+            CAMERA_MENU_WIDTH,
+            Math.round(width - 2 * CAMERA_MENU_MARGIN),
+          ),
+        ),
+        distinctUntilChanged(),
+      )
+      .subscribe(setCameraMenuWidth);
+    return (): void => subscription.unsubscribe();
+  }, [menuOpen, iconsAndLabels, rootElement]);
 
   // Only while the menu is open, so nothing holds a second capture of the
   // microphone for the length of a call.
@@ -780,6 +811,10 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
             {
               "--device-list-max-height":
                 listMaxHeight === undefined ? undefined : `${listMaxHeight}px`,
+              // The menu takes its width from its content, and this is the
+              // content that could otherwise set it. Only the camera menu.
+              "--device-list-inline-size":
+                iconsAndLabels === "video" ? `${cameraMenuWidth}px` : undefined,
               "--device-list-scroll-padding-end":
                 meterHeight === undefined ? undefined : `${meterHeight}px`,
               "--device-list-scroll-padding-start":

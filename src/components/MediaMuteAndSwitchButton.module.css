@@ -46,6 +46,8 @@ Please see LICENSE in the repository root for full details.
    component: the menu is portalled outside the root, so neither a container
    query nor a viewport unit describes the space it is allowed to fill. */
 .deviceList {
+  /* The camera menu's width, set by the component; auto everywhere else. */
+  inline-size: var(--device-list-inline-size, auto);
   overflow-y: auto;
   min-block-size: 0;
   max-block-size: var(--device-list-max-height);
@@ -150,11 +152,11 @@ Please see LICENSE in the repository root for full details.
  */
 .effectGrid {
   display: grid;
-  /* A floor, not just a share. The menu sizes itself to its content, so
-     dividing whatever width the device names happen to need makes the tiles
-     narrower the shorter those names are; this makes the menu wide enough for
-     three proper tiles instead. */
-  grid-template-columns: repeat(3, minmax(84px, 1fr));
+  /* Thirds of a menu whose width is set, so the tiles are the size design
+     draws them — about eighty pixels — whatever the device names are. Zero
+     rather than the content as the floor, so a long label wraps inside its
+     tile instead of pushing the grid wider than the menu. */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   /* Every tile the same height, set by the tallest — the ones carrying a
      label. Forcing a ratio instead clips the label as soon as the menu is
      narrow enough that the ratio cannot hold it. */
@@ -383,6 +385,9 @@ Please see LICENSE in the repository root for full details.
    supplies the lower half, so only the upper half is set here. Without it the
    message sits flush against the tiles with a gap twice its size underneath. */
 .effectError {
+  /* For the same reason as the notice below: a refusal's title is a sentence,
+     and would otherwise set the menu's width rather than fit inside it. */
+  contain: inline-size;
   /* A step short of the margin it keeps at the sides: the menu is a column
      with a gap of its own, which makes up the difference above. */
   padding: var(--cpd-space-3x) var(--cpd-space-4x) 0;
@@ -408,6 +413,11 @@ Please see LICENSE in the repository root for full details.
  * before the menu opened and will be true after it closes.
  */
 .effectNotice {
+  /* Takes the width the menu has rather than lending it one. The menu is as
+     wide as its widest content, and a sentence asks for its whole length on
+     one line: without this the notice widened the camera menu from 296 to 340
+     pixels, past the width the grid and the preview are drawn for. */
+  contain: inline-size;
   display: flex;
   align-items: flex-start;
   gap: var(--cpd-space-3x);
@@ -436,12 +446,12 @@ Please see LICENSE in the repository root for full details.
  * frame's corner, because a video paints on a layer of its own and would
  * otherwise draw over the outline the menu is framed with.
  *
- * A fixed height rather than a ratio: sixteen by nine at the menu's narrowest,
- * and wider as a long device name widens the menu, cropped rather than
- * letterboxed — a face cut at the edge reads as a self-view, a face in bars
- * reads as a broken one. Not aspect-ratio with a height cap: once the cap
- * holds, Safari keeps the ratio by narrowing the box instead of the picture,
- * and the preview stops short of the menu's right edge.
+ * Sixteen by nine across the camera menu's fixed width, less its frame, and
+ * written as a height rather than a ratio: with a ratio and a cap Safari kept
+ * the ratio by narrowing the box, and the preview stopped short of the menu's
+ * right edge. Cropped rather than letterboxed where the call is narrow enough
+ * to narrow the menu — a face cut at the edge reads as a self-view, a face in
+ * bars reads as a broken one.
  */
 .selfPreview {
   position: relative;
@@ -453,7 +463,7 @@ Please see LICENSE in the repository root for full details.
   );
   margin-inline: var(--cpd-border-width-1);
   margin-block-end: var(--cpd-space-2x);
-  block-size: 176px;
+  block-size: 166px;
   overflow: hidden;
   border-start-start-radius: calc(
     var(--cpd-space-3x) - var(--cpd-border-width-1)
@@ -465,8 +475,14 @@ Please see LICENSE in the repository root for full details.
   color: var(--cpd-color-icon-secondary);
 }
 
+/* Laid over the box rather than in it. In flow, a sixteen-by-nine picture
+   166 pixels tall asks for 295 of width, and the menu, sized to its widest
+   content, grew by the pixel that asked for. Out of flow it only fills what
+   the menu's width already gives it. */
 .selfPreview > video,
 .selfPreview > img {
+  position: absolute;
+  inset: 0;
   inline-size: 100%;
   block-size: 100%;
   object-fit: cover;

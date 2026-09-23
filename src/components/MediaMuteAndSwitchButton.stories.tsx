@@ -96,6 +96,10 @@ const WithACallArea: FC<{ children: ReactNode; height?: number }> = ({
         // which no real call does. Tall enough to leave the menu room to open
         // upward and still be wholly on screen in the story's frame.
         blockSize: height,
+        // And a call's width, for the same reason: the camera menu narrows to
+        // fit a call narrower than itself, and the centred layout Storybook
+        // gives every story would otherwise shrink this to the button's width.
+        inlineSize: "100vw",
         display: "flex",
         alignItems: "flex-end",
         justifyContent: "center",
@@ -927,6 +931,16 @@ export const BackgroundEffectsSlowInThisBrowser: Story = {
     await expect(Math.round(frame.bottom - box.bottom)).toBe(
       Math.round(box.left - frame.left),
     );
+
+    // A sentence asks for its whole length on one line, and the menu is as
+    // wide as its widest content: the notice once widened the camera menu from
+    // its set width to 340. It fits the menu rather than setting it, and lines
+    // up with the tiles above it.
+    await expect(Math.round(frame.width)).toBe(296);
+    const tile = menu.querySelector(`.${styles.effectTile}`)!;
+    await expect(Math.round(tile.getBoundingClientRect().left)).toBe(
+      Math.round(box.left),
+    );
   },
 };
 
@@ -966,7 +980,7 @@ export const BackgroundEffectsWithPreview: Story = {
 
     // And paid for out of the list's share: 60% of 720, less the preview.
     await expect(getComputedStyle(list).maxBlockSize).toBe(
-      `${Math.round(720 * 0.6) - 176}px`,
+      `${Math.round(720 * 0.6) - 166}px`,
     );
   },
 };
@@ -1169,13 +1183,13 @@ export const BackgroundEffectsWithALongDeviceName: Story = {
 };
 
 /**
- * A long device name widens the menu past the width at which the preview is
- * sixteen by nine. The preview still spans it: Safari, given a ratio and a
- * height cap, kept the ratio by narrowing the box and left a strip of menu at
- * its right. Checked here in Chromium, which never did — no test tier here
- * runs WebKit — so this holds the requirement, not the engine.
+ * A long device name, which once widened the menu over more of the picture the
+ * user is judging. The camera menu now holds its width and the name wraps, so
+ * the preview is always the sixteen by nine it is drawn at — and the Safari
+ * failure that came of a widened menu, the preview stopping short of its right
+ * edge, has nothing left to happen to.
  */
-export const BackgroundEffectsWithPreviewInAWideMenu: Story = {
+export const BackgroundEffectsWithPreviewAndALongDeviceName: Story = {
   args: {
     ...BackgroundEffectsWithALongDeviceName.args,
     selfPreview: <img src={cameraStandIn} alt="" />,
@@ -1190,11 +1204,10 @@ export const BackgroundEffectsWithPreviewInAWideMenu: Story = {
     const preview = menu.querySelector<HTMLElement>(`.${styles.selfPreview}`)!;
     const frame = menu.getBoundingClientRect();
     const box = preview.getBoundingClientRect();
-    // Wider than the preview's sixteen-by-nine width, or this proves nothing.
-    await expect(frame.width).toBeGreaterThan((176 * 16) / 9 + 8);
+    await expect(Math.round(frame.width)).toBe(296);
     await expect(frame.right - box.right).toBeLessThanOrEqual(2);
     await expect(box.left - frame.left).toBeLessThanOrEqual(2);
-    await expect(Math.round(box.height)).toBe(176);
+    await expect(Math.round(box.height)).toBe(166);
   },
 };
 
