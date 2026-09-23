@@ -46,8 +46,19 @@ Please see LICENSE in the repository root for full details.
    component: the menu is portalled outside the root, so neither a container
    query nor a viewport unit describes the space it is allowed to fill. */
 .deviceList {
-  /* The camera menu's width, set by the component; auto everywhere else. */
-  inline-size: var(--device-list-inline-size, auto);
+  /* Held one border width clear of the frame on each side. The menu draws its
+     frame as an outline just inside its own edge, and once this list has
+     enough in it to scroll, Safari paints it — rows and all — above that
+     outline, so the frame vanished beside every device; measured on the
+     microphone menu with many devices, 384 pixels of it. Everything the list
+     holds is inside this, so nothing in it needs to keep clear on its own. */
+  margin-inline: var(--cpd-border-width-1);
+  /* The camera menu's width, set by the component, less that clearance so the
+     menu still comes to it. Without the variable the calc is invalid and the
+     width falls back to auto, which is what every other menu wants. */
+  inline-size: calc(
+    var(--device-list-inline-size) - 2 * var(--cpd-border-width-1)
+  );
   overflow-y: auto;
   min-block-size: 0;
   max-block-size: var(--device-list-max-height);
@@ -96,7 +107,8 @@ Please see LICENSE in the repository root for full details.
   position: sticky;
   inset-block-start: 0;
   background: var(--cpd-color-bg-canvas-default);
-  margin-inline: var(--cpd-border-width-1);
+  /* Clear of the frame's top edge; the list it sits in already keeps it clear
+     of the sides. */
   margin-block-start: var(--cpd-border-width-1);
 }
 
@@ -110,12 +122,10 @@ Please see LICENSE in the repository root for full details.
 .stickyMeter {
   position: sticky;
   inset-block-end: 0;
-  /* Opaque, so the list does not show through it as it scrolls past. The menu
-     draws its frame as an outline inset by one border width, and the device
-     rows are transparent at rest, so this is the only thing that can cover it:
-     hold it clear on the sides and the bottom. */
+  /* Opaque, so the list does not show through it as it scrolls past, and held
+     clear of the frame's bottom edge. The list it sits in already keeps it
+     clear of the sides. */
   background: var(--cpd-color-bg-canvas-default);
-  margin-inline: var(--cpd-border-width-1);
   margin-block-end: var(--cpd-border-width-1);
 }
 
@@ -174,7 +184,11 @@ Please see LICENSE in the repository root for full details.
      control starts under its own rule: the heading's spacing supplies most of
      that, and this adds the same step a device row holds above its control.
      Below, the menu's own padding is already the inset, so nothing is set. */
-  padding: var(--cpd-space-2x) var(--cpd-space-4x) 0;
+  /* Sixteen from the menu's edge, as the notice below it is and as design
+     draws both: the list this sits in is already held a border width in from
+     the frame, so that much less here. */
+  padding: var(--cpd-space-2x)
+    calc(var(--cpd-space-4x) - var(--cpd-border-width-1)) 0;
 }
 
 /*
