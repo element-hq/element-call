@@ -41,55 +41,29 @@ Please see LICENSE in the repository root for full details.
   flex-direction: column;
 }
 
-/* Only the device lists scroll; the level meter stays put beneath them.
-   The bound comes from the measured height of the call area, set by the
-   component: the menu is portalled outside the root, so neither a container
-   query nor a viewport unit describes the space it is allowed to fill. */
+/* Only the device lists scroll, bounded by the measured call area: the menu is
+   portalled out of the root, so CSS can't size it against the call. */
 .deviceList {
   overflow-y: auto;
   min-block-size: 0;
   max-block-size: var(--device-list-max-height);
-  /* The heading stands over the head of this list and the level meter over its
-     foot. Scrolling a row flush to either edge would put it underneath one of
-     them, which is how a row reached by the keyboard ends up half-readable;
-     this keeps both their heights clear for anything the browser scrolls to.
-     Set by the component, which is the only thing that can measure them. */
+  /* Keeps a row reached by keyboard clear of the sticky heading and meter. */
   scroll-padding-block: var(--device-list-scroll-padding-start, 0)
     var(--device-list-scroll-padding-end, 0);
 }
 
-/* Each section is headed by its own rule, which Compound draws under a menu
-   heading already. The heading spans the whole menu — the menu has no padding
-   of its own — so that rule runs edge to edge, stopping only where the frame
-   is, rather than inset as a separator between the sections would be.
-
-   Compound's spacing around it is the design's too, bar one thing: the design
-   leaves a section's first device further below the rule than Compound does —
-   measured off the mock, 27px from the rule to the top of the control, against
-   the 16px that Compound's 8px margin and the row's own 8px padding give. The
-   difference goes below the rule, so the rule stays tight under its own text
-   where Compound put it. */
+/* Compound's heading rule heads each section; the design adds space below it. */
 .menu h3 {
   margin-block-end: var(--cpd-space-5x);
 }
 
-/* One section is set much further from the one above it than Compound's 8px
-   heading margin allows: measured off the mock, 41px from the last device's
-   control to the next heading's text, against the 22px we had. Only between
-   sections — the first heading keeps Compound's spacing, because the menu's
-   own padding is already above it. */
+/* And more above a heading that follows another section. */
 .deviceList [role="group"] + [role="group"] h3 {
   margin-block-start: var(--cpd-space-7x);
 }
 
-/* Each section's heading stays at the top of the scrollport while any of that
-   section is still in view, so a long list never leaves you wondering which
-   kind of device you are looking at. It leaves with its own section, because
-   sticky only holds while the group it belongs to is in view.
-
-   Opaque, and held a border width clear of the sides, for the same reason as
-   the meter below: this is a positioned element, so it paints above the
-   outline the menu draws its frame with, and would swallow it. */
+/* Sticky within its own section. Opaque and inset a border width so it doesn't
+   paint over the menu's outline. */
 .sectionHeading {
   position: sticky;
   inset-block-start: 0;
@@ -98,39 +72,22 @@ Please see LICENSE in the repository root for full details.
   margin-block-start: var(--cpd-border-width-1);
 }
 
-/* The meter belongs to the microphone section: it stays at the bottom of the
-   scrollport while that section is in view, and leaves with it when the list
-   is scrolled up to the speakers. The wrapper is deliberately unpositioned —
-   a positioned one paints above the menu's outline and swallows the frame
-   along this whole section. Sticky is resolved against the scroll container,
-   so it does not need one. */
-
+/* Sticky at the foot of the microphone section; opaque and inset as above. */
 .stickyMeter {
   position: sticky;
   inset-block-end: 0;
-  /* Opaque, so the list does not show through it as it scrolls past. The menu
-     draws its frame as an outline inset by one border width, and the device
-     rows are transparent at rest, so this is the only thing that can cover it:
-     hold it clear on the sides and the bottom. */
   background: var(--cpd-color-bg-canvas-default);
   margin-inline: var(--cpd-border-width-1);
   margin-block-end: var(--cpd-border-width-1);
 }
 
-/* Radix focuses whatever the pointer is over, so the browser's own ring marks
-   the item under the mouse. It cannot distinguish the two modalities here, so
-   it is suppressed and replaced by one that can.
-
-   Every kind of item the menu can focus, not only the device rows: the camera
-   menu's blur toggle is a checkbox item and a child of the menu rather than of
-   the list, and left out it kept the browser's own ring and followed the
-   pointer with it. */
+/* Radix focuses whatever the pointer is over, so the browser's ring would
+   follow the mouse. Replaced by one shown only for keyboard focus. */
 .menu [role^="menuitem"]:focus,
 .menu [role^="menuitem"]:focus-visible {
   outline: none;
 }
 
-/* Shown only when the keyboard is what moved the focus. */
 .menu[data-focus-source="keyboard"] [role^="menuitem"]:focus {
   outline: var(--cpd-border-width-2) solid var(--cpd-color-border-focused);
   outline-offset: calc(-1 * var(--cpd-border-width-2));

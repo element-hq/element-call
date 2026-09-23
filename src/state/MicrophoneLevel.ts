@@ -8,37 +8,19 @@ Please see LICENSE in the repository root for full details.
 import { distinctUntilChanged, Observable } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 
-/**
- * What the microphone selector can say about the input, beyond its level.
- *
- * Silence and a broken microphone look identical on a meter, so the states a
- * user has to act on are named rather than drawn as a flat bar.
- */
+/** What the microphone picks up, or why it can't be read. */
 export type MicrophoneState =
   | { type: "level"; level: number }
   | { type: "permission-denied" }
   | { type: "no-device" };
 
-/**
- * The scale a level is reported on: 0 means silence, this means full scale.
- *
- * Fixed, and deliberately not the number of bars drawn — that follows the
- * width available. A scale that moved with the width would announce the same
- * loudness as different numbers in different places, and would make this layer
- * depend on how wide something is drawn.
- */
+/** Scale a level is reported on. Fixed rather than the bar count, so a level reads the same at any width. */
 export const LEVEL_SCALE = 24;
 
 /**
- * Observes what a microphone is picking up, as the meter should show it.
- *
- * - Held for exactly as long as something is watching: subscribing opens the
- *   device, unsubscribing releases it. The menu, not the call.
- * - Its own capture rather than the track the call holds, by design. The
- *   pre-join screen freezes that track to the device selected when it mounted,
- *   so a meter fed from it could not follow the picker.
- * - Says whether the microphone hears anything, not whether anyone hears the
- *   user: it keeps reading while muted, and the mute control carries that.
+ * The level of a microphone, captured while subscribed. Its own capture rather
+ * than the call's track, because pre-join freezes that track to the device
+ * selected at mount.
  */
 export function observeMicrophoneState$(
   deviceId: string | undefined,
@@ -48,8 +30,7 @@ export function observeMicrophoneState$(
     let context: AudioContext | undefined;
     let frame: number | undefined;
 
-    // Safe to call more than once: unsubscribing runs it, and `start` runs it
-    // again for anything the browser handed over after that.
+    // Idempotent: teardown and start can both call it.
     const release = (): void => {
       if (frame !== undefined) cancelAnimationFrame(frame);
       stream?.getTracks().forEach((track) => track.stop());
@@ -64,16 +45,11 @@ export function observeMicrophoneState$(
         audio:
           deviceId === undefined ? true : { deviceId: { exact: deviceId } },
       });
-      // A permission prompt outlives the subscription that asked for it, so by
-      // now nobody may be watching — and `release` ran while `stream` was still
-      // undefined. Nothing will call it again, so release here or the device
-      // stays held, with the indicator lit and no meter on screen.
+      // Unsubscribed while the permission prompt was open.
       if (subscriber.closed) return release();
 
       context = new AudioContext();
-      // Chrome starts the context suspended unless it was created during a
-      // gesture; opening the menu is one, but resume explicitly so the meter
-      // cannot silently sit at zero.
+      // Starts suspended outside a user gesture, which would read as silence.
       if (context.state === "suspended") await context.resume();
       if (subscriber.closed) return release();
 
@@ -86,8 +62,7 @@ export function observeMicrophoneState$(
 
       const read = (): void => {
         analyser.getByteTimeDomainData(samples);
-        // Root mean square of the waveform around its centre, which is the
-        // loudness a listener perceives rather than the tallest spike.
+        // RMS: perceived loudness rather than the peak.
         let sum = 0;
         for (const sample of samples) {
           const centred = (sample - 128) / 128;
@@ -107,19 +82,14 @@ export function observeMicrophoneState$(
     };
 
     start().catch((e: unknown) => {
-      // Building the graph can fail after getUserMedia has already resolved,
-      // and the capture would then outlive its own failure: the microphone
-      // open and its in-use light on, behind a meter reporting it as
-      // unavailable. Releasing is its own step, which teardown and this path
-      // both take.
+      // Building the graph can fail after the device was granted.
       release();
       subscriber.next(stateForFailure(e));
     });
 
     return release;
   }).pipe(
-    // Read every animation frame, but quantised to a whole number of segments,
-    // so most frames say nothing new and should not reach React.
+    // Frames that don't move the quantised level don't reach React.
     distinctUntilChanged(
       (a, b) =>
         a.type === b.type &&
@@ -139,41 +109,24 @@ function stateForFailure(e: unknown): MicrophoneState {
   return { type: "no-device" };
 }
 
-/**
- * Loudness below which the microphone counts as hearing nothing. A quiet room
- * is never digitally silent, and without a floor that hiss lights the first
- * bars permanently — which reads as "it can hear me" when nobody is speaking.
- */
+/** Below this counts as silence, so a quiet room's hiss doesn't light the first bars. */
 const NOISE_FLOOR = 0.02;
 
-/**
- * Quantises a 0..1 volume onto {@link LEVEL_SCALE}. Exported for the tests:
- * this mapping is what decides whether quiet, normal and loud look different.
- */
+/** Quantises a 0..1 volume onto {@link LEVEL_SCALE}. */
 export function segmentsForVolume(volume: number): number {
   if (!Number.isFinite(volume) || volume <= NOISE_FLOOR) return 0;
-  // Volume arrives as amplitude, where speech occupies a small part of the top
-  // of the range. A square root spreads that out, so ordinary speech moves the
-  // meter through its middle rather than barely leaving the floor.
+  // Square root, so ordinary speech reaches the middle of the scale.
   const aboveFloor = (Math.min(volume, 1) - NOISE_FLOOR) / (1 - NOISE_FLOOR);
   return Math.min(LEVEL_SCALE, Math.ceil(Math.sqrt(aboveFloor) * LEVEL_SCALE));
 }
 
-/** Time constant for a rise. Short, so a syllable registers as it starts. */
+/** Rise time constant: short, so a syllable registers as it starts. */
 export const ATTACK_MS = 50;
 
-/**
- * Time constant for a fall. Longer than the attack: speech is full of gaps a
- * few tens of milliseconds long, and tracking them exactly would flicker.
- */
+/** Fall time constant: longer, so the gaps between words don't flicker. */
 export const RELEASE_MS = 120;
 
-/**
- * Moves a displayed level towards a new reading, fast up and slowly down.
- *
- * In elapsed time rather than frames, so it behaves the same at 60Hz and
- * 120Hz, and does not jump when a frame is dropped.
- */
+/** Eases towards a reading, by elapsed time so the frame rate doesn't matter. */
 export function smoothVolume(
   displayed: number,
   reading: number,

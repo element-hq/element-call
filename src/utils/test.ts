@@ -594,26 +594,19 @@ export class MockConnection extends Connection {
 
 export interface StubbedCapture {
   getUserMedia: Mock;
-  /** Hands the microphone over, as the browser does once permission is given. */
+  /** Grants the microphone, as the browser does once permission is given. */
   grant: () => void;
   track: { stop: Mock };
   contexts: { close: Mock }[];
-  /** Runs the animation frames the level meter reads on, in order. */
+  /** Runs the pending animation frames, in order. */
   drawFrames: (count: number) => void;
-  /**
-   * Sets how loud the microphone is, 0 for silence and 1 for full scale.
-   * Takes effect on the next frame drawn.
-   */
+  /** Sets the microphone's loudness from the next frame, 0 to 1. */
   speak: (amplitude: number) => void;
 }
 
 /**
- * Stubs just enough of the capture and Web Audio APIs for a microphone level to
- * be read, with the grant held back so a test decides when — or whether — it
- * lands, and with animation frames driven by hand rather than by a clock.
- *
- * Call {@link restoreAudioCapture} afterwards, or every later test in the run
- * inherits the stub.
+ * Stubs the capture and Web Audio APIs, with the grant and the animation
+ * frames driven by the test. Undo with {@link restoreAudioCapture}.
  */
 export function stubAudioCapture(): StubbedCapture {
   const track = { stop: vi.fn() };
@@ -643,8 +636,7 @@ export function stubAudioCapture(): StubbedCapture {
         return {
           fftSize: 1024,
           getByteTimeDomainData: (samples: Uint8Array): void => {
-            // Digital silence is the midpoint of the range and not zero: a
-            // buffer left at zero reads as a full-scale waveform.
+            // Silence is the midpoint of the range; a zeroed buffer reads as full scale.
             if (amplitude <= 0) {
               samples.fill(128);
               return;
@@ -660,8 +652,7 @@ export function stubAudioCapture(): StubbedCapture {
       }
     },
   );
-  // Only this property: replacing navigator wholesale drops the getters on its
-  // prototype, such as userAgent.
+  // Only this property: replacing navigator loses getters like userAgent.
   Object.defineProperty(navigator, "mediaDevices", {
     configurable: true,
     value: { getUserMedia: vi.fn().mockReturnValue(granted) },

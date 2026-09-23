@@ -104,8 +104,8 @@ function buildDeviceBehaviors(
     selectedAudioOutput$: scope.behavior(
       mediaDevices.audioOutput.selected$.pipe(map((s) => s?.id)),
     ),
-    // Safari and most Firefox builds cannot route audio to a chosen device at
-    // all. Withholding the callback is what renders the section disabled.
+    // Withheld where the platform can't route audio to a chosen device, which
+    // disables the speaker section.
     selectAudioOutputOption$: constant(
       supportsAudioOutputSelection()
         ? mediaDevices.audioOutput.select

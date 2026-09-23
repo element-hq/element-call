@@ -21,24 +21,14 @@ const mediaDevices = new MediaDevices(globalScope, {
   controlledAudioDevices: false,
 });
 
-/**
- * Gives these stories a microphone to read.
- *
- * The menu opens a capture of whichever device it has been told is selected,
- * and the devices in a story are invented: asking for one by an id no hardware
- * answers to fails, and the meter reports that — correctly — as there being no
- * microphone. So the story provides one rather than borrowing the machine's: a
- * wavering tone played into a real MediaStream, which the meter then runs its
- * own analyser over. Nothing here stands in for the meter itself.
- */
+/** Supplies a microphone, a wavering tone: a story's invented device ids match no hardware. */
 const WithAMicrophone: FC<{ children: ReactNode }> = ({ children }) => {
   useEffect(() => {
     const context = new AudioContext();
     const microphone = context.createMediaStreamDestination();
     const tone = context.createOscillator();
     const loudness = context.createGain();
-    // Swinging between about a third and two thirds of the range, so the meter
-    // reads as something live rather than as a level someone pinned there.
+    // Wavers between a third and two thirds of full scale, so it reads as live.
     const swing = context.createOscillator();
     const depth = context.createGain();
     loudness.gain.value = 0.25;
@@ -53,8 +43,7 @@ const WithAMicrophone: FC<{ children: ReactNode }> = ({ children }) => {
     const devices = navigator.mediaDevices;
     const openedForReal = devices.getUserMedia.bind(devices);
     const opened = Promise.resolve(microphone.stream);
-    // A fresh clone each time, so that a caller stopping its tracks when it is
-    // done does not take the microphone away from the next one.
+    // A fresh clone each time, so a caller stopping its tracks doesn't end the next.
     devices.getUserMedia = async (): Promise<MediaStream> =>
       (await opened).clone();
 
@@ -69,26 +58,14 @@ const WithAMicrophone: FC<{ children: ReactNode }> = ({ children }) => {
   return <>{children}</>;
 };
 
-/**
- * Gives these stories the call area the menu belongs to.
- *
- * The menu sizes its device list against the space Element Call is drawn in,
- * and takes that from a provider. Without one it falls back to the document
- * body — which in a story is the whole of Storybook's frame, so the list is
- * bounded by something far larger than the story it is drawn in and runs off
- * the top of the canvas. Supplying a root is the same courtesy as supplying the
- * devices: the story stands in for the call, so it has to say how big it is.
- */
+/** Supplies a call-sized root. Without one the list is bounded by the whole Storybook frame. */
 const WithACallArea: FC<{ children: ReactNode }> = ({ children }) => {
   const [callArea, setCallArea] = useState<HTMLElement | null>(null);
   return (
     <div
       ref={setCallArea}
       style={{
-        // The size of a call, not of a thumbnail: the device list is bounded to
-        // a share of this, so a small area makes even a two-device menu scroll,
-        // which no real call does. Tall enough to leave the menu room to open
-        // upward and still be wholly on screen in the story's frame.
+        // A call's size: anything smaller makes a short device list scroll.
         blockSize: 720,
         display: "flex",
         alignItems: "flex-end",
@@ -129,10 +106,7 @@ export const Default: Story = {
       { label: { type: "name", name: "Option 2" }, id: "2" },
     ],
     selectedOption: "1",
-    // The audio menu always has a speaker section: the footer hands it an
-    // output list whenever it draws the chevron at all, so a microphone menu
-    // with no speakers in it is a shape nothing in the app produces. Set here
-    // rather than in each story, since the others build on these.
+    // The footer always passes an output list to the audio menu.
     outputOptions: [
       { label: { type: "default", name: "Built-in Output" }, id: "default" },
       { label: { type: "name", name: "Headset" }, id: "spk2" },
@@ -234,16 +208,13 @@ export const SpeakerAndMicrophoneSections: Story = {
     await userEvent.click(headset);
     await expect(args.onSelectOutput).toHaveBeenCalledWith("spk2");
 
-    // A handful of devices fits: only a list longer than the space it is given
-    // scrolls, and a menu that scrolled at four devices would be bounded by
-    // something far smaller than the call it is drawn in.
+    // A few devices fit, so the list doesn't scroll.
     const list = document.body.querySelector<HTMLElement>(
       `.${styles.deviceList}`,
     )!;
     await expect(list.scrollHeight).toBe(list.clientHeight);
 
-    // Each section is headed by its own rule, running the full width of the
-    // menu rather than inset — and nothing divides the sections besides.
+    // Each section is headed by its own edge-to-edge rule, with no separator.
     const menu = document.body.querySelector("[role='menu']")!;
     await expect(
       document.body.querySelectorAll("[role='separator']"),
@@ -258,16 +229,14 @@ export const SpeakerAndMicrophoneSections: Story = {
       await expect(
         Number.parseFloat(getComputedStyle(rule).borderBottomWidth),
       ).toBeGreaterThan(0);
-      // Edge to edge, stopping only where the menu's frame is drawn.
+      // Edge to edge, within the frame.
       const box = rule.getBoundingClientRect();
       await expect(box.left - frame.left).toBeLessThanOrEqual(2);
       await expect(frame.right - box.right).toBeLessThanOrEqual(2);
     }
 
-    // A section's first device sits further below the rule than it does from
-    // the menu's edge. Stated as the relationship rather than a number: what
-    // the design asks for is the asymmetry, and Compound's own heading margin
-    // alone would make the two equal.
+    // The first device sits further below the rule than from the menu's edge.
+    // Asserted as a relationship, not pixels: the asymmetry is the design.
     const control = document.body.querySelector("input[type='radio']")!;
     const ruleBottom = headings[0]
       .querySelector("h3")!
@@ -275,8 +244,8 @@ export const SpeakerAndMicrophoneSections: Story = {
     const box = control.getBoundingClientRect();
     await expect(box.top - ruleBottom).toBeGreaterThan(box.left - frame.left);
 
-    // And one section stands further from the one above it than a heading does
-    // from its own first device — again the relationship, not a number.
+    // And a section stands further from the one above than from its own first
+    // device.
     const groups = document.body.querySelectorAll("[role='group']");
     const speakers = groups[0].querySelectorAll("input[type='radio']");
     const lastSpeaker = speakers[speakers.length - 1].getBoundingClientRect();
@@ -331,7 +300,7 @@ export const OnlyOneDevice: Story = {
     const canvas = within(canvasElement);
     await userEvent.click(canvas.getByRole("button", { name: "Microphone" }));
 
-    // Shown rather than hidden, so the menu keeps its shape everywhere.
+    // Shown, disabled, rather than hidden.
     const only = await within(document.body).findByRole("menuitemradio", {
       name: "Microphone 1",
     });
@@ -339,10 +308,7 @@ export const OnlyOneDevice: Story = {
   },
 };
 
-/**
- * A device has been asked for and has not arrived. Nothing in either section
- * can be picked until it does, so a second request cannot overtake the first.
- */
+/** A requested device hasn't arrived: nothing in either section can be picked. */
 export const SelectionSettling: Story = {
   args: {
     ...Default.args,
@@ -365,8 +331,7 @@ export const SelectionSettling: Story = {
     await userEvent.click(canvas.getByRole("button", { name: "Microphone" }));
     const menu = within(document.body);
 
-    // The story never changes `selectedOption`, which is what a device that has
-    // not taken effect yet looks like from here.
+    // selectedOption never changes, so the request stays in flight.
     await userEvent.click(
       await menu.findByRole("menuitemradio", { name: "Microphone 2" }),
     );
@@ -378,12 +343,8 @@ export const SelectionSettling: Story = {
 };
 
 /**
- * The focus ring belongs to the keyboard. Radix focuses whatever the pointer is
- * over, so a ring that followed focus alone would trail the mouse.
- *
- * Asserted on the painted outline rather than on `data-focus-source`: the
- * attribute is what the stylesheet keys off, so asserting it would pass even
- * with the rule deleted.
+ * The ring shows for keyboard focus only. Asserted on the painted outline:
+ * asserting data-focus-source would still pass with the CSS rule deleted.
  */
 export const KeyboardFocusRing: Story = {
   args: {
@@ -418,10 +379,7 @@ export const KeyboardFocusRing: Story = {
   },
 };
 
-/**
- * More devices than the menu can show. The list scrolls, and the meter stays at
- * the foot of the Microphone section rather than scrolling away with it.
- */
+/** The list scrolls; the meter stays at the foot of the microphone section. */
 export const ManyDevices: Story = {
   args: {
     ...Default.args,
@@ -444,11 +402,8 @@ export const ManyDevices: Story = {
     await userEvent.click(canvas.getByRole("button", { name: "Microphone" }));
     const menu = within(document.body);
 
-    // The scroll container and the opaque sticky wrapper, named rather than
-    // walked: the nesting between them is layout, and it moves. The wrapper
-    // rather than the meter itself, because this story is about where the meter
-    // sits, not what it reads — without a fake microphone, as on WebKit, it
-    // says it has no permission instead of showing a level.
+    // The sticky wrapper rather than the meter: without a fake microphone (as on
+    // WebKit) the meter shows a message instead of a level.
     const list = document.body.querySelector<HTMLElement>(
       `.${styles.deviceList}`,
     )!;
@@ -461,10 +416,8 @@ export const ManyDevices: Story = {
     });
     await expect(list.scrollHeight).toBeGreaterThan(list.clientHeight);
 
-    // Scrolled so the Microphone section starts at the top of the scrollport.
-    // Its devices then run past the bottom, which is the position that tells a
-    // pinned meter from one that simply happens to be the last element: at the
-    // very bottom of the list the two look identical.
+    // Scrolled so the microphone section starts at the top: only there does a
+    // pinned meter differ from one that is simply last.
     const group = await menu.findByRole("group", { name: "Microphone" });
     list.scrollTop +=
       group.getBoundingClientRect().top - list.getBoundingClientRect().top;
@@ -477,35 +430,27 @@ export const ManyDevices: Story = {
     await expect(pinned.bottom).toBeLessThanOrEqual(scrollport.bottom + 1);
     await expect(pinned.top).toBeGreaterThanOrEqual(scrollport.top - 1);
 
-    // The whole menu is on screen. It opens upward from the foot of the call,
-    // so a list bounded by something bigger than the call — the document, say —
-    // runs off the top and takes the speakers with it.
+    // The whole menu is on screen, not bounded by the document.
     const frame = document.body
       .querySelector("[role='menu']")!
       .getBoundingClientRect();
     await expect(frame.top).toBeGreaterThanOrEqual(0);
     await expect(frame.bottom).toBeLessThanOrEqual(window.innerHeight + 1);
 
-    // The meter is the one opaque thing in the menu, so it is the one thing
-    // that can cover the frame. Its box has to stay inside the menu's own. The
-    // paint itself needs a screenshot; this pins the geometry that decides it.
+    // The meter is the menu's one opaque part, so it must stay inside the frame.
     await expect(pinned.left).toBeGreaterThan(frame.left);
     await expect(pinned.right).toBeLessThan(frame.right);
   },
 };
 
-/** The painted outline width, in pixels, however the stylesheet spells it. */
+/** Painted outline width, in px. */
 function outlineWidth(element: HTMLElement): number {
   const { outlineStyle, outlineWidth } = getComputedStyle(element);
   if (outlineStyle === "none") return 0;
   return Number.parseFloat(outlineWidth) || 0;
 }
 
-/**
- * A platform that enumerates no output devices and offers no way to choose one
- * — Safari. The section still names where audio is going, disabled, rather than
- * leaving a heading with nothing under it.
- */
+/** Safari lists no outputs: a disabled, selected Default stands in. */
 export const OutputNotEnumerated: Story = {
   args: {
     ...Default.args,
@@ -531,15 +476,7 @@ export const OutputNotEnumerated: Story = {
   },
 };
 
-/**
- * The level meter's icon sits on the same centre line as the radio controls of
- * the devices above it.
- *
- * Held here because it is a fact about two components side by side, and because
- * layout decides it: the meter's row is inset to keep the menu's frame clear,
- * and its icon is a different size from a radio control, so the padding that
- * lines them up is arithmetic that would otherwise go stale in silence.
- */
+/** The meter's icon shares the radio controls' centre line; only a real browser lays this out. */
 export const MeterAlignsWithTheDeviceRows: Story = {
   args: {
     ...Default.args,
@@ -568,28 +505,19 @@ export const MeterAlignsWithTheDeviceRows: Story = {
   },
 };
 
-/** Where an element sits on the inline axis, at its middle. */
+/** Inline-axis centre of an element. */
 function centre(element: Element): number {
   const box = element.getBoundingClientRect();
   return box.left + box.width / 2;
 }
 
-/**
- * Walking the device list with the keyboard, all the way to the last entry.
- *
- * The level meter stands over the foot of the list, so a row scrolled flush to
- * the bottom edge arrives underneath it and can only half be read. Nothing in
- * the DOM says an element is covered, so this compares where the two were
- * actually drawn.
- */
+/** Every row the keyboard reaches is fully visible, not under a heading or the meter. */
 export const KeyboardReachesEveryDevice: Story = {
   args: {
     ...Default.args,
     iconsAndLabels: "audio",
     enabled: true,
-    // Enough of them that the list scrolls well past its own height, so that
-    // arrowing back up has to scroll too — which is where the heading can hide
-    // a row, as the meter can on the way down.
+    // Enough to scroll both ways, so either end can hide a row.
     options: Array.from({ length: 20 }, (_, i) => ({
       label: { type: "name" as const, name: `Microphone ${i + 1}` },
       id: `mic${i + 1}`,
@@ -614,8 +542,7 @@ export const KeyboardReachesEveryDevice: Story = {
       return element;
     });
 
-    // Everything that is drawn over the scrolling list: a heading holds the top
-    // while its section is in view, the meter holds the foot.
+    // Drawn over the list: the sticky headings and the meter.
     const overlays = [
       meter,
       ...document.body.querySelectorAll<HTMLElement>(
@@ -624,28 +551,20 @@ export const KeyboardReachesEveryDevice: Story = {
     ];
     const items = within(document.body).getAllByRole("menuitemradio");
 
-    // Down to the last device, as someone reading the list would, and back up
-    // again: a row can be hidden at either end.
+    // Down to the last device and back up.
     for (const key of ["{ArrowDown}", "{ArrowUp}"])
       for (let i = 0; i < items.length; i++) {
         await userEvent.keyboard(key);
         const focused = document.activeElement as HTMLElement;
         await expect(focused).toHaveRole("menuitemradio");
-        // Nothing is drawn over the row the keyboard has just reached. Stated
-        // as overlap rather than as an edge, because whether a heading is in
-        // the way depends on whether its section is still on screen.
+        // Checked as overlap: a heading only covers rows while its section is on
+        // screen.
         await expect(overlapping(focused, overlays)).toBeLessThanOrEqual(1);
       }
   },
 };
 
-/**
- * A long list scrolled well into the microphones.
- *
- * The heading of the section you are in stays at the top of the list, so it is
- * always clear which kind of device the rows below are. It leaves with its own
- * section rather than stacking with the next one.
- */
+/** A section's heading stays at the top while the section is in view, and leaves with it. */
 export const HeadingsStayWhileScrolling: Story = {
   args: {
     ...Default.args,
@@ -672,14 +591,12 @@ export const HeadingsStayWhileScrolling: Story = {
       `.${styles.deviceList}`,
     )!;
     const group = await menu.findByRole("group", { name: "Microphone" });
-    // By class, not role: the heading is aria-hidden decoration, because the
-    // group it belongs to is what carries the name.
+    // By class: the heading is aria-hidden, and its group carries the name.
     const heading = group.querySelector<HTMLElement>(
       `.${styles.sectionHeading}`,
     )!;
 
-    // Far enough in that the heading's own place in the list is well above the
-    // top of the scrollport: it is only still on screen if it is stuck there.
+    // Far enough that the heading is only on screen if it is stuck there.
     list.scrollTop +=
       group.getBoundingClientRect().top - list.getBoundingClientRect().top + 80;
 
@@ -690,7 +607,7 @@ export const HeadingsStayWhileScrolling: Story = {
     await expect(heading.getBoundingClientRect().bottom).toBeGreaterThan(
       scrollport.top,
     );
-    // And it keeps clear of the menu's frame, as the meter does.
+    // Clear of the menu's frame.
     const frame = document.body
       .querySelector("[role='menu']")!
       .getBoundingClientRect();
@@ -700,13 +617,7 @@ export const HeadingsStayWhileScrolling: Story = {
   },
 };
 
-/**
- * How far an element is covered, in pixels, by the most overlapping of others.
- *
- * Nothing in the DOM says an element is obscured, and an element scrolled flush
- * to an edge of its container looks no different there from one a sticky
- * heading is sitting on top of. The boxes are the only witness.
- */
+/** How far the most overlapping of `overlays` covers `element`, in px. */
 function overlapping(element: Element, overlays: Element[]): number {
   const box = element.getBoundingClientRect();
   return overlays.reduce((worst, overlay) => {
@@ -717,13 +628,7 @@ function overlapping(element: Element, overlays: Element[]): number {
   }, 0);
 }
 
-/**
- * The camera menu's blur toggle, which the keyboard reaches after the cameras.
- *
- * It is a checkbox item and a child of the menu rather than of the device list,
- * so a focus ring hung on the list alone left it with the browser's own —
- * which follows the pointer, and is what the ring exists to replace.
- */
+/** The blur toggle gets the keyboard ring too: it is the menu's child, not the list's. */
 export const FocusRingCoversTheBlurToggle: Story = {
   args: {
     ...VideoUnmute.args,
@@ -738,16 +643,14 @@ export const FocusRingCoversTheBlurToggle: Story = {
       name: /Blur background/,
     });
 
-    // Arrowed down past the cameras to the toggle, which is the last thing in
-    // the menu.
+    // Arrow down past the cameras to the toggle.
     for (let i = 0; i < 6 && document.activeElement !== toggle; i++)
       await userEvent.keyboard("{ArrowDown}");
     await expect(document.activeElement).toBe(toggle);
     // The same ring the device rows get.
     await expect(outlineWidth(toggle)).toBeGreaterThan(0);
 
-    // And the pointer takes it away again, with the toggle still focused — so
-    // there is something to light up and it is not lit.
+    // And the pointer takes it away, with the toggle still focused.
     await userEvent.hover(toggle);
     await expect(document.activeElement).toBe(toggle);
     await expect(outlineWidth(toggle)).toBe(0);

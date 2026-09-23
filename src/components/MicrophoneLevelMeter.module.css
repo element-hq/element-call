@@ -6,25 +6,18 @@ Please see LICENSE in the repository root for full details.
 */
 
 .meter {
-  /* The icon column, the same width as a device row's, so the bars start where
-     the device names start. */
+  /* A device row's icon column, so the bars start where the names do. */
   --meter-icon-size: 24px;
 
-  /* Compound's radio control, which the icon has to share a centre line with. */
+  /* Compound's radio size, whose centre line the icon shares. */
   --device-control-size: 20px;
 
   display: flex;
   align-items: center;
   gap: var(--cpd-space-3x);
   padding-block: var(--cpd-space-2x);
-  /* The icon shares a centre with the radio controls in the device rows above,
-     which sit one 4x padding in from the menu's edge. Two things pull this row
-     out of line with them, and both come off the padding: the row is inset by a
-     border width so that the menu's frame stays visible behind it (see
-     `.stickyMeter`), and the icon is wider than a radio control, so it starts
-     half that difference further left for the two to share a centre. Both are
-     measured in the MeterAlignsWithTheDeviceRows story rather than trusted:
-     jsdom lays nothing out, so only a real browser can hold this. */
+  /* Centres the icon on the radio column: less the row's inset border and half
+     the icon's extra width. Checked in the MeterAlignsWithTheDeviceRows story. */
   padding-inline-start: calc(
     var(--cpd-space-4x) - var(--cpd-border-width-1) -
       (var(--meter-icon-size) - var(--device-control-size)) / 2
@@ -40,27 +33,15 @@ Please see LICENSE in the repository root for full details.
 }
 
 .segments {
-  /* A bar and the space beside it are always the same size; what changes with
-     the width available is how many bars there are. Spreading a fixed number of
-     bars instead would make the meter a different shape in every place it is
-     used, and close them up into one solid block wherever the space ran short —
-     and a meter whose bars touch stops reading as a count, which is what
-     carries the level for anyone who cannot rely on the colour.
-
-     Both sizes are set here and nowhere else: the component reads them back off
-     the rendered bars to work out how many fit. */
+  /* Bars keep one size and the width decides how many; the component reads the
+     sizes back from here. */
   flex: 1;
-  /* The width decides the count, never the other way round. Containment is
-     what enforces that: without it the bars are both a floor under the width
-     and the widest thing in the menu, so the meter would set the menu's width
-     and the device names — which are what a person is reading — would have to
-     fit around it. */
+  /* So the bars never set the menu's width. */
   contain: inline-size;
   min-inline-size: 0;
   display: flex;
   align-items: center;
-  /* Half again as wide as a bar, as the design has it: bars set as close as
-     their own width read as a solid block long before they touch. */
+  /* Half again a bar's width, per the design. */
   gap: var(--cpd-space-1-5x);
 }
 
@@ -72,16 +53,13 @@ Please see LICENSE in the repository root for full details.
   background: var(--cpd-color-bg-subtle-primary);
 }
 
-/* Filled segments carry the level by count as well as by colour, so the meter
-   stays readable without relying on hue. */
+/* The count of lit bars carries the level as well as their colour. */
 .segmentLit {
   background: var(--cpd-color-bg-accent-rest);
 }
 
 .message {
   color: var(--cpd-color-text-secondary);
-  /* A paragraph brings a margin below it, which in a centred row does not push
-     the text down but lifts it: the margin box is what gets centred, so the
-     words end up above the middle and the icon beside them looks low. */
+  /* A paragraph's margin would lift the text off centre. */
   margin-block: 0;
 }

@@ -18,11 +18,9 @@ test.describe("the quick audio menu", () => {
     await joinACall(page, "Menu user", "Audio menu");
     await openAudioMenu(page);
 
-    // The speaker list is what the settings modal used to be the only home of.
     await expect(page.getByRole("group", { name: "Speaker" })).toBeVisible();
     await expect(page.getByRole("group", { name: "Microphone" })).toBeVisible();
-    // Named rather than counted: the browser contributes its own fake output
-    // and a "Default" entry, so a total would be a fact about the browser.
+    // By name, not count: the browser adds its own fake output and a Default.
     for (const n of [1, 2, 3])
       await expect(
         page
@@ -30,8 +28,6 @@ test.describe("the quick audio menu", () => {
           .getByRole("menuitemradio", { name: `Fake Speaker ${n}` }),
       ).toBeVisible();
 
-    // Only one entry of a kind is marked, and the meter reports a number
-    // rather than a colour.
     await expect(
       page.getByRole("menuitemradio", { checked: true }),
     ).toHaveCount(2);
@@ -40,10 +36,7 @@ test.describe("the quick audio menu", () => {
     await expect(meter).toHaveAttribute("aria-valuenow", /\d+/);
     await expect(meter).toHaveAttribute("aria-valuetext", /\d+ of \d+/);
 
-    // Both browsers in the matrix can route audio to a chosen output, so the
-    // section offers a real choice. The case where a platform cannot — Safari,
-    // and anything without setSinkId — is covered by a unit check, since no
-    // browser here can reach it.
+    // Both browsers here can route audio; the platform that can't is a unit check.
     await expect(
       page
         .getByRole("group", { name: "Speaker" })
@@ -55,7 +48,7 @@ test.describe("the quick audio menu", () => {
   test("moves the microphone and the speaker without disturbing the call", async ({
     browser,
   }) => {
-    // Two browsers, two joins and a real call between them.
+    // Two browsers and a real call.
     test.slow();
     const hostContext = await browser.newContext({ reducedMotion: "reduce" });
     const host = await hostContext.newPage();
@@ -73,9 +66,7 @@ test.describe("the quick audio menu", () => {
     await openAudioMenu(host);
     await selectDevice(host, "Speaker", "Fake Speaker 2");
 
-    // The point of the criterion: the switch is not a rejoin. Neither side
-    // sees the call drop, and the guest still has both tiles — so the host
-    // never left and came back.
+    // Not a rejoin: neither side drops, and the guest still has both tiles.
     await expect(
       host.getByRole("dialog", { name: "Reconnecting…" }),
     ).not.toBeVisible();
@@ -92,7 +83,7 @@ test.describe("the quick audio menu", () => {
   test("keeps the meter moving while muted, and sends nothing", async ({
     browser,
   }) => {
-    // Two browsers, two joins and a real call between them.
+    // Two browsers and a real call.
     test.slow();
     const hostContext = await browser.newContext({ reducedMotion: "reduce" });
     const host = await hostContext.newPage();
@@ -110,15 +101,12 @@ test.describe("the quick audio menu", () => {
     await expect(mute).toHaveAttribute("aria-checked", "false");
     await openAudioMenu(host);
 
-    // The microphone is held open while muted, so the meter still reports the
-    // hardware. The mute control is what says nothing is being transmitted.
     const meter = host.getByRole("meter", { name: "Microphone level" });
     await expect(meter).toBeVisible();
-    // Queried by test id, not by role: the menu is modal, so Radix takes the
-    // rest of the call out of the accessibility tree while it is open.
+    // By test id: the modal menu hides the rest of the call from the a11y tree.
     await expect(mute).toHaveAttribute("aria-checked", "false");
     await expect(mute).toBeVisible();
-    // And the listener is told so, rather than being left to guess from silence.
+    // And the guest is shown the mute.
     await expect(
       guest.getByTestId("videoTile").filter({ hasText: "Muted host" }),
     ).toBeVisible();
@@ -137,9 +125,8 @@ test.describe("the quick audio menu", () => {
     const meter = page.getByRole("meter", { name: "Microphone level" });
     await expect(meter).toBeVisible();
 
-    // Scrolled so the microphones start at the top of the list and run past its
-    // bottom: the position that tells a pinned meter from one that merely
-    // happens to be last.
+    // Scrolled so the microphones start at the top: only there does a pinned
+    // meter differ from one that is simply last.
     const list = page.locator("[role='menu'] div[role='none']").first();
     await list.evaluate((element) => {
       const group = element.querySelector("[role='group'][aria-label*='icro']");
@@ -150,7 +137,6 @@ test.describe("the quick audio menu", () => {
 
     await expect(meter).toBeInViewport();
     await expectPinnedInside(meter, list);
-    // Every entry stays reachable, which is what the scroll is for.
     await expect(
       page.getByRole("menuitemradio", { name: "Fake Microphone 20" }),
     ).toBeVisible();
@@ -169,16 +155,14 @@ test.describe("the quick audio menu", () => {
     await openAudioMenu(page);
 
     const first = page.getByRole("menuitemradio").first();
-    // Opened by pointer, so no ring, even though Radix has moved focus into the
-    // menu already.
+    // Opened by pointer: no ring, though Radix has moved focus into the menu.
     await expect.poll(async () => outlineWidth(first)).toBe(0);
 
     await page.keyboard.press("ArrowDown");
     const focused = page.locator("[role='menuitemradio']:focus");
     await expect.poll(async () => outlineWidth(focused)).toBeGreaterThan(0);
 
-    // The pointer takes it away again: the menu focuses whatever it is over, so
-    // a ring that followed focus alone would trail the mouse.
+    // And the pointer takes it away again.
     await first.hover();
     await expect.poll(async () => outlineWidth(focused)).toBe(0);
   });
@@ -193,8 +177,7 @@ async function joinACall(
   await page.goto("/");
   await SpaHelpers.createCall(page, userName, callName, true);
   await expect(page.getByTestId("name_tag")).toContainText(userName);
-  // The media controls stay disabled until the devices have enumerated, and
-  // every test here drives them.
+  // The media controls stay disabled until devices have enumerated.
   await expect(page.getByTestId("incall_mute")).toBeEnabled({
     timeout: 10_000,
   });
@@ -214,19 +197,12 @@ async function selectDevice(
     .getByRole("group", { name: section })
     .getByRole("menuitemradio", { name });
   await item.click();
-  // Selecting does not close the menu — the component prevents the default so
-  // the list survives a mis-click — so it is dismissed explicitly.
+  // Selecting doesn't close the menu, so dismiss it.
   await page.keyboard.press("Escape");
   await expect(page.getByRole("menu")).not.toBeVisible();
 }
 
-/**
- * Asserts the meter sits within the scrollport, and inside the menu's frame.
- *
- * The meter is the one opaque element in the menu, so it is the one thing that
- * can paint over the border. Whether it actually does needs a screenshot; this
- * pins the geometry that decides it.
- */
+/** Asserts the meter sits within the scrollport and inside the menu's frame. */
 async function expectPinnedInside(
   meter: Locator,
   list: Locator,
@@ -243,7 +219,7 @@ async function expectPinnedInside(
   expect(meterBox.x + meterBox.width).toBeLessThan(frame.x + frame.width);
 }
 
-/** The painted outline width in pixels, however the stylesheet spells it. */
+/** Painted outline width, in px. */
 async function outlineWidth(item: Locator): Promise<number> {
   if ((await item.count()) === 0) return 0;
   return item.first().evaluate((element) => {

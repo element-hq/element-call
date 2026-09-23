@@ -14,14 +14,7 @@ import {
 
 const IDLE: MicrophoneState = { type: "level", level: 0 };
 
-/**
- * Reads the live input level of a microphone, while `active`.
- *
- * A bridge and nothing else: the capture, its lifetime and the maths belong to
- * {@link observeMicrophoneState$}. Scoped to `active` so the device is held
- * only while whatever shows the meter is on screen, rather than for the length
- * of a call.
- */
+/** The live level of a microphone, captured only while `active`. */
 export function useMicrophoneLevel(
   deviceId: string | undefined,
   active: boolean,
@@ -30,8 +23,7 @@ export function useMicrophoneLevel(
 
   useEffect(() => {
     if (!active) return;
-    // Idle first, so a new device starts from nothing rather than from the
-    // level the previous one was reading.
+    // Idle first, so a new device doesn't start from the previous level.
     setState(IDLE);
     const subscription = observeMicrophoneState$(deviceId).subscribe(setState);
     return (): void => subscription.unsubscribe();

@@ -25,7 +25,6 @@ describe("MicrophoneLevelMeter", () => {
     const denied = render(
       <MicrophoneLevelMeter state={{ type: "permission-denied" }} />,
     );
-    // A next action, not a flat meter that reads as silence.
     expect(
       denied.getByText(/Microphone access is blocked/),
     ).toBeInTheDocument();

@@ -14,7 +14,6 @@ vi.mock("../Platform", () => ({
   },
   isFirefox: (): boolean => false,
 }));
-// One observer per device kind, so a test can add and remove hardware.
 const observers = vi.hoisted(
   () => new Map<string, { next: (devices: unknown[]) => void }>(),
 );
@@ -75,7 +74,7 @@ function device(deviceId: string, label: string, groupId = deviceId): object {
   return { deviceId, label, groupId, kind: "audioinput" };
 }
 
-/** Replaces the hardware of one kind, as the browser would report it. */
+/** Replaces the devices of one kind, as the browser reports them. */
 function setDevices(kind: string, devices: object[]): void {
   const observer = observers.get(kind);
   if (observer === undefined) throw new Error(`nothing observing ${kind}`);
@@ -103,7 +102,7 @@ describe("MediaDevices selection", () => {
 
     devices.audioInput.select("mic2");
 
-    // A later call on the same machine reads the same stored preference.
+    // A later call reads the same stored preference.
     expect(newMediaDevices().audioInput.selected$.value?.id).toBe("mic2");
   });
 
@@ -112,7 +111,6 @@ describe("MediaDevices selection", () => {
     setDevices("audioinput", [device("mic1", "Microphone 1")]);
     expect([...devices.audioInput.available$.value.keys()]).toEqual(["mic1"]);
 
-    // A headset is plugged in.
     setDevices("audioinput", [
       device("mic1", "Microphone 1"),
       device("mic2", "Headset"),
@@ -122,7 +120,6 @@ describe("MediaDevices selection", () => {
       "mic2",
     ]);
 
-    // And unplugged again.
     setDevices("audioinput", [device("mic1", "Microphone 1")]);
     expect([...devices.audioInput.available$.value.keys()]).toEqual(["mic1"]);
   });
@@ -136,7 +133,6 @@ describe("MediaDevices selection", () => {
     devices.audioInput.select("mic2");
     expect(devices.audioInput.selected$.value?.id).toBe("mic2");
 
-    // The headset is unplugged mid-call.
     setDevices("audioinput", [device("mic1", "Microphone 1")]);
 
     expect(devices.audioInput.selected$.value?.id).toBe("mic1");
@@ -145,7 +141,6 @@ describe("MediaDevices selection", () => {
   test("falls back when the remembered device is absent", () => {
     const devices = newMediaDevices();
     setDevices("audioinput", [device("mic1", "Microphone 1")]);
-    // Remembered from a previous call, on hardware that is not here now.
     devices.audioInput.select("a-device-from-last-time");
 
     expect(devices.audioInput.selected$.value?.id).toBe("mic1");
@@ -153,7 +148,7 @@ describe("MediaDevices selection", () => {
 
   test("falls back to numbered labels when labels are unavailable", () => {
     const devices = newMediaDevices();
-    // The browser withholds names until permission has been granted.
+    // Names are withheld until permission is granted.
     setDevices("audioinput", [device("mic1", ""), device("mic2", "")]);
 
     expect([...devices.audioInput.available$.value.values()]).toEqual([
@@ -167,10 +162,7 @@ describe("MediaDevices selection", () => {
     setDevices("audiooutput", [device("spk1", "Speakers")]);
 
     const available = devices.audioOutput.available$.value;
-    // Default follows the operating system and re-points when it changes, so
-    // it is its own choice rather than an alias for the device it resolves to.
-    // It carries no name of its own precisely because which device it resolves
-    // to is not knowable from here.
+    // Default is its own entry, unnamed: which device it resolves to isn't knowable.
     expect(available.get("spk1")).toEqual({ type: "name", name: "Speakers" });
     expect(available.get("")).toEqual({ type: "default", name: null });
   });

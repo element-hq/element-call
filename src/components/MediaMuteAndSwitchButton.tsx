@@ -62,10 +62,7 @@ export interface MediaMuteAndSwitchButtonProps {
   outputOptions?: MenuOptions[];
   /** The output option currently rendered as selected */
   selectedOutputOption?: string;
-  /**
-   * Called when an output device is picked. Undefined means no output can be
-   * chosen here, and the section renders disabled.
-   */
+  /** Picks an output device. Undefined disables the speaker section. */
   onSelectOutput?: (id: string) => void;
   videoBlurToggleClick?: () => void;
   videoBlurEnabled?: boolean;
@@ -101,9 +98,8 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   videoBlurToggleClick,
   onSelect,
 }) => {
-  // Which device we have asked for but not yet been given. Carries the kind as
-  // well as the id, because an input and an output can share an id: "default"
-  // names both on Chrome.
+  // Requested but not yet selected. Keyed by kind too, since Chrome uses
+  // "default" for both an input and an output.
   const [plannedSelection, setPlannedSelection] = useState<{
     kind: "input" | "output";
     id: string;
@@ -111,7 +107,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   const [menuOpen, setMenuOpen] = useState(false);
   const onOpenChange = useCallback((open: boolean): void => {
     setMenuOpen(open);
-    // A request that never arrived does not outlive the menu it was made in.
+    // Drop a request that never arrived.
     if (!open) setPlannedSelection(null);
   }, []);
   const isBusy = busy ?? false;
@@ -144,18 +140,12 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
     [],
   );
 
-  // The menu is portalled outside the call root, so nothing in the stylesheets
-  // can size it against the call. Measure the call area rather than the window,
-  // or the menu is wrong wherever Element Call is not the whole page.
+  // Measured on the call area: CSS can't size the portalled menu against it.
   const rootElement = useRootElement();
   const [listMaxHeight, setListMaxHeight] = useState<number>();
   useEffect(() => {
     if (!menuOpen) return;
-    // Followed rather than measured once: a host can resize the space Element
-    // Call is drawn in while the menu is open — a panel animating, a window
-    // dragged, a phone turned — and a bound taken on opening then describes a
-    // call area that no longer exists. Quantised before it reaches React, so a
-    // resize re-renders only when the bound itself moves.
+    // Followed, since a host can resize the call while the menu is open.
     const subscription = observeElementSize$(rootElement)
       .pipe(
         map(({ height }) =>
@@ -167,23 +157,17 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
     return (): void => subscription.unsubscribe();
   }, [menuOpen, rootElement]);
 
-  // The meter sits over the foot of the scrolling list, so the list has to
-  // keep that much of itself clear: a row scrolled to by the keyboard would
-  // otherwise arrive underneath it, half-read. Its own height, measured,
-  // because the failure states are two lines where a level is one.
+  // Kept clear at the list's foot, so a row reached by keyboard isn't under
+  // the meter.
   const [meterHeight, meter] = useMeasuredHeight();
 
-  // The headings stand over the head of the list, so it has to keep their
-  // height clear too — the same bargain as the meter, at the other end. One
-  // measurement serves both: the sections are headed alike.
+  // Likewise at its head, for the sticky headings.
   const [headingHeight, heading] = useMeasuredHeight();
 
   useEffect(() => {
     if (menuOpen) devices.requestDeviceNames(); // No-op after the first call
   }, [menuOpen, devices]);
 
-  // The mute control differs between the two only in which button it is and
-  // what it is called; how it behaves is the same, and was worth saying once.
   const MuteButton = iconsAndLabels === "audio" ? MicButton : VideoButton;
   const button = (
     <MuteButton
@@ -201,7 +185,6 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
     />
   );
 
-  // Only the camera menu carries a toggle, and only when the caller offers one.
   const toggles =
     iconsAndLabels === "video" && videoBlurToggleClick !== undefined
       ? [
@@ -231,7 +214,6 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
       break;
   }
 
-  /** The text shown for a device, whichever kind of label it carries. */
   const labelText = (
     label: MenuOptions["label"],
     numbered: (n: number) => string,
@@ -252,13 +234,8 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
     }
   };
 
-  // A device we asked for that has not arrived yet. Until it does, nothing in
-  // the menu can be picked, so a second request cannot overtake the first.
-  //
-  // A request only counts as in flight while the device is still on offer. One
-  // that is removed before it takes effect never arrives — the selection falls
-  // back to the default instead — and waiting for it would leave every device
-  // in both sections unselectable for the rest of the call.
+  // Nothing can be picked while a requested device is on offer but not yet
+  // selected, so a second request can't overtake it.
   const plannedOutput = plannedSelection?.kind === "output";
   const selectedOfPlannedKind = plannedOutput
     ? selectedOutputOption
@@ -269,17 +246,12 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
     plannedSelection.id !== selectedOfPlannedKind &&
     offeredOfPlannedKind?.some(({ id }) => id === plannedSelection.id) === true;
 
-  // Safari enumerates no output devices at all, and offers no way to choose
-  // one, so the list arrives empty. The section is shown all the same — audio
-  // is playing somewhere — naming that somewhere and disabling it like any
-  // single entry. A heading with nothing beneath it reads as a broken feature,
-  // and leaves the menu a different shape on one browser.
+  // Safari lists no outputs: show a disabled, selected Default rather than an
+  // empty section.
   const noOutputsListed = outputOptions?.length === 0;
   const speakerOptions: MenuOptions[] | undefined = noOutputsListed
     ? [{ id: DEFAULT_OUTPUT_ID, label: { type: "default", name: null } }]
     : outputOptions;
-  // And it is the selection, not merely the only row: it is where audio is
-  // going. An unchecked lone entry reads as nothing being chosen at all.
   const selectedSpeaker = noOutputsListed
     ? DEFAULT_OUTPUT_ID
     : selectedOutputOption;
@@ -292,30 +264,23 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
     numbered: (n: number) => string,
   ): ReactElement[] => {
     const list = items ?? [];
-    // Shown but not choosable when nothing can be picked here, or when there is
-    // only one device. The entry stays visible so the menu keeps the same shape
-    // on every platform.
+    // Disabled rather than hidden, so the menu keeps its shape.
     const disabled = select === undefined || list.length <= 1 || settling;
     return list.map(({ label, id }) => (
       <MenuItem
-        // A radio input inside a button is invalid, and the menu needs an
-        // element it can give menuitemradio semantics to.
+        // A radio input may not sit inside a button.
         as="div"
         hideChevron
         disabled={disabled}
         label={labelText(label, numbered)}
         Icon={
-          // Inert, not aria-hidden: a form control inside a menu item must be
-          // out of the focus order and out of the accessibility tree, and
-          // aria-hidden alone leaves it focusable. The item's aria-checked is
-          // what conveys the selection.
+          // Inert, not aria-hidden: aria-hidden alone leaves it focusable.
           <span inert>
             <RadioInput
               checked={selected === id}
               disabled={disabled}
-              // Not readOnly: that styles the control as muted, losing the
-              // accent fill that marks the selection. The menu item owns the
-              // interaction, so the change handler has nothing to do.
+              // Not readOnly, which mutes the selected fill. The item handles
+              // the click.
               onChange={(): void => {}}
             />
           </span>
@@ -377,8 +342,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
       >
         <div
           ref={trackFocusSource}
-          // Transparent to assistive technology, so the menu still sees its
-          // items as its own children.
+          // Keeps the items the menu's own children for assistive tech.
           role="none"
           className={styles.deviceList}
           style={
@@ -395,11 +359,8 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
           {iconsAndLabels === "audio" && speakerOptions && (
             <>
               {/* A menu may only contain items, separators and groups, so each
-                  heading belongs to a group rather than sitting beside the
-                  items it names. */}
+                  heading is a hidden part of a named group. */}
               <div role="group" aria-label={t("settings.devices.speaker")}>
-                {/* The heading is decoration: the group carries the name, and
-                    a menu may only contain items, separators and groups. */}
                 <div aria-hidden className={styles.sectionHeading}>
                   <MenuTitle title={t("settings.devices.speaker")} />
                 </div>
@@ -417,8 +378,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
             <div ref={heading} aria-hidden className={styles.sectionHeading}>
               <MenuTitle title={optionsButtonLabel} />
             </div>
-            {/* The heading sits outside, so the meter can never ride up over it:
-              sticky only holds while this block is in view. */}
+            {/* Apart from the heading, so the sticky meter can't ride over it. */}
             <div role="none">
               {deviceItems(
                 "input",
@@ -431,8 +391,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
                 <LiveMicrophoneLevelMeter
                   ref={meter}
                   deviceId={selectedOption}
-                  // Only while the menu is open, so nothing holds a second
-                  // capture of the microphone for the length of a call.
+                  // Only while open, so the microphone isn't held all call.
                   active={menuOpen}
                   className={styles.stickyMeter}
                 />
@@ -457,12 +416,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   );
 };
 
-/**
- * Follows an element's height, for the two pieces of chrome that stand over the
- * scrolling device list. Both have to keep their own height clear of it, and
- * neither height is knowable in advance: a heading wraps, and the meter's
- * failure states are two lines where a level is one.
- */
+/** Follows an element's height. */
 function useMeasuredHeight(): [
   number | undefined,
   (element: HTMLElement | null) => (() => void) | undefined,

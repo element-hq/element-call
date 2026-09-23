@@ -191,7 +191,6 @@ describe("LobbyView microphone level", () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
-    // Put navigator back, or every later test in the run inherits the stub.
     if (realMediaDevices === undefined) {
       Reflect.deleteProperty(navigator, "mediaDevices");
     } else {
@@ -199,7 +198,6 @@ describe("LobbyView microphone level", () => {
     }
   });
 
-  /** Just enough of the Web Audio and capture APIs for the meter to run. */
   function stubAudioCapture(): void {
     vi.stubGlobal(
       "AudioContext",
@@ -217,8 +215,7 @@ describe("LobbyView microphone level", () => {
         public close(): void {}
       },
     );
-    // Only this property: replacing navigator wholesale drops the getters on
-    // its prototype, such as userAgent.
+    // Only this property: replacing navigator loses getters like userAgent.
     Object.defineProperty(navigator, "mediaDevices", {
       configurable: true,
       value: {
@@ -241,8 +238,7 @@ describe("LobbyView microphone level", () => {
       },
     } as unknown as Partial<MediaDevices>);
 
-    // The meter lives with the microphone picker, which the pre-join screen
-    // reaches through the same chevron as a call in progress.
+    // Pre-join reaches the meter through the same chevron as a call.
     await user.click(getByRole("button", { name: "Microphone" }));
 
     expect(

@@ -27,8 +27,8 @@ import { type MediaDevices } from "../state/MediaDevices";
 import { restoreAudioCapture, stubAudioCapture } from "../utils/test";
 import type * as MediaDevicesContextModule from "../MediaDevicesContext";
 
-// The menu reads the devices once per render and the meter never does, so
-// counting these calls counts how often the menu itself re-rendered.
+// The menu reads the devices on every render and the meter never does, so
+// these calls count the menu's own renders.
 vi.mock("../MediaDevicesContext", async (importOriginal) => {
   const actual = await importOriginal<typeof MediaDevicesContextModule>();
   return { ...actual, useMediaDevices: vi.fn(actual.useMediaDevices) };
@@ -61,8 +61,7 @@ function renderComponent(
 }
 
 describe("MediaMuteAndSwitchButton", () => {
-  // Only one test stubs the capture, but leaving it stubbed would follow
-  // every later test in the run.
+  // Only one test stubs the capture; don't let it leak into the rest.
   afterEach(restoreAudioCapture);
 
   test("renders", () => {
@@ -393,8 +392,7 @@ describe("MediaMuteAndSwitchButton", () => {
       screen.getByRole("menuitemradio", { name: "Microphone 2" }),
     );
 
-    // In flight: nothing else can be picked, in either section, so a second
-    // request cannot overtake the first.
+    // In flight: nothing else can be picked, in either section.
     for (const name of ["Microphone 1", "Speakers", "Headset"]) {
       expect(screen.getByRole("menuitemradio", { name })).toHaveAttribute(
         "aria-disabled",
@@ -407,7 +405,7 @@ describe("MediaMuteAndSwitchButton", () => {
       await promise;
     });
 
-    // Settled: choosable again.
+    // Settled: selectable again.
     expect(
       screen.getByRole("menuitemradio", { name: "Microphone 1" }),
     ).not.toHaveAttribute("aria-disabled", "true");
@@ -418,9 +416,7 @@ describe("MediaMuteAndSwitchButton", () => {
 
   test("lets go of a device switch that never arrives", async () => {
     const user = userEvent.setup();
-    // onSelect that never reports back is what a device removed mid-switch
-    // looks like from here: the selection falls back to the default, so what
-    // was asked for never becomes the selection.
+    // onSelect never reports back, as when a device is removed mid-switch.
     const { getByRole } = renderComponent(
       <MediaMuteAndSwitchButton
         iconsAndLabels="audio"
@@ -447,8 +443,6 @@ describe("MediaMuteAndSwitchButton", () => {
     await user.keyboard("{Escape}");
     await user.click(getByRole("button", { name: "Microphone" }));
 
-    // Otherwise every device, in both sections, stays unselectable for the
-    // rest of the call.
     for (const name of ["Microphone 1", "Speakers", "Headset"]) {
       expect(screen.getByRole("menuitemradio", { name })).not.toHaveAttribute(
         "aria-disabled",
@@ -485,20 +479,18 @@ describe("MediaMuteAndSwitchButton", () => {
       screen.getByRole("menuitemradio", { name: "Microphone 2" }),
     );
 
-    // The second microphone is unplugged before the switch to it lands, so it
-    // is never going to become the selection.
+    // The second microphone is unplugged before the switch lands.
     rerender(withProviders(menu(mics.slice(0, 1))));
 
-    // The speakers are choosable again without the menu being closed: a
-    // request for a device that is gone is not in flight, it is over.
+    // Selectable again without closing the menu.
     expect(
       screen.getByRole("menuitemradio", { name: "Headset" }),
     ).not.toHaveAttribute("aria-disabled", "true");
   });
 
   test("redraws the meter and not the device rows around it", async () => {
-    // A level arrives many times a second. Held in the menu it would reconcile
-    // every device row on its way to the bars, so it is held in the meter.
+    // The level is held by the meter, so a moving level doesn't re-render the
+    // menu.
     const capture = stubAudioCapture();
     const user = userEvent.setup();
     const menuRenders = vi.mocked(useMediaDevices);
@@ -529,16 +521,13 @@ describe("MediaMuteAndSwitchButton", () => {
     const meter = await screen.findByRole("meter");
     const settled = menuRenders.mock.calls.length;
 
-    // The meter follows elapsed time rather than frames, so hand-driven frames
-    // need a clock to move at all: a frame every 16ms, from where the capture
-    // started.
+    // The meter smooths by elapsed time, so hand-driven frames need a clock.
     let elapsed = performance.now();
     const clock = vi
       .spyOn(performance, "now")
       .mockImplementation(() => (elapsed += 16));
 
-    // One frame per task, as a browser delivers them: drawing them all inside
-    // one act would let React batch what it would not batch in a browser.
+    // One frame per task, as a browser delivers them: one act() would batch them.
     for (let step = 1; step <= 8; step++) {
       capture.speak(step / 8);
       await act(async () => {
@@ -548,9 +537,7 @@ describe("MediaMuteAndSwitchButton", () => {
     }
     clock.mockRestore();
 
-    // The level moved...
     expect(meter.getAttribute("aria-valuenow")).not.toBe("0");
-    // ...and the menu around it did not render once on the way.
     expect(menuRenders.mock.calls.length - settled).toBe(0);
   });
 
@@ -572,10 +559,8 @@ describe("MediaMuteAndSwitchButton", () => {
 
     await user.click(getByRole("button", { name: "Camera" }));
 
-    // Same selection pattern as the microphone menu.
     screen.getByRole("menuitemradio", { name: "Camera 1", checked: true });
     screen.getByRole("menuitemradio", { name: "Camera 2", checked: false });
-    // And background blur is still reachable from here.
     expect(
       screen.getByRole("menuitemcheckbox", { name: "Blur background" }),
     ).toBeInTheDocument();
@@ -601,8 +586,7 @@ describe("MediaMuteAndSwitchButton", () => {
       .getByRole("menuitemradio", { name: "Microphone 1" })
       .closest("[data-focus-source]");
 
-    // The menu focuses whatever the pointer is over, so focus alone says
-    // nothing about how someone is navigating.
+    // The menu focuses whatever the pointer is over, so focus alone says nothing.
     expect(list).toHaveAttribute("data-focus-source", "pointer");
 
     await user.keyboard("{ArrowDown}");
@@ -636,8 +620,7 @@ describe("MediaMuteAndSwitchButton", () => {
       .getByRole("menuitemradio", { name: "Microphone 2" })
       .querySelector("input[type=radio]");
     expect(selected).toBeChecked();
-    // A read-only control is painted muted, which loses the accent fill that
-    // marks the selection and makes the menu differ from settings.
+    // readOnly would paint the selected radio muted.
     expect(selected).not.toHaveAttribute("readonly");
   });
 
@@ -664,8 +647,6 @@ describe("MediaMuteAndSwitchButton", () => {
 
     await user.click(getByRole("button", { name: "Microphone" }));
 
-    // Includes the menu's own structure: wrappers between the menu and its
-    // items break the relationship the roles describe.
     const menu = document.querySelector('[role="menu"]');
     expect(await axe(menu as HTMLElement)).toHaveNoViolations();
   });
@@ -782,7 +763,7 @@ describe("MediaMuteAndSwitchButton", () => {
 
     await user.click(getByRole("button", { name: "Microphone" }));
 
-    // Shown rather than hidden, so the menu keeps its shape, but not choosable.
+    // Shown, but not selectable.
     const only = screen.getByRole("menuitemradio", { name: "Microphone 1" });
     expect(only).toHaveAttribute("aria-disabled", "true");
   });
@@ -799,8 +780,7 @@ describe("MediaMuteAndSwitchButton", () => {
         ]}
         selectedOption="mic1"
         onSelect={vi.fn()}
-        // Safari enumerates no output devices at all, and offers no way to
-        // choose one.
+        // As Safari: no outputs listed.
         outputOptions={[]}
         selectedOutputOption={undefined}
         onSelectOutput={undefined}
@@ -809,8 +789,6 @@ describe("MediaMuteAndSwitchButton", () => {
 
     await user.click(getByRole("button", { name: "Microphone" }));
 
-    // A heading with nothing under it says the feature is broken. Audio is
-    // playing somewhere, so the section names that somewhere and disables it.
     const speakers = screen
       .getAllByRole("group")
       .find((group) => group.getAttribute("aria-label") === "Speaker")!;
@@ -818,8 +796,6 @@ describe("MediaMuteAndSwitchButton", () => {
     expect(entries).toHaveLength(1);
     expect(entries[0]).toHaveAccessibleName("Default");
     expect(entries[0]).toHaveAttribute("aria-disabled", "true");
-    // And marked as the selection: it is where audio is going, so an unchecked
-    // lone entry would read as nothing being chosen at all.
     expect(entries[0]).toHaveAttribute("aria-checked", "true");
     expect(
       within(entries[0]).getByRole("radio", { hidden: true }),
@@ -843,7 +819,6 @@ describe("MediaMuteAndSwitchButton", () => {
           { label: { type: "name", name: "Headset" }, id: "spk2" },
         ]}
         selectedOutputOption="spk1"
-        // No callback: nothing can be picked here.
         onSelectOutput={undefined}
       />,
     );
@@ -856,7 +831,6 @@ describe("MediaMuteAndSwitchButton", () => {
     expect(
       screen.getByRole("menuitemradio", { name: "Headset" }),
     ).toHaveAttribute("aria-disabled", "true");
-    // The microphone section is unaffected.
     expect(
       screen.getByRole("menuitemradio", { name: "Microphone 2" }),
     ).not.toHaveAttribute("aria-disabled", "true");

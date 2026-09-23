@@ -8,20 +8,10 @@ Please see LICENSE in the repository root for full details.
 import { type Page } from "@playwright/test";
 
 /**
- * Gives the browser more fake devices than it ships with.
- *
- * A headless browser's fake capture offers one microphone and one speaker,
- * which is one short of what a device menu is for: with no choice to make, every
- * entry renders disabled. These are synthetic entries on top of the real fake
- * device, so the menu has a list to show and a selection to move, and the app
- * runs its real device pipeline against them.
- *
- * What they do not do is route audio: every entry is backed by the same capture,
- * and `setSinkId` is accepted rather than honoured. A test can prove that
- * choosing a device changes the app's state and does not disturb the call. That
- * a listener hears the change needs hardware, and stays a manual check.
- *
- * Must be called before the page navigates.
+ * Adds synthetic devices beside the browser's one fake microphone and speaker,
+ * so the menu has a choice to show. They share one capture and `setSinkId` is
+ * accepted but not honoured: routing still needs hardware and a manual check.
+ * Call before the page navigates.
  */
 export async function installFakeDevices(
   page: Page,
@@ -58,8 +48,7 @@ export async function installFakeDevices(
         ...synthetic("audiooutput", speakers, "Fake Speaker"),
       ];
 
-      // Our ids name no hardware, so an exact-device constraint on one would be
-      // rejected. Drop it and let the one real fake device answer.
+      // Our ids name no hardware, so drop the exact-device constraint.
       const getUserMedia = devices.getUserMedia.bind(devices);
       devices.getUserMedia = async (
         constraints?: MediaStreamConstraints,
@@ -77,10 +66,8 @@ export async function installFakeDevices(
         return getUserMedia(constraints);
       };
 
-      // Routing to a device that does not exist would reject, and the app
-      // treats that as a failed switch. Both sinks are patched: Element Call
-      // routes its own AudioContext as well as the media elements, and leaving
-      // that one alone logs a NotFoundError for every switch.
+      // Accept routing to our ids on both media elements and the AudioContext,
+      // which the app also routes.
       for (const proto of [
         HTMLMediaElement.prototype,
         AudioContext.prototype,

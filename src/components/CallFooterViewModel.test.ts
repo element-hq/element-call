@@ -116,7 +116,6 @@ describe("createCallFooterViewModel", () => {
 
     it("is withheld where the platform cannot route audio to a chosen device", () => {
       outputSelectionMock.mockReturnValue(false);
-      // Undefined is what renders the speaker section disabled.
       expect(buildFooterVm().selectAudioOutputOption$.value).toBeUndefined();
     });
 
@@ -145,9 +144,7 @@ describe("createCallFooterViewModel", () => {
             selected$: constant(undefined),
             select: vi.fn(),
           },
-          // Safari enumerates no output devices whatsoever. Reproduced by the
-          // condition rather than by the browser, so it is checked on the
-          // Linux CI runners that have no Safari to check it with.
+          // As Safari: no outputs listed.
           audioOutput: {
             available$: constant(new Map<string, DeviceLabel>()),
             selected$: constant(undefined),
@@ -158,10 +155,7 @@ describe("createCallFooterViewModel", () => {
         { showControls: true, header: HeaderStyle.Standard },
       );
 
-      // Empty rather than undefined: undefined means this menu has no notion
-      // of outputs at all, as the camera menu has none, and hides the section.
-      // Empty means there are none to list, and the menu still shows the
-      // section with a default in it, disabled.
+      // Empty, not undefined: undefined would hide the section.
       expect(vm.audioOutputOptions$.value).toEqual([]);
     });
   });

@@ -28,12 +28,8 @@ export interface LiveMicrophoneLevelMeterProps {
 }
 
 /**
- * The level meter, wired to a live capture of a microphone.
- *
- * A component of its own so that a level which does change redraws the meter
- * and not whatever is rendered beside it. A moving level arrives many times a
- * second; held in the menu, it would reconcile every device row on the way to
- * the bars.
+ * The meter, wired to a live capture. Its own component so a changing level
+ * re-renders the meter, not its parent.
  */
 export const LiveMicrophoneLevelMeter: FC<LiveMicrophoneLevelMeterProps> = ({
   deviceId,
@@ -48,27 +44,18 @@ export const LiveMicrophoneLevelMeter: FC<LiveMicrophoneLevelMeterProps> = ({
 export interface MicrophoneLevelMeterProps {
   state: MicrophoneState;
   className?: string;
-  /**
-   * The meter's own element. Its height is what a scroll container has to keep
-   * clear to stop the meter covering the row it has just scrolled to.
-   */
   ref?: Ref<HTMLDivElement>;
 }
 
-/**
- * The live input level of the selected microphone, shown beneath it, or the
- * reason there is no level to show.
- */
+/** The input level of a microphone, or why there is none. */
 export const MicrophoneLevelMeter: FC<MicrophoneLevelMeterProps> = ({
   state,
   className,
   ref,
 }) => {
   const { t } = useTranslation();
-  // How many bars there is room for. The bars never change size, so this is
-  // what absorbs a change of width. Starts at the full count so that the first
-  // paint is a meter rather than a single bar, and so that a renderer with no
-  // layout at all — jsdom — still draws the whole thing.
+  // Bars keep one size, so their count follows the width. Starts full so the
+  // first paint, and jsdom, draw a whole meter.
   const [barCount, setBarCount] = useState(LEVEL_SCALE);
   const track = useCallback(
     (element: HTMLDivElement | null): (() => void) | undefined => {
@@ -112,8 +99,7 @@ export const MicrophoneLevelMeter: FC<MicrophoneLevelMeterProps> = ({
               key={i}
               aria-hidden
               className={classNames(styles.segment, {
-                // The level is a share of the scale, not a count of bars: how
-                // many stand for it depends on how many there are.
+                // The level is a share of the scale, not a bar count.
                 [styles.segmentLit]:
                   i < Math.round((state.level / LEVEL_SCALE) * barCount),
               })}
@@ -125,15 +111,11 @@ export const MicrophoneLevelMeter: FC<MicrophoneLevelMeterProps> = ({
   );
 };
 
-/**
- * How many bars fit across `width`, measured off a rendered one rather than
- * told: a bar's size is a design question, settled in the stylesheet, and
- * reading it back is what keeps it from being settled twice.
- */
+/** How many bars fit across `width`, measured so the stylesheet alone sets their size. */
 function barsThatFit(track: HTMLElement, width: number): number {
   const gap = Number.parseFloat(getComputedStyle(track).columnGap);
   const bar = track.firstElementChild?.getBoundingClientRect().width ?? 0;
-  // A renderer that lays nothing out tells us nothing; keep the full count.
+  // No layout (jsdom): keep the full count.
   if (!(bar > 0) || !(gap >= 0)) return LEVEL_SCALE;
   return Math.max(1, Math.floor((width + gap) / (bar + gap)));
 }

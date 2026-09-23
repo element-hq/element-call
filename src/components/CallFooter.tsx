@@ -99,7 +99,7 @@ export interface FooterState {
 
   /** Providing no options `[]` or `undefined` will imply that we dont have a audio fast switcher */
   audioOptions: MenuOptions[];
-  /** Output devices shown as their own section in the audio menu. */
+  /** Output (speaker) devices. */
   audioOutputOptions: MenuOptions[];
   /** Providing no options `[]` or `undefined` will imply that we dont have a audio fast switcher */
   videoOptions: MenuOptions[];

@@ -11,9 +11,7 @@ import { renderHook } from "@testing-library/react";
 import { useMicrophoneLevel } from "./useMicrophoneLevel";
 import { restoreAudioCapture, stubAudioCapture } from "../utils/test";
 
-// The capture itself, and releasing it, belong to observeMicrophoneState$ and
-// are covered in src/state/MicrophoneLevel.test.ts. What is left here is the
-// bridging: when the hook watches, and what it reports before it has an answer.
+// Capture and release are covered in MicrophoneLevel.test.ts; this covers the bridge.
 describe("useMicrophoneLevel", () => {
   afterEach(restoreAudioCapture);
 
@@ -36,7 +34,7 @@ describe("useMicrophoneLevel", () => {
 
     rerender({ id: "mic2" });
 
-    // No level carried over: the meter reads the new device or nothing at all.
+    // No level carried over from the previous device.
     expect(result.current).toEqual({ type: "level", level: 0 });
   });
 });

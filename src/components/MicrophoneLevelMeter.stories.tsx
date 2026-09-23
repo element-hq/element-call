@@ -16,15 +16,7 @@ import {
 import styles from "./MicrophoneLevelMeter.module.css";
 import { LEVEL_SCALE } from "../state/MicrophoneLevel";
 
-/**
- * A width to show the meter at, close to the menu it lives in.
- *
- * Not a copy of the menu's width, and nothing depends on the two agreeing: a
- * bar and the gap beside it are a fixed size now, so this only decides how many
- * bars there is room for. Without a width at all the stories would shrink-wrap
- * to almost nothing and show a meter two bars wide, which is no use to anyone
- * looking at them.
- */
+/** Roughly the menu's width. It only decides how many bars fit. */
 const STORY_WIDTH = 256;
 
 const meta = {
@@ -47,10 +39,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/**
- * A quiet room. Nothing is lit: room hiss below the noise floor must not read
- * as "it can hear me".
- */
+/** A quiet room: hiss below the noise floor lights nothing. */
 export const Silent: Story = {
   args: { state: { type: "level", level: 0 } },
   play: async ({ canvasElement }) => {
@@ -65,11 +54,7 @@ export const QuietSpeech: Story = {
 export const NormalSpeech: Story = {
   args: { state: { type: "level", level: 12 } },
   play: async ({ canvasElement }) => {
-    // Shown at something like the width of the menu, so the meter in a story
-    // reads like the meter in a call rather than like a handful of bars. The
-    // design's own mock has sixteen of them at this width; a floor rather than
-    // a count, because the number follows from the bar and gap sizes and those
-    // are the design's to change.
+    // A floor, not a count: the count follows from the design's bar and gap sizes.
     await expect(
       canvasElement.getElementsByClassName(styles.segment).length,
     ).toBeGreaterThanOrEqual(15);
@@ -80,10 +65,7 @@ export const LoudSpeech: Story = {
   args: { state: { type: "level", level: LEVEL_SCALE } },
 };
 
-/**
- * The three volumes differ by how many bars are lit, so the level survives
- * greyscale and a screen reader as well as it survives colour.
- */
+/** The three volumes differ in how many bars are lit, not only in colour. */
 export const VolumesAreDistinguishable: Story = {
   args: { state: { type: "level", level: 5 } },
   play: async ({ canvasElement, mount }) => {
@@ -96,17 +78,12 @@ export const VolumesAreDistinguishable: Story = {
         String(level),
       );
     }
-    // Three different counts, rising: the level is carried by how many bars
-    // are lit, not by their colour alone.
     await expect(new Set(lit).size).toBe(lit.length);
     await expect(lit).toEqual([...lit].sort((a, b) => a - b));
   },
 };
 
-/**
- * Permission refused. A message with a next action, never a still meter that
- * reads as silence.
- */
+/** Permission refused: a message with a next action, not a still meter. */
 export const PermissionDenied: Story = {
   args: { state: { type: "permission-denied" } },
   play: async ({ canvasElement }) => {
@@ -118,7 +95,7 @@ export const PermissionDenied: Story = {
   },
 };
 
-/** No input device at all, told apart from a refusal. */
+/** No input device, told apart from a refusal. */
 export const NoDevice: Story = {
   args: { state: { type: "no-device" } },
   play: async ({ canvasElement }) => {
@@ -126,9 +103,7 @@ export const NoDevice: Story = {
     await expect(canvas.queryByRole("meter")).toBeNull();
     await expect(canvas.getByText(/No microphone found/)).toBeVisible();
 
-    // The icon sits on the middle of the words, however many lines they run to.
-    // A paragraph's own margin would centre its margin box instead, leaving the
-    // text high and the icon looking low beside it.
+    // The icon sits on the middle of the text, however many lines it runs to.
     const middle = (element: Element): number => {
       const box = element.getBoundingClientRect();
       return box.top + box.height / 2;
@@ -139,15 +114,7 @@ export const NoDevice: Story = {
   },
 };
 
-/**
- * The same meter at two widths.
- *
- * A bar and the space beside it are always the same size; what changes is how
- * many bars there are. Spreading a fixed number of bars instead would make the
- * meter a different shape in every place it is used, and close the bars up into
- * one block wherever the space ran short — and bars that touch cannot be
- * counted, which is what carries the level without colour.
- */
+/** The same meter at two widths: the bars keep their size and only their count changes. */
 export const ShapeStaysTheSameAtAnyWidth: Story = {
   args: { state: { type: "level", level: 12 } },
   play: async ({ mount, args }) => {
@@ -157,17 +124,17 @@ export const ShapeStaysTheSameAtAnyWidth: Story = {
     await expect(narrow.bar).toBe(wide.bar);
     await expect(narrow.gap).toBe(wide.gap);
     await expect(narrow.count).toBeLessThan(wide.count);
-    // And the bars are still bars, not one run of colour.
+    // The bars are still separate, not one run of colour.
     await expect(narrow.gap).toBeGreaterThan(0);
   },
 };
 
-/** How many bars are painted as carrying level, rather than as empty. */
+/** How many bars are lit. */
 function litSegments(canvasElement: HTMLElement): number {
   return canvasElement.getElementsByClassName(styles.segmentLit).length;
 }
 
-/** Renders the meter at one width and reports the shape of its bars. */
+/** Renders the meter at one width and reports its bars' shape. */
 async function measureAt(
   mount: (ui: JSX.Element) => Promise<unknown>,
   args: MicrophoneLevelMeterProps,

@@ -23,8 +23,6 @@ describe("segmentsForVolume", () => {
   });
 
   test("shows nothing for the hiss of a quiet room", () => {
-    // Without a noise floor these light the first segments permanently, which
-    // reads as "it can hear me" when nobody is speaking.
     expect(segmentsForVolume(0.005)).toBe(0);
     expect(segmentsForVolume(0.015)).toBe(0);
   });
@@ -40,8 +38,7 @@ describe("segmentsForVolume", () => {
   });
 
   test("moves the meter visibly for normal speech", () => {
-    // Ordinary speech should reach the middle of the meter, not scrape along
-    // the floor: a meter that barely moves reads as a broken microphone.
+    // Ordinary speech reaches the middle of the meter.
     expect(segmentsForVolume(0.2)).toBeGreaterThanOrEqual(LEVEL_SCALE / 4);
   });
 
@@ -65,16 +62,14 @@ describe("smoothVolume", () => {
   });
 
   test("registers a syllable as it starts", () => {
-    // Most of the way there within one attack time constant, so speech does
-    // not lag the speaker.
+    // Most of the way within one attack time constant.
     expect(smoothVolume(0, 1, ATTACK_MS)).toBeGreaterThan(0.6);
   });
 
   test("rides over the gaps between words", () => {
-    // A pause of a few tens of milliseconds should not collapse the meter, or
-    // it flickers rather than reading as a level.
+    // A short pause doesn't collapse the meter...
     expect(smoothVolume(1, 0, 30)).toBeGreaterThan(0.7);
-    // A real silence still brings it down.
+    // ...but a real silence brings it down.
     expect(smoothVolume(1, 0, RELEASE_MS * 3)).toBeLessThan(0.1);
   });
 
@@ -98,8 +93,7 @@ describe("observeMicrophoneState$", () => {
     const capture = stubAudioCapture();
 
     const subscription = observeMicrophoneState$("mic1").subscribe();
-    // The user gives up on the permission prompt and closes the menu, and only
-    // then does the browser hand the microphone over.
+    // The menu closes before the browser hands the microphone over.
     subscription.unsubscribe();
     capture.grant();
     await vi.waitFor(() => expect(capture.track.stop).toHaveBeenCalled());
@@ -120,8 +114,7 @@ describe("observeMicrophoneState$", () => {
 
   test("gives the microphone back when the audio graph fails to build", async () => {
     const capture = stubAudioCapture();
-    // The graph fails only after getUserMedia has handed the device over, so
-    // there is a live capture to lose.
+    // Fails only after getUserMedia has granted the device.
     vi.stubGlobal(
       "AudioContext",
       class {
@@ -138,8 +131,6 @@ describe("observeMicrophoneState$", () => {
     capture.grant();
 
     await vi.waitFor(() => expect(seen).toContain("no-device"));
-    // Without this the microphone stays open, and its in-use light on, behind
-    // a meter that says it is unavailable.
     expect(capture.track.stop).toHaveBeenCalled();
 
     subscription.unsubscribe();
@@ -173,8 +164,7 @@ describe("observeMicrophoneState$", () => {
     capture.grant();
     await vi.waitFor(() => expect(emissions).toBe(1));
 
-    // The analyser is read every animation frame, but the meter has only
-    // LEVEL_SCALE steps: a steady signal must not redraw the meter.
+    // Read every frame, but a steady signal emits once.
     capture.drawFrames(20);
     expect(emissions).toBe(1);
 
@@ -182,7 +172,7 @@ describe("observeMicrophoneState$", () => {
   });
 });
 
-/** An error with the `name` the browser would give it, not just a message. */
+/** An error carrying the browser's `name`. */
 function named(error: Error, name: string): Error {
   error.name = name;
   return error;
