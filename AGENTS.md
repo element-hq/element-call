@@ -48,6 +48,8 @@ pnpm i18n:check
 - View model + marble tests, thin view, a story per state, an e2e spec.
 - Any new shared component called out explicitly, with why nothing existing fit.
 - Template filled for real: what, why, before/after screenshots, repro steps.
+- Comments only where the code can't give the reason — see
+  [code-style.md](docs/agents/code-style.md#comments).
 - Anything that redraws continuously — an animation frame, a stream — says what it
   costs, or better, counts the redraws in a test.
 - Branch `<handle>/<topic>`. Plain imperative commit subjects, no prefixes.

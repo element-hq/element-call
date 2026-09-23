@@ -31,7 +31,31 @@ copy, the PR says so.
 - **Suites.** Test cases first, helpers below. Older suites invert this; follow the
   rule in new ones, don't reorder old ones.
 - **Names.** What a thing means, not what it is made of: `naturalLayout$`, not
-  `computedLayout$`. Comments explain why, never what.
+  `computedLayout$`.
+
+## Comments
+
+No comment is the default. One earns its place by giving a reason the code
+cannot: a platform quirk, an outside constraint, a trap that looks like a
+simplification.
+
+- Say the reason, then stop. Test each sentence: does the reason still stand
+  without it? If so, cut it. Most reasons fit on a line, so a long comment is
+  worth a second look — it is usually carrying something that isn't one.
+- Never describe:
+  - layout or placement — the stylesheet says it, and changes without the
+    comment;
+  - the context around the code — it moves without touching the line;
+  - design measurements — the design is the source;
+  - how a decision was reached, or what was rejected — that goes in the PR body
+    or the feature spec;
+  - what the next line does, or what an assertion checks.
+- No spec ids (D11, AC23) and no browser lists — both go stale silently.
+- In tests, comment only structure that looks wrong but isn't: batching, timers,
+  why this scroll position.
+
+Before keeping one: would it still be true after a CSS change or a refactor of
+its caller? If not, cut it.
 
 ## TypeScript, React and RxJS idiom win on a clash
 
