@@ -47,11 +47,6 @@ export interface MenuOptions {
 }
 
 export interface MediaMuteAndSwitchButtonProps {
-  /**
-   * The accessible name of the menu. Defaults to a translated name for the
-   * media kind. Never shown: each section carries its own heading.
-   */
-  title?: string;
   /** If the Mute button is enabled */
   enabled?: boolean;
   /** Callback if the mute button is clicked */
@@ -63,10 +58,7 @@ export interface MediaMuteAndSwitchButtonProps {
   options?: MenuOptions[];
   /** The option that will currently be rendered as the selected option */
   selectedOption?: string;
-  /**
-   * Output (speaker) devices, shown as their own section above the input
-   * section. Audio menu only; omitted entirely for video.
-   */
+  /** Output (speaker) devices. Audio menu only. */
   outputOptions?: MenuOptions[];
   /** The output option currently rendered as selected */
   selectedOutputOption?: string;
@@ -86,33 +78,16 @@ export interface MediaMuteAndSwitchButtonProps {
 
 const BLUR_ID = "blur";
 
-/**
- * Stands for wherever the platform is sending audio, where it will not say.
- *
- * Not a device id the browser would recognise: nothing can be selected on a
- * platform that lists no outputs, so this is only ever shown, never sent.
- */
+/** Id of the placeholder "Default" row, shown when the platform lists no outputs. */
 const DEFAULT_OUTPUT_ID = "default";
 
-/**
- * The share of the call area the device list may fill.
- *
- * The menu carries its headings and the level meter as well, and a list that
- * took the whole call would hide the call it belongs to.
- */
+/** Largest share of the call area's height the device list may take. */
 const LIST_SHARE_OF_CALL = 0.6;
 
-/**
- * The shortest the device list may be, whatever the call measures.
- *
- * A share alone collapses in a small call to a list that shows one device and
- * gives no sign that there are others. Scrolling a short list is the better
- * failure.
- */
+/** Smallest device list height in px, so a short call still shows more than one device. */
 const MIN_LIST_HEIGHT = 160;
 
 export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
-  title,
   enabled,
   busy,
   onMuteClick,
@@ -144,31 +119,17 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   const devices = useMediaDevices();
 
   /**
-   * Tracks which modality moved the focus, for as long as the list is mounted.
-   *
-   * - Ours to track, because Radix focuses whatever the pointer is over, so
-   *   `:focus-visible` answers for the pointer: Chromium says yes to anything
-   *   after a key press, Firefox says no to programmatic focus.
-   * - A ref, not an effect on `menuOpen`: that state is ours and the open menu
-   *   is Radix's, and an effect keyed on ours can run before Radix has mounted
-   *   the content. The list existing is the honest signal.
-   * - On the menu, not the document: Element Call can be mounted twice in a
-   *   host's page and this menu is portalled out of the call root, so a
-   *   document listener would answer for the other instance too.
-   * - On the menu, not the list, because the first arrow key arrives while the
-   *   menu itself holds focus — and because the blur toggle is the menu's
-   *   child, not the list's, and has to answer to it as well.
-   * - In a dataset rather than state: which modality someone is using changes
-   *   nothing that has to be rendered again.
+   * Records on the menu whether the keyboard or the pointer moved focus, for
+   * the focus ring. `:focus-visible` can't tell: Radix focuses whatever the
+   * pointer is over. Listened for on the menu, not the document, so a second
+   * Element Call on the page doesn't answer for this one.
    */
-  const trackFocusModality = useCallback(
+  const trackFocusSource = useCallback(
     (list: HTMLDivElement | null): (() => void) | undefined => {
       const menu = list?.closest<HTMLElement>('[role="menu"]');
       if (menu === null || menu === undefined) return;
-      // Each opening starts over: the modality belongs to whoever is using this
-      // menu now, not to whoever last used it.
-      const record = (modality: "keyboard" | "pointer"): void => {
-        menu.dataset.focusModality = modality;
+      const record = (source: "keyboard" | "pointer"): void => {
+        menu.dataset.focusSource = source;
       };
       record("pointer");
       const usedKeyboard = (): void => record("keyboard");
@@ -253,18 +214,18 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
       : [];
 
   let optionsButtonLabel: string;
-  let defaultMenuTitle: string;
+  let menuTitle: string;
   let numberedLabel: (number: number) => string;
   switch (iconsAndLabels) {
     case "video":
       optionsButtonLabel = t("settings.devices.camera");
-      defaultMenuTitle = t("settings.devices.camera_source");
+      menuTitle = t("settings.devices.camera_source");
       numberedLabel = (n): string =>
         t("settings.devices.camera_numbered", { n });
       break;
     case "audio":
       optionsButtonLabel = t("settings.devices.microphone");
-      defaultMenuTitle = t("settings.devices.mic_source");
+      menuTitle = t("settings.devices.mic_source");
       numberedLabel = (n): string =>
         t("settings.devices.microphone_numbered", { n });
       break;
@@ -394,9 +355,8 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
       {button}
       <Menu
         className={styles.menu}
-        title={title ?? defaultMenuTitle}
-        // Each section carries its own heading, so the menu's own title would
-        // sit on top of the first one. Kept for the accessible name only.
+        // Named for screen readers only: each section has its own heading.
+        title={menuTitle}
         showTitle={false}
         open={menuOpen}
         onOpenChange={onOpenChange}
@@ -416,7 +376,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
         }
       >
         <div
-          ref={trackFocusModality}
+          ref={trackFocusSource}
           // Transparent to assistive technology, so the menu still sees its
           // items as its own children.
           role="none"

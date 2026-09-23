@@ -111,7 +111,7 @@ test("keeps every device reachable in a small container", async ({ page }) => {
   await expect(last).toHaveAttribute("aria-checked", "true");
 });
 
-test("tracks the focus modality of its own call, not the page", async ({
+test("tracks the focus source of its own call, not the page", async ({
   page,
 }) => {
   await installFakeDevices(page);
@@ -124,7 +124,7 @@ test("tracks the focus modality of its own call, not the page", async ({
     timeout: 60_000,
   });
   await openDeviceList(page, pane);
-  // The menu owns the modality, because every item it can focus has to answer
+  // The menu owns the focus source, because every item it can focus has to answer
   // to it — the device rows and the camera menu's blur toggle alike.
   const menu = page.getByRole("menu");
 
@@ -134,7 +134,7 @@ test("tracks the focus modality of its own call, not the page", async ({
   // suppresses the browser's own reaches this menu. The paint is asserted
   // standalone instead — in the story and in audio-menu.spec.ts. What is on
   // trial here is which call the tracking answers for.
-  await expect(menu).toHaveAttribute("data-focus-modality", "pointer");
+  await expect(menu).toHaveAttribute("data-focus-source", "pointer");
 
   // A key pressed in the other call on this page — or anywhere in the host's
   // own page — says nothing about how this menu is being used.
@@ -143,11 +143,11 @@ test("tracks the focus modality of its own call, not the page", async ({
       new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }),
     ),
   );
-  await expect(menu).toHaveAttribute("data-focus-modality", "pointer");
+  await expect(menu).toHaveAttribute("data-focus-source", "pointer");
 
   // A key pressed in this menu does.
   await page.keyboard.press("ArrowDown");
-  await expect(menu).toHaveAttribute("data-focus-modality", "keyboard");
+  await expect(menu).toHaveAttribute("data-focus-source", "keyboard");
 });
 
 /**

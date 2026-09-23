@@ -68,7 +68,7 @@ describe("MediaMuteAndSwitchButton", () => {
   test("renders", () => {
     const { container } = renderComponent(
       <TooltipProvider>
-        <MediaMuteAndSwitchButton title={"Switcher"} iconsAndLabels={"audio"} />
+        <MediaMuteAndSwitchButton iconsAndLabels={"audio"} />
       </TooltipProvider>,
     );
     expect(container).toMatchSnapshot();
@@ -80,11 +80,7 @@ describe("MediaMuteAndSwitchButton", () => {
       enabled: boolean,
     ): RenderResult => {
       return renderComponent(
-        <MediaMuteAndSwitchButton
-          title={"Switcher"}
-          iconsAndLabels={type}
-          enabled={enabled}
-        />,
+        <MediaMuteAndSwitchButton iconsAndLabels={type} enabled={enabled} />,
       );
     };
     const renderAudioEndabled = renderLabels("audio", true);
@@ -111,7 +107,6 @@ describe("MediaMuteAndSwitchButton", () => {
     const onMute = vi.fn();
     const { getByRole } = renderComponent(
       <MediaMuteAndSwitchButton
-        title={"Switcher"}
         onMuteClick={onMute}
         iconsAndLabels="audio"
         enabled={true}
@@ -128,7 +123,6 @@ describe("MediaMuteAndSwitchButton", () => {
     const onMute = vi.fn();
     const { getByRole } = renderComponent(
       <MediaMuteAndSwitchButton
-        title={"Switcher"}
         onMuteClick={onMute}
         iconsAndLabels="audio"
         enabled={true}
@@ -149,7 +143,6 @@ describe("MediaMuteAndSwitchButton", () => {
     const onMute = vi.fn();
     const { getByRole } = renderComponent(
       <MediaMuteAndSwitchButton
-        title={"Switcher"}
         onMuteClick={onMute}
         iconsAndLabels="video"
         enabled={true}
@@ -169,11 +162,7 @@ describe("MediaMuteAndSwitchButton", () => {
     const user = userEvent.setup();
     const requestDeviceNames = vi.fn();
     renderComponent(
-      <MediaMuteAndSwitchButton
-        title="Switcher"
-        iconsAndLabels="audio"
-        enabled
-      />,
+      <MediaMuteAndSwitchButton iconsAndLabels="audio" enabled />,
       { requestDeviceNames },
     );
 
@@ -187,7 +176,6 @@ describe("MediaMuteAndSwitchButton", () => {
     renderComponent(
       <>
         <MediaMuteAndSwitchButton
-          title="Switcher"
           iconsAndLabels="audio"
           enabled
           options={[
@@ -197,7 +185,6 @@ describe("MediaMuteAndSwitchButton", () => {
           selectedOption="mic1"
         />
         <MediaMuteAndSwitchButton
-          title="Switcher"
           iconsAndLabels="video"
           enabled
           options={[
@@ -223,7 +210,6 @@ describe("MediaMuteAndSwitchButton", () => {
     const onSelect = vi.fn();
     const { getByRole } = renderComponent(
       <MediaMuteAndSwitchButton
-        title="Switcher"
         iconsAndLabels="audio"
         enabled={true}
         options={[
@@ -247,7 +233,6 @@ describe("MediaMuteAndSwitchButton", () => {
     const onSelect = vi.fn();
     const { getByRole } = renderComponent(
       <MediaMuteAndSwitchButton
-        title="Switcher"
         iconsAndLabels="audio"
         enabled={true}
         options={[
@@ -276,7 +261,6 @@ describe("MediaMuteAndSwitchButton", () => {
       const [selectedOption, setSelectedOption] = useState("mic1");
       return (
         <MediaMuteAndSwitchButton
-          title="Switcher"
           iconsAndLabels="audio"
           enabled={true}
           options={[
@@ -336,7 +320,6 @@ describe("MediaMuteAndSwitchButton", () => {
     const onVideoBlurToggle = vi.fn();
     const { getByRole } = renderComponent(
       <MediaMuteAndSwitchButton
-        title="Switcher"
         iconsAndLabels="video"
         enabled={true}
         videoBlurToggleClick={onVideoBlurToggle}
@@ -361,7 +344,6 @@ describe("MediaMuteAndSwitchButton", () => {
     const user = userEvent.setup();
     const { getByRole } = renderComponent(
       <MediaMuteAndSwitchButton
-        title="Switcher"
         iconsAndLabels="audio"
         enabled={true}
         options={[
@@ -385,7 +367,6 @@ describe("MediaMuteAndSwitchButton", () => {
       const [selectedOption, setSelectedOption] = useState("mic1");
       return (
         <MediaMuteAndSwitchButton
-          title="Switcher"
           iconsAndLabels="audio"
           enabled={true}
           options={[
@@ -442,7 +423,6 @@ describe("MediaMuteAndSwitchButton", () => {
     // was asked for never becomes the selection.
     const { getByRole } = renderComponent(
       <MediaMuteAndSwitchButton
-        title="Switcher"
         iconsAndLabels="audio"
         enabled={true}
         options={[
@@ -485,7 +465,6 @@ describe("MediaMuteAndSwitchButton", () => {
     ];
     const menu = (options: MenuOptions[]): JSX.Element => (
       <MediaMuteAndSwitchButton
-        title="Switcher"
         iconsAndLabels="audio"
         enabled={true}
         options={options}
@@ -527,7 +506,6 @@ describe("MediaMuteAndSwitchButton", () => {
     const { getByRole } = renderComponent(
       <>
         <MediaMuteAndSwitchButton
-          title="Switcher"
           iconsAndLabels="audio"
           enabled={true}
           options={[
@@ -580,7 +558,6 @@ describe("MediaMuteAndSwitchButton", () => {
     const user = userEvent.setup();
     const { getByRole } = renderComponent(
       <MediaMuteAndSwitchButton
-        title="Switcher"
         iconsAndLabels="video"
         enabled={true}
         options={[
@@ -608,7 +585,6 @@ describe("MediaMuteAndSwitchButton", () => {
     const user = userEvent.setup();
     const { getByRole } = renderComponent(
       <MediaMuteAndSwitchButton
-        title="Switcher"
         iconsAndLabels="audio"
         enabled={true}
         options={[
@@ -623,27 +599,26 @@ describe("MediaMuteAndSwitchButton", () => {
     await user.click(getByRole("button", { name: "Microphone" }));
     const list = screen
       .getByRole("menuitemradio", { name: "Microphone 1" })
-      .closest("[data-focus-modality]");
+      .closest("[data-focus-source]");
 
     // The menu focuses whatever the pointer is over, so focus alone says
     // nothing about how someone is navigating.
-    expect(list).toHaveAttribute("data-focus-modality", "pointer");
+    expect(list).toHaveAttribute("data-focus-source", "pointer");
 
     await user.keyboard("{ArrowDown}");
-    expect(list).toHaveAttribute("data-focus-modality", "keyboard");
+    expect(list).toHaveAttribute("data-focus-source", "keyboard");
 
     await user.pointer({
       target: screen.getByRole("menuitemradio", { name: "Microphone 2" }),
       coords: { clientX: 10, clientY: 10 },
     });
-    expect(list).toHaveAttribute("data-focus-modality", "pointer");
+    expect(list).toHaveAttribute("data-focus-source", "pointer");
   });
 
   test("marks the selected device with the accent fill", async () => {
     const user = userEvent.setup();
     const { getByRole } = renderComponent(
       <MediaMuteAndSwitchButton
-        title="Switcher"
         iconsAndLabels="audio"
         enabled={true}
         options={[
@@ -670,7 +645,6 @@ describe("MediaMuteAndSwitchButton", () => {
     const user = userEvent.setup();
     const { getByRole } = renderComponent(
       <MediaMuteAndSwitchButton
-        title="Switcher"
         iconsAndLabels="audio"
         enabled={true}
         options={[
@@ -700,7 +674,6 @@ describe("MediaMuteAndSwitchButton", () => {
     const user = userEvent.setup();
     const { getByRole } = renderComponent(
       <MediaMuteAndSwitchButton
-        title="Switcher"
         iconsAndLabels="audio"
         enabled={true}
         options={[
@@ -734,7 +707,6 @@ describe("MediaMuteAndSwitchButton", () => {
     const user = userEvent.setup();
     const { getByRole } = renderComponent(
       <MediaMuteAndSwitchButton
-        title="Switcher"
         iconsAndLabels="audio"
         enabled={true}
         options={[
@@ -771,7 +743,6 @@ describe("MediaMuteAndSwitchButton", () => {
     const onSelectOutput = vi.fn();
     const { getByRole } = renderComponent(
       <MediaMuteAndSwitchButton
-        title="Switcher"
         iconsAndLabels="audio"
         enabled={true}
         options={[
@@ -799,7 +770,6 @@ describe("MediaMuteAndSwitchButton", () => {
     const onSelect = vi.fn();
     const { getByRole } = renderComponent(
       <MediaMuteAndSwitchButton
-        title="Switcher"
         iconsAndLabels="audio"
         enabled={true}
         options={[
@@ -821,7 +791,6 @@ describe("MediaMuteAndSwitchButton", () => {
     const user = userEvent.setup();
     const { getByRole } = renderComponent(
       <MediaMuteAndSwitchButton
-        title="Switcher"
         iconsAndLabels="audio"
         enabled={true}
         options={[
@@ -861,7 +830,6 @@ describe("MediaMuteAndSwitchButton", () => {
     const user = userEvent.setup();
     const { getByRole } = renderComponent(
       <MediaMuteAndSwitchButton
-        title="Switcher"
         iconsAndLabels="audio"
         enabled={true}
         options={[

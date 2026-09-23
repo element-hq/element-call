@@ -131,7 +131,7 @@ Please see LICENSE in the repository root for full details.
 }
 
 /* Shown only when the keyboard is what moved the focus. */
-.menu[data-focus-modality="keyboard"] [role^="menuitem"]:focus {
+.menu[data-focus-source="keyboard"] [role^="menuitem"]:focus {
   outline: var(--cpd-border-width-2) solid var(--cpd-color-border-focused);
   outline-offset: calc(-1 * var(--cpd-border-width-2));
 }

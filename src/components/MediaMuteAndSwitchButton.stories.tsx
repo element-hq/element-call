@@ -122,7 +122,6 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    title: "SomeMenu",
     iconsAndLabels: "audio",
     enabled: true,
     options: [
@@ -148,7 +147,6 @@ export const Default: Story = {
 export const AudioMute: Story = {
   args: {
     ...Default.args,
-    title: "Microphone",
     iconsAndLabels: "audio",
     enabled: false,
     options: [
@@ -172,7 +170,6 @@ export const AudioMute: Story = {
 export const AudioUnmute: Story = {
   args: {
     ...Default.args,
-    title: "Microphone",
     iconsAndLabels: "audio",
     enabled: true,
     options: [
@@ -185,7 +182,6 @@ export const AudioUnmute: Story = {
 
 export const VideoMute: Story = {
   args: {
-    title: "Camera",
     iconsAndLabels: "video",
     enabled: false,
     options: [
@@ -199,7 +195,6 @@ export const VideoMute: Story = {
 
 export const VideoUnmute: Story = {
   args: {
-    title: "Camera",
     iconsAndLabels: "video",
     enabled: true,
     options: [
@@ -215,7 +210,6 @@ export const VideoUnmute: Story = {
 export const SpeakerAndMicrophoneSections: Story = {
   args: {
     ...Default.args,
-    title: "Microphone",
     iconsAndLabels: "audio",
     enabled: true,
     options: [
@@ -296,7 +290,6 @@ export const SpeakerAndMicrophoneSections: Story = {
 export const OutputCannotBeChosen: Story = {
   args: {
     ...Default.args,
-    title: "Microphone",
     iconsAndLabels: "audio",
     enabled: true,
     options: [
@@ -326,7 +319,6 @@ export const OutputCannotBeChosen: Story = {
 export const OnlyOneDevice: Story = {
   args: {
     ...Default.args,
-    title: "Microphone",
     iconsAndLabels: "audio",
     enabled: true,
     options: [{ label: { type: "name", name: "Microphone 1" }, id: "mic1" }],
@@ -354,7 +346,6 @@ export const OnlyOneDevice: Story = {
 export const SelectionSettling: Story = {
   args: {
     ...Default.args,
-    title: "Microphone",
     iconsAndLabels: "audio",
     enabled: true,
     options: [
@@ -390,14 +381,13 @@ export const SelectionSettling: Story = {
  * The focus ring belongs to the keyboard. Radix focuses whatever the pointer is
  * over, so a ring that followed focus alone would trail the mouse.
  *
- * Asserted on the painted outline rather than on `data-focus-modality`: the
+ * Asserted on the painted outline rather than on `data-focus-source`: the
  * attribute is what the stylesheet keys off, so asserting it would pass even
  * with the rule deleted.
  */
 export const KeyboardFocusRing: Story = {
   args: {
     ...Default.args,
-    title: "Microphone",
     iconsAndLabels: "audio",
     enabled: true,
     options: [
@@ -435,7 +425,6 @@ export const KeyboardFocusRing: Story = {
 export const ManyDevices: Story = {
   args: {
     ...Default.args,
-    title: "Microphone",
     iconsAndLabels: "audio",
     enabled: true,
     options: Array.from({ length: 20 }, (_, i) => ({
@@ -520,7 +509,6 @@ function outlineWidth(element: HTMLElement): number {
 export const OutputNotEnumerated: Story = {
   args: {
     ...Default.args,
-    title: "Microphone",
     iconsAndLabels: "audio",
     enabled: true,
     options: [
@@ -555,7 +543,6 @@ export const OutputNotEnumerated: Story = {
 export const MeterAlignsWithTheDeviceRows: Story = {
   args: {
     ...Default.args,
-    title: "Microphone",
     iconsAndLabels: "audio",
     enabled: true,
     options: [
@@ -598,7 +585,6 @@ function centre(element: Element): number {
 export const KeyboardReachesEveryDevice: Story = {
   args: {
     ...Default.args,
-    title: "Microphone",
     iconsAndLabels: "audio",
     enabled: true,
     // Enough of them that the list scrolls well past its own height, so that
@@ -663,7 +649,6 @@ export const KeyboardReachesEveryDevice: Story = {
 export const HeadingsStayWhileScrolling: Story = {
   args: {
     ...Default.args,
-    title: "Microphone",
     iconsAndLabels: "audio",
     enabled: true,
     options: Array.from({ length: 20 }, (_, i) => ({
