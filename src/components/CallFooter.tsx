@@ -99,12 +99,6 @@ export interface FooterState {
   videoBlurEnabled: boolean;
   /** The chosen background effect, in its stored form. */
   backgroundEffect: string;
-  /**
-   * Whether this footer is shown before joining. An image added there becomes
-   * the background at once; one added in a call waits to be chosen, because
-   * putting it on would change what everyone sees with no further word.
-   */
-  beforeJoining: boolean;
   showFooter: boolean;
 
   /* This is needed for WindowMode = "flat" */
@@ -189,7 +183,6 @@ export const CallFooter: FC<FooterProps> = ({
   const selectVideoButtonOption = useBehavior(vm.selectVideoButtonOption$);
   const backgroundEffect = useBehavior(vm.backgroundEffect$);
   const selectBackgroundEffect = useBehavior(vm.selectBackgroundEffect$);
-  const beforeJoining = useBehavior(vm.beforeJoining$);
   const { added, addBackground, removeBackground } = useAddedBackgrounds();
   const { settling, cameraTrack } = useBackgroundProcessing();
 
@@ -241,26 +234,21 @@ export const CallFooter: FC<FooterProps> = ({
   const onAddBackgroundImage = useCallback(
     (file: File): void => {
       setBackgroundEffectError(undefined);
-      addBackground(file)
-        .then((id) => {
-          // Before joining, nobody sees the change, so the picture goes on at
-          // once. In a call it waits to be chosen: otherwise choosing a file
-          // would change what everyone sees, with no further word from the
-          // user. Teams draws the line in the same place.
-          if (beforeJoining)
-            selectBackgroundEffect?.(serializeEffect({ kind: "added", id }));
-        })
-        .catch((e) => {
-          setBackgroundEffectError(whyRefused(e));
-          logger.warn(
-            e instanceof UnusableImage
-              ? `Cannot use that file as a background: ${e.reason}`
-              : "Could not keep that background",
-            e,
-          );
-        });
+      // Added, not put on — before joining and during a call alike. It joins
+      // the backgrounds on offer and is in force once the user chooses it:
+      // choosing a file and choosing to wear it are two decisions, and one
+      // rule for both places is one less thing to know.
+      addBackground(file).catch((e) => {
+        setBackgroundEffectError(whyRefused(e));
+        logger.warn(
+          e instanceof UnusableImage
+            ? `Cannot use that file as a background: ${e.reason}`
+            : "Could not keep that background",
+          e,
+        );
+      });
     },
-    [addBackground, beforeJoining, selectBackgroundEffect, whyRefused],
+    [addBackground, whyRefused],
   );
 
   // The catalogue is named here rather than in the view model: the names are

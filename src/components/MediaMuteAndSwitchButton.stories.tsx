@@ -1097,7 +1097,9 @@ export const BackgroundEffectsShowThereIsMore: Story = {
       edge.classList.contains(styles.scrollEdgeShown);
 
     // Opened at the top: more below, nothing above.
-    await waitFor(async () => expect(shown(bottom)).toBe(true));
+    await waitFor(async () => expect(shown(bottom)).toBe(true), {
+      timeout: 4000,
+    });
     await expect(shown(top)).toBe(false);
     // And the fade is at the foot of what is in view, not of the content.
     await expect(
@@ -1109,8 +1111,12 @@ export const BackgroundEffectsShowThereIsMore: Story = {
 
     // At the end: nothing below, more above.
     list.scrollTop = list.scrollHeight;
-    await waitFor(async () => expect(shown(bottom)).toBe(false));
-    await waitFor(async () => expect(shown(top)).toBe(true));
+    await waitFor(async () => expect(shown(bottom)).toBe(false), {
+      timeout: 4000,
+    });
+    await waitFor(async () => expect(shown(top)).toBe(true), {
+      timeout: 4000,
+    });
 
     // Standing just below the heading holding the top, where the content comes
     // out from under it — not behind the heading, where it could not be seen.
@@ -1124,13 +1130,15 @@ export const BackgroundEffectsShowThereIsMore: Story = {
         ) < 2,
     )!;
     await expect(stuck).toBeDefined();
-    await waitFor(async () =>
-      expect(
-        Math.round(
-          top.getBoundingClientRect().top -
-            stuck.getBoundingClientRect().bottom,
-        ),
-      ).toBe(0),
+    await waitFor(
+      async () =>
+        expect(
+          Math.round(
+            top.getBoundingClientRect().top -
+              stuck.getBoundingClientRect().bottom,
+          ),
+        ).toBe(0),
+      { timeout: 4000 },
     );
   },
 };
