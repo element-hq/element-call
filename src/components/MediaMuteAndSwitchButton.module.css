@@ -426,3 +426,52 @@ Please see LICENSE in the repository root for full details.
   flex-shrink: 0;
   color: var(--cpd-color-icon-secondary);
 }
+
+/*
+ * How the user looks, at the top of the camera menu.
+ *
+ * Edge to edge and flush with the top, as the design draws it: it takes the
+ * menu's own top padding, which is why it pulls itself up over it. Held one
+ * border width clear of the frame and rounded to match what is left of the
+ * frame's corner, because a video paints on a layer of its own and would
+ * otherwise draw over the outline the menu is framed with.
+ *
+ * Sixteen by nine and never taller than its budget, cropped rather than
+ * letterboxed: a face cut at the edge reads as a self-view, a face in bars
+ * reads as a broken one.
+ */
+.selfPreview {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-block-start: calc(
+    -1 * var(--cpd-space-5x) + var(--cpd-border-width-1)
+  );
+  margin-inline: var(--cpd-border-width-1);
+  margin-block-end: var(--cpd-space-2x);
+  aspect-ratio: 16 / 9;
+  max-block-size: 176px;
+  overflow: hidden;
+  border-start-start-radius: calc(
+    var(--cpd-space-3x) - var(--cpd-border-width-1)
+  );
+  border-start-end-radius: calc(
+    var(--cpd-space-3x) - var(--cpd-border-width-1)
+  );
+  background: var(--cpd-color-bg-subtle-secondary);
+  color: var(--cpd-color-icon-secondary);
+}
+
+.selfPreview > video,
+.selfPreview > img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+/* The camera faces the user, so the picture is what a mirror would show —
+   the same as the pre-join preview, or the two would disagree. */
+.selfPreview > .mirrored {
+  transform: scaleX(-1);
+}

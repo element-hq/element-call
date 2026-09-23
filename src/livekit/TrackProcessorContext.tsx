@@ -24,8 +24,8 @@ import {
 } from "react";
 import { type LocalVideoTrack } from "livekit-client";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { combineLatest, map, type Observable } from "rxjs";
-import { useObservable } from "observable-hooks";
+import { BehaviorSubject, combineLatest, map, type Observable } from "rxjs";
+import { useObservable, useObservableEagerState } from "observable-hooks";
 
 import {
   backgroundEffect as backgroundEffectSetting,
@@ -86,6 +86,14 @@ export interface BackgroundProcessing {
    * long enough that saying nothing looks like a crash.
    */
   settling: boolean;
+  /**
+   * The camera track the pipeline is synced to: the pre-join preview's before
+   * joining, the published one after, and none while the camera is off. It
+   * draws with whatever effect is in force, and plainly when none has ever
+   * been chosen, so the menu can show someone how they look without building
+   * anything of its own.
+   */
+  cameraTrack: LocalVideoTrack | null;
 }
 
 const BackgroundProcessingContext = createContext<
@@ -170,6 +178,27 @@ export function applyProcessor(
 /**
  * Updates your video tracks to always use the given processor.
  */
+/**
+ * The camera track the pipeline was last synced to.
+ *
+ * Module state rather than context, because one of the two paths that sync a
+ * track is not React at all: in a call the publisher does it, from an
+ * observable. There is one camera and one pipeline for the app's lifetime, so
+ * there is one track to know about; each path reports its own, and clears it
+ * only if it is still the one reported, so a lobby leaving cannot blank a call
+ * that has just started.
+ */
+const syncedCameraTrack$ = new BehaviorSubject<LocalVideoTrack | null>(null);
+
+function reportCameraTrack(track: LocalVideoTrack | null): void {
+  if (syncedCameraTrack$.value !== track) syncedCameraTrack$.next(track);
+}
+
+function withdrawCameraTrack(track: LocalVideoTrack | null): void {
+  if (track !== null && syncedCameraTrack$.value === track)
+    syncedCameraTrack$.next(null);
+}
+
 export const trackProcessorSync = (
   scope: ObservableScope,
   videoTrack$: Behavior<LocalVideoTrack | null>,
@@ -182,6 +211,15 @@ export const trackProcessorSync = (
       if (!videoTrack) return;
       applyProcessor(videoTrack, processorState.processor);
     });
+  let reported: LocalVideoTrack | null = null;
+  videoTrack$.pipe(scope.bind()).subscribe({
+    next: (videoTrack) => {
+      withdrawCameraTrack(reported);
+      reported = videoTrack;
+      reportCameraTrack(videoTrack);
+    },
+    complete: () => withdrawCameraTrack(reported),
+  });
 };
 
 export const useTrackProcessorSync = (
@@ -192,6 +230,10 @@ export const useTrackProcessorSync = (
     if (!videoTrack) return;
     applyProcessor(videoTrack, processor);
   }, [processor, videoTrack]);
+  useEffect(() => {
+    reportCameraTrack(videoTrack);
+    return (): void => withdrawCameraTrack(videoTrack);
+  }, [videoTrack]);
 };
 
 interface Props {
@@ -336,7 +378,11 @@ export const ProcessorProvider: FC<Props> = ({ children }) => {
     [added, addBackground, removeBackground],
   );
 
-  const backgroundProcessing = useMemo(() => ({ settling }), [settling]);
+  const cameraTrack = useObservableEagerState(syncedCameraTrack$);
+  const backgroundProcessing = useMemo(
+    () => ({ settling, cameraTrack }),
+    [settling, cameraTrack],
+  );
 
   return (
     <ProcessorContext value={processorState}>

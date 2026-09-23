@@ -9,6 +9,8 @@ import { fn, userEvent, waitFor, within, expect } from "storybook/test";
 import { useEffect, useState, type FC, type JSX, type ReactNode } from "react";
 import { TooltipProvider } from "@vector-im/compound-web";
 
+import cameraStandIn from "../graphics/background-indoor-standin.jpg?url";
+
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { MediaMuteAndSwitchButton } from "./MediaMuteAndSwitchButton";
 import styles from "./MediaMuteAndSwitchButton.module.css";
@@ -80,7 +82,10 @@ const WithAMicrophone: FC<{ children: ReactNode }> = ({ children }) => {
  * the top of the canvas. Supplying a root is the same courtesy as supplying the
  * devices: the story stands in for the call, so it has to say how big it is.
  */
-const WithACallArea: FC<{ children: ReactNode }> = ({ children }) => {
+const WithACallArea: FC<{ children: ReactNode; height?: number }> = ({
+  children,
+  height = 720,
+}) => {
   const [callArea, setCallArea] = useState<HTMLElement | null>(null);
   return (
     <div
@@ -90,7 +95,7 @@ const WithACallArea: FC<{ children: ReactNode }> = ({ children }) => {
         // a share of this, so a small area makes even a two-device menu scroll,
         // which no real call does. Tall enough to leave the menu room to open
         // upward and still be wholly on screen in the story's frame.
-        blockSize: 720,
+        blockSize: height,
         display: "flex",
         alignItems: "flex-end",
         justifyContent: "center",
@@ -108,10 +113,12 @@ const meta = {
   decorators: [
     // The app puts one of these over everything; the remove cross needs it to
     // be able to name itself.
-    (Story): JSX.Element => (
+    (Story, { parameters }): JSX.Element => (
       <TooltipProvider>
         <MediaDevicesContext value={mediaDevices}>
-          <WithACallArea>
+          <WithACallArea
+            height={parameters.callAreaHeight as number | undefined}
+          >
             <WithAMicrophone>
               <Story />
             </WithAMicrophone>
@@ -924,6 +931,71 @@ export const BackgroundEffectsSlowInThisBrowser: Story = {
 };
 
 /**
+ * Room for the self-preview: the user sees how they look with the effect in
+ * force, at the top of the menu, while choosing.
+ *
+ * Paid for out of the device list's share of the call rather than on top of
+ * it, so the menu is no taller for having it. Both sections scroll beneath it.
+ */
+export const BackgroundEffectsWithPreview: Story = {
+  args: {
+    ...BackgroundEffects.args,
+    selfPreview: <img src={cameraStandIn} alt="" />,
+  },
+  parameters: { callAreaHeight: 720 },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
+    await within(document.body).findByRole("menuitemradio", { name: "Blur" });
+
+    const menu = document.body.querySelector("[role='menu']")!;
+    const preview = menu.querySelector<HTMLElement>(`.${styles.selfPreview}`)!;
+    await expect(preview).toBeInTheDocument();
+
+    // Flush with the top and the sides, as drawn: it takes the menu's own top
+    // padding, held clear of the frame by no more than the frame's own line.
+    const frame = menu.getBoundingClientRect();
+    const box = preview.getBoundingClientRect();
+    await expect(box.top - frame.top).toBeLessThanOrEqual(2);
+    await expect(box.left - frame.left).toBeLessThanOrEqual(2);
+    await expect(frame.right - box.right).toBeLessThanOrEqual(2);
+
+    // Above the list, not in it, so the sections scroll beneath it.
+    const list = menu.querySelector<HTMLElement>(`.${styles.deviceList}`)!;
+    await expect(list.contains(preview)).toBe(false);
+
+    // And paid for out of the list's share: 60% of 720, less the preview.
+    await expect(getComputedStyle(list).maxBlockSize).toBe(
+      `${Math.round(720 * 0.6) - 176}px`,
+    );
+  },
+};
+
+/**
+ * No room: a call area as short as a laptop browser often leaves. The list
+ * could not keep its floor after paying for the preview, so there is none —
+ * the backgrounds and the devices matter more than a picture of the user.
+ */
+export const BackgroundEffectsNoRoomForPreview: Story = {
+  args: BackgroundEffectsWithPreview.args,
+  parameters: { callAreaHeight: 470 },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
+    await within(document.body).findByRole("menuitemradio", { name: "Blur" });
+
+    const menu = document.body.querySelector("[role='menu']")!;
+    await expect(
+      menu.querySelector(`.${styles.selfPreview}`),
+    ).not.toBeInTheDocument();
+    const list = menu.querySelector<HTMLElement>(`.${styles.deviceList}`)!;
+    await expect(getComputedStyle(list).maxBlockSize).toBe(
+      `${Math.round(470 * 0.6)}px`,
+    );
+  },
+};
+
+/**
  * The sequence a user sees on the first effect of a session.
  *
  * The tile that was pressed spins where its tick will go, until a frame has
@@ -942,6 +1014,7 @@ export const BackgroundEffectsSlowInThisBrowser: Story = {
 export const BackgroundEffectsSettling: Story = {
   args: {
     ...BackgroundEffects.args,
+    selfPreview: <img src={cameraStandIn} alt="" />,
     backgroundEffectNotice:
       "This browser runs background effects slowly, so other people may see your video stutter.",
   },
@@ -979,10 +1052,15 @@ export const BackgroundEffectsSettling: Story = {
     const blur = await body.findByRole("menuitemradio", { name: "Blur" });
     await userEvent.click(blur);
 
-    // The pressed tile is busy, and has no tick yet.
+    // The pressed tile is busy, and has no tick yet — and the preview shows
+    // the same wait where the picture will be, rather than the picture from
+    // before the choice.
     await waitFor(async () =>
       expect(blur.querySelector(`.${styles.effectBusy}`)).toBeInTheDocument(),
     );
+    const preview = document.body.querySelector(`.${styles.selfPreview}`)!;
+    await expect(preview.querySelector("img")).not.toBeInTheDocument();
+    await expect(preview.querySelector("svg")).toBeInTheDocument();
     await expect(
       await body.findByText(/runs background effects slowly/),
     ).toBeInTheDocument();
@@ -996,6 +1074,8 @@ export const BackgroundEffectsSettling: Story = {
       { timeout: 5000 },
     );
     await expect(blur).toHaveAttribute("aria-checked", "true");
+    // And the picture is back.
+    await expect(preview.querySelector("img")).toBeInTheDocument();
   },
 };
 

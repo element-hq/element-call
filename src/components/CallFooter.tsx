@@ -50,6 +50,7 @@ import {
   useBackgroundProcessing,
 } from "../livekit/TrackProcessorContext";
 import { usesFallbackProcessing } from "../livekit/backgroundProcessing";
+import { SelfPreview } from "./SelfPreview";
 import { type Behavior } from "../state/Behavior";
 import { type ViewModel } from "../state/ViewModel";
 import { useBehavior } from "../useBehavior";
@@ -190,7 +191,7 @@ export const CallFooter: FC<FooterProps> = ({
   const selectBackgroundEffect = useBehavior(vm.selectBackgroundEffect$);
   const beforeJoining = useBehavior(vm.beforeJoining$);
   const { added, addBackground, removeBackground } = useAddedBackgrounds();
-  const { settling } = useBackgroundProcessing();
+  const { settling, cameraTrack } = useBackgroundProcessing();
 
   // Said, not decided. Where only the slow path exists the effect still works,
   // it costs frames — and the user is the only one who knows whether they would
@@ -363,6 +364,7 @@ export const CallFooter: FC<FooterProps> = ({
         backgroundEffectError={backgroundEffectError}
         backgroundEffectNotice={backgroundEffectNotice}
         backgroundEffectSettling={settling}
+        selfPreview={<SelfPreview track={cameraTrack ?? null} />}
       />,
     );
   } else {

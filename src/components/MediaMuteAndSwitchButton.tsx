@@ -13,6 +13,7 @@ import {
   useEffect,
   useRef,
   type ReactElement,
+  type ReactNode,
 } from "react";
 import {
   Alert,
@@ -144,6 +145,13 @@ export interface MediaMuteAndSwitchButtonProps {
    */
   backgroundEffectSettling?: boolean;
   /**
+   * How the user looks right now, with whatever effect is in force: drawn at
+   * the top of the camera menu, where choosing a background can be judged by
+   * its result rather than by a thumbnail of it. Shown only where the call
+   * leaves room for it, and scrolled beneath rather than scrolled away.
+   */
+  selfPreview?: ReactNode;
+  /**
    * For any toggle and option this method will be called.
    * So toggles need to be implemented by listening here and setting the right toggle item to `enabled`
    */
@@ -177,6 +185,17 @@ const LIST_SHARE_OF_CALL = 0.6;
  */
 const MIN_LIST_HEIGHT = 160;
 
+/**
+ * The most the self-preview may take, which is also what it costs the list.
+ *
+ * Drawn at sixteen by nine across the full width of the menu, capped here so
+ * that a menu widened by a long device name cannot make it taller than its
+ * budget. The preview is paid for out of the list's share rather than on top
+ * of it, so the menu is never taller for having one: where the list could not
+ * keep its floor after paying, there is no preview at all.
+ */
+const PREVIEW_BLOCK = 176;
+
 export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   title,
   enabled,
@@ -198,6 +217,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   backgroundEffectError,
   backgroundEffectNotice,
   backgroundEffectSettling,
+  selfPreview,
   onSelect,
 }) => {
   // Which device we have asked for but not yet been given. Carries the kind as
@@ -282,7 +302,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   // can size it against the call. Measure the call area rather than the window,
   // or the menu is wrong wherever Element Call is not the whole page.
   const rootElement = useRootElement();
-  const [listMaxHeight, setListMaxHeight] = useState<number>();
+  const [listShare, setListShare] = useState<number>();
   useEffect(() => {
     if (!menuOpen) return;
     // Followed rather than measured once: a host can resize the space Element
@@ -292,12 +312,10 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
     // resize re-renders only when the bound itself moves.
     const subscription = observeElementSize$(rootElement)
       .pipe(
-        map(({ height }) =>
-          Math.max(MIN_LIST_HEIGHT, Math.round(height * LIST_SHARE_OF_CALL)),
-        ),
+        map(({ height }) => Math.round(height * LIST_SHARE_OF_CALL)),
         distinctUntilChanged(),
       )
-      .subscribe(setListMaxHeight);
+      .subscribe(setListShare);
     return (): void => subscription.unsubscribe();
   }, [menuOpen, rootElement]);
 
@@ -668,6 +686,22 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
     return tiles;
   };
 
+  // The preview is paid for out of the list's share, and only where the list
+  // keeps its floor after paying, so a menu with one is no taller than a menu
+  // without — which is what keeps it inside the call area at any size.
+  const showPreview =
+    iconsAndLabels === "video" &&
+    selfPreview !== undefined &&
+    listShare !== undefined &&
+    listShare - PREVIEW_BLOCK >= MIN_LIST_HEIGHT;
+  const listMaxHeight =
+    listShare === undefined
+      ? undefined
+      : Math.max(
+          MIN_LIST_HEIGHT,
+          listShare - (showPreview ? PREVIEW_BLOCK : 0),
+        );
+
   return (
     <div
       className={classNames({
@@ -721,6 +755,21 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
           />
         }
       >
+        {showPreview && (
+          // Pinned above the list rather than inside it: the devices and the
+          // effects scroll beneath it, because it is what the choosing below is
+          // for. Decoration to assistive technology — the choice is announced
+          // by the items, and a picture of the user tells them nothing new.
+          <div aria-hidden className={styles.selfPreview}>
+            {backgroundEffectSettling ? (
+              // The same wait the pressed tile shows, where the picture will
+              // be, so the eye does not have to go looking for why it is not.
+              <InlineSpinner size={32} />
+            ) : (
+              selfPreview
+            )}
+          </div>
+        )}
         <div
           ref={trackFocusModality}
           // Transparent to assistive technology, so the menu still sees its
