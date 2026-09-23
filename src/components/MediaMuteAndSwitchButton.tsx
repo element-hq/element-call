@@ -298,15 +298,15 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   // that is removed before it takes effect never arrives — the selection falls
   // back to the default instead — and waiting for it would leave every device
   // in both sections unselectable for the rest of the call.
+  const plannedOutput = plannedSelection?.kind === "output";
+  const selectedOfPlannedKind = plannedOutput
+    ? selectedOutputOption
+    : selectedOption;
+  const offeredOfPlannedKind = plannedOutput ? outputOptions : options;
   const settling =
     plannedSelection !== null &&
-    plannedSelection.id !==
-      (plannedSelection.kind === "output"
-        ? selectedOutputOption
-        : selectedOption) &&
-    (plannedSelection.kind === "output" ? outputOptions : options)?.some(
-      ({ id }) => id === plannedSelection.id,
-    ) === true;
+    plannedSelection.id !== selectedOfPlannedKind &&
+    offeredOfPlannedKind?.some(({ id }) => id === plannedSelection.id) === true;
 
   // Safari enumerates no output devices at all, and offers no way to choose
   // one, so the list arrives empty. The section is shown all the same — audio
