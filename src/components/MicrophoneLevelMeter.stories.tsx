@@ -113,7 +113,7 @@ export const PermissionDenied: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.queryByRole("meter")).toBeNull();
     await expect(
-      canvas.getByText(/Allow access in your browser settings/),
+      canvas.getByText(/Microphone access is blocked/),
     ).toBeVisible();
   },
 };

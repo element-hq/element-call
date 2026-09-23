@@ -166,7 +166,7 @@
   "microphone_level": {
     "label": "Microphone level",
     "no_device": "No microphone found. Connect one, then try again.",
-    "permission_denied": "Element Call cannot use your microphone. Allow access in your browser settings.",
+    "permission_denied": "Microphone access is blocked. Allow it, then try again.",
     "value": "{{level}} of {{max}}"
   },
   "microphone_off": "Microphone off",

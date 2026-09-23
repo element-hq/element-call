@@ -27,7 +27,7 @@ describe("MicrophoneLevelMeter", () => {
     );
     // A next action, not a flat meter that reads as silence.
     expect(
-      denied.getByText(/Allow access in your browser settings/),
+      denied.getByText(/Microphone access is blocked/),
     ).toBeInTheDocument();
     expect(denied.queryByRole("meter")).toBeNull();
 
