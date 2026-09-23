@@ -7,8 +7,15 @@ Please see LICENSE in the repository root for full details.
 
 import { logger } from "matrix-js-sdk/lib/logger";
 
-/** The most backgrounds of their own a device keeps. */
-export const maxAddedBackgrounds = 4;
+/**
+ * The most backgrounds of their own a device keeps.
+ *
+ * Five, because it fills the grid. With no effect, blur and the two shipped
+ * images that makes nine tiles at the limit, where the add tile goes; and one
+ * short of it, four and the add tile make nine too. At four the grid stopped
+ * at eight and left its last corner empty.
+ */
+export const maxAddedBackgrounds = 5;
 
 /**
  * The longest edge an added background is kept at.

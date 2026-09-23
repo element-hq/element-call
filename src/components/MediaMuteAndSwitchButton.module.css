@@ -157,8 +157,9 @@ Please see LICENSE in the repository root for full details.
  * The Background effects grid.
  *
  * Three across matches the design and keeps a thumbnail readable at a glance;
- * with no effect, blur, two shipped images and the add tile it also settles
- * into a tidy three-by-three at the maximum number of images.
+ * with no effect, blur and two shipped images, the five a user may add fill it
+ * to a whole three-by-three at the limit, where the add tile goes away, and
+ * four and the add tile fill it one short of it.
  *
  * minmax(0, 1fr) rather than 1fr: a grid track will not shrink below its
  * content's minimum width by default, and a tile carrying a label is wider

@@ -5,6 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
+import { maxAddedBackgrounds } from "./backgroundImages";
 import { describe, expect, test } from "vitest";
 
 import {
@@ -44,6 +45,15 @@ describe("the chosen background effect", () => {
       // JPEG, which has no alpha channel to carry a hole in.
       expect([bytes[0], bytes[1], bytes[2]]).toEqual([0xff, 0xd8, 0xff]);
     }
+  });
+
+  // Three to a row, and the add tile goes at the limit. At four of their own
+  // the grid stopped at eight and left its last corner empty; the rule is that
+  // it is whole both at the limit and one short of it, with the add tile.
+  test("fills the grid at the limit and one short of it", () => {
+    const fixed = 2 + shippedBackgrounds.length; // no effect, blur, shipped
+    expect((fixed + maxAddedBackgrounds) % 3).toBe(0);
+    expect((fixed + maxAddedBackgrounds - 1 + 1) % 3).toBe(0);
   });
 
   test("gives every shipped background an image to draw", () => {
