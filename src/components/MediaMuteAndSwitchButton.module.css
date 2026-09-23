@@ -106,6 +106,11 @@ Please see LICENSE in the repository root for full details.
 .sectionHeading {
   position: sticky;
   inset-block-start: 0;
+  /* Over what scrolls beneath it. Without a layer of its own it is painted in
+     order with everything else positioned, and the effect tiles — positioned,
+     to carry their tick and the remove cross — come after it, so the grid
+     slid over the heading instead of under it. */
+  z-index: 1;
   background: var(--cpd-color-bg-canvas-default);
   /* Clear of the frame's top edge; the list it sits in already keeps it clear
      of the sides. */
@@ -472,10 +477,6 @@ Please see LICENSE in the repository root for full details.
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-block-start: calc(
-    -1 * var(--cpd-space-5x) + var(--cpd-border-width-1)
-  );
-  margin-inline: var(--cpd-border-width-1);
   margin-block-end: var(--cpd-space-2x);
   block-size: 166px;
   overflow: hidden;
@@ -487,6 +488,33 @@ Please see LICENSE in the repository root for full details.
   );
   background: var(--cpd-color-bg-subtle-secondary);
   color: var(--cpd-color-icon-secondary);
+}
+
+/* Above the list: it takes the menu's own top padding, which is why it pulls
+   itself up over it, and it keeps clear of the frame's sides itself, since it
+   is not inside the list that otherwise does. */
+.selfPreviewPinned {
+  margin-block-start: calc(
+    -1 * var(--cpd-space-5x) + var(--cpd-border-width-1)
+  );
+  margin-inline: var(--cpd-border-width-1);
+}
+
+/* Inside the list, where there was no room to pin it. A scrolling container
+   cuts off whatever is pulled above its top, so it is the list that moves up
+   over the menu's padding instead, to bring the preview flush with the top.
+   That puts the list's corners where the frame's are rounded, so they are
+   rounded too: square, a stuck heading would show past the curve. */
+.deviceListLeadsWithPreview {
+  margin-block-start: calc(
+    -1 * var(--cpd-space-5x) + var(--cpd-border-width-1)
+  );
+  border-start-start-radius: calc(
+    var(--cpd-space-3x) - var(--cpd-border-width-1)
+  );
+  border-start-end-radius: calc(
+    var(--cpd-space-3x) - var(--cpd-border-width-1)
+  );
 }
 
 /* Laid over the box rather than in it. In flow, a sixteen-by-nine picture

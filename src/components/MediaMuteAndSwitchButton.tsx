@@ -717,21 +717,43 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
     return tiles;
   };
 
-  // The preview is paid for out of the list's share, and only where the list
-  // keeps its floor after paying, so a menu with one is no taller than a menu
-  // without — which is what keeps it inside the call area at any size.
-  const showPreview =
+  // The preview is always there in the camera menu; what the call's height
+  // decides is whether it stays put. Pinned above the list, it is paid for out
+  // of the list's share, and only where the list keeps its floor after paying,
+  // so a menu with one is no taller than a menu without. Where the list could
+  // not afford it, it goes into the list instead, first, and scrolls away with
+  // everything else: seen on opening, out of the way once the user is choosing.
+  const hasPreview =
     iconsAndLabels === "video" &&
     selfPreview !== undefined &&
-    listShare !== undefined &&
-    listShare - PREVIEW_BLOCK >= MIN_LIST_HEIGHT;
+    listShare !== undefined;
+  const previewPinned =
+    hasPreview && listShare - PREVIEW_BLOCK >= MIN_LIST_HEIGHT;
   const listMaxHeight =
     listShare === undefined
       ? undefined
       : Math.max(
           MIN_LIST_HEIGHT,
-          listShare - (showPreview ? PREVIEW_BLOCK : 0),
+          listShare - (previewPinned ? PREVIEW_BLOCK : 0),
         );
+  const preview = hasPreview && (
+    // Decoration to assistive technology — the choice is announced by the
+    // items, and a picture of the user tells them nothing new.
+    <div
+      aria-hidden
+      className={classNames(styles.selfPreview, {
+        [styles.selfPreviewPinned]: previewPinned,
+      })}
+    >
+      {backgroundEffectSettling ? (
+        // The same wait the pressed tile shows, where the picture will be, so
+        // the eye does not have to go looking for why it is not.
+        <InlineSpinner size={32} />
+      ) : (
+        selfPreview
+      )}
+    </div>
+  );
 
   return (
     <div
@@ -786,27 +808,17 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
           />
         }
       >
-        {showPreview && (
-          // Pinned above the list rather than inside it: the devices and the
-          // effects scroll beneath it, because it is what the choosing below is
-          // for. Decoration to assistive technology — the choice is announced
-          // by the items, and a picture of the user tells them nothing new.
-          <div aria-hidden className={styles.selfPreview}>
-            {backgroundEffectSettling ? (
-              // The same wait the pressed tile shows, where the picture will
-              // be, so the eye does not have to go looking for why it is not.
-              <InlineSpinner size={32} />
-            ) : (
-              selfPreview
-            )}
-          </div>
-        )}
+        {/* Pinned where there is room: the devices and the effects scroll
+            beneath it, because it is what the choosing below is for. */}
+        {previewPinned && preview}
         <div
           ref={trackFocusModality}
           // Transparent to assistive technology, so the menu still sees its
           // items as its own children.
           role="none"
-          className={styles.deviceList}
+          className={classNames(styles.deviceList, {
+            [styles.deviceListLeadsWithPreview]: hasPreview && !previewPinned,
+          })}
           style={
             {
               "--device-list-max-height":
@@ -822,6 +834,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
             } as CSSProperties
           }
         >
+          {hasPreview && !previewPinned && preview}
           {iconsAndLabels === "audio" && speakerOptions && (
             <>
               {/* A menu may only contain items, separators and groups, so each

@@ -986,11 +986,12 @@ export const BackgroundEffectsWithPreview: Story = {
 };
 
 /**
- * No room: a call area as short as a laptop browser often leaves. The list
- * could not keep its floor after paying for the preview, so there is none —
- * the backgrounds and the devices matter more than a picture of the user.
+ * No room to pin the preview: a call area as short as a laptop browser often
+ * leaves. It is still there, but first in the list rather than above it, and
+ * it scrolls away with the devices and the effects — seen on opening, out of
+ * the way once the user is choosing.
  */
-export const BackgroundEffectsNoRoomForPreview: Story = {
+export const BackgroundEffectsPreviewScrollsWithTheList: Story = {
   args: BackgroundEffectsWithPreview.args,
   parameters: { callAreaHeight: 470 },
   play: async ({ canvasElement }) => {
@@ -999,13 +1000,77 @@ export const BackgroundEffectsNoRoomForPreview: Story = {
     await within(document.body).findByRole("menuitemradio", { name: "Blur" });
 
     const menu = document.body.querySelector("[role='menu']")!;
-    await expect(
-      menu.querySelector(`.${styles.selfPreview}`),
-    ).not.toBeInTheDocument();
     const list = menu.querySelector<HTMLElement>(`.${styles.deviceList}`)!;
+    const preview = menu.querySelector<HTMLElement>(`.${styles.selfPreview}`)!;
+    await expect(list.contains(preview)).toBe(true);
+
+    // Flush with the top and the sides, the same as when it is pinned.
+    const frame = menu.getBoundingClientRect();
+    const box = preview.getBoundingClientRect();
+    await expect(box.top - frame.top).toBeLessThanOrEqual(2);
+    await expect(box.left - frame.left).toBeLessThanOrEqual(2);
+    await expect(frame.right - box.right).toBeLessThanOrEqual(2);
+
+    // The list keeps its whole share, the preview being inside it.
     await expect(getComputedStyle(list).maxBlockSize).toBe(
       `${Math.round(470 * 0.6)}px`,
     );
+
+    // And it scrolls away.
+    list.scrollTop = 200;
+    await waitFor(async () =>
+      expect(preview.getBoundingClientRect().top).toBeLessThan(box.top - 150),
+    );
+  },
+};
+
+/**
+ * A heading stays over what scrolls beneath it. The tiles are positioned, to
+ * carry their tick and the remove cross, and positioned content painted after
+ * the heading slid over it: the grid ran across the "Background effects"
+ * title instead of under it.
+ */
+export const BackgroundEffectsHeadingStaysOverTheGrid: Story = {
+  args: {
+    ...BackgroundEffectsWithPreview.args,
+    backgroundEffects: [
+      ...backgroundEffects,
+      ...[1, 2, 3, 4].map((n) => ({
+        id: `added:${n}`,
+        label: `Background ${n + 2}`,
+        kind: "image" as const,
+        imageUrl: swatch("#1d4ed8", "#172554"),
+        removable: true,
+      })),
+    ],
+    onRemoveBackgroundEffect: fn(),
+  },
+  parameters: { callAreaHeight: 400 },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
+    await within(document.body).findByRole("menuitemradio", { name: "Blur" });
+
+    const menu = document.body.querySelector("[role='menu']")!;
+    const list = menu.querySelector<HTMLElement>(`.${styles.deviceList}`)!;
+    const headings = menu.querySelectorAll<HTMLElement>(
+      `.${styles.sectionHeading}`,
+    );
+    const heading = headings[headings.length - 1];
+    const grid = menu.querySelector<HTMLElement>(`.${styles.effectGrid}`)!;
+
+    // Scroll the grid's first row up under the stuck heading.
+    list.scrollTop = grid.offsetTop - list.offsetTop + 24;
+    await waitFor(async () => {
+      const h = heading.getBoundingClientRect();
+      const row = grid.getBoundingClientRect();
+      await expect(row.top).toBeLessThan(h.bottom);
+    });
+
+    // What is on top where the heading is, is the heading.
+    const h = heading.getBoundingClientRect();
+    const hit = document.elementFromPoint(h.left + 40, h.top + h.height / 2);
+    await expect(heading.contains(hit)).toBe(true);
   },
 };
 
