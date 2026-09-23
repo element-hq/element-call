@@ -188,11 +188,11 @@ const MIN_LIST_HEIGHT = 160;
 /**
  * The most the self-preview may take, which is also what it costs the list.
  *
- * Drawn at sixteen by nine across the full width of the menu, capped here so
- * that a menu widened by a long device name cannot make it taller than its
- * budget. The preview is paid for out of the list's share rather than on top
- * of it, so the menu is never taller for having one: where the list could not
- * keep its floor after paying, there is no preview at all.
+ * Its fixed height: sixteen by nine across the menu at its narrowest, and
+ * cropped wider as the menu widens, so it never costs more than this. The
+ * preview is paid for out of the list's share rather than on top of it, so the
+ * menu is never taller for having one: where the list could not keep its floor
+ * after paying, there is no preview at all.
  */
 const PREVIEW_BLOCK = 176;
 

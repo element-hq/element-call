@@ -436,9 +436,12 @@ Please see LICENSE in the repository root for full details.
  * frame's corner, because a video paints on a layer of its own and would
  * otherwise draw over the outline the menu is framed with.
  *
- * Sixteen by nine and never taller than its budget, cropped rather than
- * letterboxed: a face cut at the edge reads as a self-view, a face in bars
- * reads as a broken one.
+ * A fixed height rather than a ratio: sixteen by nine at the menu's narrowest,
+ * and wider as a long device name widens the menu, cropped rather than
+ * letterboxed — a face cut at the edge reads as a self-view, a face in bars
+ * reads as a broken one. Not aspect-ratio with a height cap: once the cap
+ * holds, Safari keeps the ratio by narrowing the box instead of the picture,
+ * and the preview stops short of the menu's right edge.
  */
 .selfPreview {
   position: relative;
@@ -450,8 +453,7 @@ Please see LICENSE in the repository root for full details.
   );
   margin-inline: var(--cpd-border-width-1);
   margin-block-end: var(--cpd-space-2x);
-  aspect-ratio: 16 / 9;
-  max-block-size: 176px;
+  block-size: 176px;
   overflow: hidden;
   border-start-start-radius: calc(
     var(--cpd-space-3x) - var(--cpd-border-width-1)

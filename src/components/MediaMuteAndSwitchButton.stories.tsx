@@ -1169,6 +1169,36 @@ export const BackgroundEffectsWithALongDeviceName: Story = {
 };
 
 /**
+ * A long device name widens the menu past the width at which the preview is
+ * sixteen by nine. The preview still spans it: Safari, given a ratio and a
+ * height cap, kept the ratio by narrowing the box and left a strip of menu at
+ * its right. Checked here in Chromium, which never did — no test tier here
+ * runs WebKit — so this holds the requirement, not the engine.
+ */
+export const BackgroundEffectsWithPreviewInAWideMenu: Story = {
+  args: {
+    ...BackgroundEffectsWithALongDeviceName.args,
+    selfPreview: <img src={cameraStandIn} alt="" />,
+  },
+  parameters: { callAreaHeight: 720 },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
+    await within(document.body).findByRole("menuitemradio", { name: "Blur" });
+
+    const menu = document.body.querySelector("[role='menu']")!;
+    const preview = menu.querySelector<HTMLElement>(`.${styles.selfPreview}`)!;
+    const frame = menu.getBoundingClientRect();
+    const box = preview.getBoundingClientRect();
+    // Wider than the preview's sixteen-by-nine width, or this proves nothing.
+    await expect(frame.width).toBeGreaterThan((176 * 16) / 9 + 8);
+    await expect(frame.right - box.right).toBeLessThanOrEqual(2);
+    await expect(box.left - frame.left).toBeLessThanOrEqual(2);
+    await expect(Math.round(box.height)).toBe(176);
+  },
+};
+
+/**
  * Backgrounds the user added are theirs to remove — except the one in force,
  * which is what they are wearing.
  */
