@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { defineConfig, mergeConfig } from "vite";
 import generateFile from "vite-plugin-generate-file";
 
-import fullConfig from "./vite.config";
+import fullConfig from "./vite.config.ts";
 
 const base = "./";
 
