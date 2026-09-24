@@ -53,10 +53,11 @@ vi.mock("@livekit/track-processors", () => ({
   }),
   supportsBackgroundProcessors: (): boolean => true,
 }));
+// A phone: the pipeline must not ask.
+vi.mock("../Platform", () => ({ platform: "ios" }));
 vi.mock("./BackgroundEffectTransformer", () => ({
   BackgroundEffectTransformer: vi.fn(),
 }));
-vi.mock("../Platform", () => ({ platform: "desktop" }));
 
 const processor = { name: "blur" } as VideoProcessor;
 
@@ -237,6 +238,17 @@ describe("ProcessorProvider", () => {
     expect(pipelines.destroyed).toBe(0);
     expect(track.setProcessor).toHaveBeenCalledTimes(1);
     expect(track.stopProcessor).not.toHaveBeenCalled();
+  });
+
+  it("runs on a phone whose browser can run it", async () => {
+    const track = cameraTrack();
+    render(surfaces(track));
+    await blur(true);
+
+    expect(latest().supported).toBe(true);
+    expect(track.setProcessor).toHaveBeenCalledWith(
+      convertToLivekitProcessor(latest().processor!),
+    );
   });
 
   it("preview and call share one pipeline", async () => {
