@@ -5,7 +5,13 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { combineLatest, map, type Observable, switchMap } from "rxjs";
+import {
+  combineLatest,
+  distinctUntilChanged,
+  map,
+  type Observable,
+  switchMap,
+} from "rxjs";
 import { supportsAudioOutputSelection } from "livekit-client";
 
 import {
@@ -72,6 +78,7 @@ function buildDeviceBehaviors(
   mediaDevices: MediaDevices,
   /** return empty arrays for  audioOptions and videoOptions*/
   disableSwitcher$: Behavior<boolean>,
+  backgroundEffectSettling$: Observable<boolean>,
 ): Pick<
   ViewModel<FooterSnapshot>,
   | "audioOptions$"
@@ -87,6 +94,7 @@ function buildDeviceBehaviors(
   | "selectBackgroundEffect$"
   | "backgroundEffects$"
   | "backgroundEffectNotice$"
+  | "backgroundEffectSettling$"
 > {
   const options$ = (
     available$: Behavior<Map<string, MenuOptions["label"]>>,
@@ -157,6 +165,10 @@ function buildDeviceBehaviors(
         ),
       ),
     ),
+    backgroundEffectSettling$: scope.behavior(
+      backgroundEffectSettling$.pipe(distinctUntilChanged()),
+      false,
+    ),
   };
 }
 
@@ -167,6 +179,8 @@ function buildDeviceBehaviors(
  * @param callModel - The root CallViewModel; provides layout, grid mode, reactions, etc.
  * @param muteStates - Audio and video mute state + toggles.
  * @param mediaDevices - Available and selected input devices.
+ * @param backgroundEffectSettling$ - Whether the first effect chosen is still
+ *   being prepared.
  * @param reactionIdentifier - The local user's reaction identifier string, or
  *   undefined when reactions are not supported (hides the reaction button).
  * @param options - `showControls`: whether the call controls should be shown.
@@ -177,6 +191,7 @@ export function createCallFooterViewModel(
   callModel: CallViewModel,
   muteStates: MuteStates,
   mediaDevices: MediaDevices,
+  backgroundEffectSettling$: Observable<boolean>,
   reactionIdentifier: string | undefined,
   options: { showControls: boolean; header: HeaderStyle },
 ): ViewModel<FooterSnapshot> {
@@ -191,7 +206,12 @@ export function createCallFooterViewModel(
   );
   return {
     ...buildMuteBehaviors(scope, muteStates),
-    ...buildDeviceBehaviors(scope, mediaDevices, disableDeviceSwitcher$),
+    ...buildDeviceBehaviors(
+      scope,
+      mediaDevices,
+      disableDeviceSwitcher$,
+      backgroundEffectSettling$,
+    ),
     // candidat to move into the FooterViewModel
     showFooter$: callModel.showFooter$,
     hideControls$: constant(!showControls),
@@ -253,6 +273,8 @@ export function createCallFooterViewModel(
  * @param scope - ObservableScope that bounds the lifetime of derived behaviors.
  * @param muteStates - Audio and video mute state + toggles.
  * @param mediaDevices - Available and selected input devices.
+ * @param backgroundEffectSettling$ - Whether the first effect chosen is still
+ *   being prepared.
  * @param openSettings - Callback to open the settings modal, or undefined.
  * @param hangup - Callback to leave/cancel, or undefined (hides the button).
  * @param showLogo - Whether to show the Element Call logo.
@@ -261,6 +283,7 @@ export function createLobbyFooterViewModel(
   scope: ObservableScope,
   muteStates: MuteStates,
   mediaDevices: MediaDevices,
+  backgroundEffectSettling$: Observable<boolean>,
   openSettings: (() => void) | undefined,
   hangup: (() => void) | undefined,
   showLogo: boolean,
@@ -304,7 +327,12 @@ export function createLobbyFooterViewModel(
       selectVideoButtonOption: undefined,
     }),
     ...buildMuteBehaviors(scope, muteStates),
-    ...buildDeviceBehaviors(scope, mediaDevices, constant(false)),
+    ...buildDeviceBehaviors(
+      scope,
+      mediaDevices,
+      constant(false),
+      backgroundEffectSettling$,
+    ),
   };
 }
 

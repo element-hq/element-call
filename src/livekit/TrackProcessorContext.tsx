@@ -38,6 +38,8 @@ import { useBehavior } from "../useBehavior";
 export type ProcessorState = {
   supported: boolean | undefined;
   processor: undefined | ProcessorWrapper<BackgroundOptions>;
+  /** From the first effect chosen until a frame carrying it is drawn. */
+  settling?: boolean;
 };
 
 const ProcessorContext = createContext<BackgroundEffects | undefined>(
@@ -125,14 +127,15 @@ export const ProcessorProvider: FC<Props> = ({ children }) => {
   const [effects, setEffects] = useState<BackgroundEffects | null>(null);
   useEffect(() => {
     const scope = new ObservableScope();
+    const transformer = new BackgroundEffectTransformer({
+      backgroundDisabled: true,
+    });
     setEffects(
       new BackgroundEffects(scope, {
         supported: supportsBackgroundProcessors(),
         effect$: backgroundEffectSetting.value$,
-        pipeline: new OneStepPipeline(
-          new BackgroundEffectTransformer({ backgroundDisabled: true }),
-          "background-effect",
-        ),
+        pipeline: new OneStepPipeline(transformer, "background-effect"),
+        transformer,
       }),
     );
     return (): void => scope.end();

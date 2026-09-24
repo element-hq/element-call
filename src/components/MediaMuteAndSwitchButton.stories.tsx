@@ -306,6 +306,33 @@ export const BackgroundEffectsSlowInThisBrowser: Story = {
   },
 };
 
+/** The first effect of a session shows its wait on its own tile. */
+export const BackgroundEffectsSettling: Story = {
+  args: {
+    ...VideoUnmute.args,
+    selectedBackgroundEffect: "blur",
+    backgroundEffectSettling: true,
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
+    const menu = within(document.body);
+    const chosen = await menu.findByRole("menuitemradio", {
+      name: "Blur",
+      checked: true,
+    });
+    await expect(chosen).toHaveAttribute("aria-busy", "true");
+    const marks = chosen.querySelectorAll("svg");
+    await expect(marks).toHaveLength(1);
+    await expect(getComputedStyle(marks[0]).animationName).not.toBe("none");
+    const section = menu.getByRole("group", { name: "Background effects" });
+    for (const other of within(section).getAllByRole("menuitemradio", {
+      checked: false,
+    }))
+      await expect(other).toHaveAttribute("aria-busy", "false");
+  },
+};
+
 /** In a short call the effects scroll into view with the list. */
 export const BackgroundEffectsScrollWhenTheyDoNotFit: Story = {
   args: {

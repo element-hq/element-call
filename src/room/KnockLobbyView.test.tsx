@@ -10,6 +10,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { type MatrixClient, type RoomSummary } from "matrix-js-sdk";
+import { type Observable } from "rxjs";
 
 import { KnockLobbyView } from "./KnockLobbyView";
 import { LeaveToHomeProvider } from "../LeaveToHomeContext";
@@ -21,13 +22,18 @@ vi.mock("@livekit/components-react", () => ({
   usePreviewTracks: (): unknown[] => [],
 }));
 
-vi.mock("../livekit/TrackProcessorContext", () => ({
-  useTrackProcessor: (): ProcessorState => ({
-    supported: false,
-    processor: undefined,
-  }),
-  useTrackProcessorSync: (): void => {},
-}));
+vi.mock("../livekit/TrackProcessorContext", async () => {
+  const { of } = await import("rxjs");
+  const none: ProcessorState = { supported: false, processor: undefined };
+  // One observable, as the real hook keeps: a fresh one each render would
+  // rebuild the footer on every render.
+  const none$ = of(none);
+  return {
+    useTrackProcessor: (): ProcessorState => none,
+    useTrackProcessorObservable$: (): Observable<ProcessorState> => none$,
+    useTrackProcessorSync: (): void => {},
+  };
+});
 
 vi.mock("react-use-measure", () => ({
   default: (): [() => void, object] => [(): void => {}, {}],
