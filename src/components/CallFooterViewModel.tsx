@@ -6,8 +6,9 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { combineLatest, map, type Observable, switchMap } from "rxjs";
-import { supportsBackgroundProcessors } from "@livekit/track-processors";
 import { supportsAudioOutputSelection } from "livekit-client";
+
+import { supportsBackgroundProcessors } from "../livekit/backgroundProcessing";
 
 import { type CallViewModel } from "../state/CallViewModel/CallViewModel";
 import { type MenuOptions } from "./MediaMuteAndSwitchButton";
