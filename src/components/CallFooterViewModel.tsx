@@ -13,6 +13,7 @@ import {
   switchMap,
 } from "rxjs";
 import { supportsAudioOutputSelection } from "livekit-client";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import {
   supportsBackgroundProcessors,
@@ -23,6 +24,10 @@ import {
   serializeEffect,
   shippedBackgrounds,
 } from "../livekit/backgroundEffects";
+import {
+  type AddedBackground,
+  addedBackgrounds,
+} from "../livekit/backgroundImages";
 
 import { type CallViewModel } from "../state/CallViewModel/CallViewModel";
 import { type MenuOptions } from "./MediaMuteAndSwitchButton";
@@ -95,6 +100,7 @@ function buildDeviceBehaviors(
   | "backgroundEffects$"
   | "backgroundEffectNotice$"
   | "backgroundEffectSettling$"
+  | "addBackgroundImage$"
 > {
   const options$ = (
     available$: Behavior<Map<string, MenuOptions["label"]>>,
@@ -157,7 +163,11 @@ function buildDeviceBehaviors(
         ),
       ),
     ),
-    backgroundEffects$: constant(backgroundEffectChoices()),
+    backgroundEffects$: scope.behavior(
+      addedBackgrounds.added$.pipe(
+        map((added) => backgroundEffectChoices(added ?? [])),
+      ),
+    ),
     backgroundEffectNotice$: scope.behavior(
       offered$.pipe(
         map((offered) =>
@@ -168,6 +178,22 @@ function buildDeviceBehaviors(
     backgroundEffectSettling$: scope.behavior(
       backgroundEffectSettling$.pipe(distinctUntilChanged()),
       false,
+    ),
+    // Kept and offered, not put on: that waits for the user to choose it.
+    addBackgroundImage$: scope.behavior(
+      offered$.pipe(
+        map((offered) =>
+          offered
+            ? (file: File): void => {
+                addedBackgrounds
+                  .add(file)
+                  .catch((e) =>
+                    logger.warn("Could not keep that background", e),
+                  );
+              }
+            : undefined,
+        ),
+      ),
     ),
   };
 }
@@ -336,7 +362,9 @@ export function createLobbyFooterViewModel(
   };
 }
 
-function backgroundEffectChoices(): BackgroundEffectChoice[] {
+function backgroundEffectChoices(
+  added: AddedBackground[],
+): BackgroundEffectChoice[] {
   return [
     { id: serializeEffect({ kind: "none" }), kind: "none" },
     { id: serializeEffect({ kind: "blur" }), kind: "blur" },
@@ -344,6 +372,11 @@ function backgroundEffectChoices(): BackgroundEffectChoice[] {
       id: serializeEffect({ kind: "shipped", id: background.id }),
       kind: "image" as const,
       imageUrl: background.imagePath,
+    })),
+    ...added.map((background) => ({
+      id: serializeEffect({ kind: "added", id: background.id }),
+      kind: "image" as const,
+      imageUrl: background.url,
     })),
   ];
 }

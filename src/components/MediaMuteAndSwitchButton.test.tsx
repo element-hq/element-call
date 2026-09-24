@@ -397,6 +397,77 @@ describe("MediaMuteAndSwitchButton", () => {
     expect(onSelectBackgroundEffect).not.toHaveBeenCalled();
   });
 
+  test("added images are chosen like shipped ones", async () => {
+    const user = userEvent.setup();
+    const onSelectBackgroundEffect = vi.fn();
+    const { getByRole } = renderComponent(
+      <MediaMuteAndSwitchButton
+        iconsAndLabels="video"
+        enabled={true}
+        options={[{ label: { type: "name", name: "Camera 1" }, id: "cam1" }]}
+        selectedOption="cam1"
+        backgroundEffects={[
+          ...effects,
+          {
+            id: "added:mine",
+            kind: "image",
+            label: "Background 3",
+            imageUrl: "",
+          },
+        ]}
+        selectedBackgroundEffect="none"
+        onSelectBackgroundEffect={onSelectBackgroundEffect}
+      />,
+    );
+
+    await user.click(getByRole("button", { name: "Camera" }));
+    const section = screen.getByRole("group", { name: "Background effects" });
+    await user.click(
+      within(section).getByRole("menuitemradio", { name: "Background 3" }),
+    );
+    expect(onSelectBackgroundEffect).toHaveBeenCalledWith("added:mine");
+  });
+
+  test("adds the file chosen from the add tile, and stays open", async () => {
+    const user = userEvent.setup();
+    const onAddBackgroundImage = vi.fn();
+    const pick = vi
+      .spyOn(HTMLInputElement.prototype, "click")
+      .mockImplementation(() => {});
+    try {
+      const { getByRole, container } = renderComponent(
+        <MediaMuteAndSwitchButton
+          iconsAndLabels="video"
+          enabled={true}
+          options={[{ label: { type: "name", name: "Camera 1" }, id: "cam1" }]}
+          selectedOption="cam1"
+          backgroundEffects={effects}
+          selectedBackgroundEffect="none"
+          onSelectBackgroundEffect={vi.fn()}
+          onAddBackgroundImage={onAddBackgroundImage}
+        />,
+      );
+
+      await user.click(getByRole("button", { name: "Camera" }));
+      await user.click(screen.getByRole("menuitem", { name: "Add image" }));
+      expect(pick).toHaveBeenCalled();
+      // The picker takes the focus, which would otherwise close the menu.
+      await user.keyboard("{Escape}");
+      expect(screen.getByRole("menu")).toBeInTheDocument();
+
+      const file = new File(["x"], "mine.png", { type: "image/png" });
+      // What the picker hands back; the open menu blocks pointer events.
+      fireEvent.change(
+        container.querySelector<HTMLInputElement>("input[type=file]")!,
+        { target: { files: [file] } },
+      );
+      expect(onAddBackgroundImage).toHaveBeenCalledWith(file);
+      screen.getByRole("menuitemradio", { name: "None", checked: true });
+    } finally {
+      pick.mockRestore();
+    }
+  });
+
   test("offers the background effects in a phone's drawer", async () => {
     platformMock.mockReturnValue("android");
     const userAgent = vi

@@ -25,6 +25,7 @@ import { combineLatest } from "rxjs";
 import { backgroundEffect as backgroundEffectSetting } from "../settings/settings";
 import { BackgroundEffectTransformer } from "./BackgroundEffectTransformer";
 import { OneStepPipeline } from "./OneStepPipeline";
+import { addedBackgrounds } from "./backgroundImages";
 import { supportsBackgroundProcessors } from "./backgroundProcessing";
 import { type Behavior } from "../state/Behavior";
 import { ObservableScope } from "../state/ObservableScope";
@@ -135,6 +136,7 @@ export const ProcessorProvider: FC<Props> = ({ children }) => {
         supported: supportsBackgroundProcessors(),
         effect$: backgroundEffectSetting.value$,
         setEffect: backgroundEffectSetting.setValue,
+        added$: addedBackgrounds.added$,
         pipeline: new OneStepPipeline(transformer, "background-effect"),
         transformer,
       }),
