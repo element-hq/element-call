@@ -134,6 +134,7 @@ export const ProcessorProvider: FC<Props> = ({ children }) => {
       new BackgroundEffects(scope, {
         supported: supportsBackgroundProcessors(),
         effect$: backgroundEffectSetting.value$,
+        setEffect: backgroundEffectSetting.setValue,
         pipeline: new OneStepPipeline(transformer, "background-effect"),
         transformer,
       }),
