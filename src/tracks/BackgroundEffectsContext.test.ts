@@ -18,7 +18,7 @@ import {
   type BackgroundEffects,
   type BackgroundEffectsState,
 } from "../state/BackgroundEffects";
-import { backgroundBlur } from "../settings/settings";
+import { backgroundEffect } from "../settings/settings";
 import { flushPromises, testScope } from "../utils/test";
 
 const pipelines = vi.hoisted(() => ({
@@ -64,7 +64,7 @@ describe("BackgroundEffectsProvider", () => {
     });
   const blur = async (on: boolean): Promise<void> => {
     await act(async () => {
-      backgroundBlur.setValue(on);
+      backgroundEffect.setValue(on ? "blur" : "none");
       await flushPromises();
     });
   };
@@ -77,9 +77,9 @@ describe("BackgroundEffectsProvider", () => {
     pipelines.destroyed = 0;
     pipelines.switches = [];
     platformMock.platform = "desktop";
-    backgroundBlur.setValue(false);
+    backgroundEffect.setValue("none");
   });
-  afterEach(() => backgroundBlur.setValue(false));
+  afterEach(() => backgroundEffect.setValue("none"));
 
   // A pipeline primes itself when it is built and when it is destroyed, and a
   // primed pipeline lets one frame through untouched: so the frame is spent

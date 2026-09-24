@@ -21,13 +21,14 @@ import { useHostBridge } from "../HostBridge";
 import {
   useSetting,
   soundEffectVolume as soundEffectVolumeSetting,
-  backgroundBlur as backgroundBlurSetting,
+  backgroundEffect as backgroundEffectSetting,
   developerMode,
 } from "./settings";
 import { PreferencesSettingsTab } from "./PreferencesSettingsTab";
 import { Slider } from "../Slider";
 import { DeviceSelection } from "./DeviceSelection";
 import { useBackgroundEffects } from "../tracks/BackgroundEffectsContext";
+import { parseEffect, serializeEffect } from "../tracks/backgroundEffects";
 import {
   DeveloperSettingsTab,
   type DeveloperSettingsSnapshot,
@@ -80,7 +81,9 @@ export const SettingsModal: FC<Props> = ({
   const BlurCheckbox: React.FC = (): ReactNode => {
     const { supported } = useBackgroundEffects();
 
-    const [blurActive, setBlurActive] = useSetting(backgroundBlurSetting);
+    // The camera menu's setting, of which this control sees only blur.
+    const [effect, setEffect] = useSetting(backgroundEffectSetting);
+    const blurActive = parseEffect(effect).kind === "blur";
 
     return (
       <>
@@ -94,8 +97,12 @@ export const SettingsModal: FC<Props> = ({
               supported ? "" : t("settings.blur_not_supported_by_browser")
             }
             type="checkbox"
-            checked={!!blurActive}
-            onChange={(b): void => setBlurActive(b.target.checked)}
+            checked={blurActive}
+            onChange={(b): void =>
+              setEffect(
+                serializeEffect({ kind: b.target.checked ? "blur" : "none" }),
+              )
+            }
             disabled={!supported}
           />
         </FieldRow>
