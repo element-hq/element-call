@@ -34,6 +34,8 @@ import { useBehavior } from "../useBehavior";
 export type BackgroundEffectsState = {
   supported: boolean | undefined;
   processor: undefined | ProcessorWrapper<BackgroundOptions>;
+  /** From the first effect chosen until a frame carrying it is drawn. */
+  settling?: boolean;
 };
 
 const BackgroundEffectsContext = createContext<BackgroundEffects | undefined>(
@@ -115,13 +117,14 @@ export const useSyncBackgroundEffects = (
 export function createAppBackgroundEffects(
   scope: ObservableScope,
 ): BackgroundEffects {
+  const transformer = new BackgroundEffectTransformer({
+    backgroundDisabled: true,
+  });
   return createBackgroundEffects(scope, {
     supported: supportsBackgroundProcessors(),
     effect$: backgroundEffectSetting.value$,
-    pipeline: new OneStepPipeline(
-      new BackgroundEffectTransformer({ backgroundDisabled: true }),
-      "background-effect",
-    ),
+    pipeline: new OneStepPipeline(transformer, "background-effect"),
+    transformer,
   });
 }
 

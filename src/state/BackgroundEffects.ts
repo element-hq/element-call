@@ -5,7 +5,13 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { combineLatest, distinctUntilChanged, map, scan } from "rxjs";
+import {
+  combineLatest,
+  distinctUntilChanged,
+  map,
+  Observable,
+  scan,
+} from "rxjs";
 import {
   type BackgroundProcessorWrapper,
   type SwitchBackgroundProcessorOptions,
@@ -30,6 +36,8 @@ export interface BackgroundEffectsOptions {
   effect$: Behavior<string>;
   /** The background processor pipeline to be switched between effects. */
   pipeline: BackgroundProcessorWrapper;
+  /** Tells, once, that a frame carrying an effect has been drawn. */
+  transformer: { onFirstFrame: (() => void) | undefined };
 }
 
 /** The background effect pipeline, as the camera tracks and the menus see it. */
@@ -40,7 +48,7 @@ export interface BackgroundEffects {
 /** Switches the pipeline as the choice changes, for as long as the scope lasts. */
 export function createBackgroundEffects(
   scope: ObservableScope,
-  { supported, effect$, pipeline }: BackgroundEffectsOptions,
+  { supported, effect$, pipeline, transformer }: BackgroundEffectsOptions,
 ): BackgroundEffects {
   const choice$ = effect$.pipe(map(parseEffect));
   const wanted$ = choice$.pipe(
@@ -48,15 +56,29 @@ export function createBackgroundEffects(
     distinctUntilChanged(),
   );
 
+  const drewAFrame$ = scope.behavior(
+    new Observable<boolean>((subscriber) => {
+      subscriber.next(false);
+      transformer.onFirstFrame = (): void => subscriber.next(true);
+      return (): void => {
+        transformer.onFirstFrame = undefined;
+      };
+    }),
+  );
+
   const state$ = scope.behavior(
-    wanted$.pipe(
-      scan<boolean, BackgroundEffectsState>(
-        (previous, wanted) => {
+    combineLatest([wanted$, drewAFrame$]).pipe(
+      scan<[boolean, boolean], BackgroundEffectsState>(
+        (previous, [wanted, drewAFrame]) => {
           // Attached the first time an effect is wanted and never detached
           // after, so someone who never turns one on pays for none of it.
           const enable =
             previous.processor !== undefined || (supported && wanted);
-          return { supported, processor: enable ? pipeline : undefined };
+          return {
+            supported,
+            processor: enable ? pipeline : undefined,
+            settling: enable && !drewAFrame,
+          };
         },
         { supported, processor: undefined },
       ),
