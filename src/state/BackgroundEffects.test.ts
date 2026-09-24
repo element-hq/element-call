@@ -14,6 +14,7 @@ import {
   type BackgroundEffectsOptions,
 } from "./BackgroundEffects";
 import { type ProcessorState } from "../livekit/TrackProcessorContext";
+import { shippedBackgrounds } from "../livekit/backgroundEffects";
 import { flushPromises, testScope, withTestScheduler } from "../utils/test";
 
 /** A pipeline that records what it is switched to. */
@@ -60,7 +61,7 @@ describe("the pipeline's state", () => {
     withTestScheduler(({ behavior, expectObservable }) => {
       const effects = new BackgroundEffects(testScope(), {
         supported: true,
-        blur$: behavior(effect, { n: false, b: true }),
+        effect$: behavior(effect, { n: "none", b: "blur" }),
         pipeline: fakePipeline().pipeline,
       });
       expectObservable(
@@ -69,12 +70,14 @@ describe("the pipeline's state", () => {
     });
   }
 
+  it("defaults to no effect", () => testState({ effect: "n", expected: "i" }));
+
   it("attaches on first use and stays attached", () =>
     testState({ effect: "nbn", expected: "ia" }));
 });
 
 describe("background effects", () => {
-  let blur$: BehaviorSubject<boolean>;
+  let effect$: BehaviorSubject<string>;
   let fake: ReturnType<typeof fakePipeline>;
 
   function build(
@@ -82,19 +85,32 @@ describe("background effects", () => {
   ): BackgroundEffects {
     return new BackgroundEffects(testScope(), {
       supported: true,
-      blur$,
+      effect$,
       pipeline: fake.pipeline,
       ...options,
     });
   }
-  const blur = async (on: boolean): Promise<void> => {
-    blur$.next(on);
+  const choose = async (raw: string): Promise<void> => {
+    effect$.next(raw);
     await flushPromises();
   };
+  const blur = async (on: boolean): Promise<void> =>
+    choose(on ? "blur" : "none");
 
   beforeEach(() => {
-    blur$ = new BehaviorSubject(false);
+    effect$ = new BehaviorSubject("none");
     fake = fakePipeline();
+  });
+
+  it("puts a shipped background on as that picture", async () => {
+    build();
+    await choose(`image:${shippedBackgrounds[0].id}`);
+    expect(fake.switches).toEqual([
+      {
+        mode: "virtual-background",
+        imagePath: shippedBackgrounds[0].imagePath,
+      },
+    ]);
   });
 
   it("switches in place rather than reattaching", async () => {

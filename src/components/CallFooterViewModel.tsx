@@ -9,12 +9,13 @@ import { combineLatest, map, type Observable, switchMap } from "rxjs";
 import { supportsAudioOutputSelection } from "livekit-client";
 
 import { supportsBackgroundProcessors } from "../livekit/backgroundProcessing";
+import { parseEffect } from "../livekit/backgroundEffects";
 
 import { type CallViewModel } from "../state/CallViewModel/CallViewModel";
 import { type MenuOptions } from "./MediaMuteAndSwitchButton";
 import { type MediaDevices } from "../state/MediaDevices";
 import {
-  backgroundBlur as backgroundBlurSettings,
+  backgroundEffect as backgroundEffectSetting,
   debugTileLayout as debugTileLayoutSetting,
 } from "../settings/settings";
 import { type Behavior, constant } from "../state/Behavior";
@@ -93,6 +94,11 @@ function buildDeviceBehaviors(
       ),
     );
 
+  const blurOn$ = scope.behavior(
+    backgroundEffectSetting.value$.pipe(
+      map((raw) => parseEffect(raw).kind === "blur"),
+    ),
+  );
   return {
     audioOptions$: scope.behavior(options$(mediaDevices.audioInput.available$)),
     selectedAudio$: scope.behavior(
@@ -118,17 +124,17 @@ function buildDeviceBehaviors(
     ),
     selectVideoButtonOption$: constant(mediaDevices.videoInput.select),
     toggleBlur$: scope.behavior(
-      combineLatest([backgroundBlurSettings.value$, disableSwitcher$]).pipe(
+      combineLatest([blurOn$, disableSwitcher$]).pipe(
         map(([current, switcherDisabled]) => {
           return !switcherDisabled && supportsBackgroundProcessors()
             ? (): void => {
-                backgroundBlurSettings.setValue(!current);
+                backgroundEffectSetting.setValue(current ? "none" : "blur");
               }
             : undefined;
         }),
       ),
     ),
-    videoBlurEnabled$: backgroundBlurSettings.value$,
+    videoBlurEnabled$: blurOn$,
   };
 }
 
