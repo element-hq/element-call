@@ -5,9 +5,9 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { useEffect, useMemo, useRef, type FC, type ReactNode } from "react";
+import { useMemo, type FC, type ReactNode } from "react";
 import useMeasure from "react-use-measure";
-import { constant, type LocalVideoMediaTrack } from "@element-hq/matrixrtc-sdk";
+import { type LocalVideoMediaTrack } from "@element-hq/matrixrtc-sdk";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
 
@@ -15,9 +15,8 @@ import { TileAvatar } from "../tile/TileAvatar";
 import styles from "./VideoPreview.module.css";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import videoPlaceholder from "../graphics/video-placeholder.gif";
-import { useBehavior } from "../useBehavior";
-
-const noFacingMode = constant(undefined);
+import { useAttachedTrack } from "../useAttachedTrack";
+import { sdkCamera } from "../tracks/cameraTrack";
 
 export type MatrixInfo = {
   userId: string;
@@ -46,15 +45,9 @@ export const VideoPreview: FC<Props> = ({
   const { t } = useTranslation();
   const [previewRef, previewBounds] = useMeasure();
 
-  const videoEl = useRef<HTMLVideoElement | null>(null);
-
-  useEffect(() => {
-    const element = videoEl.current;
-    if (!element || !videoTrack) return;
-    videoTrack.attach(element);
-    return (): void => videoTrack.detach(element);
-  }, [videoTrack]);
-  const facingMode = useBehavior(videoTrack?.facingMode$ ?? noFacingMode);
+  const { videoRef, mirrored } = useAttachedTrack(
+    videoTrack && sdkCamera(videoTrack),
+  );
 
   const cameraIsStarting = useMemo(
     () => videoEnabled && !videoTrack,
@@ -64,8 +57,8 @@ export const VideoPreview: FC<Props> = ({
   return (
     <div className={classNames(styles.preview)} ref={previewRef}>
       <video
-        className={facingMode === "user" ? styles.mirror : undefined}
-        ref={videoEl}
+        className={mirrored ? styles.mirror : undefined}
+        ref={videoRef}
         muted
         playsInline
         // There's no reason for this to be focusable

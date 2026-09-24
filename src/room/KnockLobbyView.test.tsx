@@ -28,6 +28,7 @@ const stable = vi.hoisted(() => ({
   media: undefined as unknown,
 }));
 vi.mock("../tracks/BackgroundEffectsContext", () => ({
+  reportCamera: (): void => {},
   useBackgroundEffectsState$: (): Behavior<BackgroundEffectsState> =>
     (stable.processorState$ ??= constant({
       supported: false,

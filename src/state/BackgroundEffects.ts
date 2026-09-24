@@ -32,6 +32,7 @@ import {
   parseEffect,
 } from "../tracks/backgroundEffectCatalog";
 import { type AddedBackground } from "../tracks/backgroundImages";
+import { SyncedCameraTrack } from "../tracks/cameraTrack";
 
 const blurRadius = 15;
 
@@ -40,6 +41,8 @@ export interface BackgroundEffectsState {
   processor: undefined | VideoProcessor;
   /** From the first effect chosen until a frame carrying it is drawn. */
   settling?: boolean;
+  /** The camera this provider's pipeline is synced to. */
+  cameraTrack?: SyncedCameraTrack;
 }
 
 export interface BackgroundEffectsOptions {
@@ -76,6 +79,8 @@ export function createBackgroundEffects(
 ): BackgroundEffects {
   // Wrapped once, so the call and the preview see one processor throughout.
   const processor = fromLivekitProcessor(pipeline);
+  // The camera the pipeline is synced to.
+  const cameraTrack = new SyncedCameraTrack();
   const choice$ = effect$.pipe(map(parseEffect));
   const wanted$ = choice$.pipe(
     map((effect) => effect.kind !== "none"),
@@ -117,6 +122,7 @@ export function createBackgroundEffects(
             supported,
             processor: enable ? processor : undefined,
             settling: enable && !drewAFrame,
+            cameraTrack,
           };
         },
         { supported, processor: undefined },

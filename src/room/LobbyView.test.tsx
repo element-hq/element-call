@@ -45,6 +45,7 @@ const leaveToHome = vi.fn();
 // One instance: the view keys an effect on it
 const processorState$ = vi.hoisted(() => ({ current: undefined as unknown }));
 vi.mock("../tracks/BackgroundEffectsContext", () => ({
+  reportCamera: (): void => {},
   useBackgroundEffectsState$: (): Behavior<BackgroundEffectsState> =>
     (processorState$.current ??= constant({
       supported: false,

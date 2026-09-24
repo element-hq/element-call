@@ -6,6 +6,14 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
+  combineLatest,
+  distinctUntilChanged,
+  EMPTY,
+  map,
+  Observable,
+  switchMap,
+} from "rxjs";
+import {
   BackgroundProcessorWrapper,
   supportsBackgroundProcessors,
 } from "@livekit/track-processors";
@@ -13,6 +21,7 @@ import { createContext, type FC, type JSX, use } from "react";
 
 import { backgroundEffect as backgroundEffectSetting } from "../settings/settings";
 import { BackgroundEffectTransformer } from "./BackgroundEffectTransformer";
+import { type ShownCamera } from "./cameraTrack";
 import { addedBackgrounds } from "./backgroundImages";
 import { type Behavior } from "../state/Behavior";
 import { type ObservableScope } from "../state/ObservableScope";
@@ -71,3 +80,32 @@ export const BackgroundEffectsProvider: FC<Props> = ({ effects, children }) => (
     {children}
   </BackgroundEffectsContext>
 );
+
+/**
+ * Reports the camera the pipeline is synced to while the scope lasts: the
+ * lobby's before joining, or the call's, each syncing its own.
+ */
+export function reportCamera(
+  scope: ObservableScope,
+  camera$: Observable<ShownCamera | null>,
+  backgroundEffectsState$: Behavior<BackgroundEffectsState>,
+): void {
+  // Keyed on the camera alone: reporting again for every change of state would
+  // blank the preview each time.
+  combineLatest([
+    camera$,
+    backgroundEffectsState$.pipe(
+      map(({ cameraTrack }) => cameraTrack),
+      distinctUntilChanged(),
+    ),
+  ])
+    .pipe(
+      switchMap(([camera, cameraTrack]) =>
+        camera === null || cameraTrack === undefined
+          ? EMPTY
+          : new Observable<never>(() => cameraTrack.report(camera)),
+      ),
+      scope.bind(),
+    )
+    .subscribe();
+}

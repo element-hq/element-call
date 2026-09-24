@@ -31,7 +31,11 @@ import { LeaveToHomeLink } from "../button/LeaveToHomeLink";
 import { useLeaveToHome } from "../LeaveToHomeContext";
 import { useMediaDevices } from "../MediaDevicesContext";
 import { ObservableScope } from "../state/ObservableScope";
-import { useBackgroundEffectsState$ } from "../tracks/BackgroundEffectsContext";
+import {
+  reportCamera,
+  useBackgroundEffectsState$,
+} from "../tracks/BackgroundEffectsContext";
+import { sdkCamera } from "../tracks/cameraTrack";
 import { useBehavior } from "../useBehavior";
 import { CallFooter, type FooterSnapshot } from "../components/CallFooter";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
@@ -127,18 +131,23 @@ export const LobbyView: FC<Props> = ({
   const [mediaVm, setMediaVm] = useState<LobbyMediaViewModel | null>(null);
   useEffect(() => {
     const mediaScope = new ObservableScope();
-    setMediaVm(
-      createLobbyMediaViewModel(
-        mediaScope,
-        media,
-        muteStates,
-        devices,
-        captureSettings(),
-        mediaScope.behavior(
-          backgroundEffectsState$.pipe(map((state) => state.processor)),
-        ),
+    const vm = createLobbyMediaViewModel(
+      mediaScope,
+      media,
+      muteStates,
+      devices,
+      captureSettings(),
+      mediaScope.behavior(
+        backgroundEffectsState$.pipe(map((state) => state.processor)),
       ),
     );
+    // The lobby's camera is the one the camera menu shows until the call's
+    reportCamera(
+      mediaScope,
+      vm.videoTrack$.pipe(map((camera) => camera && sdkCamera(camera))),
+      backgroundEffectsState$,
+    );
+    setMediaVm(vm);
     return (): void => {
       mediaScope.end();
     };
@@ -164,7 +173,7 @@ export const LobbyView: FC<Props> = ({
         footerScope,
         muteStates,
         devices,
-        backgroundEffectsState$.pipe(map(({ settling }) => settling ?? false)),
+        backgroundEffectsState$,
         openSettings,
         hangup,
         // Logo and header are connected: only show the logo in SPA with header.

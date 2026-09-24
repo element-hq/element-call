@@ -8,9 +8,11 @@ Please see LICENSE in the repository root for full details.
 import { act, createElement, type FC } from "react";
 import { render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { BehaviorSubject } from "rxjs";
 
 import {
   BackgroundEffectsProvider,
+  reportCamera,
   useBackgroundEffects,
   createAppBackgroundEffects,
 } from "./BackgroundEffectsContext";
@@ -19,8 +21,10 @@ import {
   type BackgroundEffectsState,
 } from "../state/BackgroundEffects";
 import { backgroundEffect } from "../settings/settings";
+import { sdkCamera, type ShownCamera, SyncedCameraTrack } from "./cameraTrack";
 import { type AddedBackground } from "./backgroundImages";
-import { flushPromises, testScope } from "../utils/test";
+import { constant } from "../state/Behavior";
+import { flushPromises, mockVideoTrack, testScope } from "../utils/test";
 
 const sdkSupportMock = vi.hoisted(() => vi.fn(() => true));
 const pipelines = vi.hoisted(() => ({
@@ -58,6 +62,83 @@ vi.mock("./backgroundImages", async () => {
 vi.mock("./BackgroundEffectTransformer", () => ({
   BackgroundEffectTransformer: vi.fn(),
 }));
+
+describe("the synced camera", () => {
+  it("is the track last synced, and cleared only while still its own", () => {
+    const synced = new SyncedCameraTrack();
+    const pipeline = constant<BackgroundEffectsState>({
+      supported: false,
+      processor: undefined,
+      cameraTrack: synced,
+    });
+    const lobby = sdkCamera(mockVideoTrack({ id: "lobby" }));
+    const call = sdkCamera(mockVideoTrack({ id: "call" }));
+    const lobbyCamera$ = new BehaviorSubject<ShownCamera | null>(lobby);
+    reportCamera(testScope(), lobbyCamera$, pipeline);
+    expect(synced.track$.value).toBe(lobby);
+
+    const callScope = testScope();
+    reportCamera(callScope, constant(call), pipeline);
+    expect(synced.track$.value).toBe(call);
+
+    lobbyCamera$.next(null);
+    expect(synced.track$.value).toBe(call);
+    callScope.end();
+    expect(synced.track$.value).toBeNull();
+  });
+
+  it("reports the camera once, however often the pipeline's state changes", () => {
+    const synced = new SyncedCameraTrack();
+    const report = vi.spyOn(synced, "report");
+    const state$ = new BehaviorSubject<BackgroundEffectsState>({
+      supported: true,
+      processor: undefined,
+      cameraTrack: synced,
+    });
+    reportCamera(testScope(), constant(sdkCamera(mockVideoTrack({}))), state$);
+    state$.next({ ...state$.value, settling: true });
+    state$.next({ ...state$.value, settling: false });
+    expect(report).toHaveBeenCalledOnce();
+  });
+
+  it("is the SDK's camera once the call reports it", () => {
+    const synced = new SyncedCameraTrack();
+    const state$ = constant<BackgroundEffectsState>({
+      supported: true,
+      processor: undefined,
+      cameraTrack: synced,
+    });
+    const callCamera = mockVideoTrack({ facingMode$: constant("user") });
+    const callCamera$ = new BehaviorSubject<ShownCamera | null>(
+      sdkCamera(callCamera),
+    );
+    reportCamera(testScope(), callCamera$, state$);
+    expect(synced.track$.value).toBe(sdkCamera(callCamera));
+    expect(synced.track$.value?.facesUser()).toBe(true);
+
+    const element = document.createElement("video");
+    synced.track$.value!.attach(element);
+    expect(callCamera.attach).toHaveBeenCalledWith(element);
+
+    callCamera$.next(null);
+    expect(synced.track$.value).toBeNull();
+  });
+
+  it("keeps each call's camera to its own", () => {
+    const mine = createAppBackgroundEffects(testScope());
+    const theirs = createAppBackgroundEffects(testScope());
+    const first = sdkCamera(mockVideoTrack({ id: "first" }));
+    const second = sdkCamera(mockVideoTrack({ id: "second" }));
+    reportCamera(testScope(), constant(first), mine.state$);
+    reportCamera(testScope(), constant(second), theirs.state$);
+
+    expect(mine.state$.value.cameraTrack).not.toBe(
+      theirs.state$.value.cameraTrack,
+    );
+    expect(mine.state$.value.cameraTrack?.track$.value).toBe(first);
+    expect(theirs.state$.value.cameraTrack?.track$.value).toBe(second);
+  });
+});
 
 describe("BackgroundEffectsProvider", () => {
   let seen: BackgroundEffectsState[];
