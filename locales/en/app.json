@@ -26,6 +26,7 @@
     "blur": "Blur",
     "none": "None",
     "numbered": "Background {{n}}",
+    "slow": "Background effects run slowly on this platform, which may cause your video to stutter.",
     "unavailable": "Background effects are not supported on this platform."
   },
   "call_ended_view": {
