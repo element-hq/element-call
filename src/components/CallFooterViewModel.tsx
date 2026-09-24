@@ -8,7 +8,10 @@ Please see LICENSE in the repository root for full details.
 import { combineLatest, map, type Observable, switchMap } from "rxjs";
 import { supportsAudioOutputSelection } from "livekit-client";
 
-import { supportsBackgroundProcessors } from "../livekit/backgroundProcessing";
+import {
+  supportsBackgroundProcessors,
+  usesFallbackProcessing,
+} from "../livekit/backgroundProcessing";
 import {
   parseEffect,
   serializeEffect,
@@ -101,6 +104,7 @@ function buildDeviceBehaviors(
     );
 
   const supported = supportsBackgroundProcessors();
+  const slow = usesFallbackProcessing();
   const offered$ = disableSwitcher$.pipe(
     map((switcherDisabled) => !switcherDisabled && supported),
   );
@@ -147,7 +151,11 @@ function buildDeviceBehaviors(
     ),
     backgroundEffects$: constant(backgroundEffectChoices()),
     backgroundEffectNotice$: scope.behavior(
-      offered$.pipe(map((offered) => (offered ? undefined : "unavailable"))),
+      offered$.pipe(
+        map((offered) =>
+          !offered ? "unavailable" : slow ? "slow" : undefined,
+        ),
+      ),
     ),
   };
 }

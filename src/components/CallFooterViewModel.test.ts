@@ -31,8 +31,10 @@ vi.mock("../Platform", () => ({
 
 // The SDK's own check needs WebGL and canvas APIs jsdom does not have.
 const sdkSupportMock = vi.hoisted(() => vi.fn(() => false));
+const modernRouteMock = vi.hoisted(() => vi.fn(() => true));
 vi.mock("@livekit/track-processors", () => ({
   supportsBackgroundProcessors: (): boolean => sdkSupportMock(),
+  supportsModernBackgroundProcessors: (): boolean => modernRouteMock(),
 }));
 
 const outputSelectionMock = vi.hoisted(() => vi.fn(() => true));
@@ -278,6 +280,16 @@ describe("createCallFooterViewModel", () => {
       // What isn't an effect on offer is stored as none.
       vm.selectBackgroundEffect$.value?.("image:gone");
       expect(backgroundEffectSetting.getValue()).toBe("none");
+    });
+
+    it("says they run slowly where only the slower route exists", () => {
+      sdkSupportMock.mockReturnValue(true);
+      modernRouteMock.mockReturnValue(false);
+      const slow = lobbyOn("desktop");
+      expect(slow.backgroundEffectNotice$.value).toBe("slow");
+      expect(slow.selectBackgroundEffect$.value).toBeDefined();
+      modernRouteMock.mockReturnValue(true);
+      expect(lobbyOn("desktop").backgroundEffectNotice$.value).toBeUndefined();
     });
 
     it("offers every effect in order", () => {

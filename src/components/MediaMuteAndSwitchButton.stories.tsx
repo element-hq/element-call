@@ -269,6 +269,43 @@ export const BackgroundEffectsUnavailable: Story = {
   },
 };
 
+/** Where only the slower route exists: offered and choosable, with the cost said. */
+export const BackgroundEffectsSlowInThisBrowser: Story = {
+  args: {
+    ...VideoUnmute.args,
+    backgroundEffectNotice:
+      "Background effects run slowly on this platform, which may cause your video to stutter.",
+  },
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
+    const menu = within(document.body);
+    const section = await menu.findByRole("group", {
+      name: "Background effects",
+    });
+    await expect(section).toHaveAccessibleDescription(
+      "Background effects run slowly on this platform, which may cause your video to stutter.",
+    );
+    for (const tile of within(section).getAllByRole("menuitemradio"))
+      await expect(tile).not.toHaveAttribute("aria-disabled");
+    await userEvent.click(
+      within(section).getByRole("menuitemradio", { name: "Background 1" }),
+    );
+    await expect(args.onSelectBackgroundEffect).toHaveBeenCalledWith(
+      "image:arc",
+    );
+
+    const notice = document.body.querySelector(`.${styles.notice}`)!;
+    const frame = document.body
+      .querySelector("[role='menu']")!
+      .getBoundingClientRect();
+    await expect(frame.width).toBeLessThanOrEqual(296);
+    await expect(notice.getBoundingClientRect().right).toBeLessThanOrEqual(
+      frame.right,
+    );
+  },
+};
+
 /** In a short call the effects scroll into view with the list. */
 export const BackgroundEffectsScrollWhenTheyDoNotFit: Story = {
   args: {
