@@ -326,6 +326,33 @@ test.describe("a background of one's own", () => {
     await addImage(page, red);
     await expect(mine).toBeVisible();
   });
+
+  test("a removed image stays removed", async ({ page }) => {
+    test.setTimeout(120_000);
+    await page.goto("/");
+    await SpaHelpers.createCall(
+      page,
+      "Removing user",
+      "Own background removed",
+    );
+    await addImage(page, await redImage(page));
+    const mine = page
+      .getByRole("group", { name: "Background effects" })
+      .getByRole("menuitemradio", { name: "Background 3" });
+    await expect(mine).toHaveAttribute("aria-keyshortcuts", "Delete");
+    await mine.focus();
+    await page.keyboard.press("Delete");
+    await expect(mine).toHaveCount(0);
+
+    await page.reload();
+    await expect(page.getByTestId("lobby_joinCall")).toBeVisible();
+    await page.getByRole("button", { name: "Camera", exact: true }).click();
+    await expect(
+      page.getByRole("group", { name: "Background effects" }),
+    ).toBeVisible();
+    await expect(mine).toHaveCount(0);
+    expect(await keptImages(page)).toEqual([]);
+  });
 });
 
 test.describe("what can be added", () => {
