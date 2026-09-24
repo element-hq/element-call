@@ -21,6 +21,10 @@ import {
 import { HeaderStyle } from "../UrlParams";
 import { backgroundEffect as backgroundEffectSetting } from "../settings/settings";
 import { shippedBackgrounds } from "../livekit/backgroundEffects";
+import {
+  type AddedBackground,
+  addedBackgrounds,
+} from "../livekit/backgroundImages";
 
 const platformMock = vi.hoisted(() => vi.fn(() => "desktop"));
 vi.mock("../Platform", () => ({
@@ -267,6 +271,7 @@ describe("createCallFooterViewModel", () => {
     it("offers nothing where the browser itself cannot run them", () => {
       sdkSupportMock.mockReturnValue(false);
       expect(lobbyOn("desktop").selectBackgroundEffect$.value).toBeUndefined();
+      expect(lobbyOn("desktop").addBackgroundImage$.value).toBeUndefined();
     });
 
     it("puts no effect in force where the browser cannot run them", () => {
@@ -299,6 +304,10 @@ describe("createCallFooterViewModel", () => {
 
     it("offers every effect in order", () => {
       sdkSupportMock.mockReturnValue(true);
+      const added$ = addedBackgrounds.added$ as BehaviorSubject<
+        AddedBackground[] | undefined
+      >;
+      added$.next([{ id: "mine", url: "blob:mine" }]);
       expect(lobbyOn("desktop").backgroundEffects$.value).toEqual([
         { id: "none", kind: "none" },
         { id: "blur", kind: "blur" },
@@ -307,7 +316,9 @@ describe("createCallFooterViewModel", () => {
           kind: "image",
           imageUrl: background.imagePath,
         })),
+        { id: "added:mine", kind: "image", imageUrl: "blob:mine" },
       ]);
+      added$.next([]);
     });
 
     it("says they are unavailable where they cannot be chosen", () => {
