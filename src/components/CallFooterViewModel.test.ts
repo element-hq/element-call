@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { BehaviorSubject } from "rxjs";
 
 import { testScope, mockMuteStates, mockMediaDevices } from "../utils/test";
@@ -19,6 +19,8 @@ import {
   createLobbyFooterViewModel,
 } from "./CallFooterViewModel";
 import { HeaderStyle } from "../UrlParams";
+import { backgroundEffect as backgroundEffectSetting } from "../settings/settings";
+import { shippedBackgrounds } from "../livekit/backgroundEffects";
 
 const platformMock = vi.hoisted(() => vi.fn(() => "desktop"));
 vi.mock("../Platform", () => ({
@@ -227,6 +229,8 @@ describe("createCallFooterViewModel", () => {
   });
 
   describe("background effects", () => {
+    afterEach(() => backgroundEffectSetting.setValue("none"));
+
     // The lobby, because in a call the whole device switcher is already
     // withheld on a phone, whatever the verdict says.
     function lobbyOn(
@@ -245,17 +249,55 @@ describe("createCallFooterViewModel", () => {
 
     it("offers them on a phone whose browser can run them", () => {
       sdkSupportMock.mockReturnValue(true);
-      expect(lobbyOn("ios").toggleBlur$.value).toBeDefined();
+      expect(lobbyOn("ios").selectBackgroundEffect$.value).toBeDefined();
     });
 
     it("offers them where the pipeline will honour them", () => {
       sdkSupportMock.mockReturnValue(true);
-      expect(lobbyOn("desktop").toggleBlur$.value).toBeDefined();
+      expect(lobbyOn("desktop").selectBackgroundEffect$.value).toBeDefined();
     });
 
     it("offers nothing where the browser itself cannot run them", () => {
       sdkSupportMock.mockReturnValue(false);
-      expect(lobbyOn("desktop").toggleBlur$.value).toBeUndefined();
+      expect(lobbyOn("desktop").selectBackgroundEffect$.value).toBeUndefined();
+    });
+
+    it("puts no effect in force where the browser cannot run them", () => {
+      backgroundEffectSetting.setValue("blur");
+      sdkSupportMock.mockReturnValue(false);
+      expect(lobbyOn("desktop").backgroundEffect$.value).toBe("none");
+      sdkSupportMock.mockReturnValue(true);
+      expect(lobbyOn("desktop").backgroundEffect$.value).toBe("blur");
+    });
+
+    it("stores the effect chosen", () => {
+      sdkSupportMock.mockReturnValue(true);
+      const vm = lobbyOn("desktop");
+      vm.selectBackgroundEffect$.value?.("image:arc");
+      expect(vm.backgroundEffect$.value).toBe("image:arc");
+      // What isn't an effect on offer is stored as none.
+      vm.selectBackgroundEffect$.value?.("image:gone");
+      expect(backgroundEffectSetting.getValue()).toBe("none");
+    });
+
+    it("offers every effect in order", () => {
+      sdkSupportMock.mockReturnValue(true);
+      expect(lobbyOn("desktop").backgroundEffects$.value).toEqual([
+        { id: "none", kind: "none" },
+        { id: "blur", kind: "blur" },
+        ...shippedBackgrounds.map((background) => ({
+          id: `image:${background.id}`,
+          kind: "image",
+          imageUrl: background.imagePath,
+        })),
+      ]);
+    });
+
+    it("says they are unavailable where they cannot be chosen", () => {
+      sdkSupportMock.mockReturnValue(false);
+      expect(lobbyOn("desktop").backgroundEffectNotice$.value).toBe(
+        "unavailable",
+      );
     });
 
     it("availability is the same before and during a call", () => {
@@ -270,8 +312,11 @@ describe("createCallFooterViewModel", () => {
           /* reactionIdentifier */ undefined,
           { showControls: true, header: HeaderStyle.Standard },
         );
-        const offeredInLobby = lobby.toggleBlur$.value !== undefined;
-        expect(inCall.toggleBlur$.value !== undefined).toBe(offeredInLobby);
+        const offeredInLobby =
+          lobby.selectBackgroundEffect$.value !== undefined;
+        expect(inCall.selectBackgroundEffect$.value !== undefined).toBe(
+          offeredInLobby,
+        );
         expect(offeredInLobby).toBe(supported);
       }
     });
