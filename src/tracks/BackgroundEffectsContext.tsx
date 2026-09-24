@@ -19,7 +19,7 @@ import {
   type VideoProcessor,
 } from "@element-hq/matrixrtc-sdk";
 
-import { backgroundBlur as backgroundBlurSettings } from "../settings/settings";
+import { backgroundEffect as backgroundEffectSetting } from "../settings/settings";
 import { BackgroundEffectTransformer } from "./BackgroundEffectTransformer";
 import { OneStepPipeline } from "./OneStepPipeline";
 import { supportsBackgroundProcessors } from "./backgroundProcessing";
@@ -148,7 +148,7 @@ export function createAppBackgroundEffects(
 ): BackgroundEffects {
   return createBackgroundEffects(scope, {
     supported: supportsBackgroundProcessors(),
-    blur$: backgroundBlurSettings.value$,
+    effect$: backgroundEffectSetting.value$,
     pipeline: new OneStepPipeline(
       new BackgroundEffectTransformer({ backgroundDisabled: true }),
       "background-effect",
