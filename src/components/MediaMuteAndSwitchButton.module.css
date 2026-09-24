@@ -125,3 +125,7 @@ Please see LICENSE in the repository root for full details.
   flex-shrink: 0;
   color: var(--cpd-color-icon-secondary);
 }
+
+.refusal {
+  margin: var(--cpd-space-2x) var(--cpd-space-4x) 0;
+}

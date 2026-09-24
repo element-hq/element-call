@@ -33,6 +33,11 @@ import { useBehavior } from "../useBehavior";
 import { type LayoutSwitchViewModel } from "../state/LayoutSwitchViewModel";
 import { LayoutSwitch } from "../room/LayoutSwitch";
 import { type BackgroundEffectOption } from "./BackgroundEffectGrid";
+import { type UnusableReason } from "../livekit/backgroundImages";
+
+export interface BackgroundImageRefusal {
+  reason: UnusableReason | "not-kept";
+}
 
 /** A background effect on offer, which the view names. */
 export interface BackgroundEffectChoice {
@@ -91,6 +96,8 @@ export interface FooterState {
   backgroundEffectNotice: "unavailable" | "slow" | undefined;
   /** Whether the first effect chosen is still being prepared. */
   backgroundEffectSettling: boolean;
+  /** Why the last file offered couldn't be kept, if it couldn't. */
+  backgroundImageRefusal: BackgroundImageRefusal | undefined;
   showFooter: boolean;
 
   /* This is needed for WindowMode = "flat" */
@@ -179,6 +186,21 @@ export const CallFooter: FC<FooterProps> = ({
   const backgroundEffectNotice = useBehavior(vm.backgroundEffectNotice$);
   const backgroundEffectSettling = useBehavior(vm.backgroundEffectSettling$);
   const addBackgroundImage = useBehavior(vm.addBackgroundImage$);
+  const refusal = useBehavior(vm.backgroundImageRefusal$);
+  const refusalMessage = useMemo(() => {
+    switch (refusal?.reason) {
+      case undefined:
+        return undefined;
+      case "not-an-image":
+        return { text: t("error.background_not_an_image") };
+      case "animated":
+        return { text: t("error.background_animated") };
+      case "undecodable":
+        return { text: t("error.background_undecodable") };
+      case "not-kept":
+        return { text: t("error.background_not_kept") };
+    }
+  }, [refusal, t]);
   const backgroundEffects = useBackgroundEffectLabels(
     useBehavior(vm.backgroundEffects$),
   );
@@ -248,6 +270,7 @@ export const CallFooter: FC<FooterProps> = ({
         onSelectBackgroundEffect={selectBackgroundEffect}
         backgroundEffectSettling={backgroundEffectSettling}
         onAddBackgroundImage={addBackgroundImage}
+        backgroundImageRefusal={refusalMessage}
         backgroundEffectNotice={
           backgroundEffectNotice === "unavailable"
             ? t("background_effects.unavailable")
