@@ -43,7 +43,10 @@ Please see LICENSE in the repository root for full details.
   inset-inline: 0;
 }
 
-.footer.overlay:has(:focus-visible) {
+/* Keep the footer while it is in use: focus inside it, or a menu opened from
+   it. The menu is portalled out, so the trigger's aria-expanded tracks it. */
+.footer.overlay:has(:focus-visible),
+.footer.overlay:has([aria-expanded="true"]) {
   opacity: 1;
   pointer-events: initial;
 }

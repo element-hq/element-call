@@ -13,6 +13,7 @@ import { Link } from "@vector-im/compound-web";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { CallFooter, type FooterSnapshot } from "./CallFooter";
 import inCallViewStyles from "../room/InCallView.module.css";
+import styles from "./CallFooter.module.css";
 import { useStaticViewModel } from "../state/ViewModel";
 import { ReactionsSenderContext } from "../reactions/useReactionsSender";
 import { type ReactionOption } from "../reactions";
@@ -137,10 +138,13 @@ export const Default: Story = {
     debugTileLayout: false,
     tileStoreGeneration: undefined,
     audioOptions: [],
+    audioOutputOptions: [],
     videoOptions: [],
     selectedAudio: undefined,
+    selectedAudioOutput: undefined,
     selectedVideo: undefined,
     selectAudioButtonOption: undefined,
+    selectAudioOutputOption: undefined,
     selectVideoButtonOption: undefined,
   },
   parameters: {
@@ -158,12 +162,43 @@ export const WithAudioAndVideoOptions: Story = {
       { label: { type: "name", name: "Microphone 1" }, id: "1" },
       { label: { type: "name", name: "Microphone 2" }, id: "2" },
     ],
+    audioOutputOptions: [
+      { label: { type: "default", name: "Built-in Output" }, id: "default" },
+      { label: { type: "name", name: "Headset" }, id: "2" },
+    ],
     videoOptions: [
       { label: { type: "name", name: "Camera 1" }, id: "1" },
       { label: { type: "name", name: "Camera 2" }, id: "2" },
     ],
     selectedAudio: "2",
+    selectedAudioOutput: "default",
     selectedVideo: "1",
+  },
+};
+
+export const StaysWhileAMenuIsOpen: Story = {
+  ...Default,
+  args: {
+    ...WithAudioAndVideoOptions.args,
+    // In a short window the footer overlays the call and hides itself.
+    asOverlay: true,
+    showFooter: true,
+  },
+  play: async ({ canvasElement }): Promise<void> => {
+    const footer = canvasElement.querySelector<HTMLElement>(
+      '[data-testid="footer-container"]',
+    )!;
+    await userEvent.click(
+      within(canvasElement).getByRole("button", { name: "Microphone" }),
+    );
+    await expect(document.body.querySelector('[role="menu"]')).not.toBeNull();
+
+    // The call hides the footer with this class.
+    footer.classList.add(styles.hidden);
+
+    // Read after the 0.15s fade, not mid-transition.
+    await new Promise((settled) => setTimeout(settled, 400));
+    await expect(getComputedStyle(footer).opacity).toBe("1");
   },
 };
 

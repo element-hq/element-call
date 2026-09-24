@@ -5,8 +5,10 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { describe, expect, it, vi } from "vitest";
-import { render } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { of } from "rxjs";
 import { LeaveToHomeProvider } from "../LeaveToHomeContext";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { type MatrixClient } from "matrix-js-sdk";
@@ -18,7 +20,13 @@ import {
 
 import { LobbyView } from "./LobbyView";
 import { E2eeType } from "../e2ee/e2eeType";
-import { mockMediaDevices, mockMuteStates } from "../utils/test";
+import {
+  mockMediaDevices,
+  mockMuteStates,
+  restoreAudioCapture,
+  stubAudioCapture,
+} from "../utils/test";
+import { type MediaDevices } from "../state/MediaDevices";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { type ProcessorState } from "../livekit/TrackProcessorContext";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
@@ -77,9 +85,10 @@ function renderLobbyView(
   props: Partial<Parameters<typeof LobbyView>[0]> = {},
   withAppBar = false,
   platform = "android",
+  devices: Partial<MediaDevices> = {},
 ): ReturnType<typeof render> {
   platformMock.mockReturnValue(platform);
-  const mediaDevices = mockMediaDevices({});
+  const mediaDevices = mockMediaDevices(devices);
   const muteStates = mockMuteStates();
   const hideHeader = withAppBar ? true : false;
   const lobbyView = (
@@ -176,5 +185,32 @@ describe("LobbyView", () => {
     expect(primaryButtonSvgPath).toBe(expectedSvgPath);
     expect(container).toMatchSnapshot();
     expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+describe("LobbyView microphone level", () => {
+  afterEach(restoreAudioCapture);
+
+  it("shows the microphone level meter", async () => {
+    const capture = stubAudioCapture();
+    capture.grant();
+    const user = userEvent.setup();
+    const { getByRole } = renderLobbyView({}, false, "desktop", {
+      requestDeviceNames: (): void => {},
+      audioInput: {
+        available$: of(
+          new Map([["mic1", { type: "name", name: "Microphone 1" }]]),
+        ),
+        selected$: of({ id: "mic1" }),
+        select: (): void => {},
+      },
+    } as unknown as Partial<MediaDevices>);
+
+    // Pre-join reaches the meter through the same chevron as a call.
+    await user.click(getByRole("button", { name: "Microphone" }));
+
+    expect(
+      await screen.findByRole("meter", { name: "Microphone level" }),
+    ).toBeInTheDocument();
   });
 });
