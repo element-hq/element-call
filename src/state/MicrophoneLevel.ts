@@ -13,7 +13,7 @@ import { type Behavior } from "./Behavior";
 /** What the microphone picks up, or why it can't be read. */
 export type MicrophoneState =
   // A Behavior, so a changing level can be drawn without re-rendering.
-  | { type: "level"; level: Behavior<number> }
+  | { type: "level"; level$: Behavior<number> }
   | { type: "permission-denied" }
   | { type: "no-device" };
 
