@@ -495,6 +495,118 @@ export const RemovingWithLiveSelection: Story = {
   },
 };
 
+/** The fade at each edge of the device list. */
+function fades(): { top: HTMLElement; bottom: HTMLElement } {
+  const [top, bottom] = [`.${styles.fadeTop}`, `.${styles.fadeBottom}`].map(
+    (selector) => document.body.querySelector<HTMLElement>(selector)!,
+  );
+  return { top, bottom };
+}
+const shown = async (fade: HTMLElement, visible: boolean): Promise<void> =>
+  waitFor(async () =>
+    expect(getComputedStyle(fade).opacity).toBe(visible ? "1" : "0"),
+  );
+
+/** Where the options scroll, each edge says there is more that way. */
+export const BackgroundEffectsShowThereIsMore: Story = {
+  args: VideoUnmute.args,
+  decorators: [
+    (Story): JSX.Element => (
+      <WithACallArea blockSize={300}>
+        <Story />
+      </WithACallArea>
+    ),
+  ],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
+    await within(document.body).findByRole("group", {
+      name: "Background effects",
+    });
+    const list = document.body.querySelector<HTMLElement>(
+      `.${styles.deviceList}`,
+    )!;
+    const { top, bottom } = fades();
+
+    await shown(top, false);
+    await shown(bottom, true);
+
+    list.scrollTop = 40;
+    await shown(top, true);
+    await shown(bottom, true);
+    const stuck = [
+      ...list.querySelectorAll<HTMLElement>(`.${styles.sectionHeading}`),
+    ].find(
+      (h) =>
+        Math.abs(
+          h.getBoundingClientRect().top - list.getBoundingClientRect().top,
+        ) < 2,
+    )!;
+    await expect(top.getBoundingClientRect().top).toBeCloseTo(
+      stuck.getBoundingClientRect().bottom,
+      0,
+    );
+
+    list.scrollTop = list.scrollHeight;
+    await shown(top, true);
+    await shown(bottom, false);
+  },
+};
+
+/** The microphone menu too; above the meter while the meter holds the foot. */
+export const MicrophoneMenuShowsThereIsMore: Story = {
+  args: {
+    ...Default.args,
+    iconsAndLabels: "audio",
+    enabled: true,
+    options: Array.from({ length: 20 }, (_, i) => ({
+      label: { type: "name" as const, name: `Microphone ${i + 1}` },
+      id: `mic${i + 1}`,
+    })),
+    selectedOption: "mic1",
+    outputOptions: Array.from({ length: 6 }, (_, i) => ({
+      label: { type: "name" as const, name: `Speaker ${i + 1}` },
+      id: `spk${i + 1}`,
+    })),
+    selectedOutputOption: "spk1",
+    onSelectOutput: fn(),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Microphone" }));
+    const meter = await waitFor(() => {
+      const element = document.body.querySelector<HTMLElement>(
+        `.${styles.stickyMeter}`,
+      );
+      if (element === null) throw new Error("the meter has not rendered yet");
+      return element;
+    });
+    const list = document.body.querySelector<HTMLElement>(
+      `.${styles.deviceList}`,
+    )!;
+    const { top, bottom } = fades();
+    await shown(bottom, true);
+
+    // Into the microphones, where the meter holds the foot of the list.
+    const group = within(document.body).getByRole("group", {
+      name: "Microphone",
+    });
+    list.scrollTop +=
+      group.getBoundingClientRect().top - list.getBoundingClientRect().top;
+    await shown(top, true);
+    await shown(bottom, true);
+    await waitFor(async () =>
+      expect(bottom.getBoundingClientRect().bottom).toBeCloseTo(
+        meter.getBoundingClientRect().top,
+        0,
+      ),
+    );
+
+    list.scrollTop = list.scrollHeight;
+    await shown(bottom, false);
+  },
+};
+
 /** In a short call the effects scroll into view with the list. */
 export const BackgroundEffectsScrollWhenTheyDoNotFit: Story = {
   args: {

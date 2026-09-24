@@ -203,6 +203,18 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
     [],
   );
 
+  const watchList = useCallback(
+    (list: HTMLDivElement | null): (() => void) | undefined => {
+      const stopTracking = trackFocusSource(list);
+      const stopWatching = list === null ? undefined : watchScrollEdges(list);
+      return (): void => {
+        stopTracking?.();
+        stopWatching?.();
+      };
+    },
+    [trackFocusSource],
+  );
+
   // Measured on the call area: CSS can't size the portalled menu against it.
   const rootElement = useRootElement();
   const [listMaxHeight, setListMaxHeight] = useState<number>();
@@ -421,7 +433,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
         }
       >
         <div
-          ref={trackFocusSource}
+          ref={watchList}
           // Keeps the items the menu's own children for assistive tech.
           role="none"
           className={styles.deviceList}
@@ -440,6 +452,10 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
             } as CSSProperties
           }
         >
+          <div
+            aria-hidden
+            className={classNames(styles.fade, styles.fadeTop)}
+          />
           {iconsAndLabels === "audio" && speakerOptions && (
             <>
               {/* A menu may only contain items, separators and groups, so each
@@ -528,11 +544,59 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
                 <span>{backgroundEffectNotice}</span>
               </div>
             )}
+          <div
+            aria-hidden
+            className={classNames(styles.fade, styles.fadeBottom)}
+          />
         </div>
       </Menu>
     </div>
   );
 };
+
+/**
+ * Marks on the list whether it has more above and below, for the fades at its
+ * edges: the platform may hide its scrollbar until it is used. Set on the
+ * element, not rendered, as it changes with every scroll.
+ */
+function watchScrollEdges(list: HTMLElement): () => void {
+  const measure = (): void => {
+    const box = list.getBoundingClientRect();
+    const above = list.scrollTop > 0;
+    // Under the heading stuck at the top, and above the meter at the foot.
+    let start = 0;
+    if (above)
+      for (const heading of list.querySelectorAll(
+        `.${styles.sectionHeading}`,
+      )) {
+        const edge = heading.getBoundingClientRect();
+        if (Math.abs(edge.top - box.top) < 2) start = edge.bottom - box.top;
+      }
+    let end = 0;
+    const meter = list.querySelector(`.${styles.stickyMeter}`);
+    if (meter !== null) {
+      const edge = meter.getBoundingClientRect();
+      if (Math.abs(edge.bottom - box.bottom) < 2) end = edge.height;
+    }
+    list.toggleAttribute("data-more-above", above);
+    list.toggleAttribute(
+      "data-more-below",
+      list.scrollTop + list.clientHeight < list.scrollHeight - 1,
+    );
+    list.style.setProperty("--device-list-fade-start", `${start}px`);
+    list.style.setProperty("--device-list-fade-end", `${end}px`);
+  };
+  measure();
+  list.addEventListener("scroll", measure, { passive: true });
+  // The list's own size, and its sections', which change its length.
+  const resizes = new ResizeObserver(measure);
+  resizes.observe(list);
+  for (const section of list.children) resizes.observe(section);
+  return (): void => {
+    list.removeEventListener("scroll", measure);
+    resizes.disconnect();
+  };
+}
 
 /** Follows an element's height. */
 function useMeasuredHeight(): [
