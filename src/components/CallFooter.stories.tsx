@@ -141,6 +141,7 @@ export const Default: Story = {
     backgroundImageRefusal: undefined,
     addBackgroundImage: fn(),
     removeBackgroundEffect: fn(),
+    cameraTrack: null,
     hangup: fn(),
     buttonSize: "lg",
     showFooter: true,
