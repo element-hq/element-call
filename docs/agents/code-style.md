@@ -42,15 +42,12 @@ simplification.
 - Say the reason, then stop. Test each sentence: does the reason still stand
   without it? If so, cut it. Most reasons fit on a line, so a long comment is
   worth a second look — it is usually carrying something that isn't one.
-- Never describe:
-  - layout or placement — the stylesheet says it, and changes without the
-    comment;
-  - the context around the code — it moves without touching the line;
-  - design measurements — the design is the source;
-  - how a decision was reached, or what was rejected — that goes in the PR body
-    or the feature spec;
-  - what the next line does, or what an assertion checks.
-- No spec ids (D11, AC23) and no browser lists — both go stale silently.
+- Write about the line the comment sits on, in terms of what the code does
+  there — leave layout to the stylesheet and measurements to the design.
+- Name the condition ("where the platform can't route audio"), not the browser
+  or the spec entry.
+- Put history — what was tried, removed or rejected, the dev journal — in the
+  commit or the PR description.
 - In tests, comment only structure that looks wrong but isn't: batching, timers,
   why this scroll position.
 
