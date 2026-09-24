@@ -12,6 +12,7 @@ import { Link } from "@vector-im/compound-web";
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { CallFooter, type FooterSnapshot } from "./CallFooter";
+import { ProcessorProvider } from "../livekit/TrackProcessorContext";
 import inCallViewStyles from "../room/InCallView.module.css";
 import { useStaticViewModel } from "../state/ViewModel";
 import { ReactionsSenderContext } from "../reactions/useReactionsSender";
@@ -82,6 +83,15 @@ const fnArgType = {
 
 const meta = {
   component: CallFooterStoryWrapper,
+  // The footer reads the backgrounds this device keeps from the processor
+  // provider, the same way the lobby and the call do.
+  decorators: [
+    (Story): JSX.Element => (
+      <ProcessorProvider>
+        <Story />
+      </ProcessorProvider>
+    ),
+  ],
   argTypes: {
     layout: {
       control: "radio",
@@ -124,6 +134,8 @@ export const Default: Story = {
     toggleScreenSharing: fn(),
     toggleBlur: fn(),
     videoBlurEnabled: true,
+    backgroundEffect: "none",
+    selectBackgroundEffect: fn(),
     hangup: fn(),
     buttonSize: "lg",
     showFooter: true,
@@ -137,10 +149,13 @@ export const Default: Story = {
     debugTileLayout: false,
     tileStoreGeneration: undefined,
     audioOptions: [],
+    audioOutputOptions: [],
     videoOptions: [],
     selectedAudio: undefined,
+    selectedAudioOutput: undefined,
     selectedVideo: undefined,
     selectAudioButtonOption: undefined,
+    selectAudioOutputOption: undefined,
     selectVideoButtonOption: undefined,
   },
   parameters: {
@@ -158,11 +173,16 @@ export const WithAudioAndVideoOptions: Story = {
       { label: { type: "name", name: "Microphone 1" }, id: "1" },
       { label: { type: "name", name: "Microphone 2" }, id: "2" },
     ],
+    audioOutputOptions: [
+      { label: { type: "default", name: "Built-in Output" }, id: "default" },
+      { label: { type: "name", name: "Headset" }, id: "2" },
+    ],
     videoOptions: [
       { label: { type: "name", name: "Camera 1" }, id: "1" },
       { label: { type: "name", name: "Camera 2" }, id: "2" },
     ],
     selectedAudio: "2",
+    selectedAudioOutput: "default",
     selectedVideo: "1",
   },
 };

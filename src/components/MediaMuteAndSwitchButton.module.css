@@ -35,3 +35,555 @@ Please see LICENSE in the repository root for full details.
     transform: rotate(360deg);
   }
 }
+
+.menu {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Only the device lists scroll; the level meter stays put beneath them.
+   The bound comes from the measured height of the call area, set by the
+   component: the menu is portalled outside the root, so neither a container
+   query nor a viewport unit describes the space it is allowed to fill. */
+.deviceList {
+  /* Held one border width clear of the frame on each side. The menu draws its
+     frame as an outline just inside its own edge, and once this list has
+     enough in it to scroll, Safari paints it — rows and all — above that
+     outline, so the frame vanished beside every device; measured on the
+     microphone menu with many devices, 384 pixels of it. Everything the list
+     holds is inside this, so nothing in it needs to keep clear on its own. */
+  margin-inline: var(--cpd-border-width-1);
+  /* The camera menu's width, set by the component, less that clearance so the
+     menu still comes to it. Without the variable the calc is invalid and the
+     width falls back to auto, which is what every other menu wants. */
+  inline-size: calc(
+    var(--device-list-inline-size) - 2 * var(--cpd-border-width-1)
+  );
+  overflow-y: auto;
+  min-block-size: 0;
+  max-block-size: var(--device-list-max-height);
+  /* The heading stands over the head of this list and the level meter over its
+     foot. Scrolling a row flush to either edge would put it underneath one of
+     them, which is how a row reached by the keyboard ends up half-readable;
+     this keeps both their heights clear for anything the browser scrolls to.
+     Set by the component, which is the only thing that can measure them. */
+  scroll-padding-block: var(--device-list-scroll-padding-start, 0)
+    var(--device-list-scroll-padding-end, 0);
+}
+
+/* Each section is headed by its own rule, which Compound draws under a menu
+   heading already. The heading spans the whole menu — the menu has no padding
+   of its own — so that rule runs edge to edge, stopping only where the frame
+   is, rather than inset as a separator between the sections would be.
+
+   Compound's spacing around it is the design's too, bar one thing: the design
+   leaves a section's first device further below the rule than Compound does —
+   measured off the mock, 27px from the rule to the top of the control, against
+   the 16px that Compound's 8px margin and the row's own 8px padding give. The
+   difference goes below the rule, so the rule stays tight under its own text
+   where Compound put it. */
+.menu h3 {
+  margin-block-end: var(--cpd-space-5x);
+}
+
+/* One section is set much further from the one above it than Compound's 8px
+   heading margin allows: measured off the mock, 41px from the last device's
+   control to the next heading's text, against the 22px we had. Only between
+   sections — the first heading keeps Compound's spacing, because the menu's
+   own padding is already above it. */
+.deviceList [role="group"] + [role="group"] h3 {
+  margin-block-start: var(--cpd-space-7x);
+}
+
+/* Each section's heading stays at the top of the scrollport while any of that
+   section is still in view, so a long list never leaves you wondering which
+   kind of device you are looking at. It leaves with its own section, because
+   sticky only holds while the group it belongs to is in view.
+
+   Opaque, and held a border width clear of the sides, for the same reason as
+   the meter below: this is a positioned element, so it paints above the
+   outline the menu draws its frame with, and would swallow it. */
+.sectionHeading {
+  position: sticky;
+  inset-block-start: 0;
+  /* Over what scrolls beneath it. Without a layer of its own it is painted in
+     order with everything else positioned, and the effect tiles — positioned,
+     to carry their tick and the remove cross — come after it, so the grid
+     slid over the heading instead of under it. */
+  z-index: 1;
+  background: var(--cpd-color-bg-canvas-default);
+  /* Clear of the frame's top edge; the list it sits in already keeps it clear
+     of the sides. */
+  margin-block-start: var(--cpd-border-width-1);
+}
+
+/* The meter belongs to the microphone section: it stays at the bottom of the
+   scrollport while that section is in view, and leaves with it when the list
+   is scrolled up to the speakers. The wrapper is deliberately unpositioned —
+   a positioned one paints above the menu's outline and swallows the frame
+   along this whole section. Sticky is resolved against the scroll container,
+   so it does not need one. */
+
+.stickyMeter {
+  position: sticky;
+  inset-block-end: 0;
+  /* Opaque, so the list does not show through it as it scrolls past, and held
+     clear of the frame's bottom edge. The list it sits in already keeps it
+     clear of the sides. */
+  background: var(--cpd-color-bg-canvas-default);
+  margin-block-end: var(--cpd-border-width-1);
+}
+
+/* Radix focuses whatever the pointer is over, so the browser's own ring marks
+   the item under the mouse. It cannot distinguish the two modalities here, so
+   it is suppressed and replaced by one that can.
+
+   Every kind of item the menu can focus, not only the device rows: the camera
+   menu's blur toggle is a checkbox item and a child of the menu rather than of
+   the list, and left out it kept the browser's own ring and followed the
+   pointer with it. */
+.menu [role^="menuitem"]:focus,
+.menu [role^="menuitem"]:focus-visible {
+  outline: none;
+}
+
+/* Shown only when the keyboard is what moved the focus. */
+.menu[data-focus-modality="keyboard"] [role^="menuitem"]:focus {
+  outline: var(--cpd-border-width-2) solid var(--cpd-color-border-focused);
+  outline-offset: calc(-1 * var(--cpd-border-width-2));
+}
+
+/*
+ * The Background effects grid.
+ *
+ * Three across matches the design and keeps a thumbnail readable at a glance;
+ * with no effect, blur and two shipped images, the five a user may add fill it
+ * to a whole three-by-three at the limit, where the add tile goes away, and
+ * four and the add tile fill it one short of it.
+ *
+ * minmax(0, 1fr) rather than 1fr: a grid track will not shrink below its
+ * content's minimum width by default, and a tile carrying a label is wider
+ * than a third of the menu, so plain 1fr lays out three full-width columns and
+ * clips two of them.
+ */
+.effectGrid {
+  display: grid;
+  /* Thirds of a menu whose width is set, so the tiles are the size design
+     draws them — about eighty pixels — whatever the device names are. Zero
+     rather than the content as the floor, so a long label wraps inside its
+     tile instead of pushing the grid wider than the menu. */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* Every tile the same height, set by the tallest — the ones carrying a
+     label. Forcing a ratio instead clips the label as soon as the menu is
+     narrow enough that the ratio cannot hold it. */
+  grid-auto-rows: 1fr;
+  /* Measured against the design, where the gap is about a sixth of a tile's
+     width. A step less than this read as tight, and left the remove cross on
+     the corner with little room of its own. */
+  gap: var(--cpd-space-3x);
+  /* The same inset a menu heading and a device row carry, so the tiles line
+     their left edge up with the "B" of the heading above them and with the
+     radio buttons above that. Matching the surrounding boxes instead puts the
+     tiles to the left of both, since a heading insets its own text. */
+  /* The sides carry the full inset to the menu's frame. Above, the grid is
+     the first control of its section, so it starts where a device row's
+     control starts under its own rule: the heading's spacing supplies most of
+     that, and this adds the same step a device row holds above its control.
+     Below, the menu's own padding is already the inset, so nothing is set. */
+  /* Sixteen from the menu's edge, as the notice below it is and as design
+     draws both: the list this sits in is already held a border width in from
+     the frame, so that much less here. */
+  padding: var(--cpd-space-2x)
+    calc(var(--cpd-space-4x) - var(--cpd-border-width-1)) 0;
+}
+
+/*
+ * A menu item lays itself out as a grid of chevron, icon and label in a row.
+ * A tile centres its glyph with the label beneath instead, so this has to
+ * outweigh that rule rather than sit beside it.
+ *
+ * The tiles are a little wider than tall, as the design draws them, and hold
+ * that shape whatever the menu measures.
+ */
+.effectGrid .effectTile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Glyph and label centre together as one group. Pinning the label to the
+     floor instead leaves the glyph riding high in the space above it. */
+  justify-content: center;
+  /* Measured against the design: the glyph sits a quarter of the tile wide,
+     with about a seventh of the tile's height between its ink and the label's.
+     The label's own leading is part of that distance, so the step here is
+     smaller than the ink gap it produces. */
+  gap: var(--cpd-space-1x);
+  block-size: auto;
+  min-block-size: 0;
+  min-inline-size: 0;
+  /* More room above and below than at the sides: the tile is wider than tall,
+     and the padding is what carries that proportion now the gap is set by the
+     design's spacing rather than by filling the box. */
+  padding: var(--cpd-space-3x) var(--cpd-space-2x);
+  overflow: hidden;
+  border: 2px solid var(--cpd-color-border-interactive-secondary);
+  border-radius: var(--cpd-space-2x);
+}
+
+/* The selection is drawn here and announced by the item's aria-checked, so it
+   never rests on colour alone. Matched to the specificity of the base tile
+   rule above, which also sets a border-color and would otherwise win.
+   Colour alone, at the width every tile already carries: thickening it with an
+   inset shadow drew it inside the padding box, where an image tile's picture
+   sits, so the picture covered it and an added background wore a thinner frame
+   than no effect did. */
+.effectGrid .effectTileSelected {
+  border-color: var(--cpd-color-border-accent);
+}
+
+.effectGrid .effectTile > * {
+  /* A menu item spaces its icon and label for a row, with the gap carried as a
+     right margin on each. Stacked in a tile that margin is dead space on one
+     side, which shifts the glyph and the label off the tile's centre. */
+  margin: 0;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.effectSwatch {
+  flex: 0 0 auto;
+  inline-size: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cpd-color-icon-secondary);
+}
+
+/* An image tile is the picture: it fills the tile rather than sitting in a box
+   inside one, which is what the design draws and what makes a background
+   recognisable at this size. */
+.effectThumb {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+/* Blur has no icon in the design system, and a hatch reads as "softened" in a
+   way a glyph does not. */
+.effectBlurGlyph {
+  /* Smaller than the glyph beside it, and than the design's own hatch measures.
+     The design's is an icon whose strokes shorten towards the corners, so it
+     leaves them empty and reads lighter; a uniform hatch fills its box and
+     reads heavier at the same size. */
+  inline-size: 18px;
+  block-size: 18px;
+  border-radius: var(--cpd-space-1x);
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--cpd-color-icon-secondary) 0 1.2px,
+    transparent 1.2px 3.15px
+  );
+}
+
+/* The tick marking the tile in force, standing where the glyph would.
+   Positioned, so it paints above the image, which is positioned itself and
+   would otherwise cover anything left in normal flow. */
+.effectCheck {
+  position: relative;
+  color: var(--cpd-color-icon-accent-primary);
+}
+
+/* On a picture it needs its own ground: a tick alone disappears into whatever
+   the image happens to be behind it. */
+.effectCheckOnImage {
+  border-radius: 50%;
+  background: var(--cpd-color-bg-canvas-default);
+  box-shadow: 0 0 0 var(--cpd-border-width-2) var(--cpd-color-bg-canvas-default);
+}
+
+/* A menu item's label is sized for a row; in a tile the design sets it a step
+   smaller, against the glyph above it. */
+.effectLabel {
+  font: var(--cpd-font-body-sm-medium);
+  /* A menu item labels itself in the secondary colour, which reads as muted
+     under a glyph the design draws at full strength. */
+  color: var(--cpd-color-text-primary);
+}
+
+/* Named for assistive technology, not drawn: an image labels itself, and the
+   design gives the add tile a plus alone. */
+.effectLabelUnseen {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/*
+ * Unavailable. Opacity alone is not enough on an image tile: a washed-out
+ * photograph still reads as a photograph you could pick. Draining the colour
+ * as well says plainly that there is nothing to choose here.
+ */
+.effectGrid .effectTile[aria-disabled="true"] {
+  opacity: 0.55;
+}
+
+.effectGrid .effectTile[aria-disabled="true"] .effectThumb {
+  filter: grayscale(1);
+}
+
+/*
+ * The cross that removes one of the user's own backgrounds.
+ *
+ * Shown on hover, and whenever the tile has the keyboard's attention, so the
+ * two ways of reaching it look the same. It carries its own ground for the
+ * same reason the tick does: it sits on a picture nobody chose.
+ */
+.effectRemove {
+  position: absolute;
+  /* On the tile's top-right corner, where Zoom and Teams both put it, and
+     clear of the middle: centred, it sat inside the target for choosing the
+     tile, so the one destructive action lived where the ordinary one does. */
+  inset-block-start: 0;
+  inset-inline-end: 0;
+  /* It overhangs the corner by about a fifth of itself, as the design draws
+     it: enough to read as sitting on the tile rather than in it, little
+     enough that it never reaches the tile beside it. */
+  translate: 20% -20%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  inline-size: 28px;
+  block-size: 28px;
+  border-radius: 50%;
+  background: var(--cpd-color-bg-canvas-default);
+  /* Red at rest, not only under the pointer. The design says what the button
+     does before you are on it, and the ground carries the hover instead. */
+  color: var(--cpd-color-icon-critical-primary);
+  /* Raised off the tile rather than outlined against it — Compound's own value
+     for a small raised surface, there being no shadow token. In a dark theme
+     it falls on a near-black ground and reads as nothing, which is how the
+     design draws it there too. */
+  box-shadow: 0 1.2px 2.4px 0 rgb(0 0 0 / 15%);
+  cursor: pointer;
+}
+
+/* Under the pointer the ground turns critical and the shadow gives way to a
+   ring, so the button reads as pressable and as destructive at once. */
+.effectRemove:hover {
+  background: var(--cpd-color-bg-critical-subtle-hovered);
+  box-shadow: 0 0 0 var(--cpd-border-width-1)
+    var(--cpd-color-border-critical-subtle);
+}
+
+.effectGrid .effectTileWrap:hover .effectRemove,
+.effectGrid .effectTileWrap:focus-within .effectRemove {
+  display: flex;
+}
+
+/* Holds a tile that can be removed, so the cross can sit over it without
+   being inside the menu item. */
+.effectTileWrap {
+  position: relative;
+  display: flex;
+  min-inline-size: 0;
+}
+
+.effectGrid .effectTileWrap > .effectTile {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+/* Sits under the tiles, inside the same margin they keep from the frame, and
+   with the same distance above it as below: the menu's own bottom padding
+   supplies the lower half, so only the upper half is set here. Without it the
+   message sits flush against the tiles with a gap twice its size underneath. */
+.effectError {
+  /* For the same reason as the notice below: a refusal's title is a sentence,
+     and would otherwise set the menu's width rather than fit inside it. */
+  contain: inline-size;
+  /* A step short of the margin it keeps at the sides: the menu is a column
+     with a gap of its own, which makes up the difference above. */
+  padding: var(--cpd-space-3x) var(--cpd-space-4x) 0;
+}
+
+/* The spinner stands exactly where the tick will, so the tile does not shift
+   when one becomes the other. */
+.effectBusy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 20px;
+  block-size: 20px;
+}
+
+/*
+ * What the browser costs, said quietly.
+ *
+ * Measured off the design: the subtle secondary ground, held the same sixteen
+ * pixels from the menu's sides as the grid above it, with the mark and the
+ * text on one line's baseline and the text at its ordinary weight. Not an
+ * alert — an alert is for something that just happened, and this was true
+ * before the menu opened and will be true after it closes.
+ */
+.effectNotice {
+  /* Takes the width the menu has rather than lending it one. The menu is as
+     wide as its widest content, and a sentence asks for its whole length on
+     one line: without this the notice widened the camera menu from 296 to 340
+     pixels, past the width the grid and the preview are drawn for. */
+  contain: inline-size;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--cpd-space-3x);
+  /* Nothing below: the menu's own bottom padding is already the inset, and
+     setting one here as well made the gap under the notice twice the gap
+     beside it. The same reason the grid leaves its own bottom alone. */
+  margin: var(--cpd-space-2x) var(--cpd-space-4x) 0;
+  padding: var(--cpd-space-3x);
+  border-radius: var(--cpd-space-2x);
+  background: var(--cpd-color-bg-subtle-secondary);
+  color: var(--cpd-color-text-primary);
+  font: var(--cpd-font-body-md-regular);
+}
+
+.effectNotice > svg {
+  flex-shrink: 0;
+  color: var(--cpd-color-icon-secondary);
+}
+
+/*
+ * How the user looks, at the top of the camera menu.
+ *
+ * Edge to edge and flush with the top, as the design draws it: it takes the
+ * menu's own top padding, which is why it pulls itself up over it. Held one
+ * border width clear of the frame and rounded to match what is left of the
+ * frame's corner, because a video paints on a layer of its own and would
+ * otherwise draw over the outline the menu is framed with.
+ *
+ * Sixteen by nine across the camera menu's fixed width, less its frame, and
+ * written as a height rather than a ratio: with a ratio and a cap Safari kept
+ * the ratio by narrowing the box, and the preview stopped short of the menu's
+ * right edge. Cropped rather than letterboxed where the call is narrow enough
+ * to narrow the menu — a face cut at the edge reads as a self-view, a face in
+ * bars reads as a broken one.
+ */
+.selfPreview {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-block-end: var(--cpd-space-2x);
+  block-size: 166px;
+  overflow: hidden;
+  border-start-start-radius: calc(
+    var(--cpd-space-3x) - var(--cpd-border-width-1)
+  );
+  border-start-end-radius: calc(
+    var(--cpd-space-3x) - var(--cpd-border-width-1)
+  );
+  background: var(--cpd-color-bg-subtle-secondary);
+  color: var(--cpd-color-icon-secondary);
+}
+
+/* Above the list: it takes the menu's own top padding, which is why it pulls
+   itself up over it, and it keeps clear of the frame's sides itself, since it
+   is not inside the list that otherwise does. */
+.selfPreviewPinned {
+  margin-block-start: calc(
+    -1 * var(--cpd-space-5x) + var(--cpd-border-width-1)
+  );
+  margin-inline: var(--cpd-border-width-1);
+}
+
+/* Inside the list, where there was no room to pin it. A scrolling container
+   cuts off whatever is pulled above its top, so it is the list that moves up
+   over the menu's padding instead, to bring the preview flush with the top.
+   That puts the list's corners where the frame's are rounded, so they are
+   rounded too: square, a stuck heading would show past the curve. */
+.deviceListLeadsWithPreview {
+  margin-block-start: calc(
+    -1 * var(--cpd-space-5x) + var(--cpd-border-width-1)
+  );
+  border-start-start-radius: calc(
+    var(--cpd-space-3x) - var(--cpd-border-width-1)
+  );
+  border-start-end-radius: calc(
+    var(--cpd-space-3x) - var(--cpd-border-width-1)
+  );
+}
+
+/* Laid over the box rather than in it. In flow, a sixteen-by-nine picture
+   166 pixels tall asks for 295 of width, and the menu, sized to its widest
+   content, grew by the pixel that asked for. Out of flow it only fills what
+   the menu's width already gives it. */
+.selfPreview > video,
+.selfPreview > img {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+/* The camera faces the user, so the picture is what a mirror would show —
+   the same as the pre-join preview, or the two would disagree. */
+.selfPreview > .mirrored {
+  transform: scaleX(-1);
+}
+
+/*
+ * A fade at each edge of the list while there is more that way.
+ *
+ * In place of the scrollbar, which the platform fades out after a moment: with
+ * a trackpad on a Mac there was otherwise nothing to say that the list scrolls,
+ * and it looked as though the backgrounds simply stopped. Sticky, so each holds
+ * its edge of what is in view, and taking no room: each gives back its own
+ * height in a margin. Over the content, so the rows and tiles fade into it
+ * rather than past it, since they are opaque and a background would not show.
+ *
+ * The top one stands below whichever heading holds the top of the list, which
+ * is where the content is coming out from under.
+ */
+.scrollEdge {
+  position: sticky;
+  z-index: 1;
+  block-size: var(--cpd-space-6x);
+  pointer-events: none;
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .scrollEdge {
+    transition: opacity 150ms ease-out;
+  }
+}
+
+.scrollEdgeShown {
+  opacity: 1;
+}
+
+.scrollEdgeTop {
+  inset-block-start: var(--device-list-stuck-heading-height, 0);
+  margin-block-end: calc(-1 * var(--cpd-space-6x));
+  background: linear-gradient(
+    to bottom,
+    var(--cpd-color-bg-canvas-default),
+    transparent
+  );
+}
+
+.scrollEdgeBottom {
+  inset-block-end: 0;
+  margin-block-start: calc(-1 * var(--cpd-space-6x));
+  background: linear-gradient(
+    to top,
+    var(--cpd-color-bg-canvas-default),
+    transparent
+  );
+}

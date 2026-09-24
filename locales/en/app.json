@@ -3,6 +3,10 @@
     "user_menu": "User menu"
   },
   "action": {
+    "add_background_image": "Add image",
+    "background_effect_blur": "Blur",
+    "background_effect_none": "None",
+    "background_effect_numbered": "Background {{n}}",
     "blur_background": "Blur background",
     "close": "Close",
     "copy_link": "Copy link",
@@ -23,6 +27,9 @@
     "upload_file": "Upload file"
   },
   "analytics_notice": "By participating in this beta, you consent to the collection of anonymous data, which we use to improve the product. You can find more information about which data we track in our <2>Privacy Policy</2> and our <6>Cookie Policy</6>.",
+  "background_effects": {
+    "slow_in_this_browser": "This browser runs background effects slowly, so other people may see your video stutter."
+  },
   "call_ended_view": {
     "create_account_button": "Create account",
     "create_account_prompt": "<0>Why not finish by setting up a password to keep your account?</0><1>You'll be able to keep your name and set an avatar for use on future calls</1>",
@@ -92,6 +99,10 @@
   },
   "disconnected_banner": "Connectivity to the server has been lost.",
   "error": {
+    "background_animated": "Animated images cannot be used as a background",
+    "background_not_an_image": "That file is not an image",
+    "background_not_kept": "That background could not be saved",
+    "background_undecodable": "That image could not be opened",
     "call_is_not_supported": "Call is not supported",
     "call_not_found": "Call not found",
     "call_not_found_description": "<0>That link doesn't appear to belong to any existing call. Check that you have the right link, or <2>create a new one</2>.</0>",
@@ -163,6 +174,12 @@
   "login_auth_links_prompt": "Not registered yet?",
   "login_subheading": "To continue to Element",
   "login_title": "Login",
+  "microphone_level": {
+    "label": "Microphone level",
+    "no_device": "No microphone found. Connect one, then try again.",
+    "permission_denied": "Element Call cannot use your microphone. Allow access in your browser settings.",
+    "value": "{{level}} of {{max}}"
+  },
   "microphone_off": "Microphone off",
   "microphone_on": "Microphone on",
   "mute_microphone_button_label": "Mute microphone",
@@ -206,6 +223,7 @@
     "auto_gain_control_label": "Automatic gain control",
     "background_blur_header": "Background",
     "background_blur_label": "Blur the background of the video",
+    "background_effects_header": "Background effects",
     "bitrate_label": "Bitrate",
     "blur_not_supported_by_browser": "(Background blur is not supported by this device.)",
     "camera_header": "Camera quality",
@@ -215,11 +233,14 @@
       "activating": "Activating…",
       "camera": "Camera",
       "camera_numbered": "Camera {{n}}",
+      "camera_source": "Camera Source",
       "change_device_button": "Change audio device",
       "default": "Default",
       "default_named": "Default <2>({{name}})</2>",
+      "default_named_plain": "Default ({{name}})",
       "handset": "Handset",
       "loudspeaker": "Loudspeaker",
+      "mic_source": "Mic Source",
       "microphone": "Microphone",
       "microphone_numbered": "Microphone {{n}}",
       "speaker": "Speaker",

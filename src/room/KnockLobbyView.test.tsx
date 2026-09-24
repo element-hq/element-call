@@ -27,6 +27,16 @@ vi.mock("../livekit/TrackProcessorContext", () => ({
     processor: undefined,
   }),
   useTrackProcessorSync: (): void => {},
+  useBackgroundProcessing: (): { settling: boolean } => ({ settling: false }),
+  useAddedBackgrounds: (): {
+    added: [];
+    addBackground: () => Promise<void>;
+    removeBackground: () => Promise<void>;
+  } => ({
+    added: [],
+    addBackground: async (): Promise<void> => {},
+    removeBackground: async (): Promise<void> => {},
+  }),
 }));
 
 vi.mock("react-use-measure", () => ({

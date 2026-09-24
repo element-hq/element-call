@@ -43,13 +43,40 @@ const wasmFileset: WasmFileset = {
 };
 
 /**
- * Track processor that applies effects such as blurring to a user's background.
+ * Track processor that applies background effects — blur, or a replacement
+ * image — to a user's camera.
  *
  * This is just like LiveKit's prebuilt BackgroundTransformer except that it
  * loads the segmentation models from our own bundle rather than as an external
- * resource fetched from the public internet.
+ * resource fetched from the public internet. The library's own `assetPaths`
+ * option cannot do this: it takes a directory and resolves the WASM through
+ * MediaPipe's FilesetResolver, which picks its own variants, whereas we want
+ * only the SIMD ones.
  */
-export class BlurBackgroundTransformer extends BackgroundTransformer {
+export class BackgroundEffectTransformer extends BackgroundTransformer {
+  /**
+   * Called once, when a frame has actually come out of the pipeline.
+   *
+   * The promises say nothing useful about when that happens. Measured on four
+   * devices, attaching resolves in about three seconds and switching in none
+   * at all, and then a browser on the slow path spends another twelve to
+   * fifteen seconds before the first frame appears. Only the frame itself
+   * marks the end of the wait.
+   */
+  public onFirstFrame: (() => void) | undefined;
+  private produced = false;
+
+  public override async transform(
+    frame: VideoFrame,
+    controller: TransformStreamDefaultController<VideoFrame>,
+  ): Promise<void> {
+    await super.transform(frame, controller);
+    if (!this.produced) {
+      this.produced = true;
+      this.onFirstFrame?.();
+    }
+  }
+
   public async init({
     outputCanvas,
     inputElement: inputVideo,
@@ -73,8 +100,16 @@ export class BlurBackgroundTransformer extends BackgroundTransformer {
       outputConfidenceMasks: false,
     });
 
-    if (this.options.blurRadius) {
+    // BackgroundTransformer applies these at the end of its own init. Because
+    // we replace init wholesale rather than extending it, we have to repeat
+    // them, or an effect that was already selected when the pipeline starts is
+    // silently ignored.
+    if (this.options.imagePath) {
+      await this.loadAndSetBackground(this.options.imagePath);
+    }
+    if (typeof this.options.blurRadius === "number") {
       this.gl?.setBlurRadius(this.options.blurRadius);
     }
+    this.gl?.setBackgroundDisabled(this.options.backgroundDisabled ?? false);
   }
 }

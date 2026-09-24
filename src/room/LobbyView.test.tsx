@@ -5,8 +5,10 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { describe, expect, it, vi } from "vitest";
-import { render } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { of } from "rxjs";
 import { LeaveToHomeProvider } from "../LeaveToHomeContext";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { type MatrixClient } from "matrix-js-sdk";
@@ -19,6 +21,7 @@ import {
 import { LobbyView } from "./LobbyView";
 import { E2eeType } from "../e2ee/e2eeType";
 import { mockMediaDevices, mockMuteStates } from "../utils/test";
+import { type MediaDevices } from "../state/MediaDevices";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { type ProcessorState } from "../livekit/TrackProcessorContext";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
@@ -39,6 +42,16 @@ vi.mock("../livekit/TrackProcessorContext", () => ({
     processor: undefined,
   }),
   useTrackProcessorSync: (): void => {},
+  useBackgroundProcessing: (): { settling: boolean } => ({ settling: false }),
+  useAddedBackgrounds: (): {
+    added: [];
+    addBackground: () => Promise<void>;
+    removeBackground: () => Promise<void>;
+  } => ({
+    added: [],
+    addBackground: async (): Promise<void> => {},
+    removeBackground: async (): Promise<void> => {},
+  }),
 }));
 
 vi.mock("react-use-measure", () => ({
@@ -77,9 +90,10 @@ function renderLobbyView(
   props: Partial<Parameters<typeof LobbyView>[0]> = {},
   withAppBar = false,
   platform = "android",
+  devices: Partial<MediaDevices> = {},
 ): ReturnType<typeof render> {
   platformMock.mockReturnValue(platform);
-  const mediaDevices = mockMediaDevices({});
+  const mediaDevices = mockMediaDevices(devices);
   const muteStates = mockMuteStates();
   const hideHeader = withAppBar ? true : false;
   const lobbyView = (
@@ -176,5 +190,73 @@ describe("LobbyView", () => {
     expect(primaryButtonSvgPath).toBe(expectedSvgPath);
     expect(container).toMatchSnapshot();
     expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+describe("LobbyView microphone level", () => {
+  const realMediaDevices = Object.getOwnPropertyDescriptor(
+    navigator,
+    "mediaDevices",
+  );
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    // Put navigator back, or every later test in the run inherits the stub.
+    if (realMediaDevices === undefined) {
+      Reflect.deleteProperty(navigator, "mediaDevices");
+    } else {
+      Object.defineProperty(navigator, "mediaDevices", realMediaDevices);
+    }
+  });
+
+  /** Just enough of the Web Audio and capture APIs for the meter to run. */
+  function stubAudioCapture(): void {
+    vi.stubGlobal(
+      "AudioContext",
+      class {
+        public readonly state = "running";
+        public createAnalyser(): object {
+          return {
+            fftSize: 1024,
+            getByteTimeDomainData: (): void => {},
+          };
+        }
+        public createMediaStreamSource(): object {
+          return { connect: (): void => {} };
+        }
+        public close(): void {}
+      },
+    );
+    // Only this property: replacing navigator wholesale drops the getters on
+    // its prototype, such as userAgent.
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: {
+        getUserMedia: vi.fn().mockResolvedValue({ getTracks: () => [] }),
+      },
+    });
+  }
+
+  it("shows the microphone level meter", async () => {
+    stubAudioCapture();
+    const user = userEvent.setup();
+    const { getByRole } = renderLobbyView({}, false, "desktop", {
+      requestDeviceNames: (): void => {},
+      audioInput: {
+        available$: of(
+          new Map([["mic1", { type: "name", name: "Microphone 1" }]]),
+        ),
+        selected$: of({ id: "mic1" }),
+        select: (): void => {},
+      },
+    } as unknown as Partial<MediaDevices>);
+
+    // The meter lives with the microphone picker, which the pre-join screen
+    // reaches through the same chevron as a call in progress.
+    await user.click(getByRole("button", { name: "Microphone" }));
+
+    expect(
+      await screen.findByRole("meter", { name: "Microphone level" }),
+    ).toBeInTheDocument();
   });
 });

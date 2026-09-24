@@ -1,0 +1,88 @@
+{/**
+Copyright 2026 Element Creations Ltd.
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+**/}
+
+{/**
+A custom doc page, replacing the default autodocs for this component, so that
+the background effects states can be reviewed together rather than hunted for
+in the sidebar. Same filename as the component, which is how Storybook picks
+it up.
+**/}
+
+import {
+  Meta,
+  Primary,
+  Controls,
+  Stories,
+  Title,
+  Subtitle,
+  Canvas,
+} from "@storybook/addon-docs/blocks";
+import * as MenuStories from "./MediaMuteAndSwitchButton.stories";
+
+<Meta of={MenuStories} />
+
+<Title> Device menu </Title>
+
+The menu behind the chevron on the microphone and camera buttons: the devices
+to choose from, and — on the camera — the background effects.
+
+<Subtitle> Background effects: the four states worth reviewing </Subtitle>
+
+**Offered.** The ordinary case. No effect, blur, the images we ship, the ones
+the user added, and a tile for adding another.
+
+<Canvas of={MenuStories.BackgroundEffects} />
+
+**Offered, with what it costs.** Browsers without the fast path — Safari and
+Firefox, on every platform — draw each frame through a canvas instead.
+Measured across four of them that costs between a sixth and a quarter of the
+frame rate, on a phone and on a desktop alike.
+
+It is said rather than enforced. The cost is smoothness; the reason to pay it
+is privacy; and only the person in the room knows which they would rather
+have. Everything stays choosable.
+
+Drawn quietly on purpose, to the design: the subtle ground, an outline mark and
+the text at its ordinary weight, held the same sixteen pixels from the menu's
+sides as the grid above it. Not an alert — an alert is for something that just
+happened, and this was true before the menu opened and will be true after it
+closes.
+
+<Canvas of={MenuStories.BackgroundEffectsSlowInThisBrowser} />
+
+**Being set up.** Only on the first effect of a session. The tile that was
+pressed spins where its tick will go, until a frame has actually come out of
+the pipeline — about three seconds of building, and on Safari another twelve to
+fifteen while the page holds still. The spinner turns by rotating, which a
+browser composites, so it keeps moving through a pause that has stopped
+everything else: the difference between looking busy and looking crashed.
+
+On the tile rather than in a message, because once the assets are cached the
+wait is a fraction of a second, and a message that appears and vanishes that
+fast is noise. A spinner that brief just reads as a control responding. The
+notice about what the browser costs stays put throughout — it is true before,
+during and after.
+
+This story plays the sequence rather than posing it, shortened to a second and
+a half so it is watchable. Later effects skip it entirely: switching a built
+pipeline costs nothing.
+
+<Canvas of={MenuStories.BackgroundEffectsSettling} />
+
+**Not possible at all.** Where the browser cannot run background processing on
+any path, the tiles are shown and disabled — except no effect, which needs no
+processing and stays choosable, so there is always a way back to plain video.
+
+<Canvas of={MenuStories.BackgroundEffectsUnavailable} />
+
+<Subtitle> Mobile layouts </Subtitle>
+
+This component is reactive. To check the mobile layout, open the story from the
+sidebar: the summaries on this page do not render it.
+
+<Primary />
+<Controls of={MenuStories.Default} />
+<Stories />

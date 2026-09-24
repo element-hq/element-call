@@ -117,6 +117,18 @@ export const videoInput = new Setting<string | undefined>(
 
 export const backgroundBlur = new Setting<boolean>("background-blur", false);
 
+/**
+ * The background effect applied to the local camera: "none", "blur", or
+ * "image:<id>". See backgroundEffects.ts for the stored form.
+ */
+export const backgroundEffect = new Setting<string>(
+  "background-effect",
+  // Defaults to whatever blur the user had already chosen, so someone who
+  // turned blur on before this existed still has it afterwards. Their own
+  // choice replaces this the moment they make one.
+  backgroundBlur.getValue() ? "blur" : "none",
+);
+
 export const showHandRaisedTimer = new Setting<boolean>(
   "hand-raised-show-timer",
   false,

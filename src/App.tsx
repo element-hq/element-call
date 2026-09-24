@@ -22,6 +22,8 @@ import {
 } from "react-router-dom";
 import * as Sentry from "@sentry/react";
 import { TooltipProvider } from "@vector-im/compound-web";
+
+import { BackgroundEffectsBench } from "./livekit/BackgroundEffectsBench";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { type MatrixClient } from "matrix-js-sdk";
 import { I18nextProvider } from "react-i18next";
@@ -156,6 +158,15 @@ export const App: FC<Props> = ({ vm, widget }) => {
                 <SentryRoute path="/" element={<HomePage />} />
                 <SentryRoute path="/login" element={<LoginPage />} />
                 <SentryRoute path="/register" element={<RegisterPage />} />
+                {/* Exploration only: measures whether this device can run
+                    background effects, on a device the app refuses to run them
+                    on. One path segment, not two: the config is fetched
+                    relative to the page, so a nested path looks for it in a
+                    directory that does not exist and the app never starts. */}
+                <SentryRoute
+                  path="/background-effects-bench"
+                  element={<BackgroundEffectsBench />}
+                />
                 <SentryRoute path="*" element={<RoomPage />} />
               </Routes>
             </Sentry.ErrorBoundary>
