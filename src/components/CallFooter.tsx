@@ -86,7 +86,7 @@ export interface FooterState {
   /** Every effect on offer, in the order they are shown. */
   backgroundEffects: BackgroundEffectChoice[];
   /** What the user is told about effects here, if anything. */
-  backgroundEffectNotice: "unavailable" | undefined;
+  backgroundEffectNotice: "unavailable" | "slow" | undefined;
   showFooter: boolean;
 
   /* This is needed for WindowMode = "flat" */
@@ -243,7 +243,9 @@ export const CallFooter: FC<FooterProps> = ({
         backgroundEffectNotice={
           backgroundEffectNotice === "unavailable"
             ? t("background_effects.unavailable")
-            : undefined
+            : backgroundEffectNotice === "slow"
+              ? t("background_effects.slow")
+              : undefined
         }
       />,
     );
