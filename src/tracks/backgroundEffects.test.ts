@@ -15,6 +15,7 @@ import {
   serializeEffect,
   shippedBackgrounds,
 } from "./backgroundEffects";
+import { maxAddedBackgrounds } from "./backgroundImages";
 
 describe("the chosen background effect", () => {
   test("round-trips through its stored form", () => {
@@ -37,6 +38,14 @@ describe("the chosen background effect", () => {
   test("reads a stored value that is not a string as no effect", () => {
     for (const raw of [null, 1, {}, ["blur"]])
       expect(parseEffect(raw)).toEqual({ kind: "none" });
+  });
+
+  test("fills the grid at the limit and one short of it", () => {
+    // No effect, blur and the shipped ones, then the added ones.
+    const fixed = 2 + shippedBackgrounds.length;
+    expect((fixed + maxAddedBackgrounds) % 3).toBe(0);
+    // One short, the add tile takes the last place.
+    expect((fixed + maxAddedBackgrounds - 1 + 1) % 3).toBe(0);
   });
 
   test("gives every shipped background an image to draw", () => {
