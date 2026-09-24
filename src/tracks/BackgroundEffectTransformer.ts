@@ -53,6 +53,20 @@ const wasmFileset: WasmFileset = {
  * resource fetched from the public internet.
  */
 export class BackgroundEffectTransformer extends BackgroundTransformer {
+  /** Called once, when the first frame carrying an effect has been drawn. */
+  public onFirstFrame: (() => void) | undefined;
+
+  public override async transform(
+    frame: VideoFrame,
+    controller: TransformStreamDefaultController<VideoFrame>,
+  ): Promise<void> {
+    const priming = this.isFirstFrame;
+    await super.transform(frame, controller);
+    // Cleared only once a frame has been through the segmenter; a frame
+    // passed through untouched leaves it set.
+    if (priming && !this.isFirstFrame) this.onFirstFrame?.();
+  }
+
   /**
    * As the library's, except that disabling also drops the blur radius: kept,
    * it has every frame segmented and the result thrown away, where with

@@ -233,6 +233,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       vm,
       props.muteStates,
       mediaDevices,
+      backgroundEffectsState$.pipe(map(({ settling }) => settling ?? false)),
       `${props.client.getUserId()}:${props.client.getDeviceId()}`,
       { showControls: urlParams.showControls, header: urlParams.header },
     );
