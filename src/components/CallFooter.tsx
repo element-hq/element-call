@@ -87,6 +87,8 @@ export interface FooterState {
   backgroundEffects: BackgroundEffectChoice[];
   /** What the user is told about effects here, if anything. */
   backgroundEffectNotice: "unavailable" | "slow" | undefined;
+  /** Whether the first effect chosen is still being prepared. */
+  backgroundEffectSettling: boolean;
   showFooter: boolean;
 
   /* This is needed for WindowMode = "flat" */
@@ -173,6 +175,7 @@ export const CallFooter: FC<FooterProps> = ({
   const backgroundEffect = useBehavior(vm.backgroundEffect$);
   const selectBackgroundEffect = useBehavior(vm.selectBackgroundEffect$);
   const backgroundEffectNotice = useBehavior(vm.backgroundEffectNotice$);
+  const backgroundEffectSettling = useBehavior(vm.backgroundEffectSettling$);
   const backgroundEffects = useBackgroundEffectLabels(
     useBehavior(vm.backgroundEffects$),
   );
@@ -240,6 +243,7 @@ export const CallFooter: FC<FooterProps> = ({
         backgroundEffects={backgroundEffects}
         selectedBackgroundEffect={backgroundEffect}
         onSelectBackgroundEffect={selectBackgroundEffect}
+        backgroundEffectSettling={backgroundEffectSettling}
         backgroundEffectNotice={
           backgroundEffectNotice === "unavailable"
             ? t("background_effects.unavailable")

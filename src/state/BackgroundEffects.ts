@@ -5,7 +5,14 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { combineLatest, distinctUntilChanged, filter, map, scan } from "rxjs";
+import {
+  combineLatest,
+  distinctUntilChanged,
+  filter,
+  map,
+  Observable,
+  scan,
+} from "rxjs";
 import {
   type BackgroundProcessorWrapper,
   type SwitchBackgroundProcessorOptions,
@@ -33,6 +40,8 @@ export interface BackgroundEffectsOptions {
    * untouched, so it is switched rather than rebuilt.
    */
   pipeline: BackgroundProcessorWrapper;
+  /** Tells, once, that a frame carrying an effect has been drawn. */
+  transformer: { onFirstFrame: (() => void) | undefined };
 }
 
 /** The background effect pipeline, as the camera tracks and the menus see it. */
@@ -41,7 +50,7 @@ export class BackgroundEffects {
 
   public constructor(
     scope: ObservableScope,
-    { supported, effect$, pipeline }: BackgroundEffectsOptions,
+    { supported, effect$, pipeline, transformer }: BackgroundEffectsOptions,
   ) {
     const choice$ = effect$.pipe(map(parseEffect));
     const wanted$ = choice$.pipe(
@@ -49,15 +58,29 @@ export class BackgroundEffects {
       distinctUntilChanged(),
     );
 
+    const drewAFrame$ = scope.behavior(
+      new Observable<boolean>((subscriber) => {
+        subscriber.next(false);
+        transformer.onFirstFrame = (): void => subscriber.next(true);
+        return (): void => {
+          transformer.onFirstFrame = undefined;
+        };
+      }),
+    );
+
     this.state$ = scope.behavior(
-      wanted$.pipe(
-        scan<boolean, ProcessorState>(
-          (previous, wanted) => {
+      combineLatest([wanted$, drewAFrame$]).pipe(
+        scan<[boolean, boolean], ProcessorState>(
+          (previous, [wanted, drewAFrame]) => {
             // Attached the first time an effect is wanted and never detached
             // after, so someone who never turns one on pays for none of it.
             const attached =
               previous.processor !== undefined || (supported && wanted);
-            return { supported, processor: attached ? pipeline : undefined };
+            return {
+              supported,
+              processor: attached ? pipeline : undefined,
+              settling: attached && !drewAFrame,
+            };
           },
           { supported, processor: undefined },
         ),

@@ -116,6 +116,7 @@ describe("createCallFooterViewModel", () => {
         buildMinimalCallViewModel(gridLayout),
         mockMuteStates(),
         twoMicsAndOneCamMediaDevices,
+        constant(false),
         /* reactionIdentifier */ undefined,
         { showControls: true, header: HeaderStyle.Standard },
       );
@@ -158,6 +159,7 @@ describe("createCallFooterViewModel", () => {
             select: vi.fn(),
           },
         }),
+        constant(false),
         /* reactionIdentifier */ undefined,
         { showControls: true, header: HeaderStyle.Standard },
       );
@@ -176,6 +178,7 @@ describe("createCallFooterViewModel", () => {
         buildMinimalCallViewModel(layout),
         mockMuteStates(),
         twoMicsAndOneCamMediaDevices,
+        constant(false),
         /* reactionIdentifier */ undefined,
         { showControls: true, header: HeaderStyle.Standard },
       );
@@ -198,6 +201,7 @@ describe("createCallFooterViewModel", () => {
         buildMinimalCallViewModel(gridLayout),
         mockMuteStates(),
         twoMicsAndOneCamMediaDevices,
+        constant(false),
         /* reactionIdentifier */ undefined,
         { showControls: true, header: HeaderStyle.Standard },
       );
@@ -243,6 +247,7 @@ describe("createCallFooterViewModel", () => {
         testScope(),
         mockMuteStates(),
         twoMicsAndOneCamMediaDevices,
+        constant(false),
         /* openSettings */ undefined,
         /* hangup */ undefined,
         /* showLogo */ false,
@@ -312,6 +317,23 @@ describe("createCallFooterViewModel", () => {
       );
     });
 
+    it("passes on the wait for the first effect", () => {
+      platformMock.mockReturnValue("desktop");
+      const settling$ = new BehaviorSubject(true);
+      const vm = createLobbyFooterViewModel(
+        testScope(),
+        mockMuteStates(),
+        twoMicsAndOneCamMediaDevices,
+        settling$,
+        /* openSettings */ undefined,
+        /* hangup */ undefined,
+        /* showLogo */ false,
+      );
+      expect(vm.backgroundEffectSettling$.value).toBe(true);
+      settling$.next(false);
+      expect(vm.backgroundEffectSettling$.value).toBe(false);
+    });
+
     it("availability is the same before and during a call", () => {
       for (const supported of [true, false]) {
         sdkSupportMock.mockReturnValue(supported);
@@ -321,6 +343,7 @@ describe("createCallFooterViewModel", () => {
           buildMinimalCallViewModel(gridLayout),
           mockMuteStates(),
           twoMicsAndOneCamMediaDevices,
+          constant(false),
           /* reactionIdentifier */ undefined,
           { showControls: true, header: HeaderStyle.Standard },
         );

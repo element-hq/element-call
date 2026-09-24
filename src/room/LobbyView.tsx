@@ -24,6 +24,7 @@ import {
   type LocalVideoTrack,
   Track,
 } from "livekit-client";
+import { map } from "rxjs";
 
 import inCallStyles from "./InCallView.module.css";
 import styles from "./LobbyView.module.css";
@@ -41,6 +42,7 @@ import { ObservableScope } from "../state/ObservableScope";
 import { useInitial } from "../useInitial";
 import {
   useTrackProcessor,
+  useTrackProcessorState$,
   useTrackProcessorSync,
 } from "../livekit/TrackProcessorContext";
 import { getValue } from "../utils/observable";
@@ -137,6 +139,7 @@ export const LobbyView: FC<Props> = ({
   );
 
   const { processor } = useTrackProcessor();
+  const trackProcessorState$ = useTrackProcessorState$();
 
   const initialProcessor = useInitial(() => processor);
   const localTrackOptions = useMemo<CreateLocalTracksOptions>(
@@ -195,6 +198,7 @@ export const LobbyView: FC<Props> = ({
         footerScope,
         muteStates,
         devices,
+        trackProcessorState$.pipe(map(({ settling }) => settling ?? false)),
         openSettings,
         hangup,
         // Logo and header are connected: only show the logo in SPA with header.
@@ -204,7 +208,14 @@ export const LobbyView: FC<Props> = ({
     return (): void => {
       footerScope.end();
     };
-  }, [devices, hangup, hideHeader, muteStates, openSettings]);
+  }, [
+    devices,
+    trackProcessorState$,
+    hangup,
+    hideHeader,
+    muteStates,
+    openSettings,
+  ]);
 
   // TODO: Unify this component with InCallView, so we can get slick joining
   // animations and don't have to feel bad about reusing its CSS
