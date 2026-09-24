@@ -53,6 +53,7 @@ export function createAppBackgroundEffects(
   return createBackgroundEffects(scope, {
     supported: supportsBackgroundProcessors(),
     effect$: backgroundEffectSetting.value$,
+    setEffect: backgroundEffectSetting.setValue,
     pipeline: new BackgroundProcessorWrapper(transformer, "background-effect"),
     transformer,
   });

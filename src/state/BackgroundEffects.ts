@@ -27,6 +27,7 @@ import { type Behavior } from "./Behavior";
 import { type ObservableScope } from "./ObservableScope";
 import {
   type BackgroundEffect,
+  type EffectId,
   imagePathFor,
   parseEffect,
 } from "../tracks/backgroundEffectCatalog";
@@ -45,6 +46,8 @@ export interface BackgroundEffectsOptions {
   supported: boolean;
   /** The effect chosen, as the setting stores it. */
   effect$: Behavior<string>;
+  /** Stores a choice, to forget one that can't be honoured. */
+  setEffect: (id: EffectId) => void;
   /** The background processor pipeline to be switched between effects. */
   pipeline: BackgroundProcessorWrapper;
   /** Tells, once, that a frame carrying an effect has been drawn. */
@@ -59,7 +62,13 @@ export interface BackgroundEffects {
 /** Switches the pipeline as the choice changes, for as long as the scope lasts. */
 export function createBackgroundEffects(
   scope: ObservableScope,
-  { supported, effect$, pipeline, transformer }: BackgroundEffectsOptions,
+  {
+    supported,
+    effect$,
+    setEffect,
+    pipeline,
+    transformer,
+  }: BackgroundEffectsOptions,
 ): BackgroundEffects {
   // Wrapped once, so the call and the preview see one processor throughout.
   const processor = fromLivekitProcessor(pipeline);
@@ -68,6 +77,11 @@ export function createBackgroundEffects(
     map((effect) => effect.kind !== "none"),
     distinctUntilChanged(),
   );
+
+  choice$.pipe(scope.bind()).subscribe((effect) => {
+    if (effect.kind === "none") return;
+    if (!supported) setEffect("none");
+  });
 
   const drewAFrame$ = scope.behavior(
     new Observable<boolean>((subscriber) => {
