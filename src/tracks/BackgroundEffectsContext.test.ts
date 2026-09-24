@@ -19,6 +19,7 @@ import {
   type BackgroundEffectsState,
 } from "../state/BackgroundEffects";
 import { backgroundEffect } from "../settings/settings";
+import { type AddedBackground } from "./backgroundImages";
 import { flushPromises, testScope } from "../utils/test";
 
 const sdkSupportMock = vi.hoisted(() => vi.fn(() => true));
@@ -46,6 +47,14 @@ vi.mock("@livekit/track-processors", () => ({
 }));
 const platformMock = vi.hoisted(() => ({ platform: "desktop" }));
 vi.mock("../Platform", () => platformMock);
+vi.mock("./backgroundImages", async () => {
+  const { BehaviorSubject } = await import("rxjs");
+  return {
+    addedBackgrounds: {
+      added$: new BehaviorSubject<AddedBackground[] | undefined>(undefined),
+    },
+  };
+});
 vi.mock("./BackgroundEffectTransformer", () => ({
   BackgroundEffectTransformer: vi.fn(),
 }));

@@ -137,6 +137,7 @@ export const Default: Story = {
     ],
     backgroundEffectNotice: undefined,
     backgroundEffectSettling: false,
+    addBackgroundImage: fn(),
     hangup: fn(),
     buttonSize: "lg",
     showFooter: true,

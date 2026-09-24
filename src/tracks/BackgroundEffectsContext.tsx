@@ -13,6 +13,7 @@ import { createContext, type FC, type JSX, use } from "react";
 
 import { backgroundEffect as backgroundEffectSetting } from "../settings/settings";
 import { BackgroundEffectTransformer } from "./BackgroundEffectTransformer";
+import { addedBackgrounds } from "./backgroundImages";
 import { type Behavior } from "../state/Behavior";
 import { type ObservableScope } from "../state/ObservableScope";
 import {
@@ -54,6 +55,7 @@ export function createAppBackgroundEffects(
     supported: supportsBackgroundProcessors(),
     effect$: backgroundEffectSetting.value$,
     setEffect: backgroundEffectSetting.setValue,
+    added$: addedBackgrounds.added$,
     pipeline: new BackgroundProcessorWrapper(transformer, "background-effect"),
     transformer,
   });
