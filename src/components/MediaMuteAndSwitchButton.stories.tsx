@@ -339,6 +339,42 @@ export const BackgroundEffectsSettling: Story = {
   },
 };
 
+/** A file that can't be used: said where it was chosen, and nothing changes. */
+export const BackgroundImageRefused: Story = {
+  args: {
+    ...VideoUnmute.args,
+    selectedBackgroundEffect: "blur",
+    backgroundEffectNotice:
+      "Background effects run slowly on this platform, which may cause your video to stutter.",
+    backgroundImageRefusal: { text: "That file is not a supported image" },
+  },
+  decorators: [
+    (Story): JSX.Element => (
+      <WithACallArea blockSize={300}>
+        <Story />
+      </WithACallArea>
+    ),
+  ],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
+    const menu = within(document.body);
+    const message = await menu.findByText("That file is not a supported image");
+    const list = document.body.querySelector<HTMLElement>(
+      `.${styles.deviceList}`,
+    )!;
+    await expect(list.scrollHeight).toBeGreaterThan(list.clientHeight);
+    const scrollport = list.getBoundingClientRect();
+    const shown = message.getBoundingClientRect();
+    await expect(shown.bottom).toBeLessThanOrEqual(scrollport.bottom + 1);
+    await expect(shown.top).toBeGreaterThanOrEqual(scrollport.top - 1);
+    await expect(menu.queryByText(/run slowly/)).toBeNull();
+    await expect(
+      menu.getByRole("menuitemradio", { name: "Blur" }),
+    ).toHaveAttribute("aria-checked", "true");
+  },
+};
+
 /** In a short call the effects scroll into view with the list. */
 export const BackgroundEffectsScrollWhenTheyDoNotFit: Story = {
   args: {

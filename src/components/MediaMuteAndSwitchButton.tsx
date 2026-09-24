@@ -16,6 +16,7 @@ import {
   type ReactElement,
 } from "react";
 import {
+  Alert,
   Button,
   Menu,
   MenuItem,
@@ -82,6 +83,8 @@ export interface MediaMuteAndSwitchButtonProps {
   backgroundEffectSettling?: boolean;
   /** Called with the file chosen from the add tile. Omit to leave it out. */
   onAddBackgroundImage?: (file: File) => void;
+  /** Why the last file offered couldn't be used; a new object each time. */
+  backgroundImageRefusal?: { text: string };
   /**
    * For any toggle and option this method will be called.
    * So toggles need to be implemented by listening here and setting the right toggle item to `enabled`
@@ -120,6 +123,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   backgroundEffectNotice,
   backgroundEffectSettling,
   onAddBackgroundImage,
+  backgroundImageRefusal,
   onSelect,
 }) => {
   // Requested but not yet selected. Keyed by kind too, since Chrome uses
@@ -133,11 +137,24 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   // elsewhere; it is held open until the picker is done.
   const choosingFile = useRef(false);
   const fileInput = useRef<HTMLInputElement | null>(null);
-  const onOpenChange = useCallback((open: boolean): void => {
-    if (!open && choosingFile.current) return;
-    setMenuOpen(open);
-    // Drop a request that never arrived.
-    if (!open) setPlannedSelection(null);
+  // A refusal is about the attempt that caused it: shown until dismissed or
+  // until the menu closes, and again for the next one.
+  const [seenRefusal, setSeenRefusal] = useState<object>();
+  const refusal =
+    backgroundImageRefusal !== seenRefusal ? backgroundImageRefusal : undefined;
+  const onOpenChange = useCallback(
+    (open: boolean): void => {
+      if (!open && choosingFile.current) return;
+      setMenuOpen(open);
+      // Drop a request that never arrived.
+      if (!open) setPlannedSelection(null);
+      if (!open) setSeenRefusal(backgroundImageRefusal);
+    },
+    [backgroundImageRefusal],
+  );
+  // Scrolled to as it appears, as the list may be scrolled away from it.
+  const scrollIntoView = useCallback((element: HTMLElement | null): void => {
+    element?.scrollIntoView({ block: "nearest" });
   }, []);
   const watchFileInput = useCallback(
     (input: HTMLInputElement | null): (() => void) | undefined => {
@@ -489,12 +506,23 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
             />
           )}
           {/* In the list, so the menu grows no taller for it. */}
-          {showEffects && backgroundEffectNotice !== undefined && (
-            <div id={noticeId} role="none" className={styles.notice}>
-              <InfoIcon width={20} height={20} />
-              <span>{backgroundEffectNotice}</span>
+          {showEffects && refusal !== undefined && (
+            <div ref={scrollIntoView} role="none" className={styles.refusal}>
+              <Alert
+                type="critical"
+                title={refusal.text}
+                onClose={(): void => setSeenRefusal(refusal)}
+              />
             </div>
           )}
+          {showEffects &&
+            refusal === undefined &&
+            backgroundEffectNotice !== undefined && (
+              <div id={noticeId} role="none" className={styles.notice}>
+                <InfoIcon width={20} height={20} />
+                <span>{backgroundEffectNotice}</span>
+              </div>
+            )}
         </div>
       </Menu>
     </div>

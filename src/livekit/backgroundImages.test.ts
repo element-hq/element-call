@@ -13,6 +13,9 @@ import {
   type BackgroundImageStorage,
   IndexedDBImageStorage,
   type KeptImage,
+  maxAddedBackgrounds,
+  prepareImage,
+  UnusableImage,
 } from "./backgroundImages";
 import { flushPromises } from "../utils/test";
 
@@ -29,6 +32,7 @@ describe("AddedBackgrounds", () => {
         { id: "later", image, addedAt: 2 },
         { id: "earlier", image, addedAt: 1 },
       ]),
+      asGiven,
     );
     expect(store.added$.value).toBeUndefined();
     await flushPromises();
@@ -40,11 +44,41 @@ describe("AddedBackgrounds", () => {
 
   it("keeps an added image and offers it after the others", async () => {
     const storage = memoryStorage();
-    const store = new AddedBackgrounds(storage);
+    const store = new AddedBackgrounds(storage, asGiven);
     await flushPromises();
     const id = await store.add(new Blob(["x"], { type: "image/png" }));
     expect(store.added$.value?.map((a) => a.id)).toEqual([id]);
     expect((await storage.list()).map((k) => k.id)).toEqual([id]);
+  });
+
+  it("keeps the prepared image, not the file", async () => {
+    const storage = memoryStorage();
+    const prepared = new Blob(["y"], { type: "image/webp" });
+    const store = new AddedBackgrounds(storage, async () =>
+      Promise.resolve(prepared),
+    );
+    await store.add(new Blob(["x"], { type: "image/png" }));
+    expect((await storage.list())[0].image).toBe(prepared);
+  });
+
+  it("keeps nothing of a file it refuses", async () => {
+    const storage = memoryStorage();
+    const store = new AddedBackgrounds(storage, async () =>
+      Promise.reject(new UnusableImage("animated")),
+    );
+    await flushPromises();
+    await expect(store.add(new Blob(["x"]))).rejects.toThrow(UnusableImage);
+    expect(await storage.list()).toEqual([]);
+    expect(store.added$.value).toEqual([]);
+  });
+
+  it("keeps no more than the grid holds", async () => {
+    const storage = memoryStorage();
+    const store = new AddedBackgrounds(storage, asGiven);
+    for (let i = 0; i < maxAddedBackgrounds; i++)
+      await store.add(new Blob([`${i}`]));
+    await expect(store.add(new Blob(["more"]))).rejects.toThrow(RangeError);
+    expect(await storage.list()).toHaveLength(maxAddedBackgrounds);
   });
 
   it("offers nothing where the browser keeps nothing", async () => {
@@ -62,6 +96,22 @@ describe("AddedBackgrounds", () => {
     const store = new AddedBackgrounds(unreadable);
     await flushPromises();
     expect(store.added$.value).toEqual([]);
+  });
+});
+
+describe("prepareImage", () => {
+  // Refused before anything is decoded, which only a real browser could do.
+  it("refuses a file that isn't an image", async () => {
+    await expect(
+      prepareImage(new Blob(["x"], { type: "text/plain" })),
+    ).rejects.toEqual(new UnusableImage("not-an-image"));
+  });
+
+  it("refuses an animated type where the browser can't count frames", async () => {
+    expect(globalThis.ImageDecoder).toBeUndefined();
+    await expect(
+      prepareImage(new Blob(["GIF89a"], { type: "image/gif" })),
+    ).rejects.toEqual(new UnusableImage("animated"));
   });
 });
 
@@ -83,6 +133,9 @@ describe("IndexedDBImageStorage", () => {
     ]);
   });
 });
+
+// Decoding needs a real browser; the end-to-end checks cover it.
+const asGiven = async (file: Blob): Promise<Blob> => Promise.resolve(file);
 
 function memoryStorage(kept: KeptImage[] = []): BackgroundImageStorage {
   return {

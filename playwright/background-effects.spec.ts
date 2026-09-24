@@ -328,6 +328,128 @@ test.describe("a background of one's own", () => {
   });
 });
 
+test.describe("what can be added", () => {
+  test("refuses an animated image", async ({ page }) => {
+    test.setTimeout(120_000);
+    await page.goto("/");
+    await SpaHelpers.createCall(page, "Refused user", "Animated refused");
+    await addImage(page, ANIMATED_GIF, {
+      name: "moving.gif",
+      type: "image/gif",
+    });
+
+    await expect(
+      page.getByText("Animated images cannot be used as a background"),
+    ).toBeVisible();
+    const section = page.getByRole("group", { name: "Background effects" });
+    await expect(
+      section.getByRole("menuitemradio", { name: "Background 3" }),
+    ).toHaveCount(0);
+    await expect(
+      section.getByRole("menuitemradio", { name: "None" }),
+    ).toHaveAttribute("aria-checked", "true");
+    expect(await keptImages(page)).toEqual([]);
+  });
+
+  test("reduces an oversized image", async ({ page }) => {
+    test.setTimeout(120_000);
+    await page.goto("/");
+    await SpaHelpers.createCall(page, "Large user", "Oversized reduced");
+    await addImage(page, await pngImage(page, { width: 4000, height: 3000 }));
+
+    await expect(
+      page
+        .getByRole("group", { name: "Background effects" })
+        .getByRole("menuitemradio", { name: "Background 3" }),
+    ).toBeVisible();
+    await expect(page.getByRole("alert")).toHaveCount(0);
+    const [kept] = await keptImages(page);
+    expect(kept).toMatchObject({ width: 1920, height: 1440 });
+  });
+
+  test("lays every image on an opaque ground", async ({ page }) => {
+    test.setTimeout(120_000);
+    await page.goto("/");
+    await SpaHelpers.createCall(page, "Logo user", "Transparent made opaque");
+    await addImage(
+      page,
+      await pngImage(page, { width: 320, height: 180, transparent: true }),
+    );
+
+    await expect(
+      page
+        .getByRole("group", { name: "Background effects" })
+        .getByRole("menuitemradio", { name: "Background 3" }),
+    ).toBeVisible();
+    const [kept] = await keptImages(page);
+    expect(kept.minAlpha).toBe(255);
+  });
+});
+
+/** Two frames of one pixel, red then blue. */
+const ANIMATED_GIF = Buffer.from(
+  "R0lGODlhAQABAPEAAP8AAAAA/wAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQACgAAACwAAAAAAQABAAACAkQBACH5BAAKAAAALAAAAAABAAEAAAICTAEAOw==",
+  "base64",
+);
+
+/** A red PNG of the given size; transparent leaves its right half empty. */
+async function pngImage(
+  page: Page,
+  size: { width: number; height: number; transparent?: boolean },
+): Promise<Buffer> {
+  const dataUrl = await page.evaluate(({ width, height, transparent }) => {
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d")!;
+    context.fillStyle = "rgb(255, 0, 0)";
+    context.fillRect(0, 0, transparent ? width / 2 : width, height);
+    return canvas.toDataURL("image/png");
+  }, size);
+  return Buffer.from(dataUrl.split(",")[1], "base64");
+}
+
+/** The images the device keeps, as it keeps them. */
+async function keptImages(
+  page: Page,
+): Promise<{ width: number; height: number; minAlpha: number }[]> {
+  return page.evaluate(async () => {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open("element-call-background-images");
+      request.onsuccess = (): void => resolve(request.result);
+      request.onerror = (): void => reject(request.error);
+    });
+    if (!db.objectStoreNames.contains("backgrounds")) return [];
+    const kept = await new Promise<{ image: Blob }[]>((resolve, reject) => {
+      const request = db
+        .transaction("backgrounds")
+        .objectStore("backgrounds")
+        .getAll();
+      request.onsuccess = (): void => resolve(request.result);
+      request.onerror = (): void => reject(request.error);
+    });
+    db.close();
+    return Promise.all(
+      kept.map(async ({ image }) => {
+        const bitmap = await createImageBitmap(image);
+        const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+        const context = canvas.getContext("2d")!;
+        context.drawImage(bitmap, 0, 0);
+        const { data } = context.getImageData(
+          0,
+          0,
+          bitmap.width,
+          bitmap.height,
+        );
+        let minAlpha = 255;
+        for (let i = 3; i < data.length; i += 4)
+          minAlpha = Math.min(minAlpha, data[i]);
+        return { width: bitmap.width, height: bitmap.height, minAlpha };
+      }),
+    );
+  });
+}
+
 /** The bytes of the one image the device keeps. */
 async function keptBytes(page: Page): Promise<Buffer> {
   const base64 = await page.evaluate(
@@ -370,14 +492,16 @@ async function redImage(page: Page): Promise<Buffer> {
 }
 
 /** Adds an image from the camera menu's add tile, leaving the menu open. */
-async function addImage(page: Page, image: Buffer): Promise<void> {
+async function addImage(
+  page: Page,
+  image: Buffer,
+  { name, type } = { name: "mine.png", type: "image/png" },
+): Promise<void> {
   if (!(await page.getByRole("menu").isVisible()))
     await page.getByRole("button", { name: "Camera", exact: true }).click();
   const chooser = page.waitForEvent("filechooser");
   await page.getByRole("menuitem", { name: "Add image" }).click();
-  await (
-    await chooser
-  ).setFiles({ name: "mine.png", mimeType: "image/png", buffer: image });
+  await (await chooser).setFiles({ name, mimeType: type, buffer: image });
 }
 
 test.describe("joining with a background chosen", () => {

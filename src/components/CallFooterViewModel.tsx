@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
+  BehaviorSubject,
   combineLatest,
   distinctUntilChanged,
   map,
@@ -27,6 +28,8 @@ import {
 import {
   type AddedBackground,
   addedBackgrounds,
+  maxAddedBackgrounds,
+  UnusableImage,
 } from "../livekit/backgroundImages";
 
 import { type CallViewModel } from "../state/CallViewModel/CallViewModel";
@@ -42,7 +45,11 @@ import { type MuteStates } from "../state/MuteStates";
 import { createStaticViewModel, type ViewModel } from "../state/ViewModel";
 import { HeaderStyle } from "../UrlParams";
 import { platform } from "../Platform";
-import { type BackgroundEffectChoice, type FooterSnapshot } from "./CallFooter";
+import {
+  type BackgroundEffectChoice,
+  type BackgroundImageRefusal,
+  type FooterSnapshot,
+} from "./CallFooter";
 
 /**
  * Shared helper: maps MuteStates into the audio/video enabled + toggle behaviors
@@ -101,6 +108,7 @@ function buildDeviceBehaviors(
   | "backgroundEffectNotice$"
   | "backgroundEffectSettling$"
   | "addBackgroundImage$"
+  | "backgroundImageRefusal$"
 > {
   const options$ = (
     available$: Behavior<Map<string, MenuOptions["label"]>>,
@@ -121,6 +129,10 @@ function buildDeviceBehaviors(
   const slow = usesFallbackProcessing();
   const offered$ = disableSwitcher$.pipe(
     map((switcherDisabled) => !switcherDisabled && supported),
+  );
+  // A new object for each refusal, so the same one twice is shown twice.
+  const refusal$ = new BehaviorSubject<BackgroundImageRefusal | undefined>(
+    undefined,
   );
   return {
     audioOptions$: scope.behavior(options$(mediaDevices.audioInput.available$)),
@@ -181,20 +193,23 @@ function buildDeviceBehaviors(
     ),
     // Kept and offered, not put on: that waits for the user to choose it.
     addBackgroundImage$: scope.behavior(
-      offered$.pipe(
-        map((offered) =>
-          offered
+      combineLatest([offered$, addedBackgrounds.added$]).pipe(
+        map(([offered, added]) =>
+          offered && (added?.length ?? 0) < maxAddedBackgrounds
             ? (file: File): void => {
-                addedBackgrounds
-                  .add(file)
-                  .catch((e) =>
-                    logger.warn("Could not keep that background", e),
-                  );
+                refusal$.next(undefined);
+                addedBackgrounds.add(file).catch((e) => {
+                  logger.warn("Could not keep that background", e);
+                  refusal$.next({
+                    reason: e instanceof UnusableImage ? e.reason : "not-kept",
+                  });
+                });
               }
             : undefined,
         ),
       ),
     ),
+    backgroundImageRefusal$: refusal$,
   };
 }
 

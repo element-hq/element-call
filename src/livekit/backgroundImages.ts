@@ -10,6 +10,21 @@ import { logger } from "matrix-js-sdk/lib/logger";
 
 import { type Behavior } from "../state/Behavior";
 
+export const maxAddedBackgrounds = 5;
+
+/** The longest edge kept; the pipeline scales every image to the camera. */
+export const maxStoredEdge = 1920;
+
+/** Why a file can't be used as a background. */
+export type UnusableReason = "not-an-image" | "animated" | "undecodable";
+
+export class UnusableImage extends Error {
+  public constructor(public readonly reason: UnusableReason) {
+    super(reason);
+    this.name = "UnusableImage";
+  }
+}
+
 /** A background the user added, as the menu and the pipeline use it. */
 export interface AddedBackground {
   id: string;
@@ -38,7 +53,10 @@ export class AddedBackgrounds {
   public readonly added$: Behavior<AddedBackground[] | undefined> =
     this.subject$;
 
-  public constructor(private readonly storage: BackgroundImageStorage | null) {
+  public constructor(
+    private readonly storage: BackgroundImageStorage | null,
+    private readonly prepare: (file: Blob) => Promise<Blob> = prepareImage,
+  ) {
     this.read().catch((e) => {
       logger.warn("Could not read added backgrounds", e);
       this.subject$.next([]);
@@ -53,21 +71,84 @@ export class AddedBackgrounds {
     );
   }
 
-  /** Keeps a file as a background, and answers with its id. */
+  /**
+   * Keeps a file as a background, and answers with its id. Throws
+   * {@link UnusableImage} for a file that can't be used, and a RangeError
+   * once maxAddedBackgrounds are kept.
+   */
   public async add(file: Blob): Promise<string> {
     if (this.storage === null)
       throw new Error("This browser keeps no backgrounds");
+    const image = await this.prepare(file);
+    if ((await this.storage.list()).length >= maxAddedBackgrounds)
+      throw new RangeError(
+        `${maxAddedBackgrounds} backgrounds are kept already`,
+      );
     const kept: KeptImage = {
       id: crypto.randomUUID(),
-      image: file,
+      image,
       addedAt: Date.now(),
     };
     await this.storage.put(kept);
     this.subject$.next([
       ...(this.subject$.value ?? []),
-      { id: kept.id, url: URL.createObjectURL(file) },
+      { id: kept.id, url: URL.createObjectURL(image) },
     ]);
     return kept.id;
+  }
+}
+
+/**
+ * Refuses what can't be used, reduces what is larger than is kept, and lays
+ * every image on an opaque ground: a background has to cover what is behind
+ * it, so a transparent pixel would be a hole in it.
+ */
+export async function prepareImage(file: Blob): Promise<Blob> {
+  if (!file.type.startsWith("image/")) throw new UnusableImage("not-an-image");
+  if (await isAnimated(file)) throw new UnusableImage("animated");
+
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+  } catch (e) {
+    logger.debug("Could not decode the chosen file", e);
+    throw new UnusableImage("undecodable");
+  }
+  try {
+    const scale = Math.min(
+      1,
+      maxStoredEdge / Math.max(bitmap.width, bitmap.height),
+    );
+    const canvas = new OffscreenCanvas(
+      Math.round(bitmap.width * scale),
+      Math.round(bitmap.height * scale),
+    );
+    const context = canvas.getContext("2d");
+    if (!context) throw new UnusableImage("undecodable");
+    context.fillStyle = "black";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    return await canvas.convertToBlob({ type: "image/webp", quality: 0.9 });
+  } finally {
+    bitmap.close();
+  }
+}
+
+// Read from the file, not its type: a still and an animated WebP share one.
+async function isAnimated(file: Blob): Promise<boolean> {
+  if (typeof ImageDecoder === "undefined") return /gif|apng/.test(file.type);
+  try {
+    const decoder = new ImageDecoder({
+      data: await file.arrayBuffer(),
+      type: file.type,
+    });
+    // Some browsers have no selected track until the tracks are ready.
+    await decoder.tracks.ready;
+    await decoder.completed;
+    return (decoder.tracks.selectedTrack?.frameCount ?? 1) > 1;
+  } catch (e) {
+    logger.debug("Could not read the frame count, judging by type", e);
+    return /gif|apng/.test(file.type);
   }
 }
 
