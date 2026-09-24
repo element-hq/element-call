@@ -15,24 +15,16 @@ import {
   type RenderResult,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { type JSX, useState, type ReactNode } from "react";
+import { Profiler, type JSX, useState, type ReactNode } from "react";
 import { TooltipProvider } from "@vector-im/compound-web";
 
 import {
   MediaMuteAndSwitchButton,
   type MenuOptions,
 } from "./MediaMuteAndSwitchButton";
-import { MediaDevicesContext, useMediaDevices } from "../MediaDevicesContext";
+import { MediaDevicesContext } from "../MediaDevicesContext";
 import { type MediaDevices } from "../state/MediaDevices";
 import { restoreAudioCapture, stubAudioCapture } from "../utils/test";
-import type * as MediaDevicesContextModule from "../MediaDevicesContext";
-
-// The menu reads the devices on every render and the meter never does, so
-// these calls count the menu's own renders.
-vi.mock("../MediaDevicesContext", async (importOriginal) => {
-  const actual = await importOriginal<typeof MediaDevicesContextModule>();
-  return { ...actual, useMediaDevices: vi.fn(actual.useMediaDevices) };
-});
 
 interface RenderOptions {
   requestDeviceNames: () => void;
@@ -488,15 +480,19 @@ describe("MediaMuteAndSwitchButton", () => {
     ).not.toHaveAttribute("aria-disabled", "true");
   });
 
-  test("redraws the meter and not the device rows around it", async () => {
-    // The level is held by the meter, so a moving level doesn't re-render the
-    // menu.
+  test("moves the level without re-rendering anything", async () => {
+    // The level is drawn into the DOM, so a moving level commits nothing.
     const capture = stubAudioCapture();
     const user = userEvent.setup();
-    const menuRenders = vi.mocked(useMediaDevices);
+    let commits = 0;
 
     const { getByRole } = renderComponent(
-      <>
+      <Profiler
+        id="menu"
+        onRender={(): void => {
+          commits++;
+        }}
+      >
         <MediaMuteAndSwitchButton
           iconsAndLabels="audio"
           enabled={true}
@@ -513,13 +509,16 @@ describe("MediaMuteAndSwitchButton", () => {
           selectedOutputOption="spk1"
           onSelectOutput={vi.fn()}
         />
-      </>,
+      </Profiler>,
     );
 
     await user.click(getByRole("button", { name: "Microphone" }));
     capture.grant();
+    await vi.waitFor(() => expect(capture.contexts).toHaveLength(1));
     const meter = await screen.findByRole("meter");
-    const settled = menuRenders.mock.calls.length;
+    // The capture's arrival is one render: the idle level swapped for its own.
+    await act(async () => {});
+    const settled = commits;
 
     // The meter smooths by elapsed time, so hand-driven frames need a clock.
     let elapsed = performance.now();
@@ -538,7 +537,7 @@ describe("MediaMuteAndSwitchButton", () => {
     clock.mockRestore();
 
     expect(meter.getAttribute("aria-valuenow")).not.toBe("0");
-    expect(menuRenders.mock.calls.length - settled).toBe(0);
+    expect(commits - settled).toBe(0);
   });
 
   test("camera menu uses the same selection pattern and keeps the blur toggle", async () => {

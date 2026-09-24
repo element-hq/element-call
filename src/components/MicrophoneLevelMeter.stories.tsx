@@ -15,6 +15,7 @@ import {
 } from "./MicrophoneLevelMeter";
 import styles from "./MicrophoneLevelMeter.module.css";
 import { LEVEL_SCALE } from "../state/MicrophoneLevel";
+import { constant } from "../state/Behavior";
 
 /** Roughly the menu's width. It only decides how many bars fit. */
 const STORY_WIDTH = 256;
@@ -41,18 +42,18 @@ type Story = StoryObj<typeof meta>;
 
 /** A quiet room: hiss below the noise floor lights nothing. */
 export const Silent: Story = {
-  args: { state: { type: "level", level: 0 } },
+  args: { state: { type: "level", level: constant(0) } },
   play: async ({ canvasElement }) => {
     await expect(litSegments(canvasElement)).toBe(0);
   },
 };
 
 export const QuietSpeech: Story = {
-  args: { state: { type: "level", level: 5 } },
+  args: { state: { type: "level", level: constant(5) } },
 };
 
 export const NormalSpeech: Story = {
-  args: { state: { type: "level", level: 12 } },
+  args: { state: { type: "level", level: constant(12) } },
   play: async ({ canvasElement }) => {
     // A floor, not a count: the count follows from the design's bar and gap sizes.
     await expect(
@@ -62,16 +63,20 @@ export const NormalSpeech: Story = {
 };
 
 export const LoudSpeech: Story = {
-  args: { state: { type: "level", level: LEVEL_SCALE } },
+  args: { state: { type: "level", level: constant(LEVEL_SCALE) } },
 };
 
 /** The three volumes differ in how many bars are lit, not only in colour. */
 export const VolumesAreDistinguishable: Story = {
-  args: { state: { type: "level", level: 5 } },
+  args: { state: { type: "level", level: constant(5) } },
   play: async ({ canvasElement, mount }) => {
     const lit: number[] = [];
     for (const level of [5, 12, LEVEL_SCALE]) {
-      await mount(<MicrophoneLevelMeter state={{ type: "level", level }} />);
+      await mount(
+        <MicrophoneLevelMeter
+          state={{ type: "level", level: constant(level) }}
+        />,
+      );
       lit.push(litSegments(canvasElement));
       await expect(within(canvasElement).getByRole("meter")).toHaveAttribute(
         "aria-valuenow",
@@ -116,7 +121,7 @@ export const NoDevice: Story = {
 
 /** The same meter at two widths: the bars keep their size and only their count changes. */
 export const ShapeStaysTheSameAtAnyWidth: Story = {
-  args: { state: { type: "level", level: 12 } },
+  args: { state: { type: "level", level: constant(12) } },
   play: async ({ mount, args }) => {
     const narrow = await measureAt(mount, args, 180);
     const wide = await measureAt(mount, args, 400);

@@ -11,8 +11,9 @@ import {
   type MicrophoneState,
   observeMicrophoneState$,
 } from "../state/MicrophoneLevel";
+import { constant } from "../state/Behavior";
 
-const IDLE: MicrophoneState = { type: "level", level: 0 };
+const IDLE: MicrophoneState = { type: "level", level: constant(0) };
 
 /** The live level of a microphone, captured only while `active`. */
 export function useMicrophoneLevel(

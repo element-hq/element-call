@@ -5,12 +5,15 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { distinctUntilChanged, Observable } from "rxjs";
+import { BehaviorSubject, Observable } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
+
+import { type Behavior } from "./Behavior";
 
 /** What the microphone picks up, or why it can't be read. */
 export type MicrophoneState =
-  | { type: "level"; level: number }
+  // A Behavior, so a changing level can be drawn without re-rendering.
+  | { type: "level"; level: Behavior<number> }
   | { type: "permission-denied" }
   | { type: "no-device" };
 
@@ -29,6 +32,7 @@ export function observeMicrophoneState$(
     let stream: MediaStream | undefined;
     let context: AudioContext | undefined;
     let frame: number | undefined;
+    let level: BehaviorSubject<number> | undefined;
 
     // Idempotent: teardown and start can both call it.
     const release = (): void => {
@@ -38,6 +42,8 @@ export function observeMicrophoneState$(
       frame = undefined;
       stream = undefined;
       context = undefined;
+      level?.complete();
+      level = undefined;
     };
 
     const start = async (): Promise<void> => {
@@ -59,6 +65,9 @@ export function observeMicrophoneState$(
       const samples = new Uint8Array(analyser.fftSize);
       let displayed = 0;
       let previousFrame = performance.now();
+      const current = new BehaviorSubject(0);
+      level = current;
+      subscriber.next({ type: "level", level: current });
 
       const read = (): void => {
         analyser.getByteTimeDomainData(samples);
@@ -75,7 +84,9 @@ export function observeMicrophoneState$(
           now - previousFrame,
         );
         previousFrame = now;
-        subscriber.next({ type: "level", level: segmentsForVolume(displayed) });
+        // Frames that don't move the quantised level say nothing.
+        const next = segmentsForVolume(displayed);
+        if (next !== current.value) current.next(next);
         frame = requestAnimationFrame(read);
       };
       read();
@@ -88,14 +99,7 @@ export function observeMicrophoneState$(
     });
 
     return release;
-  }).pipe(
-    // Frames that don't move the quantised level don't reach React.
-    distinctUntilChanged(
-      (a, b) =>
-        a.type === b.type &&
-        (a.type !== "level" || b.type !== "level" || a.level === b.level),
-    ),
-  );
+  });
 }
 
 /** What a failure to open the microphone means for the person using it. */

@@ -157,16 +157,20 @@ describe("observeMicrophoneState$", () => {
   test("says nothing on a frame that did not change the level", async () => {
     const capture = stubAudioCapture();
 
-    let emissions = 0;
-    const subscription = observeMicrophoneState$("mic1").subscribe(
-      () => emissions++,
-    );
+    const states: string[] = [];
+    let levels = 0;
+    const subscription = observeMicrophoneState$("mic1").subscribe((state) => {
+      states.push(state.type);
+      if (state.type === "level") state.level.subscribe(() => levels++);
+    });
     capture.grant();
-    await vi.waitFor(() => expect(emissions).toBe(1));
+    await vi.waitFor(() => expect(levels).toBe(1));
 
-    // Read every frame, but a steady signal emits once.
+    // Read every frame, but a steady signal emits once, and the state itself
+    // arrives only once.
     capture.drawFrames(20);
-    expect(emissions).toBe(1);
+    expect(levels).toBe(1);
+    expect(states).toEqual(["level"]);
 
     subscription.unsubscribe();
   });

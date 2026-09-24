@@ -35,6 +35,7 @@ describe("useMicrophoneLevel", () => {
     rerender({ id: "mic2" });
 
     // No level carried over from the previous device.
-    expect(result.current).toEqual({ type: "level", level: 0 });
+    const state = result.current;
+    expect(state.type === "level" ? state.level.value : state.type).toBe(0);
   });
 });

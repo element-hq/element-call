@@ -10,10 +10,13 @@ import { render, screen } from "@testing-library/react";
 
 import { MicrophoneLevelMeter } from "./MicrophoneLevelMeter";
 import { LEVEL_SCALE } from "../state/MicrophoneLevel";
+import { constant } from "../state/Behavior";
 
 describe("MicrophoneLevelMeter", () => {
   test("announces the level rather than relying on hue", () => {
-    render(<MicrophoneLevelMeter state={{ type: "level", level: 6 }} />);
+    render(
+      <MicrophoneLevelMeter state={{ type: "level", level: constant(6) }} />,
+    );
 
     const meter = screen.getByRole("meter", { name: "Microphone level" });
     expect(meter).toHaveAttribute("aria-valuenow", "6");

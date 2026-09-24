@@ -5,7 +5,14 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { useCallback, useState, type FC, type Ref } from "react";
+import {
+  useCallback,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type FC,
+  type Ref,
+} from "react";
 import { Text } from "@vector-im/compound-web";
 import { MicOnIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 import classNames from "classnames";
@@ -57,19 +64,44 @@ export const MicrophoneLevelMeter: FC<MicrophoneLevelMeterProps> = ({
   // Bars keep one size, so their count follows the width. Starts full so the
   // first paint, and jsdom, draw a whole meter.
   const [barCount, setBarCount] = useState(LEVEL_SCALE);
+  const segments = useRef<HTMLDivElement | null>(null);
   const track = useCallback(
     (element: HTMLDivElement | null): (() => void) | undefined => {
       if (element === null) return;
+      segments.current = element;
       const subscription = observeElementSize$(element)
         .pipe(
           map(({ width }) => barsThatFit(element, width)),
           distinctUntilChanged(),
         )
         .subscribe(setBarCount);
-      return (): void => subscription.unsubscribe();
+      return (): void => {
+        subscription.unsubscribe();
+        segments.current = null;
+      };
     },
     [],
   );
+
+  // Drawn straight into the DOM: the level changes many times a second, and
+  // re-rendering for each change is what this avoids.
+  useLayoutEffect(() => {
+    const element = segments.current;
+    if (state.type !== "level" || element === null) return;
+    const subscription = state.level.subscribe((level) => {
+      element.setAttribute("aria-valuenow", String(level));
+      element.setAttribute(
+        "aria-valuetext",
+        t("microphone_level.value", { level, max: LEVEL_SCALE }),
+      );
+      // The level is a share of the scale, not a bar count.
+      const lit = Math.round((level / LEVEL_SCALE) * barCount);
+      Array.from(element.children).forEach((bar, i) =>
+        bar.classList.toggle(styles.segmentLit, i < lit),
+      );
+    });
+    return (): void => subscription.unsubscribe();
+  }, [state, barCount, t]);
 
   return (
     <div ref={ref} className={classNames(styles.meter, className)}>
@@ -88,22 +120,15 @@ export const MicrophoneLevelMeter: FC<MicrophoneLevelMeterProps> = ({
           aria-label={t("microphone_level.label")}
           aria-valuemin={0}
           aria-valuemax={LEVEL_SCALE}
-          aria-valuenow={state.level}
+          // The first paint's value; the effect above keeps it current.
+          aria-valuenow={state.level.value}
           aria-valuetext={t("microphone_level.value", {
-            level: state.level,
+            level: state.level.value,
             max: LEVEL_SCALE,
           })}
         >
           {Array.from({ length: barCount }, (_, i) => (
-            <span
-              key={i}
-              aria-hidden
-              className={classNames(styles.segment, {
-                // The level is a share of the scale, not a bar count.
-                [styles.segmentLit]:
-                  i < Math.round((state.level / LEVEL_SCALE) * barCount),
-              })}
-            />
+            <span key={i} aria-hidden className={styles.segment} />
           ))}
         </div>
       )}
