@@ -5,9 +5,9 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { useEffect, useMemo, useRef, type FC, type ReactNode } from "react";
+import { useMemo, type FC, type ReactNode } from "react";
 import useMeasure from "react-use-measure";
-import { facingModeFromLocalTrack, type LocalVideoTrack } from "livekit-client";
+import { type LocalVideoTrack } from "livekit-client";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
 
@@ -15,6 +15,7 @@ import { TileAvatar } from "../tile/TileAvatar";
 import styles from "./VideoPreview.module.css";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import videoPlaceholder from "../graphics/video-placeholder.gif";
+import { useAttachedTrack } from "../useAttachedTrack";
 
 export type MatrixInfo = {
   userId: string;
@@ -43,17 +44,7 @@ export const VideoPreview: FC<Props> = ({
   const { t } = useTranslation();
   const [previewRef, previewBounds] = useMeasure();
 
-  const videoEl = useRef<HTMLVideoElement | null>(null);
-
-  useEffect(() => {
-    // Effect to connect the videoTrack with the video element.
-    if (videoEl.current) {
-      videoTrack?.attach(videoEl.current);
-    }
-    return (): void => {
-      videoTrack?.detach();
-    };
-  }, [videoTrack]);
+  const { videoRef, mirrored } = useAttachedTrack(videoTrack);
 
   const cameraIsStarting = useMemo(
     () => videoEnabled && !videoTrack,
@@ -63,13 +54,8 @@ export const VideoPreview: FC<Props> = ({
   return (
     <div className={classNames(styles.preview)} ref={previewRef}>
       <video
-        className={
-          videoTrack &&
-          facingModeFromLocalTrack(videoTrack).facingMode === "user"
-            ? styles.mirror
-            : undefined
-        }
-        ref={videoEl}
+        className={mirrored ? styles.mirror : undefined}
+        ref={videoRef}
         muted
         playsInline
         // There's no reason for this to be focusable
