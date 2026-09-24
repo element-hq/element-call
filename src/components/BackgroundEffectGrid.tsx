@@ -12,6 +12,7 @@ import {
   BlockIcon,
   BlurIcon,
   CheckCircleSolidIcon,
+  PlusIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import styles from "./BackgroundEffectGrid.module.css";
@@ -38,6 +39,9 @@ interface Props {
   settling?: boolean;
   /** Id of the text saying what the user should know before choosing. */
   describedBy?: string;
+  /** Offers to add a background of one's own. Omit to leave that tile out. */
+  onAdd?: () => void;
+  addLabel?: string;
 }
 
 /**
@@ -52,6 +56,8 @@ export const BackgroundEffectGrid: FC<Props> = ({
   onSelect,
   settling = false,
   describedBy,
+  onAdd,
+  addLabel,
 }) => {
   const choose = (id: string): void => {
     if (id !== selected) onSelect?.(id);
@@ -91,11 +97,31 @@ export const BackgroundEffectGrid: FC<Props> = ({
     );
   });
 
+  // A command rather than a choice, so an item beside the radios.
+  const addTile =
+    onAdd === undefined ? null : (
+      <MenuItem
+        label={null}
+        hideChevron
+        className={styles.tile}
+        onSelect={(e) => {
+          e.preventDefault();
+          onAdd();
+        }}
+      >
+        <span aria-hidden className={styles.swatch}>
+          <PlusIcon width={24} height={24} />
+        </span>
+        <VisuallyHidden>{addLabel}</VisuallyHidden>
+      </MenuItem>
+    );
+
   return (
     <div role="group" aria-label={label} aria-describedby={describedBy}>
       {heading}
       <div role="none" className={styles.grid}>
         {tiles}
+        {addTile}
       </div>
     </div>
   );

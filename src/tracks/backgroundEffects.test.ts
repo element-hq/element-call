@@ -22,6 +22,7 @@ describe("the chosen background effect", () => {
       { kind: "none" },
       { kind: "blur" },
       ...shippedBackgrounds.map(({ id }) => ({ kind: "shipped" as const, id })),
+      { kind: "added", id: "d3b07384" },
     ];
     for (const effect of effects)
       expect(parseEffect(serializeEffect(effect))).toEqual(effect);
@@ -30,6 +31,7 @@ describe("the chosen background effect", () => {
   test("falls back to no effect when the stored form names nothing we ship", () => {
     expect(parseEffect("image:gone")).toEqual({ kind: "none" });
     expect(parseEffect("")).toEqual({ kind: "none" });
+    expect(parseEffect("added:")).toEqual({ kind: "none" });
   });
 
   test("reads a stored value that is not a string as no effect", () => {

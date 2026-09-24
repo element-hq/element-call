@@ -68,6 +68,8 @@ export interface FooterActions {
   toggleVideo: (() => void) | undefined;
   /** Undefined where background effects can't be chosen. */
   selectBackgroundEffect: ((id: string) => void) | undefined;
+  /** Undefined where no background can be added. */
+  addBackgroundImage: ((file: File) => void) | undefined;
   toggleScreenSharing: (() => void) | undefined;
   /** Also controls if the settings button is visible */
   openSettings: (() => void) | undefined;
@@ -176,6 +178,7 @@ export const CallFooter: FC<FooterProps> = ({
   const selectBackgroundEffect = useBehavior(vm.selectBackgroundEffect$);
   const backgroundEffectNotice = useBehavior(vm.backgroundEffectNotice$);
   const backgroundEffectSettling = useBehavior(vm.backgroundEffectSettling$);
+  const addBackgroundImage = useBehavior(vm.addBackgroundImage$);
   const backgroundEffects = useBackgroundEffectLabels(
     useBehavior(vm.backgroundEffects$),
   );
@@ -244,6 +247,7 @@ export const CallFooter: FC<FooterProps> = ({
         selectedBackgroundEffect={backgroundEffect}
         onSelectBackgroundEffect={selectBackgroundEffect}
         backgroundEffectSettling={backgroundEffectSettling}
+        onAddBackgroundImage={addBackgroundImage}
         backgroundEffectNotice={
           backgroundEffectNotice === "unavailable"
             ? t("background_effects.unavailable")

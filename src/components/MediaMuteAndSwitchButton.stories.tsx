@@ -195,6 +195,7 @@ export const VideoUnmute: Story = {
     backgroundEffects: effects,
     selectedBackgroundEffect: "none",
     onSelectBackgroundEffect: fn(),
+    onAddBackgroundImage: fn(),
   },
 };
 
@@ -237,6 +238,11 @@ export const BackgroundEffects: Story = {
       await expect(tile.left >= frame.left && tile.right <= frame.right).toBe(
         true,
       );
+
+    const add = within(section).getByRole("menuitem", { name: "Add image" });
+    await expect(
+      tiles[3].compareDocumentPosition(add) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
 
     await userEvent.click(menu.getByRole("menuitemradio", { name: "Blur" }));
     await expect(args.onSelectBackgroundEffect).toHaveBeenCalledWith("blur");
