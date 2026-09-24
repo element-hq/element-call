@@ -88,7 +88,7 @@ export const MicrophoneLevelMeter: FC<MicrophoneLevelMeterProps> = ({
   useLayoutEffect(() => {
     const element = segments.current;
     if (state.type !== "level" || element === null) return;
-    const subscription = state.level.subscribe((level) => {
+    const subscription = state.level$.subscribe((level) => {
       element.setAttribute("aria-valuenow", String(level));
       element.setAttribute(
         "aria-valuetext",
@@ -121,9 +121,9 @@ export const MicrophoneLevelMeter: FC<MicrophoneLevelMeterProps> = ({
           aria-valuemin={0}
           aria-valuemax={LEVEL_SCALE}
           // The first paint's value; the effect above keeps it current.
-          aria-valuenow={state.level.value}
+          aria-valuenow={state.level$.value}
           aria-valuetext={t("microphone_level.value", {
-            level: state.level.value,
+            level: state.level$.value,
             max: LEVEL_SCALE,
           })}
         >

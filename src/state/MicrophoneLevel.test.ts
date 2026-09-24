@@ -161,7 +161,7 @@ describe("observeMicrophoneState$", () => {
     let levels = 0;
     const subscription = observeMicrophoneState$("mic1").subscribe((state) => {
       states.push(state.type);
-      if (state.type === "level") state.level.subscribe(() => levels++);
+      if (state.type === "level") state.level$.subscribe(() => levels++);
     });
     capture.grant();
     await vi.waitFor(() => expect(levels).toBe(1));

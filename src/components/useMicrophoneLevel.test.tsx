@@ -36,6 +36,6 @@ describe("useMicrophoneLevel", () => {
 
     // No level carried over from the previous device.
     const state = result.current;
-    expect(state.type === "level" ? state.level.value : state.type).toBe(0);
+    expect(state.type === "level" ? state.level$.value : state.type).toBe(0);
   });
 });

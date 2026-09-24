@@ -67,7 +67,7 @@ export function observeMicrophoneState$(
       let previousFrame = performance.now();
       const current = new BehaviorSubject(0);
       level = current;
-      subscriber.next({ type: "level", level: current });
+      subscriber.next({ type: "level", level$: current });
 
       const read = (): void => {
         analyser.getByteTimeDomainData(samples);
