@@ -151,6 +151,69 @@ test.describe("background effects section", () => {
   });
 });
 
+test.describe("the chosen effect", () => {
+  test("chosen effect survives leaving and rejoining", async ({ page }) => {
+    test.setTimeout(120_000);
+    await page.goto("/");
+    await SpaHelpers.createCall(page, "Returning user", "Effect remembered");
+    const { camera, picture } = await chooseAndWear(page, "Background 1");
+    await page.getByTestId("lobby_joinCall").click();
+    await page.getByTestId("incall_leave").click();
+    await expect(page.getByRole("heading")).toContainText(
+      "your call has ended",
+    );
+
+    await page.goto("/");
+    await page.getByTestId("home_callName").fill("Effect remembered again");
+    await page.getByTestId("home_go").click();
+    await expect(page.getByTestId("lobby_joinCall")).toBeVisible();
+    await page.getByRole("button", { name: "Camera", exact: true }).click();
+    const tile = page
+      .getByRole("group", { name: "Background effects" })
+      .getByRole("menuitemradio", { name: "Background 1" });
+    await expect(tile).toHaveAttribute("aria-checked", "true");
+    const preview = page.locator("video").first();
+    await expect
+      .poll(async () => distance(await averageColour(preview), picture), {
+        timeout: 60_000,
+      })
+      .toBeLessThan(distance(camera, picture) / 2);
+  });
+
+  test("second session still shows the existing error", async ({ page }) => {
+    test.setTimeout(120_000);
+    await page.goto("/");
+    await SpaHelpers.createCall(page, "Two tabs", "Effect in two tabs");
+    await chooseAndWear(page, "Background 1");
+
+    const second = await page.context().newPage();
+    await second.goto("/");
+    await expect(
+      page.getByRole("heading", { name: "Opened in another tab" }),
+    ).toBeVisible();
+  });
+});
+
+/** Chooses an effect in the lobby, and waits until the preview wears it. */
+async function chooseAndWear(
+  page: Page,
+  name: string,
+): Promise<{ camera: Colour; picture: Colour }> {
+  const preview = page.locator("video").first();
+  const camera = await cameraColour(preview);
+  await page.getByRole("button", { name: "Camera", exact: true }).click();
+  const tile = page.getByRole("menuitemradio", { name });
+  await tile.click();
+  const picture = await averageColour(tile.locator("img"));
+  await expect
+    .poll(async () => distance(await averageColour(preview), picture), {
+      timeout: 60_000,
+    })
+    .toBeLessThan(distance(camera, picture) / 2);
+  await page.keyboard.press("Escape");
+  return { camera, picture };
+}
+
 test.describe("joining with a background chosen", () => {
   test("publishes no frame of the room", async ({ browser }) => {
     // Two first builds of the pipeline, one of them held back.
