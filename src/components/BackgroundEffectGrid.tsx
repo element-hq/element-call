@@ -5,14 +5,15 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, type ReactElement } from "react";
+import { type FC, type KeyboardEvent, type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { InlineSpinner, MenuItem } from "@vector-im/compound-web";
+import { InlineSpinner, MenuItem, Tooltip } from "@vector-im/compound-web";
 import {
   BlockIcon,
   BlurIcon,
   CheckCircleSolidIcon,
+  CloseIcon,
   PlusIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 
@@ -28,6 +29,8 @@ export interface BackgroundEffectGridItem {
   kind: "none" | "blur" | "image";
   /** For kind "image". */
   imageUrl?: string;
+  /** Whether it is the user's to remove. */
+  removable?: boolean;
 }
 
 interface Props {
@@ -42,6 +45,9 @@ interface Props {
   /** Offers to add a background of one's own. Omit to leave that tile out. */
   onAdd?: () => void;
   addLabel?: string;
+  /** Removes a removable one, never the one in force. Omit to offer none. */
+  onRemove?: (id: string) => void;
+  removeLabel?: string;
 }
 
 /**
@@ -57,6 +63,8 @@ export const BackgroundEffectGrid: FC<Props> = ({
   describedBy,
   onAdd,
   addLabel,
+  onRemove,
+  removeLabel,
 }) => {
   const { t } = useTranslation();
   const choose = (id: string): void => {
@@ -72,7 +80,30 @@ export const BackgroundEffectGrid: FC<Props> = ({
           : t("background_effects.numbered", { n: ++pictures });
     const checked = effect.id === selected;
     const disabled = onSelect === undefined && effect.kind !== "none";
-    return (
+    const remove =
+      effect.removable && !checked && onRemove !== undefined
+        ? (): void => onRemove(effect.id)
+        : undefined;
+    const removeProps =
+      remove === undefined
+        ? {}
+        : {
+            "aria-keyshortcuts": "Delete",
+            onKeyDown: (e: KeyboardEvent): void => {
+              if (e.key !== "Delete" && e.key !== "Backspace") return;
+              e.preventDefault();
+              remove();
+            },
+          };
+    const content = (
+      <TileContent
+        effect={effect}
+        label={label}
+        checked={checked}
+        settling={checked && settling}
+      />
+    );
+    const tile = (
       <MenuItem
         key={effect.id}
         role="menuitemradio"
@@ -94,18 +125,37 @@ export const BackgroundEffectGrid: FC<Props> = ({
                 choose(effect.id);
               }
         }
+        {...removeProps}
       >
-        <TileContent
-          effect={effect}
-          label={label}
-          checked={checked}
-          settling={checked && settling}
-        />
+        {content}
       </MenuItem>
+    );
+    if (remove === undefined) return tile;
+    // Beside the item, not in it: inside, the item takes the press first and
+    // the tile is chosen instead.
+    return (
+      <div key={effect.id} className={styles.removable}>
+        {tile}
+        <Tooltip label={removeLabel ?? ""}>
+          {/* Not a control of its own, so the menu keeps one keyboard model:
+              the keyboard reaches the same action through Delete. */}
+          <span aria-hidden className={styles.remove} onClick={remove}>
+            <CloseIcon width={20} height={20} />
+          </span>
+        </Tooltip>
+      </div>
     );
   });
 
   // A command rather than a choice, so an item beside the radios.
+  const addContent = (
+    <>
+      <span aria-hidden className={styles.swatch}>
+        <PlusIcon width={24} height={24} />
+      </span>
+      <VisuallyHidden>{addLabel}</VisuallyHidden>
+    </>
+  );
   const addTile =
     onAdd === undefined ? null : (
       <MenuItem
@@ -117,10 +167,7 @@ export const BackgroundEffectGrid: FC<Props> = ({
           onAdd();
         }}
       >
-        <span aria-hidden className={styles.swatch}>
-          <PlusIcon width={24} height={24} />
-        </span>
-        <VisuallyHidden>{addLabel}</VisuallyHidden>
+        {addContent}
       </MenuItem>
     );
 
