@@ -33,7 +33,9 @@ import { useBehavior } from "../useBehavior";
 import { type LayoutSwitchViewModel } from "../state/LayoutSwitchViewModel";
 import { LayoutSwitch } from "../room/LayoutSwitch";
 import { type BackgroundEffectOption } from "./BackgroundEffectGrid";
+import { SelfPreview } from "./SelfPreview";
 import { type UnusableReason } from "../tracks/backgroundImages";
+import { type ShownCamera } from "../tracks/cameraTrack";
 
 export interface BackgroundImageRefusal {
   reason: UnusableReason | "not-kept";
@@ -102,6 +104,8 @@ export interface FooterState {
   backgroundEffectSettling: boolean;
   /** Why the last file offered couldn't be kept, if it couldn't. */
   backgroundImageRefusal: BackgroundImageRefusal | undefined;
+  /** The camera to preview, with the effect in force; null while it is off. */
+  cameraTrack: ShownCamera | null;
   showFooter: boolean;
 
   /* This is needed for WindowMode = "flat" */
@@ -191,6 +195,7 @@ export const CallFooter: FC<FooterProps> = ({
   const backgroundEffectSettling = useBehavior(vm.backgroundEffectSettling$);
   const addBackgroundImage = useBehavior(vm.addBackgroundImage$);
   const removeBackgroundEffect = useBehavior(vm.removeBackgroundEffect$);
+  const cameraTrack = useBehavior(vm.cameraTrack$);
   const refusal = useBehavior(vm.backgroundImageRefusal$);
   const refusalMessage = useMemo(() => {
     switch (refusal?.reason) {
@@ -276,6 +281,7 @@ export const CallFooter: FC<FooterProps> = ({
         backgroundEffectSettling={backgroundEffectSettling}
         onAddBackgroundImage={addBackgroundImage}
         onRemoveBackgroundEffect={removeBackgroundEffect}
+        selfPreview={<SelfPreview track={cameraTrack} />}
         backgroundImageRefusal={refusalMessage}
         backgroundEffectNotice={
           backgroundEffectNotice === "unavailable"

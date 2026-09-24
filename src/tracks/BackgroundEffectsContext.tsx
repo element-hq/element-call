@@ -14,7 +14,14 @@ import {
 import { createContext, type FC, type JSX, use, useEffect } from "react";
 import { type LocalVideoTrack, Track } from "livekit-client";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { combineLatest } from "rxjs";
+import {
+  combineLatest,
+  distinctUntilChanged,
+  EMPTY,
+  map,
+  Observable,
+  switchMap,
+} from "rxjs";
 import {
   convertToLivekitProcessor,
   type VideoProcessor,
@@ -22,6 +29,11 @@ import {
 
 import { backgroundEffect as backgroundEffectSetting } from "../settings/settings";
 import { BackgroundEffectTransformer } from "./BackgroundEffectTransformer";
+import {
+  livekitCamera,
+  type ShownCamera,
+  type SyncedCameraTrack,
+} from "./cameraTrack";
 import { OneStepPipeline } from "./OneStepPipeline";
 import { addedBackgrounds } from "./backgroundImages";
 import { type Behavior } from "../state/Behavior";
@@ -41,6 +53,8 @@ export type BackgroundEffectsState = {
   processor: undefined | VideoProcessor;
   /** From the first effect chosen until a frame carrying it is drawn. */
   settling?: boolean;
+  /** The camera this provider's pipeline is synced to. */
+  cameraTrack?: SyncedCameraTrack;
 };
 
 /**
@@ -133,16 +147,55 @@ export const syncBackgroundEffects = (
       if (!videoTrack) return;
       applyProcessor(videoTrack, backgroundEffectsState.processor);
     });
+  reportCamera(
+    scope,
+    videoTrack$.pipe(map((track) => track && livekitCamera(track))),
+    backgroundEffectsState$,
+  );
 };
+
+/**
+ * Reports the camera the pipeline is synced to while the scope lasts: the
+ * preview's LiveKit track before joining, or the SDK's in the call, which the
+ * call syncs itself.
+ */
+export function reportCamera(
+  scope: ObservableScope,
+  camera$: Observable<ShownCamera | null>,
+  backgroundEffectsState$: Behavior<BackgroundEffectsState>,
+): void {
+  // Keyed on the camera alone: reporting again for every change of state would
+  // blank the preview each time.
+  combineLatest([
+    camera$,
+    backgroundEffectsState$.pipe(
+      map(({ cameraTrack }) => cameraTrack),
+      distinctUntilChanged(),
+    ),
+  ])
+    .pipe(
+      switchMap(([camera, cameraTrack]) =>
+        camera === null || cameraTrack === undefined
+          ? EMPTY
+          : new Observable<never>(() => cameraTrack.report(camera)),
+      ),
+      scope.bind(),
+    )
+    .subscribe();
+}
 
 export const useSyncBackgroundEffects = (
   videoTrack: LocalVideoTrack | null,
 ): void => {
-  const { processor } = useBackgroundEffects();
+  const { processor, cameraTrack } = useBackgroundEffects();
   useEffect(() => {
     if (!videoTrack) return;
     applyProcessor(videoTrack, processor);
   }, [processor, videoTrack]);
+  useEffect(() => {
+    if (videoTrack && cameraTrack)
+      return cameraTrack.report(livekitCamera(videoTrack));
+  }, [cameraTrack, videoTrack]);
 };
 
 /** The app's one pipeline, shared by every camera track it opens. */

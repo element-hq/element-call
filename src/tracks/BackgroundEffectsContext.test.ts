@@ -9,6 +9,7 @@ import { act, createElement, type FC } from "react";
 import { render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { type LocalVideoTrack } from "livekit-client";
+import { BehaviorSubject } from "rxjs";
 import {
   type BackgroundOptions,
   type ProcessorWrapper,
@@ -23,6 +24,7 @@ import {
   fromLivekitProcessor,
   BackgroundEffectsProvider,
   type BackgroundEffectsState,
+  reportCamera,
   syncBackgroundEffects,
   useBackgroundEffects,
   useSyncBackgroundEffects,
@@ -30,9 +32,15 @@ import {
 } from "./BackgroundEffectsContext";
 import { type BackgroundEffects } from "../state/BackgroundEffects";
 import { backgroundEffect } from "../settings/settings";
+import {
+  livekitCamera,
+  sdkCamera,
+  type ShownCamera,
+  SyncedCameraTrack,
+} from "./cameraTrack";
 import { type AddedBackground } from "./backgroundImages";
 import { constant } from "../state/Behavior";
-import { flushPromises, testScope } from "../utils/test";
+import { flushPromises, mockVideoTrack, testScope } from "../utils/test";
 
 const sdkSupportMock = vi.hoisted(() => vi.fn(() => true));
 const pipelines = vi.hoisted(() => ({
@@ -179,6 +187,98 @@ describe("fromLivekitProcessor", () => {
     await expect(
       fromLivekitProcessor(mockWrapper(undefined)).init(captured),
     ).rejects.toThrow("produced no track");
+  });
+});
+
+describe("the synced camera", () => {
+  it("is the track last synced, and cleared only while still its own", () => {
+    const camera = new SyncedCameraTrack();
+    const pipeline = constant<BackgroundEffectsState>({
+      supported: false,
+      processor: undefined,
+      cameraTrack: camera,
+    });
+    const lobby = mockTrack("live");
+    const call = mockTrack("live");
+    const lobbyTrack$ = new BehaviorSubject<LocalVideoTrack | null>(lobby);
+    syncBackgroundEffects(testScope(), lobbyTrack$, pipeline);
+    expect(camera.track$.value).toBe(livekitCamera(lobby));
+
+    const callScope = testScope();
+    syncBackgroundEffects(callScope, constant(call), pipeline);
+    expect(camera.track$.value).toBe(livekitCamera(call));
+
+    lobbyTrack$.next(null);
+    expect(camera.track$.value).toBe(livekitCamera(call));
+    callScope.end();
+    expect(camera.track$.value).toBeNull();
+  });
+
+  it("reports the camera once, however often the pipeline's state changes", () => {
+    const camera = new SyncedCameraTrack();
+    const report = vi.spyOn(camera, "report");
+    const state$ = new BehaviorSubject<BackgroundEffectsState>({
+      supported: true,
+      processor: undefined,
+      cameraTrack: camera,
+    });
+    syncBackgroundEffects(testScope(), constant(mockTrack("live")), state$);
+    state$.next({ ...state$.value, settling: true });
+    state$.next({ ...state$.value, settling: false });
+    expect(report).toHaveBeenCalledOnce();
+  });
+
+  it("is the SDK's camera once the call reports it", () => {
+    const camera = new SyncedCameraTrack();
+    const state$ = constant<BackgroundEffectsState>({
+      supported: true,
+      processor: undefined,
+      cameraTrack: camera,
+    });
+    const callCamera = mockVideoTrack({ facingMode$: constant("user") });
+    const callCamera$ = new BehaviorSubject<ShownCamera | null>(
+      sdkCamera(callCamera),
+    );
+    reportCamera(testScope(), callCamera$, state$);
+    expect(camera.track$.value).toBe(sdkCamera(callCamera));
+    expect(camera.track$.value?.facesUser()).toBe(true);
+
+    const element = document.createElement("video");
+    camera.track$.value!.attach(element);
+    expect(callCamera.attach).toHaveBeenCalledWith(element);
+
+    callCamera$.next(null);
+    expect(camera.track$.value).toBeNull();
+  });
+
+  it("keeps each call's camera to its own", () => {
+    const seen: (SyncedCameraTrack | undefined)[] = [];
+    const Call: FC<{ track: LocalVideoTrack }> = ({ track }) => {
+      const { cameraTrack } = useBackgroundEffects();
+      seen.push(cameraTrack);
+      useSyncBackgroundEffects(track);
+      return null;
+    };
+    const first = mockTrack("live");
+    const second = mockTrack("live");
+    render(
+      createElement(
+        "div",
+        null,
+        createElement(BackgroundEffectsProvider, {
+          effects: createAppBackgroundEffects(testScope()),
+          children: createElement(Call, { track: first }),
+        }),
+        createElement(BackgroundEffectsProvider, {
+          effects: createAppBackgroundEffects(testScope()),
+          children: createElement(Call, { track: second }),
+        }),
+      ),
+    );
+    const [mine, theirs] = [...new Set(seen)];
+    expect(mine).not.toBe(theirs);
+    expect(mine?.track$.value).toBe(livekitCamera(first));
+    expect(theirs?.track$.value).toBe(livekitCamera(second));
   });
 });
 

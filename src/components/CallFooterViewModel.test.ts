@@ -24,6 +24,9 @@ import {
   createLobbyFooterViewModel,
 } from "./CallFooterViewModel";
 import { HeaderStyle } from "../UrlParams";
+import { type BackgroundEffectsState } from "../tracks/BackgroundEffectsContext";
+import { type ShownCamera, SyncedCameraTrack } from "../tracks/cameraTrack";
+import { type MuteStates } from "../state/MuteStates";
 import { backgroundEffect as backgroundEffectSetting } from "../settings/settings";
 import { shippedBackgrounds } from "../tracks/backgroundEffects";
 import type * as BackgroundImages from "../tracks/backgroundImages";
@@ -113,6 +116,11 @@ const pipLayout: Layout = {
   spotlight: {} as SpotlightTileViewModel,
 };
 
+const noPipeline = constant<BackgroundEffectsState>({
+  supported: false,
+  processor: undefined,
+});
+
 const twoMicsAndOneCamMediaDevices = mockMediaDevices({
   audioInput: {
     available$: constant(
@@ -144,7 +152,7 @@ describe("createCallFooterViewModel", () => {
         buildMinimalCallViewModel(gridLayout),
         mockMuteStates(),
         twoMicsAndOneCamMediaDevices,
-        constant(false),
+        noPipeline,
         /* reactionIdentifier */ undefined,
         { showControls: true, header: HeaderStyle.Standard },
       );
@@ -187,7 +195,7 @@ describe("createCallFooterViewModel", () => {
             select: vi.fn(),
           },
         }),
-        constant(false),
+        noPipeline,
         /* reactionIdentifier */ undefined,
         { showControls: true, header: HeaderStyle.Standard },
       );
@@ -206,7 +214,7 @@ describe("createCallFooterViewModel", () => {
         buildMinimalCallViewModel(layout),
         mockMuteStates(),
         twoMicsAndOneCamMediaDevices,
-        constant(false),
+        noPipeline,
         /* reactionIdentifier */ undefined,
         { showControls: true, header: HeaderStyle.Standard },
       );
@@ -229,7 +237,7 @@ describe("createCallFooterViewModel", () => {
         buildMinimalCallViewModel(gridLayout),
         mockMuteStates(),
         twoMicsAndOneCamMediaDevices,
-        constant(false),
+        noPipeline,
         /* reactionIdentifier */ undefined,
         { showControls: true, header: HeaderStyle.Standard },
       );
@@ -275,7 +283,7 @@ describe("createCallFooterViewModel", () => {
         testScope(),
         mockMuteStates(),
         twoMicsAndOneCamMediaDevices,
-        constant(false),
+        noPipeline,
         /* openSettings */ undefined,
         /* hangup */ undefined,
         /* showLogo */ false,
@@ -360,18 +368,22 @@ describe("createCallFooterViewModel", () => {
 
     it("passes on the wait for the first effect", () => {
       platformMock.mockReturnValue("desktop");
-      const settling$ = new BehaviorSubject(true);
+      const pipeline$ = new BehaviorSubject<BackgroundEffectsState>({
+        supported: true,
+        processor: undefined,
+        settling: true,
+      });
       const vm = createLobbyFooterViewModel(
         testScope(),
         mockMuteStates(),
         twoMicsAndOneCamMediaDevices,
-        settling$,
+        pipeline$,
         /* openSettings */ undefined,
         /* hangup */ undefined,
         /* showLogo */ false,
       );
       expect(vm.backgroundEffectSettling$.value).toBe(true);
-      settling$.next(false);
+      pipeline$.next({ ...pipeline$.value, settling: false });
       expect(vm.backgroundEffectSettling$.value).toBe(false);
     });
 
@@ -431,6 +443,33 @@ describe("createCallFooterViewModel", () => {
       expect(store.remove).toHaveBeenCalledWith("spare");
     });
 
+    it("previews the camera only while it is on", () => {
+      const camera = new SyncedCameraTrack();
+      const track = {} as ShownCamera;
+      camera.report(track);
+      const videoEnabled$ = new BehaviorSubject(true);
+      const muteStates = mockMuteStates();
+      const vm = createLobbyFooterViewModel(
+        testScope(),
+        {
+          ...muteStates,
+          video: { ...muteStates.video, enabled$: videoEnabled$ },
+        } as unknown as MuteStates,
+        twoMicsAndOneCamMediaDevices,
+        constant({
+          supported: true,
+          processor: undefined,
+          cameraTrack: camera,
+        }),
+        /* openSettings */ undefined,
+        /* hangup */ undefined,
+        /* showLogo */ false,
+      );
+      expect(vm.cameraTrack$.value).toBe(track);
+      videoEnabled$.next(false);
+      expect(vm.cameraTrack$.value).toBeNull();
+    });
+
     it("availability is the same before and during a call", () => {
       for (const supported of [true, false]) {
         sdkSupportMock.mockReturnValue(supported);
@@ -440,7 +479,7 @@ describe("createCallFooterViewModel", () => {
           buildMinimalCallViewModel(gridLayout),
           mockMuteStates(),
           twoMicsAndOneCamMediaDevices,
-          constant(false),
+          noPipeline,
           /* reactionIdentifier */ undefined,
           { showControls: true, header: HeaderStyle.Standard },
         );
