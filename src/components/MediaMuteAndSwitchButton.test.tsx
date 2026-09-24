@@ -26,6 +26,14 @@ import { MediaDevicesContext } from "../MediaDevicesContext";
 import { type MediaDevices } from "../state/MediaDevices";
 import { restoreAudioCapture, stubAudioCapture } from "../utils/test";
 
+const platformMock = vi.hoisted(() => vi.fn(() => "desktop"));
+vi.mock("../Platform", () => ({
+  get platform(): string {
+    return platformMock();
+  },
+  isFirefox: (): boolean => false,
+}));
+
 interface RenderOptions {
   requestDeviceNames: () => void;
 }
@@ -147,6 +155,28 @@ describe("MediaMuteAndSwitchButton", () => {
 
     await user.click(videoButton);
     expect(onMute).not.toHaveBeenCalled();
+  });
+
+  // On a phone the menu is a drawer, not a dropdown.
+  test("holds the menu's width only where it is a dropdown", async () => {
+    const width = async (platform: string): Promise<string> => {
+      platformMock.mockReturnValue(platform);
+      const user = userEvent.setup();
+      const { unmount } = renderComponent(
+        <MediaMuteAndSwitchButton iconsAndLabels="audio" enabled />,
+      );
+      await user.click(screen.getByRole("button", { name: "Microphone" }));
+      const list = document.body.querySelector<HTMLElement>(
+        "[style*='--device-list-max-height']",
+      )!;
+      const value = list.style.getPropertyValue("--device-list-inline-size");
+      unmount();
+      return value;
+    };
+    expect(await width("desktop")).toBe("296px");
+    expect(await width("ios")).toBe("");
+    expect(await width("android")).toBe("");
+    platformMock.mockReturnValue("desktop");
   });
 
   test("requests device names when opened", async () => {
