@@ -15,6 +15,7 @@ import {
   type BackgroundEffectsOptions,
 } from "./BackgroundEffects";
 import { type BackgroundEffectsState } from "../livekit/BackgroundEffectsContext";
+import { type AddedBackground } from "../livekit/backgroundImages";
 import { shippedBackgrounds } from "../livekit/backgroundEffects";
 import { flushPromises, testScope, withTestScheduler } from "../utils/test";
 
@@ -70,6 +71,7 @@ describe("the pipeline's state", () => {
         supported: true,
         effect$: behavior(effect, { n: "none", b: "blur" }),
         setEffect: vi.fn(),
+        added$: new BehaviorSubject<AddedBackground[] | undefined>([]),
         pipeline: fakePipeline().pipeline,
         transformer,
       });
@@ -95,6 +97,7 @@ describe("the pipeline's state", () => {
 
 describe("background effects", () => {
   let effect$: BehaviorSubject<string>;
+  let added$: BehaviorSubject<AddedBackground[] | undefined>;
   let setEffect: (raw: string) => void;
   let fake: ReturnType<typeof fakePipeline>;
 
@@ -105,6 +108,7 @@ describe("background effects", () => {
       supported: true,
       effect$,
       setEffect,
+      added$,
       pipeline: fake.pipeline,
       transformer: { onFirstFrame: undefined },
       ...options,
@@ -119,6 +123,7 @@ describe("background effects", () => {
 
   beforeEach(() => {
     effect$ = new BehaviorSubject("none");
+    added$ = new BehaviorSubject<AddedBackground[] | undefined>(undefined);
     setEffect = vi.fn((raw: string) => effect$.next(raw));
     fake = fakePipeline();
   });
@@ -179,5 +184,57 @@ describe("background effects", () => {
     const effects = build({ supported: false });
     expect(effect$.value).toBe("none");
     expect(effects.state$.value.processor).toBeUndefined();
+  });
+
+  it("puts an added background on as its picture", async () => {
+    added$.next([{ id: "mine", url: "blob:mine" }]);
+    build();
+    await choose("added:mine");
+    expect(fake.switches).toEqual([
+      { mode: "virtual-background", imagePath: "blob:mine" },
+    ]);
+  });
+
+  it("switches between any two effects in place", async () => {
+    added$.next([{ id: "mine", url: "blob:mine" }]);
+    const shipped = shippedBackgrounds[0];
+    const options: Record<string, unknown> = {
+      none: { mode: "disabled" },
+      blur: { mode: "background-blur", blurRadius: 15 },
+      [`image:${shipped.id}`]: {
+        mode: "virtual-background",
+        imagePath: shipped.imagePath,
+      },
+      "added:mine": { mode: "virtual-background", imagePath: "blob:mine" },
+    };
+    // Each kind to each other kind, and back.
+    const order = [
+      "blur",
+      `image:${shipped.id}`,
+      "added:mine",
+      "blur",
+      "added:mine",
+      `image:${shipped.id}`,
+      "none",
+      "added:mine",
+      "none",
+      "blur",
+    ];
+    const effects = build();
+    await choose(order[0]);
+    const pipeline = effects.state$.value.processor;
+    for (const raw of order.slice(1)) await choose(raw);
+
+    expect(effects.state$.value.processor).toBe(pipeline);
+    expect(fake.switches).toEqual(order.map((raw) => options[raw]));
+  });
+
+  it("forgets an added background the device no longer keeps", () => {
+    effect$.next("added:gone");
+    build();
+    // Not before the device has said what it keeps.
+    expect(effect$.value).toBe("added:gone");
+    added$.next([]);
+    expect(effect$.value).toBe("none");
   });
 });
