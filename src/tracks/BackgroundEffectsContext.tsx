@@ -45,13 +45,14 @@ export function useBackgroundEffectsState$(): Behavior<BackgroundEffectsState> {
 export function createAppBackgroundEffects(
   scope: ObservableScope,
 ): BackgroundEffects {
+  const transformer = new BackgroundEffectTransformer({
+    backgroundDisabled: true,
+  });
   return createBackgroundEffects(scope, {
     supported: supportsBackgroundProcessors(),
     effect$: backgroundEffectSetting.value$,
-    pipeline: new BackgroundProcessorWrapper(
-      new BackgroundEffectTransformer({ backgroundDisabled: true }),
-      "background-effect",
-    ),
+    pipeline: new BackgroundProcessorWrapper(transformer, "background-effect"),
+    transformer,
   });
 }
 

@@ -46,25 +46,33 @@ function fakePipeline(): {
   };
 }
 
-/** One letter per state: idle, attached. */
+/** One letter per state: idle, waiting for a frame, attached. */
 function letter(state: BackgroundEffectsState): string {
-  return state.processor === undefined ? "i" : "a";
+  if (state.processor === undefined) return "i";
+  return state.settling ? "w" : "a";
 }
 
 describe("the pipeline's state", () => {
   function testState({
     effect,
+    firstFrame = "",
     expected,
   }: {
     effect: string;
+    firstFrame?: string;
     expected: string;
   }): void {
-    withTestScheduler(({ behavior, expectObservable }) => {
+    withTestScheduler(({ behavior, schedule, expectObservable }) => {
+      const transformer = {
+        onFirstFrame: undefined as (() => void) | undefined,
+      };
       const effects = createBackgroundEffects(testScope(), {
         supported: true,
         effect$: behavior(effect, { n: "none", b: "blur" }),
         pipeline: fakePipeline().pipeline,
+        transformer,
       });
+      schedule(firstFrame, { f: () => transformer.onFirstFrame?.() });
       expectObservable(
         effects.state$.pipe(map(letter), distinctUntilChanged()),
       ).toBe(expected);
@@ -73,8 +81,15 @@ describe("the pipeline's state", () => {
 
   it("defaults to no effect", () => testState({ effect: "n", expected: "i" }));
 
+  it("waits from the first effect until a frame carries it", () =>
+    testState({
+      effect: "    nb-n-b",
+      firstFrame: "  --f",
+      expected: "  iwa",
+    }));
+
   it("attaches on first use and stays attached", () =>
-    testState({ effect: "nbn", expected: "ia" }));
+    testState({ effect: "nb-n", firstFrame: "--f", expected: "iwa" }));
 });
 
 describe("background effects", () => {
@@ -88,6 +103,7 @@ describe("background effects", () => {
       supported: true,
       effect$,
       pipeline: fake.pipeline,
+      transformer: { onFirstFrame: undefined },
       ...options,
     });
   }
