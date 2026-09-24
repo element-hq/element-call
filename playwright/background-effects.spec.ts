@@ -5,15 +5,15 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import {
-  expect,
-  test,
-  type Browser,
-  type Locator,
-  type Page,
-} from "@playwright/test";
+import { expect, test, type Browser, type Page } from "@playwright/test";
 
 import { SpaHelpers } from "./spa-helpers.ts";
+import {
+  averageColour,
+  cameraColour,
+  type Colour,
+  distance,
+} from "./utils/colour.ts";
 
 // Background effects need WebGL2, and headless Firefox on a CI runner has none,
 // so it rightly offers none of them.
@@ -21,8 +21,6 @@ test.skip(
   ({ browserName }) => browserName === "firefox",
   "Background effects need WebGL2, which headless Firefox on CI does not have",
 );
-
-type Colour = [number, number, number];
 
 test.describe("background effects", () => {
   test("pre-join preview shows the chosen effect", async ({ page }) => {
@@ -107,6 +105,51 @@ async function drawsPerSecond(page: Page): Promise<number> {
     return counter.draws - before;
   });
 }
+
+test.describe("background effects section", () => {
+  test("section stays within the call area at every size", async ({ page }) => {
+    test.setTimeout(120_000);
+    await page.goto("/");
+    await SpaHelpers.createCall(page, "Sizes user", "Background effect sizes");
+
+    for (const size of [
+      { width: 1280, height: 800 },
+      { width: 800, height: 600 },
+      { width: 600, height: 420 },
+      { width: 480, height: 360 },
+      { width: 360, height: 640 },
+    ]) {
+      await page.setViewportSize(size);
+      await page.getByRole("button", { name: "Camera", exact: true }).click();
+      const menu = page.getByRole("menu");
+      await expect(menu).toBeVisible();
+
+      const box = (await menu.boundingBox())!;
+      const where = `at ${size.width}x${size.height}`;
+      expect(box.x, where).toBeGreaterThanOrEqual(0);
+      expect(box.y, where).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width, where).toBeLessThanOrEqual(size.width);
+      expect(box.y + box.height, where).toBeLessThanOrEqual(size.height);
+
+      const last = page
+        .getByRole("group", { name: "Background effects" })
+        .getByRole("menuitemradio")
+        .last();
+      await last.scrollIntoViewIfNeeded();
+      await expect(last, where).toBeInViewport({ ratio: 1 });
+      await last.click();
+      await expect(last, where).toHaveAttribute("aria-checked", "true");
+
+      // Back to no effect for the next size, and close.
+      await page
+        .getByRole("group", { name: "Background effects" })
+        .getByRole("menuitemradio", { name: "None" })
+        .click();
+      await page.keyboard.press("Escape");
+      await expect(menu).toBeHidden();
+    }
+  });
+});
 
 test.describe("joining with a background chosen", () => {
   test("publishes no frame of the room", async ({ browser }) => {
@@ -426,35 +469,4 @@ async function framesOf(page: Page, trackId: string): Promise<Colour[]> {
       ).receivedFrames[id] ?? [],
     trackId,
   );
-}
-
-/** The camera's colour, once the preview is showing it rather than nothing. */
-async function cameraColour(preview: Locator): Promise<Colour> {
-  await expect
-    .poll(async () => Math.max(...(await averageColour(preview))))
-    .toBeGreaterThan(40);
-  return averageColour(preview);
-}
-
-/** The mean colour of a video's current frame or an image, drawn small. */
-async function averageColour(element: Locator): Promise<Colour> {
-  return element.evaluate(
-    async (source: HTMLVideoElement | HTMLImageElement) => {
-      if (source instanceof HTMLImageElement) await source.decode();
-      const canvas = document.createElement("canvas");
-      canvas.width = canvas.height = 32;
-      const context = canvas.getContext("2d")!;
-      context.drawImage(source, 0, 0, 32, 32);
-      const { data } = context.getImageData(0, 0, 32, 32);
-      const sum = [0, 0, 0];
-      for (let i = 0; i < data.length; i += 4)
-        for (let c = 0; c < 3; c++) sum[c] += data[i + c];
-      const pixels = data.length / 4;
-      return sum.map((s) => s / pixels) as Colour;
-    },
-  );
-}
-
-function distance(a: Colour, b: Colour): number {
-  return Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 }
