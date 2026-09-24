@@ -31,7 +31,28 @@ copy, the PR says so.
 - **Suites.** Test cases first, helpers below. Older suites invert this; follow the
   rule in new ones, don't reorder old ones.
 - **Names.** What a thing means, not what it is made of: `naturalLayout$`, not
-  `computedLayout$`. Comments explain why, never what.
+  `computedLayout$`.
+
+## Comments
+
+No comment is the default. One earns its place by giving a reason the code
+cannot: a platform quirk, an outside constraint, a trap that looks like a
+simplification.
+
+- Say the reason, then stop. Test each sentence: does the reason still stand
+  without it? If so, cut it. Most reasons fit on a line, so a long comment is
+  worth a second look — it is usually carrying something that isn't one.
+- Write about the line the comment sits on, in terms of what the code does
+  there — leave layout to the stylesheet and measurements to the design.
+- Name the condition ("where the platform can't route audio"), not the browser
+  or the spec entry.
+- Put history — what was tried, removed or rejected, the dev journal — in the
+  commit or the PR description.
+- In tests, comment only structure that looks wrong but isn't: batching, timers,
+  why this scroll position.
+
+Before keeping one: would it still be true after a CSS change or a refactor of
+its caller? If not, cut it.
 
 ## TypeScript, React and RxJS idiom win on a clash
 
