@@ -1,0 +1,61 @@
+name: Claude
+on:
+  pull_request:
+    types: [labeled]
+
+permissions: {} # We use CLAUDE_GH_TOKEN instead
+
+jobs:
+  review:
+    name: Review
+    if: github.event.label.name == 'Claude-Review'
+    runs-on: ubuntu-latest
+    env:
+      # The API key is not scoped to a workspace, so we need to select the workspace
+      # manually via the header.
+      ANTHROPIC_CUSTOM_HEADERS: "anthropic-workspace-id: wrkspc_01WUho5AvAZJ2M6vUUtUybAb"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          # The review looks at the individual commits, not just the combined diff
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Review
+        uses: anthropics/claude-code-action@8cf3482550831fb35a4fc3fbf7ca139cf8028b4c # v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.CLAUDE_GH_TOKEN }}
+          track_progress: true
+          use_sticky_comment: true
+          show_full_output: true
+          prompt: |
+            Review this pull request under the following (and no further) angles:
+
+            1. Scope:
+              
+               - Does the PR do one thing?
+               - Is the PR free of unrelated fixes and drive-by refactorings?
+               - If the PR is large, could it reasonably be split into smaller PRs
+                 that still deliver value?
+
+            2. Commits:
+               
+               - Is the work split into self-contained commits of reasonable size?
+               - Are the commits arranged in a sensible order?
+               - Have required refactorings been split out into separate commits?
+               - Is the history free of "wip", checkpoint and fixup-style commits
+                 which only correct an earlier commit in the same PR?
+
+            Read the commits themselves with `git log` and `git diff` against
+            the base branch of the PR.
+
+            Report a verdict of PASS or NEEDS WORK for each of the two checks,
+            each followed by a short bullet per problem explaining the issue
+            and offering concrete suggestion.
+
+            Start your message with "# Automated Claude review".
+          claude_args: |
+            --max-turns 20
+            --model claude-fable-5-1
+            --allowedTools "Bash(git log:*),Bash(git diff:*),Bash(git show:*)"
