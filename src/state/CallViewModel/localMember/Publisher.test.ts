@@ -451,6 +451,18 @@ describe("turning the camera on with an effect chosen", () => {
     expect(madeWith).toEqual([processor]);
   });
 
+  it("waits to make a camera track until it is known the pipeline builds", async () => {
+    state$.next({ supported: true, processor: undefined, preparing: true });
+    await publisher.createAndSetupTracks();
+    videoEnabled$.next(true);
+    await flushPromises();
+    expect(madeWith).toEqual([]);
+
+    state$.next({ supported: true, processor, preparing: false });
+    await flushPromises();
+    expect(madeWith).toEqual([processor]);
+  });
+
   it("replaces a camera track turned off before the effect was chosen", async () => {
     state$.next({ supported: true, processor });
     const stopped = Object.assign(Object.create(LocalVideoTrack.prototype), {
