@@ -24,7 +24,10 @@ import {
 } from "rxjs";
 
 import { backgroundEffect as backgroundEffectSetting } from "../settings/settings";
-import { BackgroundEffectTransformer } from "./BackgroundEffectTransformer";
+import {
+  BackgroundEffectTransformer,
+  canSegment,
+} from "./BackgroundEffectTransformer";
 import { type SyncedCameraTrack } from "./cameraTrack";
 import { OneStepPipeline } from "./OneStepPipeline";
 import { addedBackgrounds } from "./backgroundImages";
@@ -47,6 +50,8 @@ export type BackgroundEffectsState = {
   settling?: boolean;
   /** The camera this provider's pipeline is synced to. */
   cameraTrack?: SyncedCameraTrack;
+  /** While asking whether the pipeline can be built, before it is attached. */
+  preparing?: boolean;
 };
 
 const BackgroundEffectsContext = createContext<BackgroundEffects | undefined>(
@@ -157,6 +162,7 @@ export function createAppBackgroundEffects(
     effect$: backgroundEffectSetting.value$,
     setEffect: backgroundEffectSetting.setValue,
     added$: addedBackgrounds.added$,
+    canSegment,
     pipeline: new OneStepPipeline(transformer, "background-effect"),
     transformer,
   });
