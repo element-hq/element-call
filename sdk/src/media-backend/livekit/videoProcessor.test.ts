@@ -47,4 +47,11 @@ describe("convertToLivekitProcessor", () => {
     await adapter.destroy();
     expect(processor.destroy).toHaveBeenCalled();
   });
+
+  it("gives one processor one adapter", () => {
+    const processor = fakeProcessor();
+    expect(convertToLivekitProcessor(processor)).toBe(
+      convertToLivekitProcessor(processor),
+    );
+  });
 });

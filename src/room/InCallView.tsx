@@ -170,7 +170,12 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     );
     const rtcParticipation = slot.join({
       ...rtcParticipationOptions(urlParams),
-      publish: initialPublishRequests(props.muteStates, mediaDevices, capture),
+      publish: initialPublishRequests(
+        props.muteStates,
+        mediaDevices,
+        capture,
+        trackProcessorState$.value.processor,
+      ),
     });
 
     const vm = createCallViewModel$(
