@@ -1,12 +1,13 @@
 /*
 Copyright 2024-2025 New Vector Ltd.
+Copyright 2026 Element Creations Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
 import {
-  ProcessorWrapper,
+  type ProcessorWrapper,
   supportsBackgroundProcessors as supportsBackgroundProcessorsLivekitSdk,
   type BackgroundOptions,
 } from "@livekit/track-processors";
@@ -16,20 +17,19 @@ import {
   type JSX,
   use,
   useEffect,
-  useMemo,
+  useState,
 } from "react";
 import { type LocalVideoTrack } from "livekit-client";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { combineLatest, map, type Observable } from "rxjs";
-import { useObservable } from "observable-hooks";
+import { combineLatest } from "rxjs";
 
-import {
-  backgroundBlur as backgroundBlurSettings,
-  useSetting,
-} from "../settings/settings";
-import { BlurBackgroundTransformer } from "./BlurBackgroundTransformer";
+import { backgroundBlur as backgroundBlurSettings } from "../settings/settings";
+import { BackgroundEffectTransformer } from "./BackgroundEffectTransformer";
+import { OneStepPipeline } from "./OneStepPipeline";
 import { type Behavior } from "../state/Behavior";
-import { type ObservableScope } from "../state/ObservableScope";
+import { ObservableScope } from "../state/ObservableScope";
+import { BackgroundEffects } from "../state/BackgroundEffects";
+import { useBehavior } from "../useBehavior";
 import { platform } from "../Platform";
 
 //TODO-MULTI-SFU: This is not yet fully there.
@@ -41,29 +41,21 @@ export type ProcessorState = {
   processor: undefined | ProcessorWrapper<BackgroundOptions>;
 };
 
-const ProcessorContext = createContext<ProcessorState | undefined>(undefined);
+const ProcessorContext = createContext<BackgroundEffects | undefined>(
+  undefined,
+);
 
 export function useTrackProcessor(): ProcessorState {
-  const state = use(ProcessorContext);
-  if (state === undefined)
-    throw new Error(
-      "useTrackProcessor must be used within a ProcessorProvider",
-    );
-  return state;
+  return useBehavior(useTrackProcessorObservable$());
 }
 
-export function useTrackProcessorObservable$(): Observable<ProcessorState> {
-  const state = use(ProcessorContext);
-  if (state === undefined)
+export function useTrackProcessorObservable$(): Behavior<ProcessorState> {
+  const effects = use(ProcessorContext);
+  if (effects === undefined)
     throw new Error(
       "useTrackProcessor must be used within a ProcessorProvider",
     );
-  const state$ = useObservable(
-    (init$) => init$.pipe(map(([init]) => init)),
-    [state],
-  );
-
-  return state$;
+  return effects.state$;
 }
 
 /**
@@ -83,8 +75,13 @@ export function applyProcessor(
       logger.debug("Not attaching video processor to an ended track");
       return;
     }
+    const track = videoTrack.mediaStreamTrack;
     videoTrack.setProcessor(processor).catch((e) => {
-      logger.warn("Failed to attach video processor", e);
+      // The pipeline builds one track at a time, so a track can end while its
+      // build waits a turn. The camera's next track attaches it again.
+      if (track.readyState === "ended")
+        logger.debug("Video processor not attached: the track ended first");
+      else logger.warn("Failed to attach video processor", e);
     });
   }
   if (!processor && videoTrack.getProcessor()) {
@@ -130,26 +127,22 @@ function supportsBackgroundProcessors(): boolean {
 }
 
 export const ProcessorProvider: FC<Props> = ({ children }) => {
-  // The setting the user wants to have
-  const [blurActivated] = useSetting(backgroundBlurSettings);
-  const supported = useMemo(() => supportsBackgroundProcessors(), []);
-  const blur = useMemo(
-    () =>
-      new ProcessorWrapper(
-        new BlurBackgroundTransformer({ blurRadius: 15 }),
-        "background-blur",
-      ),
-    [],
-  );
+  const [effects, setEffects] = useState<BackgroundEffects | null>(null);
+  useEffect(() => {
+    const scope = new ObservableScope();
+    setEffects(
+      new BackgroundEffects(scope, {
+        supported: supportsBackgroundProcessors(),
+        blur$: backgroundBlurSettings.value$,
+        pipeline: new OneStepPipeline(
+          new BackgroundEffectTransformer({ backgroundDisabled: true }),
+          "background-effect",
+        ),
+      }),
+    );
+    return (): void => scope.end();
+  }, []);
 
-  // This is the actual state exposed through the context
-  const processorState = useMemo(
-    () => ({
-      supported,
-      processor: supported && blurActivated ? blur : undefined,
-    }),
-    [supported, blurActivated, blur],
-  );
-
-  return <ProcessorContext value={processorState}>{children}</ProcessorContext>;
+  if (effects === null) return null;
+  return <ProcessorContext value={effects}>{children}</ProcessorContext>;
 };
