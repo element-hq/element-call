@@ -15,10 +15,7 @@ import {
   switchMap,
 } from "rxjs";
 import { supportsAudioOutputSelection } from "livekit-client";
-import {
-  supportsBackgroundProcessors,
-  supportsModernBackgroundProcessors,
-} from "@livekit/track-processors";
+import { supportsModernBackgroundProcessors } from "@livekit/track-processors";
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import {
@@ -130,10 +127,14 @@ function buildDeviceBehaviors(
       ),
     );
 
-  const supported = supportsBackgroundProcessors();
+  // Also false once the pipeline has failed to build this session.
+  const supported$ = backgroundEffectsState$.pipe(
+    map(({ supported }) => supported === true),
+    distinctUntilChanged(),
+  );
   const slow = !supportsModernBackgroundProcessors();
-  const offered$ = disableSwitcher$.pipe(
-    map((switcherDisabled) => !switcherDisabled && supported),
+  const offered$ = combineLatest([disableSwitcher$, supported$]).pipe(
+    map(([switcherDisabled, supported]) => !switcherDisabled && supported),
   );
   // A new object for each refusal, so the same one twice is shown twice.
   const refusal$ = new BehaviorSubject<BackgroundImageRefusal | undefined>(
@@ -164,8 +165,10 @@ function buildDeviceBehaviors(
     ),
     selectVideoButtonOption$: constant(mediaDevices.videoInput.select),
     backgroundEffect$: scope.behavior(
-      backgroundEffectSetting.value$.pipe(
-        map((raw) => (supported ? serializeEffect(parseEffect(raw)) : "none")),
+      combineLatest([backgroundEffectSetting.value$, supported$]).pipe(
+        map(([raw, supported]) =>
+          supported ? serializeEffect(parseEffect(raw)) : "none",
+        ),
       ),
     ),
     selectBackgroundEffect$: scope.behavior(

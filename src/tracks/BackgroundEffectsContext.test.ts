@@ -76,7 +76,8 @@ vi.mock("./backgroundImages", async () => {
   };
 });
 vi.mock("./BackgroundEffectTransformer", () => ({
-  BackgroundEffectTransformer: vi.fn(),
+  BackgroundEffectTransformer: vi.fn(function () {}),
+  canSegment: async (): Promise<boolean> => Promise.resolve(true),
 }));
 
 const processor = { name: "blur" } as VideoProcessor;

@@ -179,6 +179,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
         mediaDevices,
         capture,
         backgroundEffectsState$.value.processor,
+        backgroundEffectsState$.value.preparing,
       ),
     });
 
@@ -194,6 +195,11 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
         capture,
         videoProcessor$: scope.behavior(
           backgroundEffectsState$.pipe(map((state) => state.processor)),
+        ),
+        videoProcessorPreparing$: scope.behavior(
+          backgroundEffectsState$.pipe(
+            map((state) => state.preparing ?? false),
+          ),
         ),
         hostBridge,
         autoLeaveWhenOthersLeft,
