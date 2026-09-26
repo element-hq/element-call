@@ -42,6 +42,7 @@ export interface KeptImage {
 export interface BackgroundImageStorage {
   list(): Promise<KeptImage[]>;
   put(image: KeptImage): Promise<void>;
+  delete(id: string): Promise<void>;
 }
 
 /** The backgrounds this device keeps, which never leave it. */
@@ -95,6 +96,14 @@ export class AddedBackgrounds {
       { id: kept.id, url: URL.createObjectURL(image) },
     ]);
     return kept.id;
+  }
+
+  public async remove(id: string): Promise<void> {
+    await this.storage?.delete(id);
+    const current = this.subject$.value ?? [];
+    const gone = current.find((a) => a.id === id);
+    if (gone) URL.revokeObjectURL(gone.url);
+    this.subject$.next(current.filter((a) => a.id !== id));
   }
 }
 
@@ -189,6 +198,10 @@ export class IndexedDBImageStorage implements BackgroundImageStorage {
 
   public async put(image: KeptImage): Promise<void> {
     await this.run("readwrite", (s) => s.put(image));
+  }
+
+  public async delete(id: string): Promise<void> {
+    await this.run("readwrite", (s) => s.delete(id));
   }
 }
 
