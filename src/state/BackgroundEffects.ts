@@ -15,14 +15,18 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import { type Behavior } from "./Behavior";
 import { type ObservableScope } from "./ObservableScope";
 import { type ProcessorState } from "../livekit/TrackProcessorContext";
-
-const blurRadius = 15;
+import {
+  type BackgroundEffect,
+  blurRadius,
+  imagePathFor,
+  parseEffect,
+} from "../livekit/backgroundEffects";
 
 export interface BackgroundEffectsOptions {
   /** Whether this browser can run a pipeline at all. */
   supported: boolean;
-  /** Whether blur is chosen. */
-  blur$: Behavior<boolean>;
+  /** The effect chosen, as the setting stores it. */
+  effect$: Behavior<string>;
   /**
    * Shared by the pre-join preview and the call. Building or destroying it is
    * what primes it, and a primed pipeline lets its next frame through
@@ -37,10 +41,16 @@ export class BackgroundEffects {
 
   public constructor(
     scope: ObservableScope,
-    { supported, blur$, pipeline }: BackgroundEffectsOptions,
+    { supported, effect$, pipeline }: BackgroundEffectsOptions,
   ) {
+    const choice$ = effect$.pipe(map(parseEffect));
+    const wanted$ = choice$.pipe(
+      map((effect) => effect.kind !== "none"),
+      distinctUntilChanged(),
+    );
+
     this.state$ = scope.behavior(
-      blur$.pipe(
+      wanted$.pipe(
         scan<boolean, ProcessorState>(
           (previous, wanted) => {
             // Attached the first time an effect is wanted and never detached
@@ -55,12 +65,10 @@ export class BackgroundEffects {
     );
 
     const switchTo = oneSwitchAtATime(pipeline);
-    combineLatest([this.state$, blur$])
+    combineLatest([this.state$, choice$])
       .pipe(
         filter(([{ processor }]) => processor !== undefined),
-        map(([, blur]): SwitchBackgroundProcessorOptions =>
-          blur ? { mode: "background-blur", blurRadius } : { mode: "disabled" },
-        ),
+        map(([, effect]) => switchOptionsFor(effect)),
         distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b)),
         scope.bind(),
       )
@@ -90,4 +98,21 @@ function oneSwitchAtATime(
     queue = turn.catch(() => {});
     return turn;
   };
+}
+
+function switchOptionsFor(
+  effect: BackgroundEffect,
+): SwitchBackgroundProcessorOptions {
+  switch (effect.kind) {
+    case "blur":
+      return { mode: "background-blur", blurRadius };
+    case "shipped": {
+      const imagePath = imagePathFor(effect.id);
+      return imagePath
+        ? { mode: "virtual-background", imagePath }
+        : { mode: "disabled" };
+    }
+    default:
+      return { mode: "disabled" };
+  }
 }
