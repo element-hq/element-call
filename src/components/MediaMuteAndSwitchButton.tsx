@@ -40,6 +40,7 @@ import { useMediaDevices } from "../MediaDevicesContext";
 import { useRootElement } from "../RootElementContext";
 import { observeElementSize$ } from "../utils/elementSize";
 import { LiveMicrophoneLevelMeter } from "./MicrophoneLevelMeter";
+import { menuIsDrawer } from "./menuIsDrawer";
 
 export interface MenuOptions {
   label: DeviceLabel | AudioOutputDeviceLabel;
@@ -83,6 +84,12 @@ const LIST_SHARE_OF_CALL = 0.6;
 
 /** Smallest device list height in px, so a short call still shows more than one device. */
 const MIN_LIST_HEIGHT = 160;
+
+/** The width design sets for the menu; a long device name wraps instead. */
+const MENU_WIDTH = 296;
+
+/** Space kept between the menu and the call area's sides. */
+const MENU_MARGIN = 16;
 
 export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   enabled,
@@ -143,17 +150,27 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   // Measured on the call area: CSS can't size the portalled menu against it.
   const rootElement = useRootElement();
   const [listMaxHeight, setListMaxHeight] = useState<number>();
+  const [menuWidth, setMenuWidth] = useState(MENU_WIDTH);
   useEffect(() => {
     if (!menuOpen) return;
     // Followed, since a host can resize the call while the menu is open.
     const subscription = observeElementSize$(rootElement)
       .pipe(
-        map(({ height }) =>
-          Math.max(MIN_LIST_HEIGHT, Math.round(height * LIST_SHARE_OF_CALL)),
+        map(({ width, height }) => ({
+          height: Math.max(
+            MIN_LIST_HEIGHT,
+            Math.round(height * LIST_SHARE_OF_CALL),
+          ),
+          width: Math.min(MENU_WIDTH, Math.round(width - 2 * MENU_MARGIN)),
+        })),
+        distinctUntilChanged(
+          (a, b) => a.height === b.height && a.width === b.width,
         ),
-        distinctUntilChanged(),
       )
-      .subscribe(setListMaxHeight);
+      .subscribe(({ height, width }) => {
+        setListMaxHeight(height);
+        setMenuWidth(width);
+      });
     return (): void => subscription.unsubscribe();
   }, [menuOpen, rootElement]);
 
@@ -349,6 +366,10 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
             {
               "--device-list-max-height":
                 listMaxHeight === undefined ? undefined : `${listMaxHeight}px`,
+              // On a phone Compound renders the menu as a drawer, which sets its own width.
+              "--device-list-inline-size": menuIsDrawer()
+                ? undefined
+                : `${menuWidth}px`,
               "--device-list-scroll-padding-end":
                 meterHeight === undefined ? undefined : `${meterHeight}px`,
               "--device-list-scroll-padding-start":
