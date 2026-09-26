@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { type FC, type ReactNode, type ReactElement } from "react";
 import {
+  DropdownMenuItem,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
 } from "@radix-ui/react-dropdown-menu";
@@ -16,6 +17,7 @@ import {
   BlockIcon,
   BlurIcon,
   CheckCircleSolidIcon,
+  PlusIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import styles from "./BackgroundEffectGrid.module.css";
@@ -43,6 +45,9 @@ interface Props {
   settling?: boolean;
   /** Id of the text saying what the user should know before choosing. */
   describedBy?: string;
+  /** Offers to add a background of one's own. Omit to leave that tile out. */
+  onAdd?: () => void;
+  addLabel?: string;
 }
 
 /**
@@ -57,6 +62,8 @@ export const BackgroundEffectGrid: FC<Props> = ({
   onSelect,
   settling = false,
   describedBy,
+  onAdd,
+  addLabel,
 }) => {
   const choose = (id: string): void => {
     if (id !== selected) onSelect?.(id);
@@ -105,11 +112,44 @@ export const BackgroundEffectGrid: FC<Props> = ({
     );
   });
 
+  // A command rather than a choice, so an item beside the radios.
+  const addContent = (
+    <>
+      <span aria-hidden className={styles.swatch}>
+        <PlusIcon width={24} height={24} />
+      </span>
+      <VisuallyHidden>{addLabel}</VisuallyHidden>
+    </>
+  );
+  const addTile =
+    onAdd === undefined ? null : inDrawer ? (
+      <button
+        type="button"
+        role="menuitem"
+        className={styles.tile}
+        onClick={onAdd}
+      >
+        {addContent}
+      </button>
+    ) : (
+      <DropdownMenuItem
+        textValue={addLabel}
+        className={styles.tile}
+        onSelect={(e) => {
+          e.preventDefault();
+          onAdd();
+        }}
+      >
+        {addContent}
+      </DropdownMenuItem>
+    );
+
   const body = (
     <>
       {heading}
       <div role="none" className={styles.grid}>
         {tiles}
+        {addTile}
       </div>
     </>
   );

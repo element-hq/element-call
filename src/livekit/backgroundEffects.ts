@@ -24,16 +24,18 @@ export const shippedBackgrounds: ShippedBackground[] = [
 export type BackgroundEffect =
   | { kind: "none" }
   | { kind: "blur" }
-  | { kind: "shipped"; id: string };
+  | { kind: "shipped"; id: string }
+  | { kind: "added"; id: string };
 
 /** An effect as the setting stores it, and as the menu names its option. */
-export type EffectId = "none" | "blur" | `image:${string}`;
+export type EffectId = "none" | "blur" | `image:${string}` | `added:${string}`;
 
 export const noEffect: BackgroundEffect = { kind: "none" };
 
 /**
- * Reads a stored effect; one we no longer ship reads as no effect. Stored by
- * hand or by another build, the value need not even be a string.
+ * Reads a stored effect; one we no longer ship reads as no effect. Whether an
+ * added one is still kept only the device knows. Stored by hand or by another
+ * build, the value need not even be a string.
  */
 export function parseEffect(raw: unknown): BackgroundEffect {
   if (typeof raw !== "string") return noEffect;
@@ -42,6 +44,10 @@ export function parseEffect(raw: unknown): BackgroundEffect {
     const id = raw.slice("image:".length);
     if (shippedBackgrounds.some((b) => b.id === id))
       return { kind: "shipped", id };
+  }
+  if (raw.startsWith("added:")) {
+    const id = raw.slice("added:".length);
+    if (id) return { kind: "added", id };
   }
   return noEffect;
 }
@@ -52,6 +58,8 @@ export function serializeEffect(effect: BackgroundEffect): EffectId {
       return "blur";
     case "shipped":
       return `image:${effect.id}`;
+    case "added":
+      return `added:${effect.id}`;
     default:
       return "none";
   }

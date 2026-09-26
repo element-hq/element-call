@@ -8,6 +8,7 @@ Please see LICENSE in the repository root for full details.
 import {
   useCallback,
   useId,
+  useRef,
   useState,
   type CSSProperties,
   type FC,
@@ -15,6 +16,7 @@ import {
   type ReactElement,
 } from "react";
 import {
+  Alert,
   Button,
   Menu,
   MenuItem,
@@ -79,6 +81,10 @@ export interface MediaMuteAndSwitchButtonProps {
   backgroundEffectNotice?: string;
   /** Whether the first effect chosen is still being prepared. */
   backgroundEffectSettling?: boolean;
+  /** Called with the file chosen from the add tile. Omit to leave it out. */
+  onAddBackgroundImage?: (file: File) => void;
+  /** Why the last file offered couldn't be used; a new object each time. */
+  backgroundImageRefusal?: { text: string };
   /**
    * For any toggle and option this method will be called.
    * So toggles need to be implemented by listening here and setting the right toggle item to `enabled`
@@ -116,6 +122,8 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   onSelectBackgroundEffect,
   backgroundEffectNotice,
   backgroundEffectSettling,
+  onAddBackgroundImage,
+  backgroundImageRefusal,
   onSelect,
 }) => {
   // Requested but not yet selected. Keyed by kind too, since Chrome uses
@@ -125,11 +133,42 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
     id: string;
   } | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const onOpenChange = useCallback((open: boolean): void => {
-    setMenuOpen(open);
-    // Drop a request that never arrived.
-    if (!open) setPlannedSelection(null);
+  // The file picker takes the focus, which the menu reads as a click
+  // elsewhere; it is held open until the picker is done.
+  const choosingFile = useRef(false);
+  const fileInput = useRef<HTMLInputElement | null>(null);
+  // A refusal is about the attempt that caused it: shown until dismissed or
+  // until the menu closes, and again for the next one.
+  const [seenRefusal, setSeenRefusal] = useState<object>();
+  const refusal =
+    backgroundImageRefusal !== seenRefusal ? backgroundImageRefusal : undefined;
+  const onOpenChange = useCallback(
+    (open: boolean): void => {
+      if (!open && choosingFile.current) return;
+      setMenuOpen(open);
+      // Drop a request that never arrived.
+      if (!open) setPlannedSelection(null);
+      if (!open) setSeenRefusal(backgroundImageRefusal);
+    },
+    [backgroundImageRefusal],
+  );
+  // Scrolled to as it appears, as the list may be scrolled away from it.
+  const scrollIntoView = useCallback((element: HTMLElement | null): void => {
+    element?.scrollIntoView({ block: "nearest" });
   }, []);
+  const watchFileInput = useCallback(
+    (input: HTMLInputElement | null): (() => void) | undefined => {
+      fileInput.current = input;
+      if (input === null) return;
+      // Dismissing the picker fires cancel, which React doesn't type.
+      const done = (): void => {
+        choosingFile.current = false;
+      };
+      input.addEventListener("cancel", done);
+      return (): void => input.removeEventListener("cancel", done);
+    },
+    [],
+  );
   const isBusy = busy ?? false;
   const { t } = useTranslation();
   const devices = useMediaDevices();
@@ -341,6 +380,21 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
     >
       {/* The mute button lives inside */}
       {button}
+      {onAddBackgroundImage !== undefined && (
+        <input
+          ref={watchFileInput}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            // Cleared, so the same file can be chosen twice in a row.
+            e.target.value = "";
+            choosingFile.current = false;
+            if (file) onAddBackgroundImage(file);
+          }}
+        />
+      )}
       <Menu
         className={styles.menu}
         // Named for screen readers only: each section has its own heading.
@@ -440,15 +494,35 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
               describedBy={
                 backgroundEffectNotice === undefined ? undefined : noticeId
               }
+              onAdd={
+                onAddBackgroundImage === undefined
+                  ? undefined
+                  : (): void => {
+                      choosingFile.current = true;
+                      fileInput.current?.click();
+                    }
+              }
+              addLabel={t("action.add_background_image")}
             />
           )}
           {/* In the list, so the menu grows no taller for it. */}
-          {showEffects && backgroundEffectNotice !== undefined && (
-            <div id={noticeId} role="none" className={styles.notice}>
-              <InfoIcon width={20} height={20} />
-              <span>{backgroundEffectNotice}</span>
+          {showEffects && refusal !== undefined && (
+            <div ref={scrollIntoView} role="none" className={styles.refusal}>
+              <Alert
+                type="critical"
+                title={refusal.text}
+                onClose={(): void => setSeenRefusal(refusal)}
+              />
             </div>
           )}
+          {showEffects &&
+            refusal === undefined &&
+            backgroundEffectNotice !== undefined && (
+              <div id={noticeId} role="none" className={styles.notice}>
+                <InfoIcon width={20} height={20} />
+                <span>{backgroundEffectNotice}</span>
+              </div>
+            )}
         </div>
       </Menu>
     </div>

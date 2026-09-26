@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
+  BehaviorSubject,
   combineLatest,
   distinctUntilChanged,
   map,
@@ -13,6 +14,7 @@ import {
   switchMap,
 } from "rxjs";
 import { supportsAudioOutputSelection } from "livekit-client";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import {
   supportsBackgroundProcessors,
@@ -23,6 +25,12 @@ import {
   serializeEffect,
   shippedBackgrounds,
 } from "../livekit/backgroundEffects";
+import {
+  type AddedBackground,
+  addedBackgrounds,
+  maxAddedBackgrounds,
+  UnusableImage,
+} from "../livekit/backgroundImages";
 
 import { type CallViewModel } from "../state/CallViewModel/CallViewModel";
 import { type MenuOptions } from "./MediaMuteAndSwitchButton";
@@ -37,7 +45,11 @@ import { type MuteStates } from "../state/MuteStates";
 import { createStaticViewModel, type ViewModel } from "../state/ViewModel";
 import { HeaderStyle } from "../UrlParams";
 import { platform } from "../Platform";
-import { type BackgroundEffectChoice, type FooterSnapshot } from "./CallFooter";
+import {
+  type BackgroundEffectChoice,
+  type BackgroundImageRefusal,
+  type FooterSnapshot,
+} from "./CallFooter";
 
 /**
  * Shared helper: maps MuteStates into the audio/video enabled + toggle behaviors
@@ -95,6 +107,8 @@ function buildDeviceBehaviors(
   | "backgroundEffects$"
   | "backgroundEffectNotice$"
   | "backgroundEffectSettling$"
+  | "addBackgroundImage$"
+  | "backgroundImageRefusal$"
 > {
   const options$ = (
     available$: Behavior<Map<string, MenuOptions["label"]>>,
@@ -115,6 +129,10 @@ function buildDeviceBehaviors(
   const slow = usesFallbackProcessing();
   const offered$ = disableSwitcher$.pipe(
     map((switcherDisabled) => !switcherDisabled && supported),
+  );
+  // A new object for each refusal, so the same one twice is shown twice.
+  const refusal$ = new BehaviorSubject<BackgroundImageRefusal | undefined>(
+    undefined,
   );
   return {
     audioOptions$: scope.behavior(options$(mediaDevices.audioInput.available$)),
@@ -157,7 +175,11 @@ function buildDeviceBehaviors(
         ),
       ),
     ),
-    backgroundEffects$: constant(backgroundEffectChoices()),
+    backgroundEffects$: scope.behavior(
+      addedBackgrounds.added$.pipe(
+        map((added) => backgroundEffectChoices(added ?? [])),
+      ),
+    ),
     backgroundEffectNotice$: scope.behavior(
       offered$.pipe(
         map((offered) =>
@@ -169,6 +191,25 @@ function buildDeviceBehaviors(
       backgroundEffectSettling$.pipe(distinctUntilChanged()),
       false,
     ),
+    // Kept and offered, not put on: that waits for the user to choose it.
+    addBackgroundImage$: scope.behavior(
+      combineLatest([offered$, addedBackgrounds.added$]).pipe(
+        map(([offered, added]) =>
+          offered && (added?.length ?? 0) < maxAddedBackgrounds
+            ? (file: File): void => {
+                refusal$.next(undefined);
+                addedBackgrounds.add(file).catch((e) => {
+                  logger.warn("Could not keep that background", e);
+                  refusal$.next({
+                    reason: e instanceof UnusableImage ? e.reason : "not-kept",
+                  });
+                });
+              }
+            : undefined,
+        ),
+      ),
+    ),
+    backgroundImageRefusal$: refusal$,
   };
 }
 
@@ -336,7 +377,9 @@ export function createLobbyFooterViewModel(
   };
 }
 
-function backgroundEffectChoices(): BackgroundEffectChoice[] {
+function backgroundEffectChoices(
+  added: AddedBackground[],
+): BackgroundEffectChoice[] {
   return [
     { id: serializeEffect({ kind: "none" }), kind: "none" },
     { id: serializeEffect({ kind: "blur" }), kind: "blur" },
@@ -344,6 +387,11 @@ function backgroundEffectChoices(): BackgroundEffectChoice[] {
       id: serializeEffect({ kind: "shipped", id: background.id }),
       kind: "image" as const,
       imageUrl: background.imagePath,
+    })),
+    ...added.map((background) => ({
+      id: serializeEffect({ kind: "added", id: background.id }),
+      kind: "image" as const,
+      imageUrl: background.url,
     })),
   ];
 }

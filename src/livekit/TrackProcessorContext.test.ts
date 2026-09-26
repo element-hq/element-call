@@ -23,6 +23,7 @@ import {
   useTrackProcessorSync,
 } from "./TrackProcessorContext";
 import { backgroundEffect } from "../settings/settings";
+import { type AddedBackground } from "./backgroundImages";
 import { constant } from "../state/Behavior";
 import { flushPromises, testScope } from "../utils/test";
 
@@ -51,6 +52,14 @@ vi.mock("@livekit/track-processors", () => ({
 }));
 // A phone: the pipeline must not ask.
 vi.mock("../Platform", () => ({ platform: "ios" }));
+vi.mock("./backgroundImages", async () => {
+  const { BehaviorSubject } = await import("rxjs");
+  return {
+    addedBackgrounds: {
+      added$: new BehaviorSubject<AddedBackground[] | undefined>(undefined),
+    },
+  };
+});
 vi.mock("./BackgroundEffectTransformer", () => ({
   BackgroundEffectTransformer: vi.fn(),
 }));

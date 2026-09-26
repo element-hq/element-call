@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, onTestFinished, test, vi } from "vitest";
 import { axe } from "vitest-axe";
 import {
   act,
@@ -395,6 +395,121 @@ describe("MediaMuteAndSwitchButton", () => {
     await user.click(getByRole("button", { name: "Camera" }));
     await user.click(screen.getByRole("menuitemradio", { name: "Blur" }));
     expect(onSelectBackgroundEffect).not.toHaveBeenCalled();
+  });
+
+  test("added images are chosen like shipped ones", async () => {
+    const user = userEvent.setup();
+    const onSelectBackgroundEffect = vi.fn();
+    const { getByRole } = renderComponent(
+      <MediaMuteAndSwitchButton
+        iconsAndLabels="video"
+        enabled={true}
+        options={[{ label: { type: "name", name: "Camera 1" }, id: "cam1" }]}
+        selectedOption="cam1"
+        backgroundEffects={[
+          ...effects,
+          {
+            id: "added:mine",
+            kind: "image",
+            label: "Background 3",
+            imageUrl: "",
+          },
+        ]}
+        selectedBackgroundEffect="none"
+        onSelectBackgroundEffect={onSelectBackgroundEffect}
+      />,
+    );
+
+    await user.click(getByRole("button", { name: "Camera" }));
+    const section = screen.getByRole("group", { name: "Background effects" });
+    await user.click(
+      within(section).getByRole("menuitemradio", { name: "Background 3" }),
+    );
+    expect(onSelectBackgroundEffect).toHaveBeenCalledWith("added:mine");
+  });
+
+  test("adds the file chosen from the add tile, and stays open", async () => {
+    const user = userEvent.setup();
+    const onAddBackgroundImage = vi.fn();
+    const pick = vi
+      .spyOn(HTMLInputElement.prototype, "click")
+      .mockImplementation(() => {});
+    try {
+      const { getByRole, container } = renderComponent(
+        <MediaMuteAndSwitchButton
+          iconsAndLabels="video"
+          enabled={true}
+          options={[{ label: { type: "name", name: "Camera 1" }, id: "cam1" }]}
+          selectedOption="cam1"
+          backgroundEffects={effects}
+          selectedBackgroundEffect="none"
+          onSelectBackgroundEffect={vi.fn()}
+          onAddBackgroundImage={onAddBackgroundImage}
+        />,
+      );
+
+      await user.click(getByRole("button", { name: "Camera" }));
+      await user.click(screen.getByRole("menuitem", { name: "Add image" }));
+      expect(pick).toHaveBeenCalled();
+      // The picker takes the focus, which would otherwise close the menu.
+      await user.keyboard("{Escape}");
+      expect(screen.getByRole("menu")).toBeInTheDocument();
+
+      const file = new File(["x"], "mine.png", { type: "image/png" });
+      // What the picker hands back; the open menu blocks pointer events.
+      fireEvent.change(
+        container.querySelector<HTMLInputElement>("input[type=file]")!,
+        { target: { files: [file] } },
+      );
+      expect(onAddBackgroundImage).toHaveBeenCalledWith(file);
+      screen.getByRole("menuitemradio", { name: "None", checked: true });
+    } finally {
+      pick.mockRestore();
+    }
+  });
+
+  test("a refusal can be dismissed and does not outlive the menu", async () => {
+    const user = userEvent.setup();
+    // jsdom lays nothing out, so has nothing to scroll.
+    const scroll = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = vi.fn();
+    onTestFinished(() => {
+      Element.prototype.scrollIntoView = scroll;
+    });
+    const menu = (refusal?: { text: string }): JSX.Element =>
+      withProviders(
+        <MediaMuteAndSwitchButton
+          iconsAndLabels="video"
+          enabled={true}
+          options={[{ label: { type: "name", name: "Camera 1" }, id: "cam1" }]}
+          selectedOption="cam1"
+          backgroundEffects={effects}
+          selectedBackgroundEffect="blur"
+          onSelectBackgroundEffect={vi.fn()}
+          onAddBackgroundImage={vi.fn()}
+          backgroundImageRefusal={refusal}
+        />,
+      );
+    const { rerender, getByRole } = render(menu());
+    await user.click(getByRole("button", { name: "Camera" }));
+
+    rerender(menu({ text: "That file is not a supported image" }));
+    expect(
+      screen.getByText("That file is not a supported image"),
+    ).toBeVisible();
+    screen.getByRole("menuitemradio", { name: "Blur", checked: true });
+    await user.click(screen.getByRole("button", { name: "Close" }));
+    expect(screen.queryByText("That file is not a supported image")).toBeNull();
+
+    // The next refusal is shown, even if it says the same.
+    rerender(menu({ text: "That file is not a supported image" }));
+    expect(
+      screen.getByText("That file is not a supported image"),
+    ).toBeVisible();
+
+    await user.keyboard("{Escape}");
+    await user.click(getByRole("button", { name: "Camera" }));
+    expect(screen.queryByText("That file is not a supported image")).toBeNull();
   });
 
   test("offers the background effects in a phone's drawer", async () => {

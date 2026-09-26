@@ -29,6 +29,7 @@ import {
   imagePathFor,
   parseEffect,
 } from "../livekit/backgroundEffects";
+import { type AddedBackground } from "../livekit/backgroundImages";
 
 export interface BackgroundEffectsOptions {
   /** Whether this browser can run a pipeline at all. */
@@ -37,6 +38,8 @@ export interface BackgroundEffectsOptions {
   effect$: Behavior<string>;
   /** Stores a choice, to forget one that can't be honoured. */
   setEffect: (id: EffectId) => void;
+  /** The backgrounds the device keeps, undefined until it has said. */
+  added$: Behavior<AddedBackground[] | undefined>;
   /**
    * Shared by the pre-join preview and the call. Building or destroying it is
    * what primes it, and a primed pipeline lets its next frame through
@@ -57,6 +60,7 @@ export class BackgroundEffects {
       supported,
       effect$,
       setEffect,
+      added$,
       pipeline,
       transformer,
     }: BackgroundEffectsOptions,
@@ -67,10 +71,18 @@ export class BackgroundEffects {
       distinctUntilChanged(),
     );
 
-    choice$.pipe(scope.bind()).subscribe((effect) => {
-      if (effect.kind === "none") return;
-      if (!supported) setEffect("none");
-    });
+    combineLatest([choice$, added$])
+      .pipe(scope.bind())
+      .subscribe(([effect, added]) => {
+        if (effect.kind === "none") return;
+        if (
+          !supported ||
+          (effect.kind === "added" &&
+            added !== undefined &&
+            !added.some(({ id }) => id === effect.id))
+        )
+          setEffect("none");
+      });
 
     const drewAFrame$ = scope.behavior(
       new Observable<boolean>((subscriber) => {
@@ -102,10 +114,17 @@ export class BackgroundEffects {
     );
 
     const switchTo = oneSwitchAtATime(pipeline);
-    combineLatest([this.state$, choice$])
+    combineLatest([this.state$, choice$, added$])
       .pipe(
         filter(([{ processor }]) => processor !== undefined),
-        map(([, effect]) => switchOptionsFor(effect)),
+        map(([, effect, added]) =>
+          switchOptionsFor(
+            effect,
+            effect.kind === "added"
+              ? added?.find(({ id }) => id === effect.id)?.url
+              : undefined,
+          ),
+        ),
         distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b)),
         scope.bind(),
       )
@@ -137,18 +156,24 @@ function oneSwitchAtATime(
   };
 }
 
+/** `addedUrl` is the picture of the added background chosen, if still kept. */
 function switchOptionsFor(
   effect: BackgroundEffect,
+  addedUrl: string | undefined,
 ): SwitchBackgroundProcessorOptions {
+  const withImage = (
+    imagePath: string | undefined,
+  ): SwitchBackgroundProcessorOptions =>
+    imagePath
+      ? { mode: "virtual-background", imagePath }
+      : { mode: "disabled" };
   switch (effect.kind) {
     case "blur":
       return { mode: "background-blur", blurRadius };
-    case "shipped": {
-      const imagePath = imagePathFor(effect.id);
-      return imagePath
-        ? { mode: "virtual-background", imagePath }
-        : { mode: "disabled" };
-    }
+    case "shipped":
+      return withImage(imagePathFor(effect.id));
+    case "added":
+      return withImage(addedUrl);
     default:
       return { mode: "disabled" };
   }
