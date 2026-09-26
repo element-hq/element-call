@@ -20,10 +20,18 @@ import {
 } from "react";
 import { type LocalVideoTrack } from "livekit-client";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { combineLatest } from "rxjs";
+import {
+  combineLatest,
+  distinctUntilChanged,
+  EMPTY,
+  map,
+  Observable,
+  switchMap,
+} from "rxjs";
 
 import { backgroundEffect as backgroundEffectSetting } from "../settings/settings";
 import { BackgroundEffectTransformer } from "./BackgroundEffectTransformer";
+import { type SyncedCameraTrack } from "./cameraTrack";
 import { OneStepPipeline } from "./OneStepPipeline";
 import { addedBackgrounds } from "./backgroundImages";
 import { supportsBackgroundProcessors } from "./backgroundProcessing";
@@ -41,6 +49,8 @@ export type ProcessorState = {
   processor: undefined | ProcessorWrapper<BackgroundOptions>;
   /** From the first effect chosen until a frame carrying it is drawn. */
   settling?: boolean;
+  /** The camera this provider's pipeline is synced to. */
+  cameraTrack?: SyncedCameraTrack;
 };
 
 const ProcessorContext = createContext<BackgroundEffects | undefined>(
@@ -108,16 +118,37 @@ export const trackProcessorSync = (
       if (!videoTrack) return;
       applyProcessor(videoTrack, processorState.processor);
     });
+  // Keyed on the camera alone: reporting again for every change of state would
+  // blank the preview each time.
+  combineLatest([
+    videoTrack$,
+    processor$.pipe(
+      map(({ cameraTrack }) => cameraTrack),
+      distinctUntilChanged(),
+    ),
+  ])
+    .pipe(
+      switchMap(([track, cameraTrack]) =>
+        track === null || cameraTrack === undefined
+          ? EMPTY
+          : new Observable<never>(() => cameraTrack.report(track)),
+      ),
+      scope.bind(),
+    )
+    .subscribe();
 };
 
 export const useTrackProcessorSync = (
   videoTrack: LocalVideoTrack | null,
 ): void => {
-  const { processor } = useTrackProcessor();
+  const { processor, cameraTrack } = useTrackProcessor();
   useEffect(() => {
     if (!videoTrack) return;
     applyProcessor(videoTrack, processor);
   }, [processor, videoTrack]);
+  useEffect(() => {
+    if (videoTrack && cameraTrack) return cameraTrack.report(videoTrack);
+  }, [cameraTrack, videoTrack]);
 };
 
 interface Props {

@@ -11,6 +11,7 @@ import {
   distinctUntilChanged,
   map,
   type Observable,
+  of,
   switchMap,
 } from "rxjs";
 import { supportsAudioOutputSelection } from "livekit-client";
@@ -25,6 +26,7 @@ import {
   serializeEffect,
   shippedBackgrounds,
 } from "../livekit/backgroundEffects";
+import { type ProcessorState } from "../livekit/TrackProcessorContext";
 import {
   type AddedBackground,
   addedBackgrounds,
@@ -90,7 +92,8 @@ function buildDeviceBehaviors(
   mediaDevices: MediaDevices,
   /** return empty arrays for  audioOptions and videoOptions*/
   disableSwitcher$: Behavior<boolean>,
-  backgroundEffectSettling$: Observable<boolean>,
+  processorState$: Observable<ProcessorState>,
+  videoEnabled$: Behavior<boolean>,
 ): Pick<
   ViewModel<FooterSnapshot>,
   | "audioOptions$"
@@ -110,6 +113,7 @@ function buildDeviceBehaviors(
   | "addBackgroundImage$"
   | "backgroundImageRefusal$"
   | "removeBackgroundEffect$"
+  | "cameraTrack$"
 > {
   const options$ = (
     available$: Behavior<Map<string, MenuOptions["label"]>>,
@@ -189,7 +193,10 @@ function buildDeviceBehaviors(
       ),
     ),
     backgroundEffectSettling$: scope.behavior(
-      backgroundEffectSettling$.pipe(distinctUntilChanged()),
+      processorState$.pipe(
+        map(({ settling }) => settling ?? false),
+        distinctUntilChanged(),
+      ),
       false,
     ),
     // Kept and offered, not put on: that waits for the user to choose it.
@@ -211,6 +218,15 @@ function buildDeviceBehaviors(
       ),
     ),
     backgroundImageRefusal$: refusal$,
+    cameraTrack$: scope.behavior(
+      combineLatest([
+        processorState$.pipe(
+          switchMap(({ cameraTrack }) => cameraTrack?.track$ ?? of(null)),
+        ),
+        videoEnabled$,
+      ]).pipe(map(([track, videoEnabled]) => (videoEnabled ? track : null))),
+      null,
+    ),
     // Never the one in force: taking it away would leave nothing chosen.
     removeBackgroundEffect$: scope.behavior(
       offered$.pipe(
@@ -240,8 +256,8 @@ function buildDeviceBehaviors(
  * @param callModel - The root CallViewModel; provides layout, grid mode, reactions, etc.
  * @param muteStates - Audio and video mute state + toggles.
  * @param mediaDevices - Available and selected input devices.
- * @param backgroundEffectSettling$ - Whether the first effect chosen is still
- *   being prepared.
+ * @param processorState$ - The background pipeline's state: whether effects
+ *   run here, the wait for the first, and the camera it is synced to.
  * @param reactionIdentifier - The local user's reaction identifier string, or
  *   undefined when reactions are not supported (hides the reaction button).
  * @param options - `showControls`: whether the call controls should be shown.
@@ -252,7 +268,7 @@ export function createCallFooterViewModel(
   callModel: CallViewModel,
   muteStates: MuteStates,
   mediaDevices: MediaDevices,
-  backgroundEffectSettling$: Observable<boolean>,
+  processorState$: Observable<ProcessorState>,
   reactionIdentifier: string | undefined,
   options: { showControls: boolean; header: HeaderStyle },
 ): ViewModel<FooterSnapshot> {
@@ -271,7 +287,8 @@ export function createCallFooterViewModel(
       scope,
       mediaDevices,
       disableDeviceSwitcher$,
-      backgroundEffectSettling$,
+      processorState$,
+      muteStates.video.enabled$,
     ),
     // candidat to move into the FooterViewModel
     showFooter$: callModel.showFooter$,
@@ -334,8 +351,8 @@ export function createCallFooterViewModel(
  * @param scope - ObservableScope that bounds the lifetime of derived behaviors.
  * @param muteStates - Audio and video mute state + toggles.
  * @param mediaDevices - Available and selected input devices.
- * @param backgroundEffectSettling$ - Whether the first effect chosen is still
- *   being prepared.
+ * @param processorState$ - The background pipeline's state: whether effects
+ *   run here, the wait for the first, and the camera it is synced to.
  * @param openSettings - Callback to open the settings modal, or undefined.
  * @param hangup - Callback to leave/cancel, or undefined (hides the button).
  * @param showLogo - Whether to show the Element Call logo.
@@ -344,7 +361,7 @@ export function createLobbyFooterViewModel(
   scope: ObservableScope,
   muteStates: MuteStates,
   mediaDevices: MediaDevices,
-  backgroundEffectSettling$: Observable<boolean>,
+  processorState$: Observable<ProcessorState>,
   openSettings: (() => void) | undefined,
   hangup: (() => void) | undefined,
   showLogo: boolean,
@@ -392,7 +409,8 @@ export function createLobbyFooterViewModel(
       scope,
       mediaDevices,
       constant(false),
-      backgroundEffectSettling$,
+      processorState$,
+      muteStates.video.enabled$,
     ),
   };
 }

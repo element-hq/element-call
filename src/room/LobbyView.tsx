@@ -25,7 +25,6 @@ import {
   Track,
 } from "livekit-client";
 import { useObservableEagerState } from "observable-hooks";
-import { map } from "rxjs";
 
 import inCallStyles from "./InCallView.module.css";
 import styles from "./LobbyView.module.css";
@@ -201,7 +200,7 @@ export const LobbyView: FC<Props> = ({
         footerScope,
         muteStates,
         devices,
-        trackProcessorState$.pipe(map(({ settling }) => settling ?? false)),
+        trackProcessorState$,
         openSettings,
         hangup,
         // Logo and header are connected: only show the logo in SPA with header.
