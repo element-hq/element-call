@@ -1,0 +1,92 @@
+/*
+Copyright 2026 Element Creations Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
+.grid {
+  display: grid;
+  /* A zero floor, so a long label wraps inside its tile rather than widening
+     the grid past the menu. */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  gap: var(--cpd-space-3x);
+  padding: var(--cpd-space-2x)
+    calc(var(--cpd-space-4x) - var(--cpd-border-width-1)) 0;
+}
+
+.tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--cpd-space-1x);
+  min-inline-size: 0;
+  padding: var(--cpd-space-3x) var(--cpd-space-2x);
+  /* Not hidden: that makes the tile a scroll container, which focus scrolls
+     into view without its border, and so without the focus ring. */
+  overflow: clip;
+  border: var(--cpd-border-width-2) solid
+    var(--cpd-color-border-interactive-secondary);
+  border-radius: var(--cpd-space-2x);
+  background: none;
+  color: var(--cpd-color-icon-secondary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.tile:hover:not([data-disabled]),
+.tile[data-highlighted] {
+  background: var(--cpd-color-bg-subtle-secondary);
+}
+
+.tile[aria-checked="true"] {
+  border-color: var(--cpd-color-border-accent);
+}
+
+.tile[data-disabled] {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.tile[data-disabled] .picture {
+  filter: grayscale(1);
+}
+
+.swatch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.picture {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+/* Positioned, or the picture, positioned itself, would cover it. */
+.mark {
+  position: relative;
+  display: inline-flex;
+  color: var(--cpd-color-icon-accent-primary);
+}
+
+/* On a picture the mark needs a ground of its own to be seen. */
+.picture ~ .mark {
+  border-radius: 50%;
+  background: var(--cpd-color-bg-canvas-default);
+  box-shadow: 0 0 0 var(--cpd-border-width-2) var(--cpd-color-bg-canvas-default);
+}
+
+.label {
+  max-inline-size: 100%;
+  font: var(--cpd-font-body-sm-medium);
+  color: var(--cpd-color-text-primary);
+  text-align: center;
+  overflow-wrap: anywhere;
+}

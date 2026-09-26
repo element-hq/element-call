@@ -68,9 +68,11 @@ Please see LICENSE in the repository root for full details.
 }
 
 /* Sticky within its own section. Opaque and inset a border width so it doesn't
-   paint over the menu's outline. */
+   paint over the menu's outline; raised, or the positioned tiles scroll over
+   it. */
 .sectionHeading {
   position: sticky;
+  z-index: 1;
   inset-block-start: 0;
   background: var(--cpd-color-bg-canvas-default);
   margin-block-start: var(--cpd-border-width-1);
@@ -94,4 +96,22 @@ Please see LICENSE in the repository root for full details.
 .menu[data-focus-source="keyboard"] [role^="menuitem"]:focus {
   outline: var(--cpd-border-width-2) solid var(--cpd-color-border-focused);
   outline-offset: calc(-1 * var(--cpd-border-width-2));
+}
+
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--cpd-space-3x);
+  margin: var(--cpd-space-2x)
+    calc(var(--cpd-space-4x) - var(--cpd-border-width-1)) 0;
+  padding: var(--cpd-space-3x);
+  border-radius: var(--cpd-space-2x);
+  background: var(--cpd-color-bg-subtle-secondary);
+  color: var(--cpd-color-text-primary);
+  font: var(--cpd-font-body-md-regular);
+}
+
+.notice > svg {
+  flex-shrink: 0;
+  color: var(--cpd-color-icon-secondary);
 }
