@@ -9,9 +9,15 @@ import {
   combineLatest,
   distinctUntilChanged,
   filter,
+  first,
+  from,
   map,
   Observable,
+  type ObservableInput,
+  of,
   scan,
+  startWith,
+  switchMap,
 } from "rxjs";
 import {
   type BackgroundProcessorWrapper,
@@ -41,6 +47,8 @@ export interface BackgroundEffectsOptions {
   setEffect: (id: EffectId) => void;
   /** The backgrounds the device keeps, undefined until it has said. */
   added$: Behavior<AddedBackground[] | undefined>;
+  /** Builds a segmenter on trial, and answers whether it could. */
+  canSegment: () => ObservableInput<boolean>;
   /**
    * Shared by the pre-join preview and the call. Building or destroying it is
    * what primes it, and a primed pipeline lets its next frame through
@@ -64,14 +72,17 @@ export class BackgroundEffects {
       effect$,
       setEffect,
       added$,
+      canSegment,
       pipeline,
       transformer,
     }: BackgroundEffectsOptions,
   ) {
     const choice$ = effect$.pipe(map(parseEffect));
-    const wanted$ = choice$.pipe(
-      map((effect) => effect.kind !== "none"),
-      distinctUntilChanged(),
+    const wanted$ = scope.behavior(
+      choice$.pipe(
+        map((effect) => effect.kind !== "none"),
+        distinctUntilChanged(),
+      ),
     );
 
     combineLatest([choice$, added$])
@@ -87,6 +98,18 @@ export class BackgroundEffects {
           setEffect("none");
       });
 
+    // Asked once an effect is first wanted. A browser update may fix what
+    // fails, so the choice is kept for the next session rather than cleared.
+    const buildable$ = scope.behavior<boolean | undefined>(
+      supported
+        ? wanted$.pipe(
+            first(Boolean),
+            switchMap(() => from(canSegment())),
+            startWith(undefined),
+          )
+        : of(undefined),
+    );
+
     const drewAFrame$ = scope.behavior(
       new Observable<boolean>((subscriber) => {
         subscriber.next(false);
@@ -97,19 +120,24 @@ export class BackgroundEffects {
       }),
     );
 
+    // In one step, so that nothing sees the pipeline neither preparing nor
+    // attached.
     this.state$ = scope.behavior(
-      combineLatest([wanted$, drewAFrame$]).pipe(
-        scan<[boolean, boolean], ProcessorState>(
-          (previous, [wanted, drewAFrame]) => {
+      combineLatest([wanted$, buildable$, drewAFrame$]).pipe(
+        scan<[boolean, boolean | undefined, boolean], ProcessorState>(
+          (previous, [wanted, buildable, drewAFrame]) => {
             // Attached the first time an effect is wanted and never detached
             // after, so someone who never turns one on pays for none of it.
             const attached =
-              previous.processor !== undefined || (supported && wanted);
+              previous.processor !== undefined ||
+              (wanted && buildable === true);
+            const preparing = supported && wanted && buildable === undefined;
             return {
-              supported,
+              supported: supported && buildable !== false,
               processor: attached ? pipeline : undefined,
-              settling: attached && !drewAFrame,
+              settling: (preparing || attached) && !drewAFrame,
               cameraTrack: this.cameraTrack,
+              preparing,
             };
           },
           { supported, processor: undefined },

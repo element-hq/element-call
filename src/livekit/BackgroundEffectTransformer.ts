@@ -11,6 +11,7 @@ import {
   VideoTransformer,
   type VideoTransformerInitOptions,
   type BackgroundOptions,
+  type SegmenterOptions,
 } from "@livekit/track-processors";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { ImageSegmenter } from "@mediapipe/tasks-vision";
@@ -89,17 +90,10 @@ export class BackgroundEffectTransformer extends BackgroundTransformer {
       inputElement: inputVideo,
     });
 
-    this.imageSegmenter = await ImageSegmenter.createFromOptions(wasmFileset, {
-      baseOptions: {
-        modelAssetPath,
-        delegate: "GPU",
-        ...this.options.segmenterOptions,
-      },
-      canvas: this.canvas,
-      runningMode: "VIDEO",
-      outputCategoryMask: true,
-      outputConfidenceMasks: false,
-    });
+    this.imageSegmenter = await createSegmenter(
+      this.canvas,
+      this.options.segmenterOptions,
+    );
 
     // BackgroundTransformer's own init applies these, and this one replaces it.
     if (this.options.imagePath) {
@@ -111,5 +105,40 @@ export class BackgroundEffectTransformer extends BackgroundTransformer {
       this.gl?.setBlurRadius(this.options.blurRadius);
     }
     this.gl?.setBackgroundDisabled(this.options.backgroundDisabled ?? false);
+  }
+}
+
+/**
+ * Whether a segmenter can be built here, asked once before any camera depends
+ * on one: a pipeline that fails to build takes the camera down with it.
+ */
+export async function canSegment(): Promise<boolean> {
+  try {
+    (await createSegmenter(new OffscreenCanvas(1, 1))).close();
+    return true;
+  } catch (e) {
+    logger.warn("Background effects cannot run here", e);
+    return false;
+  }
+}
+
+/** On the GPU, or on the CPU where the GPU refuses, as a blocklisted one does. */
+async function createSegmenter(
+  canvas: HTMLCanvasElement | OffscreenCanvas | undefined,
+  segmenterOptions?: SegmenterOptions,
+): Promise<ImageSegmenter> {
+  const build = async (delegate: "GPU" | "CPU"): Promise<ImageSegmenter> =>
+    ImageSegmenter.createFromOptions(wasmFileset, {
+      baseOptions: { modelAssetPath, delegate, ...segmenterOptions },
+      canvas,
+      runningMode: "VIDEO",
+      outputCategoryMask: true,
+      outputConfidenceMasks: false,
+    });
+  try {
+    return await build("GPU");
+  } catch (e) {
+    logger.warn("Segmenting on the CPU, as the GPU refused", e);
+    return build("CPU");
   }
 }

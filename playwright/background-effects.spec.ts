@@ -178,6 +178,46 @@ test.describe("background effects section", () => {
   });
 });
 
+test.describe("a pipeline that fails to build", () => {
+  test("offers no effects for the session, and keeps the choice", async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    await page.goto("/");
+    await SpaHelpers.createCall(page, "Failing user", "Pipeline fails");
+    const preview = page.locator("video").first();
+    const camera = await cameraColour(preview);
+    await page.route("**/*.tflite*", async (route) => route.abort());
+
+    await page.getByRole("button", { name: "Camera", exact: true }).click();
+    const tile = page.getByRole("menuitemradio", { name: "Background 1" });
+    await tile.click();
+    await expect(
+      page.getByText("Background effects are not supported on this platform."),
+    ).toBeVisible({ timeout: 30_000 });
+    await expect(tile).toHaveAttribute("aria-disabled", "true");
+    await page.keyboard.press("Escape");
+    // The camera and microphone carry on without it.
+    expect(distance(await cameraColour(preview), camera)).toBeLessThan(30);
+    await expect(page.getByTestId("incall_mute")).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+
+    await page.unroute("**/*.tflite*");
+    await page.reload();
+    await expect(page.getByTestId("lobby_joinCall")).toBeVisible();
+    await page.getByRole("button", { name: "Camera", exact: true }).click();
+    await expect(tile).toHaveAttribute("aria-checked", "true");
+    const picture = await averageColour(tile.locator("img"));
+    await expect
+      .poll(async () => distance(await averageColour(preview), picture), {
+        timeout: 60_000,
+      })
+      .toBeLessThan(distance(camera, picture) / 2);
+  });
+});
+
 test.describe("the chosen effect", () => {
   test("chosen effect survives leaving and rejoining", async ({ page }) => {
     test.setTimeout(120_000);

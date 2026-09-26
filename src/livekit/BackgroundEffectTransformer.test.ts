@@ -13,7 +13,10 @@ import {
 } from "@livekit/track-processors";
 import { ImageSegmenter } from "@mediapipe/tasks-vision";
 
-import { BackgroundEffectTransformer } from "./BackgroundEffectTransformer";
+import {
+  BackgroundEffectTransformer,
+  canSegment,
+} from "./BackgroundEffectTransformer";
 
 const frame = {} as VideoFrame;
 const controller = {} as TransformStreamDefaultController<VideoFrame>;
@@ -77,5 +80,35 @@ describe("BackgroundEffectTransformer", () => {
     // With neither, the library passes a frame on without segmenting it.
     expect(transformer.options.blurRadius).toBeUndefined();
     expect(transformer.options.imagePath).toBeUndefined();
+  });
+
+  it("segments on the CPU where the GPU refuses", async () => {
+    vi.spyOn(VideoTransformer.prototype, "init").mockResolvedValue();
+    const build = vi
+      .spyOn(ImageSegmenter, "createFromOptions")
+      .mockRejectedValueOnce(new Error("blocklisted"))
+      .mockResolvedValue({} as ImageSegmenter);
+
+    await new BackgroundEffectTransformer({}).init(
+      {} as VideoTransformerInitOptions,
+    );
+    expect(build.mock.calls.map(([, o]) => o.baseOptions?.delegate)).toEqual([
+      "GPU",
+      "CPU",
+    ]);
+  });
+
+  it("says whether a segmenter can be built at all", async () => {
+    vi.stubGlobal("OffscreenCanvas", class {});
+    const close = vi.fn();
+    const build = vi
+      .spyOn(ImageSegmenter, "createFromOptions")
+      .mockResolvedValue({ close } as unknown as ImageSegmenter);
+    expect(await canSegment()).toBe(true);
+    expect(close).toHaveBeenCalled();
+
+    build.mockRejectedValue(new Error("no model"));
+    expect(await canSegment()).toBe(false);
+    vi.unstubAllGlobals();
   });
 });
