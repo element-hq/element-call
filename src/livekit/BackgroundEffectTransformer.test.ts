@@ -15,6 +15,9 @@ import { ImageSegmenter } from "@mediapipe/tasks-vision";
 
 import { BackgroundEffectTransformer } from "./BackgroundEffectTransformer";
 
+const frame = {} as VideoFrame;
+const controller = {} as TransformStreamDefaultController<VideoFrame>;
+
 describe("BackgroundEffectTransformer", () => {
   afterEach(() => vi.restoreAllMocks());
 
@@ -36,6 +39,32 @@ describe("BackgroundEffectTransformer", () => {
 
     await transformer.init({} as VideoTransformerInitOptions);
     expect(load).toHaveBeenCalledWith("/background.jpg");
+  });
+
+  it("reports the first frame carrying an effect, once", async () => {
+    vi.spyOn(BackgroundTransformer.prototype, "transform").mockImplementation(
+      async function (this: BackgroundTransformer) {
+        this.isFirstFrame = false;
+        return Promise.resolve();
+      },
+    );
+    const transformer = new BackgroundEffectTransformer({});
+    transformer.onFirstFrame = vi.fn();
+
+    await transformer.transform(frame, controller);
+    await transformer.transform(frame, controller);
+    expect(transformer.onFirstFrame).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not report a frame passed through untouched", async () => {
+    vi.spyOn(BackgroundTransformer.prototype, "transform").mockResolvedValue();
+    const transformer = new BackgroundEffectTransformer({
+      backgroundDisabled: true,
+    });
+    transformer.onFirstFrame = vi.fn();
+
+    await transformer.transform(frame, controller);
+    expect(transformer.onFirstFrame).not.toHaveBeenCalled();
   });
 
   it("passes frames on untouched once disabled, even after blurring", async () => {

@@ -5,7 +5,10 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { supportsBackgroundProcessors as supportsBackgroundProcessorsLivekitSdk } from "@livekit/track-processors";
+import {
+  supportsBackgroundProcessors as supportsBackgroundProcessorsLivekitSdk,
+  supportsModernBackgroundProcessors,
+} from "@livekit/track-processors";
 
 /**
  * Whether this browser can run background effects: the one answer for the
@@ -13,4 +16,13 @@ import { supportsBackgroundProcessors as supportsBackgroundProcessorsLivekitSdk 
  */
 export function supportsBackgroundProcessors(): boolean {
   return supportsBackgroundProcessorsLivekitSdk();
+}
+
+/**
+ * Whether effects, where they run at all, draw every frame through a canvas:
+ * the slower route, which costs frame rate and stalls the page while the
+ * first one is built.
+ */
+export function usesFallbackProcessing(): boolean {
+  return !supportsModernBackgroundProcessors();
 }
