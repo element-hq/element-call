@@ -14,7 +14,7 @@ import {
   type MockedFunction,
   vi,
 } from "vitest";
-import { render, type RenderResult } from "@testing-library/react";
+import { act, render, type RenderResult } from "@testing-library/react";
 import { type LocalParticipant } from "livekit-client";
 import { BehaviorSubject, of } from "rxjs";
 import { BrowserRouter } from "react-router-dom";
@@ -22,7 +22,7 @@ import { TooltipProvider } from "@vector-im/compound-web";
 import { RoomContext, useLocalParticipant } from "@livekit/components-react";
 import userEvent from "@testing-library/user-event";
 
-import { InCallView } from "./InCallView";
+import { ActiveCall, InCallView } from "./InCallView";
 import {
   mockLivekitRoom,
   mockLocalParticipant,
@@ -33,7 +33,10 @@ import {
   type MockRTCSession,
 } from "../utils/test";
 import { E2eeType } from "../e2ee/e2eeType";
-import { getBasicCallViewModelEnvironment } from "../utils/test-viewmodel";
+import {
+  getBasicCallViewModelEnvironment,
+  getBasicRTCSession,
+} from "../utils/test-viewmodel";
 import {
   type CallViewModel,
   type CallViewModelOptions,
@@ -45,7 +48,10 @@ import { LivekitRoomAudioRenderer } from "../livekit/MatrixAudioRenderer";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { type MediaDevices as ECMediaDevices } from "../state/MediaDevices";
 import { AppBar } from "../AppBar";
+import { type MatrixInfo } from "./VideoPreview";
+import { ProcessorProvider } from "../livekit/TrackProcessorContext";
 import { initializeWidget } from "../widget";
+import { RootElementProvider } from "../RootElementContext";
 
 initializeWidget();
 vi.hoisted(
@@ -77,6 +83,17 @@ const localParticipant = mockLocalParticipant({
 const remoteParticipant = mockRemoteParticipant({
   identity: "@alice:example.org:AAAAAA",
 });
+
+const matrixInfo = {
+  userId: "",
+  displayName: "",
+  avatarUrl: "",
+  roomId: "",
+  roomName: "",
+  roomAlias: null,
+  roomAvatar: null,
+  e2eeSystem: { kind: E2eeType.NONE },
+} satisfies MatrixInfo;
 
 let useRoomEncryptionSystemMock: MockedFunction<typeof useRoomEncryptionSystem>;
 
@@ -122,12 +139,13 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
       remoteParticipants$: of([remoteParticipant]),
     },
   );
-  const { vm, footerVm, rtcSession } = getBasicCallViewModelEnvironment(
-    [local, alice],
-    undefined,
-    mediaDevices,
-    args.callViewModelOptions,
-  );
+  const { vm, footerVm, developerSettingsVm, rtcSession } =
+    getBasicCallViewModelEnvironment(
+      [local, alice],
+      undefined,
+      mediaDevices,
+      args.callViewModelOptions,
+    );
 
   rtcSession.joined = true;
   const room = rtcSession.room;
@@ -140,18 +158,8 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
       muteStates={muteState}
       vm={vm}
       footerVm={footerVm}
-      matrixInfo={{
-        userId: "",
-        displayName: "",
-        avatarUrl: "",
-        roomId: "",
-        roomName: "",
-        roomAlias: null,
-        roomAvatar: null,
-        e2eeSystem: {
-          kind: E2eeType.NONE,
-        },
-      }}
+      developerSettingsVm={developerSettingsVm}
+      matrixInfo={matrixInfo}
       matrixRoom={room}
       onShareClick={null}
     />
@@ -224,5 +232,103 @@ describe("InCallView", () => {
       // Clicking the button should call select -> switchFn with the earpiece device id
       expect(switchFn).toHaveBeenCalledWith("earpiece-id");
     });
+  });
+});
+
+describe("ActiveCall", () => {
+  it("creates the view models and renders the call", async () => {
+    const mediaDevices = mockMediaDevices({});
+    const { rtcSession, matrixRoom } = getBasicRTCSession([local, alice]);
+    const { findByTestId } = render(
+      <BrowserRouter>
+        <MediaDevicesContext value={mediaDevices}>
+          <ProcessorProvider>
+            <TooltipProvider>
+              <RoomContext value={mockLivekitRoom({ localParticipant })}>
+                <ActiveCall
+                  client={matrixRoom.client}
+                  rtcSession={rtcSession.asMockedSession()}
+                  matrixRoom={matrixRoom}
+                  muteStates={mockMuteStates()}
+                  matrixInfo={matrixInfo}
+                  onShareClick={null}
+                  e2eeSystem={{ kind: E2eeType.NONE }}
+                  onLeft={(): void => {}}
+                />
+              </RoomContext>
+            </TooltipProvider>
+          </ProcessorProvider>
+        </MediaDevicesContext>
+      </BrowserRouter>,
+    );
+    // Rendering at all proves ActiveCall created all of its view models
+    expect(await findByTestId("incall_leave")).toBeVisible();
+  });
+
+  it("lays the call out for the size of its root element", async () => {
+    // jsdom has no layout and no ResizeObserver: the root reports whatever
+    // size we say, and the observer notifies whenever we tell it to
+    let size = { width: 1000, height: 800 };
+    const root = document.createElement("div");
+    Object.defineProperty(root, "clientWidth", { get: () => size.width });
+    Object.defineProperty(root, "clientHeight", { get: () => size.height });
+    document.body.appendChild(root);
+
+    const observers: (() => void)[] = [];
+    const originalResizeObserver = window.ResizeObserver;
+    window.ResizeObserver = class {
+      public constructor(private readonly callback: ResizeObserverCallback) {}
+      public observe(): void {
+        observers.push(() => this.callback([], this as ResizeObserver));
+      }
+      public unobserve(): void {}
+      public disconnect(): void {}
+    } as unknown as typeof ResizeObserver;
+
+    try {
+      const mediaDevices = mockMediaDevices({});
+      const { rtcSession, matrixRoom } = getBasicRTCSession([local, alice]);
+      const { findByTestId, container } = render(
+        <BrowserRouter>
+          <RootElementProvider value={root}>
+            <MediaDevicesContext value={mediaDevices}>
+              <ProcessorProvider>
+                <TooltipProvider>
+                  <RoomContext value={mockLivekitRoom({ localParticipant })}>
+                    <ActiveCall
+                      client={matrixRoom.client}
+                      rtcSession={rtcSession.asMockedSession()}
+                      matrixRoom={matrixRoom}
+                      muteStates={mockMuteStates()}
+                      matrixInfo={matrixInfo}
+                      onShareClick={null}
+                      e2eeSystem={{ kind: E2eeType.NONE }}
+                      onLeft={(): void => {}}
+                    />
+                  </RoomContext>
+                </TooltipProvider>
+              </ProcessorProvider>
+            </MediaDevicesContext>
+          </RootElementProvider>
+        </BrowserRouter>,
+        { container: root },
+      );
+      await findByTestId("incall_leave");
+      const call = container.querySelector("[data-layout]")!;
+      expect(call.getAttribute("data-layout")).not.toBe("pip");
+
+      // The host shrinks the container to a corner of its page. The window has
+      // not changed at all — what matters is the element we were given.
+      size = { width: 300, height: 300 };
+      act(() => observers.forEach((notify) => notify()));
+      expect(call.getAttribute("data-layout")).toBe("pip");
+
+      size = { width: 1000, height: 800 };
+      act(() => observers.forEach((notify) => notify()));
+      expect(call.getAttribute("data-layout")).not.toBe("pip");
+    } finally {
+      window.ResizeObserver = originalResizeObserver;
+      root.remove();
+    }
   });
 });

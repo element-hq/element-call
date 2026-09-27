@@ -210,11 +210,8 @@ export function withCallViewModel(mode: MatrixRTCMode) {
         connectionState$,
         windowSize$,
         localTransport: {
-          active$: constant({
-            transport: exampleTransport,
-            sfuConfig: exampleSfuConfig,
-          }),
-          advertised$: constant(exampleTransport),
+          transport: exampleTransport,
+          sfuConfig: exampleSfuConfig,
         },
         connectionFactory: {
           createConnection(
@@ -238,7 +235,7 @@ export function withCallViewModel(mode: MatrixRTCMode) {
             );
           },
         },
-        matrixRTCMode$: constant(mode),
+        matrixRTCMode: mode,
         ...options,
       },
       raisedHands$,

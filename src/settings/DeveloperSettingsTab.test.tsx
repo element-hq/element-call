@@ -12,7 +12,12 @@ import { TooltipProvider } from "@vector-im/compound-web";
 
 import type { MatrixClient } from "matrix-js-sdk";
 import type { Room as LivekitRoom } from "livekit-client";
-import { DeveloperSettingsTab } from "./DeveloperSettingsTab";
+import {
+  DeveloperSettingsTab,
+  type DeveloperSettingsSnapshot,
+} from "./DeveloperSettingsTab";
+import { outOfCallDeveloperSettingsTabViewModel } from "./DeveloperSettingsTabViewModel";
+import { createStaticViewModel } from "../state/ViewModel";
 import { getSFUConfigWithOpenID } from "../livekit/openIDSFU";
 import {
   customLivekitUrl as customLivekitUrlSetting,
@@ -107,6 +112,7 @@ describe("DeveloperSettingsTab", () => {
         roomId={"#room:example.org"}
         livekitRooms={livekitRooms}
         env={{ MY_MOCK_ENV: 10, ENV: "test" } as unknown as ImportMetaEnv}
+        vm={outOfCallDeveloperSettingsTabViewModel}
       />,
     );
 
@@ -136,6 +142,7 @@ describe("DeveloperSettingsTab", () => {
           <DeveloperSettingsTab
             client={client}
             env={{} as unknown as ImportMetaEnv}
+            vm={outOfCallDeveloperSettingsTabViewModel}
           />
         </TooltipProvider>,
       );
@@ -159,6 +166,7 @@ describe("DeveloperSettingsTab", () => {
             client={client}
             roomId="#testRoom"
             env={{} as unknown as ImportMetaEnv}
+            vm={outOfCallDeveloperSettingsTabViewModel}
           />
         </TooltipProvider>,
       );
@@ -181,6 +189,7 @@ describe("DeveloperSettingsTab", () => {
             client={client}
             roomId="#testRoom"
             env={{} as unknown as ImportMetaEnv}
+            vm={outOfCallDeveloperSettingsTabViewModel}
           />
         </TooltipProvider>,
       );
@@ -206,6 +215,7 @@ describe("DeveloperSettingsTab", () => {
             client={client}
             roomId="#testRoom"
             env={{} as unknown as ImportMetaEnv}
+            vm={outOfCallDeveloperSettingsTabViewModel}
           />
         </TooltipProvider>,
       );
@@ -236,6 +246,7 @@ describe("DeveloperSettingsTab", () => {
             client={client}
             roomId="#testRoom"
             env={{} as unknown as ImportMetaEnv}
+            vm={outOfCallDeveloperSettingsTabViewModel}
           />
         </TooltipProvider>,
       );
@@ -273,6 +284,7 @@ describe("DeveloperSettingsTab", () => {
           <DeveloperSettingsTab
             client={client}
             env={{} as unknown as ImportMetaEnv}
+            vm={outOfCallDeveloperSettingsTabViewModel}
           />
         </TooltipProvider>,
       );
@@ -305,6 +317,7 @@ describe("DeveloperSettingsTab", () => {
           <DeveloperSettingsTab
             client={client}
             env={{} as unknown as ImportMetaEnv}
+            vm={outOfCallDeveloperSettingsTabViewModel}
           />
         </TooltipProvider>,
       );
@@ -317,19 +330,15 @@ describe("DeveloperSettingsTab", () => {
 
   describe("matrix rtc mode", () => {
     afterEach(() => {
-      matrixRTCModeSetting.setValue(MatrixRTCMode.Legacy);
+      matrixRTCModeSetting.setValue(MatrixRTCMode.Compatibility);
       vi.restoreAllMocks();
     });
 
     function getModeRadios(): {
-      legacy: HTMLInputElement;
       compatibility: HTMLInputElement;
       matrix20: HTMLInputElement;
     } {
       return {
-        legacy: screen.getByDisplayValue(
-          MatrixRTCMode.Legacy,
-        ) as HTMLInputElement,
         compatibility: screen.getByDisplayValue(
           MatrixRTCMode.Compatibility,
         ) as HTMLInputElement,
@@ -349,6 +358,7 @@ describe("DeveloperSettingsTab", () => {
           <DeveloperSettingsTab
             client={client}
             env={{} as unknown as ImportMetaEnv}
+            vm={outOfCallDeveloperSettingsTabViewModel}
           />
         </TooltipProvider>,
       );
@@ -359,27 +369,21 @@ describe("DeveloperSettingsTab", () => {
 
       const radios = getModeRadios();
       expect(radios.compatibility).toBeChecked();
-      expect(radios.legacy).not.toBeChecked();
       expect(radios.matrix20).not.toBeChecked();
       // None are disabled by config; only Matrix_2_0 may be disabled by sticky-events support.
-      expect(radios.legacy).not.toBeDisabled();
       expect(radios.compatibility).not.toBeDisabled();
     });
 
-    it.each([
-      MatrixRTCMode.Legacy,
-      MatrixRTCMode.Compatibility,
-      MatrixRTCMode.Matrix_2_0,
-    ])(
+    it.each([MatrixRTCMode.Compatibility, MatrixRTCMode.Matrix_2_0])(
       "disables all radios and shows the config value (%s) as checked when matrix_rtc_mode is set",
       async (configMode) => {
         mockConfig({ matrix_rtc_mode: configMode });
         // Local setting is intentionally different from the config value to
         // prove config wins.
         matrixRTCModeSetting.setValue(
-          configMode === MatrixRTCMode.Legacy
-            ? MatrixRTCMode.Compatibility
-            : MatrixRTCMode.Legacy,
+          configMode === MatrixRTCMode.Compatibility
+            ? MatrixRTCMode.Matrix_2_0
+            : MatrixRTCMode.Compatibility,
         );
         const client = createMockMatrixClient();
 
@@ -388,6 +392,7 @@ describe("DeveloperSettingsTab", () => {
             <DeveloperSettingsTab
               client={client}
               env={{} as unknown as ImportMetaEnv}
+              vm={outOfCallDeveloperSettingsTabViewModel}
             />
           </TooltipProvider>,
         );
@@ -397,13 +402,11 @@ describe("DeveloperSettingsTab", () => {
         );
 
         const radios = getModeRadios();
-        expect(radios.legacy).toBeDisabled();
         expect(radios.compatibility).toBeDisabled();
         expect(radios.matrix20).toBeDisabled();
 
         const checkedValue = (
           {
-            [MatrixRTCMode.Legacy]: radios.legacy,
             [MatrixRTCMode.Compatibility]: radios.compatibility,
             [MatrixRTCMode.Matrix_2_0]: radios.matrix20,
           } as const
@@ -411,5 +414,75 @@ describe("DeveloperSettingsTab", () => {
         expect(checkedValue).toBeChecked();
       },
     );
+  });
+
+  describe("KeyRotationStatus", () => {
+    it("displays active status when key rotation is not suppressed", async () => {
+      const client = createMockMatrixClient();
+      const vm = createStaticViewModel<DeveloperSettingsSnapshot>({
+        keyRotation: { suppressed: false, participantCount: 5 },
+      });
+
+      render(
+        <TooltipProvider>
+          <DeveloperSettingsTab
+            client={client}
+            env={{} as unknown as ImportMetaEnv}
+            vm={vm}
+          />
+        </TooltipProvider>,
+      );
+
+      await waitFor(() =>
+        expect(
+          screen.getByText(/Media key rotation: active \(5 participants\)/),
+        ).toBeInTheDocument(),
+      );
+    });
+
+    it("displays suppressed status when key rotation is suppressed", async () => {
+      const client = createMockMatrixClient();
+      const vm = createStaticViewModel<DeveloperSettingsSnapshot>({
+        keyRotation: { suppressed: true, participantCount: 50 },
+      });
+
+      render(
+        <TooltipProvider>
+          <DeveloperSettingsTab
+            client={client}
+            env={{} as unknown as ImportMetaEnv}
+            vm={vm}
+          />
+        </TooltipProvider>,
+      );
+
+      await waitFor(() =>
+        expect(
+          screen.getByText(
+            /Media key rotation: suppressed, participant limit reached \(50 participants\)/,
+          ),
+        ).toBeInTheDocument(),
+      );
+    });
+
+    it("does not render KeyRotationStatus when not in a call", async () => {
+      const client = createMockMatrixClient();
+
+      render(
+        <TooltipProvider>
+          <DeveloperSettingsTab
+            client={client}
+            env={{} as unknown as ImportMetaEnv}
+            vm={outOfCallDeveloperSettingsTabViewModel}
+          />
+        </TooltipProvider>,
+      );
+
+      await waitFor(() =>
+        expect(
+          screen.queryByText(/Media key rotation:/),
+        ).not.toBeInTheDocument(),
+      );
+    });
   });
 });

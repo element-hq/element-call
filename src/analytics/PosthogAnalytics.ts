@@ -15,7 +15,6 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import { type MatrixClient } from "matrix-js-sdk";
 import { type Subscription } from "rxjs";
 
-import { widget } from "../widget";
 import {
   CallEndedTracker,
   CallStartedTracker,
@@ -29,8 +28,6 @@ import {
   CallConnectDurationTracker,
   CallReconnectingTracker,
 } from "./PosthogEvents";
-import { Config } from "../config/Config";
-import { getUrlParams } from "../UrlParams";
 import { optInAnalytics } from "../settings/settings";
 
 /* Posthog analytics tracking.
@@ -140,6 +137,27 @@ interface PlatformProperties {
   cryptoVersion?: string;
 }
 
+/**
+ * How analytics reporting should be set up, supplied by whoever is starting
+ * Element Call rather than discovered from the page it happens to be on.
+ */
+export interface AnalyticsConfig {
+  /** The PostHog project key. Without one, analytics stay switched off. */
+  apiKey?: string;
+  apiHost?: string;
+  /**
+   * How Element Call reaches Matrix. When `embedded`, the host owns the user's
+   * identity: it supplies the analytics ID, and Element Call must not store one
+   * in the user's account data.
+   */
+  matrixBackend: "embedded" | "jssdk";
+  /** The analytics ID the host has assigned to this user, when embedded. */
+  hostAnalyticsId?: string | null;
+}
+
+/** Analytics are off until someone asks for them. */
+const analyticsDisabled: AnalyticsConfig = { matrixBackend: "jssdk" };
+
 export class PosthogAnalytics {
   /* Wrapper for Posthog analytics.
    * 3 modes of anonymity are supported, governed by this.anonymity
@@ -167,13 +185,32 @@ export class PosthogAnalytics {
   private registrationType: RegistrationType = RegistrationType.Guest;
   private optInListener: Subscription | null = null;
 
+  private static analyticsConfig: AnalyticsConfig = analyticsDisabled;
+
+  /**
+   * Sets up analytics reporting. Must be called before the instance is first
+   * used; without it, analytics stay switched off.
+   */
+  public static configure(config: AnalyticsConfig): void {
+    if (this.internalInstance)
+      // Configuration is read once, when the instance is built, so arriving
+      // late means analytics are already running unconfigured.
+      logger.warn(
+        "Analytics were configured after they had already been started; the new configuration will not take effect",
+      );
+    this.analyticsConfig = config;
+  }
+
   public static hasInstance(): boolean {
     return Boolean(this.internalInstance);
   }
 
   public static get instance(): PosthogAnalytics {
     if (!this.internalInstance) {
-      this.internalInstance = new PosthogAnalytics(posthog);
+      this.internalInstance = new PosthogAnalytics(
+        posthog,
+        PosthogAnalytics.analyticsConfig,
+      );
     }
     return this.internalInstance;
   }
@@ -181,20 +218,14 @@ export class PosthogAnalytics {
   public static resetInstance(): void {
     // Reset the singleton instance
     this.internalInstance = null;
+    this.analyticsConfig = analyticsDisabled;
   }
 
-  private constructor(private readonly posthog: PostHog) {
-    let apiKey: string | undefined;
-    let apiHost: string | undefined;
-    if (import.meta.env.VITE_PACKAGE === "embedded") {
-      // for the embedded package we always use the values from the URL as the widget host is responsible for analytics configuration
-      apiKey = getUrlParams().posthogApiKey ?? undefined;
-      apiHost = getUrlParams().posthogApiHost ?? undefined;
-    } else if (import.meta.env.VITE_PACKAGE === "full") {
-      // in full package it is the server responsible for the analytics
-      apiKey = Config.get().posthog?.api_key;
-      apiHost = Config.get().posthog?.api_host;
-    }
+  private constructor(
+    private readonly posthog: PostHog,
+    private readonly config: AnalyticsConfig,
+  ) {
+    const { apiKey, apiHost } = config;
 
     if (apiKey && apiHost) {
       const beforeSend = (event: CaptureResult | null): CaptureResult | null =>
@@ -225,15 +256,15 @@ export class PosthogAnalytics {
     }
   }
 
-  private static getPlatformProperties(): PlatformProperties {
+  private getPlatformProperties(): PlatformProperties {
     const appVersion = import.meta.env.VITE_APP_VERSION || "dev";
     return {
       appVersion,
-      matrixBackend: widget ? "embedded" : "jssdk",
+      matrixBackend: this.config.matrixBackend,
       callBackend: "livekit",
-      cryptoVersion: widget
-        ? undefined
-        : window.matrixclient?.getCrypto()?.getVersion(),
+      // Undefined when Element Call has no crypto of its own, which is the case
+      // whenever a host is doing the encrypting for it.
+      cryptoVersion: window.matrixclient?.getCrypto()?.getVersion(),
     };
   }
 
@@ -283,8 +314,8 @@ export class PosthogAnalytics {
       // different devices to send the same ID.
       let analyticsID = await this.getAnalyticsId();
       try {
-        if (!analyticsID && !widget) {
-          // only try setting up a new analytics ID in the standalone app.
+        if (!analyticsID && this.config.matrixBackend !== "embedded") {
+          // only mint an analytics ID when we are the ones storing it.
 
           // Couldn't retrieve an analytics ID from user settings, so create one and set it on the server.
           // Note there's a race condition here - if two devices do these steps at the same time, last write
@@ -313,8 +344,8 @@ export class PosthogAnalytics {
 
   private async getAnalyticsId(): Promise<string | null> {
     const client: MatrixClient = window.matrixclient;
-    if (widget) {
-      return getUrlParams().posthogUserId;
+    if (this.config.matrixBackend === "embedded") {
+      return this.config.hostAnalyticsId ?? null;
     } else {
       const accountData = await client.getAccountDataFromServer(
         PosthogAnalytics.ANALYTICS_EVENT_TYPE,
@@ -324,7 +355,7 @@ export class PosthogAnalytics {
   }
 
   private async setAccountAnalyticsId(analyticsID: string): Promise<void> {
-    if (!widget) {
+    if (this.config.matrixBackend !== "embedded") {
       const client = window.matrixclient;
 
       // the analytics ID only needs to be set in the standalone version.
@@ -362,7 +393,7 @@ export class PosthogAnalytics {
     // These properties will be subsequently passed in every event.
     //
     // This only needs to be done once per page lifetime. Note that getPlatformProperties
-    this.platformSuperProperties = PosthogAnalytics.getPlatformProperties();
+    this.platformSuperProperties = this.getPlatformProperties();
     this.registerSuperProperties({
       ...this.platformSuperProperties,
       registrationType:

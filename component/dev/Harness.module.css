@@ -1,0 +1,140 @@
+/*
+Copyright 2026 Element Creations Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
+.credentials {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-inline-size: 420px;
+  margin: 48px auto;
+  padding: 24px;
+  background-color: #ffffff;
+  border: 1px solid #d4d4d8;
+  border-radius: 8px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.error {
+  color: #b91c1c;
+}
+
+.harness {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  block-size: 100%;
+}
+
+.header,
+.paneBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-block-end: 1px solid #d4d4d8;
+  background-color: #ffffff;
+}
+
+.header h1 {
+  font-size: 16px;
+  margin: 0;
+}
+
+.middle {
+  display: flex;
+  min-block-size: 0;
+}
+
+.sidebar {
+  flex: 0 0 220px;
+  padding: 12px;
+  border-inline-end: 1px solid #d4d4d8;
+  background-color: #ffffff;
+  overflow-y: auto;
+}
+
+.panes {
+  display: flex;
+  flex-wrap: wrap;
+  /* So that a pane is the size it was dragged to, rather than being stretched
+  to fill the row */
+  align-items: flex-start;
+  align-content: flex-start;
+  gap: 16px;
+  padding: 16px;
+  flex: 1;
+  min-inline-size: 0;
+  overflow: auto;
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #d4d4d8;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #ffffff;
+}
+
+.paneBar {
+  flex-wrap: wrap;
+  gap: 6px;
+  border-block-end: none;
+}
+
+/* The space the host gives Element Call. Resizable so that the sizes it has to
+cope with can be found by dragging rather than by rebuilding, and `overflow:
+hidden` both to enable the resize handle and to show up anything inside Element
+Call that does not fit the box it was given. */
+.paneCall {
+  inline-size: 560px;
+  block-size: 420px;
+  min-inline-size: 180px;
+  min-block-size: 180px;
+  resize: both;
+  overflow: hidden;
+}
+
+.log {
+  max-block-size: 180px;
+  overflow-y: auto;
+  padding: 8px 12px;
+  border-block-start: 1px solid #d4d4d8;
+  background-color: #ffffff;
+  font-size: 12px;
+}
+
+.log h2 {
+  font-size: 13px;
+  margin: 0 0 4px;
+}
+
+.log ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A host overlay, which Element Call must not be able to draw over */
+.dialogScrim {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background-color: rgb(0 0 0 / 50%);
+  z-index: 10;
+}
+
+.dialog {
+  padding: 24px;
+  border-radius: 8px;
+  background-color: #ffffff;
+}

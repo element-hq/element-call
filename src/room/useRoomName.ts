@@ -6,14 +6,27 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type Room, RoomEvent } from "matrix-js-sdk";
-import { useCallback } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 
-import { useTypedEventEmitterState } from "../useEvents";
-
-export function useRoomName(room: Room): string {
-  return useTypedEventEmitterState(
-    room,
-    RoomEvent.Name,
-    useCallback(() => room.name, [room]),
+/**
+ * The room's name, kept up to date. Null when there is no room yet, for a
+ * caller that only sometimes has one.
+ */
+export function useRoomName(room: Room): string;
+export function useRoomName(room: Room | null): string | null;
+export function useRoomName(room: Room | null): string | null {
+  const subscribe = useCallback(
+    (onChange: () => void) => {
+      if (room === null) return (): void => {};
+      room.on(RoomEvent.Name, onChange);
+      return (): void => {
+        room.off(RoomEvent.Name, onChange);
+      };
+    },
+    [room],
+  );
+  return useSyncExternalStore(
+    subscribe,
+    useCallback(() => room?.name ?? null, [room]),
   );
 }

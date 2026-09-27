@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { test, vi, expect, beforeEach, afterEach } from "vitest";
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject, NEVER } from "rxjs";
 import { type Room as LivekitRoom } from "livekit-client";
 import EventEmitter from "events";
 import fetchMock from "fetch-mock";
@@ -34,7 +34,6 @@ import {
 } from "./MatrixLivekitMembers.ts";
 import { createConnectionManager$ } from "./ConnectionManager.ts";
 import { membershipsAndTransports$ } from "../../SessionBehaviors.ts";
-import { constant } from "../../Behavior.ts";
 import { localRtcMember, testJWTToken } from "../../../utils/test-fixtures.ts";
 
 // Test the integration of ConnectionManager and MatrixLivekitMerger
@@ -124,7 +123,7 @@ test("bob, carl, then bob joining no tracks yet", () => {
     const connectionManager = createConnectionManager$({
       scope: testScope,
       connectionFactory: ecConnectionFactory,
-      localTransport$: constant(null),
+      localTransport$: NEVER,
       remoteTransports$: membershipsAndTransports.transports$,
       logger: logger,
       ownMembershipIdentity: ownMemberMock,

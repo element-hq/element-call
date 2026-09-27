@@ -1,36 +1,24 @@
 # MatrixRTC modes
 
 Element Call is in the middle of a transition of how a call session is
-represented and how participants pick an SFU:
+represented: from room _state_ events (`org.matrix.msc3401.call.member`) to
+_sticky_ events
+([MSC4354](https://github.com/matrix-org/matrix-spec-proposals/pull/4354)),
+which are a much better fit for the short lived, per-device nature of call
+memberships.
 
-- **Membership events**: from room _state_ events
-  (`org.matrix.msc3401.call.member`) to _sticky_ events
-  ([MSC4354](https://github.com/matrix-org/matrix-spec-proposals/pull/4354)),
-  which are a much better fit for the short lived, per-device nature of call
-  memberships.
-- **SFU selection**: from "everyone connects to the SFU of the oldest member" to
-  **multi SFU**, where each participant uses its own homeserver's SFU and the
-  SFUs interconnect.
-
-Not every homeserver supports sticky events yet. Multi SFU is supported on all current (August 2026)
-element call clients. The three MatrixRTC modes are the steps of that transition,
-so a deployment can pick the newest one its homeserver and its user base can
-handle.
+Not every homeserver supports sticky events yet. The two MatrixRTC modes
+controls whether Element Call uses them.
 
 ## The modes
 
 | Mode            | Membership events | SFU selection | JWT endpoint                 |
 | --------------- | ----------------- | ------------- | ---------------------------- |
-| `legacy`        | state events      | oldest member | legacy                       |
 | `compatibility` | state events      | multi SFU     | legacy                       |
 | `matrix_2_0`    | sticky events     | multi SFU     | Matrix 2.0 (hashed identity) |
 
-**`legacy`** — the lowest common denominator. Use it if calls need to work with
-Element Call clients older than v0.17.0, which cannot handle multi SFU calls. (unused)
-
-**`compatibility`** — multi SFU, but still state events. Use it when all Element
-Call clients are v0.17.0 or later but the homeserver does not support sticky
-events. This is the default. (default)
+**`compatibility`** — multi SFU, but still state events. Use it when the
+homeserver does not support sticky events. This is the default.
 
 **`matrix_2_0`** — the target state. Requires a homeserver that advertises
 MSC4354 and all clients on v0.17.0 or later. The local membership requests its
@@ -54,7 +42,7 @@ disables the Developer Settings choice:
 }
 ```
 
-Valid values are `legacy`, `compatibility` and `matrix_2_0`; an invalid value is
+Valid values are `compatibility` and `matrix_2_0`; an invalid value is
 ignored (with a warning) and the user's choice applies. Pinning `matrix_2_0` on a
 homeserver without sticky event support makes joining fail with a "sticky events
 required" error.

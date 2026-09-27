@@ -14,10 +14,9 @@ import {
 } from "react";
 import { Avatar as CompoundAvatar } from "@vector-im/compound-web";
 import { type MatrixClient } from "matrix-js-sdk";
-import { type WidgetApi } from "matrix-widget-api";
 
 import { useClientState } from "./ClientContext";
-import { widget } from "./widget";
+import { useHostBridge } from "./HostBridge";
 
 export enum Size {
   XS = "xs",
@@ -76,6 +75,7 @@ export const Avatar: FC<Props> = ({
   ...props
 }) => {
   const clientState = useClientState();
+  const hostBridge = useHostBridge();
 
   const sizePx = useMemo(
     () =>
@@ -87,7 +87,8 @@ export const Avatar: FC<Props> = ({
 
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
 
-  // In theory, a change in `clientState` or `sizePx` could run extra getAvatarFromWidgetAPI calls, but in practice they should be stable long before this code runs.
+  // In theory, a change in `clientState` or `sizePx` could run extra media
+  // downloads, but in practice they should be stable long before this code runs.
   useEffect(() => {
     if (!src) {
       setAvatarUrl(undefined);
@@ -96,8 +97,8 @@ export const Avatar: FC<Props> = ({
 
     let blob: Promise<Blob>;
 
-    if (widget?.api) {
-      blob = getAvatarFromWidgetAPI(widget.api, src);
+    if (hostBridge.downloadMedia) {
+      blob = hostBridge.downloadMedia(src);
     } else if (
       clientState?.state === "valid" &&
       clientState.authenticated?.client &&
@@ -132,7 +133,7 @@ export const Avatar: FC<Props> = ({
         URL.revokeObjectURL(objectUrl);
       }
     };
-  }, [clientState, src, sizePx]);
+  }, [clientState, hostBridge, src, sizePx]);
 
   return (
     <CompoundAvatar
@@ -171,25 +172,4 @@ async function getAvatarFromServer(
   const blob = await request.blob();
 
   return blob;
-}
-
-// export for testing
-export async function getAvatarFromWidgetAPI(
-  api: WidgetApi,
-  src: string,
-): Promise<Blob> {
-  const response = await api.downloadFile(src);
-  const file = response.file;
-
-  // element-web sends a Blob, and the MSC4039 is considering changing the spec to strictly Blob, so only handling that
-  if (file instanceof Blob) {
-    return file;
-  } else if (typeof file === "string") {
-    // it is a base64 string
-    const bytes = Uint8Array.from(atob(file), (c) => c.charCodeAt(0));
-    return new Blob([bytes]);
-  }
-  throw new Error(
-    "Downloaded file format is not supported: " + typeof file + "",
-  );
 }

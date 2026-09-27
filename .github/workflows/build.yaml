@@ -6,7 +6,7 @@ on:
       - opened
       - labeled
   push:
-    branches: [livekit, full-mesh]
+    branches: [main]
 jobs:
   build_full_element_call:
     # Use the full package vite build
@@ -22,8 +22,8 @@ jobs:
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
   deploy_develop:
-    # Deploy livekit branch to call.element.dev after build completes
-    if: github.ref == 'refs/heads/livekit'
+    # Deploy main branch to call.element.dev after build completes
+    if: github.ref == 'refs/heads/main'
     needs: build_full_element_call
     runs-on: ubuntu-latest
     steps:
@@ -43,8 +43,8 @@ jobs:
                 }
             })
   docker_for_develop:
-    # Build docker and publish docker for livekit branch after build completes
-    if: github.ref == 'refs/heads/livekit'
+    # Build docker and publish docker for main branch after build completes
+    if: github.ref == 'refs/heads/main'
     needs: build_full_element_call
     permissions:
       contents: write

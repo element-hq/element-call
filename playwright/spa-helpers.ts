@@ -101,9 +101,7 @@ async function setRtcModeFromSettings(
 
   // Move to Developer tab now
   await page.getByRole("tab", { name: "Developer" }).click();
-  if (mode == "legacy") {
-    await page.getByText("Legacy: state events").click();
-  } else if (mode == "2_0") {
+  if (mode == "2_0") {
     await page.getByText("Matrix 2.0").click();
   } else {
     // compat
@@ -111,6 +109,24 @@ async function setRtcModeFromSettings(
   }
 
   await page.getByTestId("modal_close").click();
+}
+
+/**
+ * Makes the delayed-leave delegation support probes fail so that the client
+ * manages its delayed leave event itself instead of delegating it to the
+ * backend.
+ *
+ * Must be installed before the page joins a call.
+ */
+async function disableLeaveDelegation(page: Page): Promise<void> {
+  // Covers both the transport probe (<livekit_service_url>/delegate_delayed_leave)
+  // and the homeserver probe (MSC4195, .../rtc/livekit/delegate_delayed_leave).
+  await page.route("**/delegate_delayed_leave", async (route) =>
+    route.fulfill({
+      status: 404,
+      headers: { "Access-Control-Allow-Origin": "*" },
+    }),
+  );
 }
 
 /**
@@ -135,5 +151,6 @@ export const SpaHelpers = {
   createCall,
   getCallInviteLink,
   joinCallFromInviteLink,
+  disableLeaveDelegation,
   expectVideoTilesCount,
 };

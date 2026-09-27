@@ -10,7 +10,7 @@
   width: fit-content;
 }
 
-@media (max-width: 420px) {
+@container element-call (max-width: 420px) {
   .reactionPopupMenu {
     --reaction-button-padding: 8px;
     --reaction-button-fontsize: 16px;
@@ -19,7 +19,12 @@
 }
 
 div.reactionPopupMenuRoot.reactionPopupMenuModal {
-  --overlay-top: 82vh;
+  /* Down near the footer it belongs to, rather than centred like other modals.
+  A percentage, not a viewport unit: the overlay is positioned `fixed`, so this
+  resolves against the page in the standalone app and against the container
+  when a host embeds us — where 82vh would put it below the container
+  entirely. */
+  --overlay-top: 82%;
   width: fit-content;
 }
 
@@ -30,7 +35,7 @@ div.reactionPopupMenuRoot {
 
 .reactionPopupMenuRoot > div {
   width: fit-content;
-  max-width: 100vw;
+  max-width: 100cqw;
 }
 
 div.reactionPopupMenuRoot.reactionPopupMenuModal > div > div {

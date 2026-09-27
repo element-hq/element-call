@@ -3,7 +3,7 @@ networks:
 
 services:
   auth-service:
-    image: ghcr.io/element-hq/lk-jwt-service:0.4.4
+    image: ghcr.io/element-hq/lk-jwt-service:0.7.0
     pull_policy: always
     hostname: auth-server
     environment:
@@ -15,6 +15,14 @@ services:
       # a self-signed certificate
       - LIVEKIT_INSECURE_SKIP_VERIFY_TLS=YES_I_KNOW_WHAT_I_AM_DOING
       - LIVEKIT_FULL_ACCESS_HOMESERVERS=*
+      # Registers this instance as an application service on the main homeserver
+      - LIVEKIT_AS_REGISTRATION_FILE=/etc/lk-jwt-service/app-service.yaml
+      - LIVEKIT_HS_SERVER_NAME=synapse.m.localhost
+      # Neither homeserver serves /.well-known/matrix/client, so the C-S API
+      # location has to be given explicitly.
+      - LIVEKIT_CS_API_URL_OVERRIDES=synapse.m.localhost=http://homeserver:8008,synapse.othersite.m.localhost=http://homeserver-1:18008
+    volumes:
+      - ./backend/app-service.yaml:/etc/lk-jwt-service/app-service.yaml:Z
     deploy:
       restart_policy:
         condition: on-failure
@@ -25,7 +33,7 @@ services:
       - ecbackend
 
   auth-service-1:
-    image: ghcr.io/element-hq/lk-jwt-service:0.4.4
+    image: ghcr.io/element-hq/lk-jwt-service:0.7.0
     pull_policy: always
     hostname: auth-server-1
     environment:
@@ -37,6 +45,14 @@ services:
       # a self-signed certificate
       - LIVEKIT_INSECURE_SKIP_VERIFY_TLS=YES_I_KNOW_WHAT_I_AM_DOING
       - LIVEKIT_FULL_ACCESS_HOMESERVERS=*
+      # Registers this instance as an application service on the other homeserver.
+      - LIVEKIT_AS_REGISTRATION_FILE=/etc/lk-jwt-service/app-service.yaml
+      - LIVEKIT_HS_SERVER_NAME=synapse.othersite.m.localhost
+      # Neither homeserver serves /.well-known/matrix/client, so the C-S API
+      # location has to be given explicitly.
+      - LIVEKIT_CS_API_URL_OVERRIDES=synapse.m.localhost=http://homeserver:8008,synapse.othersite.m.localhost=http://homeserver-1:18008
+    volumes:
+      - ./backend/app-service-othersite.yaml:/etc/lk-jwt-service/app-service.yaml:Z
     deploy:
       restart_policy:
         condition: on-failure
@@ -94,7 +110,10 @@ services:
 
   synapse:
     hostname: homeserver
-    image: ghcr.io/element-hq/synapse:latest
+    # develop (not latest) is required for application service C-S/S-S proxying
+    # (MSC4512) and membership look-ups (MSC4502), which are not in a stable
+    # release yet.
+    image: ghcr.io/element-hq/synapse:develop
     pull_policy: always
     environment:
       - SYNAPSE_CONFIG_PATH=/data/cfg/homeserver.yaml
@@ -107,12 +126,16 @@ services:
     volumes:
       - ./backend/synapse_tmp:/data:Z
       - ./backend/dev_homeserver.yaml:/data/cfg/homeserver.yaml:Z
+      - ./backend/app-service.yaml:/data/cfg/app-service.yaml:Z
     networks:
       - ecbackend
 
   synapse-1:
     hostname: homeserver-1
-    image: ghcr.io/element-hq/synapse:latest
+    # develop (not latest) is required for application service C-S/S-S proxying
+    # (MSC4512) and membership look-ups (MSC4502), which are not in a stable
+    # release yet.
+    image: ghcr.io/element-hq/synapse:develop
     pull_policy: always
     environment:
       - SYNAPSE_CONFIG_PATH=/data/cfg/homeserver.yaml
@@ -125,6 +148,7 @@ services:
     volumes:
       - ./backend/synapse_tmp_othersite:/data:Z
       - ./backend/dev_homeserver-othersite.yaml:/data/cfg/homeserver.yaml:Z
+      - ./backend/app-service-othersite.yaml:/data/cfg/app-service.yaml:Z
     networks:
       - ecbackend
 

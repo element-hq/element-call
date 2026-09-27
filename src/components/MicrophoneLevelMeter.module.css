@@ -1,0 +1,65 @@
+/*
+Copyright 2026 Element Creations Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
+.meter {
+  /* A device row's icon column, so the bars start where the names do. */
+  --meter-icon-size: 24px;
+
+  /* Compound's radio size, whose centre line the icon shares. */
+  --device-control-size: 20px;
+
+  display: flex;
+  align-items: center;
+  gap: var(--cpd-space-3x);
+  padding-block: var(--cpd-space-2x);
+  /* Centres the icon on the radio column: less the row's inset border and half
+     the icon's extra width. Checked in the MeterAlignsWithTheDeviceRows story. */
+  padding-inline-start: calc(
+    var(--cpd-space-4x) - var(--cpd-border-width-1) -
+      (var(--meter-icon-size) - var(--device-control-size)) / 2
+  );
+  padding-inline-end: calc(var(--cpd-space-4x) * 2 + var(--cpd-space-2x));
+}
+
+.icon {
+  color: var(--cpd-color-icon-secondary);
+  flex-shrink: 0;
+  inline-size: var(--meter-icon-size);
+  block-size: var(--meter-icon-size);
+}
+
+.segments {
+  /* Bars keep one size and the width decides how many; the component reads the
+     sizes back from here. */
+  flex: 1;
+  /* So the bars never set the menu's width. */
+  contain: inline-size;
+  min-inline-size: 0;
+  display: flex;
+  align-items: center;
+  /* Half again a bar's width, per the design. */
+  gap: var(--cpd-space-1-5x);
+}
+
+.segment {
+  flex: none;
+  inline-size: var(--cpd-space-1x);
+  block-size: var(--cpd-space-4x);
+  border-radius: var(--cpd-space-1x);
+  background: var(--cpd-color-bg-subtle-primary);
+}
+
+/* The count of lit bars carries the level as well as their colour. */
+.segmentLit {
+  background: var(--cpd-color-bg-accent-rest);
+}
+
+.message {
+  color: var(--cpd-color-text-secondary);
+  /* A paragraph's margin would lift the text off centre. */
+  margin-block: 0;
+}

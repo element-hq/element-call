@@ -6,8 +6,13 @@ Please see LICENSE in the repository root for full details.
 */
 
 import classNames from "classnames";
-import { type Ref, type FC, type HTMLAttributes, type ReactNode } from "react";
-import { Link } from "react-router-dom";
+import {
+  type Ref,
+  type FC,
+  type HTMLAttributes,
+  type ReactNode,
+  useCallback,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { Heading, Text } from "@vector-im/compound-web";
 import { UserProfileIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
@@ -16,7 +21,8 @@ import styles from "./Header.module.css";
 import Logo from "./icons/Logo.svg?react";
 import { Avatar, Size } from "./Avatar";
 import { EncryptionLock } from "./room/EncryptionLock";
-import { useMediaQuery } from "./useMediaQuery";
+import { useRootSizeMatches } from "./useRootSize";
+import { useLeaveToHome } from "./LeaveToHomeContext";
 import { DisconnectedBanner } from "./DisconnectedBanner";
 
 interface HeaderProps extends HTMLAttributes<HTMLElement> {
@@ -112,17 +118,30 @@ interface HeaderLogoProps {
   className?: string;
 }
 
+/**
+ * The logo, which is also the way home — when there is a home to go to. As a
+ * component there is not, and it is just the logo.
+ */
 export const HeaderLogo: FC<HeaderLogoProps> = ({ className }) => {
   const { t } = useTranslation();
+  const leaveToHome = useLeaveToHome();
+  const onClick = useCallback(() => leaveToHome?.(), [leaveToHome]);
 
+  if (leaveToHome === null)
+    return (
+      <div className={classNames(styles.headerLogo, className)}>
+        <Logo />
+      </div>
+    );
   return (
-    <Link
+    <button
+      type="button"
       className={classNames(styles.headerLogo, className)}
-      to="/"
+      onClick={onClick}
       aria-label={t("header_label")}
     >
       <Logo />
-    </Link>
+    </button>
   );
 };
 
@@ -142,7 +161,7 @@ export const RoomHeaderInfo: FC<RoomHeaderInfoProps> = ({
   participantCount,
 }) => {
   const { t } = useTranslation();
-  const size = useMediaQuery("(max-width: 550px)") ? "sm" : "lg";
+  const size = useRootSizeMatches(({ width }) => width <= 550) ? "sm" : "lg";
 
   return (
     <div className={styles.roomHeaderInfo} data-size={size}>

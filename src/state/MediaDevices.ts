@@ -16,6 +16,7 @@ import {
 } from "rxjs";
 import { createMediaDeviceObserver } from "@livekit/components-core";
 import { type Logger, logger as rootLogger } from "matrix-js-sdk/lib/logger";
+import { type RTCCallIntent } from "matrix-js-sdk/lib/matrixrtc";
 
 import {
   alwaysShowIphoneEarpiece as alwaysShowIphoneEarpieceSetting,
@@ -25,7 +26,6 @@ import {
 } from "../settings/settings";
 import { type ObservableScope } from "./ObservableScope";
 import { availableOutputDevices$ as controlledAvailableOutputDevices$ } from "../controls";
-import { getUrlParams } from "../UrlParams";
 import { platform } from "../Platform";
 import { switchWhen } from "../utils/observable";
 import { type Behavior, constant } from "./Behavior";
@@ -257,14 +257,21 @@ export class AudioOutput implements MediaDevice<
       map((availableRaw) => {
         let available: Map<string, AudioOutputDeviceLabel> =
           buildDeviceMap(availableRaw);
-        // Create a virtual default audio output for browsers that don't have one.
-        // Its device ID must be the empty string because that's what setSinkId
-        // recognizes.
+        // Create a virtual default audio output for browsers that don't have one
+        // (Firefox, Safari). Its device ID must be the empty string because
+        // that's what setSinkId recognizes. It goes first so that it is the
+        // fallback when no output has been explicitly chosen (or the chosen
+        // one disappears), rather than pinning the first physical device
+        // with setSinkId: pinned sinks are not re-routed by the browser, and
+        // Firefox leaves the audio elements silent when a pinned sink goes
+        // away (e.g. a Bluetooth headset switching profile when its
+        // microphone is opened). We can't know which physical device the
+        // browser default resolves to, so the entry carries no name.
         if (available.size && !available.has("") && !available.has("default"))
-          available.set("", {
-            type: "default",
-            name: availableRaw[0]?.label || null,
-          });
+          available = new Map<string, AudioOutputDeviceLabel>([
+            ["", { type: "default", name: null }],
+            ...available,
+          ]);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const isSafari = !!(window as any).GestureEvent; // non standard api only found on Safari. https://developer.mozilla.org/en-US/docs/Web/API/GestureEvent#browser_compatibility
         if (isSafari) {
@@ -338,6 +345,22 @@ class VideoInput implements MediaDevice<DeviceLabel, SelectedDevice> {
   }
 }
 
+/**
+ * How Element Call should manage audio output.
+ */
+export interface AudioOutputOptions {
+  /**
+   * Whether the list of output devices is controlled by the app hosting Element
+   * Call, through the global JS controls, rather than by the browser.
+   */
+  controlledAudioDevices: boolean;
+  /**
+   * The kind of call being placed, which decides the initial output route when
+   * the host controls the devices.
+   */
+  callIntent?: RTCCallIntent;
+}
+
 export class MediaDevices {
   private readonly deviceNamesRequest$ = new Subject<void>();
   /**
@@ -368,23 +391,28 @@ export class MediaDevices {
   public readonly audioOutput: MediaDevice<
     AudioOutputDeviceLabel,
     SelectedAudioOutputDevice
-  > = getUrlParams().controlledAudioDevices
+  > = this.audioOutputOptions.controlledAudioDevices
     ? platform == "android"
       ? new AndroidControlledAudioOutput(
           controlledAvailableOutputDevices$,
           this.scope,
-          getUrlParams().callIntent,
+          this.audioOutputOptions.callIntent,
           window.controls,
         )
       : new IOSControlledAudioOutput(
           this.usingNames$,
           this.scope,
-          getUrlParams().callIntent,
+          this.audioOutputOptions.callIntent,
         )
     : new AudioOutput(this.usingNames$, this.scope);
 
   public readonly videoInput: MediaDevice<DeviceLabel, SelectedDevice> =
     new VideoInput(this.usingNames$, this.scope);
 
-  public constructor(private readonly scope: ObservableScope) {}
+  // Note: both parameters are read by the field initializers above, which is
+  // safe because TypeScript assigns parameter properties before running them.
+  public constructor(
+    private readonly scope: ObservableScope,
+    private readonly audioOutputOptions: AudioOutputOptions,
+  ) {}
 }

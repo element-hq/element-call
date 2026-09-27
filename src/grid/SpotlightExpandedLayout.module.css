@@ -25,7 +25,7 @@ Please see LICENSE in the repository root for full details.
     var(--content-inset-left);
 }
 
-@media (min-width: 600px) {
+@container element-call (min-width: 600px) {
   .pip {
     inline-size: 180px;
     block-size: 135px;

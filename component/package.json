@@ -1,0 +1,42 @@
+{
+  "name": "@element-hq/element-call-component",
+  "version": "0.0.0",
+  "description": "Element Call as a React component. Consumed straight from the repository as a git dependency (github:element-hq/element-call#<ref>&path:/component): the host's package manager runs `prepare`, which builds `dist/`.",
+  "license": "SEE LICENSE IN ../README.md",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/element-hq/element-call",
+    "directory": "component"
+  },
+  "type": "module",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/element-call.js",
+  "module": "./dist/element-call.js",
+  "types": "./dist/types/component/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/component/index.d.ts",
+      "default": "./dist/element-call.js"
+    },
+    "./style.css": "./dist/element-call.css"
+  },
+  "sideEffects": [
+    "*.css"
+  ],
+  "scripts": {
+    "prepare": "cd .. && pnpm install --frozen-lockfile && pnpm build:component"
+  },
+  "peerDependencies": {
+    "livekit-client": "^2.18.1",
+    "matrix-js-sdk": "*",
+    "react": "^19",
+    "react-dom": "^19"
+  }
+}

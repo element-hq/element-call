@@ -35,3 +35,60 @@ Please see LICENSE in the repository root for full details.
     transform: rotate(360deg);
   }
 }
+
+.menu {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Only the device lists scroll, bounded by the measured call area: the menu is
+   portalled out of the root, so CSS can't size it against the call. */
+.deviceList {
+  overflow-y: auto;
+  min-block-size: 0;
+  max-block-size: var(--device-list-max-height);
+  /* Keeps a row reached by keyboard clear of the sticky heading and meter. */
+  scroll-padding-block: var(--device-list-scroll-padding-start, 0)
+    var(--device-list-scroll-padding-end, 0);
+}
+
+/* Compound's heading rule heads each section; the design adds space below it. */
+.menu h3 {
+  margin-block-end: var(--cpd-space-5x);
+}
+
+/* And more above a heading that follows another section. */
+.deviceList [role="group"] + [role="group"] h3 {
+  margin-block-start: var(--cpd-space-7x);
+}
+
+/* Sticky within its own section. Opaque and inset a border width so it doesn't
+   paint over the menu's outline. */
+.sectionHeading {
+  position: sticky;
+  inset-block-start: 0;
+  background: var(--cpd-color-bg-canvas-default);
+  margin-inline: var(--cpd-border-width-1);
+  margin-block-start: var(--cpd-border-width-1);
+}
+
+/* Sticky at the foot of the microphone section; opaque and inset as above. */
+.stickyMeter {
+  position: sticky;
+  inset-block-end: 0;
+  background: var(--cpd-color-bg-canvas-default);
+  margin-inline: var(--cpd-border-width-1);
+  margin-block-end: var(--cpd-border-width-1);
+}
+
+/* Radix focuses whatever the pointer is over, so the browser's ring would
+   follow the mouse. Replaced by one shown only for keyboard focus. */
+.menu [role^="menuitem"]:focus,
+.menu [role^="menuitem"]:focus-visible {
+  outline: none;
+}
+
+.menu[data-focus-source="keyboard"] [role^="menuitem"]:focus {
+  outline: var(--cpd-border-width-2) solid var(--cpd-color-border-focused);
+  outline-offset: calc(-1 * var(--cpd-border-width-2));
+}

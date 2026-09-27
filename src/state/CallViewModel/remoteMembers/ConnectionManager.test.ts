@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject, NEVER } from "rxjs";
 import { type LivekitTransportConfig } from "matrix-js-sdk/lib/matrixrtc";
 import { type RemoteParticipant } from "livekit-client";
 import { logger } from "matrix-js-sdk/lib/logger";
@@ -14,13 +14,13 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import { Epoch, mapEpoch, ObservableScope } from "../../ObservableScope.ts";
 import {
   createConnectionManager$,
-  type ConnectionManagerData,
+  ConnectionManagerData,
 } from "./ConnectionManager.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
 import { type Connection } from "./Connection.ts";
 import { ownMemberMock, withTestScheduler } from "../../../utils/test.ts";
 import { areLivekitTransportsEqual } from "./MatrixLivekitMembers.ts";
-import { constant, type Behavior } from "../../Behavior.ts";
+import { type Behavior } from "../../Behavior.ts";
 
 // Some test constants
 
@@ -74,7 +74,7 @@ describe("connections$ stream", () => {
       const { connectionManagerData$ } = createConnectionManager$({
         scope: testScope,
         connectionFactory: fakeConnectionFactory,
-        localTransport$: constant(null),
+        localTransport$: NEVER,
         remoteTransports$: behavior("a", {
           a: new Epoch([TRANSPORT_1, TRANSPORT_2], 0),
         }),
@@ -115,7 +115,7 @@ describe("connections$ stream", () => {
       const { connectionManagerData$ } = createConnectionManager$({
         scope: testScope,
         connectionFactory: fakeConnectionFactory,
-        localTransport$: constant(null),
+        localTransport$: NEVER,
         remoteTransports$: behavior("abcdef", {
           a: new Epoch([TRANSPORT_1], 0),
           b: new Epoch([TRANSPORT_1], 1),
@@ -162,7 +162,7 @@ describe("connections$ stream", () => {
       const { connectionManagerData$ } = createConnectionManager$({
         scope: testScope,
         connectionFactory: fakeConnectionFactory,
-        localTransport$: constant(null),
+        localTransport$: NEVER,
         remoteTransports$: behavior("abc", {
           a: new Epoch([TRANSPORT_1], 0),
           b: new Epoch([TRANSPORT_1, TRANSPORT_2], 1),
@@ -200,6 +200,24 @@ describe("connections$ stream", () => {
         }),
       });
     });
+  });
+});
+
+describe("ConnectionManagerData", () => {
+  test("warns when a second connection to the same URL is merged", () => {
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => {});
+    const data = new ConnectionManagerData(logger);
+    const connection = { transport: TRANSPORT_1 } as unknown as Connection;
+    const p = (identity: string): RemoteParticipant =>
+      ({ identity }) as unknown as RemoteParticipant;
+    data.add(connection, [p("a")]);
+    data.add({ ...connection } as Connection, [p("b")]);
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "second connection to https://lk.example.org: existing [a], adding [b]",
+      ),
+    );
+    expect(data.getParticipantsForTransport(TRANSPORT_1)).toHaveLength(2);
   });
 });
 
@@ -279,7 +297,7 @@ describe("connectionManagerData$ stream", () => {
       const { connectionManagerData$ } = createConnectionManager$({
         scope: testScope,
         connectionFactory: fakeConnectionFactory,
-        localTransport$: constant(null),
+        localTransport$: NEVER,
         remoteTransports$: behavior("a", {
           a: new Epoch([TRANSPORT_1, TRANSPORT_2], 0),
         }),

@@ -12,9 +12,7 @@ Please see LICENSE in the repository root for full details.
  * Settings, or pinned for a deployment via `matrix_rtc_mode` in config.json.
  */
 export enum MatrixRTCMode {
-  /** Legacy single-SFU + user-keyed memberships + legacy JWT endpoint. */
-  Legacy = "legacy",
-  /** Multi-SFU transport, legacy JWT endpoint, no sticky events. */
+  /** Multi-SFU transport, legacy JWT endpoint, state events. */
   Compatibility = "compatibility",
   /**
    * Multi-SFU transport with:
@@ -24,6 +22,35 @@ export enum MatrixRTCMode {
    *  - use the hashed identity for the local membership
    */
   Matrix_2_0 = "matrix_2_0",
+}
+
+export interface DelayedLeaveTimings {
+  /**
+   * The delay (in milliseconds) with which delayed leave events are sent.
+   *
+   * If the server receives no keep-alives from the client for any longer than
+   * this duration, it will send the leave event, automatically removing the
+   * user from the call.
+   */
+  delay_ms?: number;
+
+  /**
+   * How frequently (in milliseconds) the client sends keep-alives to the server
+   * to restart the timer for a delayed leave event. Should be less than
+   * {@link DelayedLeaveTimings.delay_ms}.
+   */
+  restart_ms?: number;
+
+  /**
+   * The time (in milliseconds) after which we consider a delayed event restart HTTP request to have failed.
+   * Setting this to a lower value will result in more frequent retries, but then we will also give up earlier.
+   *
+   * In the presence of network packet loss (hurting TCP connections), the custom delayedEventRestartLocalTimeoutMs
+   * helps by keeping more delayed event reset candidates in flight,
+   * improving the chances of a successful reset. (its is equivalent to the js-sdk `localTimeout` configuration,
+   * but only applies to calls to the `_unstable_updateDelayedEvent` endpoint with a body of `{action:"restart"}`.)
+   */
+  restart_timeout_ms?: number;
 }
 
 export interface ConfigOptions {
@@ -86,15 +113,6 @@ export interface ConfigOptions {
      * Allow to join group calls without audio and video.
      */
     feature_group_calls_without_video_and_audio?: boolean;
-
-    /**
-     * Send device-specific call session membership state events instead of
-     * legacy user-specific call membership state events.
-     * This setting has no effect when the user joins an active call with
-     * legacy state events. For compatibility, Element Call will always join
-     * active legacy calls with legacy state events.
-     */
-    feature_use_device_session_member_events?: boolean;
   };
 
   /**
@@ -196,29 +214,6 @@ export interface ConfigOptions {
     wait_for_key_rotation_ms?: number;
 
     /**
-     * The duration (in milliseconds) after the most recent keep-alive (delayed leave event restart)
-     * that the server waits before sending the leave MatrixRTC membership event.
-     */
-    delayed_leave_event_delay_ms?: number;
-
-    /**
-     * The time (in milliseconds) after which we consider a delayed event restart http request to have failed.
-     * Setting this to a lower value will result in more frequent retries but also a higher chance of failiour.
-     *
-     * In the presence of network packet loss (hurting TCP connections), the custom delayedEventRestartLocalTimeoutMs
-     * helps by keeping more delayed event reset candidates in flight,
-     * improving the chances of a successful reset. (its is equivalent to the js-sdk `localTimeout` configuration,
-     * but only applies to calls to the `_unstable_updateDelayedEvent` endpoint with a body of `{action:"restart"}`.)
-     */
-    delayed_leave_event_restart_local_timeout_ms?: number;
-
-    /**
-     * The time interval (in milliseconds) at which the client sends membership keep-alive
-     * messages to the server by restarting the timer for the delayed leave event.
-     */
-    delayed_leave_event_restart_ms?: number;
-
-    /**
      * How long we wait before retrying after a network error on any of the requests.
      */
     network_error_retry_ms?: number;
@@ -230,7 +225,38 @@ export interface ConfigOptions {
      * This is what goes into the m.rtc.member event expiry field and is typically set to a number of hours.
      */
     membership_event_expiry_ms?: number;
+
+    /**
+     * The number of participants in the session at which the media encryption key will no longer
+     * be rotated.
+     *
+     * Rotating a key requires sending it to every participant device, so in large sessions the
+     * cost of rotating on every join/leave becomes prohibitive. At this limit the current key is
+     * kept and distributed to new joiners; no new keys are generated for joiners/leavers.
+     *
+     * Defaults to the js-sdk default (undefined). Which means that rotation will always happen.
+     */
+    key_rotation_participant_limit?: number;
+
+    /**
+     * Timing options for delayed leave events, which are used to remove a user
+     * from a call when they lose connection.
+     */
+    delayed_leave?: DelayedLeaveTimings;
+
+    /**
+     * Timing options for delayed leave events, in cases where the ability to
+     * send the event can be delegated to the SFU.
+     *
+     * We recommend setting {@link DelayedLeaveTimings.delay_ms} >>
+     * {@link sync_disconnect_grace_period_ms} here.
+     */
+    delegated_delayed_leave?: DelayedLeaveTimings;
   };
+}
+
+export interface ResolvedDelayedLeaveTimings extends DelayedLeaveTimings {
+  delay_ms: number; // Required
 }
 
 // Overrides members from ConfigOptions that are always provided by the
@@ -256,21 +282,15 @@ export interface ResolvedConfigOptions extends ConfigOptions {
       >
     >;
   };
-  matrix_rtc_session: {
-    wait_for_key_rotation_ms?: number;
-    delayed_leave_event_delay_ms: number;
-    delayed_leave_event_restart_local_timeout_ms?: number;
-    delayed_leave_event_restart_ms?: number;
+  matrix_rtc_session: ConfigOptions["matrix_rtc_session"] & {
     network_error_retry_ms: number;
-    membership_event_expiry_ms?: number;
+    delayed_leave: ResolvedDelayedLeaveTimings;
+    delegated_delayed_leave: ResolvedDelayedLeaveTimings;
   };
 }
 
 export const DEFAULT_CONFIG: ResolvedConfigOptions = {
-  features: {
-    feature_use_device_session_member_events: true,
-  },
-  sync_disconnect_grace_period_ms: 10000,
+  sync_disconnect_grace_period_ms: 10_000,
   ssla: "https://static.element.io/legal/element-software-and-services-license-agreement-uk-1.pdf",
   media_quality: {
     video_codec: "vp8",
@@ -286,7 +306,8 @@ export const DEFAULT_CONFIG: ResolvedConfigOptions = {
     },
   },
   matrix_rtc_session: {
-    delayed_leave_event_delay_ms: 10000,
-    network_error_retry_ms: 1000,
+    network_error_retry_ms: 1_000,
+    delayed_leave: { delay_ms: 18_000, restart_ms: 4_000 },
+    delegated_delayed_leave: { delay_ms: 3_600_000, restart_ms: 300_000 },
   },
 };

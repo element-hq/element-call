@@ -10,6 +10,7 @@ The following sound effects have been licensed from Pixabay, under https://pixab
 - `reactions/generic`
 - `reactions/lightbulb`
 - `reactions/party`
+- `reactions/bell`
 
 ### Other
 

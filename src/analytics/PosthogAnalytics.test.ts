@@ -15,6 +15,7 @@ import {
   afterAll,
 } from "vitest";
 import posthog, { type CaptureResult } from "posthog-js";
+import { type MatrixClient } from "matrix-js-sdk";
 
 import {
   Anonymity,
@@ -22,75 +23,122 @@ import {
   PosthogAnalytics,
 } from "./PosthogAnalytics";
 import { mockConfig } from "../utils/test";
+import { analyticsConfigFromEnvironment } from "../initializer";
+import { optInAnalytics } from "../settings/settings";
 
 describe("PosthogAnalytics", () => {
-  describe("embedded package", () => {
-    beforeAll(() => {
-      vi.stubEnv("VITE_PACKAGE", "embedded");
-    });
-
+  describe("enablement", () => {
     beforeEach(() => {
-      mockConfig({});
-      window.location.hash = "#";
       PosthogAnalytics.resetInstance();
     });
 
-    afterAll(() => {
-      vi.unstubAllEnvs();
-    });
-
-    it("does not create instance without config value or URL params", () => {
+    it("stays off until it is configured", () => {
       expect(PosthogAnalytics.instance.isEnabled()).toBe(false);
     });
 
-    it("ignores config value and does not create instance", () => {
-      mockConfig({
-        posthog: {
-          api_host: "https://api.example.com.localhost",
-          api_key: "api_key",
-        },
+    it("stays off when configured without credentials", () => {
+      PosthogAnalytics.configure({ matrixBackend: "jssdk" });
+      expect(PosthogAnalytics.instance.isEnabled()).toBe(false);
+    });
+
+    it("stays off when given only a key", () => {
+      PosthogAnalytics.configure({
+        matrixBackend: "jssdk",
+        apiKey: "api_key",
       });
       expect(PosthogAnalytics.instance.isEnabled()).toBe(false);
     });
 
-    it("uses URL params if both set", () => {
-      window.location.hash = `#?posthogApiHost=${encodeURIComponent("https://url.example.com.localhost")}&posthogApiKey=api_key`;
+    it("turns on when given both a key and a host", () => {
+      PosthogAnalytics.configure({
+        matrixBackend: "jssdk",
+        apiKey: "api_key",
+        apiHost: "https://api.example.com.localhost",
+      });
       expect(PosthogAnalytics.instance.isEnabled()).toBe(true);
     });
   });
 
-  describe("full package", () => {
-    beforeAll(() => {
-      vi.stubEnv("VITE_PACKAGE", "full");
-    });
-
+  // Which of the URL and config.json the credentials come from is a deliberate
+  // policy: an embedder is responsible for its own users' telemetry, so it must
+  // not pick up the deployment's, and vice versa.
+  describe("analyticsConfigFromEnvironment", () => {
     beforeEach(() => {
       mockConfig({});
       window.location.hash = "#";
-      PosthogAnalytics.resetInstance();
     });
 
     afterAll(() => {
       vi.unstubAllEnvs();
     });
 
-    it("does not create instance without config value", () => {
-      expect(PosthogAnalytics.instance.isEnabled()).toBe(false);
-    });
+    const urlCredentials = `posthogApiHost=${encodeURIComponent("https://url.example.com.localhost")}&posthogApiKey=url_key`;
+    const configCredentials = {
+      posthog: {
+        api_host: "https://config.example.com.localhost",
+        api_key: "config_key",
+      },
+    };
 
-    it("ignores URL params and does not create instance", () => {
-      window.location.hash = `#?posthogApiHost=${encodeURIComponent("https://url.example.com.localhost")}&posthogApiKey=api_key`;
-      expect(PosthogAnalytics.instance.isEnabled()).toBe(false);
-    });
-
-    it("creates instance with config value", () => {
-      mockConfig({
-        posthog: {
-          api_host: "https://api.example.com.localhost",
-          api_key: "api_key",
-        },
+    describe("embedded package", () => {
+      beforeAll(() => {
+        vi.stubEnv("VITE_PACKAGE", "embedded");
       });
-      expect(PosthogAnalytics.instance.isEnabled()).toBe(true);
+
+      it("has no credentials without URL params", () => {
+        expect(analyticsConfigFromEnvironment().apiKey).toBeUndefined();
+      });
+
+      it("takes the credentials from the URL", () => {
+        window.location.hash = `#?${urlCredentials}`;
+        expect(analyticsConfigFromEnvironment()).toMatchObject({
+          apiKey: "url_key",
+          apiHost: "https://url.example.com.localhost",
+        });
+      });
+
+      it("ignores the deployment's config", () => {
+        mockConfig(configCredentials);
+        expect(analyticsConfigFromEnvironment().apiKey).toBeUndefined();
+      });
+    });
+
+    describe("full package", () => {
+      beforeAll(() => {
+        vi.stubEnv("VITE_PACKAGE", "full");
+      });
+
+      it("has no credentials without config", () => {
+        expect(analyticsConfigFromEnvironment().apiKey).toBeUndefined();
+      });
+
+      it("takes the credentials from the config", () => {
+        mockConfig(configCredentials);
+        expect(analyticsConfigFromEnvironment()).toMatchObject({
+          apiKey: "config_key",
+          apiHost: "https://config.example.com.localhost",
+        });
+      });
+
+      it("ignores the URL params", () => {
+        window.location.hash = `#?${urlCredentials}`;
+        expect(analyticsConfigFromEnvironment().apiKey).toBeUndefined();
+      });
+    });
+
+    // Who owns the user's analytics identity depends on how Element Call is
+    // running, not on which package it was built as.
+    it("reports the embedded backend when running as a widget", () => {
+      vi.stubEnv("VITE_PACKAGE", "full");
+      window.location.hash = `#?widgetId=id&parentUrl=${encodeURIComponent("https://host.example.com.localhost")}&posthogUserId=given_id`;
+      expect(analyticsConfigFromEnvironment()).toMatchObject({
+        matrixBackend: "embedded",
+        hostAnalyticsId: "given_id",
+      });
+    });
+
+    it("reports the jssdk backend when running standalone", () => {
+      expect(analyticsConfigFromEnvironment().matrixBackend).toBe("jssdk");
     });
   });
 
@@ -204,22 +252,13 @@ describe("PosthogAnalytics", () => {
   // posthog-js bumps renaming/removing the hook. The filter logic itself is
   // covered by the applyPrivacyFilters block above.
   describe("posthog.init wiring", () => {
-    beforeAll(() => {
-      vi.stubEnv("VITE_PACKAGE", "full");
-    });
-
     beforeEach(() => {
-      mockConfig({
-        posthog: {
-          api_host: "https://api.example.com.localhost",
-          api_key: "api_key",
-        },
-      });
       PosthogAnalytics.resetInstance();
-    });
-
-    afterAll(() => {
-      vi.unstubAllEnvs();
+      PosthogAnalytics.configure({
+        matrixBackend: "jssdk",
+        apiKey: "api_key",
+        apiHost: "https://api.example.com.localhost",
+      });
     });
 
     it("passes events through the privacy filter via before_send", () => {
@@ -242,5 +281,88 @@ describe("PosthogAnalytics", () => {
       );
       expect(out?.properties).not.toHaveProperty("$initial_person_info");
     });
+  });
+});
+
+describe("identifying the user", () => {
+  const credentials = {
+    apiKey: "api_key",
+    apiHost: "https://api.example.com.localhost",
+  };
+
+  function mockClient(accountDataId: string | null): MatrixClient {
+    return {
+      isGuest: () => false,
+      getCrypto: () => undefined,
+      getAccountDataFromServer: vi
+        .fn()
+        .mockResolvedValue(
+          accountDataId === null ? null : { id: accountDataId },
+        ),
+      setAccountData: vi.fn().mockResolvedValue({}),
+    } as Partial<MatrixClient> as MatrixClient;
+  }
+
+  beforeEach(() => {
+    PosthogAnalytics.resetInstance();
+    optInAnalytics.setValue(true);
+  });
+
+  it("reports under the ID its host assigned, and stores nothing", async () => {
+    const client = mockClient(null);
+    window.matrixclient = client;
+    PosthogAnalytics.configure({
+      ...credentials,
+      matrixBackend: "embedded",
+      hostAnalyticsId: "assigned-by-host",
+    });
+    const identify = vi.spyOn(posthog, "identify");
+
+    PosthogAnalytics.instance.startListeningToSettingsChanges();
+    await vi.waitFor(() =>
+      expect(identify).toHaveBeenCalledWith("assigned-by-host"),
+    );
+
+    // The host owns the user's account, so Element Call must not write to it
+    expect(client.setAccountData).not.toHaveBeenCalled();
+  });
+
+  it("keeps its own ID in account data when it owns the session", async () => {
+    const client = mockClient(null);
+    window.matrixclient = client;
+    PosthogAnalytics.configure({ ...credentials, matrixBackend: "jssdk" });
+
+    PosthogAnalytics.instance.startListeningToSettingsChanges();
+
+    // No ID on the server yet, so one is minted and stored for other devices
+    await vi.waitFor(() => expect(client.setAccountData).toHaveBeenCalled());
+  });
+
+  it("reuses the ID already in account data", async () => {
+    const client = mockClient("stored-earlier");
+    window.matrixclient = client;
+    PosthogAnalytics.configure({ ...credentials, matrixBackend: "jssdk" });
+    const identify = vi.spyOn(posthog, "identify");
+
+    PosthogAnalytics.instance.startListeningToSettingsChanges();
+    await vi.waitFor(() =>
+      expect(identify).toHaveBeenCalledWith("stored-earlier"),
+    );
+
+    expect(client.setAccountData).not.toHaveBeenCalled();
+  });
+
+  it("records how it reaches Matrix as a super property", async () => {
+    window.matrixclient = mockClient("stored-earlier");
+    PosthogAnalytics.configure({ ...credentials, matrixBackend: "embedded" });
+    const register = vi.spyOn(posthog, "register");
+
+    PosthogAnalytics.instance.startListeningToSettingsChanges();
+
+    await vi.waitFor(() =>
+      expect(register).toHaveBeenCalledWith(
+        expect.objectContaining({ matrixBackend: "embedded" }),
+      ),
+    );
   });
 });

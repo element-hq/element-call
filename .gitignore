@@ -10,6 +10,9 @@ public/config.json
 backend/synapse_tmp/*
 backend/synapse_tmp_othersite/*
 /coverage
+
+# Transient agent scratch files
+/agent-workspace/
 config.json
 
 # Yarn

@@ -39,6 +39,17 @@
     "jsdoc/check-property-names": "error",
     "jsdoc/require-param-description": "warn",
     "react/display-name": "error",
+    // TODO: These React Compiler-based rules joined oxlint's correctness
+    // category in v1.81 and flag many pre-existing patterns, including hooks
+    // like useLatest/useInitial/useReactiveState that intentionally access
+    // refs during render. Re-evaluate them when adopting the React Compiler.
+    "react/immutability": "off",
+    "react/no-deriving-state-in-effects": "off",
+    "react/preserve-manual-memoization": "off",
+    "react/refs": "off",
+    "react/set-state-in-effect": "off",
+    "react/static-components": "off",
+    "react/use-memo": "off",
     // TODO: Re-enable once oxlint supports lint rules that rely on TypeScript type-awareness.
     // "rxjs/no-exposed-subjects": "error",
     // "rxjs/finnish": [

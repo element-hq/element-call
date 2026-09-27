@@ -42,6 +42,13 @@ experimental_features:
   msc4354_enabled: true
   # MatrixRTC
   msc4143_enabled: true
+  # Enable membership look-up via /is_joined.
+  msc4502_enabled: true
+  # Enable C-S & S-S request proxying for application services.
+  msc4512_enabled: true
+
+app_service_config_files:
+  - /data/cfg/app-service.yaml
 
 # The maximum allowed duration by which sent events can be delayed, as
 # per MSC4140. Must be a positive value if set.  Defaults to no

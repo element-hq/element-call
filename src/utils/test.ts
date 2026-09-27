@@ -8,6 +8,7 @@ import { map, type Observable, of, type SchedulerLike } from "rxjs";
 import { type RunHelpers, TestScheduler } from "rxjs/testing";
 import {
   expect,
+  type Mock,
   type MockedObject,
   type MockInstance,
   onTestFinished,
@@ -63,6 +64,7 @@ import { type MediaDevices } from "../state/MediaDevices";
 import { type Behavior, constant } from "../state/Behavior";
 import { ObservableScope } from "../state/ObservableScope";
 import { MuteStates } from "../state/MuteStates";
+import { nullHostBridge } from "../HostBridge";
 import {
   createLocalUserMedia,
   type LocalUserMediaViewModel,
@@ -237,7 +239,7 @@ export function mockRtcMembership(
       fociPreferred: [exampleTransport],
       focusActive: {
         type: "livekit" as const,
-        focus_selection: "oldest_membership" as const,
+        focus_selection: "multi_sfu" as const,
       },
       callId: "",
       membership: {},
@@ -463,9 +465,6 @@ export class MockRTCSession extends TypedEventEmitter<
     session.reemitEncryptionKeys = vi
       .fn<() => void>()
       .mockReturnValue(undefined);
-    session.getOldestMembership = vi
-      .fn<() => CallMembership | undefined>()
-      .mockReturnValue(this.memberships[0]);
 
     return session;
   }
@@ -489,6 +488,8 @@ export class MockRTCSession extends TypedEventEmitter<
   public isJoined(): boolean {
     return this.joined;
   }
+
+  public isKeyRotationSuppressed = false;
 
   public withMemberships(
     rtcMembers$: Behavior<Partial<CallMembership>[]>,
@@ -578,13 +579,110 @@ export function mockMuteStates(
   joined$: Observable<boolean> = of(true),
 ): MuteStates {
   const observableScope = new ObservableScope();
-  return new MuteStates(observableScope, mockMediaDevices({}), {
-    audioEnabled: false,
-    videoEnabled: false,
-  });
+  return new MuteStates(
+    observableScope,
+    mockMediaDevices({}),
+    { audioEnabled: false, videoEnabled: false },
+    nullHostBridge,
+  );
 }
 
 export class MockConnection extends Connection {
   public async start(): Promise<void> {}
   public async stop(): Promise<void> {}
+}
+
+export interface StubbedCapture {
+  getUserMedia: Mock;
+  /** Grants the microphone, as the browser does once permission is given. */
+  grant: () => void;
+  track: { stop: Mock };
+  contexts: { close: Mock }[];
+  /** Runs the pending animation frames, in order. */
+  drawFrames: (count: number) => void;
+  /** Sets the microphone's loudness from the next frame, 0 to 1. */
+  speak: (amplitude: number) => void;
+}
+
+/**
+ * Stubs the capture and Web Audio APIs, with the grant and the animation
+ * frames driven by the test. Undo with {@link restoreAudioCapture}.
+ */
+export function stubAudioCapture(): StubbedCapture {
+  const track = { stop: vi.fn() };
+  const contexts: { close: Mock }[] = [];
+  let grant = (): void => {};
+  const granted = new Promise<MediaStream>((resolve) => {
+    grant = (): void =>
+      resolve({ getTracks: () => [track] } as unknown as MediaStream);
+  });
+
+  const frames: FrameRequestCallback[] = [];
+  let amplitude = 0;
+  vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
+    frames.push(callback);
+    return frames.length;
+  });
+  vi.stubGlobal("cancelAnimationFrame", vi.fn());
+  vi.stubGlobal(
+    "AudioContext",
+    class {
+      public readonly state = "running";
+      public readonly close = vi.fn();
+      public constructor() {
+        contexts.push(this);
+      }
+      public createAnalyser(): object {
+        return {
+          fftSize: 1024,
+          getByteTimeDomainData: (samples: Uint8Array): void => {
+            // Silence is the midpoint of the range; a zeroed buffer reads as full scale.
+            if (amplitude <= 0) {
+              samples.fill(128);
+              return;
+            }
+            const peak = Math.round(Math.min(1, amplitude) * 127);
+            for (let i = 0; i < samples.length; i++)
+              samples[i] = 128 + (i % 2 ? peak : -peak);
+          },
+        };
+      }
+      public createMediaStreamSource(): object {
+        return { connect: (): void => {} };
+      }
+    },
+  );
+  // Only this property: replacing navigator loses getters like userAgent.
+  Object.defineProperty(navigator, "mediaDevices", {
+    configurable: true,
+    value: { getUserMedia: vi.fn().mockReturnValue(granted) },
+  });
+
+  return {
+    getUserMedia: navigator.mediaDevices.getUserMedia as unknown as Mock,
+    grant: () => grant(),
+    track,
+    contexts,
+    drawFrames: (count): void => {
+      for (let i = 0; i < count; i++) frames.shift()?.(i);
+    },
+    speak: (next): void => {
+      amplitude = next;
+    },
+  };
+}
+
+const realMediaDevices = Object.getOwnPropertyDescriptor(
+  navigator,
+  "mediaDevices",
+);
+
+/** Undoes {@link stubAudioCapture}. */
+export function restoreAudioCapture(): void {
+  vi.unstubAllGlobals();
+  if (realMediaDevices === undefined) {
+    Reflect.deleteProperty(navigator, "mediaDevices");
+  } else {
+    Object.defineProperty(navigator, "mediaDevices", realMediaDevices);
+  }
 }

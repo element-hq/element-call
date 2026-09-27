@@ -34,7 +34,7 @@ import {
   EndCallIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 
-import { widget } from "../widget";
+import { useUrlParams } from "../UrlParams";
 
 export type GroupCallLoaded = {
   kind: "loaded";
@@ -132,6 +132,7 @@ export const useLoadGroupCall = (
   const [state, setState] = useState<GroupCallStatus>({ kind: "loading" });
   const activeRoom = useRef<Room | undefined>(undefined);
   const { t } = useTranslation();
+  const { isWidget } = useUrlParams();
 
   const bannedError = useCallback(
     (): CallTerminatedMessage =>
@@ -249,7 +250,7 @@ export const useLoadGroupCall = (
           // room already joined so we are done here already.
           return room!;
         }
-        if (widget)
+        if (isWidget)
           // in widget mode we never should reach this point. (getRoom should return the room.)
           throw new Error(
             "Room not found. The widget-api did not pass over the relevant room events/information.",
@@ -373,6 +374,7 @@ export const useLoadGroupCall = (
   }, [
     bannedError,
     client,
+    isWidget,
     knockRejectError,
     removeNoticeError,
     roomIdOrAlias,

@@ -5,8 +5,9 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { combineLatest, map, switchMap } from "rxjs";
+import { combineLatest, map, type Observable, switchMap } from "rxjs";
 import { supportsBackgroundProcessors } from "@livekit/track-processors";
+import { supportsAudioOutputSelection } from "livekit-client";
 
 import { type CallViewModel } from "../state/CallViewModel/CallViewModel";
 import { type MenuOptions } from "./MediaMuteAndSwitchButton";
@@ -19,7 +20,7 @@ import { type Behavior, constant } from "../state/Behavior";
 import type { ObservableScope } from "../state/ObservableScope";
 import { type MuteStates } from "../state/MuteStates";
 import { createStaticViewModel, type ViewModel } from "../state/ViewModel";
-import { getUrlParams, HeaderStyle } from "../UrlParams";
+import { HeaderStyle } from "../UrlParams";
 import { platform } from "../Platform";
 import { type FooterSnapshot } from "./CallFooter";
 
@@ -67,49 +68,50 @@ function buildDeviceBehaviors(
   | "audioOptions$"
   | "selectedAudio$"
   | "selectAudioButtonOption$"
+  | "audioOutputOptions$"
+  | "selectedAudioOutput$"
+  | "selectAudioOutputOption$"
   | "videoOptions$"
   | "selectedVideo$"
   | "selectVideoButtonOption$"
   | "toggleBlur$"
   | "videoBlurEnabled$"
 > {
-  return {
-    audioOptions$: scope.behavior(
-      disableSwitcher$.pipe(
-        switchMap((disable) =>
-          disable
-            ? constant([] as MenuOptions[])
-            : mediaDevices.audioInput.available$.pipe(
-                map((available) =>
-                  [...available.entries()].map(([id, label]) => ({
-                    id,
-                    label,
-                  })),
-                ),
+  const options$ = (
+    available$: Behavior<Map<string, MenuOptions["label"]>>,
+  ): Observable<MenuOptions[]> =>
+    disableSwitcher$.pipe(
+      switchMap((disable) =>
+        disable
+          ? constant([] as MenuOptions[])
+          : available$.pipe(
+              map((available) =>
+                [...available.entries()].map(([id, label]) => ({ id, label })),
               ),
-        ),
+            ),
       ),
-    ),
+    );
+
+  return {
+    audioOptions$: scope.behavior(options$(mediaDevices.audioInput.available$)),
     selectedAudio$: scope.behavior(
       mediaDevices.audioInput.selected$.pipe(map((s) => s?.id)),
     ),
     selectAudioButtonOption$: constant(mediaDevices.audioInput.select),
-    videoOptions$: scope.behavior(
-      disableSwitcher$.pipe(
-        switchMap((disable) =>
-          disable
-            ? constant([] as MenuOptions[])
-            : mediaDevices.videoInput.available$.pipe(
-                map((available) =>
-                  [...available.entries()].map(([id, label]) => ({
-                    id,
-                    label,
-                  })),
-                ),
-              ),
-        ),
-      ),
+    audioOutputOptions$: scope.behavior(
+      options$(mediaDevices.audioOutput.available$),
     ),
+    selectedAudioOutput$: scope.behavior(
+      mediaDevices.audioOutput.selected$.pipe(map((s) => s?.id)),
+    ),
+    // Withheld where the platform can't route audio to a chosen device, which
+    // disables the speaker section.
+    selectAudioOutputOption$: constant(
+      supportsAudioOutputSelection()
+        ? mediaDevices.audioOutput.select
+        : undefined,
+    ),
+    videoOptions$: scope.behavior(options$(mediaDevices.videoInput.available$)),
     selectedVideo$: scope.behavior(
       mediaDevices.videoInput.selected$.pipe(map((s) => s?.id)),
     ),
@@ -138,6 +140,8 @@ function buildDeviceBehaviors(
  * @param mediaDevices - Available and selected input devices.
  * @param reactionIdentifier - The local user's reaction identifier string, or
  *   undefined when reactions are not supported (hides the reaction button).
+ * @param options - `showControls`: whether the call controls should be shown.
+ *   `header`: the style of header, which decides whether to show the logo.
  */
 export function createCallFooterViewModel(
   scope: ObservableScope,
@@ -145,8 +149,9 @@ export function createCallFooterViewModel(
   muteStates: MuteStates,
   mediaDevices: MediaDevices,
   reactionIdentifier: string | undefined,
+  options: { showControls: boolean; header: HeaderStyle },
 ): ViewModel<FooterSnapshot> {
-  const { showControls, header: headerStyle } = getUrlParams();
+  const { showControls, header: headerStyle } = options;
   const showLogo = headerStyle === HeaderStyle.Standard;
 
   const isPip$ = scope.behavior(
@@ -260,10 +265,13 @@ export function createLobbyFooterViewModel(
       reactionData: undefined,
       tileStoreGeneration: undefined,
       audioOptions: undefined,
+      audioOutputOptions: undefined,
       videoOptions: undefined,
       selectedAudio: undefined,
+      selectedAudioOutput: undefined,
       selectedVideo: undefined,
       selectAudioButtonOption: undefined,
+      selectAudioOutputOption: undefined,
       selectVideoButtonOption: undefined,
     }),
     ...buildMuteBehaviors(scope, muteStates),

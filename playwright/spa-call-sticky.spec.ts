@@ -19,6 +19,7 @@ async function setupTwoUserSpaCall(
   browser: Browser,
   page: Page,
   browserName: string,
+  opts: { disableGuestLeaveDelegation?: boolean } = {},
 ): Promise<{ guestPage: Page }> {
   test.skip(
     browserName === "firefox",
@@ -51,6 +52,9 @@ async function setupTwoUserSpaCall(
   const guestPage = await guestInviteeContext.newPage();
 
   await guestPage.goto("/");
+
+  if (opts.disableGuestLeaveDelegation)
+    await SpaHelpers.disableLeaveDelegation(guestPage);
 
   let pevaraHasSentStickyEvent = false;
 
@@ -102,7 +106,13 @@ test("One to One rejoin after improper leave does not crash EC", async ({
   page,
   browserName,
 }) => {
-  const { guestPage } = await setupTwoUserSpaCall(browser, page, browserName);
+  // With delegation, the backend sends the guest's delayed leave event within
+  // moments of the improper leave, so the stale membership this test needs
+  // would be cleaned up before the rejoin. Keep the guest's leave
+  // client-managed so the stale membership lingers.
+  const { guestPage } = await setupTwoUserSpaCall(browser, page, browserName, {
+    disableGuestLeaveDelegation: true,
+  });
 
   await SpaHelpers.expectVideoTilesCount(page, 2);
   await SpaHelpers.expectVideoTilesCount(guestPage, 2);

@@ -7,12 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { type Logger } from "matrix-js-sdk/lib/logger";
 
-import {
-  ElementWidgetActions,
-  type ScreenShareAudioSessionRequest,
-  type ScreenShareAudioSessionResponse,
-  type WidgetHelpers,
-} from "../../../widget.ts";
+import { type HostBridge } from "../../../HostBridge.ts";
 
 export interface AcquiredScreenShareAudioSession {
   sessionId: string;
@@ -22,8 +17,7 @@ export class ScreenShareAudioSessionCoordinator {
   private currentSessionId: string | null = null;
 
   public constructor(
-    private readonly widget: WidgetHelpers | null,
-    private readonly enabled: boolean,
+    private readonly hostBridge: HostBridge,
     private readonly logger: Logger,
   ) {}
 
@@ -33,19 +27,13 @@ export class ScreenShareAudioSessionCoordinator {
 
   public async acquire(): Promise<AcquiredScreenShareAudioSession | null> {
     await this.release();
-    if (!this.enabled || !this.widget) return null;
+    if (!this.hostBridge.supportsIsolatedScreenShareAudio) return null;
 
     const sessionId = crypto.randomUUID();
     try {
-      const response = await this.widget.api.transport.send<
-        ScreenShareAudioSessionRequest,
-        ScreenShareAudioSessionResponse
-      >(ElementWidgetActions.ScreenShareAudioSession, {
-        version: 1,
-        state: "acquire",
-        session_id: sessionId,
-      });
-      if (response.accepted !== true) return null;
+      const accepted =
+        await this.hostBridge.acquireIsolatedScreenShareAudio(sessionId);
+      if (!accepted) return null;
       this.currentSessionId = sessionId;
       return { sessionId };
     } catch {
@@ -60,14 +48,7 @@ export class ScreenShareAudioSessionCoordinator {
     if (!sessionId || this.currentSessionId !== sessionId) return;
     this.currentSessionId = null;
     try {
-      await this.widget?.api.transport.send<
-        ScreenShareAudioSessionRequest,
-        ScreenShareAudioSessionResponse
-      >(ElementWidgetActions.ScreenShareAudioSession, {
-        version: 1,
-        state: "release",
-        session_id: sessionId,
-      });
+      await this.hostBridge.releaseIsolatedScreenShareAudio(sessionId);
     } catch {
       this.logger.info(
         "Isolated screen-share audio session release was not acknowledged",

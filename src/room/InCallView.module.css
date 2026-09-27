@@ -75,7 +75,7 @@ spotlight tile is maximised and displaying video, apply a gradient background. *
   background: none;
 }
 
-@media (max-width: 320px) {
+@container element-call (max-width: 320px) {
   .invite {
     display: none;
   }

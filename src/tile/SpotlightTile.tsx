@@ -54,6 +54,7 @@ import { Slider } from "../Slider";
 import { platform } from "../Platform";
 import { type RingingMediaViewModel } from "../state/media/RingingMediaViewModel";
 import { RingingStatus } from "./RingingStatus";
+import { useRootElement } from "../RootElementContext";
 
 interface SpotlightItemBaseProps {
   ref?: Ref<HTMLDivElement>;
@@ -414,6 +415,7 @@ export const SpotlightTile: FC<Props> = ({
   style,
 }) => {
   const { t } = useTranslation();
+  const rootElement = useRootElement();
   const [ourRef, root$] = useObservableRef<HTMLDivElement | null>(null);
   const ref = useMergedRefs(ourRef, theirRef);
   const maximised = useBehavior(vm.maximised$);
@@ -428,24 +430,22 @@ export const SpotlightTile: FC<Props> = ({
   const canGoToNext = visibleIndex !== -1 && visibleIndex < media.length - 1;
 
   const isFullscreen = useCallback((): boolean => {
-    const rootElement = document.body;
     if (rootElement && document.fullscreenElement) return true;
     return false;
-  }, []);
+  }, [rootElement]);
 
   const FullScreenIcon = isFullscreen()
     ? FullScreenMinimiseIcon
     : FullScreenMaximiseIcon;
 
   const onToggleFullscreen = useCallback(() => {
-    const rootElement = document.body;
     if (!rootElement) return;
     if (isFullscreen()) {
       void document?.exitFullscreen();
     } else {
       void rootElement.requestFullscreen();
     }
-  }, [isFullscreen]);
+  }, [isFullscreen, rootElement]);
 
   // To keep track of which item is visible, we need an intersection observer
   // hooked up to the root element and the items. Because the items will run

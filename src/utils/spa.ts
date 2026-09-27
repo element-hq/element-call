@@ -40,7 +40,6 @@ export async function initSPA(
     try {
       const client = await initClient(initClientParams, true);
       return {
-        widgetApi: null,
         client,
         passwordlessUser,
       };

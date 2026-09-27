@@ -11,6 +11,7 @@ import {
   type LivekitTransportConfig,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { combineLatest, filter, map } from "rxjs";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { type Behavior } from "../../Behavior";
 import { type IConnectionManager } from "./ConnectionManager";
@@ -110,13 +111,17 @@ export function createRemoteMatrixLivekitMembers$({
             const participants = transport
               ? managerData.getParticipantsForTransport(transport)
               : [];
-            const participant =
-              participants.find(
-                (p) => p.identity == membership.rtcBackendIdentity,
-              ) ?? null;
+            const matches = participants.filter(
+              (p) => p.identity == membership.rtcBackendIdentity,
+            );
+            const participant = matches[0] ?? null;
             const connection = transport
               ? managerData.getConnectionForTransport(transport)
               : null;
+            if (matches.length > 1)
+              logger.warn(
+                `[RemoteMatrixLivekitMembers] ${membership.rtcBackendIdentity}: ${matches.length} LiveKit participants match (sids ${matches.map((p) => p.sid).join(", ")}), using ${participant?.sid}`,
+              );
 
             yield {
               // This could just be the backend identity without the other keys.
@@ -133,8 +138,16 @@ export function createRemoteMatrixLivekitMembers$({
           }
         },
         // Each update where the key of the generator array do not change will result in updates to the `data$` behavior.
-        (scope, data$, userId, _deviceId, _memberId, _rtcBackendIdentity) => {
+        (scope, data$, userId, _deviceId, _memberId, rtcBackendIdentity) => {
           const { participant$, ...rest } = scope.splitBehavior(data$);
+          // Log whether the member could be matched to a LiveKit participant,
+          // since a tile shows "waiting for media" for as long as it cannot.
+          participant$.pipe(scope.bind()).subscribe((p) => {
+            const url = data$.value.connection?.transport.livekit_service_url;
+            logger.info(
+              `[RemoteMatrixLivekitMembers] ${rtcBackendIdentity}: LiveKit participant ${p ? `matched (${p.sid})` : "missing"} on ${url ?? "no connection"}`,
+            );
+          });
           // will only get called once per backend identity.
           // updates to data$ and as a result to displayName$ and mxcAvatarUrl$ are more frequent.
           return {

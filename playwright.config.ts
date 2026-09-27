@@ -11,6 +11,8 @@ import { join } from "path";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { COMPONENT_HARNESS_URL } from "./playwright/component/harness.ts";
+
 const baseURL = process.env.USE_DOCKER
   ? "http://localhost:8080"
   : "https://localhost:3000";
@@ -84,6 +86,11 @@ export default defineConfig({
             // enumerateDevices work on CI runners without real hardware.
             "media.navigator.streams.fake": true,
             "media.navigator.permission.disabled": true,
+            // Vite serves HTTPS over HTTP/2, and Firefox intermittently stalls
+            // on Node's HTTP/2 server with a page that never finishes loading
+            // (one run in five or so, locally). Every server in the suite
+            // still speaks HTTP/1.1, so nothing is lost by insisting on it.
+            "network.http.http2.enabled": false,
           },
         },
       },
@@ -115,14 +122,29 @@ export default defineConfig({
   ],
 
   /* Run your local dev server before starting the tests */
-  webServer: {
-    command: "./scripts/playwright-webserver-command.sh",
-    url: baseURL,
-    reuseExistingServer: !process.env.CI,
-    ignoreHTTPSErrors: true,
-    gracefulShutdown: {
-      signal: "SIGTERM",
-      timeout: 500,
+  webServer: [
+    {
+      command: "./scripts/playwright-webserver-command.sh",
+      url: baseURL,
+      reuseExistingServer: !process.env.CI,
+      ignoreHTTPSErrors: true,
+      gracefulShutdown: {
+        signal: "SIGTERM",
+        timeout: 500,
+      },
     },
-  },
+    {
+      // The harness that embeds Element Call as a component. Always a Vite dev
+      // server, whether or not the app itself is being served from Docker,
+      // since there is nothing to build: it is a development page only.
+      command: "pnpm dev:component",
+      url: COMPONENT_HARNESS_URL,
+      reuseExistingServer: !process.env.CI,
+      ignoreHTTPSErrors: true,
+      gracefulShutdown: {
+        signal: "SIGTERM",
+        timeout: 500,
+      },
+    },
+  ],
 });

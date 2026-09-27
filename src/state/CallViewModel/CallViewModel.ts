@@ -16,7 +16,6 @@ import {
 import { type Room as MatrixRoom } from "matrix-js-sdk";
 import {
   BehaviorSubject,
-  catchError,
   combineLatest,
   distinctUntilChanged,
   filter,
@@ -39,14 +38,16 @@ import {
   throttleTime,
   timer,
   takeUntil,
+  from,
 } from "rxjs";
 import { type Logger, logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import {
   MembershipManagerEvent,
   type LivekitTransportConfig,
   type MatrixRTCSession,
+  type RTCCallIntent,
+  type RTCNotificationType,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { type IWidgetApiRequest } from "matrix-widget-api";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 import { v4 as uuidv4 } from "uuid";
 import { type IMembershipManager } from "matrix-js-sdk/lib/matrixrtc/IMembershipManager";
@@ -54,7 +55,6 @@ import { type IMembershipManager } from "matrix-js-sdk/lib/matrixrtc/IMembership
 import {
   createToggle$,
   filterBehavior,
-  generateItem,
   generateItems,
   pauseWhen,
 } from "../../utils/observable";
@@ -64,7 +64,10 @@ import {
   showReactions,
 } from "../../settings/settings";
 import { Config } from "../../config/Config";
-import { MatrixRTCMode } from "../../config/ConfigOptions";
+import {
+  MatrixRTCMode,
+  type ResolvedDelayedLeaveTimings,
+} from "../../config/ConfigOptions";
 import { isFirefox, platform } from "../../Platform";
 import { setPipEnabled$ } from "../../controls";
 import { TileStore } from "../TileStore";
@@ -85,9 +88,9 @@ import { constant, type Behavior } from "../Behavior";
 import { E2eeType } from "../../e2ee/e2eeType";
 import { MatrixKeyProvider } from "../../e2ee/matrixKeyProvider";
 import { type MuteStates } from "../MuteStates";
-import { getUrlParams, HeaderStyle } from "../../UrlParams";
+import { HeaderStyle, type UrlParams } from "../../UrlParams";
 import { type ProcessorState } from "../../livekit/TrackProcessorContext";
-import { ElementWidgetActions, widget } from "../../widget";
+import { type HostBridge, nullHostBridge } from "../../HostBridge";
 import {
   layoutShallowEquals,
   type Alignment,
@@ -109,11 +112,11 @@ import {
   TransportState,
 } from "./localMember/LocalMember.ts";
 import {
-  createLocalTransport$,
-  JwtEndpointVersion,
+  getLocalTransport,
   type LocalTransport,
 } from "./localMember/LocalTransport.ts";
 import {
+  createKeyRotationSuppressed$,
   createMemberships$,
   membershipsAndTransports$,
 } from "../SessionBehaviors.ts";
@@ -170,6 +173,28 @@ import { type GridTileViewModel } from "../TileViewModel.ts";
 // callMembership -> rtcMembership
 export interface CallViewModelOptions {
   encryptionSystem: EncryptionSystem;
+  /**
+   * The application hosting Element Call, which can ask it to hang up and wants
+   * to know when the user joins or leaves. Defaults to no host.
+   */
+  hostBridge?: HostBridge;
+  /**
+   * Whether the app hosting Element Call controls the audio output devices,
+   * rather than the browser. Defaults to false.
+   */
+  controlledAudioDevices?: boolean;
+  /** The style of header to show. Defaults to {@link HeaderStyle.Standard}. */
+  header?: HeaderStyle;
+  /** Whether the call controls should be shown. Defaults to true. */
+  showControls?: boolean;
+  /** Whether to hide the screen-sharing button. Defaults to false. */
+  hideScreensharing?: boolean;
+  /**
+   * Whether and what kind of notification to send when joining the call.
+   */
+  sendNotificationType?: RTCNotificationType;
+  /** The kind of call being placed. */
+  callIntent?: RTCCallIntent;
   autoLeaveWhenOthersLeft?: boolean;
   /**
    * If the call is started in a way where we want it to behave like a telephone usecase
@@ -180,16 +205,57 @@ export interface CallViewModelOptions {
   livekitRoomFactory?: (options?: RoomOptions) => LivekitRoom;
   /** Optional behavior overriding the local connection state, mainly for testing purposes. */
   connectionState$?: Behavior<ConnectionState>;
-  /** Optional behavior overriding the computed window size, mainly for testing purposes. */
-  windowSize$?: Behavior<{ width: number; height: number }>;
+  /**
+   * The size of the space the call is drawn in: the page when Element Call
+   * owns it, or the container a host mounted it in when it is a component.
+   * The layout — whether the call is shown full size, flat, narrow or as a
+   * picture-in-picture — follows this rather than the size of the window, so
+   * that a component shrunk by its host adapts even though the window has not
+   * changed.
+   */
+  windowSize$: Behavior<{ width: number; height: number }>;
   /** Optional value overriding the local transport, for testing purposes. */
   localTransport?: LocalTransport;
   /** Optional value overriding the connection factory, for testing purposes. */
   connectionFactory?: ConnectionFactory;
   /** The version & compatibility mode of MatrixRTC that we should use. */
-  matrixRTCMode$?: Behavior<MatrixRTCMode>;
+  matrixRTCMode?: MatrixRTCMode;
   /** Optional behavior overriding for the screensharing, for testing */
   toggleScreensharing?: () => void;
+}
+
+/**
+ * The options {@link createCallViewModel$} takes from the parameters Element
+ * Call was started with.
+ *
+ * Callers share this rather than picking the fields out themselves. The
+ * defaults on {@link CallViewModelOptions} describe a standalone Element Call,
+ * so a widget or component caller that misses one does not get an error — it
+ * quietly gets standalone behaviour instead.
+ *
+ * Note `autoLeaveWhenOthersLeft` and `waitForCallPickup` are deliberately not
+ * here: unlike these, the view model never read them from the parameters
+ * itself, so they remain the caller's decision.
+ */
+export function callViewModelOptionsFromParams(
+  params: UrlParams,
+): Pick<
+  CallViewModelOptions,
+  | "controlledAudioDevices"
+  | "header"
+  | "showControls"
+  | "hideScreensharing"
+  | "sendNotificationType"
+  | "callIntent"
+> {
+  return {
+    controlledAudioDevices: params.controlledAudioDevices,
+    header: params.header,
+    showControls: params.showControls,
+    hideScreensharing: params.hideScreensharing,
+    sendNotificationType: params.sendNotificationType,
+    callIntent: params.callIntent,
+  };
 }
 
 // Do not play any sounds if the participant count has exceeded this
@@ -205,6 +271,11 @@ const smallMobileCallThreshold = 3;
 // with the interface
 const showFooterMs = 4000;
 
+/**
+ * The general shape of the space the call is drawn in. Called a window because
+ * that is what it is in the standalone app; for a component it is the container
+ * the host gave us, which may be a small corner of a large window.
+ */
 export type WindowMode = "normal" | "narrow" | "flat" | "pip";
 
 interface LayoutScanState {
@@ -266,6 +337,11 @@ export interface CallViewModel {
    * Whether we are sharing our screen.
    */
   sharingScreen$: Behavior<boolean>;
+  /**
+   * The last error from toggling screen sharing, until dismissed.
+   */
+  screenShareError$: Behavior<Error | null>;
+  dismissScreenShareError: () => void;
 
   // UI interactions
   /**
@@ -302,6 +378,12 @@ export interface CallViewModel {
    *    multiple devices.
    */
   participantCount$: Behavior<number>;
+  /**
+   * Whether the call has grown large enough that MatrixRTC has stopped rotating the media
+   * encryption key. While this is true the key in use is still shared with new joiners, but no new
+   * key is generated when someone joins or leaves.
+   */
+  keyRotationSuppressed$: Behavior<boolean>;
   allConnections$: Behavior<ConnectionManagerData>;
   /** Participants sorted by livekit room so they can be used in the audio rendering */
   livekitRoomItems$: Behavior<LivekitRoomItem[]>;
@@ -428,6 +510,18 @@ export function createCallViewModel$(
   if (!(userId && deviceId))
     throw new UnknownCallError(new Error("userId and deviceId are required"));
 
+  // Defaults match what the URL parameters resolve to outside of widget mode,
+  // so that callers which don't care (chiefly tests) behave as they always have.
+  const {
+    hostBridge = nullHostBridge,
+    controlledAudioDevices = false,
+    header = HeaderStyle.Standard,
+    showControls = true,
+    hideScreensharing = false,
+    sendNotificationType,
+    callIntent,
+  } = options;
+
   const livekitKeyProvider = getE2eeKeyProvider(
     options.encryptionSystem,
     matrixRTCSession,
@@ -438,10 +532,8 @@ export function createCallViewModel$(
   const configMatrixRTCMode = Config.get().matrix_rtc_mode as
     | MatrixRTCMode
     | undefined;
-  const matrixRTCMode$ =
-    configMatrixRTCMode !== undefined
-      ? constant(configMatrixRTCMode)
-      : (options.matrixRTCMode$ ?? constant(MatrixRTCMode.Legacy));
+  const matrixRTCMode =
+    configMatrixRTCMode ?? options.matrixRTCMode ?? MatrixRTCMode.Compatibility;
 
   // Each hbar seperates a block of input variables required for the CallViewModel to function.
   // The outputs of this block is written under the hbar.
@@ -471,43 +563,26 @@ export function createCallViewModel$(
   const ownMembershipIdentity: CallMembershipIdentityParts = {
     userId,
     deviceId,
-    // This will only be consumed by the sticky membership manager. So it has no impact on legacy calls.
-    memberId: uuidv4(),
+    // Consumed by the sticky membership manager as `member.id`, *and* stamped
+    // into every to-device key event by the key transport. A pre-sticky
+    // membership advertises `${userId}:${deviceId}` as its `membershipID`
+    // instead, so a uuid there names a member no peer can resolve.
+    memberId:
+      matrixRTCMode === MatrixRTCMode.Matrix_2_0
+        ? uuidv4()
+        : `${userId}:${deviceId}`,
   };
 
-  const localTransport$ = scope.behavior(
-    matrixRTCMode$.pipe(
-      generateItem(
-        "CallViewModel localTransport$",
-        // Re-create LocalTransport whenever the mode changes
-        (mode) => ({ keys: [mode], data: undefined }),
-        (scope, _data$, mode) =>
-          options.localTransport ??
-          createLocalTransport$({
-            scope: scope,
-            memberships$: memberships$,
-            ownMembershipIdentity,
-            client,
-            delayId$: scope.behavior(
-              (
-                fromEvent(
-                  matrixRTCSession,
-                  MembershipManagerEvent.DelayIdChanged,
-                  // The type of reemitted event includes the original emitted as the second arg.
-                ) as Observable<[string | undefined, IMembershipManager]>
-              ).pipe(map(([delayId]) => delayId ?? null)),
-              matrixRTCSession.delayId ?? null,
-            ),
-            roomId: matrixRoom.roomId,
-            forceJwtEndpoint:
-              mode === MatrixRTCMode.Matrix_2_0
-                ? JwtEndpointVersion.Matrix_2_0
-                : JwtEndpointVersion.Legacy,
-            useOldestMember: mode === MatrixRTCMode.Legacy,
-          }),
-      ),
-    ),
-  );
+  const localTransport$ = options.localTransport
+    ? constant(options.localTransport)
+    : from(
+        getLocalTransport({
+          ownMembershipIdentity,
+          client,
+          roomId: matrixRoom.roomId,
+          matrixRTCMode,
+        }),
+      );
 
   const connectionFactory =
     options.connectionFactory ??
@@ -517,25 +592,14 @@ export function createCallViewModel$(
       mediaDevices,
       trackProcessorState$,
       livekitKeyProvider,
-      getUrlParams().controlledAudioDevices,
+      controlledAudioDevices,
       options.livekitRoomFactory,
     );
 
   const connectionManager = createConnectionManager$({
     scope: scope,
     connectionFactory: connectionFactory,
-    localTransport$: scope.behavior(
-      localTransport$.pipe(
-        switchMap((t) => t.active$),
-        catchError((e: unknown) => {
-          logger.info(
-            "could not pass local transport to createConnectionManager$. localTransport$ threw an error",
-            e,
-          );
-          return of(null);
-        }),
-      ),
-    ),
+    localTransport$,
     remoteTransports$: membershipsAndTransports.transports$,
     logger: logger,
     ownMembershipIdentity,
@@ -551,16 +615,6 @@ export function createCallViewModel$(
     localUser: { userId, deviceId },
   });
 
-  const connectOptions$ = scope.behavior(
-    matrixRTCMode$.pipe(
-      map((mode) => ({
-        encryptMedia: livekitKeyProvider !== undefined,
-        // TODO. This might need to get called again on each change of matrixRTCMode...
-        matrixRTCMode: mode,
-      })),
-    ),
-  );
-
   const localMembership = createLocalMembership$({
     scope,
     homeserverConnected: createHomeserverConnected$(
@@ -569,12 +623,21 @@ export function createCallViewModel$(
       matrixRTCSession,
     ),
     muteStates,
-    joinMatrixRTC: (transport: LivekitTransportConfig) => {
+    joinMatrixRTC: (
+      transport: LivekitTransportConfig,
+      delayedLeaveTimings: ResolvedDelayedLeaveTimings,
+    ) => {
       return enterRTCSession(
         matrixRTCSession,
         ownMembershipIdentity,
         transport,
-        connectOptions$.value,
+        {
+          encryptMedia: livekitKeyProvider !== undefined,
+          matrixRTCMode,
+          delayedLeaveTimings,
+          sendNotificationType,
+          callIntent,
+        },
       );
     },
     createPublisherFactory: (connection: Connection) => {
@@ -586,12 +649,29 @@ export function createCallViewModel$(
         logger.getChild(
           "[Publisher " + connection.transport.livekit_service_url + "]",
         ),
+        controlledAudioDevices,
       );
     },
     connectionManager,
+    client,
     matrixRTCSession,
     localTransport$,
     roomId: matrixRoom.roomId,
+    hideScreensharing,
+    hostBridge,
+    baseUrl: client.baseUrl,
+    ownMembershipIdentity,
+    delayId$: scope.behavior(
+      (
+        fromEvent(
+          matrixRTCSession,
+          MembershipManagerEvent.DelayIdChanged,
+          // The type of reemitted event includes the original emitted as the second arg.
+        ) as Observable<[string | undefined, IMembershipManager]>
+      ).pipe(map(([delayId]) => delayId ?? null)),
+      matrixRTCSession.delayId ?? null,
+    ),
+    matrixRTCMode,
     logger: logger.getChild(`[${Date.now()}]`),
   });
 
@@ -862,6 +942,11 @@ export function createCallViewModel$(
     matrixLivekitMembers$.pipe(map((ms) => ms.length)),
   );
 
+  const keyRotationSuppressed$ = createKeyRotationSuppressed$(
+    scope,
+    matrixRTCSession,
+  );
+
   const leaveSoundEffect$ = userMedia$.pipe(
     pairwise(),
     filter(
@@ -878,24 +963,16 @@ export function createCallViewModel$(
 
   const userHangup$ = new Subject<void>();
 
-  const widgetHangup$ =
-    widget === null
-      ? NEVER
-      : (
-          fromEvent(
-            widget.lazyActions,
-            ElementWidgetActions.HangupCall,
-          ) as Observable<CustomEvent<IWidgetApiRequest>>
-        ).pipe(
-          tap((ev) => {
-            widget!.api.transport.reply(ev.detail, {});
-          }),
-        );
+  const hostHangup$ = hostBridge.hangUp$.pipe(
+    tap((request) => {
+      request.reply();
+    }),
+  );
 
   const leave$: Observable<"user" | "timeout" | "decline" | "allOthersLeft"> =
     merge(
       autoLeave$,
-      merge(userHangup$, widgetHangup$).pipe(map(() => "user" as const)),
+      merge(userHangup$, hostHangup$).pipe(map(() => "user" as const)),
     ).pipe(scope.share);
 
   const spotlightSpeaker$ = scope.behavior<UserMediaViewModel | undefined>(
@@ -1020,18 +1097,10 @@ export function createCallViewModel$(
 
   const pipEnabled$ = scope.behavior(setPipEnabled$, false);
 
-  const windowSize$ =
-    options.windowSize$ ??
-    scope.behavior<{ width: number; height: number }>(
-      fromEvent(window, "resize").pipe(
-        startWith(null),
-        map(() => ({ width: window.innerWidth, height: window.innerHeight })),
-      ),
-    );
-
-  // A guess at what the window's mode should be based on its size and shape.
+  // A guess at what the window's mode should be based on the size and shape of
+  // the space we have to draw in.
   const naturalWindowMode$ = scope.behavior<WindowMode>(
-    windowSize$.pipe(
+    options.windowSize$.pipe(
       map(({ width, height }) => {
         if (height <= 400 && width <= 340) return "pip";
         // Our layouts for flat windows are better at adapting to a small width
@@ -1446,9 +1515,8 @@ export function createCallViewModel$(
     ),
   );
 
-  const urlParams = getUrlParams();
   const showFooterUrlParams = !(
-    urlParams.header === HeaderStyle.None && urlParams.showControls === false
+    header === HeaderStyle.None && showControls === false
   );
   const showFooter$ = scope.behavior(
     naturallyShowFooter$.pipe(
@@ -1767,8 +1835,7 @@ export function createCallViewModel$(
   return {
     autoLeave$: autoLeave$,
     ringingVm$: ringingMedia$,
-    ringingStatusLocation:
-      urlParams.header === HeaderStyle.AppBar ? "app_bar" : "tile",
+    ringingStatusLocation: header === HeaderStyle.AppBar ? "app_bar" : "tile",
     leave$: leave$,
     hangup: (): void => userHangup$.next(),
     join: localMembership.requestJoinAndPublish,
@@ -1798,6 +1865,7 @@ export function createCallViewModel$(
     ),
     allConnections$,
     participantCount$: participantCount$,
+    keyRotationSuppressed$: keyRotationSuppressed$,
     handsRaised$: handsRaised$,
     reactions$: reactions$,
     joinSoundEffect$: joinSoundEffect$,
@@ -1846,6 +1914,8 @@ export function createCallViewModel$(
     reconnecting$: localMembership.reconnecting$,
     livekitRoomItems$,
     connected$: localMembership.connected$,
+    screenShareError$: localMembership.screenShareError$,
+    dismissScreenShareError: localMembership.dismissScreenShareError,
   };
 }
 

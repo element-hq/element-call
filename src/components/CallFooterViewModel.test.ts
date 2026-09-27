@@ -15,6 +15,7 @@ import type { Alignment, Layout } from "../state/layout-types";
 import type { SpotlightTileViewModel } from "../state/TileViewModel";
 import type { DeviceLabel } from "../state/MediaDevices";
 import { createCallFooterViewModel } from "./CallFooterViewModel";
+import { HeaderStyle } from "../UrlParams";
 
 const platformMock = vi.hoisted(() => vi.fn(() => "desktop"));
 vi.mock("../Platform", () => ({
@@ -27,6 +28,11 @@ vi.mock("../Platform", () => ({
 // exercised by these tests (only used in `videoToggles`, not `videoOptions`).
 vi.mock("@livekit/track-processors", () => ({
   supportsBackgroundProcessors: (): boolean => false,
+}));
+
+const outputSelectionMock = vi.hoisted(() => vi.fn(() => true));
+vi.mock("livekit-client", () => ({
+  supportsAudioOutputSelection: (): boolean => outputSelectionMock(),
 }));
 
 /**
@@ -95,6 +101,65 @@ const twoMicsAndOneCamMediaDevices = mockMediaDevices({
 });
 
 describe("createCallFooterViewModel", () => {
+  describe("selectAudioOutputOption", () => {
+    function buildFooterVm(): ReturnType<typeof createCallFooterViewModel> {
+      platformMock.mockReturnValue("desktop");
+      return createCallFooterViewModel(
+        testScope(),
+        buildMinimalCallViewModel(gridLayout),
+        mockMuteStates(),
+        twoMicsAndOneCamMediaDevices,
+        /* reactionIdentifier */ undefined,
+        { showControls: true, header: HeaderStyle.Standard },
+      );
+    }
+
+    it("is withheld where the platform cannot route audio to a chosen device", () => {
+      outputSelectionMock.mockReturnValue(false);
+      expect(buildFooterVm().selectAudioOutputOption$.value).toBeUndefined();
+    });
+
+    it("is offered where the platform can route audio to a chosen device", () => {
+      outputSelectionMock.mockReturnValue(true);
+      expect(buildFooterVm().selectAudioOutputOption$.value).toBeDefined();
+    });
+  });
+
+  describe("audioOutputOptions", () => {
+    it("is an empty list, not absent, where the platform enumerates no outputs", () => {
+      platformMock.mockReturnValue("desktop");
+      outputSelectionMock.mockReturnValue(true);
+
+      const vm = createCallFooterViewModel(
+        testScope(),
+        buildMinimalCallViewModel(gridLayout),
+        mockMuteStates(),
+        mockMediaDevices({
+          audioInput: {
+            available$: constant(
+              new Map<string, DeviceLabel>([
+                ["mic1", { type: "name", name: "Microphone 1" }],
+              ]),
+            ),
+            selected$: constant(undefined),
+            select: vi.fn(),
+          },
+          // As Safari: no outputs listed.
+          audioOutput: {
+            available$: constant(new Map<string, DeviceLabel>()),
+            selected$: constant(undefined),
+            select: vi.fn(),
+          },
+        }),
+        /* reactionIdentifier */ undefined,
+        { showControls: true, header: HeaderStyle.Standard },
+      );
+
+      // Empty, not undefined: undefined would hide the section.
+      expect(vm.audioOutputOptions$.value).toEqual([]);
+    });
+  });
+
   describe("audioOptions and videoOptions", () => {
     function checkEmptyFor(platform: string, layout: Layout): void {
       platformMock.mockReturnValue(platform);
@@ -105,6 +170,7 @@ describe("createCallFooterViewModel", () => {
         mockMuteStates(),
         twoMicsAndOneCamMediaDevices,
         /* reactionIdentifier */ undefined,
+        { showControls: true, header: HeaderStyle.Standard },
       );
 
       expect(vm.audioOptions$.value).toEqual([]);
@@ -126,6 +192,7 @@ describe("createCallFooterViewModel", () => {
         mockMuteStates(),
         twoMicsAndOneCamMediaDevices,
         /* reactionIdentifier */ undefined,
+        { showControls: true, header: HeaderStyle.Standard },
       );
 
       expect(vm.audioOptions$?.value).toEqual([
