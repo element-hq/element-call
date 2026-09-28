@@ -9,6 +9,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { axe } from "vitest-axe";
 import {
   act,
+  fireEvent,
   render,
   screen,
   within,
@@ -22,9 +23,17 @@ import {
   MediaMuteAndSwitchButton,
   type MenuOptions,
 } from "./MediaMuteAndSwitchButton";
+import { type BackgroundEffectOption } from "./BackgroundEffectGrid";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { type MediaDevices } from "../state/MediaDevices";
 import { restoreAudioCapture, stubAudioCapture } from "../utils/test";
+
+const effects: BackgroundEffectOption[] = [
+  { id: "none", kind: "none", label: "None" },
+  { id: "blur", kind: "blur", label: "Blur" },
+  { id: "image:arc", kind: "image", label: "Background 1", imageUrl: "" },
+  { id: "image:glow", kind: "image", label: "Background 2", imageUrl: "" },
+];
 
 const platformMock = vi.hoisted(() => vi.fn(() => "desktop"));
 vi.mock("../Platform", () => ({
@@ -335,30 +344,90 @@ describe("MediaMuteAndSwitchButton", () => {
     expect(mic2ItemAfter.querySelector(".rotate")).toBeNull();
   });
 
-  test("renders menu with toggle control and calls toggle callback", async () => {
+  test("background effects are one keyboard-operable labelled choice", async () => {
     const user = userEvent.setup();
-    const onSelect = vi.fn();
-    const onVideoBlurToggle = vi.fn();
+    const onSelectBackgroundEffect = vi.fn();
     const { getByRole } = renderComponent(
       <MediaMuteAndSwitchButton
         iconsAndLabels="video"
         enabled={true}
-        videoBlurToggleClick={onVideoBlurToggle}
-        onSelect={onSelect}
+        options={[{ label: { type: "name", name: "Camera 1" }, id: "cam1" }]}
+        selectedOption="cam1"
+        onSelect={vi.fn()}
+        backgroundEffects={effects}
+        selectedBackgroundEffect="none"
+        onSelectBackgroundEffect={onSelectBackgroundEffect}
       />,
     );
 
     await user.click(getByRole("button", { name: "Camera" }));
-
-    const toggle = screen.getByRole("menuitemcheckbox", {
-      name: "Blur background",
+    const section = screen.getByRole("group", { name: "Background effects" });
+    within(section).getByRole("menuitemradio", { name: "None", checked: true });
+    within(section).getByRole("menuitemradio", {
+      name: "Background 1",
+      checked: false,
     });
-    expect(toggle).toBeInTheDocument();
-    expect(toggle).toHaveAttribute("aria-checked", "false");
 
-    await user.click(toggle);
+    const blur = within(section).getByRole("menuitemradio", { name: "Blur" });
+    for (let i = 0; i < 6 && document.activeElement !== blur; i++)
+      await user.keyboard("{ArrowDown}");
+    expect(document.activeElement).toBe(blur);
+    await user.keyboard("{Enter}");
+    expect(onSelectBackgroundEffect).toHaveBeenCalledWith("blur");
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+  });
 
-    expect(onVideoBlurToggle).toHaveBeenCalled();
+  test("does not choose the effect already in force again", async () => {
+    const user = userEvent.setup();
+    const onSelectBackgroundEffect = vi.fn();
+    const { getByRole } = renderComponent(
+      <MediaMuteAndSwitchButton
+        iconsAndLabels="video"
+        enabled={true}
+        options={[{ label: { type: "name", name: "Camera 1" }, id: "cam1" }]}
+        selectedOption="cam1"
+        backgroundEffects={effects}
+        selectedBackgroundEffect="blur"
+        onSelectBackgroundEffect={onSelectBackgroundEffect}
+      />,
+    );
+
+    await user.click(getByRole("button", { name: "Camera" }));
+    await user.click(screen.getByRole("menuitemradio", { name: "Blur" }));
+    expect(onSelectBackgroundEffect).not.toHaveBeenCalled();
+  });
+
+  test("offers the background effects in a phone's drawer", async () => {
+    platformMock.mockReturnValue("android");
+    const userAgent = vi
+      .spyOn(navigator, "userAgent", "get")
+      .mockReturnValue("Mozilla/5.0 (Linux; Android 14)");
+    try {
+      const user = userEvent.setup();
+      const onSelectBackgroundEffect = vi.fn();
+      const { getByRole } = renderComponent(
+        <MediaMuteAndSwitchButton
+          iconsAndLabels="video"
+          enabled={true}
+          options={[{ label: { type: "name", name: "Camera 1" }, id: "cam1" }]}
+          selectedOption="cam1"
+          backgroundEffects={effects}
+          selectedBackgroundEffect="none"
+          onSelectBackgroundEffect={onSelectBackgroundEffect}
+        />,
+      );
+
+      await user.click(getByRole("button", { name: "Camera" }));
+      const section = screen.getByRole("group", { name: "Background effects" });
+      // A click alone: the drawer's drag handling reads layout jsdom lacks.
+      fireEvent.click(
+        within(section).getByRole("menuitemradio", { name: "Background 2" }),
+      );
+      expect(onSelectBackgroundEffect).toHaveBeenCalledWith("image:glow");
+    } finally {
+      userAgent.mockRestore();
+      platformMock.mockReturnValue("desktop");
+    }
   });
 
   test("marks the selected menu item as checked", async () => {
@@ -582,7 +651,9 @@ describe("MediaMuteAndSwitchButton", () => {
         ]}
         selectedOption="cam1"
         onSelect={vi.fn()}
-        videoBlurToggleClick={vi.fn()}
+        backgroundEffects={effects}
+        selectedBackgroundEffect="none"
+        onSelectBackgroundEffect={vi.fn()}
       />,
     );
 
@@ -590,9 +661,10 @@ describe("MediaMuteAndSwitchButton", () => {
 
     screen.getByRole("menuitemradio", { name: "Camera 1", checked: true });
     screen.getByRole("menuitemradio", { name: "Camera 2", checked: false });
-    expect(
-      screen.getByRole("menuitemcheckbox", { name: "Blur background" }),
-    ).toBeInTheDocument();
+    within(screen.getByRole("group", { name: "Background effects" })).getByRole(
+      "menuitemradio",
+      { name: "Blur" },
+    );
   });
 
   test("marks focus as keyboard-driven only when the keyboard moved it", async () => {

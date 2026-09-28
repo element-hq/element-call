@@ -11,6 +11,8 @@ import { useEffect, useState, type FC, type JSX, type ReactNode } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { MediaMuteAndSwitchButton } from "./MediaMuteAndSwitchButton";
 import styles from "./MediaMuteAndSwitchButton.module.css";
+import { type BackgroundEffectOption } from "./BackgroundEffectGrid";
+import { shippedBackgrounds } from "../livekit/backgroundEffects";
 import meterStyles from "./MicrophoneLevelMeter.module.css";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { RootElementProvider } from "../RootElementContext";
@@ -59,15 +61,18 @@ const WithAMicrophone: FC<{ children: ReactNode }> = ({ children }) => {
 };
 
 /** Supplies a call-sized root. Without one the list is bounded by the whole Storybook frame. */
-const WithACallArea: FC<{ children: ReactNode }> = ({ children }) => {
+const WithACallArea: FC<{ children: ReactNode; blockSize?: number }> = ({
+  children,
+  // A call's size: anything smaller makes a short device list scroll, and a
+  // narrower one narrows the menu.
+  blockSize = 720,
+}) => {
   const [callArea, setCallArea] = useState<HTMLElement | null>(null);
   return (
     <div
       ref={setCallArea}
       style={{
-        // A call's size: anything smaller makes a short device list scroll, and
-        // a narrower one narrows the menu.
-        blockSize: 720,
+        blockSize,
         inlineSize: 1024,
         display: "flex",
         alignItems: "flex-end",
@@ -129,8 +134,6 @@ export const AudioMute: Story = {
       { label: { type: "name", name: "Microphone 1" }, id: "1" },
       { label: { type: "name", name: "Microphone 2" }, id: "2" },
     ],
-    videoBlurEnabled: true,
-    videoBlurToggleClick: fn(),
     selectedOption: "2",
   },
   play: async ({ args, canvasElement }) => {
@@ -169,6 +172,17 @@ export const VideoMute: Story = {
   },
 };
 
+const effects: BackgroundEffectOption[] = [
+  { id: "none", kind: "none", label: "None" },
+  { id: "blur", kind: "blur", label: "Blur" },
+  ...shippedBackgrounds.map((background, i) => ({
+    id: `image:${background.id}`,
+    kind: "image" as const,
+    label: `Background ${i + 1}`,
+    imageUrl: background.imagePath,
+  })),
+];
+
 export const VideoUnmute: Story = {
   args: {
     iconsAndLabels: "video",
@@ -177,9 +191,147 @@ export const VideoUnmute: Story = {
       { label: { type: "name", name: "Camera 1" }, id: "1" },
       { label: { type: "name", name: "Camera 2" }, id: "2" },
     ],
-    videoBlurEnabled: true,
-    videoBlurToggleClick: fn(),
     selectedOption: "2",
+    backgroundEffects: effects,
+    selectedBackgroundEffect: "none",
+    onSelectBackgroundEffect: fn(),
+  },
+};
+
+/** One choice among no effect, blur and the shipped images, under the cameras. */
+export const BackgroundEffects: Story = {
+  args: VideoUnmute.args,
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
+    const menu = within(document.body);
+    const section = await menu.findByRole("group", {
+      name: "Background effects",
+    });
+    const tiles = within(section).getAllByRole("menuitemradio");
+    await expect(tiles.map((tile) => tile.textContent)).toEqual([
+      "None",
+      "Blur",
+      "Background 1",
+      "Background 2",
+    ]);
+    await expect(
+      within(section).getByRole("menuitemradio", { checked: true }),
+    ).toHaveTextContent("None");
+
+    const cameras = menu.getByRole("group", { name: "Camera" });
+    await expect(
+      cameras.compareDocumentPosition(section) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    const [first, second, third, fourth] = tiles.map((tile) =>
+      tile.getBoundingClientRect(),
+    );
+    await expect(second.top).toBe(first.top);
+    await expect(third.top).toBe(first.top);
+    await expect(fourth.top).toBeGreaterThan(first.bottom);
+    const frame = document.body
+      .querySelector("[role='menu']")!
+      .getBoundingClientRect();
+    for (const tile of [first, second, third])
+      await expect(tile.left >= frame.left && tile.right <= frame.right).toBe(
+        true,
+      );
+
+    await userEvent.click(menu.getByRole("menuitemradio", { name: "Blur" }));
+    await expect(args.onSelectBackgroundEffect).toHaveBeenCalledWith("blur");
+    await expect(menu.getByRole("menu")).toBeVisible();
+  },
+};
+
+/** Where effects can't run: shown, disabled and explained, except no effect. */
+export const BackgroundEffectsUnavailable: Story = {
+  args: {
+    ...VideoUnmute.args,
+    onSelectBackgroundEffect: undefined,
+    backgroundEffectNotice:
+      "Background effects are not supported on this platform.",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
+    const menu = within(document.body);
+    const section = await menu.findByRole("group", {
+      name: "Background effects",
+    });
+    await expect(section).toHaveAccessibleDescription(
+      "Background effects are not supported on this platform.",
+    );
+    for (const tile of within(section).getAllByRole("menuitemradio"))
+      if (tile.textContent === "None")
+        await expect(tile).not.toHaveAttribute("aria-disabled");
+      else await expect(tile).toHaveAttribute("aria-disabled", "true");
+  },
+};
+
+/** In a short call the effects scroll into view with the list. */
+export const BackgroundEffectsScrollWhenTheyDoNotFit: Story = {
+  args: {
+    ...VideoUnmute.args,
+    // It sits with the effects, so it must fit the same share of the call.
+    backgroundEffectNotice:
+      "Background effects run slowly on this platform, which may cause your video to stutter.",
+  },
+  decorators: [
+    (Story): JSX.Element => (
+      <WithACallArea blockSize={300}>
+        <Story />
+      </WithACallArea>
+    ),
+  ],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
+    const menu = within(document.body);
+    const last = await menu.findByRole("menuitemradio", {
+      name: "Background 2",
+    });
+    const list = document.body.querySelector<HTMLElement>(
+      `.${styles.deviceList}`,
+    )!;
+    await expect(list.scrollHeight).toBeGreaterThan(list.clientHeight);
+    await expect(last.getBoundingClientRect().top).toBeGreaterThan(
+      list.getBoundingClientRect().bottom,
+    );
+
+    // Scrolled under the section's heading, the tiles pass beneath it.
+    const heading = [
+      ...document.body.querySelectorAll<HTMLElement>(
+        `.${styles.sectionHeading}`,
+      ),
+    ].find((h) => h.textContent === "Background effects")!;
+    list.scrollTop = heading.offsetTop + 30;
+    await waitFor(async () => {
+      const box = heading.getBoundingClientRect();
+      const drawn = document.elementFromPoint(
+        box.left + box.width / 2,
+        box.bottom - 2,
+      );
+      await expect(heading.contains(drawn)).toBe(true);
+    });
+    list.scrollTop = 0;
+
+    for (let i = 0; i < 10 && document.activeElement !== last; i++)
+      await userEvent.keyboard("{ArrowDown}");
+    await expect(document.activeElement).toBe(last);
+    const scrollport = list.getBoundingClientRect();
+    const reached = last.getBoundingClientRect();
+    await expect(reached.bottom).toBeLessThanOrEqual(scrollport.bottom + 1);
+    await expect(reached.top).toBeGreaterThanOrEqual(scrollport.top - 1);
+
+    const callArea = canvasElement
+      .querySelector<HTMLElement>("[style*='block-size: 300px']")!
+      .getBoundingClientRect();
+    const frame = document.body
+      .querySelector("[role='menu']")!
+      .getBoundingClientRect();
+    await expect(frame.top).toBeGreaterThanOrEqual(callArea.top);
+    await expect(frame.bottom).toBeLessThanOrEqual(callArea.bottom);
   },
 };
 
@@ -668,31 +820,23 @@ function overlapping(element: Element, overlays: Element[]): number {
   }, 0);
 }
 
-/** The blur toggle gets the keyboard ring too: it is the menu's child, not the list's. */
-export const FocusRingCoversTheBlurToggle: Story = {
-  args: {
-    ...VideoUnmute.args,
-    iconsAndLabels: "video",
-    videoBlurEnabled: false,
-    videoBlurToggleClick: fn(),
-  },
+/** The effect tiles get the keyboard ring the device rows get. */
+export const FocusRingCoversTheEffectTiles: Story = {
+  args: VideoUnmute.args,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
-    const toggle = await within(document.body).findByRole("menuitemcheckbox", {
-      name: /Blur background/,
+    const tile = await within(document.body).findByRole("menuitemradio", {
+      name: "Blur",
     });
 
-    // Arrow down past the cameras to the toggle.
-    for (let i = 0; i < 6 && document.activeElement !== toggle; i++)
+    for (let i = 0; i < 6 && document.activeElement !== tile; i++)
       await userEvent.keyboard("{ArrowDown}");
-    await expect(document.activeElement).toBe(toggle);
-    // The same ring the device rows get.
-    await expect(outlineWidth(toggle)).toBeGreaterThan(0);
+    await expect(document.activeElement).toBe(tile);
+    await expect(outlineWidth(tile)).toBeGreaterThan(0);
 
-    // And the pointer takes it away, with the toggle still focused.
-    await userEvent.hover(toggle);
-    await expect(document.activeElement).toBe(toggle);
-    await expect(outlineWidth(toggle)).toBe(0);
+    await userEvent.hover(tile);
+    await expect(document.activeElement).toBe(tile);
+    await expect(outlineWidth(tile)).toBe(0);
   },
 };
