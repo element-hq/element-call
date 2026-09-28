@@ -11,11 +11,16 @@ import {
   LocalParticipant,
   type LocalTrack,
   type LocalTrackPublication,
+  LocalVideoTrack,
   ParticipantEvent,
   Track,
 } from "livekit-client";
 import { BehaviorSubject } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
+import {
+  type BackgroundOptions,
+  type ProcessorWrapper,
+} from "@livekit/track-processors";
 
 import { ObservableScope } from "../../ObservableScope";
 import { constant } from "../../Behavior";
@@ -25,6 +30,7 @@ import {
   mockMediaDevices,
 } from "../../../utils/test";
 import { Publisher } from "./Publisher";
+import { type ProcessorState } from "../../../livekit/TrackProcessorContext";
 import { type Connection } from "../remoteMembers/Connection";
 import { type MuteStates } from "../../MuteStates";
 
@@ -398,5 +404,69 @@ describe("Bug fix", () => {
       expect(track!.isMuted).toBe(true);
     }
     await publisher.destroy();
+  });
+});
+
+describe("turning the camera on with an effect chosen", () => {
+  const processor = {} as ProcessorWrapper<BackgroundOptions>;
+  let state$: BehaviorSubject<ProcessorState>;
+  let publisher: Publisher;
+  /** The processor the SDK would give each camera track it made. */
+  let madeWith: unknown[];
+
+  beforeEach(() => {
+    state$ = new BehaviorSubject<ProcessorState>({
+      supported: true,
+      processor: undefined,
+    });
+    publisher = new Publisher(
+      connection,
+      mockMediaDevices({}),
+      muteStates,
+      state$,
+      logger,
+      false,
+    );
+    madeWith = [];
+    vi.spyOn(localParticipant, "setCameraEnabled").mockImplementation(
+      async () => {
+        madeWith.push(
+          connection.livekitRoom.options.videoCaptureDefaults?.processor,
+        );
+        return Promise.resolve(undefined);
+      },
+    );
+    vi.spyOn(localParticipant, "unpublishTrack").mockResolvedValue(undefined);
+  });
+  afterEach(async () => {
+    await publisher.destroy();
+  });
+
+  it("makes each camera track with the pipeline attached since", async () => {
+    await publisher.createAndSetupTracks();
+    state$.next({ supported: true, processor });
+    videoEnabled$.next(true);
+    await flushPromises();
+
+    expect(madeWith).toEqual([processor]);
+  });
+
+  it("replaces a camera track turned off before the effect was chosen", async () => {
+    state$.next({ supported: true, processor });
+    const stopped = Object.assign(Object.create(LocalVideoTrack.prototype), {
+      source: Track.Source.Camera,
+      getProcessor: (): undefined => undefined,
+    }) as LocalVideoTrack;
+    trackPublications.push({
+      track: stopped,
+      source: Track.Source.Camera,
+    } as Partial<LocalTrackPublication> as LocalTrackPublication);
+
+    await publisher.createAndSetupTracks();
+    videoEnabled$.next(true);
+    await flushPromises();
+
+    expect(localParticipant.unpublishTrack).toHaveBeenCalledWith(stopped);
+    expect(madeWith).toEqual([processor]);
   });
 });

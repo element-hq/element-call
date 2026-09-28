@@ -63,7 +63,7 @@ export class Publisher {
     private connection: Pick<Connection, "livekitRoom" | "state$">, //setE2EEEnabled,
     devices: MediaDevices,
     private readonly muteStates: MuteStates,
-    trackerProcessorState$: Behavior<ProcessorState>,
+    private readonly trackerProcessorState$: Behavior<ProcessorState>,
     private logger: Logger,
     controlledAudioDevices: boolean,
   ) {
@@ -74,7 +74,7 @@ export class Publisher {
     });
 
     // Setup track processor syncing (blur)
-    this.observeTrackProcessors(this.scope, room, trackerProcessorState$);
+    this.observeTrackProcessors(this.scope, room, this.trackerProcessorState$);
     // Observe media device changes and update LiveKit active devices accordingly
     this.observeMediaDevices(this.scope, devices, controlledAudioDevices);
 
@@ -412,6 +412,8 @@ export class Publisher {
     this.muteStates.video.setHandler(async (enable) => {
       try {
         this.logger.debug(`handler: Setting LiveKit camera enabled: ${enable}`);
+        const { processor } = this.trackerProcessorState$.value;
+        if (enable && processor) await this.dropCameraWithoutEffect(lkRoom);
         await lkRoom.localParticipant.setCameraEnabled(enable);
         // Unmute will restart the track if it was paused upstream,
         // but until explicitly requested, we want to keep it paused.
@@ -424,6 +426,19 @@ export class Publisher {
         return lkRoom.localParticipant.isCameraEnabled;
       }
     });
+  }
+
+  /**
+   * Unpublishes a camera track that has no effect on, so that turning the
+   * camera on creates one with it. A camera turned off is stopped, and a
+   * stopped track can't take an effect chosen while it was off.
+   */
+  private async dropCameraWithoutEffect(lkRoom: LivekitRoom): Promise<void> {
+    const track = lkRoom.localParticipant.getTrackPublication(
+      Track.Source.Camera,
+    )?.track;
+    if (track instanceof LocalVideoTrack && !track.getProcessor())
+      await lkRoom.localParticipant.unpublishTrack(track);
   }
 
   private observeTrackProcessors(
@@ -441,5 +456,14 @@ export class Publisher {
       null,
     );
     trackProcessorSync(scope, track$, trackerProcessorState$);
+    // Every camera track the SDK makes, on joining or on turning the camera
+    // on, then starts with the pipeline on. One attached after publishing lets
+    // the room through while it is built.
+    trackerProcessorState$.pipe(scope.bind()).subscribe(({ processor }) => {
+      room.options.videoCaptureDefaults = {
+        ...room.options.videoCaptureDefaults,
+        processor,
+      };
+    });
   }
 }
