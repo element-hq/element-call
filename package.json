@@ -83,7 +83,7 @@
     "@types/sdp-transform": "^2.4.5",
     "@typescript-eslint/utils": "^8.61.0",
     "@use-gesture/react": "^10.2.11",
-    "@vector-im/compound-design-tokens": "^11.0.0",
+    "@vector-im/compound-design-tokens": "^11.1.0",
     "@vector-im/compound-web": "^10.0.0",
     "@vitejs/plugin-react": "^6.0.2",
     "@vitest/browser-playwright": "^4.1.5",

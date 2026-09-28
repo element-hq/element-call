@@ -22,7 +22,7 @@ import {
   useTrackProcessor,
   useTrackProcessorSync,
 } from "./TrackProcessorContext";
-import { backgroundBlur } from "../settings/settings";
+import { backgroundEffect } from "../settings/settings";
 import { constant } from "../state/Behavior";
 import { flushPromises, testScope } from "../utils/test";
 
@@ -165,7 +165,7 @@ describe("ProcessorProvider", () => {
   ): ReturnType<typeof createElement> => createElement(Surfaces, { tracks });
   const blur = async (on: boolean): Promise<void> => {
     await act(async () => {
-      backgroundBlur.setValue(on);
+      backgroundEffect.setValue(on ? "blur" : "none");
       await flushPromises();
     });
   };
@@ -176,9 +176,9 @@ describe("ProcessorProvider", () => {
     pipelines.built = 0;
     pipelines.destroyed = 0;
     pipelines.switches = [];
-    backgroundBlur.setValue(false);
+    backgroundEffect.setValue("none");
   });
-  afterEach(() => backgroundBlur.setValue(false));
+  afterEach(() => backgroundEffect.setValue("none"));
 
   // A pipeline primes itself when it is built and when it is destroyed, and a
   // primed pipeline lets one frame through untouched: so the frame is spent
