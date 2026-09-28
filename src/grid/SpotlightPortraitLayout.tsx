@@ -6,7 +6,6 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type ReactNode, type CSSProperties } from "react";
-import { useObservableEagerState } from "observable-hooks";
 import classNames from "classnames";
 
 import { type CallLayout, arrangeTiles } from "./CallLayout";
@@ -58,7 +57,7 @@ export const makeSpotlightPortraitLayout: CallLayout<
   }): ReactNode {
     useUpdateLayout();
     useVisibleTiles(model.setVisibleTiles);
-    const { width } = useObservableEagerState(minBounds$);
+    const { width } = useBehavior(minBounds$);
     const { gap, tileWidth, tileHeight } = arrangeTiles(
       width,
       // TODO: We pretend that the minimum height is the width, because the

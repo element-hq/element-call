@@ -25,6 +25,7 @@ import {
   mockRemoteScreenShare,
 } from "../../utils/test";
 import { constant } from "../Behavior";
+import { showConnectionStats } from "../../settings/settings";
 
 global.MediaStreamTrack = class {} as unknown as {
   new (): MediaStreamTrack;
@@ -40,6 +41,12 @@ vi.mock("../../Platform", () => ({
   get platform(): string {
     return platformMock();
   },
+}));
+
+const observeRtpStreamStatsMock = vi.hoisted(() => vi.fn());
+vi.mock("./observeRtpStreamStats", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  observeRtpStreamStats$: observeRtpStreamStatsMock,
 }));
 
 const rtcMembership = mockRtcMembership("@alice:example.org", "AAAA");
@@ -288,4 +295,38 @@ test("remote media is not in waiting state when user does not intend to publish 
     undefined, // No room (no advertised transport)
   );
   expect(vm.waitingForMedia$.value).toBe(false);
+});
+
+test("user media polls stream stats only while the setting is on", () => {
+  const participant = mockRemoteParticipant({});
+  const vm = mockRemoteMedia(rtcMembership, {}, participant);
+  onTestFinished(() => showConnectionStats.setValue(false));
+  withTestScheduler(({ cold, expectObservable, schedule }) => {
+    const stats = { type: "inbound-rtp" } as RTCInboundRtpStreamStats;
+    observeRtpStreamStatsMock.mockImplementation(() =>
+      cold("-s", { s: stats }),
+    );
+    schedule("-a-b", {
+      a() {
+        showConnectionStats.setValue(true);
+      },
+      b() {
+        showConnectionStats.setValue(false);
+      },
+    });
+    expectObservable(vm.audioStreamStats$).toBe("u-su", {
+      u: undefined,
+      s: stats,
+    });
+  });
+  expect(observeRtpStreamStatsMock).toHaveBeenCalledWith(
+    participant,
+    Track.Source.Microphone,
+    "inbound-rtp",
+  );
+  expect(observeRtpStreamStatsMock).toHaveBeenCalledWith(
+    participant,
+    Track.Source.Camera,
+    "inbound-rtp",
+  );
 });

@@ -7,7 +7,6 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type ReactNode, useCallback, useMemo } from "react";
-import { useObservableEagerState } from "observable-hooks";
 import classNames from "classnames";
 
 import { type OneOnOneDesktopLayout as OneOnOneDesktopLayoutModel } from "../state/layout-types.ts";
@@ -37,7 +36,7 @@ export const makeOneOnOneDesktopLayout: CallLayout<
     Slot,
   }): ReactNode {
     useUpdateLayout();
-    const { width, height } = useObservableEagerState(minBounds$);
+    const { width, height } = useBehavior(minBounds$);
     const pipAlignment = useBehavior(model.pipAlignment$);
     const { tileWidth, tileHeight } = useMemo(
       () => arrangeTiles(width, height, 1),

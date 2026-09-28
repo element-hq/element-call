@@ -6,7 +6,6 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type FC, type ReactNode } from "react";
-import { useObservableEagerState } from "observable-hooks";
 import classNames from "classnames";
 
 import { type CallLayout } from "./CallLayout";
@@ -33,7 +32,7 @@ export const makeSpotlightLandscapeLayout: CallLayout<
     Slot,
   }): ReactNode {
     useUpdateLayout();
-    useObservableEagerState(minBounds$);
+    useBehavior(minBounds$);
 
     return (
       <div ref={ref} className={styles.layer}>
@@ -56,7 +55,7 @@ export const makeSpotlightLandscapeLayout: CallLayout<
   }): ReactNode {
     useUpdateLayout();
     useVisibleTiles(model.setVisibleTiles);
-    useObservableEagerState(minBounds$);
+    useBehavior(minBounds$);
 
     return (
       <div ref={ref} className={styles.layer}>

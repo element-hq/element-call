@@ -24,7 +24,6 @@ import {
   type LocalVideoTrack,
   Track,
 } from "livekit-client";
-import { useObservableEagerState } from "observable-hooks";
 
 import inCallStyles from "./InCallView.module.css";
 import styles from "./LobbyView.module.css";
@@ -125,9 +124,7 @@ export const LobbyView: FC<Props> = ({
   );
 
   const devices = useMediaDevices();
-  const videoInputId = useObservableEagerState(
-    devices.videoInput.selected$,
-  )?.id;
+  const videoInputId = useBehavior(devices.videoInput.selected$)?.id;
 
   // Capture the audio options as they were when we first mounted, because
   // we're not doing anything with the audio anyway so we don't need to
