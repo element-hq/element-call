@@ -102,9 +102,9 @@ export function createBaseUserMedia(
     scope.behavior(
       combineLatest([participant$, showConnectionStats.value$]).pipe(
         switchMap(([p, showConnectionStats]) =>
-          !p || !showConnectionStats
-            ? of(undefined)
-            : observeRtpStreamStats$(p, source, statsType),
+          p && showConnectionStats
+            ? observeRtpStreamStats$(p, source, statsType)
+            : of(undefined),
         ),
       ),
     );
