@@ -14,10 +14,12 @@ import {
   type FC,
   useEffect,
   type ReactElement,
+  type ReactNode,
 } from "react";
 import {
   Alert,
   Button,
+  InlineSpinner,
   Menu,
   MenuItem,
   MenuTitle,
@@ -87,6 +89,8 @@ export interface MediaMuteAndSwitchButtonProps {
   onRemoveBackgroundEffect?: (id: string) => void;
   /** Why the last file offered couldn't be used; a new object each time. */
   backgroundImageRefusal?: { text: string };
+  /** The user's own camera, shown at the top of the camera menu. */
+  selfPreview?: ReactNode;
   /**
    * For any toggle and option this method will be called.
    * So toggles need to be implemented by listening here and setting the right toggle item to `enabled`
@@ -127,6 +131,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   onAddBackgroundImage,
   onRemoveBackgroundEffect,
   backgroundImageRefusal,
+  selfPreview,
   onSelect,
 }) => {
   // Requested but not yet selected. Keyed by kind too, since Chrome uses
@@ -217,18 +222,23 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
 
   // Measured on the call area: CSS can't size the portalled menu against it.
   const rootElement = useRootElement();
-  const [listMaxHeight, setListMaxHeight] = useState<number>();
+  const [listShare, setListShare] = useState<number>();
   const [menuWidth, setMenuWidth] = useState(MENU_WIDTH);
+  const [previewBlock, setPreviewBlock] = useState(0);
   useEffect(() => {
     if (!menuOpen) return;
+    // From the tokens the stylesheets size the preview with, so that it is
+    // placed once rather than measured and moved.
+    const tokens = getComputedStyle(rootElement);
+    const px = (token: string): number =>
+      parseFloat(tokens.getPropertyValue(token)) || 0;
+    const borders = 2 * px("--cpd-border-width-1");
+    const below = px("--cpd-space-2x") + px("--cpd-space-1x");
     // Followed, since a host can resize the call while the menu is open.
     const subscription = observeElementSize$(rootElement)
       .pipe(
         map(({ width, height }) => ({
-          height: Math.max(
-            MIN_LIST_HEIGHT,
-            Math.round(height * LIST_SHARE_OF_CALL),
-          ),
+          height: Math.round(height * LIST_SHARE_OF_CALL),
           width: Math.min(MENU_WIDTH, Math.round(width - 2 * MENU_MARGIN)),
         })),
         distinctUntilChanged(
@@ -236,11 +246,44 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
         ),
       )
       .subscribe(({ height, width }) => {
-        setListMaxHeight(height);
+        setListShare(height);
         setMenuWidth(width);
+        setPreviewBlock(Math.round(((width - borders) * 9) / 16) + below);
       });
     return (): void => subscription.unsubscribe();
   }, [menuOpen, rootElement]);
+
+  // Paid for out of the list's share, so a preview makes the menu no taller.
+  const hasPreview =
+    iconsAndLabels === "video" &&
+    selfPreview !== undefined &&
+    listShare !== undefined;
+  const previewPinned =
+    hasPreview && listShare - previewBlock >= MIN_LIST_HEIGHT;
+  const listMaxHeight =
+    listShare === undefined
+      ? undefined
+      : Math.max(
+          MIN_LIST_HEIGHT,
+          listShare - (previewPinned ? previewBlock : 0),
+        );
+  const preview = hasPreview && (
+    <div
+      aria-hidden
+      className={classNames(styles.selfPreview, {
+        [styles.selfPreviewPinned]: previewPinned,
+      })}
+      style={
+        {
+          "--device-list-inline-size": menuIsDrawer()
+            ? undefined
+            : `${menuWidth}px`,
+        } as CSSProperties
+      }
+    >
+      {backgroundEffectSettling ? <InlineSpinner size={32} /> : selfPreview}
+    </div>
+  );
 
   // Kept clear at the list's foot, so a row reached by keyboard isn't under
   // the meter.
@@ -432,11 +475,14 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
           />
         }
       >
+        {previewPinned && preview}
         <div
           ref={watchList}
           // Keeps the items the menu's own children for assistive tech.
           role="none"
-          className={styles.deviceList}
+          className={classNames(styles.deviceList, {
+            [styles.deviceListLeadsWithPreview]: hasPreview && !previewPinned,
+          })}
           style={
             {
               "--device-list-max-height":
@@ -456,6 +502,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
             aria-hidden
             className={classNames(styles.fade, styles.fadeTop)}
           />
+          {hasPreview && !previewPinned && preview}
           {iconsAndLabels === "audio" && speakerOptions && (
             <>
               {/* A menu may only contain items, separators and groups, so each

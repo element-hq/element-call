@@ -30,6 +30,7 @@ import {
   parseEffect,
 } from "../livekit/backgroundEffects";
 import { type AddedBackground } from "../livekit/backgroundImages";
+import { SyncedCameraTrack } from "../livekit/cameraTrack";
 
 export interface BackgroundEffectsOptions {
   /** Whether this browser can run a pipeline at all. */
@@ -52,6 +53,8 @@ export interface BackgroundEffectsOptions {
 
 /** The background effect pipeline, as the camera tracks and the menus see it. */
 export class BackgroundEffects {
+  /** The camera the pipeline is synced to. */
+  public readonly cameraTrack = new SyncedCameraTrack();
   public readonly state$: Behavior<ProcessorState>;
 
   public constructor(
@@ -106,6 +109,7 @@ export class BackgroundEffects {
               supported,
               processor: attached ? pipeline : undefined,
               settling: attached && !drewAFrame,
+              cameraTrack: this.cameraTrack,
             };
           },
           { supported, processor: undefined },
