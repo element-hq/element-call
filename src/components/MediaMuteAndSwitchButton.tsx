@@ -77,6 +77,8 @@ export interface MediaMuteAndSwitchButtonProps {
   onSelectBackgroundEffect?: (id: string) => void;
   /** What the user should know before choosing an effect, if anything. */
   backgroundEffectNotice?: string;
+  /** Whether the first effect chosen is still being prepared. */
+  backgroundEffectSettling?: boolean;
   /**
    * For any toggle and option this method will be called.
    * So toggles need to be implemented by listening here and setting the right toggle item to `enabled`
@@ -113,6 +115,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   selectedBackgroundEffect,
   onSelectBackgroundEffect,
   backgroundEffectNotice,
+  backgroundEffectSettling,
   onSelect,
 }) => {
   // Requested but not yet selected. Keyed by kind too, since Chrome uses
@@ -433,6 +436,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
               effects={backgroundEffects ?? []}
               selected={selectedBackgroundEffect}
               onSelect={onSelectBackgroundEffect}
+              settling={backgroundEffectSettling}
               describedBy={
                 backgroundEffectNotice === undefined ? undefined : noticeId
               }
