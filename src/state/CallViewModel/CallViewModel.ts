@@ -30,7 +30,6 @@ import {
   scan,
   startWith,
   Subject,
-  switchAll,
   switchMap,
   switchScan,
   take,
@@ -148,6 +147,7 @@ import {
 import { Publisher } from "./localMember/Publisher.ts";
 import { type Connection } from "./remoteMembers/Connection.ts";
 import {
+  type LayoutMode,
   type LayoutSwitchViewModel,
   createLayoutSwitchViewModel,
 } from "../LayoutSwitchViewModel.ts";
@@ -1092,52 +1092,7 @@ export function createCallViewModel$(
     hasRemoteScreenShares$,
   );
 
-  const gridLayoutMedia$: Observable<GridLayoutMedia> = combineLatest(
-    [grid$, spotlight$],
-    (grid, spotlight) => ({
-      type: "grid",
-      edgeToEdge: false,
-      spotlight: spotlight.some((vm) => vm.type === "screen share")
-        ? spotlight
-        : undefined,
-      grid,
-    }),
-  );
-
-  const spotlightLandscapeLayoutMedia$ = (
-    edgeToEdge: boolean,
-  ): Observable<SpotlightLandscapeLayoutMedia> =>
-    combineLatest([grid$, spotlight$], (grid, spotlight) => ({
-      type: "spotlight-landscape",
-      edgeToEdge,
-      spotlight,
-      grid,
-    }));
-
-  const spotlightPortraitLayoutMedia$: Observable<SpotlightPortraitLayoutMedia> =
-    combineLatest([grid$, spotlight$], (grid, spotlight) => ({
-      type: "spotlight-portrait",
-      edgeToEdge: false,
-      spotlight,
-      grid,
-    }));
-
-  const spotlightExpandedLayoutMedia$ = (
-    edgeToEdge: boolean,
-  ): Observable<SpotlightExpandedLayoutMedia> =>
-    spotlightAndPip$.pipe(
-      map(({ spotlight, pip }) => ({
-        type: "spotlight-expanded" as const,
-        edgeToEdge,
-        spotlight,
-        pip,
-      })),
-    );
-
-  const oneOnOneLayoutMedia$: Behavior<{
-    local: LocalUserMediaViewModel;
-    remote: UserMediaViewModel | RingingMediaViewModel;
-  } | null> = scope.behavior(
+  const oneOnOneLayoutMedia$: Behavior<OneOnOneMedia | null> = scope.behavior(
     combineLatest([userMedia$, screenShares$]).pipe(
       switchMap(([userMedia, screenShares]) => {
         // One-on-one layout only supports 2 user media, no screen shares
@@ -1175,47 +1130,12 @@ export function createCallViewModel$(
     ),
   );
 
-  const oneOnOneDesktopLayoutMedia$: Observable<OneOnOneDesktopLayoutMedia | null> =
+  const localVideoEnabled$ = scope.behavior<boolean>(
     oneOnOneLayoutMedia$.pipe(
-      map((media) => {
-        if (media === null) return null;
-        return media.remote.type === "ringing"
-          ? {
-              type: "one-on-one-desktop" as const,
-              edgeToEdge: false,
-              spotlight: media.local,
-              pip: media.remote,
-            }
-          : {
-              type: "one-on-one-desktop" as const,
-              edgeToEdge: false,
-              spotlight: media.remote,
-              pip: media.local,
-            };
-      }),
-    );
-
-  const oneOnOneMobileLayoutMedia$: Observable<OneOnOneMobileLayoutMedia | null> =
-    oneOnOneLayoutMedia$.pipe(
-      switchMap((media) => {
-        if (media === null) return of(null);
-        return media.local.videoEnabled$.pipe(
-          map((videoEnabled) => ({
-            type: "one-on-one-mobile" as const,
-            edgeToEdge: true as const,
-            spotlight: media.remote,
-            pip: videoEnabled ? media.local : undefined,
-          })),
-        );
-      }),
-    );
-
-  const pipLayoutMedia$: Observable<LayoutMedia> = spotlight$.pipe(
-    map((spotlight) => ({
-      type: "pip",
-      edgeToEdge: platform !== "desktop",
-      spotlight,
-    })),
+      switchMap((media) =>
+        media === null ? of(false) : media.local.videoEnabled$,
+      ),
+    ),
   );
 
   spotlight$
@@ -1250,66 +1170,28 @@ export function createCallViewModel$(
    * The media to be used to produce a layout.
    */
   const layoutMedia$ = scope.behavior<LayoutMedia>(
-    windowMode$.pipe(
-      switchMap((windowMode) => {
-        switch (windowMode) {
-          case "normal":
-            return layoutSwitchVm.layout$.pipe(
-              switchMap((layout) => {
-                switch (layout) {
-                  case "grid":
-                    return oneOnOneDesktopLayoutMedia$.pipe(
-                      switchMap((oneOnOne) =>
-                        oneOnOne === null ? gridLayoutMedia$ : of(oneOnOne),
-                      ),
-                    );
-                  case "spotlight":
-                    return spotlightExpanded$.pipe(
-                      switchMap((expanded) =>
-                        expanded
-                          ? spotlightExpandedLayoutMedia$(false)
-                          : spotlightLandscapeLayoutMedia$(false),
-                      ),
-                    );
-                }
-              }),
-            );
-          case "narrow":
-            return oneOnOneMobileLayoutMedia$.pipe(
-              switchMap((oneOnOne) =>
-                oneOnOne === null
-                  ? combineLatest([grid$, spotlight$], (grid, spotlight) =>
-                      grid.length > smallMobileCallThreshold ||
-                      spotlight.some((vm) => vm.type === "screen share")
-                        ? spotlightPortraitLayoutMedia$
-                        : gridLayoutMedia$,
-                    ).pipe(switchAll())
-                  : of(oneOnOne),
-              ),
-            );
-          case "flat":
-            return oneOnOneMobileLayoutMedia$.pipe(
-              switchMap((oneOnOne) =>
-                oneOnOne === null
-                  ? layoutSwitchVm.layout$.pipe(
-                      switchMap((layout) => {
-                        switch (layout) {
-                          case "grid":
-                            // Yes, grid mode actually gets you a "spotlight" layout in
-                            // this window mode.
-                            return spotlightLandscapeLayoutMedia$(true);
-                          case "spotlight":
-                            return spotlightExpandedLayoutMedia$(true);
-                        }
-                      }),
-                    )
-                  : of(oneOnOne),
-              ),
-            );
-          case "pip":
-            return pipLayoutMedia$;
-        }
-      }),
+    merge(
+      windowMode$,
+      layoutSwitchVm.layout$,
+      spotlightExpanded$,
+      oneOnOneLayoutMedia$,
+      localVideoEnabled$,
+      spotlightAndPip$,
+      grid$,
+    ).pipe(
+      map(() =>
+        computeLayoutMedia({
+          windowMode: windowMode$.value,
+          layoutMode: layoutSwitchVm.layout$.value,
+          spotlightExpanded: spotlightExpanded$.value,
+          oneOnOne: oneOnOneLayoutMedia$.value,
+          localVideoEnabled: localVideoEnabled$.value,
+          ...spotlightAndPip$.value,
+          grid: grid$.value,
+          desktop: platform === "desktop",
+        }),
+      ),
+      distinctUntilChanged(layoutShallowEquals),
     ),
   );
 
@@ -1890,4 +1772,134 @@ function getE2eeKeyProvider(
       .catch((e) => logger.error("Failed to set shared key for E2EE", e));
     return keyProvider;
   }
+}
+
+interface OneOnOneMedia {
+  local: LocalUserMediaViewModel;
+  remote: UserMediaViewModel | RingingMediaViewModel;
+}
+
+interface LayoutMediaInputs {
+  windowMode: WindowMode;
+  /** The layout chosen with the layout switch. */
+  layoutMode: LayoutMode;
+  spotlightExpanded: boolean;
+  /** Set when the call qualifies for a one-on-one layout. */
+  oneOnOne: OneOnOneMedia | null;
+  localVideoEnabled: boolean;
+  spotlight: MediaViewModel[];
+  grid: UserMediaViewModel[];
+  pip: UserMediaViewModel | undefined;
+  desktop: boolean;
+}
+
+/**
+ * Decides which layout to use and which media goes where in it.
+ */
+function computeLayoutMedia({
+  windowMode,
+  layoutMode,
+  spotlightExpanded,
+  oneOnOne,
+  localVideoEnabled,
+  spotlight,
+  grid,
+  pip,
+  desktop,
+}: LayoutMediaInputs): LayoutMedia {
+  switch (windowMode) {
+    case "normal":
+      if (layoutMode === "grid")
+        return oneOnOne === null
+          ? gridLayoutMedia(spotlight, grid)
+          : oneOnOneDesktopLayoutMedia(oneOnOne);
+      return spotlightExpanded
+        ? spotlightExpandedLayoutMedia(false, spotlight, pip)
+        : spotlightLandscapeLayoutMedia(false, spotlight, grid);
+    case "narrow":
+      if (oneOnOne !== null)
+        return oneOnOneMobileLayoutMedia(oneOnOne, localVideoEnabled);
+      return grid.length > smallMobileCallThreshold || hasScreenShare(spotlight)
+        ? spotlightPortraitLayoutMedia(spotlight, grid)
+        : gridLayoutMedia(spotlight, grid);
+    case "flat":
+      if (oneOnOne !== null)
+        return oneOnOneMobileLayoutMedia(oneOnOne, localVideoEnabled);
+      // Yes, grid mode actually gets you a "spotlight" layout in this window
+      // mode.
+      return layoutMode === "grid"
+        ? spotlightLandscapeLayoutMedia(true, spotlight, grid)
+        : spotlightExpandedLayoutMedia(true, spotlight, pip);
+    case "pip":
+      return { type: "pip", edgeToEdge: !desktop, spotlight };
+  }
+}
+
+function hasScreenShare(spotlight: MediaViewModel[]): boolean {
+  return spotlight.some((vm) => vm.type === "screen share");
+}
+
+function gridLayoutMedia(
+  spotlight: MediaViewModel[],
+  grid: UserMediaViewModel[],
+): GridLayoutMedia {
+  return {
+    type: "grid",
+    edgeToEdge: false,
+    spotlight: hasScreenShare(spotlight) ? spotlight : undefined,
+    grid,
+  };
+}
+
+function oneOnOneDesktopLayoutMedia(
+  media: OneOnOneMedia,
+): OneOnOneDesktopLayoutMedia {
+  return media.remote.type === "ringing"
+    ? {
+        type: "one-on-one-desktop",
+        edgeToEdge: false,
+        spotlight: media.local,
+        pip: media.remote,
+      }
+    : {
+        type: "one-on-one-desktop",
+        edgeToEdge: false,
+        spotlight: media.remote,
+        pip: media.local,
+      };
+}
+
+function spotlightExpandedLayoutMedia(
+  edgeToEdge: boolean,
+  spotlight: MediaViewModel[],
+  pip: UserMediaViewModel | undefined,
+): SpotlightExpandedLayoutMedia {
+  return { type: "spotlight-expanded", edgeToEdge, spotlight, pip };
+}
+
+function spotlightLandscapeLayoutMedia(
+  edgeToEdge: boolean,
+  spotlight: MediaViewModel[],
+  grid: UserMediaViewModel[],
+): SpotlightLandscapeLayoutMedia {
+  return { type: "spotlight-landscape", edgeToEdge, spotlight, grid };
+}
+
+function oneOnOneMobileLayoutMedia(
+  media: OneOnOneMedia,
+  localVideoEnabled: boolean,
+): OneOnOneMobileLayoutMedia {
+  return {
+    type: "one-on-one-mobile",
+    edgeToEdge: true,
+    spotlight: media.remote,
+    pip: localVideoEnabled ? media.local : undefined,
+  };
+}
+
+function spotlightPortraitLayoutMedia(
+  spotlight: MediaViewModel[],
+  grid: UserMediaViewModel[],
+): SpotlightPortraitLayoutMedia {
+  return { type: "spotlight-portrait", edgeToEdge: false, spotlight, grid };
 }
