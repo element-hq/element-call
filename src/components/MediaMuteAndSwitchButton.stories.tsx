@@ -375,6 +375,126 @@ export const BackgroundImageRefused: Story = {
   },
 };
 
+/** A flat picture, for backgrounds of one's own. */
+function swatch(colour: string): string {
+  return `data:image/svg+xml,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="9"><rect width="16" height="9" fill="${colour}"/></svg>`,
+  )}`;
+}
+
+/** One's own backgrounds are removable, never the one in force. */
+export const AddedBackgroundsCanBeRemoved: Story = {
+  args: {
+    ...VideoUnmute.args,
+    backgroundEffects: [
+      ...effects,
+      {
+        id: "added:one",
+        label: "Background 3",
+        kind: "image",
+        imageUrl: swatch("#c2410c"),
+        removable: true,
+      },
+      {
+        id: "added:two",
+        label: "Background 4",
+        kind: "image",
+        imageUrl: swatch("#1d4ed8"),
+        removable: true,
+      },
+    ],
+    selectedBackgroundEffect: "added:one",
+    onRemoveBackgroundEffect: fn(),
+  },
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
+    const body = within(document.body);
+
+    const inForce = await body.findByRole("menuitemradio", {
+      name: "Background 3",
+    });
+    await expect(inForce).not.toHaveAttribute("aria-keyshortcuts");
+
+    const other = body.getByRole("menuitemradio", { name: "Background 4" });
+    await expect(other).toHaveAttribute("aria-keyshortcuts", "Delete");
+    other.focus();
+    await userEvent.keyboard("{Delete}");
+    await expect(args.onRemoveBackgroundEffect).toHaveBeenCalledWith(
+      "added:two",
+    );
+
+    const wrapper = other.parentElement!;
+    await userEvent.hover(wrapper);
+    const cross = wrapper.querySelector<HTMLElement>(
+      "[aria-hidden]:last-child",
+    )!;
+    const probe = document.createElement("span");
+    probe.style.color = "var(--cpd-color-icon-critical-primary)";
+    cross.append(probe);
+    const critical = getComputedStyle(probe).color;
+    probe.remove();
+    await expect(getComputedStyle(cross).color).toBe(critical);
+    const tile = other.getBoundingClientRect();
+    const box = cross.getBoundingClientRect();
+    await expect(box.right).toBeGreaterThan(tile.right);
+    await expect(box.top).toBeLessThan(tile.top);
+
+    await userEvent.hover(cross);
+    await waitFor(async () =>
+      expect(
+        [...document.body.querySelectorAll("div")].some(
+          (d) => d.textContent === "Remove" && d.offsetParent !== null,
+        ),
+      ).toBe(true),
+    );
+  },
+};
+
+/** Removing by pointer while the selection really changes. */
+export const RemovingWithLiveSelection: Story = {
+  args: AddedBackgroundsCanBeRemoved.args,
+  render: function WithLiveSelection(args): JSX.Element {
+    const [selected, setSelected] = useState("none");
+    const [offered, setOffered] = useState(args.backgroundEffects ?? []);
+    return (
+      <MediaMuteAndSwitchButton
+        {...args}
+        backgroundEffects={offered}
+        selectedBackgroundEffect={selected}
+        onSelectBackgroundEffect={setSelected}
+        onRemoveBackgroundEffect={(id): void =>
+          setOffered((current) => current.filter((o) => o.id !== id))
+        }
+      />
+    );
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
+    const body = within(document.body);
+
+    const tile = await body.findByRole("menuitemradio", {
+      name: "Background 4",
+    });
+    await userEvent.hover(tile);
+    const cross = tile.parentElement!.querySelector<HTMLElement>(
+      "[aria-hidden]:last-child",
+    )!;
+    await expect(cross).toBeVisible();
+    await userEvent.click(cross);
+
+    await waitFor(async () =>
+      expect(
+        body.queryByRole("menuitemradio", { name: "Background 4" }),
+      ).toBeNull(),
+    );
+    await expect(
+      body.getByRole("menuitemradio", { name: "None" }),
+    ).toHaveAttribute("aria-checked", "true");
+  },
+};
+
 /** In a short call the effects scroll into view with the list. */
 export const BackgroundEffectsScrollWhenTheyDoNotFit: Story = {
   args: {

@@ -81,6 +81,23 @@ describe("AddedBackgrounds", () => {
     expect(await storage.list()).toHaveLength(maxAddedBackgrounds);
   });
 
+  it("forgets a removed image, and lets its picture go", async () => {
+    const revoke = vi
+      .spyOn(URL, "revokeObjectURL")
+      .mockImplementation(() => {});
+    const storage = memoryStorage();
+    const store = new AddedBackgrounds(storage, asGiven);
+    await flushPromises();
+    const first = await store.add(new Blob(["a"]));
+    const second = await store.add(new Blob(["b"]));
+    const url = store.added$.value![0].url;
+
+    await store.remove(first);
+    expect(store.added$.value?.map((a) => a.id)).toEqual([second]);
+    expect((await storage.list()).map((k) => k.id)).toEqual([second]);
+    expect(revoke).toHaveBeenCalledWith(url);
+  });
+
   it("offers nothing where the browser keeps nothing", async () => {
     const store = new AddedBackgrounds(null);
     await flushPromises();
@@ -116,7 +133,7 @@ describe("prepareImage", () => {
 });
 
 describe("IndexedDBImageStorage", () => {
-  it("keeps images across sessions", async () => {
+  it("keeps images across sessions until they are deleted", async () => {
     const indexedDB = new IDBFactory();
     const image = new Blob(["x"], { type: "image/webp" });
     const first = new IndexedDBImageStorage(indexedDB);
@@ -131,6 +148,8 @@ describe("IndexedDBImageStorage", () => {
       ["a", 1],
       ["b", 2],
     ]);
+    await second.delete("a");
+    expect((await first.list()).map(({ id }) => id)).toEqual(["b"]);
   });
 });
 
@@ -142,6 +161,13 @@ function memoryStorage(kept: KeptImage[] = []): BackgroundImageStorage {
     list: async (): Promise<KeptImage[]> => Promise.resolve([...kept]),
     put: async (image): Promise<void> => {
       kept.push(image);
+      return Promise.resolve();
+    },
+    delete: async (id): Promise<void> => {
+      kept.splice(
+        kept.findIndex((k) => k.id === id),
+        1,
+      );
       return Promise.resolve();
     },
   };

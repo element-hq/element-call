@@ -5,18 +5,24 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, type ReactNode, type ReactElement } from "react";
+import {
+  type FC,
+  type KeyboardEvent,
+  type ReactNode,
+  type ReactElement,
+} from "react";
 import {
   DropdownMenuItem,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
 } from "@radix-ui/react-dropdown-menu";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { InlineSpinner } from "@vector-im/compound-web";
+import { InlineSpinner, Tooltip } from "@vector-im/compound-web";
 import {
   BlockIcon,
   BlurIcon,
   CheckCircleSolidIcon,
+  CloseIcon,
   PlusIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 
@@ -31,6 +37,8 @@ export interface BackgroundEffectOption {
   kind: "none" | "blur" | "image";
   /** For kind "image". */
   imageUrl?: string;
+  /** Whether it is the user's to remove. */
+  removable?: boolean;
 }
 
 interface Props {
@@ -48,6 +56,9 @@ interface Props {
   /** Offers to add a background of one's own. Omit to leave that tile out. */
   onAdd?: () => void;
   addLabel?: string;
+  /** Removes a removable one, never the one in force. Omit to offer none. */
+  onRemove?: (id: string) => void;
+  removeLabel?: string;
 }
 
 /**
@@ -64,6 +75,8 @@ export const BackgroundEffectGrid: FC<Props> = ({
   describedBy,
   onAdd,
   addLabel,
+  onRemove,
+  removeLabel,
 }) => {
   const choose = (id: string): void => {
     if (id !== selected) onSelect?.(id);
@@ -75,6 +88,21 @@ export const BackgroundEffectGrid: FC<Props> = ({
   const tiles = effects.map((effect) => {
     const checked = effect.id === selected;
     const disabled = onSelect === undefined && effect.kind !== "none";
+    const remove =
+      effect.removable && !checked && onRemove !== undefined
+        ? (): void => onRemove(effect.id)
+        : undefined;
+    const removeProps =
+      remove === undefined
+        ? {}
+        : {
+            "aria-keyshortcuts": "Delete",
+            onKeyDown: (e: KeyboardEvent): void => {
+              if (e.key !== "Delete" && e.key !== "Backspace") return;
+              e.preventDefault();
+              remove();
+            },
+          };
     const content = (
       <TileContent
         effect={effect}
@@ -82,7 +110,7 @@ export const BackgroundEffectGrid: FC<Props> = ({
         settling={checked && settling}
       />
     );
-    return inDrawer ? (
+    const tile = inDrawer ? (
       <button
         key={effect.id}
         type="button"
@@ -93,6 +121,7 @@ export const BackgroundEffectGrid: FC<Props> = ({
         data-disabled={disabled ? "" : undefined}
         className={styles.tile}
         onClick={(): void => choose(effect.id)}
+        {...removeProps}
       >
         {content}
       </button>
@@ -106,9 +135,25 @@ export const BackgroundEffectGrid: FC<Props> = ({
         className={styles.tile}
         // Kept open, so the user sees what they chose take effect.
         onSelect={(e) => e.preventDefault()}
+        {...removeProps}
       >
         {content}
       </DropdownMenuRadioItem>
+    );
+    if (remove === undefined) return tile;
+    // Beside the item, not in it: inside, the item takes the press first and
+    // the tile is chosen instead.
+    return (
+      <div key={effect.id} className={styles.removable}>
+        {tile}
+        <Tooltip label={removeLabel ?? ""}>
+          {/* Not a control of its own, so the menu keeps one keyboard model:
+              the keyboard reaches the same action through Delete. */}
+          <span aria-hidden className={styles.remove} onClick={remove}>
+            <CloseIcon width={20} height={20} />
+          </span>
+        </Tooltip>
+      </div>
     );
   });
 

@@ -83,6 +83,8 @@ export interface MediaMuteAndSwitchButtonProps {
   backgroundEffectSettling?: boolean;
   /** Called with the file chosen from the add tile. Omit to leave it out. */
   onAddBackgroundImage?: (file: File) => void;
+  /** Removes a removable effect, never the one in force. */
+  onRemoveBackgroundEffect?: (id: string) => void;
   /** Why the last file offered couldn't be used; a new object each time. */
   backgroundImageRefusal?: { text: string };
   /**
@@ -123,6 +125,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   backgroundEffectNotice,
   backgroundEffectSettling,
   onAddBackgroundImage,
+  onRemoveBackgroundEffect,
   backgroundImageRefusal,
   onSelect,
 }) => {
@@ -503,6 +506,8 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
                     }
               }
               addLabel={t("action.add_background_image")}
+              onRemove={onRemoveBackgroundEffect}
+              removeLabel={t("action.remove")}
             />
           )}
           {/* In the list, so the menu grows no taller for it. */}
