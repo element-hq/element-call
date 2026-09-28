@@ -104,7 +104,7 @@ import {
   type SpotlightPortraitLayoutMedia,
   type WindowMode,
 } from "../layout-types.ts";
-import { chooseSpotlightSpeaker } from "../layoutMedia.ts";
+import { chooseSpotlightSpeaker, computeSpotlight } from "../layoutMedia.ts";
 import { ElementCallError, UnknownCallError } from "../../utils/errors.ts";
 import { type Epoch, type ObservableScope } from "../ObservableScope.ts";
 import { createHomeserverConnected$ } from "./localMember/HomeserverConnected.ts";
@@ -1029,33 +1029,12 @@ export function createCallViewModel$(
     ),
   );
 
-  const spotlightAndPip$ = scope.behavior<{
-    spotlight: MediaViewModel[];
-    pip$: Observable<UserMediaViewModel | undefined>;
-  }>(
-    ringingMedia$.pipe(
-      switchMap((ringingMedia) => {
-        if (ringingMedia !== null)
-          return of({ spotlight: [ringingMedia], pip$: localUserMediaForPip$ });
-
-        return screenShares$.pipe(
-          switchMap((screenShares) => {
-            if (screenShares.length > 0)
-              return of({ spotlight: screenShares, pip$: spotlightSpeaker$ });
-
-            return spotlightSpeaker$.pipe(
-              map((speaker) => ({
-                spotlight: speaker ? [speaker] : [],
-                // Hide PiP if redundant (i.e. if local user is already in spotlight)
-                pip$: localUserMediaForPip$.pipe(
-                  map((m) => (m === speaker ? undefined : m)),
-                ),
-              })),
-            );
-          }),
-        );
-      }),
-    ),
+  const spotlightAndPip$ = scope.behavior(
+    combineLatest(
+      [ringingMedia$, screenShares$, spotlightSpeaker$, localUserMediaForPip$],
+      (ringing, screenShares, speaker, localPip) =>
+        computeSpotlight({ ringing, screenShares, speaker, localPip }),
+    ).pipe(distinctUntilChanged(layoutShallowEquals)),
   );
 
   const spotlight$ = scope.behavior<MediaViewModel[]>(
@@ -1147,16 +1126,12 @@ export function createCallViewModel$(
     edgeToEdge: boolean,
   ): Observable<SpotlightExpandedLayoutMedia> =>
     spotlightAndPip$.pipe(
-      switchMap(({ spotlight, pip$ }) =>
-        pip$.pipe(
-          map((pip) => ({
-            type: "spotlight-expanded" as const,
-            edgeToEdge,
-            spotlight,
-            pip: pip ?? undefined,
-          })),
-        ),
-      ),
+      map(({ spotlight, pip }) => ({
+        type: "spotlight-expanded" as const,
+        edgeToEdge,
+        spotlight,
+        pip,
+      })),
     );
 
   const oneOnOneLayoutMedia$: Behavior<{
