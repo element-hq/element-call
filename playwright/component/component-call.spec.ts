@@ -203,13 +203,13 @@ test("gates isolated screen-share audio by the component host capability", async
 
   const log = page.getByTestId("bridge-log");
   const capable = panes.nth(0);
-  await capable.getByRole("button", { name: "Share screen" }).click();
+  await capable.getByRole("switch", { name: "Share screen" }).click();
   await expect(
     log.locator("li").filter({
       hasText: "Call A → acquireIsolatedScreenShareAudio(",
     }),
   ).toBeVisible({ timeout: 30_000 });
-  await capable.getByRole("button", { name: "Sharing screen" }).click();
+  await capable.getByRole("switch", { name: "Sharing screen" }).click();
   await expect(
     log.locator("li").filter({
       hasText: "Call A → releaseIsolatedScreenShareAudio(",
@@ -217,11 +217,11 @@ test("gates isolated screen-share audio by the component host capability", async
   ).toBeVisible({ timeout: 30_000 });
 
   const ordinary = panes.nth(1);
-  await ordinary.getByRole("button", { name: "Share screen" }).click();
+  await ordinary.getByRole("switch", { name: "Share screen" }).click();
   await expect(
-    ordinary.getByRole("button", { name: "Sharing screen" }),
+    ordinary.getByRole("switch", { name: "Sharing screen" }),
   ).toBeVisible({ timeout: 30_000 });
-  await ordinary.getByRole("button", { name: "Sharing screen" }).click();
+  await ordinary.getByRole("switch", { name: "Sharing screen" }).click();
   await expect(
     log.locator("li").filter({
       hasText: "Call B → acquireIsolatedScreenShareAudio(",
