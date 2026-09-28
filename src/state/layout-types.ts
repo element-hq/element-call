@@ -5,8 +5,6 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type BehaviorSubject } from "rxjs";
-
 import { type LocalUserMediaViewModel } from "./media/LocalUserMediaViewModel.ts";
 import { type MediaViewModel } from "./media/MediaViewModel.ts";
 import { type RingingMediaViewModel } from "./media/RingingMediaViewModel.ts";
@@ -17,6 +15,7 @@ import {
 } from "./TileViewModel.ts";
 import { type Behavior } from "./Behavior.ts";
 import { shallowEquals as arrayShallowEquals } from "../utils/array.ts";
+import { type FloatingTile } from "./FloatingTile.ts";
 
 export interface GridLayoutMedia {
   type: "grid";
@@ -80,24 +79,48 @@ export interface Alignment {
   block: "start" | "end";
 }
 
+export interface Drag {
+  /**
+   * The X offset of the dragged tile relative to its container.
+   */
+  x: number;
+  /**
+   * The Y offset of the dragged tile relative to its container.
+   */
+  y: number;
+  /**
+   * The X coordinate of the dragged tile, as a scalar of the container's width.
+   */
+  xRatio: number;
+  /**
+   * The Y coordinate of the dragged tile, as a scalar of the container's height.
+   */
+  yRatio: number;
+  /**
+   * Whether this event ends the drag gesture.
+   */
+  endOfGesture: boolean;
+}
+
+export type DragCallback = (drag: Drag) => void;
+
 export interface GridLayout {
   type: "grid";
-  spotlight?: SpotlightTileViewModel;
+  spotlight?: FloatingTile & { vm: SpotlightTileViewModel };
   grid: GridTileViewModel[];
-  spotlightAlignment$: BehaviorSubject<Alignment>;
   setVisibleTiles: (value: number) => void;
 }
 
 export interface SpotlightLandscapeLayout {
   type: "spotlight-landscape";
-  spotlight: SpotlightTileViewModel;
+  spotlight: { vm: SpotlightTileViewModel };
   grid: GridTileViewModel[];
   setVisibleTiles: (value: number) => void;
 }
 
 export interface SpotlightPortraitLayout {
   type: "spotlight-portrait";
-  spotlight: SpotlightTileViewModel;
+  spotlight: { vm: SpotlightTileViewModel };
   grid: GridTileViewModel[];
   setVisibleTiles: (value: number) => void;
 }
@@ -105,23 +128,19 @@ export interface SpotlightPortraitLayout {
 export interface SpotlightExpandedLayout {
   type: "spotlight-expanded";
   spotlight: SpotlightTileViewModel;
-  pip?: GridTileViewModel;
-  pipAlignment$: BehaviorSubject<Alignment>;
+  pip?: FloatingTile & { vm: GridTileViewModel };
 }
 
 export interface OneOnOneDesktopLayout {
   type: "one-on-one-desktop";
   spotlight: GridTileViewModel;
-  pip: GridTileViewModel;
-  pipAlignment$: BehaviorSubject<Alignment>;
+  pip: FloatingTile & { vm: GridTileViewModel };
 }
 
 export interface OneOnOneMobileLayout {
   type: "one-on-one-mobile";
   spotlight: SpotlightTileViewModel;
-  pip?: GridTileViewModel;
-  pipSize$: Behavior<"sm" | "lg">;
-  pipAlignment$: BehaviorSubject<Alignment>;
+  pip?: FloatingTile & { vm: GridTileViewModel; size$: Behavior<"sm" | "lg"> };
 }
 
 export interface PipLayout {

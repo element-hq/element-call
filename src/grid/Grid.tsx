@@ -40,6 +40,7 @@ import { useMergedRefs } from "../useMergedRefs";
 import { TileWrapper } from "./TileWrapper";
 import { usePrefersReducedMotion } from "../usePrefersReducedMotion";
 import { useInitial } from "../useInitial";
+import { type DragCallback } from "../state/layout-types";
 
 const MAX_ANIMATED_TILES = 50; // Capped for performance reasons
 
@@ -83,7 +84,10 @@ interface DragState {
   cursorY: number;
 }
 
-interface SlotProps<Model> extends Omit<ComponentProps<"div">, "onDrag"> {
+export interface SlotProps<Model> extends Omit<
+  ComponentProps<"div">,
+  "onDrag"
+> {
   id: string;
   model: Model;
   onDrag?: DragCallback;
@@ -180,31 +184,6 @@ export interface TileProps<Model, R extends HTMLElement> {
   targetHeight: number;
   model: Model;
 }
-
-interface Drag {
-  /**
-   * The X coordinate of the dragged tile in grid space.
-   */
-  x: number;
-  /**
-   * The Y coordinate of the dragged tile in grid space.
-   */
-  y: number;
-  /**
-   * The X coordinate of the dragged tile, as a scalar of the grid width.
-   */
-  xRatio: number;
-  /**
-   * The Y coordinate of the dragged tile, as a scalar of the grid height.
-   */
-  yRatio: number;
-  /**
-   * Whether this event ends the drag gesture.
-   */
-  endOfGesture: boolean
-}
-
-export type DragCallback = (drag: Drag) => void;
 
 interface LayoutMemoProps<
   LayoutModel,

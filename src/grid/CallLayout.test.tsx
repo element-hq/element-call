@@ -13,7 +13,7 @@ import { arrangeTiles, type Bounds } from "./CallLayout";
 import { makeGridLayout } from "./GridLayout";
 import { makeSpotlightLandscapeLayout } from "./SpotlightLandscapeLayout";
 import { makeSpotlightPortraitLayout } from "./SpotlightPortraitLayout";
-import { type DragCallback, type LayoutProps } from "./Grid";
+import { type LayoutProps } from "./Grid";
 import { constant } from "../state/Behavior";
 import {
   type Alignment,
@@ -52,33 +52,6 @@ describe("grid layout", () => {
     expect(layer.style.getPropertyValue("--width")).toBe(
       `${Math.floor(arrangeTiles(400, 300, 3).tileWidth)}px`,
     );
-  });
-
-  it("moves the spotlight only when a drag reaches another corner", () => {
-    const model = gridModel();
-    const { fixed: Fixed } = makeGridLayout({ minBounds$: bounds });
-    render(<Fixed model={model} Slot={Slot} />);
-    const alignments: Alignment[] = [];
-    model.spotlightAlignment$.subscribe((a) => alignments.push(a));
-    const drag = drags.get("spotlight")!;
-
-    // Still in the bottom right corner
-    act(() => drag({ x: 0, y: 0, xRatio: 0.9, yRatio: 0.9 }));
-    // Over to the bottom left
-    act(() => drag({ x: 0, y: 0, xRatio: 0.1, yRatio: 0.9 }));
-    // And a little further, still bottom left
-    act(() => drag({ x: 0, y: 0, xRatio: 0.2, yRatio: 0.8 }));
-    // Up to the top left
-    act(() => drag({ x: 0, y: 0, xRatio: 0.2, yRatio: 0.1 }));
-
-    expect(alignments).toEqual([
-      { inline: "end", block: "end" },
-      { inline: "start", block: "end" },
-      { inline: "start", block: "start" },
-    ]);
-    const slot = screen.getByTestId("slot-spotlight");
-    expect(slot.getAttribute("data-inline-alignment")).toBe("start");
-    expect(slot.getAttribute("data-block-alignment")).toBe("start");
   });
 });
 
@@ -123,11 +96,15 @@ const bounds = constant<Bounds>({ width: 800, height: 600 });
 
 // The layouts only pass tile view models through to their slots
 const media = {} as UserMediaViewModel;
-const spotlight = new SpotlightTileViewModel(
-  constant([]),
-  constant(false),
-  constant("solid"),
-);
+const spotlight = {
+  vm: new SpotlightTileViewModel(
+    constant([]),
+    constant(false),
+    constant("solid"),
+  ),
+  alignment$: constant<Alignment>({ inline: "end", block: "end" }),
+  onDrag: () => {},
+};
 const tiles = (): GridTileViewModel[] =>
   Array.from({ length: 3 }, () => new GridTileViewModel(constant(media)));
 
@@ -136,10 +113,6 @@ function gridModel(): GridLayout {
     type: "grid",
     spotlight,
     grid: tiles(),
-    spotlightAlignment$: new BehaviorSubject<Alignment>({
-      inline: "end",
-      block: "end",
-    }),
     setVisibleTiles: () => {},
   };
 }
@@ -162,22 +135,17 @@ function portraitModel(): SpotlightPortraitLayout {
   };
 }
 
-// Slots record their drag callback so a test can drag them, and show the id
-// of the tile they hold
-const drags = new Map<string, DragCallback | undefined>();
+// Slots show the id of the tile they hold
 const Slot: LayoutProps<unknown, TileViewModel, HTMLDivElement>["Slot"] = ({
   id,
   model,
   onDrag,
   ...props
-}) => {
-  drags.set(id, onDrag);
-  return (
-    <div data-testid={`slot-${id}`} {...props}>
-      {model instanceof GridTileViewModel ? model.id : "spotlight"}
-    </div>
-  );
-};
+}) => (
+  <div data-testid={`slot-${id}`} {...props}>
+    {model instanceof GridTileViewModel ? model.id : "spotlight"}
+  </div>
+);
 
 function slotIds(): string[] {
   return screen

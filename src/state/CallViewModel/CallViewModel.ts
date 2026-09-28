@@ -93,7 +93,6 @@ import { type ProcessorState } from "../../livekit/TrackProcessorContext";
 import { type HostBridge, nullHostBridge } from "../../HostBridge";
 import {
   layoutShallowEquals,
-  type Alignment,
   type GridLayoutMedia,
   type Layout,
   type LayoutMedia,
@@ -163,6 +162,7 @@ import {
   type RingingMediaViewModel,
 } from "../media/RingingMediaViewModel.ts";
 import { type GridTileViewModel } from "../TileViewModel.ts";
+import { createFloatingTile } from "../FloatingTile.ts";
 
 //TODO
 // Larger rename
@@ -1548,32 +1548,28 @@ export function createCallViewModel$(
   );
 
   /**
-   * The alignment of the floating spotlight tile, if present.
+   * State of the floating spotlight tile, if present.
    */
-  const spotlightAlignment$ = new BehaviorSubject<Alignment>({
+  const floatingSpotlightTile = createFloatingTile(scope, {
     inline: "end",
     block: "end",
   });
   /**
-   * The size of the small picture-in-picture tile, if present, when in portrait.
+   * State of the small picture-in-picture tile, if present, when in landscape.
    */
-  const portraitPipSize$ = scope.behavior(
-    showFooter$.pipe(map((showFooter) => (showFooter ? "lg" : "sm"))),
-  );
-  /**
-   * The alignment of the small picture-in-picture tile, if present, when in portrait.
-   */
-  const portraitPipAlignment$ = new BehaviorSubject<Alignment>({
-    inline: "end",
-    block: "end",
-  });
-  /**
-   * The alignment of the small picture-in-picture tile, if present, when in landscape.
-   */
-  const landscapePipAlignment$ = new BehaviorSubject<Alignment>({
+  const landscapePipTile = createFloatingTile(scope, {
     inline: "end",
     block: "start",
   });
+  /**
+   * State of the small picture-in-picture tile, if present, when in portrait.
+   */
+  const portraitPipTile = {
+    ...createFloatingTile(scope, { inline: "end", block: "end" }),
+    size$: scope.behavior(
+      showFooter$.pipe(map((showFooter) => (showFooter ? "lg" : "sm"))),
+    ),
+  };
 
   // There is a cyclical dependency here: the layout algorithms want to know
   // which tiles are on screen, but to know which tiles are on screen we have to
@@ -1603,7 +1599,7 @@ export function createCallViewModel$(
             case "spotlight-portrait":
               [layout, newTiles] = gridLikeLayout(
                 media,
-                spotlightAlignment$,
+                floatingSpotlightTile,
                 visibleTiles,
                 setVisibleTiles,
                 prevTiles,
@@ -1613,26 +1609,25 @@ export function createCallViewModel$(
             case "spotlight-expanded":
               [layout, newTiles] = spotlightExpandedLayout(
                 media,
-                landscapePipAlignment$,
+                landscapePipTile,
                 prevTiles,
               );
               break;
             case "one-on-one-desktop":
               [layout, newTiles] = oneOnOneDesktopLayout(
                 media,
-                landscapePipAlignment$,
+                landscapePipTile,
                 prevTiles,
               );
-              pip = layout.pip;
+              pip = layout.pip.vm;
               break;
             case "one-on-one-mobile":
               [layout, newTiles] = oneOnOneMobileLayout(
                 media,
-                portraitPipSize$,
-                portraitPipAlignment$,
+                portraitPipTile,
                 prevTiles,
               );
-              pip = layout.pip;
+              pip = layout.pip?.vm;
               break;
             case "pip":
               [layout, newTiles] = pipLayout(media, prevTiles);
