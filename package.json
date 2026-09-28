@@ -95,6 +95,7 @@
     "copy-to-clipboard": "^3.3.3",
     "eslint-plugin-element-call": "link:eslint",
     "eslint-plugin-storybook": "^10.3.6",
+    "fake-indexeddb": "^6.2.5",
     "fetch-mock": "11.1.5",
     "i18next": "^26.0.0",
     "i18next-browser-languagedetector": "^8.0.0",

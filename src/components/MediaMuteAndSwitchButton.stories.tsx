@@ -195,6 +195,7 @@ export const VideoUnmute: Story = {
     backgroundEffects: effects,
     selectedBackgroundEffect: "none",
     onSelectBackgroundEffect: fn(),
+    onAddBackgroundImage: fn(),
   },
 };
 
@@ -237,6 +238,11 @@ export const BackgroundEffects: Story = {
       await expect(tile.left >= frame.left && tile.right <= frame.right).toBe(
         true,
       );
+
+    const add = within(section).getByRole("menuitem", { name: "Add image" });
+    await expect(
+      tiles[3].compareDocumentPosition(add) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
 
     await userEvent.click(menu.getByRole("menuitemradio", { name: "Blur" }));
     await expect(args.onSelectBackgroundEffect).toHaveBeenCalledWith("blur");
@@ -330,6 +336,42 @@ export const BackgroundEffectsSettling: Story = {
       checked: false,
     }))
       await expect(other).toHaveAttribute("aria-busy", "false");
+  },
+};
+
+/** A file that can't be used: said where it was chosen, and nothing changes. */
+export const BackgroundImageRefused: Story = {
+  args: {
+    ...VideoUnmute.args,
+    selectedBackgroundEffect: "blur",
+    backgroundEffectNotice:
+      "Background effects run slowly on this platform, which may cause your video to stutter.",
+    backgroundImageRefusal: { text: "That file is not a supported image" },
+  },
+  decorators: [
+    (Story): JSX.Element => (
+      <WithACallArea blockSize={300}>
+        <Story />
+      </WithACallArea>
+    ),
+  ],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
+    const menu = within(document.body);
+    const message = await menu.findByText("That file is not a supported image");
+    const list = document.body.querySelector<HTMLElement>(
+      `.${styles.deviceList}`,
+    )!;
+    await expect(list.scrollHeight).toBeGreaterThan(list.clientHeight);
+    const scrollport = list.getBoundingClientRect();
+    const shown = message.getBoundingClientRect();
+    await expect(shown.bottom).toBeLessThanOrEqual(scrollport.bottom + 1);
+    await expect(shown.top).toBeGreaterThanOrEqual(scrollport.top - 1);
+    await expect(menu.queryByText(/run slowly/)).toBeNull();
+    await expect(
+      menu.getByRole("menuitemradio", { name: "Blur" }),
+    ).toHaveAttribute("aria-checked", "true");
   },
 };
 
