@@ -5,10 +5,28 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
+import { type LayoutMode } from "./LayoutSwitchViewModel.ts";
+import {
+  type GridLayoutMedia,
+  type LayoutMedia,
+  type OneOnOneDesktopLayoutMedia,
+  type OneOnOneMobileLayoutMedia,
+  type SpotlightExpandedLayoutMedia,
+  type SpotlightLandscapeLayoutMedia,
+  type SpotlightPortraitLayoutMedia,
+  type WindowMode,
+} from "./layout-types.ts";
+import { type LocalUserMediaViewModel } from "./media/LocalUserMediaViewModel.ts";
 import { type MediaViewModel } from "./media/MediaViewModel.ts";
 import { type RingingMediaViewModel } from "./media/RingingMediaViewModel.ts";
 import { type ScreenShareViewModel } from "./media/ScreenShareViewModel.ts";
 import { type UserMediaViewModel } from "./media/UserMediaViewModel.ts";
+
+/**
+ * This is the number of participants that we think constitutes a "small" call
+ * on mobile. No spotlight tile should be shown below this threshold.
+ */
+const smallMobileCallThreshold = 3;
 
 /**
  * Picks who to spotlight based on who is speaking, preferring the previous
@@ -65,4 +83,134 @@ export function computeSpotlight({
     // Hide PiP if redundant (i.e. if local user is already in spotlight)
     pip: localPip === speaker ? undefined : localPip,
   };
+}
+
+export interface OneOnOneMedia {
+  local: LocalUserMediaViewModel;
+  remote: UserMediaViewModel | RingingMediaViewModel;
+}
+
+export interface LayoutMediaInputs {
+  windowMode: WindowMode;
+  /** The layout chosen with the layout switch. */
+  layoutMode: LayoutMode;
+  spotlightExpanded: boolean;
+  /** Set when the call qualifies for a one-on-one layout. */
+  oneOnOne: OneOnOneMedia | null;
+  localVideoEnabled: boolean;
+  spotlight: MediaViewModel[];
+  grid: UserMediaViewModel[];
+  pip: UserMediaViewModel | undefined;
+  desktop: boolean;
+}
+
+/**
+ * Decides which layout to use and which media goes where in it.
+ */
+export function computeLayoutMedia({
+  windowMode,
+  layoutMode,
+  spotlightExpanded,
+  oneOnOne,
+  localVideoEnabled,
+  spotlight,
+  grid,
+  pip,
+  desktop,
+}: LayoutMediaInputs): LayoutMedia {
+  switch (windowMode) {
+    case "normal":
+      if (layoutMode === "grid")
+        return oneOnOne === null
+          ? gridLayoutMedia(spotlight, grid)
+          : oneOnOneDesktopLayoutMedia(oneOnOne);
+      return spotlightExpanded
+        ? spotlightExpandedLayoutMedia(false, spotlight, pip)
+        : spotlightLandscapeLayoutMedia(false, spotlight, grid);
+    case "narrow":
+      if (oneOnOne !== null)
+        return oneOnOneMobileLayoutMedia(oneOnOne, localVideoEnabled);
+      return grid.length > smallMobileCallThreshold || hasScreenShare(spotlight)
+        ? spotlightPortraitLayoutMedia(spotlight, grid)
+        : gridLayoutMedia(spotlight, grid);
+    case "flat":
+      if (oneOnOne !== null)
+        return oneOnOneMobileLayoutMedia(oneOnOne, localVideoEnabled);
+      // Yes, grid mode actually gets you a "spotlight" layout in this window
+      // mode.
+      return layoutMode === "grid"
+        ? spotlightLandscapeLayoutMedia(true, spotlight, grid)
+        : spotlightExpandedLayoutMedia(true, spotlight, pip);
+    case "pip":
+      return { type: "pip", edgeToEdge: !desktop, spotlight };
+  }
+}
+
+function hasScreenShare(spotlight: MediaViewModel[]): boolean {
+  return spotlight.some((vm) => vm.type === "screen share");
+}
+
+function gridLayoutMedia(
+  spotlight: MediaViewModel[],
+  grid: UserMediaViewModel[],
+): GridLayoutMedia {
+  return {
+    type: "grid",
+    edgeToEdge: false,
+    spotlight: hasScreenShare(spotlight) ? spotlight : undefined,
+    grid,
+  };
+}
+
+function oneOnOneDesktopLayoutMedia(
+  media: OneOnOneMedia,
+): OneOnOneDesktopLayoutMedia {
+  return media.remote.type === "ringing"
+    ? {
+        type: "one-on-one-desktop",
+        edgeToEdge: false,
+        spotlight: media.local,
+        pip: media.remote,
+      }
+    : {
+        type: "one-on-one-desktop",
+        edgeToEdge: false,
+        spotlight: media.remote,
+        pip: media.local,
+      };
+}
+
+function spotlightExpandedLayoutMedia(
+  edgeToEdge: boolean,
+  spotlight: MediaViewModel[],
+  pip: UserMediaViewModel | undefined,
+): SpotlightExpandedLayoutMedia {
+  return { type: "spotlight-expanded", edgeToEdge, spotlight, pip };
+}
+
+function spotlightLandscapeLayoutMedia(
+  edgeToEdge: boolean,
+  spotlight: MediaViewModel[],
+  grid: UserMediaViewModel[],
+): SpotlightLandscapeLayoutMedia {
+  return { type: "spotlight-landscape", edgeToEdge, spotlight, grid };
+}
+
+function oneOnOneMobileLayoutMedia(
+  media: OneOnOneMedia,
+  localVideoEnabled: boolean,
+): OneOnOneMobileLayoutMedia {
+  return {
+    type: "one-on-one-mobile",
+    edgeToEdge: true,
+    spotlight: media.remote,
+    pip: localVideoEnabled ? media.local : undefined,
+  };
+}
+
+function spotlightPortraitLayoutMedia(
+  spotlight: MediaViewModel[],
+  grid: UserMediaViewModel[],
+): SpotlightPortraitLayoutMedia {
+  return { type: "spotlight-portrait", edgeToEdge: false, spotlight, grid };
 }

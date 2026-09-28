@@ -7,7 +7,12 @@ Please see LICENSE in the repository root for full details.
 
 import { describe, expect, it } from "vitest";
 
-import { chooseSpotlightSpeaker, computeSpotlight } from "./layoutMedia";
+import {
+  chooseSpotlightSpeaker,
+  computeLayoutMedia,
+  computeSpotlight,
+  type LayoutMediaInputs,
+} from "./layoutMedia";
 import { type LocalUserMediaViewModel } from "./media/LocalUserMediaViewModel";
 import { type RemoteUserMediaViewModel } from "./media/RemoteUserMediaViewModel";
 import { type RingingMediaViewModel } from "./media/RingingMediaViewModel";
@@ -108,5 +113,108 @@ describe("computeSpotlight", () => {
         localPip: local,
       }),
     ).toEqual({ spotlight: [local], pip: undefined });
+  });
+});
+
+describe("computeLayoutMedia", () => {
+  const base: LayoutMediaInputs = {
+    windowMode: "normal",
+    layoutMode: "grid",
+    spotlightExpanded: false,
+    oneOnOne: null,
+    localVideoEnabled: true,
+    spotlight: [alice],
+    grid: [local, alice, bob],
+    pip: local,
+    desktop: false,
+  };
+  const layout = (
+    overrides: Partial<LayoutMediaInputs>,
+  ): ReturnType<typeof computeLayoutMedia> =>
+    computeLayoutMedia({ ...base, ...overrides });
+
+  it("uses a plain grid unless a screen share needs the spotlight", () => {
+    expect(layout({})).toEqual({
+      type: "grid",
+      edgeToEdge: false,
+      spotlight: undefined,
+      grid: base.grid,
+    });
+    expect(layout({ spotlight: [screenShare] }).spotlight).toEqual([
+      screenShare,
+    ]);
+  });
+
+  it("switches between landscape and expanded spotlight", () => {
+    expect(layout({ layoutMode: "spotlight" })).toMatchObject({
+      type: "spotlight-landscape",
+      edgeToEdge: false,
+    });
+    expect(
+      layout({ layoutMode: "spotlight", spotlightExpanded: true }),
+    ).toEqual({
+      type: "spotlight-expanded",
+      edgeToEdge: false,
+      spotlight: [alice],
+      pip: local,
+    });
+  });
+
+  it("puts the remote user in the desktop one-on-one spotlight, or the local user when ringing", () => {
+    expect(layout({ oneOnOne: { local, remote: alice } })).toEqual({
+      type: "one-on-one-desktop",
+      edgeToEdge: false,
+      spotlight: alice,
+      pip: local,
+    });
+    expect(layout({ oneOnOne: { local, remote: ringing } })).toMatchObject({
+      spotlight: local,
+      pip: ringing,
+    });
+  });
+
+  it("uses a mobile one-on-one layout in narrow and flat windows, hiding the PiP without video", () => {
+    const oneOnOne = { local, remote: alice };
+    expect(layout({ windowMode: "narrow", oneOnOne })).toEqual({
+      type: "one-on-one-mobile",
+      edgeToEdge: true,
+      spotlight: alice,
+      pip: local,
+    });
+    expect(
+      layout({ windowMode: "flat", oneOnOne, localVideoEnabled: false }),
+    ).toMatchObject({ type: "one-on-one-mobile", pip: undefined });
+  });
+
+  it("uses a portrait spotlight in narrow windows for big calls or screen shares", () => {
+    expect(layout({ windowMode: "narrow" }).type).toBe("grid");
+    expect(
+      layout({ windowMode: "narrow", grid: [local, alice, bob, carol] }).type,
+    ).toBe("spotlight-portrait");
+    expect(
+      layout({ windowMode: "narrow", spotlight: [screenShare] }).type,
+    ).toBe("spotlight-portrait");
+  });
+
+  it("uses edge-to-edge spotlight layouts in flat windows", () => {
+    expect(layout({ windowMode: "flat" })).toMatchObject({
+      type: "spotlight-landscape",
+      edgeToEdge: true,
+    });
+    expect(
+      layout({ windowMode: "flat", layoutMode: "spotlight" }),
+    ).toMatchObject({
+      type: "spotlight-expanded",
+      edgeToEdge: true,
+    });
+  });
+
+  it("uses the PiP layout, edge to edge except on desktop", () => {
+    expect(layout({ windowMode: "pip" })).toEqual({
+      type: "pip",
+      edgeToEdge: true,
+      spotlight: [alice],
+    });
+    expect(layout({ windowMode: "pip", desktop: true }).edgeToEdge).toBe(false);
   });
 });
