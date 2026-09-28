@@ -18,6 +18,13 @@ import {
 import { type Behavior } from "./Behavior.ts";
 import { shallowEquals as arrayShallowEquals } from "../utils/array.ts";
 
+/**
+ * The general shape of the space the call is drawn in. Called a window because
+ * that is what it is in the standalone app; for a component it is the container
+ * the host gave us, which may be a small corner of a large window.
+ */
+export type WindowMode = "normal" | "narrow" | "flat" | "pip";
+
 export interface GridLayoutMedia {
   type: "grid";
   edgeToEdge: false;

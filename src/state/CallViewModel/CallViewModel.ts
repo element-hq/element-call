@@ -102,6 +102,7 @@ import {
   type SpotlightExpandedLayoutMedia,
   type SpotlightLandscapeLayoutMedia,
   type SpotlightPortraitLayoutMedia,
+  type WindowMode,
 } from "../layout-types.ts";
 import { ElementCallError, UnknownCallError } from "../../utils/errors.ts";
 import { type Epoch, type ObservableScope } from "../ObservableScope.ts";
@@ -270,13 +271,6 @@ const smallMobileCallThreshold = 3;
 // How long the footer should be shown for when hovering over or interacting
 // with the interface
 const showFooterMs = 4000;
-
-/**
- * The general shape of the space the call is drawn in. Called a window because
- * that is what it is in the standalone app; for a component it is the container
- * the host gave us, which may be a small corner of a large window.
- */
-export type WindowMode = "normal" | "narrow" | "flat" | "pip";
 
 interface LayoutScanState {
   layout: Layout | null;
