@@ -198,6 +198,10 @@ interface Drag {
    * The Y coordinate of the dragged tile, as a scalar of the grid height.
    */
   yRatio: number;
+  /**
+   * Whether this event ends the drag gesture.
+   */
+  endOfGesture: boolean
 }
 
 export type DragCallback = (drag: Drag) => void;
@@ -464,13 +468,13 @@ export function Grid<
       )
       .catch(logger.error);
 
-    if (endOfGesture)
-      callback({
-        x: tileX,
-        y: tileY,
-        xRatio: tileX / (gridBounds.width - tile.width),
-        yRatio: tileY / (gridBounds.height - tile.height),
-      });
+    callback({
+      x: tileX,
+      y: tileY,
+      xRatio: tileX / (gridBounds.width - tile.width),
+      yRatio: tileY / (gridBounds.height - tile.height),
+      endOfGesture,
+    });
   };
 
   // Callback for useDrag. We could call useDrag here, but the default
