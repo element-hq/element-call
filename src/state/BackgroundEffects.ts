@@ -25,6 +25,7 @@ import { type ProcessorState } from "../livekit/TrackProcessorContext";
 import {
   type BackgroundEffect,
   blurRadius,
+  type EffectId,
   imagePathFor,
   parseEffect,
 } from "../livekit/backgroundEffects";
@@ -34,6 +35,8 @@ export interface BackgroundEffectsOptions {
   supported: boolean;
   /** The effect chosen, as the setting stores it. */
   effect$: Behavior<string>;
+  /** Stores a choice, to forget one that can't be honoured. */
+  setEffect: (id: EffectId) => void;
   /**
    * Shared by the pre-join preview and the call. Building or destroying it is
    * what primes it, and a primed pipeline lets its next frame through
@@ -50,13 +53,24 @@ export class BackgroundEffects {
 
   public constructor(
     scope: ObservableScope,
-    { supported, effect$, pipeline, transformer }: BackgroundEffectsOptions,
+    {
+      supported,
+      effect$,
+      setEffect,
+      pipeline,
+      transformer,
+    }: BackgroundEffectsOptions,
   ) {
     const choice$ = effect$.pipe(map(parseEffect));
     const wanted$ = choice$.pipe(
       map((effect) => effect.kind !== "none"),
       distinctUntilChanged(),
     );
+
+    choice$.pipe(scope.bind()).subscribe((effect) => {
+      if (effect.kind === "none") return;
+      if (!supported) setEffect("none");
+    });
 
     const drewAFrame$ = scope.behavior(
       new Observable<boolean>((subscriber) => {

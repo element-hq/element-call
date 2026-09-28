@@ -26,6 +26,7 @@ import { backgroundEffect } from "../settings/settings";
 import { constant } from "../state/Behavior";
 import { flushPromises, testScope } from "../utils/test";
 
+const sdkSupportMock = vi.hoisted(() => vi.fn(() => true));
 const pipelines = vi.hoisted(() => ({
   built: 0,
   destroyed: 0,
@@ -46,7 +47,7 @@ vi.mock("@livekit/track-processors", () => ({
       return Promise.resolve();
     });
   }),
-  supportsBackgroundProcessors: (): boolean => true,
+  supportsBackgroundProcessors: (): boolean => sdkSupportMock(),
 }));
 // A phone: the pipeline must not ask.
 vi.mock("../Platform", () => ({ platform: "ios" }));
@@ -176,6 +177,7 @@ describe("ProcessorProvider", () => {
     pipelines.built = 0;
     pipelines.destroyed = 0;
     pipelines.switches = [];
+    sdkSupportMock.mockReturnValue(true);
     backgroundEffect.setValue("none");
   });
   afterEach(() => backgroundEffect.setValue("none"));
@@ -192,6 +194,28 @@ describe("ProcessorProvider", () => {
     expect(pipelines.destroyed).toBe(0);
     expect(track.setProcessor).toHaveBeenCalledTimes(1);
     expect(track.stopProcessor).not.toHaveBeenCalled();
+  });
+
+  it("camera on with an effect chosen publishes nothing unprocessed", async () => {
+    const view = render(surfaces(cameraTrack()));
+    await blur(true);
+    const pipeline = latest().processor;
+
+    // Camera off, then on again: a new track, given the pipeline as it
+    // arrives, and the pipeline neither rebuilt nor switched again.
+    await act(async () => {
+      view.rerender(surfaces(null));
+      await flushPromises();
+    });
+    const again = cameraTrack();
+    await act(async () => {
+      view.rerender(surfaces(again));
+      await flushPromises();
+    });
+    expect(again.setProcessor).toHaveBeenCalledTimes(1);
+    expect(again.setProcessor).toHaveBeenCalledWith(pipeline);
+    expect(pipelines.built).toBe(1);
+    expect(pipelines.switches).toHaveLength(1);
   });
 
   it("runs on a phone whose browser can run it", async () => {
