@@ -218,6 +218,10 @@ export interface UrlConfiguration {
    */
   controlledAudioDevices: boolean;
   /**
+   * Whether the host can provide an isolated screen-share audio source.
+   */
+  isolatedScreenShareAudio: boolean;
+  /**
    * Setting this flag skips the lobby and brings you in the call directly.
    * In the widget this can be combined with preload to pass the device settings
    * with the join widget action.
@@ -380,6 +384,7 @@ export function configurationForIntent(intent: UserIntent): UrlConfiguration {
     allowIceFallback: true,
     perParticipantE2EE: true,
     controlledAudioDevices: platform === "desktop" ? false : true,
+    isolatedScreenShareAudio: false,
     skipLobby: true,
     returnToLobby: false,
     sendNotificationType: "notification",
@@ -435,6 +440,7 @@ export function configurationForIntent(intent: UserIntent): UrlConfiguration {
         allowIceFallback: false,
         perParticipantE2EE: false,
         controlledAudioDevices: false,
+        isolatedScreenShareAudio: false,
         skipLobby: false,
         returnToLobby: false,
         sendNotificationType: undefined,
@@ -557,6 +563,9 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     allowIceFallback: parser.getFlag("allowIceFallback"),
     perParticipantE2EE: parser.getFlag("perParticipantE2EE"),
     controlledAudioDevices: parser.getFlag("controlledAudioDevices"),
+    isolatedScreenShareAudio: isWidget
+      ? parser.getFlag("isolatedScreenShareAudio")
+      : false,
     skipLobby: isWidget ? parser.getFlag("skipLobby") : false,
     // In SPA mode the user should always exit to the home screen when hanging
     // up, rather than being sent back to the lobby

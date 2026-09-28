@@ -99,14 +99,18 @@ const Pane: FC<{
   log: (pane: string, message: string) => void;
 }> = ({ session, roomId, theme, language, log }): ReactNode => {
   const [mounted, setMounted] = useState(true);
+  const isolatedAudio =
+    new URLSearchParams(location.search).get("isolatedAudio") === "true" &&
+    session.label === "Call A";
 
   const bridge = useMemo(
     () =>
       createDevHostBridge(
         (message) => log(session.label, message),
         () => setMounted(false),
+        isolatedAudio,
       ),
-    [log, session.label],
+    [isolatedAudio, log, session.label],
   );
 
   // What the host asks of Element Call goes through the component's handle.

@@ -174,6 +174,61 @@ test("tells its host what it is doing", async ({ page }) => {
   });
 });
 
+test("gates isolated screen-share audio by the component host capability", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator.mediaDevices, "getDisplayMedia", {
+      configurable: true,
+      value: async (): Promise<MediaStream> => {
+        const canvas = document.createElement("canvas");
+        canvas.getContext("2d")!.fillRect(0, 0, 1, 1);
+        const stream = canvas.captureStream();
+        const audio = new AudioContext();
+        const source = audio.createOscillator();
+        const destination = audio.createMediaStreamDestination();
+        source.connect(destination);
+        source.start();
+        stream.addTrack(destination.stream.getAudioTracks()[0]);
+        return await Promise.resolve(stream);
+      },
+    });
+  });
+  const { username, roomId } = await createUserAndRoom("isolatedaudio");
+  const panes = await startHarness(page, username, roomId, true);
+  for (const index of [0, 1])
+    await panes.nth(index).getByTestId("lobby_joinCall").click({
+      timeout: 60_000,
+    });
+
+  const log = page.getByTestId("bridge-log");
+  const capable = panes.nth(0);
+  await capable.getByRole("switch", { name: "Share screen" }).click();
+  await expect(
+    log.locator("li").filter({
+      hasText: "Call A → acquireIsolatedScreenShareAudio(",
+    }),
+  ).toBeVisible({ timeout: 30_000 });
+  await capable.getByRole("switch", { name: "Sharing screen" }).click();
+  await expect(
+    log.locator("li").filter({
+      hasText: "Call A → releaseIsolatedScreenShareAudio(",
+    }),
+  ).toBeVisible({ timeout: 30_000 });
+
+  const ordinary = panes.nth(1);
+  await ordinary.getByRole("switch", { name: "Share screen" }).click();
+  await expect(
+    ordinary.getByRole("switch", { name: "Sharing screen" }),
+  ).toBeVisible({ timeout: 30_000 });
+  await ordinary.getByRole("switch", { name: "Sharing screen" }).click();
+  await expect(
+    log.locator("li").filter({
+      hasText: "Call B → acquireIsolatedScreenShareAudio(",
+    }),
+  ).toHaveCount(0);
+});
+
 test("lays itself out for the space it is given, not the page", async ({
   page,
 }) => {

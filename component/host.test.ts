@@ -56,6 +56,39 @@ describe("useComponentHostBridge", () => {
     expect(result.current.supportsReactions).toBe(true);
     // Starting the user unmuted unasked is something a host has to opt into
     expect(result.current.allowJoinUnmutedViaIntent).toBe(false);
+    expect(result.current.supportsIsolatedScreenShareAudio).toBe(false);
+    await expect(
+      result.current.acquireIsolatedScreenShareAudio("session"),
+    ).resolves.toBe(false);
+    await expect(
+      result.current.releaseIsolatedScreenShareAudio("session"),
+    ).resolves.toBe(false);
+  });
+
+  test("forwards isolated screen-share audio sessions", async () => {
+    const acquire = vi.fn().mockResolvedValue(true);
+    const release = vi.fn().mockResolvedValue(true);
+    const { result } = renderHook(() =>
+      useComponentHostBridge(
+        {
+          supportsIsolatedScreenShareAudio: true,
+          acquireIsolatedScreenShareAudio: acquire,
+          releaseIsolatedScreenShareAudio: release,
+        },
+        undefined,
+        undefined,
+      ),
+    );
+
+    expect(result.current.supportsIsolatedScreenShareAudio).toBe(true);
+    await expect(
+      result.current.acquireIsolatedScreenShareAudio("session"),
+    ).resolves.toBe(true);
+    await expect(
+      result.current.releaseIsolatedScreenShareAudio("session"),
+    ).resolves.toBe(true);
+    expect(acquire).toHaveBeenCalledWith("session");
+    expect(release).toHaveBeenCalledWith("session");
   });
 
   test("lets the host allow joining unmuted on the intent", () => {

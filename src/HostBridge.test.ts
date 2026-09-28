@@ -87,6 +87,33 @@ describe("createWidgetHostBridge", () => {
         { audio_enabled: true, video_enabled: false },
       );
     });
+
+    test("acknowledges isolated screen-share audio sessions", async () => {
+      const transport = mockTransport();
+      transport.send.mockResolvedValue({ accepted: true });
+      const bridge = createWidgetHostBridge(
+        mockWidget({ transport } as never),
+        true,
+      );
+
+      expect(bridge.supportsIsolatedScreenShareAudio).toBe(true);
+      await expect(
+        bridge.acquireIsolatedScreenShareAudio("session"),
+      ).resolves.toBe(true);
+      await expect(
+        bridge.releaseIsolatedScreenShareAudio("session"),
+      ).resolves.toBe(true);
+      expect(transport.send).toHaveBeenNthCalledWith(
+        1,
+        ElementWidgetActions.ScreenShareAudioSession,
+        { version: 1, state: "acquire", session_id: "session" },
+      );
+      expect(transport.send).toHaveBeenNthCalledWith(
+        2,
+        ElementWidgetActions.ScreenShareAudioSession,
+        { version: 1, state: "release", session_id: "session" },
+      );
+    });
   });
 
   describe("relaying what the host asks for", () => {

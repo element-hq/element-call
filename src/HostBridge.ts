@@ -16,6 +16,8 @@ import {
 import {
   ElementWidgetActions,
   type JoinCallData,
+  type ScreenShareAudioSessionRequest,
+  type ScreenShareAudioSessionResponse,
   type WidgetHelpers,
 } from "./widget";
 
@@ -75,6 +77,10 @@ export interface HostBridge {
   notifyHungUp(): Promise<void>;
   /** Tells the host the user's current audio and video mute state. */
   notifyDeviceMute(state: DeviceMuteState): Promise<void>;
+  /** Asks the host to prepare isolated audio for a screen-share session. */
+  acquireIsolatedScreenShareAudio(sessionId: string): Promise<boolean>;
+  /** Asks the host to release an isolated screen-share audio session. */
+  releaseIsolatedScreenShareAudio(sessionId: string): Promise<boolean>;
   /**
    * Asks the host to close Element Call, and stops communicating with it. No
    * further calls should be made on this bridge afterwards.
@@ -116,6 +122,8 @@ export interface HostBridge {
    * them muted instead.
    */
   readonly allowJoinUnmutedViaIntent: boolean;
+  /** Whether the host can provide isolated screen-share audio. */
+  readonly supportsIsolatedScreenShareAudio: boolean;
   /**
    * Fetches media on Element Call's behalf, for hosts that do not give it
    * direct access to the homeserver. Absent when Element Call should fetch
@@ -134,6 +142,8 @@ export const nullHostBridge: HostBridge = {
   notifyJoined: async () => {},
   notifyHungUp: async () => {},
   notifyDeviceMute: async () => {},
+  acquireIsolatedScreenShareAudio: async () => await Promise.resolve(false),
+  releaseIsolatedScreenShareAudio: async () => await Promise.resolve(false),
   themeChange$: NEVER,
   join$: NEVER,
   hangUp$: NEVER,
@@ -147,10 +157,14 @@ export const nullHostBridge: HostBridge = {
   // Standalone, nobody vouched for the intent: it came from a URL, which is
   // not enough to switch the user's camera and microphone on unasked.
   allowJoinUnmutedViaIntent: false,
+  supportsIsolatedScreenShareAudio: false,
 };
 
 /** Bridges to a host that Element Call is a widget of. */
-export function createWidgetHostBridge(widget: WidgetHelpers): HostBridge {
+export function createWidgetHostBridge(
+  widget: WidgetHelpers,
+  supportsIsolatedScreenShareAudio = false,
+): HostBridge {
   const requests = <Data, Reply>(
     action: string,
   ): Observable<HostRequest<Data, Reply>> =>
@@ -184,6 +198,28 @@ export function createWidgetHostBridge(widget: WidgetHelpers): HostBridge {
     notifyHungUp: async () => send(ElementWidgetActions.HangupCall),
     notifyDeviceMute: async (state) =>
       send(ElementWidgetActions.DeviceMute, state),
+    acquireIsolatedScreenShareAudio: async (sessionId) => {
+      const response = await widget.api.transport.send<
+        ScreenShareAudioSessionRequest,
+        ScreenShareAudioSessionResponse
+      >(ElementWidgetActions.ScreenShareAudioSession, {
+        version: 1,
+        state: "acquire",
+        session_id: sessionId,
+      });
+      return response.accepted === true;
+    },
+    releaseIsolatedScreenShareAudio: async (sessionId) => {
+      const response = await widget.api.transport.send<
+        ScreenShareAudioSessionRequest,
+        ScreenShareAudioSessionResponse
+      >(ElementWidgetActions.ScreenShareAudioSession, {
+        version: 1,
+        state: "release",
+        session_id: sessionId,
+      });
+      return response.accepted === true;
+    },
     close: async () => {
       try {
         await send(ElementWidgetActions.Close);
@@ -204,6 +240,7 @@ export function createWidgetHostBridge(widget: WidgetHelpers): HostBridge {
     // The client we are a widget of asked for this call on the user's behalf,
     // so its intent may be trusted to say whether they start unmuted
     allowJoinUnmutedViaIntent: true,
+    supportsIsolatedScreenShareAudio,
     // Element Call needs the host's permission to send reactions on its behalf.
     // Read on access rather than up front: the widget API negotiates its
     // capabilities asynchronously, and the bridge is built before that settles.

@@ -113,11 +113,14 @@ export async function createMatrixRTCSdk(
   const widget = initializeWidget(application, true);
   if (!widget) throw Error("No widget. This webapp can only start as a widget");
   const client = await widget.client;
-  const hostBridge = createWidgetHostBridge(widget);
+  const urlParams = getUrlParams();
+  const hostBridge = createWidgetHostBridge(
+    widget,
+    urlParams.isolatedScreenShareAudio,
+  );
   logger.info("client created");
 
   // url params
-  const urlParams = getUrlParams();
   const { roomId, controlledAudioDevices, callIntent } = urlParams;
   if (roomId === null) throw Error("could not get roomId from url params");
   const room = client.getRoom(roomId);

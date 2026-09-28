@@ -64,12 +64,14 @@ export async function startHarness(
   page: Page,
   username: string,
   roomId: string,
+  isolatedAudio = false,
 ): Promise<Locator> {
   const query = new URLSearchParams({
     homeserver: HOMESERVER_URL,
     username,
     password: PASSWORD,
     room: roomId,
+    ...(isolatedAudio ? { isolatedAudio: "true" } : {}),
   });
   await page.goto(`${COMPONENT_HARNESS_URL}/?${query.toString()}`);
   await page.getByRole("button", { name: "Start" }).click();

@@ -23,7 +23,13 @@ import {
 } from "vitest";
 import { BehaviorSubject, map, of, Subject } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { type LocalParticipant, type LocalTrack } from "livekit-client";
+import {
+  ParticipantEvent,
+  Track,
+  type LocalParticipant,
+  type LocalTrack,
+  type LocalTrackPublication,
+} from "livekit-client";
 import fetchMock from "fetch-mock";
 
 import { PosthogAnalytics } from "../../../analytics/PosthogAnalytics";
@@ -48,6 +54,7 @@ import {
   enterRTCSession,
   PublishState,
   TrackState,
+  getScreenShareCaptureOptions,
   watchScreenShareToggle,
 } from "./LocalMember";
 import { MatrixRTCTransportMissingError } from "../../../utils/errors";
@@ -57,9 +64,16 @@ import { ConnectionManagerData } from "../remoteMembers/ConnectionManager";
 import { ConnectionState, type Connection } from "../remoteMembers/Connection";
 import { type Publisher } from "./Publisher";
 import { initializeWidget } from "../../../widget";
-import { nullHostBridge } from "../../../HostBridge";
+import { type HostBridge, nullHostBridge } from "../../../HostBridge";
 import { type LocalTransport } from "./LocalTransport";
 import * as openIDSFU from "../../../livekit/openIDSFU";
+import {
+  advancedScreenShare,
+  screenShareBitrate,
+  screenShareCodec,
+  screenShareFramerate,
+  screenShareResolution,
+} from "../../../settings/settings";
 
 initializeWidget();
 
@@ -203,6 +217,31 @@ describe("enterRTCSession", () => {
 });
 
 describe("LocalMembership", () => {
+  describe("screen-share capture options", () => {
+    it("preserves the ordinary capture constraints", () => {
+      expect(getScreenShareCaptureOptions(false)).toEqual({
+        audio: {
+          autoGainControl: false,
+          noiseSuppression: false,
+          voiceIsolation: false,
+        },
+        selfBrowserSurface: "include",
+        surfaceSwitching: "include",
+        systemAudio: "include",
+      });
+    });
+
+    it("adds high-fidelity constraints only for isolated audio", () => {
+      expect(getScreenShareCaptureOptions(true).audio).toEqual({
+        autoGainControl: false,
+        noiseSuppression: false,
+        voiceIsolation: false,
+        echoCancellation: false,
+        channelCount: { ideal: 2 },
+      });
+    });
+  });
+
   const defaultCreateLocalMemberValues = {
     options: constant({
       encryptMedia: false,
@@ -839,6 +878,7 @@ describe("LocalMembership", () => {
 
     const createMembershipWithConnection = (
       connection: Connection | null,
+      hostBridge = nullHostBridge,
     ): {
       scope: ObservableScope;
       localMembership: ReturnType<typeof createLocalMembership$>;
@@ -849,6 +889,7 @@ describe("LocalMembership", () => {
       const localMembership = createLocalMembership$({
         scope,
         ...defaultCreateLocalMemberValues,
+        hostBridge,
         connectionManager: {
           connectionManagerData$: constant(new Epoch(connectionManagerData)),
         },
@@ -856,6 +897,384 @@ describe("LocalMembership", () => {
       });
       return { scope, localMembership };
     };
+
+    const publication = (source: Track.Source): LocalTrackPublication =>
+      ({ source, track: {} }) as unknown as LocalTrackPublication;
+
+    const isolatedHost = (
+      acquire = vi.fn().mockResolvedValue(true),
+      release = vi.fn().mockResolvedValue(true),
+    ): HostBridge => ({
+      ...nullHostBridge,
+      supportsIsolatedScreenShareAudio: true,
+      acquireIsolatedScreenShareAudio: acquire,
+      releaseIsolatedScreenShareAudio: release,
+    });
+
+    it("uses isolated constraints only after host acquisition and releases on unshare", async () => {
+      const acquire = vi.fn().mockResolvedValue(true);
+      const release = vi.fn().mockResolvedValue(true);
+      const setScreenShareEnabled = vi.fn().mockResolvedValue(undefined);
+      const participant = mockLocalParticipant({
+        isScreenShareEnabled: false,
+        setScreenShareEnabled,
+        getTrackPublication: vi.fn((source) => publication(source)),
+      });
+      const connection = {
+        state$: constant(ConnectionState.LivekitConnected),
+        transport: mockTransportConfig,
+        livekitRoom: mockLivekitRoom({ localParticipant: participant }),
+      } as unknown as Connection;
+      const { scope, localMembership } = createMembershipWithConnection(
+        connection,
+        {
+          ...nullHostBridge,
+          supportsIsolatedScreenShareAudio: true,
+          acquireIsolatedScreenShareAudio: acquire,
+          releaseIsolatedScreenShareAudio: release,
+        },
+      );
+      await flushPromises();
+
+      localMembership.toggleScreenSharing!();
+      await flushPromises();
+      expect(acquire).toHaveBeenCalledWith(expect.any(String));
+      expect(setScreenShareEnabled).toHaveBeenCalledWith(
+        true,
+        expect.objectContaining({
+          audio: expect.objectContaining({
+            echoCancellation: false,
+            channelCount: { ideal: 2 },
+          }),
+        }),
+        undefined,
+      );
+
+      localMembership.toggleScreenSharing!();
+      await flushPromises();
+      expect(setScreenShareEnabled).toHaveBeenLastCalledWith(
+        false,
+        expect.objectContaining({
+          audio: expect.not.objectContaining({ echoCancellation: false }),
+        }),
+        undefined,
+      );
+      expect(release).toHaveBeenCalledOnce();
+      scope.end();
+      await flushPromises();
+      expect(release).toHaveBeenCalledOnce();
+    });
+
+    it("preserves advanced screen-share video settings", async () => {
+      advancedScreenShare.setValue(true);
+      screenShareResolution.setValue("1280x720");
+      screenShareFramerate.setValue(24);
+      screenShareBitrate.setValue(2_500_000);
+      screenShareCodec.setValue("vp8");
+      const setScreenShareEnabled = vi.fn().mockResolvedValue(undefined);
+      const connection = {
+        state$: constant(ConnectionState.LivekitConnected),
+        transport: mockTransportConfig,
+        livekitRoom: mockLivekitRoom({
+          localParticipant: mockLocalParticipant({
+            isScreenShareEnabled: false,
+            setScreenShareEnabled,
+            getTrackPublication: vi.fn((source) => publication(source)),
+          }),
+        }),
+      } as unknown as Connection;
+      const { scope, localMembership } = createMembershipWithConnection(
+        connection,
+        isolatedHost(),
+      );
+
+      try {
+        await flushPromises();
+        localMembership.toggleScreenSharing!();
+        await flushPromises();
+        expect(setScreenShareEnabled).toHaveBeenCalledWith(
+          true,
+          expect.objectContaining({
+            resolution: { width: 1280, height: 720, frameRate: 24 },
+          }),
+          {
+            screenShareEncoding: {
+              maxBitrate: 2_500_000,
+              maxFramerate: 24,
+            },
+            videoCodec: "vp8",
+          },
+        );
+      } finally {
+        scope.end();
+        advancedScreenShare.setValue(false);
+        screenShareResolution.setValue("1920x1080");
+        screenShareFramerate.setValue(30);
+        screenShareBitrate.setValue(5_000_000);
+        screenShareCodec.setValue("vp9");
+      }
+    });
+
+    it("falls back to ordinary constraints when host acquisition is rejected", async () => {
+      const setScreenShareEnabled = vi.fn().mockResolvedValue(undefined);
+      const connection = {
+        state$: constant(ConnectionState.LivekitConnected),
+        transport: mockTransportConfig,
+        livekitRoom: mockLivekitRoom({
+          localParticipant: mockLocalParticipant({
+            isScreenShareEnabled: false,
+            setScreenShareEnabled,
+            getTrackPublication: vi.fn((source) => publication(source)),
+          }),
+        }),
+      } as unknown as Connection;
+      const { scope, localMembership } = createMembershipWithConnection(
+        connection,
+        {
+          ...nullHostBridge,
+          supportsIsolatedScreenShareAudio: true,
+          acquireIsolatedScreenShareAudio: vi.fn().mockResolvedValue(false),
+        },
+      );
+      await flushPromises();
+
+      localMembership.toggleScreenSharing!();
+      await flushPromises();
+      expect(setScreenShareEnabled).toHaveBeenCalledWith(
+        true,
+        expect.objectContaining({
+          audio: expect.not.objectContaining({ echoCancellation: false }),
+        }),
+        undefined,
+      );
+      scope.end();
+    });
+
+    it.each([Track.Source.ScreenShare, Track.Source.ScreenShareAudio])(
+      "releases the owned session when the %s publication is lost",
+      async (source) => {
+        const release = vi.fn().mockResolvedValue(true);
+        const participant = mockLocalParticipant({
+          isScreenShareEnabled: false,
+          setScreenShareEnabled: vi.fn().mockResolvedValue(undefined),
+          getTrackPublication: vi.fn((trackSource) => publication(trackSource)),
+        });
+        const connection = {
+          state$: constant(ConnectionState.LivekitConnected),
+          transport: mockTransportConfig,
+          livekitRoom: mockLivekitRoom({ localParticipant: participant }),
+        } as unknown as Connection;
+        const { scope, localMembership } = createMembershipWithConnection(
+          connection,
+          isolatedHost(undefined, release),
+        );
+        await flushPromises();
+        localMembership.toggleScreenSharing!();
+        await flushPromises();
+
+        participant.emit(
+          ParticipantEvent.LocalTrackUnpublished,
+          publication(source),
+        );
+        await flushPromises();
+        expect(release).toHaveBeenCalledOnce();
+        scope.end();
+        await flushPromises();
+        expect(release).toHaveBeenCalledOnce();
+      },
+    );
+
+    it("releases on start failure and missing screen-share audio", async () => {
+      for (const participant of [
+        mockLocalParticipant({
+          isScreenShareEnabled: false,
+          setScreenShareEnabled: vi.fn().mockRejectedValue(new Error("failed")),
+        }),
+        mockLocalParticipant({
+          isScreenShareEnabled: false,
+          setScreenShareEnabled: vi.fn().mockResolvedValue(undefined),
+          getTrackPublication: vi.fn((source) =>
+            source === Track.Source.ScreenShare
+              ? publication(source)
+              : undefined,
+          ),
+        }),
+      ]) {
+        const release = vi.fn().mockResolvedValue(true);
+        const connection = {
+          state$: constant(ConnectionState.LivekitConnected),
+          transport: mockTransportConfig,
+          livekitRoom: mockLivekitRoom({ localParticipant: participant }),
+        } as unknown as Connection;
+        const { scope, localMembership } = createMembershipWithConnection(
+          connection,
+          isolatedHost(undefined, release),
+        );
+        await flushPromises();
+        localMembership.toggleScreenSharing!();
+        await flushPromises();
+        expect(release).toHaveBeenCalledOnce();
+        scope.end();
+      }
+    });
+
+    it("releases on scope teardown", async () => {
+      const release = vi.fn().mockResolvedValue(true);
+      const connection = {
+        state$: constant(ConnectionState.LivekitConnected),
+        transport: mockTransportConfig,
+        livekitRoom: mockLivekitRoom({
+          localParticipant: mockLocalParticipant({
+            isScreenShareEnabled: false,
+            setScreenShareEnabled: vi.fn().mockResolvedValue(undefined),
+            getTrackPublication: vi.fn((source) => publication(source)),
+          }),
+        }),
+      } as unknown as Connection;
+      const { scope, localMembership } = createMembershipWithConnection(
+        connection,
+        isolatedHost(undefined, release),
+      );
+      await flushPromises();
+      localMembership.toggleScreenSharing!();
+      await flushPromises();
+      scope.end();
+      await flushPromises();
+      expect(release).toHaveBeenCalledOnce();
+    });
+
+    it("releases a stale pending acquire without starting capture", async () => {
+      const acquired = Promise.withResolvers<boolean>();
+      const acquire = vi.fn().mockReturnValue(acquired.promise);
+      const release = vi.fn().mockResolvedValue(true);
+      const setScreenShareEnabled = vi.fn().mockResolvedValue(undefined);
+      const connection = {
+        state$: constant(ConnectionState.LivekitConnected),
+        transport: mockTransportConfig,
+        livekitRoom: mockLivekitRoom({
+          localParticipant: mockLocalParticipant({
+            isScreenShareEnabled: false,
+            setScreenShareEnabled,
+          }),
+        }),
+      } as unknown as Connection;
+      const { scope, localMembership } = createMembershipWithConnection(
+        connection,
+        isolatedHost(acquire, release),
+      );
+      await flushPromises();
+      localMembership.toggleScreenSharing!();
+      localMembership.toggleScreenSharing!();
+      acquired.resolve(true);
+      await flushPromises();
+      expect(setScreenShareEnabled).toHaveBeenCalledOnce();
+      expect(setScreenShareEnabled).toHaveBeenCalledWith(
+        false,
+        expect.any(Object),
+        undefined,
+      );
+      expect(release).toHaveBeenCalledOnce();
+      scope.end();
+    });
+
+    it("releases when the publishing participant is replaced", async () => {
+      const release = vi.fn().mockResolvedValue(true);
+      const participant = mockLocalParticipant({
+        isScreenShareEnabled: false,
+        setScreenShareEnabled: vi.fn().mockResolvedValue(undefined),
+        getTrackPublication: vi.fn((source) => publication(source)),
+      });
+      const replacement = mockLocalParticipant({ isScreenShareEnabled: false });
+      const replacementConfig = {
+        livekit_service_url: "b",
+      } as LivekitTransportConfig;
+      const replacementTransport = {
+        ...mockTransport,
+        transport: replacementConfig,
+      } as LocalTransport;
+      const connectionManagerData = new ConnectionManagerData();
+      connectionManagerData.add(
+        {
+          state$: constant(ConnectionState.LivekitConnected),
+          transport: mockTransportConfig,
+          livekitRoom: mockLivekitRoom({ localParticipant: participant }),
+        } as unknown as Connection,
+        [],
+      );
+      connectionManagerData.add(
+        {
+          state$: constant(ConnectionState.LivekitConnected),
+          transport: replacementConfig,
+          livekitRoom: mockLivekitRoom({ localParticipant: replacement }),
+        } as unknown as Connection,
+        [],
+      );
+      const localTransport$ = new BehaviorSubject(mockTransport);
+      const scope = new ObservableScope();
+      const localMembership = createLocalMembership$({
+        scope,
+        ...defaultCreateLocalMemberValues,
+        hostBridge: isolatedHost(undefined, release),
+        connectionManager: {
+          connectionManagerData$: constant(new Epoch(connectionManagerData)),
+        },
+        localTransport$,
+      });
+      await flushPromises();
+      localMembership.toggleScreenSharing!();
+      await flushPromises();
+
+      localTransport$.next(replacementTransport);
+      await flushPromises();
+      expect(release).toHaveBeenCalledOnce();
+      scope.end();
+    });
+
+    it("starts an isolated successor after a rapid off and on", async () => {
+      let participant: LocalParticipant;
+      const setScreenShareEnabled = vi.fn(async (enabled: boolean) => {
+        Object.defineProperty(participant, "isScreenShareEnabled", {
+          configurable: true,
+          value: enabled,
+        });
+        if (!enabled) {
+          participant.emit(
+            ParticipantEvent.LocalTrackUnpublished,
+            publication(Track.Source.ScreenShare),
+          );
+        }
+        return await Promise.resolve(undefined);
+      });
+      participant = mockLocalParticipant({
+        isScreenShareEnabled: false,
+        setScreenShareEnabled,
+        getTrackPublication: vi.fn((source) => publication(source)),
+      });
+      const acquire = vi.fn().mockResolvedValue(true);
+      const release = vi.fn().mockResolvedValue(true);
+      const connection = {
+        state$: constant(ConnectionState.LivekitConnected),
+        transport: mockTransportConfig,
+        livekitRoom: mockLivekitRoom({ localParticipant: participant }),
+      } as unknown as Connection;
+      const { scope, localMembership } = createMembershipWithConnection(
+        connection,
+        isolatedHost(acquire, release),
+      );
+      await flushPromises();
+      localMembership.toggleScreenSharing!();
+      await flushPromises();
+
+      localMembership.toggleScreenSharing!();
+      localMembership.toggleScreenSharing!();
+      await flushPromises();
+      expect(
+        setScreenShareEnabled.mock.calls.map(([enabled]) => enabled),
+      ).toEqual([true, false, true]);
+      expect(acquire).toHaveBeenCalledTimes(2);
+      expect(release).toHaveBeenCalledOnce();
+      scope.end();
+    });
 
     it("surfaces a failure and clears it on dismiss", async () => {
       const error = new Error("NotReadableError");

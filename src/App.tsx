@@ -115,10 +115,25 @@ interface Props {
 }
 
 export const App: FC<Props> = ({ vm, widget }) => {
+  return (
+    <I18nextProvider i18n={i18n}>
+      <BrowserRouter>
+        <LocationUrlParamsProvider>
+          <HostedApp vm={vm} widget={widget} />
+        </LocationUrlParamsProvider>
+      </BrowserRouter>
+    </I18nextProvider>
+  );
+};
+
+const HostedApp: FC<Props> = ({ vm, widget }) => {
+  const { isolatedScreenShareAudio } = useUrlParams();
   // The standalone build has no host; the widget build's host is the client it
   // is a widget of.
   const hostBridge = useInitial(() =>
-    widget === null ? nullHostBridge : createWidgetHostBridge(widget),
+    widget === null
+      ? nullHostBridge
+      : createWidgetHostBridge(widget, isolatedScreenShareAudio),
   );
   const [loaded, setLoaded] = useState(false);
   useEffect(() => {
@@ -167,24 +182,18 @@ export const App: FC<Props> = ({ vm, widget }) => {
     );
 
   return (
-    <I18nextProvider i18n={i18n}>
-      <HostBridgeProvider value={hostBridge}>
-        <BrowserRouter>
-          <LocationUrlParamsProvider>
-            <HomeProvider>
-              <BackgroundProvider>
-                <ThemeProvider>
-                  <TooltipProvider>
-                    <Suspense fallback={null}>
-                      <MaybeAppBar>{content}</MaybeAppBar>
-                    </Suspense>
-                  </TooltipProvider>
-                </ThemeProvider>
-              </BackgroundProvider>
-            </HomeProvider>
-          </LocationUrlParamsProvider>
-        </BrowserRouter>
-      </HostBridgeProvider>
-    </I18nextProvider>
+    <HostBridgeProvider value={hostBridge}>
+      <HomeProvider>
+        <BackgroundProvider>
+          <ThemeProvider>
+            <TooltipProvider>
+              <Suspense fallback={null}>
+                <MaybeAppBar>{content}</MaybeAppBar>
+              </Suspense>
+            </TooltipProvider>
+          </ThemeProvider>
+        </BackgroundProvider>
+      </HomeProvider>
+    </HostBridgeProvider>
   );
 };

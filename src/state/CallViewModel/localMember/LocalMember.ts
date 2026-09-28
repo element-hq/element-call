@@ -9,8 +9,10 @@ import {
   type Participant,
   ParticipantEvent,
   type LocalParticipant,
+  type LocalTrackPublication,
   type ScreenShareCaptureOptions,
   type TrackPublishOptions,
+  Track,
   RoomEvent,
   MediaDeviceFailure,
 } from "livekit-client";
@@ -82,6 +84,7 @@ import {
 import { type HomeserverConnected } from "./HomeserverConnected.ts";
 import { type LocalTransport } from "./LocalTransport.ts";
 import { getSFUConfigWithOpenID } from "../../../livekit/openIDSFU.ts";
+import { ScreenShareAudioSessionCoordinator } from "./ScreenShareAudioSessionCoordinator.ts";
 
 export enum TransportState {
   /** Not even a transport is available to the LocalMembership */
@@ -164,6 +167,62 @@ interface Props {
   delayId$: Behavior<string | null>;
   matrixRTCMode: MatrixRTCMode;
   logger: Logger;
+}
+
+export function getScreenShareCaptureOptions(
+  isolatedAudio: boolean,
+): ScreenShareCaptureOptions {
+  return {
+    audio: {
+      autoGainControl: false,
+      noiseSuppression: false,
+      voiceIsolation: false,
+      ...(isolatedAudio
+        ? {
+            echoCancellation: false,
+            channelCount: { ideal: 2 },
+          }
+        : {}),
+    },
+    selfBrowserSurface: "include",
+    surfaceSwitching: "include",
+    systemAudio: "include",
+  };
+}
+
+function getScreenShareOptions(isolatedAudio: boolean): {
+  captureOptions: ScreenShareCaptureOptions;
+  publishOptions?: TrackPublishOptions;
+} {
+  const captureOptions = getScreenShareCaptureOptions(isolatedAudio);
+  let publishOptions: TrackPublishOptions | undefined;
+
+  if (advancedScreenShare.getValue()) {
+    const { width, height } = parseResolution(screenShareResolution.getValue());
+    const fps = screenShareFramerate.getValue();
+    const bps = screenShareBitrate.getValue();
+    const codec = screenShareCodec.getValue();
+
+    captureOptions.resolution = { width, height, frameRate: fps };
+    publishOptions = {
+      screenShareEncoding: {
+        maxBitrate: bps,
+        maxFramerate: fps,
+      },
+      videoCodec: codec,
+    };
+  } else {
+    const screenConf = Config.get().media_quality?.screen_share;
+    if (screenConf?.max_resolution) {
+      captureOptions.resolution = {
+        width: Math.round((screenConf.max_resolution * 16) / 9),
+        height: screenConf.max_resolution,
+        frameRate: screenConf.max_framerate ?? 30,
+      };
+    }
+  }
+
+  return { captureOptions, publishOptions };
 }
 
 /**
@@ -792,59 +851,140 @@ export const createLocalMembership$ = ({
     "getDisplayMedia" in (navigator.mediaDevices ?? {}) &&
     !hideScreensharing
   ) {
-    toggleScreenSharing = (): void => {
-      const screenshareSettings: ScreenShareCaptureOptions = {
-        // Screen share audio shouldn't have any filtering.
-        // "echoCancellation" is purposely excluded, as setting it to
-        // false causes the screen share audio track to include
-        // an echo of the incoming participant's voice
-        audio: {
-          autoGainControl: false,
-          noiseSuppression: false,
-          voiceIsolation: false,
-        },
-        selfBrowserSurface: "include",
-        surfaceSwitching: "include",
-        systemAudio: "include",
-      };
+    const sessionCoordinator = new ScreenShareAudioSessionCoordinator(
+      hostBridge,
+      logger,
+    );
+    let desiredScreenshareState = sharingScreen$.value;
+    let generation = 0;
+    let scopeEnded = false;
+    let toggleQueue = Promise.resolve();
+    let observedParticipant = participant$.value;
 
-      let publishOptions: TrackPublishOptions | undefined;
+    const releaseSession = async (): Promise<void> => {
+      await sessionCoordinator.release();
+    };
+    const onTrackUnpublished = (publication: LocalTrackPublication): void => {
+      if (publication.source === Track.Source.ScreenShare) {
+        desiredScreenshareState = false;
+        void releaseSession();
+      } else if (publication.source === Track.Source.ScreenShareAudio) {
+        desiredScreenshareState =
+          participant$.value?.isScreenShareEnabled ?? desiredScreenshareState;
+        void releaseSession();
+      }
+    };
+    observedParticipant?.on?.(
+      ParticipantEvent.LocalTrackUnpublished,
+      onTrackUnpublished,
+    );
+    participant$.pipe(scope.bind()).subscribe((participant) => {
+      if (participant === observedParticipant) return;
+      observedParticipant?.off?.(
+        ParticipantEvent.LocalTrackUnpublished,
+        onTrackUnpublished,
+      );
+      observedParticipant = participant;
+      observedParticipant?.on?.(
+        ParticipantEvent.LocalTrackUnpublished,
+        onTrackUnpublished,
+      );
+      desiredScreenshareState = participant?.isScreenShareEnabled ?? false;
+      generation++;
+      void releaseSession();
+    });
+    scope.onEnd(() => {
+      scopeEnded = true;
+      generation++;
+      observedParticipant?.off?.(
+        ParticipantEvent.LocalTrackUnpublished,
+        onTrackUnpublished,
+      );
+      void releaseSession();
+    });
 
-      if (advancedScreenShare.getValue()) {
-        // User has advanced screen share settings enabled
-        const { width, height } = parseResolution(
-          screenShareResolution.getValue(),
+    const applyScreenshareState = async (
+      targetScreenshareState: boolean,
+      operationGeneration: number,
+    ): Promise<void> => {
+      const participant = participant$.value;
+      if (!participant || scopeEnded) return;
+      if (!targetScreenshareState) {
+        const { captureOptions, publishOptions } = getScreenShareOptions(false);
+        const toggle = participant.setScreenShareEnabled(
+          false,
+          captureOptions,
+          publishOptions,
         );
-        const fps = screenShareFramerate.getValue();
-        const bps = screenShareBitrate.getValue();
-        const codec = screenShareCodec.getValue();
-
-        screenshareSettings.resolution = {
-          width,
-          height,
-          frameRate: fps,
-        };
-
-        publishOptions = {
-          screenShareEncoding: {
-            maxBitrate: bps,
-            maxFramerate: fps,
-          },
-          videoCodec: codec,
-        };
-      } else {
-        // Fall back to config.json settings if available
-        const screenConf = Config.get().media_quality?.screen_share;
-        if (screenConf?.max_resolution) {
-          screenshareSettings.resolution = {
-            width: Math.round((screenConf.max_resolution * 16) / 9),
-            height: screenConf.max_resolution,
-            frameRate: screenConf.max_framerate ?? 30,
-          };
+        watchScreenShareToggle(toggle, false, logger, (e) =>
+          screenShareError$.next(e),
+        );
+        try {
+          await toggle;
+        } catch {
+          // watchScreenShareToggle reports the error.
+        } finally {
+          await releaseSession();
         }
+        return;
       }
 
-      const targetScreenshareState = !sharingScreen$.value;
+      const acquired = await sessionCoordinator.acquire();
+      if (
+        scopeEnded ||
+        operationGeneration !== generation ||
+        participant !== participant$.value
+      ) {
+        await sessionCoordinator.release(acquired?.sessionId);
+        return;
+      }
+      const { captureOptions, publishOptions } = getScreenShareOptions(
+        Boolean(acquired),
+      );
+      const toggle = participant.setScreenShareEnabled(
+        true,
+        captureOptions,
+        publishOptions,
+      );
+      watchScreenShareToggle(toggle, true, logger, (e) =>
+        screenShareError$.next(e),
+      );
+      try {
+        await toggle;
+      } catch {
+        if (operationGeneration === generation) {
+          desiredScreenshareState = false;
+        }
+        await sessionCoordinator.release(acquired?.sessionId);
+        return;
+      }
+      if (
+        scopeEnded ||
+        operationGeneration !== generation ||
+        participant !== participant$.value
+      ) {
+        await sessionCoordinator.release(acquired?.sessionId);
+        return;
+      }
+      const video = participant.getTrackPublication(
+        Track.Source.ScreenShare,
+      )?.track;
+      desiredScreenshareState = Boolean(video);
+      if (acquired) {
+        const audio = participant.getTrackPublication(
+          Track.Source.ScreenShareAudio,
+        )?.track;
+        if (!video || !audio) {
+          await sessionCoordinator.release(acquired.sessionId);
+        }
+      }
+    };
+
+    toggleScreenSharing = (): void => {
+      if (!participant$.value) return;
+      desiredScreenshareState = !desiredScreenshareState;
+      const targetScreenshareState = desiredScreenshareState;
+      const operationGeneration = ++generation;
       logger.info(
         `toggleScreenSharing called. Switching ${
           targetScreenshareState ? "On" : "Off"
@@ -858,18 +998,12 @@ export const createLocalMembership$ = ({
       // We also allow screen sharing to be toggled even if the connection
       // is still initializing or publishing tracks, because there's no
       // technical reason to disallow this. LiveKit will publish if it can.
-      const participant = participant$.value;
-      if (!participant) return;
-      watchScreenShareToggle(
-        participant.setScreenShareEnabled(
+      toggleQueue = toggleQueue.then(async () => {
+        await applyScreenshareState(
           targetScreenshareState,
-          screenshareSettings,
-          publishOptions,
-        ),
-        targetScreenshareState,
-        logger,
-        (e) => screenShareError$.next(e),
-      );
+          operationGeneration,
+        );
+      });
     };
   }
 

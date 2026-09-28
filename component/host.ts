@@ -72,6 +72,12 @@ export interface ElementCallHostBridge {
    * says so here — as a Matrix client hosting Element Call as a widget does.
    */
   readonly allowJoinUnmutedViaIntent?: boolean;
+  /** Whether the host can provide isolated audio for screen sharing. */
+  readonly supportsIsolatedScreenShareAudio?: boolean;
+  /** Prepares isolated audio for an opaque screen-share session. */
+  acquireIsolatedScreenShareAudio?(sessionId: string): Promise<boolean>;
+  /** Releases the matching isolated screen-share audio session. */
+  releaseIsolatedScreenShareAudio?(sessionId: string): Promise<boolean>;
 }
 
 /**
@@ -174,6 +180,15 @@ export function useComponentHostBridge(
     get allowJoinUnmutedViaIntent(): boolean {
       return latest.current.allowJoinUnmutedViaIntent ?? false;
     },
+    get supportsIsolatedScreenShareAudio(): boolean {
+      return latest.current.supportsIsolatedScreenShareAudio ?? false;
+    },
+    acquireIsolatedScreenShareAudio: async (sessionId) =>
+      (await latest.current.acquireIsolatedScreenShareAudio?.(sessionId)) ??
+      false,
+    releaseIsolatedScreenShareAudio: async (sessionId) =>
+      (await latest.current.releaseIsolatedScreenShareAudio?.(sessionId)) ??
+      false,
     // Whatever the host says or does not say, the account is its own: it
     // signed the user in and handed us the client. So Element Call never
     // offers to edit the profile from inside a component.

@@ -16,6 +16,7 @@ export function createDevHostBridge(
   log: (message: string) => void,
   /** What the host does when Element Call asks to be closed. */
   onClose: () => void,
+  supportsIsolatedScreenShareAudio = false,
 ): ElementCallHostBridge {
   /**
    * Records something Element Call told the host. Nothing is sent anywhere, so
@@ -27,6 +28,15 @@ export function createDevHostBridge(
   };
 
   return {
+    supportsIsolatedScreenShareAudio,
+    acquireIsolatedScreenShareAudio: async (sessionId): Promise<boolean> => {
+      await told(`acquireIsolatedScreenShareAudio(${sessionId})`);
+      return supportsIsolatedScreenShareAudio;
+    },
+    releaseIsolatedScreenShareAudio: async (sessionId): Promise<boolean> => {
+      await told(`releaseIsolatedScreenShareAudio(${sessionId})`);
+      return supportsIsolatedScreenShareAudio;
+    },
     setAlwaysOnScreen: async (alwaysOnScreen): Promise<void> =>
       await told(`setAlwaysOnScreen(${alwaysOnScreen})`),
     contentLoaded: async (): Promise<void> => await told("contentLoaded"),
