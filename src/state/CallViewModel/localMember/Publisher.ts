@@ -14,6 +14,8 @@ import {
   Track,
 } from "livekit-client";
 import {
+  filter,
+  firstValueFrom,
   map,
   NEVER,
   type Observable,
@@ -189,14 +191,19 @@ export class Publisher {
     // We are using the `ParticipantEvent.LocalTrackPublished` to be notified
     // when tracks are actually published, and at that point
     // we can pause upstream if needed (depending on if startPublishing has been called).
-    if (audio && video) {
-      // Enable both at once in order to have a single permission prompt!
-      void lkRoom.localParticipant.enableCameraAndMicrophone();
-    } else if (audio) {
-      void lkRoom.localParticipant.setMicrophoneEnabled(true);
-    } else if (video) {
-      void lkRoom.localParticipant.setCameraEnabled(true);
-    }
+    const enableTracks = (): void => {
+      if (audio && video) {
+        // Enable both at once in order to have a single permission prompt!
+        void lkRoom.localParticipant.enableCameraAndMicrophone();
+      } else if (audio) {
+        void lkRoom.localParticipant.setMicrophoneEnabled(true);
+      } else if (video) {
+        void lkRoom.localParticipant.setCameraEnabled(true);
+      }
+    };
+    if (video && this.trackerProcessorState$.value.preparing)
+      void this.pipelineKnown().then(enableTracks);
+    else enableTracks();
 
     return Promise.resolve();
   }
@@ -412,7 +419,9 @@ export class Publisher {
     this.muteStates.video.setHandler(async (enable) => {
       try {
         this.logger.debug(`handler: Setting LiveKit camera enabled: ${enable}`);
-        const { processor } = this.trackerProcessorState$.value;
+        const { processor } = enable
+          ? await this.pipelineKnown()
+          : this.trackerProcessorState$.value;
         if (enable && processor) await this.dropCameraWithoutEffect(lkRoom);
         await lkRoom.localParticipant.setCameraEnabled(enable);
         // Unmute will restart the track if it was paused upstream,
@@ -439,6 +448,16 @@ export class Publisher {
     )?.track;
     if (track instanceof LocalVideoTrack && !track.getProcessor())
       await lkRoom.localParticipant.unpublishTrack(track);
+  }
+
+  /**
+   * The pipeline's state once it is known whether it builds: a camera track
+   * made before then would start without the effect.
+   */
+  private async pipelineKnown(): Promise<ProcessorState> {
+    return firstValueFrom(
+      this.trackerProcessorState$.pipe(filter((s) => !s.preparing)),
+    );
   }
 
   private observeTrackProcessors(

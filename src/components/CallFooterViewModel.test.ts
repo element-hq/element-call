@@ -15,7 +15,7 @@ import {
   mockMuteStates,
   mockMediaDevices,
 } from "../utils/test";
-import { constant } from "../state/Behavior";
+import { type Behavior, constant } from "../state/Behavior";
 import type { CallViewModel } from "../state/CallViewModel/CallViewModel";
 import type { Alignment, Layout } from "../state/layout-types";
 import type { SpotlightTileViewModel } from "../state/TileViewModel";
@@ -121,6 +121,11 @@ const noPipeline = constant<ProcessorState>({
   supported: false,
   processor: undefined,
 });
+
+/** The provider's verdict, which the SDK's check stands for here. */
+function pipelineAsTheSdkSays(): Behavior<ProcessorState> {
+  return constant({ supported: sdkSupportMock(), processor: undefined });
+}
 
 const twoMicsAndOneCamMediaDevices = mockMediaDevices({
   audioInput: {
@@ -284,7 +289,7 @@ describe("createCallFooterViewModel", () => {
         testScope(),
         mockMuteStates(),
         twoMicsAndOneCamMediaDevices,
-        noPipeline,
+        pipelineAsTheSdkSays(),
         /* openSettings */ undefined,
         /* hangup */ undefined,
         /* showLogo */ false,
@@ -388,6 +393,31 @@ describe("createCallFooterViewModel", () => {
       expect(vm.backgroundEffectSettling$.value).toBe(false);
     });
 
+    it("offers nothing once the pipeline fails to build, keeping the choice", () => {
+      platformMock.mockReturnValue("desktop");
+      backgroundEffectSetting.setValue("blur");
+      const pipeline$ = new BehaviorSubject<ProcessorState>({
+        supported: true,
+        processor: undefined,
+      });
+      const vm = createLobbyFooterViewModel(
+        testScope(),
+        mockMuteStates(),
+        twoMicsAndOneCamMediaDevices,
+        pipeline$,
+        /* openSettings */ undefined,
+        /* hangup */ undefined,
+        /* showLogo */ false,
+      );
+      expect(vm.backgroundEffect$.value).toBe("blur");
+
+      pipeline$.next({ supported: false, processor: undefined });
+      expect(vm.selectBackgroundEffect$.value).toBeUndefined();
+      expect(vm.addBackgroundImage$.value).toBeUndefined();
+      expect(vm.backgroundEffect$.value).toBe("none");
+      expect(backgroundEffectSetting.getValue()).toBe("blur");
+    });
+
     it("adding is unavailable at the limit", () => {
       sdkSupportMock.mockReturnValue(true);
       const added$ = addedBackgrounds.added$ as BehaviorSubject<
@@ -480,7 +510,7 @@ describe("createCallFooterViewModel", () => {
           buildMinimalCallViewModel(gridLayout),
           mockMuteStates(),
           twoMicsAndOneCamMediaDevices,
-          noPipeline,
+          pipelineAsTheSdkSays(),
           /* reactionIdentifier */ undefined,
           { showControls: true, header: HeaderStyle.Standard },
         );

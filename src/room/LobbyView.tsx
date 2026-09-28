@@ -9,6 +9,7 @@ import {
   type FC,
   useCallback,
   useMemo,
+  useRef,
   useState,
   type JSX,
   useEffect,
@@ -140,10 +141,15 @@ export const LobbyView: FC<Props> = ({
       },
   );
 
-  const { processor } = useTrackProcessor();
+  const { processor, preparing } = useTrackProcessor();
   const trackProcessorState$ = useTrackProcessorObservable$();
 
-  const initialProcessor = useInitial(() => processor);
+  // Taken once it is known whether the pipeline builds, and then kept, as
+  // useInitial keeps a value: one attached later is synced below.
+  const initialProcessorRef = useRef<{ value: typeof processor }>(undefined);
+  if (!preparing) initialProcessorRef.current ??= { value: processor };
+  const initialProcessor = initialProcessorRef.current?.value;
+  const processorTaken = initialProcessorRef.current !== undefined;
   const localTrackOptions = useMemo<CreateLocalTracksOptions>(
     () => ({
       // The only reason we request audio here is to get the audio permission
@@ -153,12 +159,20 @@ export const LobbyView: FC<Props> = ({
       // We also pass in a clone because livekit mutates the object passed in,
       // which would cause the devices to be re-opened on the next render.
       audio: Object.assign({}, initialAudioOptions),
-      video: videoEnabled && {
-        deviceId: videoInputId,
-        processor: initialProcessor,
-      },
+      // Not opened before then, so that the preview never shows the room.
+      video: videoEnabled &&
+        processorTaken && {
+          deviceId: videoInputId,
+          processor: initialProcessor,
+        },
     }),
-    [initialAudioOptions, videoEnabled, videoInputId, initialProcessor],
+    [
+      initialAudioOptions,
+      videoEnabled,
+      processorTaken,
+      videoInputId,
+      initialProcessor,
+    ],
   );
 
   const onError = useCallback(

@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { BehaviorSubject, distinctUntilChanged, map } from "rxjs";
+import { BehaviorSubject, distinctUntilChanged, map, of } from "rxjs";
 import { type BackgroundProcessorWrapper } from "@livekit/track-processors";
 
 import {
@@ -46,8 +46,10 @@ function fakePipeline(): {
   };
 }
 
-/** One letter per state: idle, waiting for a frame, attached. */
+/** One letter per state: idle, preparing, waiting for a frame, attached. */
 function letter(state: ProcessorState): string {
+  if (state.supported === false) return "x";
+  if (state.preparing) return "p";
   if (state.processor === undefined) return "i";
   return state.settling ? "w" : "a";
 }
@@ -55,14 +57,17 @@ function letter(state: ProcessorState): string {
 describe("the pipeline's state", () => {
   function testState({
     effect,
+    answer = "-y",
     firstFrame = "",
     expected,
   }: {
     effect: string;
+    /** When the trial build answers, from being asked. */
+    answer?: string;
     firstFrame?: string;
     expected: string;
   }): void {
-    withTestScheduler(({ behavior, schedule, expectObservable }) => {
+    withTestScheduler(({ behavior, cold, schedule, expectObservable }) => {
       const transformer = {
         onFirstFrame: undefined as (() => void) | undefined,
       };
@@ -71,6 +76,7 @@ describe("the pipeline's state", () => {
         effect$: behavior(effect, { n: "none", b: "blur" }),
         setEffect: vi.fn(),
         added$: new BehaviorSubject<AddedBackground[] | undefined>([]),
+        canSegment: () => cold(answer, { y: true, n: false }),
         pipeline: fakePipeline().pipeline,
         transformer,
       });
@@ -83,15 +89,21 @@ describe("the pipeline's state", () => {
 
   it("defaults to no effect", () => testState({ effect: "n", expected: "i" }));
 
+  it("attaches only once it is known the pipeline builds", () =>
+    testState({ effect: "nb", answer: "--y", expected: "ip-w" }));
+
+  it("offers none where the pipeline fails to build", () =>
+    testState({ effect: "nb", answer: "-n", expected: "ipx" }));
+
   it("waits from the first effect until a frame carries it", () =>
     testState({
-      effect: "    nb-n-b",
-      firstFrame: "  --f",
-      expected: "  iwa",
+      effect: "    nb---n-b",
+      firstFrame: "---f",
+      expected: "  ipwa",
     }));
 
   it("attaches on first use and stays attached", () =>
-    testState({ effect: "nb-n", firstFrame: "--f", expected: "iwa" }));
+    testState({ effect: "nb--n", firstFrame: "---f", expected: "ipwa" }));
 });
 
 describe("background effects", () => {
@@ -108,6 +120,7 @@ describe("background effects", () => {
       effect$,
       setEffect,
       added$,
+      canSegment: () => of(true),
       pipeline: fake.pipeline,
       transformer: { onFirstFrame: undefined },
       ...options,
@@ -117,14 +130,23 @@ describe("background effects", () => {
     effect$.next(raw);
     await flushPromises();
   };
-  const blur = async (on: boolean): Promise<void> =>
-    choose(on ? "blur" : "none");
 
   beforeEach(() => {
     effect$ = new BehaviorSubject("none");
     added$ = new BehaviorSubject<AddedBackground[] | undefined>(undefined);
     setEffect = vi.fn((raw: string) => effect$.next(raw));
     fake = fakePipeline();
+  });
+
+  it("offers none for the session where the pipeline fails to build", async () => {
+    const effects = build({ canSegment: () => of(false) });
+    await choose("blur");
+
+    expect(effects.state$.value.supported).toBe(false);
+    expect(effects.state$.value.processor).toBeUndefined();
+    expect(effects.state$.value.settling).toBe(false);
+    // A browser update may fix it, so the next session asks again.
+    expect(effect$.value).toBe("blur");
   });
 
   it("puts a shipped background on as that picture", async () => {
@@ -140,10 +162,10 @@ describe("background effects", () => {
 
   it("switches in place rather than reattaching", async () => {
     const effects = build();
-    await blur(true);
+    await choose("blur");
     const pipeline = effects.state$.value.processor;
-    await blur(false);
-    await blur(true);
+    await choose("none");
+    await choose("blur");
 
     expect(effects.state$.value.processor).toBe(pipeline);
     expect(fake.switches).toEqual([
@@ -156,10 +178,10 @@ describe("background effects", () => {
   it("switches one at a time, skipping those overtaken", async () => {
     const finished = fake.holdNext();
     build();
-    await blur(true);
-    await blur(false);
-    await blur(true);
-    await blur(false);
+    await choose("blur");
+    await choose("none");
+    await choose("blur");
+    await choose("none");
     expect(fake.switches).toHaveLength(1);
 
     finished();
