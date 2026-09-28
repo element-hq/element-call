@@ -120,3 +120,38 @@ Please see LICENSE in the repository root for full details.
   margin: var(--cpd-space-2x)
     calc(var(--cpd-space-4x) - var(--cpd-border-width-1)) 0;
 }
+
+/* Says there is more at an edge, whether or not a scrollbar shows. */
+.fade {
+  position: sticky;
+  z-index: 1;
+  block-size: var(--cpd-space-6x);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 150ms ease-out;
+}
+
+.fadeTop {
+  inset-block-start: var(--device-list-fade-start, 0);
+  margin-block-end: calc(-1 * var(--cpd-space-6x));
+  background: linear-gradient(
+    to bottom,
+    var(--cpd-color-bg-canvas-default),
+    transparent
+  );
+}
+
+.fadeBottom {
+  inset-block-end: var(--device-list-fade-end, 0);
+  margin-block-start: calc(-1 * var(--cpd-space-6x));
+  background: linear-gradient(
+    to top,
+    var(--cpd-color-bg-canvas-default),
+    transparent
+  );
+}
+
+.deviceList[data-more-above] > .fadeTop,
+.deviceList[data-more-below] > .fadeBottom {
+  opacity: 1;
+}

@@ -754,6 +754,44 @@ describe("MediaMuteAndSwitchButton", () => {
     expect(commits - settled).toBe(0);
   });
 
+  test("says there is more at the edges without re-rendering anything", async () => {
+    const user = userEvent.setup();
+    let commits = 0;
+    const { getByRole } = renderComponent(
+      <Profiler
+        id="menu"
+        onRender={(): void => {
+          commits++;
+        }}
+      >
+        <MediaMuteAndSwitchButton
+          iconsAndLabels="video"
+          enabled={true}
+          options={[{ label: { type: "name", name: "Camera 1" }, id: "cam1" }]}
+          selectedOption="cam1"
+          backgroundEffects={effects}
+          selectedBackgroundEffect="none"
+          onSelectBackgroundEffect={vi.fn()}
+        />
+      </Profiler>,
+    );
+    await user.click(getByRole("button", { name: "Camera" }));
+    const list = screen.getByRole("group", { name: "Camera" }).parentElement!;
+    // jsdom lays nothing out, so the list is given a length to scroll.
+    Object.defineProperty(list, "scrollHeight", { value: 600 });
+    Object.defineProperty(list, "clientHeight", { value: 200 });
+    await act(async () => {});
+    const settled = commits;
+
+    for (const top of [0, 100, 400]) {
+      list.scrollTop = top;
+      list.dispatchEvent(new Event("scroll"));
+      expect(list.hasAttribute("data-more-above")).toBe(top > 0);
+      expect(list.hasAttribute("data-more-below")).toBe(top < 400);
+    }
+    expect(commits - settled).toBe(0);
+  });
+
   test("camera menu uses the same selection pattern and keeps the blur toggle", async () => {
     const user = userEvent.setup();
     const { getByRole } = renderComponent(
