@@ -26,8 +26,7 @@ import {
   VolumeOnSolidIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { animated } from "@react-spring/web";
-import { type Observable, map } from "rxjs";
-import { useObservableRef } from "observable-hooks";
+import { BehaviorSubject, type Observable, map } from "rxjs";
 import { useTranslation } from "react-i18next";
 import classNames from "classnames";
 import { type TrackReferenceOrPlaceholder } from "@livekit/components-core";
@@ -416,7 +415,13 @@ export const SpotlightTile: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const rootElement = useRootElement();
-  const [ourRef, root$] = useObservableRef<HTMLDivElement | null>(null);
+  const root$ = useInitial(
+    () => new BehaviorSubject<HTMLDivElement | null>(null),
+  );
+  const ourRef = useCallback(
+    (root: HTMLDivElement | null) => root$.next(root),
+    [root$],
+  );
   const ref = useMergedRefs(ourRef, theirRef);
   const maximised = useBehavior(vm.maximised$);
   const background = useBehavior(vm.background$);

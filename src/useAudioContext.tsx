@@ -7,7 +7,6 @@ Please see LICENSE in the repository root for full details.
 
 import { logger } from "matrix-js-sdk/lib/logger";
 import { useState, useEffect } from "react";
-import { useObservableEagerState } from "observable-hooks";
 
 import {
   soundEffectVolume as soundEffectVolumeSetting,
@@ -17,6 +16,7 @@ import { useEarpieceAudioConfig, useMediaDevices } from "./MediaDevicesContext";
 import { type PrefetchedSounds } from "./soundUtils";
 import { useUrlParams } from "./UrlParams";
 import * as controls from "./controls";
+import { useBehavior } from "./useBehavior";
 
 /**
  * Play a sound though a given AudioContext. Will take
@@ -168,7 +168,7 @@ export function useAudioContext<S extends string>(
     };
   }, [props.sounds, props.latencyHint]);
 
-  const audioOutputId = useObservableEagerState(
+  const audioOutputId = useBehavior(
     useMediaDevices().audioOutput.selected$,
   )?.id;
   const { controlledAudioDevices } = useUrlParams();

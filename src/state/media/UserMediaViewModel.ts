@@ -10,7 +10,6 @@ import {
   BehaviorSubject,
   combineLatest,
   map,
-  type Observable,
   of,
   Subject,
   switchMap,
@@ -54,10 +53,10 @@ export interface BaseUserMediaViewModel extends BaseMemberMediaViewModel {
   rtcBackendIdentity: string;
   handRaised$: Behavior<Date | null>;
   reaction$: Behavior<ReactionOption | null>;
-  audioStreamStats$: Observable<
+  audioStreamStats$: Behavior<
     RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats | undefined
   >;
-  videoStreamStats$: Observable<
+  videoStreamStats$: Behavior<
     RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats | undefined
   >;
   /**
@@ -94,6 +93,21 @@ export function createBaseUserMedia(
   );
   const toggleCropVideo$ = new Subject<void>();
   const videoAspectRatio$ = new BehaviorSubject(NaN);
+  const streamStats$ = (
+    scope: ObservableScope,
+    source: Track.Source,
+  ): Behavior<
+    RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats | undefined
+  > =>
+    scope.behavior(
+      combineLatest([participant$, showConnectionStats.value$]).pipe(
+        switchMap(([p, showConnectionStats]) =>
+          !p || !showConnectionStats
+            ? of(undefined)
+            : observeRtpStreamStats$(p, source, statsType),
+        ),
+      ),
+    );
 
   return {
     ...createMemberMedia(scope, {
@@ -130,25 +144,8 @@ export function createBaseUserMedia(
     rtcBackendIdentity,
     handRaised$,
     reaction$,
-    audioStreamStats$: combineLatest([
-      participant$,
-      showConnectionStats.value$,
-    ]).pipe(
-      switchMap(([p, showConnectionStats]) => {
-        //
-        if (!p || !showConnectionStats) return of(undefined);
-        return observeRtpStreamStats$(p, Track.Source.Microphone, statsType);
-      }),
-    ),
-    videoStreamStats$: combineLatest([
-      participant$,
-      showConnectionStats.value$,
-    ]).pipe(
-      switchMap(([p, showConnectionStats]) => {
-        if (!p || !showConnectionStats) return of(undefined);
-        return observeRtpStreamStats$(p, Track.Source.Camera, statsType);
-      }),
-    ),
+    audioStreamStats$: streamStats$(scope, Track.Source.Microphone),
+    videoStreamStats$: streamStats$(scope, Track.Source.Camera),
     setVideoAspectRatio: (ratio) => videoAspectRatio$.next(ratio),
   };
 }

@@ -37,7 +37,6 @@ import {
   Menu,
   Text,
 } from "@vector-im/compound-web";
-import { useObservableEagerState } from "observable-hooks";
 
 import styles from "./GridTile.module.css";
 import { Slider } from "../Slider";
@@ -133,12 +132,8 @@ const UserMediaTileInner: FC<UserMediaTileProps & { menu: ReactNode }> = ({
   const { t } = useTranslation();
   const video = useBehavior(vm.video$);
   const unencryptedWarning = useBehavior(vm.unencryptedWarning$);
-  const audioStreamStats = useObservableEagerState<
-    RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats | undefined
-  >(vm.audioStreamStats$);
-  const videoStreamStats = useObservableEagerState<
-    RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats | undefined
-  >(vm.videoStreamStats$);
+  const audioStreamStats = useBehavior(vm.audioStreamStats$);
+  const videoStreamStats = useBehavior(vm.videoStreamStats$);
   const audioEnabled = useBehavior(vm.audioEnabled$);
   const videoEnabled = useBehavior(vm.videoEnabled$);
   const speaking = useBehavior(vm.speaking$);

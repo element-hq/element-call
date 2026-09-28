@@ -6,9 +6,9 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { createContext, use, useMemo } from "react";
-import { useObservableEagerState } from "observable-hooks";
 
 import { type MediaDevices } from "./state/MediaDevices";
+import { useBehavior } from "./useBehavior";
 
 export const MediaDevicesContext = createContext<MediaDevices | undefined>(
   undefined,
@@ -35,7 +35,7 @@ export const useEarpieceAudioConfig = (): {
   volume: number;
 } => {
   const devices = useMediaDevices();
-  const audioOutput = useObservableEagerState(devices.audioOutput.selected$);
+  const audioOutput = useBehavior(devices.audioOutput.selected$);
   const isVirtualEarpiece = audioOutput?.virtualEarpiece ?? false;
   return {
     // We use only the right speaker (pan = 1) for the earpiece.

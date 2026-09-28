@@ -5,11 +5,11 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type Observable } from "rxjs";
 import { type ComponentType } from "react";
 
 import { type LayoutProps } from "./Grid";
 import { type TileViewModel } from "../state/TileViewModel";
+import { type Behavior } from "../state/Behavior";
 
 export interface Bounds {
   width: number;
@@ -20,7 +20,7 @@ export interface CallLayoutInputs {
   /**
    * The minimum bounds of the layout area.
    */
-  minBounds$: Observable<Bounds>;
+  minBounds$: Behavior<Bounds>;
 }
 
 export interface CallLayoutOutputs<Model> {

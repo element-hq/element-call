@@ -21,7 +21,6 @@ import {
   Separator,
 } from "@vector-im/compound-web";
 import { Trans, useTranslation } from "react-i18next";
-import { useObservableEagerState } from "observable-hooks";
 
 import {
   type AudioOutputDeviceLabel,
@@ -30,6 +29,7 @@ import {
   type MediaDevice,
 } from "../state/MediaDevices";
 import styles from "./DeviceSelection.module.css";
+import { useBehavior } from "../useBehavior";
 
 interface Props {
   device: MediaDevice<DeviceLabel | AudioOutputDeviceLabel, SelectedDevice>;
@@ -44,8 +44,8 @@ export const DeviceSelection: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const groupId = useId();
-  const available = useObservableEagerState(device.available$);
-  const selectedId = useObservableEagerState(device.selected$)?.id;
+  const available = useBehavior(device.available$);
+  const selectedId = useBehavior(device.selected$)?.id;
   const onChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       device.select(e.target.value);

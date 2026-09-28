@@ -20,8 +20,7 @@ import {
 } from "react";
 import { type LocalVideoTrack } from "livekit-client";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { combineLatest, map, type Observable } from "rxjs";
-import { useObservable } from "observable-hooks";
+import { combineLatest } from "rxjs";
 
 import {
   backgroundBlur as backgroundBlurSettings,
@@ -31,6 +30,7 @@ import { BlurBackgroundTransformer } from "./BlurBackgroundTransformer";
 import { type Behavior } from "../state/Behavior";
 import { type ObservableScope } from "../state/ObservableScope";
 import { platform } from "../Platform";
+import { useValueBehavior } from "../useValueBehavior";
 
 //TODO-MULTI-SFU: This is not yet fully there.
 // it is a combination of exposing observable and react hooks.
@@ -52,18 +52,8 @@ export function useTrackProcessor(): ProcessorState {
   return state;
 }
 
-export function useTrackProcessorObservable$(): Observable<ProcessorState> {
-  const state = use(ProcessorContext);
-  if (state === undefined)
-    throw new Error(
-      "useTrackProcessor must be used within a ProcessorProvider",
-    );
-  const state$ = useObservable(
-    (init$) => init$.pipe(map(([init]) => init)),
-    [state],
-  );
-
-  return state$;
+export function useTrackProcessorState$(): Behavior<ProcessorState> {
+  return useValueBehavior(useTrackProcessor());
 }
 
 /**

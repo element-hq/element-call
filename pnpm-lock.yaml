@@ -202,9 +202,6 @@ importers:
       normalize.css:
         specifier: ^8.0.1
         version: 8.0.1
-      observable-hooks:
-        specifier: ^4.2.3
-        version: 4.2.4(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)
       oxfmt:
         specifier: ^0.66.0
         version: 0.66.0
@@ -4815,13 +4812,6 @@ packages:
   object.assign@4.1.7:
     resolution: {integrity: sha512-nK28WOo+QIjBkDduTINE4JkF/UJJKyf2EJxvJKfblDpyg0Q+pkOHNTL0Qwy6NP6FhE/EnzV73BxxqcJaXY9anw==}
     engines: {node: '>= 0.4'}
-
-  observable-hooks@4.2.4:
-    resolution: {integrity: sha512-FdTQgyw1h5bG/QHCBIqctdBSnv9VARJCEilgpV6L2qlw1yeLqFIwPm4U15dMtl5kDmNN0hSt+Nl6iYbLFwEcQA==}
-    peerDependencies:
-      react: '>=16.8.0'
-      react-dom: '>=16.8.0'
-      rxjs: '>=6.0.0'
 
   obug@2.1.4:
     resolution: {integrity: sha512-4a+OsYv9UktOJKE+l1A4OufDgdRF9PifWj+tJnHURo/P+WOxpG4GzUFL9qCalmWauao6ogiG+QvnCovwPoyAWA==}
@@ -10409,12 +10399,6 @@ snapshots:
       es-object-atoms: 1.1.1
       has-symbols: 1.1.0
       object-keys: 1.1.1
-
-  observable-hooks@4.2.4(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(rxjs@7.8.2):
-    dependencies:
-      react: 19.2.8
-      react-dom: 19.2.8(react@19.2.8)
-      rxjs: 7.8.2
 
   obug@2.1.4: {}
 
