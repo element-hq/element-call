@@ -104,6 +104,7 @@ import {
   type SpotlightPortraitLayoutMedia,
   type WindowMode,
 } from "../layout-types.ts";
+import { chooseSpotlightSpeaker } from "../layoutMedia.ts";
 import { ElementCallError, UnknownCallError } from "../../utils/errors.ts";
 import { type Epoch, type ObservableScope } from "../ObservableScope.ts";
 import { createHomeserverConnected$ } from "./localMember/HomeserverConnected.ts";
@@ -975,33 +976,16 @@ export function createCallViewModel$(
         mediaItems.length === 0
           ? of([])
           : combineLatest(
-              mediaItems.map((m) =>
-                m.speaking$.pipe(map((s) => [m, s] as const)),
+              mediaItems.map((media) =>
+                media.speaking$.pipe(map((speaking) => ({ media, speaking }))),
               ),
             ),
       ),
       scan<
-        (readonly [UserMediaViewModel, boolean])[],
+        { media: UserMediaViewModel; speaking: boolean }[],
         UserMediaViewModel | undefined,
         undefined
-      >((prev, mediaItems) => {
-        // Only remote users that are still in the call should be sticky
-        const [stickyMedia, stickySpeaking] =
-          (!prev?.local && mediaItems.find(([m]) => m === prev)) || [];
-        // Decide who to spotlight:
-        // If the previous speaker is still speaking, stick with them rather
-        // than switching eagerly to someone else
-        return stickySpeaking
-          ? stickyMedia!
-          : // Otherwise, select any remote user who is speaking
-            (mediaItems.find(([m, s]) => !m.local && s)?.[0] ??
-              // Otherwise, stick with the person who was last speaking
-              stickyMedia ??
-              // Otherwise, spotlight an arbitrary remote user
-              mediaItems.find(([m]) => !m.local)?.[0] ??
-              // Otherwise, spotlight the local user
-              mediaItems.find(([m]) => m.local)?.[0]);
-      }, undefined),
+      >(chooseSpotlightSpeaker, undefined),
     ),
   );
 
