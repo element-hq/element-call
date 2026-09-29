@@ -8,7 +8,7 @@
     "dev:embedded": "vite --config vite-embedded.config.js",
     "dev:component": "vite --config vite-component-dev.config.ts",
     "build": "pnpm build:full",
-    "build:full": "NODE_OPTIONS=--max-old-space-size=16384 vite build",
+    "build:full": "node --max-old-space-size=16384 node_modules/vite/bin/vite.js build",
     "build:full:production": "pnpm build:full",
     "build:full:development": "pnpm build:full --mode development",
     "build:embedded": "pnpm build:full --config vite-embedded.config.js",

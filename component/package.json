@@ -25,6 +25,10 @@
       "types": "./dist/types/component/index.d.ts",
       "default": "./dist/element-call.js"
     },
+    "./api": {
+      "types": "./dist/types/component/api.d.ts",
+      "default": "./dist/api.js"
+    },
     "./style.css": "./dist/element-call.css"
   },
   "sideEffects": [

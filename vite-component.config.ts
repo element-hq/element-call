@@ -49,8 +49,19 @@ export default defineConfig(({ mode }) => {
       cssCodeSplit: false,
       lib: {
         formats: ["es" as const],
-        entry: "./component/index.tsx",
-        fileName: "element-call",
+        entry: {
+          // The component
+          "element-call": "./component/index.tsx",
+          // What a host needs to talk about it, without it (see component/api.ts).
+          // Built as an entry point of its own so that importing it does not
+          // load the component: the bundler gives it a chunk that reaches only
+          // what it imports.
+          api: "./component/api.ts",
+        },
+        fileName: (_format, entryName) => `${entryName}.js`,
+        // The one stylesheet (see cssCodeSplit) keeps the name it had when the
+        // component was the only entry
+        cssFileName: "element-call",
       },
       rollupOptions: {
         // The host already has these, and a second copy of any of them does not
