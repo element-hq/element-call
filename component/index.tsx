@@ -59,6 +59,7 @@ import { ErrorPage } from "../src/FullScreenView";
 import { ClientProvider } from "../src/ClientContext";
 import { HostBridgeProvider } from "../src/HostBridge";
 import { RootElementProvider, useRootElement } from "../src/RootElementContext";
+import { PortalRoot } from "./PortalRoot";
 import {
   configurationForIntent,
   componentProperties,
@@ -321,34 +322,36 @@ export const ElementCall: FC<ElementCallProps> = ({
         <UrlParamsProvider value={params}>
           <div ref={setContainer} className={styles.root}>
             {ready && (
-              <RootElementProvider value={container}>
-                {/* Whatever goes wrong in here is shown in here. Left to
+              <PortalRoot root={container}>
+                <RootElementProvider value={container}>
+                  {/* Whatever goes wrong in here is shown in here. Left to
                   propagate, an error would unmount the host's own tree. */}
-                <ErrorBoundary
-                  fallback={(error) => <ErrorPage error={error} />}
-                  // A broken call should not hold the host on screen
-                  onError={() => void hostBridge.setAlwaysOnScreen(false)}
-                >
-                  <Decoration>
-                    <TooltipProvider>
-                      <ClientProvider client={client}>
-                        <MediaDevicesContext value={mediaDevices}>
-                          <ProcessorProvider>
-                            <CallView
-                              client={client}
-                              rtcSession={rtcSession}
-                              isPasswordlessUser={false}
-                              confineToRoom={params.confineToRoom}
-                              preload={params.preload}
-                              skipLobby={params.skipLobby}
-                            />
-                          </ProcessorProvider>
-                        </MediaDevicesContext>
-                      </ClientProvider>
-                    </TooltipProvider>
-                  </Decoration>
-                </ErrorBoundary>
-              </RootElementProvider>
+                  <ErrorBoundary
+                    fallback={(error) => <ErrorPage error={error} />}
+                    // A broken call should not hold the host on screen
+                    onError={() => void hostBridge.setAlwaysOnScreen(false)}
+                  >
+                    <Decoration>
+                      <TooltipProvider>
+                        <ClientProvider client={client}>
+                          <MediaDevicesContext value={mediaDevices}>
+                            <ProcessorProvider>
+                              <CallView
+                                client={client}
+                                rtcSession={rtcSession}
+                                isPasswordlessUser={false}
+                                confineToRoom={params.confineToRoom}
+                                preload={params.preload}
+                                skipLobby={params.skipLobby}
+                              />
+                            </ProcessorProvider>
+                          </MediaDevicesContext>
+                        </ClientProvider>
+                      </TooltipProvider>
+                    </Decoration>
+                  </ErrorBoundary>
+                </RootElementProvider>
+              </PortalRoot>
             )}
           </div>
         </UrlParamsProvider>

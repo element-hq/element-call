@@ -34,10 +34,33 @@ component rather than a page makes. */
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Compound's overlay container, which holds tooltips and popovers, has to fill
-the container for the elements inside it to be positioned against it. The
-standalone page does the same for the container under `#root`. */
-.root > [data-overlay-container] {
-  position: relative;
+/* floating-ui's portal node, which `PortalRoot` puts here to hold the call
+along with the tooltips Compound floats over it. It fills the container, and
+lays out its children as the container would. */
+.root > [data-floating-ui-portal] {
+  display: flex;
+  flex-direction: column;
   block-size: 100%;
+  position: relative;
+}
+
+/* The call itself, in the wrapper `PortalRoot` gives it. It is a stacking
+context of its own, as the standalone page's `#root` is, so that the layers
+the call view uses for its header, footer and overlays stay below the modals
+and toasts, which are portalled into the root and carry no layer of their own,
+and below the tooltips. */
+.content {
+  display: flex;
+  flex-direction: column;
+  block-size: 100%;
+  position: relative;
+  isolation: isolate;
+}
+
+/* The tooltips sit in portal nodes of their own, nested in ours. Raised, so
+that a tooltip opened inside a modal shows above it: the modal is portalled
+straight into the root and so comes later in the document than our node. */
+.root > [data-floating-ui-portal] > [data-floating-ui-portal] {
+  position: relative;
+  z-index: 1;
 }
