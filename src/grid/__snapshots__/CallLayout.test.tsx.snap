@@ -1,0 +1,186 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`grid layout 1`] = `
+<div>
+  <div
+    class="_scrolling_e8555d"
+    style="width: 800px; --gap: 20px; --width: 370px; --height: 277px;"
+  >
+    <div
+      class="_slot_e8555d"
+      data-testid="slot-0"
+    />
+    <div
+      class="_slot_e8555d"
+      data-testid="slot-1"
+    />
+    <div
+      class="_slot_e8555d"
+      data-testid="slot-2"
+    />
+  </div>
+  <div
+    class="_fixed_e8555d"
+  >
+    <div
+      class="_slot_e8555d"
+      data-block-alignment="end"
+      data-inline-alignment="end"
+      data-testid="slot-spotlight"
+    />
+  </div>
+</div>
+`;
+
+exports[`one-on-one desktop layout 1`] = `
+<div>
+  <div
+    class="_layer_185815"
+  >
+    <div
+      class="_container_185815"
+      data-testid="slot-spotlight"
+      style="width: 760px; height: 570px;"
+    >
+      <div
+        class="_slot_185815 _local_185815"
+        data-block-alignment="end"
+        data-inline-alignment="end"
+        data-testid="slot-pip"
+      />
+    </div>
+  </div>
+  <div />
+</div>
+`;
+
+exports[`one-on-one mobile layout 1`] = `
+<div>
+  <div
+    class="_layer_c81c30"
+  >
+    <div
+      class="_spotlight_c81c30"
+      data-testid="slot-spotlight"
+    />
+  </div>
+  <div
+    class="_layer_c81c30"
+  >
+    <div
+      class="_pip_c81c30"
+      data-block-alignment="end"
+      data-inline-alignment="end"
+      data-size="sm"
+      data-testid="slot-pip"
+    />
+  </div>
+</div>
+`;
+
+exports[`spotlight expanded layout 1`] = `
+<div>
+  <div
+    class="_layer_e70191"
+  >
+    <div
+      class="_spotlight_e70191"
+      data-testid="slot-spotlight"
+    />
+  </div>
+  <div
+    class="_layer_e70191"
+  >
+    <div
+      class="_pip_e70191"
+      data-block-alignment="end"
+      data-inline-alignment="end"
+      data-testid="slot-pip"
+    />
+  </div>
+</div>
+`;
+
+exports[`spotlight landscape layout 1`] = `
+<div>
+  <div
+    class="_layer_29809c"
+  >
+    <div
+      class="_spotlight_29809c"
+    >
+      <div
+        class="_slot_29809c"
+        data-testid="slot-spotlight"
+      />
+    </div>
+    <div
+      class="_grid_29809c"
+    />
+  </div>
+  <div
+    class="_layer_29809c"
+  >
+    <div
+      class="_spotlight_29809c"
+    />
+    <div
+      class="_grid_29809c"
+    >
+      <div
+        class="_slot_29809c"
+        data-testid="slot-0"
+      />
+      <div
+        class="_slot_29809c"
+        data-testid="slot-1"
+      />
+      <div
+        class="_slot_29809c"
+        data-testid="slot-2"
+      />
+    </div>
+  </div>
+</div>
+`;
+
+exports[`spotlight portrait layout 1`] = `
+<div>
+  <div
+    class="_layer_065bbc"
+    style="--grid-gap: 20px; --grid-tile-width: 370px; --grid-tile-height: 277px;"
+  >
+    <div
+      class="_spotlight_065bbc"
+    />
+    <div
+      class="_grid_065bbc"
+    >
+      <div
+        class="_slot_065bbc"
+        data-testid="slot-0"
+      />
+      <div
+        class="_slot_065bbc"
+        data-testid="slot-1"
+      />
+      <div
+        class="_slot_065bbc"
+        data-testid="slot-2"
+      />
+    </div>
+  </div>
+  <div
+    class="_layer_065bbc"
+  >
+    <div
+      class="_spotlight_065bbc"
+    >
+      <div
+        class="_slot_065bbc"
+        data-testid="slot-spotlight"
+      />
+    </div>
+  </div>
+</div>
+`;
