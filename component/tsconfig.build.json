@@ -13,8 +13,8 @@
     "rootDir": "..",
     "outDir": "./dist/types"
   },
-  // The entry point, plus the ambient declarations (CSS modules, `?react` SVGs,
-  // `import.meta.env`, …) that the sources it reaches rely on.
-  "include": ["./index.tsx", "../src/@types/*.d.ts"],
+  // The entry points, plus the ambient declarations (CSS modules, `?react` SVGs,
+  // `import.meta.env`, …) that the sources they reach rely on.
+  "include": ["./index.tsx", "./api.ts", "../src/@types/*.d.ts"],
   "exclude": []
 }
