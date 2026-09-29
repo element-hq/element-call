@@ -762,6 +762,55 @@ describe("LocalMembership", () => {
       scope.end();
     });
 
+    it("reports a signal-only reconnect without reconnecting", async () => {
+      const scope = new ObservableScope();
+      const trackSpy = vi.spyOn(
+        PosthogAnalytics.instance.eventCallReconnecting,
+        "track",
+      );
+
+      const connectionState$ = new BehaviorSubject<ConnectionState>(
+        ConnectionState.LivekitConnected,
+      );
+      const connectionManagerData = new ConnectionManagerData();
+      connectionManagerData.add(
+        {
+          ...connectionTransportAConnected,
+          state$: connectionState$,
+        } as unknown as Connection,
+        [],
+      );
+
+      const localMembership = createLocalMembership$({
+        scope,
+        ...defaultCreateLocalMemberValues,
+        homeserverConnected: {
+          combined$: constant<[boolean, HomeserverDisconnectReason | null]>([
+            true,
+            null,
+          ]),
+          rtsSession$: constant(RTCMemberStatus.Connected),
+        },
+        connectionManager: {
+          connectionManagerData$: constant(new Epoch(connectionManagerData)),
+        },
+        localTransport$: constant(mockTransport),
+      });
+
+      await flushPromises();
+
+      connectionState$.next(ConnectionState.LivekitSignalReconnecting);
+      expect(localMembership.signalReconnecting$.value).toBe(true);
+      expect(localMembership.reconnecting$.value).toBe(false);
+      expect(localMembership.connected$.value).toBe(true);
+
+      connectionState$.next(ConnectionState.LivekitConnected);
+      expect(localMembership.signalReconnecting$.value).toBe(false);
+      expect(trackSpy).not.toHaveBeenCalled();
+
+      scope.end();
+    });
+
     it("fires one event per completed reconnection cycle", async () => {
       const scope = new ObservableScope();
       const trackSpy = vi.spyOn(

@@ -299,6 +299,7 @@ export const InCallView: FC<InCallViewProps> = ({
   const audioParticipants = useBehavior(vm.livekitRoomItems$);
   const participantCount = useBehavior(vm.participantCount$);
   const reconnecting = useBehavior(vm.reconnecting$);
+  const signalReconnecting = useBehavior(vm.signalReconnecting$);
   const screenShareError = useBehavior(vm.screenShareError$);
   const layout = useBehavior(vm.layout$);
   const edgeToEdge = useBehavior(vm.edgeToEdge$);
@@ -460,6 +461,17 @@ export const InCallView: FC<InCallViewProps> = ({
         {t("common.reconnecting")}
       </Toast>
     </>
+  );
+
+  // Media is still flowing, so no scrim and nothing paused: just say so
+  const serverUnavailableToast = (
+    <Toast
+      onDismiss={onDismissReconnectingToast}
+      open={signalReconnecting && !reconnecting}
+      modal={false}
+    >
+      {t("error.server_unavailable")}
+    </Toast>
   );
 
   const earpieceOverlay = (
@@ -679,6 +691,7 @@ export const InCallView: FC<InCallViewProps> = ({
       <ReactionsAudioRenderer vm={vm} muted={muteAllAudio} />
       <RingingAudioRenderer vm={ringingVm} muted={muteAllAudio} />
       {reconnectingToast}
+      {serverUnavailableToast}
       {screenShareToast}
       {earpieceOverlay}
       <ReactionsOverlay vm={vm} />
