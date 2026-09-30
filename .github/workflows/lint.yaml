@@ -17,9 +17,11 @@ jobs:
         with:
           cache: "pnpm"
           node-version-file: ".node-version"
-      - name: Install dependencies
+      - name: Install dependencies (layered)
         # ignore-pnpmfile should never be commited. Make CI crash if it happened (`pnpmfileChecksum` is present)
-        run: "pnpm install --frozen-lockfile --ignore-pnpmfile"
+        run: "scripts/layered.sh --ignore-pnpmfile"
+        env:
+          PR_HEAD_REPO_OWNER: ${{ github.event.pull_request.head.repo.owner.login }}
       - name: Formatting
         run: "pnpm run format:check"
       - name: i18n
