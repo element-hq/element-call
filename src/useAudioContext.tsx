@@ -156,7 +156,7 @@ export function useAudioContext<S extends string>(
       }
       setAudioBuffers(buffers as Record<S, AudioBuffer>);
     })().catch((ex) => {
-      logger.debug("Failed to setup audio context", ex);
+      logger.warn("Failed to setup audio context", ex);
     });
 
     setAudioContext(ctx);
