@@ -16,7 +16,7 @@ import {
 import { MatrixError } from "matrix-js-sdk";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import {
-  type LivekitTransportConfig,
+  type LivekitTransport,
   type Transport,
 } from "matrix-js-sdk/lib/matrixrtc";
 
@@ -28,12 +28,12 @@ import {
 
 type DiscoveryClient = RtcTransportAutoDiscoveryProps["client"];
 
-const backendTransport: LivekitTransportConfig = {
+const backendTransport: LivekitTransport = {
   type: "livekit",
   livekit_service_url: "https://backend.example.org",
 };
 
-const configTransport: LivekitTransportConfig = {
+const configTransport: LivekitTransport = {
   type: "livekit",
   livekit_service_url: "https://config.example.org",
 };

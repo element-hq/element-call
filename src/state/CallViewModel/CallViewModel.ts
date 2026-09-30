@@ -43,7 +43,7 @@ import {
 import { type Logger, logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import {
   MembershipManagerEvent,
-  type LivekitTransportConfig,
+  type LivekitTransport,
   type MatrixRTCSession,
   type RTCCallIntent,
   type RTCNotificationType,
@@ -624,7 +624,7 @@ export function createCallViewModel$(
     ),
     muteStates,
     joinMatrixRTC: (
-      transport: LivekitTransportConfig,
+      transport: LivekitTransport,
       delayedLeaveTimings: ResolvedDelayedLeaveTimings,
     ) => {
       return enterRTCSession(

@@ -24,7 +24,7 @@ homeserver does not support sticky events. This is the default.
 MSC4354 and all clients on v0.17.0 or later. The local membership requests its
 token from the Matrix 2.0 JWT endpoint of the
 [MatrixRTC Authorization Service](https://github.com/element-hq/lk-jwt-service)
-and identifies the room by a hashed identity instead of a `livekit_alias`.
+and identifies the room by a hashed identity instead of the Matrix `room_id`.
 (Remote memberships always try the new endpoint first and fall back to the
 legacy one, so remote participants can be on either.)
 

@@ -5,7 +5,7 @@ SPDX-License-IdFentifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type LivekitTransportConfig } from "matrix-js-sdk/lib/matrixrtc";
+import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { type MatrixClient } from "matrix-js-sdk";
 import { logger as rootLogger, type Logger } from "matrix-js-sdk/lib/logger";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
@@ -34,34 +34,13 @@ interface Props {
   matrixRTCMode: MatrixRTCMode;
 }
 
-// TODO livekit_alias-cleanup
-// 1. We need to move away from transports map to connections!!!
-//
-// 2. We need to stop sending livekit_alias all together
-//
-//
-// 1.
-// Transports are just the jwt service adress but do not contain the information which room on this transport to use.
-// That requires slot and roomId.
-//
-// We need one connection per room on the transport.
-//
-// We need an object that contains:
-// transport
-// roomId
-// slotId
-//
-// To map to the connections. Prosposal: `ConnectionIdentifier`
-//
-// 2.
-// We need to make sure we do not sent livekit_alias in sticky events and that we drop all code for sending state events!
 export interface LocalTransport {
-  transport: LivekitTransportConfig;
+  transport: LivekitTransport;
   sfuConfig: SFUConfig;
 }
 
 export function isLocalTransport(
-  obj: LivekitTransportConfig | LocalTransport,
+  obj: LivekitTransport | LocalTransport,
 ): obj is LocalTransport {
   return "transport" in obj && "sfuConfig" in obj;
 }
@@ -90,7 +69,7 @@ export async function getLocalTransport({
   const customUrl = customLivekitUrl.value$.value;
 
   // Respect the user's custom URL, if set
-  const transport: LivekitTransportConfig | null = customUrl
+  const transport: LivekitTransport | null = customUrl
     ? { type: "livekit", livekit_service_url: customUrl }
     : await discovery.discoverPreferredTransport();
 
@@ -131,7 +110,7 @@ export async function getLocalTransport({
  *  @throws FailToGetOpenIdToken, NoMatrix2AuthorizationService
  */
 async function doOpenIdAndJWTFromUrl(
-  transport: LivekitTransportConfig,
+  transport: LivekitTransport,
   matrixRTCMode: MatrixRTCMode,
   membership: CallMembershipIdentityParts,
   roomId: string,
