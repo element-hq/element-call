@@ -18,6 +18,13 @@ import {
 import { type Behavior } from "./Behavior.ts";
 import { shallowEquals as arrayShallowEquals } from "../utils/array.ts";
 
+/**
+ * The general shape of the space the call is drawn in. Called a window because
+ * that is what it is in the standalone app; for a component it is the container
+ * the host gave us, which may be a small corner of a large window.
+ */
+export type WindowMode = "normal" | "narrow" | "flat" | "pip";
+
 export interface GridLayoutMedia {
   type: "grid";
   edgeToEdge: false;
@@ -143,10 +150,11 @@ export type Layout =
   | PipLayout;
 
 /**
- * Tests whether the top-level properties and array elements of layout `a` are
- * equal to those of layout `b`. Useful for deduping redundant layout updates.
+ * Tests whether the top-level properties and array elements of `a` are equal
+ * to those of `b`. Useful for deduping redundant layout and layout media
+ * updates.
  */
-export function layoutShallowEquals(a: Layout, b: Layout): boolean {
+export function layoutShallowEquals<T extends object>(a: T, b: T): boolean {
   // If a and b have the same number of keys and every key in a is also in b,
   // then they have the same keys.
   const aKeys = Object.keys(a);

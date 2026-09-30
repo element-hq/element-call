@@ -14,7 +14,7 @@ import {
   switchAll,
 } from "rxjs";
 
-import { type WindowMode } from "./CallViewModel/CallViewModel.ts";
+import { type WindowMode } from "./layout-types.ts";
 import { constant, type Behavior } from "./Behavior.ts";
 import { type ObservableScope } from "./ObservableScope.ts";
 
