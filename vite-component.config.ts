@@ -65,8 +65,12 @@ export default defineConfig(({ mode }) => {
       },
       rollupOptions: {
         // The host already has these, and a second copy of any of them does not
-        // merely bloat the bundle: React would hold two sets of hooks, and the
-        // Matrix client would run two sync loops.
+        // merely bloat the bundle: React would hold two sets of hooks, the
+        // Matrix client would run two sync loops, and a second Compound would
+        // bring a second stylesheet with class names of its own — so that what
+        // it floats into the host's body, tooltips and menus, would match the
+        // host's Compound stylesheet only when the two happened to be the same
+        // version.
         //
         // Every subpath has to be named. Element Call reaches most of the Matrix
         // SDK as `matrix-js-sdk/lib/…`, and a bare "matrix-js-sdk" would not
@@ -103,6 +107,8 @@ export default defineConfig(({ mode }) => {
           "matrix-js-sdk/lib/sync",
           "matrix-js-sdk/lib/types",
           "matrix-js-sdk/lib/utils",
+          "@vector-im/compound-web",
+          "@vector-im/compound-design-tokens/assets/web/icons",
         ],
       },
     },

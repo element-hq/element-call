@@ -40,10 +40,10 @@ const IS_ROOT = `:where(${ROOT_SELECTOR})`;
  * Element Call as a component.
  *
  * As a page of its own, Element Call can style the document: normalize.css and
- * Compound speak of `html`, `body` and bare elements, and the design tokens are
- * declared on `:root`. As a component, all of that would land on the host's
- * document too. This rewrites every selector so that it matches only the root
- * or its descendants:
+ * its own base styles speak of `html`, `body` and bare elements, and its custom
+ * properties are declared on `:root`. As a component, all of that would land on
+ * the host's document too. This rewrites every selector so that it matches only
+ * the root or its descendants:
  *
  * - `html`, `body` and `:root` become the root element, which is what stands in
  *   for the document inside a host.
@@ -55,9 +55,10 @@ const IS_ROOT = `:where(${ROOT_SELECTOR})`;
  * CSS modules are scoped by their class names already, so only their selectors
  * that would match by element alone — `pre` rather than `.pre` — are touched.
  *
- * The root's fonts and design tokens are still inherited by everything inside
- * it, the way they were from `body` and `:root`, and `@font-face` declarations
- * stay global, which they are by nature.
+ * The root's custom properties are still inherited by everything inside it,
+ * the way they were from `:root`. Compound's own stylesheet — the design
+ * tokens, the component styles, the fonts — is not in this build at all: the
+ * host supplies it, unscoped, along with its copy of Compound.
  */
 export function scopeStylesToRoot(): Plugin {
   return {

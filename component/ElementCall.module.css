@@ -34,33 +34,18 @@ component rather than a page makes. */
   -webkit-tap-highlight-color: transparent;
 }
 
-/* floating-ui's portal node, which `PortalRoot` puts here to hold the call
-along with the tooltips Compound floats over it. It fills the container, and
-lays out its children as the container would. */
-.root > [data-floating-ui-portal] {
-  display: flex;
-  flex-direction: column;
-  block-size: 100%;
-  position: relative;
-}
+/* The call itself. It is a stacking context of its own, as the standalone
+page's `#root` is, so that the layers the call view uses for its header, footer
+and overlays stay below the modals and toasts, which are portalled into the
+root and carry no layer of their own.
 
-/* The call itself, in the wrapper `PortalRoot` gives it. It is a stacking
-context of its own, as the standalone page's `#root` is, so that the layers
-the call view uses for its header, footer and overlays stay below the modals
-and toasts, which are portalled into the root and carry no layer of their own,
-and below the tooltips. */
+What Compound floats — tooltips, menus — is not in here at all: it goes into
+the host's body, as it would for any other component on the host's page, and is
+styled and layered by the host's copy of Compound. */
 .content {
   display: flex;
   flex-direction: column;
   block-size: 100%;
   position: relative;
   isolation: isolate;
-}
-
-/* The tooltips sit in portal nodes of their own, nested in ours. Raised, so
-that a tooltip opened inside a modal shows above it: the modal is portalled
-straight into the root and so comes later in the document than our node. */
-.root > [data-floating-ui-portal] > [data-floating-ui-portal] {
-  position: relative;
-  z-index: 1;
 }

@@ -7,9 +7,23 @@ Please see LICENSE in the repository root for full details.
 
 /* Styles for Element Call as a page of its own. The parts that apply wherever
 Element Call is shown live in base.css; these are about owning the document,
-and are not loaded when a host embeds Element Call as a component. */
+and are not loaded when a host embeds Element Call as a component.
+
+That includes Compound: the page brings the design tokens, the component styles
+and their fonts, where a host embedding the component supplies its own. The
+`compound` layers are ordered by base.css. */
 
 @import url("./base.css");
+
+@import url("@fontsource/inter/400.css");
+@import url("@fontsource/inter/500.css");
+@import url("@fontsource/inter/600.css");
+@import url("@fontsource/inter/700.css");
+@import url("@fontsource/inconsolata/400.css");
+@import url("@fontsource/inconsolata/700.css");
+
+@import url("@vector-im/compound-design-tokens/assets/web/css/compound-design-tokens.css") layer(compound);
+@import url("@vector-im/compound-web/dist/style.css") layer(compound.components);
 
 body {
   background-color: var(--cpd-color-bg-canvas-default);

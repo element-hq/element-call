@@ -306,8 +306,14 @@ directory target it rather than the repository; run them from the repository
 root. The host imports the component from
 `@element-hq/element-call-component` and the stylesheet from
 `@element-hq/element-call-component/style.css`, and has to provide `react`,
-`react-dom`, `matrix-js-sdk` and `livekit-client` itself, since the bundle leaves
-them external.
+`react-dom`, `matrix-js-sdk`, `livekit-client`, `@vector-im/compound-web` and
+`@vector-im/compound-design-tokens` itself, since the bundle leaves them
+external. Compound's stylesheet (`@vector-im/compound-web/dist/style.css`), the
+design tokens' CSS and the Inter and Inconsolata fonts are the host's to load
+too: the component shares the host's copy of Compound, so that the tooltips and
+menus Compound floats into the host's body are styled by the host's stylesheet
+like everything else there, and the component's own stylesheet stays confined
+to its root.
 
 The component is large, and a host will usually load it lazily, only once a
 call is shown. Everything a host needs in order to talk about a call before
