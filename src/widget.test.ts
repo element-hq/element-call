@@ -56,17 +56,17 @@ describe("widget", () => {
     expect(widget).toBeDefined();
     expect(configInitSpy).toHaveBeenCalled();
     const sendEvent = [
-      EventType.CallNotify, // Sent as a deprecated fallback
-      EventType.RTCNotification,
+      "org.matrix.msc4075.call.notify", // Sent as a deprecated fallback
+      "org.matrix.msc4075.rtc.notification",
     ];
     const sendRecvEvent = [
       "org.matrix.rageshake_request",
-      EventType.CallEncryptionKeysPrefix,
-      EventType.Reaction,
-      EventType.RoomRedaction,
-      ElementCallReactionEventType,
-      EventType.RTCDecline,
-      EventType.RTCMembership,
+      "io.element.call.encryption_keys",
+      "m.reaction",
+      "m.room.redaction",
+      "io.element.call.reaction",
+      "org.matrix.msc4310.rtc.decline",
+      "org.matrix.msc4143.rtc.member",
     ];
 
     const sendState = [
@@ -81,26 +81,14 @@ describe("widget", () => {
       }, // The above with no leading underscore, for room versions whose auth rules allow it
     ];
     const receiveState = [
-      { eventType: EventType.RoomCreate },
-      { eventType: EventType.RoomName },
-      { eventType: EventType.RoomMember },
-      { eventType: EventType.RoomEncryption },
-      { eventType: EventType.GroupCallMemberPrefix },
+      { eventType: "m.room.create" },
+      { eventType: "m.room.name" },
+      { eventType: "m.room.member" },
+      { eventType: "m.room.encryption" },
+      { eventType: "org.matrix.msc3401.call.member" },
     ];
 
-    const sendRecvToDevice = [
-      EventType.CallInvite,
-      EventType.CallCandidates,
-      EventType.CallAnswer,
-      EventType.CallHangup,
-      EventType.CallReject,
-      EventType.CallSelectAnswer,
-      EventType.CallNegotiate,
-      EventType.CallSDPStreamMetadataChanged,
-      EventType.CallSDPStreamMetadataChangedPrefix,
-      EventType.CallReplaces,
-      EventType.CallEncryptionKeysPrefix,
-    ];
+    const sendRecvToDevice = ["io.element.call.encryption_keys"];
 
     expect(createRoomWidgetClientSpy.mock.calls[0][1]).toStrictEqual({
       sendEvent: [...sendEvent, ...sendRecvEvent],
