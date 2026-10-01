@@ -6,33 +6,25 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { test, expect } from "vitest";
-import {
-  type Alignment,
-  layoutShallowEquals,
-  type Layout,
-} from "./layout-types";
+import { layoutShallowEquals, type Layout } from "./layout-types";
 import {
   type SpotlightTileViewModel,
   type GridTileViewModel,
 } from "./TileViewModel";
-import { BehaviorSubject } from "rxjs";
+import { type FloatingTile } from "./FloatingTile";
 
 const spotlightTile = {} as unknown as SpotlightTileViewModel;
 const gridTile = {} as unknown as GridTileViewModel;
-const pipAlignment$ = new BehaviorSubject<Alignment>({
-  inline: "end",
-  block: "end",
-});
+const pipTile = {} as unknown as FloatingTile & { vm: GridTileViewModel };
 
 const spotlightExpanded: Layout = {
   type: "spotlight-expanded",
   spotlight: spotlightTile,
-  pipAlignment$,
 };
 
 const spotlightPortrait: Layout = {
   type: "spotlight-portrait",
-  spotlight: spotlightTile,
+  spotlight: { vm: spotlightTile },
   grid: [gridTile],
   setVisibleTiles: () => {},
 };
@@ -46,12 +38,12 @@ test("layoutShallowEquals detects a missing key", () => {
   expect(
     layoutShallowEquals(spotlightExpanded, {
       ...spotlightExpanded,
-      pip: gridTile,
+      pip: pipTile,
     }),
   ).toBe(false);
   expect(
     layoutShallowEquals(
-      { ...spotlightExpanded, pip: gridTile },
+      { ...spotlightExpanded, pip: pipTile },
       spotlightExpanded,
     ),
   ).toBe(false);
