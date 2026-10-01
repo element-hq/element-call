@@ -82,8 +82,9 @@ its caller? If not, cut it.
 - Size against the root, not the window: `@container element-call (…)` and
   `cqw` / `cqh`, never `@media (width)` or `vw` / `vh`. Media queries stay correct
   only in standalone-only views — home, login.
-- Style `[data-element-call-root]`, never `body` or `:root`; the component build
-  makes those stand for the root (`component/build/scopeStylesToRoot.ts`).
+- Style `[data-element-call-root]`, never `body` or `:root`. A rule that matches
+  by element alone takes the root as a prefix (see `src/base.css`); nothing
+  rewrites selectors at build time, so a bare one reaches the host's page.
 
 ## Strings and a11y
 

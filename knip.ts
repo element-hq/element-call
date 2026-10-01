@@ -33,8 +33,6 @@ export default {
     "src/state/ServiceInterruptionsViewModel.ts",
   ],
   ignoreDependencies: [
-    // Used in CSS
-    "normalize.css",
     // Used for its global type declarations
     "@types/grecaptcha",
     "@types/sdp-transform",

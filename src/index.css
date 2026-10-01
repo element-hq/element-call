@@ -31,6 +31,13 @@ body.no-scroll-body {
   width: 100%;
 }
 
+/* index.html starts the body with this class, so that nothing is painted until
+useTheme has decided the theme and removed it. Only the page starts out hidden
+like this; a host's container is shown whenever the host shows it. */
+body.no-theme {
+  opacity: 0;
+}
+
 html,
 body,
 #root {

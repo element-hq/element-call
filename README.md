@@ -252,11 +252,10 @@ for the standalone app the root is the page, so they mean what the media queries
 they replaced did. (The standalone-only views, such as the home and login pages,
 still use plain media queries, since the component never shows them.)
 
-The component's stylesheet is confined to the element it is mounted in: the
-build rewrites every selector so that it matches only Element Call's root or
-what is inside it, with `html`, `body` and `:root` standing for that root (see
-`component/build/scopeStylesToRoot.ts`). A host's own page keeps its styles,
-and Element Call brings its own fonts and design tokens along.
+The component's stylesheet is confined to the element it is mounted in: its
+base styles — element defaults and custom properties — are written against
+Element Call's root element rather than the document, and everything else is a
+CSS module. A host's own page keeps its styles.
 
 The component speaks every language the app does. English is bundled in; the
 other locales are split into chunks the host's bundler loads the first time

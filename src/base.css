@@ -10,14 +10,22 @@ and element defaults its own stylesheets build on top of.
 
 Split out from index.css so that Element Call as a component can have these
 without also being given the standalone page's layout, which would style the
-host's own document. What remains here still speaks of the
-document — normalize.css and the typography below use bare element selectors,
-and the custom properties are declared on `:root` — which is right for the
-page, and is why the component build rewrites it: there every selector is
-confined to Element Call's root element (see component/build/scopeStylesToRoot.ts),
-with `html`, `body` and `:root` becoming that element. Nothing needs to be
-written differently here for that to work, but nothing here may rely on
-reaching the host's document either.
+host's own document. Compound's stylesheets — the design tokens, the component
+styles and the fonts they use — are not here either: as a component, Element
+Call shares the host's copy of Compound (it is a peer dependency, so that what
+Compound floats into the host's body, tooltips and menus, is styled by the
+host's stylesheet), and index.css loads it for the page.
+
+Everything here is written against Element Call's root element, found by the
+`data-element-call-root` attribute useTheme puts on it: the custom properties
+are declared on it rather than on `:root`, and the element defaults — the
+normalize.css next to this file, and the typography below — take it as a prefix
+so that they reach only what is inside it. For the standalone page the root is
+the body, so this means what the unscoped rules did; for a component it is the
+container the host gave, and the host's document is left as it was. Nothing
+rewrites selectors at build time, so a bare `h1` or `.theme` here would reach
+the host's page in every build. CSS modules need none of this, since their
+class names already confine them.
 
 Nothing here should depend on where it lands relative to Element Call's
 component stylesheets: the bundler decides that, and it decides differently for
@@ -32,11 +40,11 @@ the app and for the component build. */
 @import url("@fontsource/inconsolata/400.css");
 @import url("@fontsource/inconsolata/700.css");
 
-@import url("normalize.css/normalize.css") layer(normalize);
+@import url("./normalize.css") layer(normalize);
 @import url("@vector-im/compound-design-tokens/assets/web/css/compound-design-tokens.css") layer(compound);
 @import url("@vector-im/compound-web/dist/style.css") layer(compound.components);
 
-:root {
+[data-element-call-root] {
   --font-scale: 1;
   --font-size-micro: calc(10px * var(--font-scale));
   --font-size-caption: calc(12px * var(--font-scale));
@@ -73,8 +81,8 @@ the app and for the component build. */
   --call-view-header-footer-layer: 2;
 }
 
-:root,
-[class*="cpd-theme-"] {
+[data-element-call-root],
+[data-element-call-root] [class*="cpd-theme-"] {
   --video-tile-background: var(--cpd-color-bg-subtle-secondary);
 }
 
@@ -93,7 +101,8 @@ before using one further down the tree. */
   container: element-call / size;
 }
 
-.cpd-theme-dark {
+[data-element-call-root].cpd-theme-dark,
+[data-element-call-root] .cpd-theme-dark {
   --cpd-color-border-accent: var(--cpd-color-green-1100);
   --stopgap-color-on-solid-accent: var(--cpd-color-text-primary);
   --stopgap-background-85: rgba(16, 19, 23, 0.85);
@@ -120,11 +129,6 @@ before using one further down the tree. */
   }
 }
 
-/* We use this to not render the page at all until we know the theme.*/
-.no-theme {
-  opacity: 0;
-}
-
 /* On Android and iOS, prefer native system fonts. The global.css file of
 Compound Web is where these variables ultimately get consumed to set the page's
 font-family. */
@@ -138,54 +142,45 @@ font-family. */
 }
 
 @layer compound-legacy {
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6,
-  p,
-  a {
+  [data-element-call-root] :is(h1, h2, h3, h4, h5, h6, p, a) {
     margin-top: 0;
   }
 
   /* Headline Semi Bold */
-  h1 {
+  [data-element-call-root] h1 {
     font-weight: 600;
     font-size: var(--font-size-headline);
   }
 
   /* Title */
-  h2 {
+  [data-element-call-root] h2 {
     font-weight: 600;
     font-size: var(--font-size-title);
   }
 
   /* Subtitle */
-  h3 {
+  [data-element-call-root] h3 {
     font-weight: 600;
     font-size: var(--font-size-subtitle);
   }
 
   /* Body Semi Bold */
-  h4 {
+  [data-element-call-root] h4 {
     font-weight: 600;
     font-size: var(--font-size-body);
   }
 
-  h1,
-  h2,
-  h3 {
+  [data-element-call-root] :is(h1, h2, h3) {
     line-height: 1.2;
   }
 
   /* Body */
-  p {
+  [data-element-call-root] p {
     font-size: var(--font-size-body);
     line-height: var(--font-size-title);
   }
 
-  hr {
+  [data-element-call-root] hr {
     width: calc(100% - 24px);
     border: none;
     border-top: 1px solid var(--cpd-color-border-interactive-secondary);
@@ -199,25 +194,27 @@ font-family. */
     margin: 0 12px;
   }
 
-  summary {
+  [data-element-call-root] summary {
     font-size: var(--font-size-body);
   }
 
-  details > :not(summary) {
+  [data-element-call-root] details > :not(summary) {
     margin-left: var(--font-size-body);
   }
 
-  details[open] > summary {
+  [data-element-call-root] details[open] > summary {
     margin-bottom: var(--font-size-body);
   }
 }
 
 /* normalize.css sets the focus rings on buttons in Firefox to an unusual custom
 outline, which is inconsistent with our other components and is not sufficiently
-visible to be accessible. This resets it back to 'auto'. */
-button:-moz-focusring,
-[type="button"]:-moz-focusring,
-[type="reset"]:-moz-focusring,
-[type="submit"]:-moz-focusring {
+visible to be accessible. This resets it back to 'auto'. The root is named in
+`:where()`, which adds no specificity, so that the focus styles components set
+with a class still win over this. */
+:where([data-element-call-root]) button:-moz-focusring,
+:where([data-element-call-root]) [type="button"]:-moz-focusring,
+:where([data-element-call-root]) [type="reset"]:-moz-focusring,
+:where([data-element-call-root]) [type="submit"]:-moz-focusring {
   outline: auto;
 }
