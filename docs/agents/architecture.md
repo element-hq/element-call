@@ -72,7 +72,8 @@ Code that builds in only one is a bug.
 
 - `build:full` — standalone app, also widget mode.
 - `build:embedded` — `@element-hq/element-call-embedded`.
-- `build:sdk` — SDK library, entry `sdk/main.ts`.
+- `build:sdk-target-based-on-call-view-model` — the SDK demo, one bundle of the
+  `CallViewModel`; entry `sdk-target-based-on-call-view-model/main.ts`.
 - `build:component` — `@element-hq/element-call-component`, sources in `component/`
   (its own pnpm project; run pnpm from the repo root). Host API is in the README;
   `pnpm lint:externals` rejects an import of a `react` / `react-dom` /
