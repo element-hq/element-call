@@ -25,6 +25,7 @@ export default defineConfig((configEnv) =>
                 "src/**/*.test.ts",
                 "src/**/*.test.tsx",
                 "component/**/*.test.ts",
+                "component/**/*.test.tsx",
               ],
             },
           },

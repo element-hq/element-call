@@ -38,6 +38,8 @@
     "prepare": "cd .. && pnpm install --frozen-lockfile && pnpm build:component"
   },
   "peerDependencies": {
+    "@vector-im/compound-design-tokens": "^11.0.0",
+    "@vector-im/compound-web": "^10.0.0",
     "livekit-client": "^2.18.1",
     "matrix-js-sdk": "*",
     "react": "^19",
