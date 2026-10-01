@@ -151,10 +151,7 @@ interface Props {
   ownMembershipIdentity: CallMembershipIdentityParts;
   localTransport$: Observable<LocalTransport>;
   client: Pick<MatrixClient, "getDeviceId" | "getOpenIdToken">;
-  matrixRTCSession: Pick<
-    MatrixRTCSession,
-    "updateCallIntent" | "leaveRoomSession"
-  >;
+  matrixRTCSession: Pick<MatrixRTCSession, "updateCallIntent" | "leave">;
   /** Whether to hide the screen-sharing button. */
   hideScreensharing: boolean;
   /** The application hosting Element Call, to be kept informed of join/leave. */
@@ -682,7 +679,7 @@ export const createLocalMembership$ = ({
       return Promise.resolve(async (): Promise<void> => {
         try {
           // TODO Update matrixRTCSession to allow udpating the transport without leaving the session!
-          await matrixRTCSession.leaveRoomSession(1000);
+          await matrixRTCSession.leave(1000);
         } catch (e) {
           logger.error("Error leaving RTC session", e);
         }
@@ -998,7 +995,7 @@ export function enterRTCSession(
   // Multi-sfu does not need a preferred foci list. just the focus that is actually used.
   // TODO where/how do we track errors originating from the ongoing rtcSession?
 
-  rtcSession.joinRTCSession(ownMembershipIdentity, [transport], {
+  rtcSession.join(ownMembershipIdentity, [transport], {
     notificationType,
     callIntent,
     manageMediaKeys: encryptMedia,
