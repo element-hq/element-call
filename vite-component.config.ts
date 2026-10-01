@@ -8,7 +8,6 @@ Please see LICENSE in the repository root for full details.
 import { defineConfig } from "vite";
 
 import { vitePluginsConfig } from "./vite.config.ts";
-import { scopeStylesToRoot } from "./component/build/scopeStylesToRoot";
 
 // Config for Element Call as a React component, to be imported by an
 // application embedding it rather than served as a page of its own.
@@ -34,9 +33,6 @@ export default defineConfig(({ mode }) => {
     // whatever is in `public` — including the developer's own config.json, which
     // is not in the repository — into the output we would publish.
     publicDir: false,
-    // A host's document is not ours to style: everything in the stylesheet is
-    // confined to the element Element Call is mounted in
-    css: { postcss: { plugins: [scopeStylesToRoot()] } },
     build: {
       // Into the package directory, so that `component/package.json` describes
       // what sits next to it and the directory can be installed as a package
