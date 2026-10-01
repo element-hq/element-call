@@ -18,7 +18,6 @@ import { observeParticipantEvents } from "@livekit/components-core";
 import { type MatrixClient } from "matrix-js-sdk";
 import {
   Status as RTCSessionStatus,
-  type LivekitTransport,
   type MatrixRTCSession,
   type RTCCallIntent,
   type RTCNotificationType,
@@ -81,6 +80,7 @@ import {
 import { type HomeserverConnected } from "./HomeserverConnected.ts";
 import { type LocalTransport } from "./LocalTransport.ts";
 import { getSFUConfigWithOpenID } from "../../../livekit/openIDSFU.ts";
+import { type LivekitTransport } from "../../../LivekitTransport.ts";
 
 export enum TransportState {
   /** Not even a transport is available to the LocalMembership */

@@ -7,10 +7,8 @@ Please see LICENSE in the repository root for full details.
 
 import {
   type CallMembership,
-  type LivekitTransport,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
-  isLivekitTransport,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { fromEvent } from "rxjs";
 
@@ -21,6 +19,7 @@ import {
   type ObservableScope,
 } from "./ObservableScope";
 import { type Behavior } from "./Behavior";
+import { isLivekitTransport, type LivekitTransport } from "../LivekitTransport";
 
 /**
  * Tracks the transports used by ourselves, plus all other MatrixRTC session

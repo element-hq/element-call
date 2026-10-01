@@ -22,7 +22,6 @@ import {
   type Track,
   type TrackPublication,
 } from "livekit-client";
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { BehaviorSubject, map } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
@@ -42,6 +41,7 @@ import {
   SFURoomCreationRestrictedError,
   UnknownCallError,
 } from "../../../utils/errors.ts";
+import { type LivekitTransport } from "../../../LivekitTransport.ts";
 
 export interface ConnectionOpts {
   /**

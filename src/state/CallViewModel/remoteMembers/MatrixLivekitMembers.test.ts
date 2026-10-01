@@ -7,10 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { describe, test, expect, beforeEach, afterEach, vi } from "vitest";
 import { logger } from "matrix-js-sdk/lib/logger";
-import {
-  type CallMembership,
-  type LivekitTransport,
-} from "matrix-js-sdk/lib/matrixrtc";
+import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
 import { BehaviorSubject, combineLatest, map, type Observable } from "rxjs";
 
 import { type IConnectionManager } from "./ConnectionManager.ts";
@@ -33,6 +30,7 @@ import {
 import { type Connection } from "./Connection.ts";
 import { constant } from "../../Behavior.ts";
 import { localRtcMember } from "../../../utils/test-fixtures.ts";
+import { type LivekitTransport } from "../../../LivekitTransport.ts";
 
 let testScope: ObservableScope;
 

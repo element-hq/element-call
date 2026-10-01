@@ -16,10 +16,7 @@ import {
 } from "vitest";
 import { act } from "react";
 import { type RoomMember } from "matrix-js-sdk";
-import {
-  type LivekitTransport,
-  type CallMembership,
-} from "matrix-js-sdk/lib/matrixrtc";
+import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
 
 import {
   exampleTransport,
@@ -40,6 +37,7 @@ import {
 } from "../utils/test-fixtures";
 import { MAX_PARTICIPANT_COUNT_FOR_SOUND } from "../state/CallViewModel/CallViewModel";
 import { initializeWidget } from "../widget";
+import { type LivekitTransport } from "../LivekitTransport";
 initializeWidget();
 vitest.mock("livekit-client/e2ee-worker?worker");
 vitest.mock("../useAudioContext");

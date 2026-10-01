@@ -86,6 +86,17 @@
             ],
             "message": "Please use matrix-js-sdk instead"
           }
+        ],
+        "paths": [
+          {
+            "name": "matrix-js-sdk/lib/matrixrtc",
+            "importNames": [
+              "LivekitTransport",
+              "isLivekitTransport",
+              "isLivekitTransportConfig"
+            ],
+            "message": "Please use src/LivekitTransport.ts instead"
+          }
         ]
       }
     ],

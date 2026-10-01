@@ -5,7 +5,6 @@ SPDX-License-IdFentifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { type MatrixClient } from "matrix-js-sdk";
 import { logger as rootLogger, type Logger } from "matrix-js-sdk/lib/logger";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
@@ -24,6 +23,7 @@ import {
 import { customLivekitUrl } from "../../../settings/settings.ts";
 import { RtcTransportAutoDiscovery } from "./RtcTransportAutoDiscovery.ts";
 import { type MatrixRTCMode } from "../../../config/ConfigOptions.ts";
+import { type LivekitTransport } from "../../../LivekitTransport.ts";
 
 interface Props {
   ownMembershipIdentity: CallMembershipIdentityParts;

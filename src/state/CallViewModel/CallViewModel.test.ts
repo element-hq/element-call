@@ -31,7 +31,6 @@ import {
   type CallMembership,
   type IRTCNotificationContent,
   MatrixRTCSessionEvent,
-  type LivekitTransport,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
 
@@ -70,6 +69,7 @@ import { MatrixRTCMode } from "../../config/ConfigOptions.ts";
 import { initializeWidget } from "../../widget.ts";
 import { computeUrlParams } from "../../UrlParams.ts";
 import { callViewModelOptionsFromParams } from "./CallViewModel.ts";
+import { type LivekitTransport } from "../../LivekitTransport.ts";
 
 initializeWidget();
 

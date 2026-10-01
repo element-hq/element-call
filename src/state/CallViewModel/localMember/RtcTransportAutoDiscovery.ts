@@ -4,15 +4,15 @@ Copyright 2026 Element Creations Ltd.
 SPDX-License-IdFentifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
-import {
-  isLivekitTransport,
-  type LivekitTransport,
-} from "matrix-js-sdk/lib/matrixrtc";
 import { type MatrixClient } from "matrix-js-sdk";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 
 import type { ResolvedConfigOptions } from "../../../config/ConfigOptions.ts";
 import { doNetworkOperationWithRetry } from "../../../utils/matrix.ts";
+import {
+  isLivekitTransport,
+  type LivekitTransport,
+} from "../../../LivekitTransport.ts";
 
 type TransportDiscoveryClient = Pick<
   MatrixClient,

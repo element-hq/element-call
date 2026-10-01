@@ -7,7 +7,6 @@ Please see LICENSE in the repository root for full details.
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { BehaviorSubject, NEVER } from "rxjs";
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { type RemoteParticipant } from "livekit-client";
 import { logger } from "matrix-js-sdk/lib/logger";
 
@@ -21,6 +20,7 @@ import { type Connection } from "./Connection.ts";
 import { ownMemberMock, withTestScheduler } from "../../../utils/test.ts";
 import { areLivekitTransportsEqual } from "./MatrixLivekitMembers.ts";
 import { type Behavior } from "../../Behavior.ts";
+import { type LivekitTransport } from "../../../LivekitTransport.ts";
 
 // Some test constants
 

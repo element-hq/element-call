@@ -30,7 +30,6 @@ import fetchMock from "fetch-mock";
 import EventEmitter from "events";
 import { type IOpenIDToken } from "matrix-js-sdk";
 import { logger, type Logger } from "matrix-js-sdk/lib/logger";
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 
 import {
   Connection,
@@ -45,6 +44,7 @@ import {
 } from "../../../utils/errors.ts";
 import { testJWTToken } from "../../../utils/test-fixtures.ts";
 import { mockRemoteParticipant, ownMemberMock } from "../../../utils/test.ts";
+import { type LivekitTransport } from "../../../LivekitTransport.ts";
 
 let testScope: ObservableScope;
 

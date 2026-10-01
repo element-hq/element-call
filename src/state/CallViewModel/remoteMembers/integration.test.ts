@@ -10,7 +10,6 @@ import { BehaviorSubject, NEVER } from "rxjs";
 import { type Room as LivekitRoom } from "livekit-client";
 import EventEmitter from "events";
 import fetchMock from "fetch-mock";
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import {
@@ -35,6 +34,7 @@ import {
 import { createConnectionManager$ } from "./ConnectionManager.ts";
 import { membershipsAndTransports$ } from "../../SessionBehaviors.ts";
 import { localRtcMember, testJWTToken } from "../../../utils/test-fixtures.ts";
+import { type LivekitTransport } from "../../../LivekitTransport.ts";
 
 // Test the integration of ConnectionManager and MatrixLivekitMerger
 

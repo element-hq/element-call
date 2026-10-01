@@ -16,7 +16,6 @@ import { logger, type Logger } from "matrix-js-sdk/lib/logger";
 // imported as inline to support worker when loaded from a cdn (cross domain)
 import E2EEWorker from "livekit-client/e2ee-worker?worker&inline";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 
 import { type ObservableScope } from "../../ObservableScope.ts";
 import { Connection } from "./Connection.ts";
@@ -39,6 +38,7 @@ import {
   noiseSuppressionSetting,
   autoGainControlSetting,
 } from "../../../settings/settings.ts";
+import { type LivekitTransport } from "../../../LivekitTransport.ts";
 
 // TODO evaluate if this should be done like the Publisher Factory
 export interface ConnectionFactory {

@@ -15,16 +15,14 @@ import {
 } from "vitest";
 import { MatrixError } from "matrix-js-sdk";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
-import {
-  type LivekitTransport,
-  type Transport,
-} from "matrix-js-sdk/lib/matrixrtc";
+import { type Transport } from "matrix-js-sdk/lib/matrixrtc";
 
 import type { ResolvedConfigOptions } from "../../../config/ConfigOptions.ts";
 import {
   RtcTransportAutoDiscovery,
   type RtcTransportAutoDiscoveryProps,
 } from "./RtcTransportAutoDiscovery.ts";
+import { type LivekitTransport } from "../../../LivekitTransport.ts";
 
 type DiscoveryClient = RtcTransportAutoDiscoveryProps["client"];
 

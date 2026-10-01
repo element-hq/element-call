@@ -8,7 +8,6 @@ Please see LICENSE in the repository root for full details.
 
 import {
   Status as RTCMemberStatus,
-  type LivekitTransport,
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
 import {
@@ -60,6 +59,7 @@ import { initializeWidget } from "../../../widget";
 import { nullHostBridge } from "../../../HostBridge";
 import { type LocalTransport } from "./LocalTransport";
 import * as openIDSFU from "../../../livekit/openIDSFU";
+import { type LivekitTransport } from "../../../LivekitTransport";
 
 initializeWidget();
 

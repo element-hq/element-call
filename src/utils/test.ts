@@ -25,8 +25,6 @@ import {
 } from "matrix-js-sdk";
 import {
   CallMembership,
-  type LivekitFocusSelection,
-  type LivekitTransport,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
   type MatrixRTCSessionEventHandlerMap,
@@ -79,6 +77,7 @@ import {
 } from "../state/media/RemoteScreenShareViewModel";
 import { Connection } from "../state/CallViewModel/remoteMembers/Connection";
 import { type SFUConfig } from "../livekit/openIDSFU";
+import { type LivekitTransport } from "../LivekitTransport";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();
@@ -228,7 +227,6 @@ export function mockRtcMembership(
     rtcBackendIdentity?: string;
     callId?: string;
     fociPreferred?: Transport[];
-    focusActive?: LivekitFocusSelection;
     membership?: Partial<SessionMembershipData>;
   },
 ): CallMembership {

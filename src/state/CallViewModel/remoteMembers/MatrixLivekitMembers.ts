@@ -6,10 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type LocalParticipant, type RemoteParticipant } from "livekit-client";
-import {
-  type CallMembership,
-  type LivekitTransport,
-} from "matrix-js-sdk/lib/matrixrtc";
+import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
 import { combineLatest, filter, map } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 
@@ -18,6 +15,7 @@ import { type IConnectionManager } from "./ConnectionManager";
 import { Epoch, type ObservableScope } from "../../ObservableScope";
 import { type Connection } from "./Connection";
 import { generateItemsWithEpoch } from "../../../utils/observable";
+import { type LivekitTransport } from "../../../LivekitTransport";
 
 interface LocalTaggedParticipant {
   type: "local";
