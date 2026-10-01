@@ -6,9 +6,11 @@ the media of every member, as observables. It has no UI. Element Call's own
 `CallViewModel` is meant to become one consumer of it; the design is in
 [`sdk-plan.md`](../sdk-plan.md).
 
-**Status:** interface only. `createRtcSession` returns an object that does nothing.
-The development harness and its e2e test exist so the implementation can be built
-against them.
+**Status:** first implementation. `createRtcSession` joins the session, connects to
+the transport, publishes the local media and exposes every member's media; the
+development harness and its e2e tests in `playwright/sdk` drive it. The
+implementation still imports the building blocks it shares with Element Call from
+`src/` (connections, memberships, key provider); moving them here is the next slice.
 
 ## Using it
 
@@ -25,7 +27,7 @@ const scope = new ObservableScope();
 const session = createRtcSession(
   scope,
   client, // a matrix-js-sdk MatrixClient, logged in and syncing
-  room, // the matrix-js-sdk Room to hold the session in
+  room, // the matrix-js-sdk Room to hold the session in, from client.getRoom()
   {
     microphoneEnabled$: constant(true),
     cameraEnabled$: constant(true),

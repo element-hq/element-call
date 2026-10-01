@@ -7,12 +7,18 @@ Please see LICENSE in the repository root for full details.
 
 /**
  * The smallest consumer of the SDK: log in, join a room, show every member's
- * camera and play every remote member's microphone, leave. What a host writes,
- * and nothing a host would not.
+ * camera and play every remote member's microphone, mute, leave. What a host
+ * writes, and nothing a host would not.
  */
 
 import { logger } from "matrix-js-sdk/lib/logger";
-import { combineLatest, type Observable, of, switchMap } from "rxjs";
+import {
+  BehaviorSubject,
+  combineLatest,
+  type Observable,
+  of,
+  switchMap,
+} from "rxjs";
 import {
   constant,
   createRtcSession,
@@ -24,12 +30,16 @@ import {
   type RtcSession,
 } from "@element-hq/matrixrtc-sdk";
 
-import { createSession } from "./session";
+import { createSession, joinRoom, type Login } from "./session";
 
 const form = document.querySelector("form")!;
 const status = document.getElementById("status")!;
 const members = document.getElementById("members")!;
-const leaveButton = document.getElementById("leave") as HTMLButtonElement;
+const buttons = {
+  microphone: document.getElementById("microphone") as HTMLButtonElement,
+  camera: document.getElementById("camera") as HTMLButtonElement,
+  leave: document.getElementById("leave") as HTMLButtonElement,
+};
 
 // So that a test, or a bookmark, can fill the form from the URL
 const params = new URLSearchParams(location.search);
@@ -40,33 +50,36 @@ form.addEventListener("submit", (event) => {
   event.preventDefault();
   const fields = new FormData(form);
   const field = (name: string): string => fields.get(name) as string;
-  void start(
-    field("homeserver"),
-    field("username"),
-    field("password"),
-    field("room"),
-  );
+  const login: Login = field("accessToken")
+    ? {
+        accessToken: field("accessToken"),
+        userId: field("userId"),
+        deviceId: field("deviceId"),
+      }
+    : { username: field("username"), password: field("password") };
+  void start(field("homeserver"), login, field("room"));
 });
 
 async function start(
   homeserver: string,
-  username: string,
-  password: string,
+  login: Login,
   roomIdOrAlias: string,
 ): Promise<void> {
   try {
     status.textContent = "Logging in";
-    const client = await createSession(homeserver, username, password);
-    const room = await client.joinRoom(roomIdOrAlias);
+    const client = await createSession(homeserver, login);
+    const room = await joinRoom(client, roomIdOrAlias);
 
     const scope = new ObservableScope();
+    const microphoneEnabled$ = new BehaviorSubject(true);
+    const cameraEnabled$ = new BehaviorSubject(true);
     const session = createRtcSession(
       scope,
       client,
       room,
       {
-        microphoneEnabled$: constant(true),
-        cameraEnabled$: constant(true),
+        microphoneEnabled$,
+        cameraEnabled$,
         audioInputDeviceId$: constant(undefined),
         videoInputDeviceId$: constant(undefined),
         videoProcessor$: constant(undefined),
@@ -76,22 +89,40 @@ async function start(
         matrixRTCMode: MatrixRTCMode.Compatibility,
       },
     );
+    session.status$.pipe(scope.bind()).subscribe((s) => {
+      status.textContent = s;
+    });
+    session.fatalError$.pipe(scope.bind()).subscribe((error) => {
+      if (error !== null) status.textContent = `Error: ${error.message}`;
+    });
     showMembers(scope, session);
     session.join();
-    status.textContent = "Joined";
 
-    leaveButton.hidden = false;
-    leaveButton.onclick = (): void => {
+    toggle(buttons.microphone, microphoneEnabled$);
+    toggle(buttons.camera, cameraEnabled$);
+    buttons.leave.hidden = false;
+    buttons.leave.onclick = (): void => {
       session.leave();
       scope.end();
       members.replaceChildren();
-      leaveButton.hidden = true;
+      for (const button of Object.values(buttons)) button.hidden = true;
       status.textContent = "Left";
     };
   } catch (e) {
     status.textContent = `Error: ${e}`;
     logger.error(e);
   }
+}
+
+function toggle(
+  button: HTMLButtonElement,
+  enabled$: BehaviorSubject<boolean>,
+): void {
+  button.hidden = false;
+  button.onclick = (): void => {
+    enabled$.next(!enabled$.value);
+    button.ariaPressed = String(enabled$.value);
+  };
 }
 
 function showMembers(scope: ObservableScope, session: RtcSession): void {
@@ -118,6 +149,7 @@ function memberTile(scope: ObservableScope, member: RtcMember): HTMLElement {
   const tile = document.createElement("section");
   tile.dataset.testid = "member";
   tile.dataset.userId = member.userId;
+  tile.dataset.local = String(member.local);
 
   const name = tile.appendChild(document.createElement("h2"));
   member.displayName$.pipe(scope.bind()).subscribe((n) => {
@@ -142,6 +174,10 @@ function memberTile(scope: ObservableScope, member: RtcMember): HTMLElement {
   return tile;
 }
 
+/**
+ * Plays a track on an element and labels the element with the track's state,
+ * so that the page shows what the member is sending and how well it arrives.
+ */
 function render(
   scope: ObservableScope,
   track$: Observable<MediaTrack | undefined>,
@@ -154,4 +190,43 @@ function render(
     track?.attach(element);
   });
   scope.onEnd(() => attached?.detach(element));
+
+  const label = (
+    key: string,
+    value$: Observable<string | number | boolean | undefined>,
+  ): void => {
+    value$.pipe(scope.bind()).subscribe((value) => {
+      if (value === undefined) delete element.dataset[key];
+      else element.dataset[key] = String(value);
+    });
+  };
+  const of$ = <T>(
+    pick: (track: MediaTrack) => Observable<T>,
+  ): Observable<T | undefined> =>
+    track$.pipe(switchMap((track) => (track ? pick(track) : of(undefined))));
+  label(
+    "muted",
+    of$((t) => t.muted$),
+  );
+  label(
+    "encrypted",
+    of$((t) => t.encrypted$),
+  );
+  const stats$ = of$((t) => t.stats$);
+  label("frameWidth", stats$.pipe(switchMap((s) => of(frames(s)?.frameWidth))));
+  label("frames", stats$.pipe(switchMap((s) => of(frames(s)?.count))));
+}
+
+/** The frame counters an RTP stream reports, from either end of it. */
+function frames(
+  stats: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats | undefined,
+): { frameWidth: number | undefined; count: number | undefined } | undefined {
+  if (stats === undefined) return undefined;
+  return {
+    frameWidth: stats.frameWidth,
+    count:
+      stats.type === "inbound-rtp"
+        ? (stats as RTCInboundRtpStreamStats).framesDecoded
+        : (stats as RTCOutboundRtpStreamStats).framesEncoded,
+  };
 }
