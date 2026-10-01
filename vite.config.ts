@@ -90,7 +90,18 @@ export const vitePluginsConfig = ({
     );
   }
 
-  return { plugins };
+  return {
+    plugins,
+    resolve: {
+      alias: {
+        // The SDK by its package name, resolved to its source, for every
+        // config built on this one: see the matching entry in tsconfig.json
+        "@element-hq/matrixrtc-sdk": fileURLToPath(
+          new URL("./sdk/index.ts", import.meta.url),
+        ),
+      },
+    },
+  };
 };
 // https://vitejs.dev/config/
 // Modified type helper from defineConfig to allow for packageType (see defineConfig from vite)
@@ -162,8 +173,6 @@ export default ({
         // which Vite for some reason refuses to work with, so we point it to
         // src/index.ts instead
         "matrix-widget-api": "matrix-widget-api/src/index.ts",
-        // The SDK by its package name, resolved to its source: see the matching
-        // entry in tsconfig.json
         "@element-hq/matrixrtc-sdk": fileURLToPath(
           new URL("./sdk/index.ts", import.meta.url),
         ),

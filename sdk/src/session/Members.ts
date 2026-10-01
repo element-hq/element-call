@@ -1,0 +1,162 @@
+/*
+Copyright 2026 Element Creations Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
+import {
+  type LocalParticipant,
+  type Participant,
+  type Room as LivekitRoom,
+} from "livekit-client";
+import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
+import { combineLatest, distinctUntilChanged, map } from "rxjs";
+
+import { type Behavior } from "../../../src/state/Behavior";
+import { type ObservableScope } from "../../../src/state/ObservableScope";
+import { type Connection } from "../../../src/state/CallViewModel/remoteMembers/Connection";
+import { type createMatrixMemberMetadata$ } from "../../../src/state/CallViewModel/remoteMembers/MatrixMemberMetadata";
+import { type RemoteMatrixLivekitMember } from "../../../src/state/CallViewModel/remoteMembers/MatrixLivekitMembers";
+import { type EncryptionSystem } from "../../../src/e2ee/sharedKeyManagement";
+import {
+  type LocalRtcMember,
+  type MemberMedia,
+  type RemoteRtcMember,
+  type RtcMember,
+} from "../api";
+import {
+  createLivekitMemberMedia,
+  createLocalLivekitMemberMedia,
+} from "../media/LivekitMemberMedia";
+import { mapScoped } from "../utils/mapScoped";
+import { type LocalMembership } from "./LocalMember";
+import { type TransportRegistry } from "./Transports";
+
+export interface MemberContext {
+  metadata: ReturnType<typeof createMatrixMemberMetadata$>;
+  transports: TransportRegistry;
+  encryptionSystem: EncryptionSystem;
+}
+
+/** Everything that tells one membership from another, for keying items. */
+export function membershipKeys(
+  membership: CallMembership,
+): [string, string, string, string] {
+  return [
+    membership.userId,
+    membership.deviceId,
+    membership.memberId,
+    membership.rtcBackendIdentity,
+  ];
+}
+
+export function createRemoteRtcMember(
+  scope: ObservableScope,
+  member: RemoteMatrixLivekitMember,
+  context: MemberContext,
+): RemoteRtcMember {
+  return {
+    ...createRtcMember(scope, member.membership$, context),
+    local: false,
+    media$: mediaFor(
+      scope,
+      member.participant.value$,
+      member.connection$,
+      (mediaScope, participant, room) =>
+        createLivekitMemberMedia(
+          mediaScope,
+          participant,
+          room,
+          context.encryptionSystem,
+        ),
+    ),
+  };
+}
+
+export function createLocalRtcMember(
+  scope: ObservableScope,
+  membership$: Behavior<CallMembership>,
+  localMembership: LocalMembership,
+  context: MemberContext,
+): LocalRtcMember {
+  return {
+    ...createRtcMember(scope, membership$, context),
+    local: true,
+    media$: mediaFor(
+      scope,
+      localMembership.participant$,
+      localMembership.connection$,
+      (mediaScope, participant, room) =>
+        createLocalLivekitMemberMedia(
+          mediaScope,
+          participant,
+          room,
+          context.encryptionSystem,
+        ),
+    ),
+    sharingScreen$: localMembership.sharingScreen$,
+    toggleScreenSharing: localMembership.toggleScreenSharing,
+    screenShareError$: localMembership.screenShareError$,
+    dismissScreenShareError: localMembership.dismissScreenShareError,
+  };
+}
+
+function createRtcMember(
+  scope: ObservableScope,
+  membership$: Behavior<CallMembership>,
+  { metadata, transports }: MemberContext,
+): Omit<RtcMember, "local" | "media$"> {
+  const { userId, deviceId, rtcBackendIdentity } = membership$.value;
+  return {
+    id: rtcBackendIdentity,
+    userId,
+    deviceId,
+    membership$,
+    displayName$: scope.behavior(
+      metadata
+        .createDisplayNameBehavior$(scope, userId)
+        .pipe(map((name) => name ?? userId)),
+    ),
+    avatarUrl$: metadata.createAvatarUrlBehavior$(scope, userId),
+    transport$: scope.behavior(
+      membership$.pipe(
+        map((membership) => membership.getTransport()),
+        distinctUntilChanged(),
+        map((transport) => transport && transports.get(transport)),
+      ),
+    ),
+  };
+}
+
+/**
+ * The member's media once its participant is known, in a scope that ends when
+ * the participant or the connection changes.
+ */
+function mediaFor<
+  P extends Participant | LocalParticipant,
+  M extends MemberMedia,
+>(
+  scope: ObservableScope,
+  participant$: Behavior<P | null>,
+  connection$: Behavior<Connection | null>,
+  factory: (scope: ObservableScope, participant: P, room: LivekitRoom) => M,
+): Behavior<M | null> {
+  const source$ = scope.behavior(
+    combineLatest([participant$, connection$]).pipe(
+      map(([participant, connection]) =>
+        participant && connection
+          ? { participant, room: connection.livekitRoom }
+          : null,
+      ),
+      distinctUntilChanged(
+        (a, b) => a?.participant === b?.participant && a?.room === b?.room,
+      ),
+    ),
+  );
+  return scope.behavior(
+    mapScoped(scope, source$, (mediaScope, { participant, room }) =>
+      factory(mediaScope, participant, room),
+    ).pipe(map((media) => media ?? null)),
+  );
+}

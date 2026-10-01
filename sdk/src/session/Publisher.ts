@@ -1,0 +1,226 @@
+/*
+Copyright 2026 Element Creations Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
+import { observeParticipantMedia } from "@livekit/components-core";
+import {
+  ConnectionState as LivekitConnectionState,
+  type LocalTrackPublication,
+  LocalVideoTrack,
+  ParticipantEvent,
+  type Room as LivekitRoom,
+  Track,
+} from "livekit-client";
+import { type Logger } from "matrix-js-sdk/lib/logger";
+import { combineLatest, distinctUntilChanged, map, skip } from "rxjs";
+
+import { type Behavior } from "../../../src/state/Behavior";
+import { ObservableScope } from "../../../src/state/ObservableScope";
+import { type LocalMediaInputs } from "../api";
+
+/**
+ * Publishes the local media on one LiveKit room, following `LocalMediaInputs`.
+ *
+ * LiveKit publishes a track the moment it is created, but a member must not be
+ * heard before it has joined the MatrixRTC session, nor after it has left. The
+ * tracks are therefore kept, and their upstream paused, while `shouldPublish`
+ * is false: the local preview stays live while nothing reaches the room.
+ */
+export class Publisher {
+  public shouldPublish = false;
+  private tracksRequested = false;
+  private readonly scope = new ObservableScope();
+  private readonly room: LivekitRoom;
+
+  public constructor(
+    room: LivekitRoom,
+    private readonly inputs: LocalMediaInputs,
+    private readonly logger: Logger,
+  ) {
+    this.room = room;
+    room.setE2EEEnabled(room.options.e2ee !== undefined)?.catch((e: Error) => {
+      this.logger.error("Failed to enable E2EE on the room", e);
+    });
+    this.followVideoProcessor();
+    this.followDevices();
+    this.onLocalTrackPublished = this.onLocalTrackPublished.bind(this);
+    room.localParticipant.on(
+      ParticipantEvent.LocalTrackPublished,
+      this.onLocalTrackPublished,
+    );
+  }
+
+  public async destroy(): Promise<void> {
+    this.scope.end();
+    this.room.localParticipant.off(
+      ParticipantEvent.LocalTrackPublished,
+      this.onLocalTrackPublished,
+    );
+    try {
+      await this.stopTracks();
+    } catch (e) {
+      this.logger.error("Failed to stop the local tracks", e);
+    }
+  }
+
+  /**
+   * Creates the microphone and camera tracks the inputs ask for, and keeps
+   * them in step with the inputs from then on. Both are enabled in one call so
+   * that the browser asks for permission once. Safe to call more than once.
+   */
+  public createAndSetupTracks(): void {
+    if (this.tracksRequested) return;
+    this.tracksRequested = true;
+    const participant = this.room.localParticipant;
+    const audio = this.inputs.microphoneEnabled$.value;
+    const video = this.inputs.cameraEnabled$.value;
+    // LiveKit resolves these once the track is published, which may block on
+    // the connection; LocalTrackPublished is what tells us a track exists.
+    if (audio && video) void participant.enableCameraAndMicrophone();
+    else if (audio) void participant.setMicrophoneEnabled(true);
+    else if (video) void participant.setCameraEnabled(true);
+
+    this.follow(this.inputs.microphoneEnabled$, Track.Source.Microphone);
+    this.follow(this.inputs.cameraEnabled$, Track.Source.Camera);
+  }
+
+  public async startPublishing(): Promise<void> {
+    if (this.shouldPublish) return;
+    this.shouldPublish = true;
+    // Enabling a track does not resume an upstream that was paused while it
+    // was already enabled, so it is done explicitly
+    await this.resumeUpstreams([Track.Source.Microphone, Track.Source.Camera]);
+  }
+
+  public async stopPublishing(): Promise<void> {
+    this.shouldPublish = false;
+    await this.pauseUpstreams([
+      Track.Source.Microphone,
+      Track.Source.Camera,
+      Track.Source.ScreenShare,
+    ]);
+  }
+
+  private async stopTracks(): Promise<void> {
+    const participant = this.room.localParticipant;
+    for (const source of [
+      Track.Source.Microphone,
+      Track.Source.Camera,
+      Track.Source.ScreenShare,
+    ]) {
+      const track = participant.getTrackPublication(source)?.track;
+      if (track) await participant.unpublishTrack(track, true);
+    }
+  }
+
+  private onLocalTrackPublished(publication: LocalTrackPublication): void {
+    this.logger.info(`Local ${publication.source} track published`);
+    if (!this.shouldPublish)
+      this.pauseUpstreams([publication.source]).catch((e) => {
+        this.logger.error("Failed to pause the upstream", e);
+      });
+    // The input may have changed while the track was being created
+    const enabled =
+      publication.source === Track.Source.Microphone
+        ? this.inputs.microphoneEnabled$.value
+        : publication.source === Track.Source.Camera
+          ? this.inputs.cameraEnabled$.value
+          : undefined;
+    if (enabled === false) this.setEnabled(publication.source, false);
+  }
+
+  private follow(
+    enabled$: Behavior<boolean>,
+    source: Track.Source.Microphone | Track.Source.Camera,
+  ): void {
+    enabled$
+      .pipe(skip(1), distinctUntilChanged(), this.scope.bind())
+      .subscribe((enabled) => this.setEnabled(source, enabled));
+  }
+
+  private setEnabled(source: Track.Source, enabled: boolean): void {
+    const participant = this.room.localParticipant;
+    const toggle =
+      source === Track.Source.Microphone
+        ? participant.setMicrophoneEnabled(enabled)
+        : participant.setCameraEnabled(enabled);
+    toggle
+      .then(async () => {
+        // Unmuting restarts the upstream; until the member has joined, it
+        // has to stay paused
+        if (enabled && !this.shouldPublish) await this.pauseUpstreams([source]);
+      })
+      .catch((e) => {
+        this.logger.error(`Failed to set ${source} enabled=${enabled}`, e);
+      });
+  }
+
+  private async pauseUpstreams(sources: Track.Source[]): Promise<void> {
+    for (const source of sources) {
+      const track =
+        this.room.localParticipant.getTrackPublication(source)?.track;
+      if (track && !track.isUpstreamPaused) await track.pauseUpstream();
+    }
+  }
+
+  private async resumeUpstreams(sources: Track.Source[]): Promise<void> {
+    for (const source of sources) {
+      const track =
+        this.room.localParticipant.getTrackPublication(source)?.track;
+      if (track?.isUpstreamPaused) await track.resumeUpstream();
+    }
+  }
+
+  private followDevices(): void {
+    const sync = (
+      kind: MediaDeviceKind,
+      deviceId$: Behavior<string | undefined>,
+    ): void => {
+      deviceId$.pipe(this.scope.bind()).subscribe((deviceId) => {
+        if (
+          deviceId === undefined ||
+          this.room.state !== LivekitConnectionState.Connected ||
+          this.room.getActiveDevice(kind) === deviceId
+        )
+          return;
+        this.room
+          .switchActiveDevice(kind, deviceId)
+          .catch((e) => this.logger.error(`Failed to switch ${kind}`, e));
+      });
+    };
+    sync("audioinput", this.inputs.audioInputDeviceId$);
+    sync("videoinput", this.inputs.videoInputDeviceId$);
+  }
+
+  private followVideoProcessor(): void {
+    const participant = this.room.localParticipant;
+    const cameraTrack$ = observeParticipantMedia(participant).pipe(
+      map(() => {
+        const track = participant.getTrackPublication(
+          Track.Source.Camera,
+        )?.track;
+        return track instanceof LocalVideoTrack ? track : undefined;
+      }),
+      distinctUntilChanged(),
+    );
+    combineLatest([cameraTrack$, this.inputs.videoProcessor$])
+      .pipe(this.scope.bind())
+      .subscribe(([track, processor]) => {
+        if (!track) return;
+        if (processor && !track.getProcessor()) {
+          // A processor cannot be built on a track that has already ended
+          if (track.mediaStreamTrack.readyState === "ended") return;
+          track.setProcessor(processor).catch((e) => {
+            this.logger.warn("Failed to attach the video processor", e);
+          });
+        } else if (!processor && track.getProcessor()) {
+          track.stopProcessor().catch((e) => {
+            this.logger.warn("Failed to stop the video processor", e);
+          });
+        }
+      });
+  }
+}
