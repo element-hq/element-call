@@ -53,7 +53,7 @@
     "./src/**/*.ts",
     "./src/**/*.tsx",
     "./playwright/**/*.ts",
-    "./sdk/**/*.ts",
+    "./sdk-target-based-on-call-view-model/**/*.ts",
     "./component/**/*.ts",
     "./component/**/*.tsx"
   ],

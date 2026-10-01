@@ -1,4 +1,8 @@
-# SDK mode (EXPERIMENTAL)
+# SDK mode (EXPERIMENTAL, superseded)
+
+> Superseded by the `sdk/` package (`@element-hq/matrixrtc-sdk`) and its harness in
+> `sdk/dev`; see `sdk-plan.md`. This folder still builds, with its own script, until
+> that package can do what this does.
 
 EC can be build in sdk mode. This will result in a compiled js file that can be imported in very simple webapps.
 
@@ -14,12 +18,13 @@ To get started run
 
 ```
 pnpm install
-pnpm build:sdk
+pnpm build:sdk-target-based-on-call-view-model
 ```
 
-in the repository root.
+in the repository root. (`pnpm build:sdk` builds the `sdk/` package instead.)
 
-It will create a `dist` folder containing the compiled js file.
+It will create `sdk-target-based-on-call-view-model/dist` containing the compiled js
+file, `matrixrtc-sdk.js`.
 
 This file needs to be hosted. Locally (via `npx serve -l 81234 --cors`) or on a remote server.
 

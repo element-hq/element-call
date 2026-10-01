@@ -12,7 +12,7 @@ export default {
     config: [
       "vite.config.ts",
       "vite-embedded.config.ts",
-      "vite-sdk.config.ts",
+      "vite-sdk-target-based-on-call-view-model.config.ts",
       "vite-component.config.ts",
       "vite-component-dev.config.ts",
     ],
