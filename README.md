@@ -297,8 +297,8 @@ The package is not published yet. A host installs it as a git dependency on the
 ```
 
 whose `prepare` script runs the build on install. That build needs pnpm (via
-Corepack) on the host's machine, runs a full `pnpm install` of this repository
-and is memory-hungry, since it inherits the `--max-old-space-size` setting of
+Corepack) on the host's machine, runs a full `pnpm install` of this repository,
+since it inherits the `--max-old-space-size` setting of
 the app build; the host's pnpm also has to allow it to run at all
 (`allowBuilds` in its `pnpm-workspace.yaml`). Note that `component/` is a pnpm
 project of its own for this reason, so pnpm commands run from inside that
@@ -308,12 +308,8 @@ root. The host imports the component from
 `@element-hq/element-call-component/style.css`, and has to provide `react`,
 `react-dom`, `matrix-js-sdk`, `livekit-client`, `@vector-im/compound-web` and
 `@vector-im/compound-design-tokens` itself, since the bundle leaves them
-external. Compound's stylesheet (`@vector-im/compound-web/dist/style.css`), the
-design tokens' CSS and the Inter and Inconsolata fonts are the host's to load
-too: the component shares the host's copy of Compound, so that the tooltips and
-menus Compound floats into the host's body are styled by the host's stylesheet
-like everything else there, and the component's own stylesheet stays confined
-to its root.
+external. Compound's stylesheet are the host's to load too: the component shares
+the host's copy of Compound, (required for example for tooltips)
 
 The component is large, and a host will usually load it lazily, only once a
 call is shown. Everything a host needs in order to talk about a call before
