@@ -12,6 +12,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { COMPONENT_HARNESS_URL } from "./playwright/component/harness.ts";
+import { SDK_HARNESS_URL } from "./playwright/sdk/harness.ts";
 
 const baseURL = process.env.USE_DOCKER
   ? "http://localhost:8080"
@@ -139,6 +140,18 @@ export default defineConfig({
       // since there is nothing to build: it is a development page only.
       command: "pnpm dev:component",
       url: COMPONENT_HARNESS_URL,
+      reuseExistingServer: !process.env.CI,
+      ignoreHTTPSErrors: true,
+      gracefulShutdown: {
+        signal: "SIGTERM",
+        timeout: 500,
+      },
+    },
+    {
+      // The harness that uses the MatrixRTC SDK without Element Call. A Vite
+      // dev server for the same reason as the component's.
+      command: "pnpm dev:sdk",
+      url: SDK_HARNESS_URL,
       reuseExistingServer: !process.env.CI,
       ignoreHTTPSErrors: true,
       gracefulShutdown: {

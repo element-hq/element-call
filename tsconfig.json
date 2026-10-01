@@ -20,6 +20,10 @@
     "useDefineForClassFields": false,
     "allowImportingTsExtensions": true,
     "paths": {
+      // Element Call imports the SDK by its package name, so that the move to a
+      // published dependency changes nothing but this line (and the matching
+      // alias in vite.config.ts)
+      "@element-hq/matrixrtc-sdk": ["./sdk/index.ts"],
       // These imports within @livekit/components-core and
       // @livekit/components-react are broken under the "bundler" module
       // resolution mode, so we need to resolve them manually
@@ -53,6 +57,7 @@
     "./src/**/*.ts",
     "./src/**/*.tsx",
     "./playwright/**/*.ts",
+    "./sdk/**/*.ts",
     "./sdk-target-based-on-call-view-model/**/*.ts",
     "./component/**/*.ts",
     "./component/**/*.tsx"
