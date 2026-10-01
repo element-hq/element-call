@@ -9,9 +9,11 @@ Please see LICENSE in the repository root for full details.
  * Checks that the component build leaves the packages a host must supply to
  * the host.
  *
- * A host application already has React, the Matrix SDK and LiveKit, and a
- * second copy of any of them is worse than dead weight: React would hold two
- * sets of hooks, and the Matrix client would run two sync loops. So the
+ * A host application already has React, the Matrix SDK, LiveKit and Compound,
+ * and a second copy of any of them is worse than dead weight: React would hold
+ * two sets of hooks, the Matrix client would run two sync loops, and a second
+ * Compound would style the tooltips it floats into the host's body with class
+ * names the host's stylesheet does not know. So the
  * component build lists them as external — but that list has to name every
  * subpath, since the bundler silently ignores the pattern and callback forms
  * of the option, and an import it does not cover is bundled with no warning at
@@ -33,6 +35,9 @@ import { loadConfigFromFile } from "vite";
 
 const CONFIG = "vite-component.config.ts";
 const SOURCES = ["src", "component"];
+// The development harness is a host, not part of the component: it is the
+// one that imports what a host supplies (Compound's stylesheets, say).
+const EXCLUDED = ["component/dev"];
 
 /** The packages whose duplication would break a host, rather than merely enlarge it. */
 const MUST_BE_EXTERNAL = [
@@ -40,6 +45,8 @@ const MUST_BE_EXTERNAL = [
   "react-dom",
   "matrix-js-sdk",
   "livekit-client",
+  "@vector-im/compound-web",
+  "@vector-im/compound-design-tokens",
 ];
 
 const isTestFile = (name) =>
@@ -49,6 +56,7 @@ const isTestFile = (name) =>
 async function* sourceFiles(dir) {
   for (const entry of await readdir(dir, { withFileTypes: true })) {
     const path = join(dir, entry.name);
+    if (EXCLUDED.includes(path)) continue;
     if (entry.isDirectory()) yield* sourceFiles(path);
     else if (/\.(ts|tsx)$/.test(entry.name) && !isTestFile(entry.name))
       yield path;

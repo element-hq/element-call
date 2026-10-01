@@ -17,19 +17,25 @@ Please see LICENSE in the repository root for full details.
  * host instead, or is confined to the container it is mounted in.
  */
 
-// The design tokens, fonts and element defaults every Element Call stylesheet
+// The element defaults and custom properties every Element Call stylesheet
 // builds on. Written for a page, they speak of `html`, `body` and bare
 // elements; the component build confines them, and every other stylesheet in
 // this bundle, to the root element below (see build/scopeStylesToRoot.ts), so
 // that the host's document is left as it was.
+//
+// Compound is not in here. The component uses the host's copy of it (a peer
+// dependency, left external by the build), and the host loads Compound's
+// stylesheet, design tokens and fonts along with it: what Compound floats into
+// the host's body — tooltips, menus — is then styled by the same stylesheet as
+// everything else there, and Element Call's root takes the tokens and fonts of
+// the theme class it carries, as any element on the host's page would.
 //
 // Where these land relative to the component stylesheets is the bundler's
 // choice — the standalone app puts them first, this build puts them in the
 // middle — so nothing in base.css may depend on winning or losing against a
 // component's own rules at equal specificity. It currently does not: what it
 // declares unlayered is custom properties on Element Call's root, which
-// components inherit rather than compete with, and everything from Compound
-// sits in a `@layer`, which loses to unlayered rules either way.
+// components inherit rather than compete with.
 import "../src/base.css";
 
 import {
@@ -231,34 +237,38 @@ export const ElementCall: FC<ElementCallProps> = ({
         <UrlParamsProvider value={params}>
           <div ref={setContainer} className={styles.root}>
             {ready && (
-              <RootElementProvider value={container}>
-                {/* Whatever goes wrong in here is shown in here. Left to
+              // Stands in for the standalone page's `#root`: see `.content`
+              // in ElementCall.module.css
+              <div className={styles.content}>
+                <RootElementProvider value={container}>
+                  {/* Whatever goes wrong in here is shown in here. Left to
                   propagate, an error would unmount the host's own tree. */}
-                <ErrorBoundary
-                  fallback={(error) => <ErrorPage error={error} />}
-                  // A broken call should not hold the host on screen
-                  onError={() => void hostBridge.setAlwaysOnScreen(false)}
-                >
-                  <Decoration>
-                    <TooltipProvider>
-                      <ClientProvider client={client}>
-                        <MediaDevicesContext value={mediaDevices}>
-                          <ProcessorProvider>
-                            <CallView
-                              client={client}
-                              rtcSession={rtcSession}
-                              isPasswordlessUser={false}
-                              confineToRoom={params.confineToRoom}
-                              preload={params.preload}
-                              skipLobby={params.skipLobby}
-                            />
-                          </ProcessorProvider>
-                        </MediaDevicesContext>
-                      </ClientProvider>
-                    </TooltipProvider>
-                  </Decoration>
-                </ErrorBoundary>
-              </RootElementProvider>
+                  <ErrorBoundary
+                    fallback={(error) => <ErrorPage error={error} />}
+                    // A broken call should not hold the host on screen
+                    onError={() => void hostBridge.setAlwaysOnScreen(false)}
+                  >
+                    <Decoration>
+                      <TooltipProvider>
+                        <ClientProvider client={client}>
+                          <MediaDevicesContext value={mediaDevices}>
+                            <ProcessorProvider>
+                              <CallView
+                                client={client}
+                                rtcSession={rtcSession}
+                                isPasswordlessUser={false}
+                                confineToRoom={params.confineToRoom}
+                                preload={params.preload}
+                                skipLobby={params.skipLobby}
+                              />
+                            </ProcessorProvider>
+                          </MediaDevicesContext>
+                        </ClientProvider>
+                      </TooltipProvider>
+                    </Decoration>
+                  </ErrorBoundary>
+                </RootElementProvider>
+              </div>
             )}
           </div>
         </UrlParamsProvider>
