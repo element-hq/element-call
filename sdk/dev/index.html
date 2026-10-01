@@ -1,0 +1,56 @@
+<!doctype html>
+<!--
+Copyright 2026 Element Creations Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MatrixRTC SDK harness</title>
+    <style>
+      body {
+        margin: 1rem;
+        font-family: system-ui, sans-serif;
+      }
+      form {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+      #members {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 0.5rem;
+      }
+      #members video {
+        width: 100%;
+        aspect-ratio: 4 / 3;
+        background: #222;
+      }
+      #members h2 {
+        font-size: 1rem;
+        margin: 0.25rem 0;
+      }
+    </style>
+  </head>
+  <body>
+    <form>
+      <input
+        name="homeserver"
+        placeholder="homeserver"
+        value="https://synapse.m.localhost"
+      />
+      <input name="username" placeholder="username" />
+      <input name="password" type="password" placeholder="password" />
+      <input name="room" placeholder="room id or alias" />
+      <button type="submit">Start</button>
+      <button type="button" id="leave" hidden>Leave</button>
+    </form>
+    <p id="status" data-testid="status"></p>
+    <main id="members"></main>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
