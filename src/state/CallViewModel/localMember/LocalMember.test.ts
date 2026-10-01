@@ -138,7 +138,7 @@ describe("enterRTCSession", () => {
       client: mockedClient,
     },
     memberships: [],
-    joinRTCSession: vi.fn(),
+    join: vi.fn(),
   }) as unknown as MatrixRTCSession;
 
   beforeEach(() =>
@@ -150,7 +150,7 @@ describe("enterRTCSession", () => {
   it("It joins the correct Session", () => {
     enterRTCSession(mockedSession, ownMemberMock, transport, options);
 
-    expect(mockedSession.joinRTCSession).toHaveBeenLastCalledWith(
+    expect(mockedSession.join).toHaveBeenLastCalledWith(
       {
         deviceId: "DEVICE",
         memberId: "@alice:example.org:DEVICE",
@@ -161,7 +161,7 @@ describe("enterRTCSession", () => {
     );
   });
 
-  it("passes keyRotationParticipantLimit from config to joinRTCSession", () => {
+  it("passes keyRotationParticipantLimit from config to join", () => {
     mockConfig({
       livekit: { livekit_service_url: "http://my-default-service-url.com" },
       matrix_rtc_session: {
@@ -174,7 +174,7 @@ describe("enterRTCSession", () => {
 
     enterRTCSession(mockedSession, ownMemberMock, transport, options);
 
-    expect(mockedSession.joinRTCSession).toHaveBeenLastCalledWith(
+    expect(mockedSession.join).toHaveBeenLastCalledWith(
       expect.any(Object),
       expect.any(Object),
       expect.objectContaining({
@@ -186,7 +186,7 @@ describe("enterRTCSession", () => {
   it("uses the specified delayed leave timings", () => {
     enterRTCSession(mockedSession, ownMemberMock, transport, options);
 
-    expect(mockedSession.joinRTCSession).toHaveBeenLastCalledWith(
+    expect(mockedSession.join).toHaveBeenLastCalledWith(
       expect.anything(),
       expect.anything(),
       expect.objectContaining({
@@ -206,7 +206,7 @@ describe("LocalMembership", () => {
     }),
     matrixRTCSession: {
       updateCallIntent: vi.fn().mockReturnValue(Promise.resolve()),
-      leaveRoomSession: vi.fn(),
+      leave: vi.fn(),
     } as unknown as MatrixRTCSession,
     muteStates: mockMuteStates(),
     trackProcessorState$: constant({
@@ -300,7 +300,7 @@ describe("LocalMembership", () => {
       ...defaultCreateLocalMemberValues,
       matrixRTCSession: {
         updateCallIntent: vi.fn().mockImplementation(reject),
-        leaveRoomSession: vi.fn(),
+        leave: vi.fn(),
       },
       connectionManager: mockConnectionManager,
       localTransport$: constant(mockTransport),
