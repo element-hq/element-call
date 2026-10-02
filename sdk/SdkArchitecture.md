@@ -185,17 +185,31 @@ export interface MatrixRTCClientOptions {
    * (`"audio"` or `"video"`); anything else is dropped until it can.
    */
   applicationData?: Record<string, unknown>;
+  /** Session timings the host has configured; the defaults otherwise. */
+  timings?: Partial<SessionTimings>;
+  /** Limits on what is published; LiveKit's defaults otherwise. */
+  mediaQuality?: MediaQuality;
+  /** How the local tracks are captured and encoded: audio processing, camera and screen share resolution, bitrate, codec. */
+  capture?: CaptureSettings;
+  /** Use this transport instead of asking the homeserver. */
+  transportUrl?: string;
+  /** Use this transport when the homeserver advertises none. */
+  fallbackTransportUrl?: string;
 }
 
 /**
- * What the local member publishes. The SDK publishes what it is told; device
- * enumeration, permission prompts and the lobby preview stay with the host.
+ * What the local member publishes. The enabled flags are the initial state;
+ * from then on `setMicrophoneEnabled` and `setCameraEnabled` on the client
+ * change it, and report what the device allowed. Device enumeration,
+ * permission prompts and the lobby preview stay with the host.
  */
 export interface LocalMediaInputs {
-  microphoneEnabled$: Behavior<boolean>;
-  cameraEnabled$: Behavior<boolean>;
+  microphoneEnabled: boolean;
+  cameraEnabled: boolean;
   audioInputDeviceId$: Behavior<string | undefined>;
   videoInputDeviceId$: Behavior<string | undefined>;
+  /** Undefined where the host routes audio itself, or to leave the browser's choice. */
+  audioOutputDeviceId$: Behavior<string | undefined>;
   /** Background blur and the like. */
   videoProcessor$: Behavior<TrackProcessor<Track.Kind.Video> | undefined>;
 }
@@ -230,8 +244,17 @@ export type ConnectionStatus =
   | "reconnecting"
   | "disconnected";
 
-/** An error raised by the client. `cause` holds the backend's error, for a host that knows the backend. */
-export class MatrixRTCError extends Error {}
+/** Why the client is not connected: the first failing of its three links. */
+export type DisconnectReason = "sync" | "membership" | "probablyLeft" | "media";
+
+/**
+ * An error raised by the client. `code` and `category` say what went wrong in
+ * a form a host can translate; `cause` holds the backend's error.
+ */
+export class MatrixRTCError extends Error {
+  code: ErrorCode;
+  category: ErrorCategory;
+}
 
 export interface MatrixRTCClient {
   join(): void;
@@ -242,6 +265,17 @@ export interface MatrixRTCClient {
   connected$: Behavior<boolean>;
   /** Connected once, and currently not. */
   reconnecting$: Behavior<boolean>;
+  /** Null while connected, the first failing link otherwise. */
+  disconnectReason$: Behavior<DisconnectReason | null>;
+
+  /**
+   * Publishes or mutes the microphone. Resolves with the state that
+   * resulted, which differs from the request where the device could not be
+   * used. Before the transport is connected the request is remembered and
+   * applied once it is.
+   */
+  setMicrophoneEnabled(enabled: boolean): Promise<boolean>;
+  setCameraEnabled(enabled: boolean): Promise<boolean>;
   /**
    * A transport, Matrix or connection error that stops the session. Null
    * while fine. A failed publication is not fatal: the member can still
@@ -459,6 +493,12 @@ export interface MemberMedia {
 
 export interface LocalMemberMedia extends MemberMedia {
   local: true;
+  /**
+   * Restarts the camera facing the other way, on devices with a front and a
+   * back camera, and resolves with the id of the device now in use. Does
+   * nothing without a camera track or where the facing mode is unknown.
+   */
+  switchCamera(): Promise<string | undefined>;
 }
 ```
 
@@ -549,27 +589,20 @@ public API only.
 
 ## Open decisions
 
-- **Timings.** Delayed-leave timings, the sync grace period, the key rotation
-  delay and participant limit come from `DEFAULT_CONFIG` today. The SDK must not
-  read `config.json`, so they become an option (`timings`, with these defaults).
-  Delegating the delayed leave to the SFU is not implemented, since it needs the
-  same timings; the js-sdk restarts the delayed event itself meanwhile.
-- **`LocalMediaInputs` as behaviors or methods.** Behaviors match how the mute
-  states drive the publisher and keep a lobby's pre-join state in one place;
-  methods are the more conventional SDK shape. Two things are missing either way:
-  creating the tracks before `join()` for a preview (today they are created at the
-  join), and screen share capture options, which are fixed.
-- **`applicationData` after the join.** The option is read once. The implementation
-  still updates `m.call.intent` from the camera input, as Element Call does; that
-  moves to the host once the data can be updated, as a behavior or a setter.
-- **Backend overrides.** Tests of the client itself need to inject the transport,
-  the connection factory and the LiveKit room. They were planned as
-  `options.backend`, grouped so that no LiveKit type appears on the options; not
-  yet added, so `createMatrixRTCClient` is covered by the e2e tests only.
+- **`LocalMediaInputs` shape.** The enabled flags are initial values and the
+  setters on the client change them, because the setters have to report what
+  the device allowed; the device ids and the processor stay behaviors. Creating
+  the tracks before `join()` for a preview is still missing: today they are
+  created at the join.
+- **`applicationData` after the join.** The option is read once. The client
+  still updates `m.call.intent` from the camera state, as Element Call did; that
+  moves to the host once the data can be updated.
 - **Raw local state.** The local member's state machine (`LocalMemberState`) stays
-  internal; `status$` and `fatalError$` are its public view. A developer panel may
-  want it as `LocalRTCMember.state$`.
-- **Developer panel.** `resolved$.identity` covers the local identity and
-  `remoteMembers$` filtered by `transport$.id` the remote list. Anything beyond
-  that (LiveKit room state, connection quality) needs an opaque `debug$` per
-  transport.
+  internal; `status$`, `disconnectReason$` and `fatalError$` are its public view.
+  A developer panel may want it as `LocalRTCMember.state$`.
+- **Developer panel.** `resolved$` on each connected transport covers what the
+  panel shows today. Anything beyond that (LiveKit room state, connection
+  quality) needs an opaque `debug$` per transport.
+- **Unencrypted rooms with per-participant keys.** Keys only reach devices the
+  crypto tracks, which are the members of encrypted rooms. If the SDK is to work
+  in an unencrypted room, tracking the members' devices becomes its job.

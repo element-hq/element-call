@@ -11,11 +11,14 @@ import {
   roomEventSelector,
 } from "@livekit/components-core";
 import {
+  facingModeFromLocalTrack,
   type LocalParticipant,
+  LocalVideoTrack,
   type Participant,
   ParticipantEvent,
   type Room as LivekitRoom,
   RoomEvent,
+  Track,
   type TrackPublication,
 } from "livekit-client";
 import { distinctUntilChanged, filter, map, type Observable } from "rxjs";
@@ -89,6 +92,16 @@ export function createLocalLivekitMemberMedia(
   return {
     ...createLivekitMemberMedia(scope, participant, room, encryptionSystem),
     local: true,
+    switchCamera: async () => {
+      const track = participant.getTrackPublication(Track.Source.Camera)?.track;
+      if (!(track instanceof LocalVideoTrack)) return;
+      const { facingMode } = facingModeFromLocalTrack(track);
+      if (facingMode !== "user" && facingMode !== "environment") return;
+      await track.restartTrack({
+        facingMode: facingMode === "user" ? "environment" : "user",
+      });
+      return track.mediaStreamTrack.getSettings().deviceId;
+    },
   };
 }
 

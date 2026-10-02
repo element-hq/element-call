@@ -12,13 +12,7 @@ Please see LICENSE in the repository root for full details.
  */
 
 import { logger } from "matrix-js-sdk/lib/logger";
-import {
-  BehaviorSubject,
-  combineLatest,
-  type Observable,
-  of,
-  switchMap,
-} from "rxjs";
+import { combineLatest, type Observable, of, switchMap } from "rxjs";
 import {
   constant,
   createMatrixRTCClient,
@@ -71,17 +65,16 @@ async function start(
     const room = await joinRoom(client, roomIdOrAlias);
 
     const scope = new ObservableScope();
-    const microphoneEnabled$ = new BehaviorSubject(true);
-    const cameraEnabled$ = new BehaviorSubject(true);
     const rtcClient = createMatrixRTCClient(
       scope,
       client,
       room,
       {
-        microphoneEnabled$,
-        cameraEnabled$,
+        microphoneEnabled: true,
+        cameraEnabled: true,
         audioInputDeviceId$: constant(undefined),
         videoInputDeviceId$: constant(undefined),
+        audioOutputDeviceId$: constant(undefined),
         videoProcessor$: constant(undefined),
       },
       {
@@ -98,8 +91,12 @@ async function start(
     showMembers(scope, rtcClient);
     rtcClient.join();
 
-    toggle(buttons.microphone, microphoneEnabled$);
-    toggle(buttons.camera, cameraEnabled$);
+    toggle(buttons.microphone, async (enabled) =>
+      rtcClient.setMicrophoneEnabled(enabled),
+    );
+    toggle(buttons.camera, async (enabled) =>
+      rtcClient.setCameraEnabled(enabled),
+    );
     buttons.leave.hidden = false;
     buttons.leave.onclick = (): void => {
       rtcClient.leave();
@@ -114,14 +111,16 @@ async function start(
   }
 }
 
+/** A pressed button means the source is on; the SDK says what it could do. */
 function toggle(
   button: HTMLButtonElement,
-  enabled$: BehaviorSubject<boolean>,
+  set: (enabled: boolean) => Promise<boolean>,
 ): void {
   button.hidden = false;
   button.onclick = (): void => {
-    enabled$.next(!enabled$.value);
-    button.ariaPressed = String(enabled$.value);
+    void set(button.ariaPressed !== "true").then((enabled) => {
+      button.ariaPressed = String(enabled);
+    });
   };
 }
 

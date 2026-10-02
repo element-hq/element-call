@@ -23,7 +23,12 @@ import { type OpenIDClientParts, type SFUConfig } from "./openIDSFU";
 import { type Behavior } from "../reactive/Behavior";
 import { Connection, type ConnectionOpts, ConnectionState } from "./Connection";
 import { type ObservableScope } from "../reactive/ObservableScope";
-import { type LocalMediaInputs, type ResolvedTransport } from "../api";
+import {
+  type CaptureSettings,
+  type LocalMediaInputs,
+  type ResolvedTransport,
+} from "../api";
+import { type MediaQuality } from "../config";
 
 export interface ConnectionFactory {
   createConnection(
@@ -87,6 +92,8 @@ export class LivekitConnectionFactory implements ConnectionFactory {
     private readonly roomId: string,
     private readonly localMedia: LocalMediaInputs,
     private readonly keyProvider: BaseKeyProvider | undefined,
+    private readonly mediaQuality: MediaQuality | undefined,
+    private readonly capture: CaptureSettings | undefined,
   ) {}
 
   public createConnection(
@@ -104,7 +111,14 @@ export class LivekitConnectionFactory implements ConnectionFactory {
         client: this.client,
         scope,
         livekitRoomFactory: () =>
-          new LivekitRoom(roomOptions(this.localMedia, this.keyProvider)),
+          new LivekitRoom(
+            roomOptions(
+              this.localMedia,
+              this.keyProvider,
+              this.mediaQuality,
+              this.capture,
+            ),
+          ),
         ownMembershipIdentity,
       },
       logger,
@@ -115,19 +129,35 @@ export class LivekitConnectionFactory implements ConnectionFactory {
 function roomOptions(
   localMedia: LocalMediaInputs,
   keyProvider: BaseKeyProvider | undefined,
+  mediaQuality: MediaQuality | undefined,
+  capture: CaptureSettings | undefined,
 ): RoomOptions {
-  const base = buildLiveKitOptions();
+  const base = buildLiveKitOptions(mediaQuality);
+  const camera = capture?.camera;
   return {
     ...base,
     videoCaptureDefaults: {
       ...base.videoCaptureDefaults,
       deviceId: localMedia.videoInputDeviceId$.value,
       processor: localMedia.videoProcessor$.value,
+      ...(camera?.resolution && { resolution: camera.resolution }),
+    },
+    publishDefaults: {
+      ...base.publishDefaults,
+      ...(camera?.maxBitrate !== undefined && {
+        videoEncoding: {
+          maxBitrate: camera.maxBitrate,
+          maxFramerate: camera.maxFramerate,
+        },
+      }),
+      ...(camera?.codec && { videoCodec: camera.codec }),
     },
     audioCaptureDefaults: {
       ...base.audioCaptureDefaults,
       deviceId: localMedia.audioInputDeviceId$.value,
+      ...capture?.audio,
     },
+    audioOutput: { deviceId: localMedia.audioOutputDeviceId$.value },
     // Every room needs a worker of its own: one gets confused by streams from
     // several rooms
     e2ee: keyProvider && { keyProvider, worker: new E2EEWorker() },

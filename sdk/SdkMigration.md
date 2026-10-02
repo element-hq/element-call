@@ -8,21 +8,26 @@ symbols, so it ages with the code; the architecture document should not.
 
 ## Status
 
-| Slice                                                                                                                                                                 | State                |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| 1. Scaffold: `sdk/` packaging, the interface, the harness, the smoke test                                                                                             | done, October 2026   |
-| 2. First implementation of `createMatrixRTCClient` under `sdk/src`, the media adapter, the e2e suite                                                                  | done, 1 October 2026 |
-| 3. Copy the shared modules into `sdk/src/` with their tests, drop every `src/` import, turn on the import boundary                                                    | done, 2 October 2026 |
-| 4. `createCallViewModel$` consumes the client; media view models take `media$`; Element Call imports the primitives and enums from the SDK and deletes its own copies | next                 |
-| 5. Remove `sdk-target-based-on-call-view-model/` and the old `build:sdk` output                                                                                       | last                 |
+| Slice                                                                                                                                                                                                 | State                |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| 1. Scaffold: `sdk/` packaging, the interface, the harness, the smoke test                                                                                                                             | done, October 2026   |
+| 2. First implementation of `createMatrixRTCClient` under `sdk/src`, the media adapter, the e2e suite                                                                                                  | done, 1 October 2026 |
+| 3. Copy the shared modules into `sdk/src/` with their tests, drop every `src/` import, turn on the import boundary                                                                                    | done, 2 October 2026 |
+| 4. `createCallViewModel$` consumes the client; media view models take `media$`; Element Call imports the primitives and enums from the SDK and deletes its own copies; the old demo target is removed | done, 2 October 2026 |
 
-`src/` was not touched in slices 2 and 3: the SDK has its own copies of what it
-needs, and the lint rule `element-call/sdk-import-boundary` fails any import from
-`sdk/` that resolves outside `sdk/` or names React, i18n or Compound. Until slice 4
-the two copies drift independently, which is why slice 4 comes next. Nothing in
-Element Call consumes the SDK yet.
+Element Call now consumes the SDK. `InCallView` creates the client from the
+configuration, settings and URL parameters, and hands it to `createCallViewModel$`,
+which keeps what makes the session a call. The modules below were deleted from
+`src/` once the SDK had its copies, and `Behavior`, `ObservableScope`, the
+observable operators, `E2eeType`, `EncryptionSystem` and `MatrixRTCMode` are
+re-exported from the SDK by their old paths so the rest of Element Call did not
+have to change in the same step. The view model tests drive a fake
+`MatrixRTCClient` (`mockMatrixRTCClient` in `src/utils/test.ts`) instead of mocked
+LiveKit rooms; the tests of the deleted modules live on in `sdk/src`.
 
 ## What was copied from `src/`, and what changed on the way
+
+All of these are gone from `src/` as of slice 4; the table records where they went.
 
 Each module came with its tests (`sdk/src/utils/test.ts` and `test-fixtures.ts` are
 the subset of `src/utils/test.ts` and `test-fixtures.ts` they need). In slice 4

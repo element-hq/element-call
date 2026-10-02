@@ -38,26 +38,34 @@ interface Props {
   ownMembershipIdentity: CallMembershipIdentityParts;
   roomId: string;
   matrixRTCMode: MatrixRTCMode;
+  /** Skip discovery and use this transport. */
+  transportUrl?: string;
+  /** Use this transport when the homeserver advertises none. */
+  fallbackTransportUrl?: string;
   logger: Logger;
 }
 
 /**
- * The transport the local member publishes on: the homeserver's preferred
- * one, authenticated with so that the session can be joined with a token in
- * hand. Only the homeserver is asked; the SDK has no configuration of its own
- * to fall back on.
+ * The transport the local member publishes on: the one the host names, else
+ * the homeserver's preferred one, else the host's fallback; authenticated
+ * with, so that the session can be joined with a token in hand.
  */
 export async function getLocalTransport({
   client,
   ownMembershipIdentity,
   roomId,
   matrixRTCMode,
+  transportUrl,
+  fallbackTransportUrl,
   logger,
 }: Props): Promise<LocalTransport> {
-  const transport = await new RtcTransportAutoDiscovery({
-    client,
-    logger,
-  }).discoverPreferredTransport();
+  const transport: LivekitTransport | null = transportUrl
+    ? { type: "livekit", livekit_service_url: transportUrl }
+    : await new RtcTransportAutoDiscovery({
+        client,
+        fallbackTransportUrl,
+        logger,
+      }).discoverPreferredTransport();
   if (transport === null)
     throw new MatrixRTCTransportMissingError(client.getDomain() ?? "");
   const sfuConfig = await getSFUConfigWithOpenID(
