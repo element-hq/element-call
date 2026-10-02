@@ -237,6 +237,12 @@ export const createLocalMembership$ = ({
    * Tracks the homserver and livekit connected state and based on that computes reconnecting.
    */
   reconnecting$: Behavior<boolean>;
+  /**
+   * Whether LiveKit is re-establishing only its signalling connection. The
+   * peer connection, and so the media, stays up: the user is told the server
+   * is unavailable but nothing is paused.
+   */
+  signalReconnecting$: Behavior<boolean>;
   /** Shorthand for homeserverConnected.rtcSession === Status.Disconnected
    * Direct translation to the js-sdk membership manager connection `Status`.
    */
@@ -561,7 +567,13 @@ export const createLocalMembership$ = ({
     combineLatest([
       homeserverConnected.combined$,
       localConnectionState$.pipe(
-        map((state) => state === ConnectionState.LivekitConnected),
+        // A signal-only reconnect keeps the peer connection (and so the
+        // media) up, so it is not a disconnect: see signalReconnecting$.
+        map(
+          (state) =>
+            state === ConnectionState.LivekitConnected ||
+            state === ConnectionState.LivekitSignalReconnecting,
+        ),
       ),
     ]).pipe(
       map(([[hsConnected, hsReason], livekitConnected]) => {
@@ -590,6 +602,12 @@ export const createLocalMembership$ = ({
       map(([prev, current]) => prev === true && current === false),
     ),
     false,
+  );
+
+  const signalReconnecting$ = scope.behavior(
+    localConnectionState$.pipe(
+      map((state) => state === ConnectionState.LivekitSignalReconnecting),
+    ),
   );
 
   let reconnectStart: {
@@ -876,6 +894,7 @@ export const createLocalMembership$ = ({
     localMemberState$,
     participant$,
     reconnecting$,
+    signalReconnecting$,
     connected$: matrixAndLivekitConnected$,
     disconnected$: scope.behavior(
       homeserverConnected.rtsSession$.pipe(
