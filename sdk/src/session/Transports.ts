@@ -11,10 +11,10 @@ import {
 } from "matrix-js-sdk/lib/matrixrtc";
 import { combineLatest, distinctUntilChanged, map, of, switchMap } from "rxjs";
 
-import { constant, type Behavior } from "../../../src/state/Behavior";
-import { type ObservableScope } from "../../../src/state/ObservableScope";
-import { ConnectionState } from "../../../src/state/CallViewModel/remoteMembers/Connection";
-import { type IConnectionManager } from "../../../src/state/CallViewModel/remoteMembers/ConnectionManager";
+import { constant, type Behavior } from "../reactive/Behavior";
+import { type ObservableScope } from "../reactive/ObservableScope";
+import { ConnectionState } from "./Connection";
+import { type IConnectionManager } from "./ConnectionManager";
 import { type TransportMetadata } from "../api";
 import { ResolvedConnection } from "./ConnectionFactory";
 

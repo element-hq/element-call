@@ -16,7 +16,7 @@ import {
 } from "livekit-client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ObservableScope } from "../../../src/state/ObservableScope";
+import { ObservableScope } from "../reactive/ObservableScope";
 import { type AudioMediaTrack } from "../api";
 import { createLivekitMediaTrack } from "./LivekitMediaTrack";
 

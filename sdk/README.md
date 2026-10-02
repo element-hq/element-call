@@ -9,9 +9,8 @@ in [`SdkMigration.md`](./SdkMigration.md).
 
 **Status:** first implementation. `createMatrixRTCClient` joins the session, connects to
 the transport, publishes the local media and exposes every member's media; the
-development harness and its e2e tests in `playwright/sdk` drive it. The
-implementation still imports the building blocks it shares with Element Call from
-`src/` (connections, memberships, key provider); moving them here is the next slice.
+development harness and its e2e tests in `playwright/sdk` drive it. It depends on
+nothing in Element Call's `src/`; Element Call does not consume it yet.
 
 ## Using it
 

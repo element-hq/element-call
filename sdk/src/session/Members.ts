@@ -13,12 +13,12 @@ import {
 import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
 import { combineLatest, distinctUntilChanged, map } from "rxjs";
 
-import { type Behavior } from "../../../src/state/Behavior";
-import { type ObservableScope } from "../../../src/state/ObservableScope";
-import { type Connection } from "../../../src/state/CallViewModel/remoteMembers/Connection";
-import { type createMatrixMemberMetadata$ } from "../../../src/state/CallViewModel/remoteMembers/MatrixMemberMetadata";
-import { type RemoteMatrixLivekitMember } from "../../../src/state/CallViewModel/remoteMembers/MatrixLivekitMembers";
-import { type EncryptionSystem } from "../../../src/e2ee/sharedKeyManagement";
+import { type Behavior } from "../reactive/Behavior";
+import { type ObservableScope } from "../reactive/ObservableScope";
+import { type Connection } from "./Connection";
+import { type createMatrixMemberMetadata$ } from "./MatrixMemberMetadata";
+import { type RemoteMatrixLivekitMember } from "./MatrixLivekitMembers";
+import { type EncryptionSystem } from "../encryption";
 import {
   type LocalRTCMember,
   type MemberMedia,

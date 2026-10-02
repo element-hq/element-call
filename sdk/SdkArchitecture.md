@@ -508,18 +508,23 @@ Layout:
 sdk/
   index.ts            the entry point: re-exports the API and the primitives
   src/api.ts          the public types above
-  src/session/        MatrixRTCClient, the local member, publisher, connections, transports, join
+  src/errors.ts       MatrixRTCError and its codes
+  src/config.ts       MatrixRTCMode, session timings, media quality
+  src/encryption.ts   E2eeType, EncryptionSystem
+  src/reactive/       Behavior, ObservableScope, the observable operators
+  src/session/        MatrixRTCClient, the local member, publisher, connections,
+                      memberships, transports, discovery, JWT, join
   src/media/          the LiveKit adapter: MemberMedia and MediaTrack
-  src/utils/          LazyBehavior, mapScoped, error wrapping
+  src/utils/          LazyBehavior, mapScoped, network retry, display names, test helpers
   dev/                the harness (below)
   SdkArchitecture.md  this document
   SdkMigration.md     how Element Call gets from CallViewModel to the client
 ```
 
-An import boundary is still to be added to the local lint plugin: nothing under
-`sdk/` may import `src/`, `component/`, `playwright/`, React, i18n, Compound or the
-settings. Until the shared modules have moved (see the migration document) the
-SDK imports them from `src/`, so the rule cannot be turned on yet.
+The lint rule `element-call/sdk-import-boundary` keeps it that way: nothing under
+`sdk/` may import a file outside `sdk/` (that is `src/`, `component/`,
+`playwright/`) or React, i18n or Compound. The harness under `sdk/dev/` is a host
+and exempt.
 
 ## Dev harness: `sdk/dev/`
 

@@ -18,9 +18,9 @@ import {
 import { type Track, type TrackProcessor } from "livekit-client";
 import { type Observable } from "rxjs";
 
-import { type Behavior } from "../../src/state/Behavior";
-import { type EncryptionSystem } from "../../src/e2ee/sharedKeyManagement";
-import { type MatrixRTCMode } from "../../src/config/ConfigOptions";
+import { type Behavior } from "./reactive/Behavior";
+import { type EncryptionSystem } from "./encryption";
+import { type MatrixRTCMode } from "./config";
 
 // ---------------------------------------------------------------------------
 // Session
@@ -64,16 +64,9 @@ export type ConnectionStatus =
   | "reconnecting"
   | "disconnected";
 
-/**
- * An error raised by the session. `cause` holds the underlying error, which
- * lets a host that knows the backend tell the failures apart.
- */
-export class MatrixRTCError extends Error {
-  public constructor(message: string, options?: ErrorOptions) {
-    super(message, options);
-    this.name = "MatrixRTCError";
-  }
-}
+import { type MatrixRTCError } from "./errors";
+
+export { MatrixRTCError } from "./errors";
 
 /**
  * A session in one room. The room has to be the one the client's sync loop

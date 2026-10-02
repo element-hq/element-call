@@ -7,18 +7,25 @@ Please see LICENSE in the repository root for full details.
 
 import { type MatrixClient } from "matrix-js-sdk";
 import { type Logger } from "matrix-js-sdk/lib/logger";
+import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
-import {
-  DEFAULT_CONFIG,
-  type MatrixRTCMode,
-} from "../../../src/config/ConfigOptions";
-import { getSFUConfigWithOpenID } from "../../../src/livekit/openIDSFU";
-import { type LocalTransport } from "../../../src/state/CallViewModel/localMember/LocalTransport";
-import { RtcTransportAutoDiscovery } from "../../../src/state/CallViewModel/localMember/RtcTransportAutoDiscovery";
-import { MatrixRTCTransportMissingError } from "../../../src/utils/errors";
+import { type MatrixRTCMode } from "../config";
+import { getSFUConfigWithOpenID, type SFUConfig } from "./openIDSFU";
+import { RtcTransportAutoDiscovery } from "./RtcTransportAutoDiscovery";
+import { MatrixRTCTransportMissingError } from "../errors";
 
-export type { LocalTransport };
+/** The transport the local member publishes on, authenticated with. */
+export interface LocalTransport {
+  transport: LivekitTransport;
+  sfuConfig: SFUConfig;
+}
+
+export function isLocalTransport(
+  obj: LivekitTransport | LocalTransport,
+): obj is LocalTransport {
+  return "transport" in obj && "sfuConfig" in obj;
+}
 
 interface Props {
   client: Pick<
@@ -49,7 +56,6 @@ export async function getLocalTransport({
 }: Props): Promise<LocalTransport> {
   const transport = await new RtcTransportAutoDiscovery({
     client,
-    resolvedConfig: DEFAULT_CONFIG,
     logger,
   }).discoverPreferredTransport();
   if (transport === null)

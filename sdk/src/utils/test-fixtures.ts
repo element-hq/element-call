@@ -1,0 +1,65 @@
+/*
+Copyright 2024 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
+import { mockRtcMembership, mockMatrixRoomMember } from "./test";
+
+export const localRtcMember = mockRtcMembership("@local:example.org", "1111");
+
+export const aliceDeviceId = "AAAA";
+export const aliceUserId = "@alice:example.org";
+export const aliceRtcMember = mockRtcMembership(aliceUserId, aliceDeviceId);
+export const alice = mockMatrixRoomMember(aliceRtcMember, {
+  rawDisplayName: "Alice",
+});
+
+export const aliceDoppelgangerRtcMember = mockRtcMembership(
+  "@alice2:example.org",
+  "AAAA",
+);
+export const aliceDoppelganger = mockMatrixRoomMember(
+  aliceDoppelgangerRtcMember,
+  {
+    rawDisplayName: "Alice",
+  },
+);
+
+export const bobDeviceId = "BBBB";
+export const bobUserId = "@bob:example.org";
+export const bobRtcMember = mockRtcMembership(bobUserId, bobDeviceId);
+export const bob = mockMatrixRoomMember(bobRtcMember, {
+  rawDisplayName: "Bob",
+});
+
+export const bobZeroWidthSpaceRtcMember = mockRtcMembership(
+  "@bob2:example.org",
+  "BBBB",
+);
+export const bobZeroWidthSpace = mockMatrixRoomMember(
+  bobZeroWidthSpaceRtcMember,
+  {
+    rawDisplayName: "Bo\u200bb",
+  },
+);
+
+export const daveRTLRtcMember = mockRtcMembership("@dave2:example.org", "DDDD");
+export const daveRTL = mockMatrixRoomMember(daveRTLRtcMember, {
+  rawDisplayName: "\u202eevaD",
+});
+
+export const testJWTToken = [
+  {}, // header
+  {
+    // payload
+    sub: "@me:example.org:ABCDEF",
+    video: {
+      room: "!example_room_id",
+    },
+  },
+  {}, // signature
+]
+  .map((d) => global.btoa(JSON.stringify(d)))
+  .join(".");

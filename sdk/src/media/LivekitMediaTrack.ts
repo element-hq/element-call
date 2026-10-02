@@ -35,8 +35,8 @@ import {
   switchMap,
 } from "rxjs";
 
-import { type Behavior } from "../../../src/state/Behavior";
-import { type ObservableScope } from "../../../src/state/ObservableScope";
+import { type Behavior } from "../reactive/Behavior";
+import { type ObservableScope } from "../reactive/ObservableScope";
 import {
   type AudioMediaTrack,
   type MediaSource,

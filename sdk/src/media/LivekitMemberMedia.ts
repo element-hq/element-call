@@ -20,10 +20,10 @@ import {
 } from "livekit-client";
 import { distinctUntilChanged, filter, map, type Observable } from "rxjs";
 
-import { type Behavior } from "../../../src/state/Behavior";
-import { type ObservableScope } from "../../../src/state/ObservableScope";
-import { E2eeType } from "../../../src/e2ee/e2eeType";
-import { type EncryptionSystem } from "../../../src/e2ee/sharedKeyManagement";
+import { type Behavior } from "../reactive/Behavior";
+import { type ObservableScope } from "../reactive/ObservableScope";
+import { E2eeType } from "../encryption";
+import { type EncryptionSystem } from "../encryption";
 import {
   type AudioMediaTrack,
   type EncryptionError,

@@ -8,42 +8,48 @@ symbols, so it ages with the code; the architecture document should not.
 
 ## Status
 
-| Slice                                                                                                          | State                |
-| -------------------------------------------------------------------------------------------------------------- | -------------------- |
-| 1. Scaffold: `sdk/` packaging, the interface, the harness, the smoke test                                      | done, October 2026   |
-| 2. First implementation of `createMatrixRTCClient` under `sdk/src`, the media adapter, the e2e suite           | done, 1 October 2026 |
-| 3. Move the shared modules out of `src/` into `sdk/src/`, leave re-exports behind, turn on the import boundary | next                 |
-| 4. `createCallViewModel$` consumes the client; media view models take `media$`                                 | after 3              |
-| 5. Remove the re-exports, `sdk-target-based-on-call-view-model/` and the old `build:sdk` output                | last                 |
+| Slice                                                                                                                                                                 | State                |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| 1. Scaffold: `sdk/` packaging, the interface, the harness, the smoke test                                                                                             | done, October 2026   |
+| 2. First implementation of `createMatrixRTCClient` under `sdk/src`, the media adapter, the e2e suite                                                                  | done, 1 October 2026 |
+| 3. Copy the shared modules into `sdk/src/` with their tests, drop every `src/` import, turn on the import boundary                                                    | done, 2 October 2026 |
+| 4. `createCallViewModel$` consumes the client; media view models take `media$`; Element Call imports the primitives and enums from the SDK and deletes its own copies | next                 |
+| 5. Remove `sdk-target-based-on-call-view-model/` and the old `build:sdk` output                                                                                       | last                 |
 
-Slice 2 was built without touching `src/`, so the SDK imports its building blocks
-from there for now. Nothing in Element Call consumes the SDK yet.
+`src/` was not touched in slices 2 and 3: the SDK has its own copies of what it
+needs, and the lint rule `element-call/sdk-import-boundary` fails any import from
+`sdk/` that resolves outside `sdk/` or names React, i18n or Compound. Until slice 4
+the two copies drift independently, which is why slice 4 comes next. Nothing in
+Element Call consumes the SDK yet.
 
-## What the SDK still imports from `src/`
+## What was copied from `src/`, and what changed on the way
 
-These move into `sdk/src/` in slice 3, each with its tests, leaving a one-line
-re-export in `src` until Element Call's importers are updated.
+Each module came with its tests (`sdk/src/utils/test.ts` and `test-fixtures.ts` are
+the subset of `src/utils/test.ts` and `test-fixtures.ts` they need). In slice 4
+Element Call switches to the SDK's copy and deletes its own.
 
-| Module                                                                         | Used for                                                                          | Notes for the move                                                                                               |
-| ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `state/Behavior.ts`, `state/ObservableScope.ts`, `utils/observable.ts`         | the reactive primitives                                                           | exported from `sdk/index.ts` already; 37 importers in `src` and `component` keep working through the re-export   |
-| `state/SessionBehaviors.ts`                                                    | `createMemberships$`, `membershipsAndTransports$`, `createKeyRotationSuppressed$` | as is                                                                                                            |
-| `state/CallViewModel/remoteMembers/Connection.ts`                              | `Connection`, `ConnectionState`                                                   | the SDK subclasses it as `ResolvedConnection` to keep the JWT answer; fold that in                               |
-| `state/CallViewModel/remoteMembers/ConnectionFactory.ts`                       | the `ConnectionFactory` interface only                                            | `ECConnectionFactory` stays behind: it reads settings and `MediaDevices`; the SDK has `LivekitConnectionFactory` |
-| `state/CallViewModel/remoteMembers/ConnectionManager.ts`                       | `createConnectionManager$`                                                        | as is                                                                                                            |
-| `state/CallViewModel/remoteMembers/MatrixLivekitMembers.ts`                    | `createRemoteMatrixLivekitMembers$`, the membership-to-participant match          | the `TaggedParticipant` type goes; the SDK maps the result to `RTCMember`                                        |
-| `state/CallViewModel/remoteMembers/MatrixMemberMetadata.ts`                    | `createRoomMembers$`, `createMatrixMemberMetadata$`                               | depends on `utils/displayname.ts`, which moves with it                                                           |
-| `state/CallViewModel/localMember/HomeserverConnected.ts`                       | `createHomeserverConnected$`                                                      | reads `Config.get()` unless the grace period is passed; the SDK passes it                                        |
-| `state/CallViewModel/localMember/LocalTransport.ts`                            | the `LocalTransport` type only                                                    | `getLocalTransport` reads config and settings; the SDK has its own in `session/LocalTransport.ts`                |
-| `state/CallViewModel/localMember/RtcTransportAutoDiscovery.ts`                 | discovery through `rtc/transports`                                                | takes a resolved config for the fallback url; the SDK passes `DEFAULT_CONFIG`, which has none                    |
-| `state/CallViewModel/localMember/LocalMember.ts`                               | `observeSharingScreen$` only                                                      | the SDK has its own local member; the rest stays until slice 4                                                   |
-| `livekit/openIDSFU.ts`                                                         | `getSFUConfigWithOpenID`, `SFUConfig`                                             | reads `Config.get()` only on the delegated delayed leave path, which the SDK does not use                        |
-| `livekit/options.ts`                                                           | `buildLiveKitOptions`                                                             | takes the media quality config as a parameter; `getLiveKitOptions` stays behind                                  |
-| `e2ee/matrixKeyProvider.ts`, `e2ee/e2eeType.ts`, `e2ee/sharedKeyManagement.ts` | the key provider, `E2eeType`, the `EncryptionSystem` type                         | `sharedKeyManagement.ts` also holds React hooks; split the type out                                              |
-| `config/ConfigOptions.ts`                                                      | `MatrixRTCMode`, `DEFAULT_CONFIG` for the timings                                 | the enum moves; the timings become an option (see the architecture document's open decisions)                    |
-| `utils/errors.ts`                                                              | the error classes the modules above throw                                         | they carry translation keys, so they stay; the SDK wraps them as `MatrixRTCError` with `cause`                   |
+| In `src/`                                                                           | In `sdk/src/`                                             | What changed                                                                                                                     |
+| ----------------------------------------------------------------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `state/Behavior.ts`, `state/ObservableScope.ts`, `utils/observable.ts`              | `reactive/`                                               | as is                                                                                                                            |
+| `state/SessionBehaviors.ts`                                                         | `session/SessionBehaviors.ts`                             | as is                                                                                                                            |
+| `state/CallViewModel/remoteMembers/Connection.ts`                                   | `session/Connection.ts`                                   | throws `MatrixRTCError`s; the SDK still subclasses it as `ResolvedConnection` to keep the JWT answer, to be folded in            |
+| `state/CallViewModel/remoteMembers/ConnectionFactory.ts`                            | `session/ConnectionFactory.ts`                            | the interface only; `ECConnectionFactory` reads settings and `MediaDevices`, the SDK has `LivekitConnectionFactory`              |
+| `state/CallViewModel/remoteMembers/ConnectionManager.ts`                            | `session/ConnectionManager.ts`                            | as is                                                                                                                            |
+| `state/CallViewModel/remoteMembers/MatrixLivekitMembers.ts`                         | `session/MatrixLivekitMembers.ts`                         | as is; the SDK maps its result to `RTCMember`, `TaggedParticipant` is internal                                                   |
+| `state/CallViewModel/remoteMembers/MatrixMemberMetadata.ts`, `utils/displayname.ts` | `session/MatrixMemberMetadata.ts`, `utils/displayname.ts` | as is                                                                                                                            |
+| `state/CallViewModel/localMember/HomeserverConnected.ts`                            | `session/HomeserverConnected.ts`                          | the grace period defaults to `defaultSessionTimings` instead of `Config.get()`                                                   |
+| `state/CallViewModel/localMember/LocalTransport.ts`                                 | `session/LocalTransport.ts`                               | the type and `isLocalTransport`; discovery without the custom-url setting                                                        |
+| `state/CallViewModel/localMember/RtcTransportAutoDiscovery.ts`                      | `session/RtcTransportAutoDiscovery.ts`                    | takes `fallbackTransportUrl` instead of a resolved config                                                                        |
+| `state/CallViewModel/localMember/LocalMember.ts`                                    | `session/LocalMember.ts`                                  | rewritten; only `observeSharingScreen$` was copied                                                                               |
+| `livekit/openIDSFU.ts`                                                              | `session/openIDSFU.ts`                                    | the delegated leave timeout is a parameter (`delayTimeoutMs`) instead of `Config.get()`                                          |
+| `livekit/options.ts`                                                                | `session/livekitOptions.ts`                               | `buildLiveKitOptions(mediaQuality?)` only; `getLiveKitOptions` and the `Config` singleton are gone                               |
+| `e2ee/matrixKeyProvider.ts`                                                         | `session/MatrixKeyProvider.ts`                            | as is                                                                                                                            |
+| `e2ee/e2eeType.ts`, the `EncryptionSystem` type from `e2ee/sharedKeyManagement.ts`  | `encryption.ts`                                           | the React hooks stayed behind                                                                                                    |
+| `MatrixRTCMode`, the timings and media quality types from `config/ConfigOptions.ts` | `config.ts`                                               | `defaultSessionTimings` and `defaultMediaQuality` replace `DEFAULT_CONFIG`                                                       |
+| `utils/errors.ts`                                                                   | `errors.ts`                                               | `MatrixRTCError` with `code` and `category` replaces `ElementCallError`; messages are plain English, the host translates by code |
+| `doNetworkOperationWithRetry` from `utils/matrix.ts`                                | `utils/network.ts`                                        | as is                                                                                                                            |
 
-Rewritten in the SDK rather than moved, because the originals read settings,
+Rewritten in the SDK rather than copied, because the originals read settings,
 config, analytics or the host bridge: the local member (`session/LocalMember.ts`),
 the publisher (`session/Publisher.ts`), the connection factory and LiveKit room
 options (`session/ConnectionFactory.ts`), transport discovery

@@ -9,9 +9,9 @@ import { type BaseKeyProvider, ExternalE2EEKeyProvider } from "livekit-client";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import { type MatrixRTCSession as JsSdkRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 
-import { E2eeType } from "../../../src/e2ee/e2eeType";
-import { MatrixKeyProvider } from "../../../src/e2ee/matrixKeyProvider";
-import { type EncryptionSystem } from "../../../src/e2ee/sharedKeyManagement";
+import { E2eeType } from "../encryption";
+import { MatrixKeyProvider } from "./MatrixKeyProvider";
+import { type EncryptionSystem } from "../encryption";
 
 /** The LiveKit key provider for the encryption the host asked for, or none. */
 export function createKeyProvider(
