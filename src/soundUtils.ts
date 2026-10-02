@@ -48,11 +48,11 @@ function decodeDataUrl(url: string): ArrayBuffer {
   if (!url.startsWith("data:") || separator === -1)
     throw new Error("Not a valid data: URL");
   const header = url.slice("data:".length, separator);
-  const payload = url.slice(separator + 1);
-  const decoded = header.split(";").includes("base64")
-    ? atob(payload)
-    : decodeURIComponent(payload);
+  // Vite only percent-encodes SVGs; every other inlined asset is base64.
+  if (!header.split(";").includes("base64"))
+    throw new Error("Only base64 data: URLs are supported");
   // `decoded` is a binary string: one char per byte
+  const decoded = atob(url.slice(separator + 1));
   const bytes = Uint8Array.from(decoded, (c) => c.charCodeAt(0));
   return bytes.buffer;
 }
@@ -90,7 +90,6 @@ export async function prefetchSounds<S extends string>(
         buffer = await loadSound(url);
       } catch (e) {
         logger.warn(`Could not load sound ${name}`, e);
-        return;
       }
       if (buffer === null) {
         // If the sound doesn't load, it's not the end of the world. We won't play

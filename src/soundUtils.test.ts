@@ -43,12 +43,12 @@ describe("prefetchSounds", () => {
     expect(bytesOf(sounds.beep)).toEqual([0x4f, 0x67, 0x67, 0x53]);
   });
 
-  it("decodes percent-encoded data: URLs without fetching them", async () => {
+  it("leaves out a sound with a percent-encoded data: URL", async () => {
     const sounds = await prefetchSounds({
       beep: { ogg: "data:audio/ogg,Ogg%53" },
     });
     expect(fetchSpy).not.toHaveBeenCalled();
-    expect(bytesOf(sounds.beep)).toEqual([0x4f, 0x67, 0x67, 0x53]);
+    expect(sounds).toEqual({});
   });
 
   it("leaves out a sound whose response is not okay", async () => {
