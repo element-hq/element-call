@@ -209,7 +209,9 @@ export function useAudioContext<S extends string>(
     },
     playSoundLooping: (name, delayS: number): (() => Promise<void>) => {
       if (!audioBuffers[name]) {
-        throw Error(`Tried to play a sound that wasn't buffered (${name})`);
+        // We do not throw here. Instead we log and let the component life. Its not a fatal error if sounds are missing.
+        logger.debug(`Tried to play a sound that wasn't buffered (${name})`);
+        return async () => {};
       }
       return playSoundLooping(
         audioContext,
