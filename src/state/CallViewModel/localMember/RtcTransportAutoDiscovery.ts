@@ -5,8 +5,8 @@ SPDX-License-IdFentifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 import {
-  isLivekitTransport,
-  type LivekitTransport,
+  isUnstableLivekitTransport,
+  type UnstableLivekitTransport,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type MatrixClient } from "matrix-js-sdk";
 import { type Logger } from "matrix-js-sdk/lib/logger";
@@ -40,7 +40,7 @@ export class RtcTransportAutoDiscovery {
     this.logger = logger.getChild("[RtcTransportAutoDiscovery]");
   }
 
-  public async discoverPreferredTransport(): Promise<LivekitTransport | null> {
+  public async discoverPreferredTransport(): Promise<UnstableLivekitTransport | null> {
     // 1) backend transports
     const backendTransport = await this.tryBackendTransports();
     if (backendTransport) {
@@ -67,7 +67,7 @@ export class RtcTransportAutoDiscovery {
    * This will not throw errors, but instead just log them and return null if the expected config is not found or malformed.
    * @private
    */
-  private async tryBackendTransports(): Promise<LivekitTransport | null> {
+  private async tryBackendTransports(): Promise<UnstableLivekitTransport | null> {
     const client = this.client;
     // MSC4143: Attempt to fetch transports from backend.
     this.logger.info("First try to use getRTCTransports end point ...");
@@ -75,7 +75,7 @@ export class RtcTransportAutoDiscovery {
       const transportList = await doNetworkOperationWithRetry(async () =>
         client._unstable_getRTCTransports(),
       );
-      const first = transportList.find(isLivekitTransport);
+      const first = transportList.find(isUnstableLivekitTransport);
       if (first) {
         return first;
       } else {
@@ -90,7 +90,7 @@ export class RtcTransportAutoDiscovery {
     return null;
   }
 
-  private tryConfigTransport(): LivekitTransport | null {
+  private tryConfigTransport(): UnstableLivekitTransport | null {
     const url = this.resolvedConfig.livekit?.livekit_service_url;
     if (url) {
       return {

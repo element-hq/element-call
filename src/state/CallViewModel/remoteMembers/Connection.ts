@@ -22,16 +22,11 @@ import {
   type Track,
   type TrackPublication,
 } from "livekit-client";
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { BehaviorSubject, map } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
-import {
-  getSFUConfigWithOpenID,
-  type OpenIDClientParts,
-  type SFUConfig,
-} from "../../../livekit/openIDSFU.ts";
 import { type Behavior } from "../../Behavior.ts";
 import { type ObservableScope } from "../../ObservableScope.ts";
 import {
@@ -42,6 +37,12 @@ import {
   SFURoomCreationRestrictedError,
   UnknownCallError,
 } from "../../../utils/errors.ts";
+import {
+  type ClientGetTokenParts,
+  getSFUConfig,
+  type ClientOpenIDParts,
+  type SFUConfig,
+} from "../../../livekit/auth";
 
 export interface ConnectionOpts {
   /**
@@ -52,9 +53,9 @@ export interface ConnectionOpts {
   /** The identity parts to use on this connection */
   ownMembershipIdentity: CallMembershipIdentityParts;
   /** The media transport to connect to. */
-  transport: LivekitTransport;
+  transport: UnstableLivekitTransport;
   /** The Matrix client to use for OpenID and SFU config requests. */
-  client: OpenIDClientParts;
+  client: ClientGetTokenParts & ClientOpenIDParts;
   /** The room ID this connection is associated with. */
   roomId: string;
   /** The observable scope to use for this connection. */
@@ -107,7 +108,7 @@ export class Connection {
   /**
    * The media transport to connect to.
    */
-  public readonly transport: LivekitTransport;
+  public readonly transport: UnstableLivekitTransport;
 
   public readonly livekitRoom: LivekitRoom;
 
@@ -137,7 +138,7 @@ export class Connection {
   protected stopped = false;
 
   // TODO: can we just keep the ConnectionOpts object instead of spreading?
-  private readonly client: OpenIDClientParts;
+  private readonly client: ClientGetTokenParts & ClientOpenIDParts;
   private readonly roomId: string;
   private readonly logger: Logger;
   private readonly ownMembershipIdentity: CallMembershipIdentityParts;
@@ -154,10 +155,10 @@ export class Connection {
     this.existingSFUConfig = opts.existingSFUConfig;
     this.roomId = opts.roomId;
     this.logger = logger.getChild(
-      "[Connection " + opts.transport.livekit_service_url + "]",
+      `[Connection ${JSON.stringify(opts.transport)}]`,
     );
     this.logger.info(
-      `constructor: ${opts.transport.livekit_service_url} roomId: ${this.roomId} withSfuConfig?: ${opts.existingSFUConfig ? JSON.stringify(opts.existingSFUConfig) : "undefined"}`,
+      `constructor - roomId: ${this.roomId} withSfuConfig?: ${opts.existingSFUConfig ? JSON.stringify(opts.existingSFUConfig) : "undefined"}`,
     );
     const { transport, client, scope } = opts;
 
@@ -311,9 +312,7 @@ export class Connection {
         this.existingSFUConfig ??
         (await this.getSFUConfigForRemoteConnection());
       this.logger.debug(
-        "Starting Connection to: ",
-        this.transport.livekit_service_url,
-        "jwt: ",
+        "Starting Connection - jwt: ",
         jwt,
         "wss: ",
         url,
@@ -398,15 +397,14 @@ export class Connection {
   protected async getSFUConfigForRemoteConnection(): Promise<SFUConfig> {
     // This will only be called for sfu's where we do not publish ourselves.
     // For the local connection we will use the existingJwtTokenData
-    return await getSFUConfigWithOpenID(
-      this.client,
-      this.ownMembershipIdentity,
-      this.transport.livekit_service_url,
-      this.roomId,
-      // dont pass any custom opts for the subscribe only connections
-      {},
-      this.logger,
-    );
+    return await getSFUConfig({
+      client: this.client,
+      membership: this.ownMembershipIdentity,
+      transport: this.transport,
+      roomId: this.roomId,
+      role: "subscriber",
+      logger: this.logger,
+    });
   }
 
   /**
@@ -416,17 +414,13 @@ export class Connection {
    * If the connection is already stopped, this is a no-op.
    */
   public async stop(): Promise<void> {
-    this.logger.debug(
-      `stop: disconnecing from lk room ${this.transport.livekit_service_url}`,
-    );
+    this.logger.debug("stop: disconnecing from lk room");
     if (this.stopped) return;
     // Mark as stopped before disconnecting so that a connect() aborted by the
     // disconnect sees the flag and does not report the abort as an error.
     this.stopped = true;
     await this.livekitRoom.disconnect();
     this._state$.next(ConnectionState.Stopped);
-    this.logger.debug(
-      `stop: DONE disconnecing from lk room ${this.transport.livekit_service_url}`,
-    );
+    this.logger.debug("stop: DONE disconnecing from lk room");
   }
 }

@@ -30,7 +30,7 @@ import fetchMock from "fetch-mock";
 import EventEmitter from "events";
 import { type IOpenIDToken } from "matrix-js-sdk";
 import { logger, type Logger } from "matrix-js-sdk/lib/logger";
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 
 import {
   Connection,
@@ -38,7 +38,7 @@ import {
   type ConnectionOpts,
 } from "./Connection.ts";
 import { ObservableScope } from "../../ObservableScope.ts";
-import { type OpenIDClientParts } from "../../../livekit/openIDSFU.ts";
+import { type ClientOpenIDParts } from "../../../livekit/openIDSFU.ts";
 import {
   ElementCallError,
   FailToGetOpenIdToken,
@@ -48,7 +48,7 @@ import { mockRemoteParticipant, ownMemberMock } from "../../../utils/test.ts";
 
 let testScope: ObservableScope;
 
-let client: MockedObject<OpenIDClientParts>;
+let client: MockedObject<ClientOpenIDParts>;
 
 let fakeLivekitRoom: MockedObject<LivekitRoom>;
 
@@ -57,14 +57,14 @@ let fakeLocalParticipant: MockedObject<LocalParticipant>;
 
 const ROOM_ID = "!roomID:example.org";
 
-const livekitFocus: LivekitTransport = {
+const livekitFocus: UnstableLivekitTransport = {
   livekit_service_url: "https://matrix-rtc.example.org/livekit/jwt",
   type: "livekit",
 };
 
 function setupTest(): void {
   testScope = new ObservableScope();
-  client = vi.mocked<OpenIDClientParts>({
+  client = vi.mocked<ClientOpenIDParts>({
     getOpenIdToken: vi.fn().mockResolvedValue({
       access_token: "rYsmGUEwNjKgJYyeNUkZseJN",
       token_type: "Bearer",
@@ -72,7 +72,7 @@ function setupTest(): void {
       expires_in: 3600,
     }),
     getDeviceId: vi.fn().mockReturnValue("ABCDEF"),
-  } as unknown as OpenIDClientParts);
+  } as unknown as ClientOpenIDParts);
 
   localParticipantEventEmiter = new EventEmitter();
 

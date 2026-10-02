@@ -26,7 +26,7 @@ import {
 import {
   CallMembership,
   type LivekitFocusSelection,
-  type LivekitTransport,
+  type UnstableLivekitTransport,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
   type MatrixRTCSessionEventHandlerMap,
@@ -209,7 +209,7 @@ export function mockEmitter<T>(): EmitterMock<T> {
   };
 }
 
-export const exampleTransport: LivekitTransport = {
+export const exampleTransport: UnstableLivekitTransport = {
   type: "livekit",
   livekit_service_url: "https://lk.example.org",
 };

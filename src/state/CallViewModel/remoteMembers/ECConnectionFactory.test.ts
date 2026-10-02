@@ -14,7 +14,7 @@ import EventEmitter from "events";
 
 import { ObservableScope } from "../../ObservableScope.ts";
 import { ECConnectionFactory } from "./ConnectionFactory.ts";
-import type { OpenIDClientParts } from "../../../livekit/openIDSFU.ts";
+import type { ClientOpenIDParts } from "../../../livekit/openIDSFU.ts";
 import {
   exampleTransport,
   mockMediaDevices,
@@ -51,7 +51,7 @@ vi.mock("livekit-client", async (importOriginal) => {
 });
 
 let testScope: ObservableScope;
-let mockClient: OpenIDClientParts;
+let mockClient: ClientOpenIDParts;
 
 beforeEach(() => {
   testScope = new ObservableScope();

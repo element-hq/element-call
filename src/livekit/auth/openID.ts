@@ -13,17 +13,13 @@ import {
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 
-import {
-  FailToGetOpenIdToken,
-  NoMatrix2AuthorizationService,
-} from "../../utils/errors";
+import { FailToGetOpenIdToken } from "../../utils/errors";
 import { doNetworkOperationWithRetry } from "../../utils/matrix";
 import { Config } from "../../config/Config";
-import { MatrixRTCMode } from "../../config/ConfigOptions";
 import { extractFullConfigFromToken, type SFUConfig } from "./types";
 
 // The bits we need from MatrixClient
-export type OpenIDClientParts = Pick<
+export type ClientOpenIDParts = Pick<
   MatrixClient,
   "getOpenIdToken" | "getDeviceId"
 >;
@@ -47,18 +43,25 @@ export type OpenIDClientParts = Pick<
  * @returns Object containing the token information
  * @throws FailToGetOpenIdToken
  */
-export async function getSFUConfig(
-  client: OpenIDClientParts,
-  membership: CallMembershipIdentityParts,
-  serviceUrl: string,
-  roomId: string,
-  opts?: {
-    matrixRTCMode?: MatrixRTCMode;
-    delayEndpointBaseUrl?: string;
-    delayId?: string;
-  },
-  logger?: Logger,
-): Promise<SFUConfig> {
+export async function getSFUConfig({
+  client,
+  membership,
+  serviceUrl,
+  roomId,
+  role,
+  delayEndpointBaseUrl,
+  delayId,
+  logger,
+}: {
+  client: ClientOpenIDParts;
+  membership: CallMembershipIdentityParts;
+  serviceUrl: string;
+  roomId: string;
+  role: "publisher" | "subscriber";
+  delayEndpointBaseUrl?: string;
+  delayId?: string;
+  logger: Logger;
+}): Promise<SFUConfig> {
   let openIdToken: IOpenIDToken;
   try {
     openIdToken = await doNetworkOperationWithRetry(async () =>
@@ -69,65 +72,50 @@ export async function getSFUConfig(
       error instanceof Error ? error : new Error("Unknown error"),
     );
   }
-  logger?.debug("Got openID token", openIdToken);
+  logger.debug("Got openID token", openIdToken);
   let sfuConfig: { url: string; jwt: string } | undefined;
 
-  const tryBothJwtEndpoints = opts?.matrixRTCMode === undefined; // This is for SFUs where we do not publish.
-
-  const forceMatrix2Jwt = opts?.matrixRTCMode === MatrixRTCMode.Matrix_2_0;
-
-  // We want to start using the new endpoint (with optional delay delegation)
-  // if we can use both or if we are forced to use the new one.
-  if (tryBothJwtEndpoints || forceMatrix2Jwt) {
-    try {
-      logger?.info(
-        `Trying to get JWT via default endpoint for focus ${serviceUrl}...`,
-      );
-      const sfuConfig = await getLiveKitJWT(
-        membership,
-        serviceUrl,
-        roomId,
-        openIdToken,
-        opts?.delayEndpointBaseUrl,
-        opts?.delayId,
-      );
-
-      return extractFullConfigFromToken(sfuConfig);
-    } catch (e) {
-      logger?.debug(`Failed fetching jwt with matrix 2.0 endpoint:`, e);
-      // Make this throw a hard error in case we force the matrix2.0 endpoint.
-      if (forceMatrix2Jwt) {
-        throw new NoMatrix2AuthorizationService(e as Error);
-      }
-    }
+  let endpoint: "default" | "legacy";
+  switch (role) {
+    case "publisher":
+      // When publishing a legacy transport (one with a `livekit_service_url`),
+      // subscribers will expect our participant identity to use the legacy
+      // `@user_id:device_id` format. Only the legacy JWT service endpoint
+      // assigns identities in this format, so we must use it.
+      endpoint = "legacy";
+      break;
+    case "subscriber":
+      // Use the default endpoint as it's more likely to allow remote access.
+      endpoint = "default";
+      break;
   }
 
-  // DEPRECATED
-  // here we either have a sfuConfig or we already exited because of `if (forceMatrix2) throw ...`
-  // The only case we can get into this condition is, if `forceMatrix2` is `false`
   try {
-    logger?.info(
-      `Trying to get JWT with legacy endpoint for focus ${serviceUrl}...`,
+    logger.info(
+      `Trying to get JWT with ${endpoint} endpoint for focus ${serviceUrl}...`,
     );
-    sfuConfig = await getLiveKitJWTLegacy(
-      membership.deviceId,
+    sfuConfig = await (
+      endpoint === "legacy" ? getLiveKitJWTLegacy : getLiveKitJWT
+    )(
+      membership,
       serviceUrl,
       roomId,
       openIdToken,
-      opts?.delayEndpointBaseUrl,
-      opts?.delayId,
+      delayEndpointBaseUrl,
+      delayId,
     );
-    logger?.info(`Got JWT from call's active focus URL.`);
+    logger.info(`Got JWT from call's active focus URL.`);
     return extractFullConfigFromToken(sfuConfig);
-  } catch (ex) {
+  } catch (e) {
+    logger.error(`Failed fetching jwt with ${endpoint} endpoint:`, e);
     throw new FailToGetOpenIdToken(
-      ex instanceof Error ? ex : new Error(`Unknown error ${ex}`),
+      e instanceof Error ? e : new Error(`Unknown error ${e}`),
     );
   }
 }
 
 async function getLiveKitJWTLegacy(
-  deviceId: string,
+  membership: CallMembershipIdentityParts,
   livekitServiceURL: string,
   matrixRoomId: string,
   openIDToken: IOpenIDToken,
@@ -161,7 +149,7 @@ async function getLiveKitJWTLegacy(
         // However, the livekit room alias is provided as part of the JWT payload.
         room: matrixRoomId,
         openid_token: openIDToken,
-        device_id: deviceId,
+        device_id: membership.deviceId,
         ...delayParts,
       }),
     });

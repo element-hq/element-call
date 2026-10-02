@@ -8,7 +8,6 @@ Please see LICENSE in the repository root for full details.
 import { type MatrixClient } from "matrix-js-sdk";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
-import { type OpenIDClientParts } from "./openID.ts";
 import { extractFullConfigFromToken, type SFUConfig } from "./types.ts";
 import { doNetworkOperationWithRetry } from "../../utils/matrix.ts";
 
@@ -16,8 +15,10 @@ import { doNetworkOperationWithRetry } from "../../utils/matrix.ts";
 // of being hardcoded here. (the legacy flow hardcodes it as well)
 const SLOT_ID = "m.call#ROOM";
 
-export type ClientGetTokenParts = OpenIDClientParts &
-  Pick<MatrixClient, "_unstable_getLivekitToken">;
+export type ClientGetTokenParts = Pick<
+  MatrixClient,
+  "_unstable_getLivekitToken"
+>;
 
 export async function getSFUConfig({
   client,
@@ -35,7 +36,7 @@ export async function getSFUConfig({
       url,
       room_id: roomId,
       slot_id: "m.call#ROOM",
-      member: { id: membership.memberId },
+      member_id: membership.memberId,
     }),
   );
   return extractFullConfigFromToken({ url, jwt: res.jwt });
@@ -64,7 +65,7 @@ export async function delegateDelayedLeave({
       url,
       room_id: roomId,
       slot_id: SLOT_ID,
-      member: { id: membership.memberId },
+      member_id: membership.memberId,
       delay_id: delayId,
     }),
   );

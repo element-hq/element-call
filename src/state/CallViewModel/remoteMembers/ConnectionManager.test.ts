@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { BehaviorSubject, NEVER } from "rxjs";
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { type RemoteParticipant } from "livekit-client";
 import { logger } from "matrix-js-sdk/lib/logger";
 
@@ -19,17 +19,17 @@ import {
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
 import { type Connection } from "./Connection.ts";
 import { ownMemberMock, withTestScheduler } from "../../../utils/test.ts";
-import { areLivekitTransportsEqual } from "./MatrixLivekitMembers.ts";
+import { areUnstableLivekitTransportsEqual } from "./MatrixLivekitMembers.ts";
 import { type Behavior } from "../../Behavior.ts";
 
 // Some test constants
 
-const TRANSPORT_1: LivekitTransport = {
+const TRANSPORT_1: UnstableLivekitTransport = {
   type: "livekit",
   livekit_service_url: "https://lk.example.org",
 };
 
-const TRANSPORT_2: LivekitTransport = {
+const TRANSPORT_2: UnstableLivekitTransport = {
   type: "livekit",
   livekit_service_url: "https://lk.sample.com",
 };
@@ -47,7 +47,7 @@ beforeEach(() => {
   vi.mocked(fakeConnectionFactory).createConnection = vi
     .fn()
     .mockImplementation(
-      (scope: ObservableScope, transport: LivekitTransport) => {
+      (scope: ObservableScope, transport: UnstableLivekitTransport) => {
         const mockConnection = {
           transport,
           remoteParticipants$: new BehaviorSubject([]),
@@ -94,13 +94,13 @@ describe("connections$ stream", () => {
           ).toHaveBeenCalledTimes(2);
 
           const conn1 = connections.find((c) =>
-            areLivekitTransportsEqual(c.transport, TRANSPORT_1),
+            areUnstableLivekitTransportsEqual(c.transport, TRANSPORT_1),
           );
           expect(conn1).toBeDefined();
           expect(conn1!.start).toHaveBeenCalled();
 
           const conn2 = connections.find((c) =>
-            areLivekitTransportsEqual(c.transport, TRANSPORT_2),
+            areUnstableLivekitTransportsEqual(c.transport, TRANSPORT_2),
           );
           expect(conn2).toBeDefined();
           expect(conn2!.start).toHaveBeenCalled();
@@ -141,12 +141,12 @@ describe("connections$ stream", () => {
           ).toHaveBeenCalledTimes(2);
 
           const conn2 = connections.find((c) =>
-            areLivekitTransportsEqual(c.transport, TRANSPORT_2),
+            areUnstableLivekitTransportsEqual(c.transport, TRANSPORT_2),
           );
           expect(conn2).toBeDefined();
 
           const conn1 = connections.find((c) =>
-            areLivekitTransportsEqual(c.transport, TRANSPORT_1),
+            areUnstableLivekitTransportsEqual(c.transport, TRANSPORT_1),
           );
           expect(conn1).toBeDefined();
           expect(conn1!.start).toHaveBeenCalledOnce();
@@ -187,7 +187,7 @@ describe("connections$ stream", () => {
           expect(connections.length).toBe(1);
           // The second connection should have been stopped has it is no longer needed.
           const connection2 = allCreatedConnections.find((c) =>
-            areLivekitTransportsEqual(c.transport, TRANSPORT_2),
+            areUnstableLivekitTransportsEqual(c.transport, TRANSPORT_2),
           );
           expect(connection2).toBeDefined();
           expect(connection2!.stop).toHaveBeenCalled();
@@ -225,7 +225,7 @@ describe("connectionManagerData$ stream", () => {
   // Used in test to control fake connections' remoteParticipants$ streams
   let fakeRemoteParticipantsStreams: Map<string, Behavior<RemoteParticipant[]>>;
 
-  function keyForTransport(transport: LivekitTransport): string {
+  function keyForTransport(transport: UnstableLivekitTransport): string {
     return `${transport.livekit_service_url}`;
   }
 
@@ -233,7 +233,7 @@ describe("connectionManagerData$ stream", () => {
     fakeRemoteParticipantsStreams = new Map();
 
     function getRemoteParticipantsFor(
-      transport: LivekitTransport,
+      transport: UnstableLivekitTransport,
     ): Behavior<RemoteParticipant[]> {
       return (
         fakeRemoteParticipantsStreams.get(keyForTransport(transport)) ??
@@ -245,7 +245,7 @@ describe("connectionManagerData$ stream", () => {
     vi.mocked(fakeConnectionFactory).createConnection = vi
       .fn()
       .mockImplementation(
-        (scope: ObservableScope, transport: LivekitTransport) => {
+        (scope: ObservableScope, transport: UnstableLivekitTransport) => {
           const fakeRemoteParticipants$ = new BehaviorSubject<
             RemoteParticipant[]
           >([]);

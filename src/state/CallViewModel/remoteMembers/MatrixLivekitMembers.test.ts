@@ -9,7 +9,7 @@ import { describe, test, expect, beforeEach, afterEach, vi } from "vitest";
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
   type CallMembership,
-  type LivekitTransport,
+  type UnstableLivekitTransport,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { BehaviorSubject, combineLatest, map, type Observable } from "rxjs";
 
@@ -39,12 +39,12 @@ let testScope: ObservableScope;
 const fallbackMemberId = (userId: string, deviceId: string): string =>
   `${userId}:${deviceId}`;
 
-const transportA: LivekitTransport = {
+const transportA: UnstableLivekitTransport = {
   type: "livekit",
   livekit_service_url: "https://lk.example.org",
 };
 
-const transportB: LivekitTransport = {
+const transportB: UnstableLivekitTransport = {
   type: "livekit",
   livekit_service_url: "https://lk.sample.com",
 };
@@ -117,7 +117,7 @@ test("should signal participant not yet connected to livekit", async () => {
 function createEpochedMemberships$(m$: Observable<CallMembership[]>): {
   memberships$: Observable<Epoch<CallMembership[]>>;
   membershipsWithTransport$: Observable<
-    Epoch<{ membership: CallMembership; transport?: LivekitTransport }[]>
+    Epoch<{ membership: CallMembership; transport?: UnstableLivekitTransport }[]>
   >;
 } {
   const memberships$ = m$.pipe(trackEpoch());
@@ -128,7 +128,7 @@ function createEpochedMemberships$(m$: Observable<CallMembership[]>): {
         return {
           membership: m,
           transport:
-            tr?.type === "livekit" ? (tr as LivekitTransport) : undefined,
+            tr?.type === "livekit" ? (tr as UnstableLivekitTransport) : undefined,
         };
       });
     }),

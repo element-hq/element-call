@@ -8,20 +8,16 @@ Please see LICENSE in the repository root for full details.
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 
-import {
-  getSFUConfig as getSFUConfigWithOpenID,
-  type OpenIDClientParts,
-} from "./openID";
-import {
-  type ClientDelegationParts,
-  delegateDelayedLeave as delegateDelayedLeaveWithCSApi,
-  type ClientGetTokenParts,
-  getSFUConfig as getSFUConfigWithCSApi,
-} from "./csApi";
-import { type MatrixRTCMode } from "../../config/ConfigOptions";
 import { MatrixError } from "matrix-js-sdk";
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import * as openID from "./openID";
+import * as csApi from "./csApi";
 import { type SFUConfig } from "./types";
+import { NoMatrix2AuthorizationService } from "../../utils/errors";
+
+export { ClientOpenIDParts } from "./openID";
+export { ClientGetTokenParts, ClientDelegationParts } from "./csApi";
+export * from "./types";
 
 /**
  * Checks whether an error means "this homeserver does not implement the
@@ -46,19 +42,19 @@ export async function getSFUConfig({
   membership,
   transport,
   roomId,
-  matrixRTCMode,
+  role,
   logger,
 }: {
-  client: ClientGetTokenParts & OpenIDClientParts;
+  client: csApi.ClientGetTokenParts & openID.ClientOpenIDParts;
   membership: CallMembershipIdentityParts;
-  transport: LivekitTransport;
+  transport: UnstableLivekitTransport;
   roomId: string;
-  matrixRTCMode: MatrixRTCMode;
+  role: "publisher" | "subscriber";
   logger: Logger;
 }): Promise<SFUConfig> {
   if ("url" in transport) {
     try {
-      return await getSFUConfigWithCSApi({
+      return await csApi.getSFUConfig({
         client,
         membership,
         url: transport.url,
@@ -66,19 +62,18 @@ export async function getSFUConfig({
       });
     } catch (e) {
       if (isEndpointUnsupported(e)) {
-        // Alias transport before checking whether we can fall back, otherwise
-        // TypeScript gets confused about its type
-        const transport_ = transport;
-        if ("livekit_service_url" in transport_) {
+        const mayFallBack =
+          role === "subscriber" && "livekit_service_url" in transport;
+        if (mayFallBack) {
           logger.warn(
-            `Homeserver does not support the MSC4195 get_token endpoint, falling back to the OpenID flow with service ${transport_.livekit_service_url}`,
+            `Homeserver does not support the MSC4195 get_token endpoint, falling back to the OpenID flow with service ${transport.livekit_service_url}`,
           );
           // Fall through
         } else {
           logger.error(
             `Homeserver does not support the MSC4195 get_token endpoint, cannot get token for transport ${transport.url}`,
           );
-          throw e;
+          throw new NoMatrix2AuthorizationService(e as Error);
         }
       } else {
         throw e;
@@ -86,18 +81,14 @@ export async function getSFUConfig({
     }
   }
 
-  if ("livekit_service_url" in transport) {
-    return await getSFUConfigWithOpenID(
-      client,
-      membership,
-      transport.livekit_service_url,
-      roomId,
-      { matrixRTCMode },
-      logger,
-    );
-  }
-
-  throw new Error(`Unrecognized transport: ${JSON.stringify(transport)}`);
+  return await openID.getSFUConfig({
+    client,
+    membership,
+    serviceUrl: transport.livekit_service_url,
+    roomId,
+    role,
+    logger,
+  });
 }
 
 export async function delegateDelayedLeave({
@@ -106,20 +97,18 @@ export async function delegateDelayedLeave({
   transport,
   roomId,
   delayId,
-  matrixRTCMode,
   logger,
 }: {
-  client: ClientDelegationParts & OpenIDClientParts;
+  client: csApi.ClientDelegationParts & openID.ClientOpenIDParts;
   membership: CallMembershipIdentityParts;
-  transport: LivekitTransport;
+  transport: UnstableLivekitTransport;
   roomId: string;
   delayId: string;
-  matrixRTCMode: MatrixRTCMode;
   logger: Logger;
 }): Promise<void> {
   if ("url" in transport) {
     try {
-      await delegateDelayedLeaveWithCSApi({
+      await csApi.delegateDelayedLeave({
         client,
         membership,
         url: transport.url,
@@ -136,13 +125,15 @@ export async function delegateDelayedLeave({
   } else {
     // This will technically cause the service to issue a new JWT token, but
     // it's safe to discard. We're only interested in triggering delegation.
-    await getSFUConfigWithOpenID(
+    await openID.getSFUConfig({
       client,
       membership,
-      transport.livekit_service_url,
+      serviceUrl: transport.livekit_service_url,
       roomId,
-      { matrixRTCMode, delayEndpointBaseUrl: client.baseUrl, delayId },
+      role: "publisher",
+      delayEndpointBaseUrl: client.baseUrl,
+      delayId,
       logger,
-    );
+    });
   }
 }

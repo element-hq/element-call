@@ -6,7 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import {
   combineLatest,
   map,
@@ -25,7 +25,7 @@ import { type Behavior } from "../../Behavior.ts";
 import { type Connection } from "./Connection.ts";
 import { Epoch, type ObservableScope } from "../../ObservableScope.ts";
 import { generateItemsWithEpoch } from "../../../utils/observable.ts";
-import { areLivekitTransportsEqual } from "./MatrixLivekitMembers.ts";
+import { areUnstableLivekitTransportsEqual } from "./MatrixLivekitMembers.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
 import {
   isLocalTransport,
@@ -56,7 +56,7 @@ export class ConnectionManagerData {
     }
   }
 
-  private getKey(transport: LivekitTransport): string {
+  private getKey(transport: UnstableLivekitTransport): string {
     // This is enough as a key because the ConnectionManager is already scoped by room.
     // We also do not need to consider the slotId at this point since each `MatrixRTCSession` is already scoped by `slotDescription: {id, application}`.
     return transport.livekit_service_url;
@@ -67,13 +67,13 @@ export class ConnectionManagerData {
   }
 
   public getConnectionForTransport(
-    transport: LivekitTransport,
+    transport: UnstableLivekitTransport,
   ): Connection | null {
     return this.store.get(this.getKey(transport))?.connection ?? null;
   }
 
   public getParticipantsForTransport(
-    transport: LivekitTransport,
+    transport: UnstableLivekitTransport,
   ): RemoteParticipant[] {
     const key = this.getKey(transport);
     const existing = this.store.get(key);
@@ -88,7 +88,7 @@ interface Props {
   scope: ObservableScope;
   connectionFactory: ConnectionFactory;
   localTransport$: Observable<LocalTransport>;
-  remoteTransports$: Behavior<Epoch<LivekitTransport[]>>;
+  remoteTransports$: Behavior<Epoch<UnstableLivekitTransport[]>>;
 
   logger: Logger;
   ownMembershipIdentity: CallMembershipIdentityParts;
@@ -147,7 +147,7 @@ export function createConnectionManager$({
    * externally this is modified via `registerTransports()`.
    */
   const localAndRemoteTransports$: Behavior<
-    Epoch<(LivekitTransport | LocalTransport)[]>
+    Epoch<(UnstableLivekitTransport | LocalTransport)[]>
   > = scope.behavior(
     combineLatest([localTransportAsArray$, remoteTransports$]).pipe(
       // Combine local and remote transports into one transport array
@@ -157,7 +157,7 @@ export function createConnectionManager$({
         const remoteWithoutLocal = dedupedRemote.filter(
           (transport) =>
             !localTransportAsArray.find((l) =>
-              areLivekitTransportsEqual(l.transport, transport),
+              areUnstableLivekitTransportsEqual(l.transport, transport),
             ),
         );
         logger.debug(
@@ -271,11 +271,11 @@ export function createConnectionManager$({
   return { connectionManagerData$ };
 }
 
-function removeDuplicateTransports<T extends LivekitTransport>(
+function removeDuplicateTransports<T extends UnstableLivekitTransport>(
   transports: T[],
 ): T[] {
   return transports.reduce((acc, transport) => {
-    if (!acc.some((t) => areLivekitTransportsEqual(t, transport)))
+    if (!acc.some((t) => areUnstableLivekitTransportsEqual(t, transport)))
       acc.push(transport);
     return acc;
   }, [] as T[]);

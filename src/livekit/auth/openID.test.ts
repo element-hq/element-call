@@ -17,7 +17,7 @@ import {
 import fetchMock from "fetch-mock";
 import { MatrixError } from "matrix-js-sdk";
 
-import { getSFUConfigWithOpenID, type OpenIDClientParts } from "./openIDSFU";
+import { getSFUConfigWithOpenID, type ClientOpenIDParts } from "./openIDSFU";
 import { testJWTToken } from "../utils/test-fixtures";
 import { ownMemberMock } from "../utils/test";
 import { FailToGetOpenIdToken } from "../utils/errors";
@@ -25,7 +25,7 @@ import { FailToGetOpenIdToken } from "../utils/errors";
 const sfuUrl = "https://sfu.example.org";
 
 describe("getSFUConfigWithOpenID", () => {
-  let matrixClient: MockedObject<OpenIDClientParts>;
+  let matrixClient: MockedObject<ClientOpenIDParts>;
   beforeEach(() => {
     fetchMock.catch(404);
     matrixClient = {

@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 
 import {
   Status as RTCMemberStatus,
-  type LivekitTransport,
+  type UnstableLivekitTransport,
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
 import {
@@ -121,7 +121,7 @@ const mockedClient = {
 };
 
 describe("enterRTCSession", () => {
-  const transport: LivekitTransport = {
+  const transport: UnstableLivekitTransport = {
     livekit_service_url: "http://my-livekit-service-url.com",
     type: "livekit",
   };
@@ -252,7 +252,7 @@ describe("LocalMembership", () => {
 
   it("throws error on missing RTC config error", () => {
     withTestScheduler(({ scope, hot, expectObservable }) => {
-      const localTransport$ = scope.behavior<null | LivekitTransport>(
+      const localTransport$ = scope.behavior<null | UnstableLivekitTransport>(
         hot("1ms #", {}, new MatrixRTCTransportMissingError("domain.com")),
         null,
       );
@@ -317,7 +317,7 @@ describe("LocalMembership", () => {
 
   const mockTransportConfig = {
     livekit_service_url: "a",
-  } as LivekitTransport;
+  } as UnstableLivekitTransport;
 
   const mockTransport = {
     transport: mockTransportConfig,

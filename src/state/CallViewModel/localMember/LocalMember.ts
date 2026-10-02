@@ -17,7 +17,7 @@ import {
 import { observeParticipantEvents } from "@livekit/components-core";
 import {
   Status as RTCSessionStatus,
-  type LivekitTransport,
+  type UnstableLivekitTransport,
   type MatrixRTCSession,
   type RTCCallIntent,
   type RTCNotificationType,
@@ -82,7 +82,8 @@ import { type LocalTransport } from "./LocalTransport.ts";
 import {
   type ClientDelegationParts,
   delegateDelayedLeave,
-} from "../../../livekit/auth/index.ts";
+  type ClientOpenIDParts,
+} from "../../../livekit/auth";
 
 export enum TransportState {
   /** Not even a transport is available to the LocalMembership */
@@ -145,14 +146,14 @@ interface Props {
   connectionManager: IConnectionManager;
   createPublisherFactory: (connection: Connection) => Publisher;
   joinMatrixRTC: (
-    transport: LivekitTransport,
+    transport: UnstableLivekitTransport,
     delayedLeaveTimings: ResolvedDelayedLeaveTimings,
   ) => void;
   homeserverConnected: HomeserverConnected;
   roomId: string;
   ownMembershipIdentity: CallMembershipIdentityParts;
   localTransport$: Observable<LocalTransport>;
-  client: ClientDelegationParts;
+  client: ClientDelegationParts & ClientOpenIDParts;
   matrixRTCSession: Pick<MatrixRTCSession, "updateCallIntent" | "leave">;
   /** Whether to hide the screen-sharing button. */
   hideScreensharing: boolean;
@@ -160,7 +161,6 @@ interface Props {
   hostBridge: HostBridge;
   baseUrl: string;
   delayId$: Behavior<string | null>;
-  matrixRTCMode: MatrixRTCMode;
   logger: Logger;
 }
 
@@ -208,7 +208,6 @@ export const createLocalMembership$ = ({
   hostBridge,
   ownMembershipIdentity,
   delayId$,
-  matrixRTCMode,
 }: Props): {
   /**
    * This request to start audio and video tracks.
@@ -714,7 +713,6 @@ export const createLocalMembership$ = ({
             transport: joinParams.transport,
             roomId,
             delayId,
-            matrixRTCMode,
             logger,
           });
           logger.info("Delayed leave successfully delegated");
@@ -953,7 +951,7 @@ interface EnterRTCSessionOptions {
  *
  * @param rtcSession - The MatrixRTCSession to join.
  * @param ownMembershipIdentity - Options for entering the RTC session.
- * @param transport - The LivekitTransport to use for this session.
+ * @param transport - The UnstableLivekitTransport to use for this session.
  * @param options - `encryptMedia`: Whether to encrypt media. `matrixRTCMode`: The
  *   Matrix RTC mode to use. `delayedLeaveTimings`: The preferred timings for
  *   delayed leave events. `sendNotificationType`: Whether and what kind of
@@ -964,7 +962,7 @@ interface EnterRTCSessionOptions {
 export function enterRTCSession(
   rtcSession: MatrixRTCSession,
   ownMembershipIdentity: CallMembershipIdentityParts,
-  transport: LivekitTransport,
+  transport: UnstableLivekitTransport,
   {
     encryptMedia,
     matrixRTCMode,

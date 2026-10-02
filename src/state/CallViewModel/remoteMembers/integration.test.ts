@@ -10,7 +10,7 @@ import { BehaviorSubject, NEVER } from "rxjs";
 import { type Room as LivekitRoom } from "livekit-client";
 import EventEmitter from "events";
 import fetchMock from "fetch-mock";
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import {
@@ -19,7 +19,7 @@ import {
   trackEpoch,
 } from "../../ObservableScope.ts";
 import { ECConnectionFactory } from "./ConnectionFactory.ts";
-import { type OpenIDClientParts } from "../../../livekit/openIDSFU.ts";
+import { type ClientOpenIDParts } from "../../../livekit/openIDSFU.ts";
 import {
   mockMediaDevices,
   mockRtcMembership,
@@ -28,7 +28,7 @@ import {
 } from "../../../utils/test.ts";
 import { type ProcessorState } from "../../../livekit/TrackProcessorContext.tsx";
 import {
-  areLivekitTransportsEqual,
+  areUnstableLivekitTransportsEqual,
   createRemoteMatrixLivekitMembers$,
   type RemoteMatrixLivekitMember,
 } from "./MatrixLivekitMembers.ts";
@@ -40,7 +40,7 @@ import { localRtcMember, testJWTToken } from "../../../utils/test-fixtures.ts";
 
 let testScope: ObservableScope;
 let ecConnectionFactory: ECConnectionFactory;
-let mockClient: OpenIDClientParts;
+let mockClient: ClientOpenIDParts;
 let lkRoomFactory: () => LivekitRoom;
 
 const createdMockLivekitRooms: Map<string, LivekitRoom> = new Map();
@@ -147,9 +147,9 @@ test("bob, carl, then bob joining no tracks yet", () => {
         });
         expectObservable(item.connection$).toBe("a", {
           a: expect.toSatisfy((co) =>
-            areLivekitTransportsEqual(
+            areUnstableLivekitTransportsEqual(
               co.transport,
-              bobMembership.transports[0]! as LivekitTransport,
+              bobMembership.transports[0]! as UnstableLivekitTransport,
             ),
           ),
         });
@@ -184,9 +184,9 @@ test("bob, carl, then bob joining no tracks yet", () => {
           expectObservable(item.connection$).toBe("a", {
             a: expect.toSatisfy((connection) => {
               expect(
-                areLivekitTransportsEqual(
+                areUnstableLivekitTransportsEqual(
                   connection.transport,
-                  carlMembership.transports[0]! as LivekitTransport,
+                  carlMembership.transports[0]! as UnstableLivekitTransport,
                 ),
               ).toBe(true);
               return true;
@@ -214,9 +214,9 @@ test("bob, carl, then bob joining no tracks yet", () => {
           expectObservable(item.connection$).toBe("a", {
             a: expect.toSatisfy((connection) => {
               expect(
-                areLivekitTransportsEqual(
+                areUnstableLivekitTransportsEqual(
                   connection.transport,
-                  daveMembership.transports[0]! as LivekitTransport,
+                  daveMembership.transports[0]! as UnstableLivekitTransport,
                 ),
               ).toBe(true);
               return true;
