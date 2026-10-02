@@ -3,10 +3,13 @@
 # Installs dependencies, then swaps matrix-js-sdk for a branch of the same
 # name as the pull request branch under test if one exists. This is what
 # lets CI test an Element Call branch together with a matrix-js-sdk branch
-# before either is merged. Without a matching branch the install is left as
-# pnpm-lock.yaml pins it. Inspired by scripts/layered.sh in element-web.
+# before either is merged. Inspired by scripts/layered.sh in element-web.
 #
 # Usage: scripts/layered.sh [pnpm install flags]
+#
+# The layering is only performed when package.json uses the develop branch of
+# matrix-js-sdk and the run is for a pull request whose branch has a matrix-js-sdk
+# counterpart. Otherwise the dependency is left as pnpm-lock.yaml pins it.
 #
 # The matrix-js-sdk checkout is nested inside this directory because some CI
 # systems do not allow moving above the primary checkout. It is git-ignored.

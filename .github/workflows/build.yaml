@@ -15,7 +15,6 @@ jobs:
       package: full
       vite_app_version: ${{ github.event.release.tag_name || github.sha }}
       build_mode: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'development build') && 'development' || 'production' }}
-      layered: ${{ github.event_name == 'pull_request' }}
     secrets:
       SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
       SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
@@ -66,7 +65,6 @@ jobs:
       package: embedded
       vite_app_version: ${{ github.event.release.tag_name || github.sha }}
       build_mode: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'development build') && 'development' || 'production' }}
-      layered: ${{ github.event_name == 'pull_request' }}
     secrets:
       SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
       SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
@@ -81,7 +79,6 @@ jobs:
       package: sdk
       vite_app_version: ${{ github.event.release.tag_name || github.sha }}
       build_mode: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'development build') && 'development' || 'production' }}
-      layered: ${{ github.event_name == 'pull_request' }}
     secrets:
       SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
       SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
