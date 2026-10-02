@@ -1004,7 +1004,6 @@ export function enterRTCSession(
     delayedLeaveEventRestartLocalTimeoutMs:
       delayedLeaveTimings.restart_timeout_ms,
     networkErrorRetryMs: sessionConfig.network_error_retry_ms,
-    makeKeyDelay: sessionConfig.wait_for_key_rotation_ms,
     membershipEventExpiryMs: sessionConfig.membership_event_expiry_ms,
     keyRotationParticipantLimit: sessionConfig.key_rotation_participant_limit,
     unstableSendStickyEvents: matrixRTCMode === MatrixRTCMode.Matrix_2_0,

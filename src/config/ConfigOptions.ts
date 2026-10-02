@@ -208,12 +208,6 @@ export interface ConfigOptions {
    */
   matrix_rtc_session?: {
     /**
-     * How long (in milliseconds) to wait before rotating end-to-end media encryption keys
-     * when someone leaves a call.
-     */
-    wait_for_key_rotation_ms?: number;
-
-    /**
      * How long we wait before retrying after a network error on any of the requests.
      */
     network_error_retry_ms?: number;
