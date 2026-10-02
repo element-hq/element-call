@@ -20,10 +20,10 @@ import { type createMatrixMemberMetadata$ } from "../../../src/state/CallViewMod
 import { type RemoteMatrixLivekitMember } from "../../../src/state/CallViewModel/remoteMembers/MatrixLivekitMembers";
 import { type EncryptionSystem } from "../../../src/e2ee/sharedKeyManagement";
 import {
-  type LocalRtcMember,
+  type LocalRTCMember,
   type MemberMedia,
-  type RemoteRtcMember,
-  type RtcMember,
+  type RemoteRTCMember,
+  type RTCMember,
 } from "../api";
 import {
   createLivekitMemberMedia,
@@ -51,13 +51,13 @@ export function membershipKeys(
   ];
 }
 
-export function createRemoteRtcMember(
+export function createRemoteRTCMember(
   scope: ObservableScope,
   member: RemoteMatrixLivekitMember,
   context: MemberContext,
-): RemoteRtcMember {
+): RemoteRTCMember {
   return {
-    ...createRtcMember(scope, member.membership$, context),
+    ...createRTCMember(scope, member.membership$, context),
     local: false,
     media$: mediaFor(
       scope,
@@ -74,14 +74,14 @@ export function createRemoteRtcMember(
   };
 }
 
-export function createLocalRtcMember(
+export function createLocalRTCMember(
   scope: ObservableScope,
   membership$: Behavior<CallMembership>,
   localMembership: LocalMembership,
   context: MemberContext,
-): LocalRtcMember {
+): LocalRTCMember {
   return {
-    ...createRtcMember(scope, membership$, context),
+    ...createRTCMember(scope, membership$, context),
     local: true,
     media$: mediaFor(
       scope,
@@ -102,11 +102,11 @@ export function createLocalRtcMember(
   };
 }
 
-function createRtcMember(
+function createRTCMember(
   scope: ObservableScope,
   membership$: Behavior<CallMembership>,
   { metadata, transports }: MemberContext,
-): Omit<RtcMember, "local" | "media$"> {
+): Omit<RTCMember, "local" | "media$"> {
   const { userId, deviceId, rtcBackendIdentity } = membership$.value;
   return {
     id: rtcBackendIdentity,

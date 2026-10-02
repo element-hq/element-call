@@ -5,14 +5,14 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { RtcSessionError } from "../api";
+import { MatrixRTCError } from "../api";
 
 /** Wraps whatever a backend threw into the SDK's error type, keeping it as the cause. */
-export function toRtcSessionError(error: unknown): RtcSessionError {
-  if (error instanceof RtcSessionError) return error;
+export function toMatrixRTCError(error: unknown): MatrixRTCError {
+  if (error instanceof MatrixRTCError) return error;
   if (error instanceof Error)
-    return new RtcSessionError(messageOf(error), { cause: error });
-  return new RtcSessionError(String(error));
+    return new MatrixRTCError(messageOf(error), { cause: error });
+  return new MatrixRTCError(String(error));
 }
 
 /**

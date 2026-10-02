@@ -12,7 +12,7 @@ import {
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import {
   type LivekitTransport,
-  type MatrixRTCSession as JsSdkRtcSession,
+  type MatrixRTCSession as JsSdkRTCSession,
   type Status as RTCSessionStatus,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
@@ -41,8 +41,8 @@ import {
   ConnectionState,
 } from "../../../src/state/CallViewModel/remoteMembers/Connection";
 import { type IConnectionManager } from "../../../src/state/CallViewModel/remoteMembers/ConnectionManager";
-import { type RtcSessionError } from "../api";
-import { toRtcSessionError } from "../utils/errors";
+import { type MatrixRTCError } from "../api";
+import { toMatrixRTCError } from "../utils/errors";
 import { type LocalTransport } from "./LocalTransport";
 import { type Publisher } from "./Publisher";
 
@@ -56,16 +56,16 @@ export enum PublishState {
 }
 
 export type LocalMemberMediaState =
-  | { connection: ConnectionState | RtcSessionError }
+  | { connection: ConnectionState | MatrixRTCError }
   | PublishState
-  | RtcSessionError;
+  | MatrixRTCError;
 
 export type LocalMemberState =
-  | RtcSessionError
+  | MatrixRTCError
   | TransportState.Waiting
   | {
       media: LocalMemberMediaState;
-      matrix: RtcSessionError | RTCSessionStatus;
+      matrix: MatrixRTCError | RTCSessionStatus;
     };
 
 interface Props {
@@ -78,7 +78,7 @@ interface Props {
   /** The membership manager giving up on keeping the membership alive. */
   membershipManagerError$: Observable<unknown>;
   matrixRTCSession: Pick<
-    JsSdkRtcSession,
+    JsSdkRTCSession,
     "updateCallIntent" | "leaveRoomSession"
   >;
   cameraEnabled$: Behavior<boolean>;
@@ -121,10 +121,10 @@ export function createLocalMembership$({
 }: Props): LocalMembership {
   const logger = parentLogger.getChild("[LocalMember]");
 
-  const fatalTransportError$ = new Subject<RtcSessionError>();
+  const fatalTransportError$ = new Subject<MatrixRTCError>();
   const localTransport$ = localTransportWithErrors$.pipe(
     catchError((e: unknown) => {
-      fatalTransportError$.next(toRtcSessionError(e));
+      fatalTransportError$.next(toMatrixRTCError(e));
       return NEVER;
     }),
   );
@@ -147,8 +147,8 @@ export function createLocalMembership$({
 
   const joinRequested$ = new BehaviorSubject(false);
   const publisher$ = new BehaviorSubject<Publisher | null>(null);
-  const publishError$ = new BehaviorSubject<RtcSessionError | null>(null);
-  const matrixError$ = new BehaviorSubject<RtcSessionError | null>(null);
+  const publishError$ = new BehaviorSubject<MatrixRTCError | null>(null);
+  const matrixError$ = new BehaviorSubject<MatrixRTCError | null>(null);
 
   scope.reconcile(connection$, async (connection) => {
     if (connection === null) return;
@@ -171,7 +171,7 @@ export function createLocalMembership$({
         } else if (publisher.shouldPublish) await publisher.stopPublishing();
       } catch (e) {
         if (publishError$.value === null)
-          publishError$.next(toRtcSessionError(e));
+          publishError$.next(toMatrixRTCError(e));
         else logger.error("Another publish error", e);
       }
     },
@@ -185,8 +185,7 @@ export function createLocalMembership$({
         joinMatrixRTC(transport.transport);
       } catch (e) {
         logger.error("Failed to enter the session", e);
-        if (matrixError$.value === null)
-          matrixError$.next(toRtcSessionError(e));
+        if (matrixError$.value === null) matrixError$.next(toMatrixRTCError(e));
       }
       return Promise.resolve(async (): Promise<void> => {
         try {
@@ -200,7 +199,7 @@ export function createLocalMembership$({
 
   membershipManagerError$.pipe(scope.bind()).subscribe((e) => {
     logger.error("The membership manager stopped", e);
-    if (matrixError$.value === null) matrixError$.next(toRtcSessionError(e));
+    if (matrixError$.value === null) matrixError$.next(toMatrixRTCError(e));
   });
 
   cameraEnabled$.pipe(scope.bind()).subscribe((videoEnabled) => {
@@ -224,7 +223,7 @@ export function createLocalMembership$({
           return {
             connection:
               connectionState instanceof Error
-                ? toRtcSessionError(connectionState)
+                ? toMatrixRTCError(connectionState)
                 : (connectionState ?? ConnectionState.Initialized),
           };
         return shouldPublish

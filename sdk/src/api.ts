@@ -6,13 +6,12 @@ Please see LICENSE in the repository root for full details.
 */
 
 /**
- * The public types of the SDK. `createRtcSession` in `session/RtcSession.ts`
+ * The public types of the SDK. `createMatrixRTCClient` in `session/MatrixRTCClient.ts`
  * is the only way to obtain an implementation of them.
  */
 
 import {
   type CallMembership,
-  type RTCCallIntent,
   type RTCNotificationType,
   type Transport,
 } from "matrix-js-sdk/lib/matrixrtc";
@@ -26,17 +25,26 @@ import { type MatrixRTCMode } from "../../src/config/ConfigOptions";
 // ---------------------------------------------------------------------------
 // Session
 
-export interface RtcSessionOptions {
+export interface MatrixRTCClientOptions {
   encryptionSystem: EncryptionSystem;
   /** Resolved by the host; the SDK reads neither config.json nor settings. */
   matrixRTCMode: MatrixRTCMode;
   /**
-   * MSC4075 notification sent with the join. Parameters of the MatrixRTC join
-   * itself, so they are here even though they are named after calls; reacting
+   * MSC4075 notification sent with the join. A parameter of the MatrixRTC
+   * join itself, so it is here even though it is named after calls; reacting
    * to a notification (ringing, timeouts, declines) is the application's job.
    */
   sendNotificationType?: RTCNotificationType;
-  callIntent?: RTCCallIntent;
+  /** The application the session belongs to, as named in the membership. Default `m.call`. */
+  application?: string;
+  /** The application's slot in the room. Default `ROOM`. */
+  slot?: string;
+  /**
+   * Whatever the application wants to say about itself in the membership.
+   * Opaque to the SDK. Today the js-sdk carries one key, `m.call.intent`
+   * (`"audio"` or `"video"`); anything else is dropped until it can.
+   */
+  applicationData?: Record<string, unknown>;
 }
 
 /** What the local member publishes. */
@@ -49,7 +57,7 @@ export interface LocalMediaInputs {
   videoProcessor$: Behavior<TrackProcessor<Track.Kind.Video> | undefined>;
 }
 
-export type SessionConnectionStatus =
+export type ConnectionStatus =
   | "waitingForTransport"
   | "connecting"
   | "connected"
@@ -60,10 +68,10 @@ export type SessionConnectionStatus =
  * An error raised by the session. `cause` holds the underlying error, which
  * lets a host that knows the backend tell the failures apart.
  */
-export class RtcSessionError extends Error {
+export class MatrixRTCError extends Error {
   public constructor(message: string, options?: ErrorOptions) {
     super(message, options);
-    this.name = "RtcSessionError";
+    this.name = "MatrixRTCError";
   }
 }
 
@@ -73,18 +81,18 @@ export class RtcSessionError extends Error {
  * detached copy `joinRoom` returns for a room joined just now never receives
  * the state the members are read from.
  */
-export interface RtcSession {
+export interface MatrixRTCClient {
   join(): void;
   leave(): void;
   /** Collapsed view of the local member's state machine. */
-  status$: Behavior<SessionConnectionStatus>;
+  status$: Behavior<ConnectionStatus>;
   connected$: Behavior<boolean>;
   reconnecting$: Behavior<boolean>;
   /** A transport, Matrix or connection error that stops the session. */
-  fatalError$: Behavior<RtcSessionError | null>;
+  fatalError$: Behavior<MatrixRTCError | null>;
 
-  localMember$: Behavior<LocalRtcMember | null>;
-  remoteMembers$: Behavior<RemoteRtcMember[]>;
+  localMember$: Behavior<LocalRTCMember | null>;
+  remoteMembers$: Behavior<RemoteRTCMember[]>;
   /** `remoteMembers.length`, plus one for the local member once it exists. */
   memberCount$: Behavior<number>;
 
@@ -135,7 +143,7 @@ export type ResolvedTransport =
 // ---------------------------------------------------------------------------
 // Members
 
-export interface RtcMember {
+export interface RTCMember {
   local: boolean;
   /** The identity the media backend knows this member by. */
   id: string;
@@ -153,11 +161,11 @@ export interface RtcMember {
   media$: Behavior<MemberMedia | null>;
 }
 
-export interface RemoteRtcMember extends RtcMember {
+export interface RemoteRTCMember extends RTCMember {
   local: false;
 }
 
-export interface LocalRtcMember extends RtcMember {
+export interface LocalRTCMember extends RTCMember {
   local: true;
   media$: Behavior<LocalMemberMedia | null>;
   sharingScreen$: Behavior<boolean>;

@@ -3,10 +3,11 @@
 `@element-hq/matrixrtc-sdk` is the call model under Element Call, on its own:
 MatrixRTC memberships and transports, LiveKit connections, publishing, E2EE keys and
 the media of every member, as observables. It has no UI. Element Call's own
-`CallViewModel` is meant to become one consumer of it; the design is in
-[`sdk-plan.md`](../sdk-plan.md).
+`CallViewModel` is meant to become one consumer of it. The design is in
+[`SdkArchitecture.md`](./SdkArchitecture.md), the migration from the view model
+in [`SdkMigration.md`](./SdkMigration.md).
 
-**Status:** first implementation. `createRtcSession` joins the session, connects to
+**Status:** first implementation. `createMatrixRTCClient` joins the session, connects to
 the transport, publishes the local media and exposes every member's media; the
 development harness and its e2e tests in `playwright/sdk` drive it. The
 implementation still imports the building blocks it shares with Element Call from
@@ -17,17 +18,17 @@ implementation still imports the building blocks it shares with Element Call fro
 ```ts
 import {
   constant,
-  createRtcSession,
+  createMatrixRTCClient,
   E2eeType,
   MatrixRTCMode,
   ObservableScope,
 } from "@element-hq/matrixrtc-sdk";
 
 const scope = new ObservableScope();
-const session = createRtcSession(
+const rtcClient = createMatrixRTCClient(
   scope,
   client, // a matrix-js-sdk MatrixClient, logged in and syncing
-  room, // the matrix-js-sdk Room to hold the session in, from client.getRoom()
+  room, // the matrix-js-sdk Room, from client.getRoom() once the join has synced
   {
     microphoneEnabled$: constant(true),
     cameraEnabled$: constant(true),
@@ -40,15 +41,15 @@ const session = createRtcSession(
     matrixRTCMode: MatrixRTCMode.Compatibility,
   },
 );
-session.join();
+rtcClient.join();
 
-session.remoteMembers$.subscribe((members) => {
+rtcClient.remoteMembers$.subscribe((members) => {
   // each member has displayName$, media$ and more; a media track is rendered
   // by handing it a <video> or <audio> element: track.attach(element)
 });
 
 // later
-session.leave();
+rtcClient.leave();
 scope.end();
 ```
 

@@ -24,4 +24,4 @@ export { type EncryptionSystem } from "../src/e2ee/sharedKeyManagement";
 export { MatrixRTCMode } from "../src/config/ConfigOptions";
 
 export * from "./src/api";
-export { createRtcSession } from "./src/session/RtcSession";
+export { createMatrixRTCClient } from "./src/session/MatrixRTCClient";
