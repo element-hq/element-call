@@ -42,7 +42,7 @@ import { useInitial } from "../useInitial";
 import {
   useTrackProcessor,
   useTrackProcessorSync,
-} from "../livekit/TrackProcessorContext";
+} from "../tracks/TrackProcessorContext";
 import { getValue } from "../utils/observable";
 import { useBehavior } from "../useBehavior";
 import { CallFooter, type FooterSnapshot } from "../components/CallFooter";

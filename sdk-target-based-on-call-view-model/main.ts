@@ -6,61 +6,74 @@ Please see LICENSE in the repository root for full details.
 */
 
 /**
- * EXPERIMENTAL
+ * LEGACY, in production use
  *
- * This file is the entrypoint for the sdk build of element call: `pnpm build:sdk`
- * use in widgets.
- * It exposes the `createMatrixRTCSdk` which creates the `MatrixRTCSdk` interface (see below) that
- * can be used to join a rtc session and exchange realtime data.
- * It takes care of all the tricky bits:
+ * This file is the entrypoint of the legacy SDK bundle,
+ * `pnpm build:sdk-target-based-on-call-view-model`, for use in widgets. It
+ * exposes `createMatrixRTCSdk`, which creates the `MatrixRTCSdk` interface
+ * (see below) to join an RTC session and exchange realtime data.
+ *
+ * It is a thin layer over the `@element-hq/matrixrtc-sdk` package and Element
+ * Call's call view model, which take care of all the tricky bits:
  *  - sending delayed events
  *  - finding the right sfu
  *  - handling the media stream
  *  - sending join/leave state or sticky events
- *  - setting up encryption and scharing keys
+ *  - setting up encryption and sharing keys
+ *
+ * The interface is kept as it was for its existing consumers. New consumers
+ * use the `@element-hq/matrixrtc-sdk` package directly; this bundle goes away
+ * once the existing ones have moved.
  */
 
 import {
   combineLatest,
+  filter,
   map,
   type Observable,
   of,
-  shareReplay,
-  Subject,
   switchMap,
-  tap,
 } from "rxjs";
+import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
+import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import {
-  type CallMembership,
-  MatrixRTCSessionEvent,
-  MatrixRTCSessionManager,
-} from "matrix-js-sdk/lib/matrixrtc";
-import {
-  type Room as LivekitRoom,
-  type TextStreamReader,
-  type LocalParticipant,
-  type RemoteParticipant,
-} from "livekit-client";
+  type Behavior,
+  constant,
+  createMatrixRTCClient,
+  E2eeType,
+  ObservableScope,
+  type RTCMember,
+} from "@element-hq/matrixrtc-sdk";
 
-// TODO how can this get fixed? to just be part of `livekit-client`
-// Can this be done in the tsconfig.json
-import { type TextStreamInfo } from "../node_modules/livekit-client/dist/src/room/types";
-import { type Behavior, constant } from "../src/state/Behavior";
 import {
   callViewModelOptionsFromParams,
   createCallViewModel$,
 } from "../src/state/CallViewModel/CallViewModel";
-import { ObservableScope } from "../src/state/ObservableScope";
 import { getUrlParams } from "../src/UrlParams";
 import { MuteStates } from "../src/state/MuteStates";
 import { MediaDevices } from "../src/state/MediaDevices";
-import { E2eeType } from "../src/e2ee/e2eeType";
-import { currentAndPrev, TEXT_LK_TOPIC, tryMakeSticky } from "./helper";
-import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
+import { TEXT_LK_TOPIC, tryMakeSticky } from "./helper";
 import { initializeWidget } from "../src/widget";
-import { type Connection } from "../src/state/CallViewModel/remoteMembers/Connection";
 import { createWidgetHostBridge } from "../src/HostBridge";
 import { observeElementSize$ } from "../src/utils/elementSize";
+import {
+  matrixRTCClientOptions,
+  selectedDeviceId$,
+} from "../src/room/InCallView";
+
+/**
+ * A member as this bundle has always presented it. The media transport is
+ * the SDK's business now, so the transport objects are gone: `connection` and
+ * `participant` are always null and only kept so that existing code keeps
+ * destructuring. `membership` is what consumers read.
+ */
+interface MatrixRTCSdkMember {
+  /** @deprecated Always null: the SDK owns the transport connection. */
+  connection: null;
+  membership: CallMembership;
+  /** @deprecated Always null: the SDK owns the transport participant. */
+  participant: null;
+}
 
 interface MatrixRTCSdk {
   /**
@@ -80,21 +93,11 @@ interface MatrixRTCSdk {
   /**
    * flattened list of remote members
    */
-  remoteMembers$: Behavior<
-    {
-      connection: Connection | null;
-      membership: CallMembership;
-      participant: LocalParticipant | RemoteParticipant | null;
-    }[]
-  >;
+  remoteMembers$: Behavior<MatrixRTCSdkMember[]>;
   /**
    * flattened local member
    */
-  localMember$: Behavior<{
-    connection: Connection | null;
-    membership: CallMembership;
-    participant: LocalParticipant | null;
-  } | null>;
+  localMember$: Behavior<MatrixRTCSdkMember | null>;
   /** Use the LocalMemberConnectionState returned from `join` for a more detailed connection state  */
   connected$: Behavior<boolean>;
   sendData?: (data: unknown) => Promise<void>;
@@ -123,12 +126,6 @@ export async function createMatrixRTCSdk(
   const room = client.getRoom(roomId);
   if (room === null) throw Error("could not get room from client");
 
-  // rtc session
-  const slot = { application, id };
-  const rtcSessionManager = new MatrixRTCSessionManager(logger, client, slot);
-  rtcSessionManager.start();
-  const rtcSession = rtcSessionManager.getRoomSession(room);
-
   // media devices
   const mediaDevices = new MediaDevices(scope, {
     controlledAudioDevices,
@@ -141,134 +138,63 @@ export async function createMatrixRTCSdk(
     hostBridge,
   );
 
-  // call view model
+  // rtc client: the session, the transport and the media, as in the app
+  const encryptionSystem = { kind: E2eeType.PER_PARTICIPANT } as const;
+  const rtcClient = createMatrixRTCClient(
+    scope,
+    client,
+    room,
+    {
+      microphoneEnabled: muteStates.audio.enabled$.value,
+      cameraEnabled: muteStates.video.enabled$.value,
+      audioInputDeviceId$: selectedDeviceId$(scope, mediaDevices.audioInput),
+      videoInputDeviceId$: selectedDeviceId$(scope, mediaDevices.videoInput),
+      audioOutputDeviceId$: controlledAudioDevices
+        ? constant(undefined)
+        : selectedDeviceId$(scope, mediaDevices.audioOutput),
+      videoProcessor$: constant(undefined),
+    },
+    {
+      ...matrixRTCClientOptions(urlParams, encryptionSystem),
+      application,
+      slot: id,
+    },
+  );
+
+  // call view model: the host bridge's hang-up handling and the leave flow
   const callViewModel = createCallViewModel$(
     scope,
-    rtcSession,
+    rtcClient,
     room,
     mediaDevices,
     muteStates,
     {
       ...callViewModelOptionsFromParams(urlParams),
-      encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+      encryptionSystem,
       hostBridge,
       // The SDK owns its page, so the body is the space it has
       windowSize$: scope.behavior(observeElementSize$(document.body)),
     },
     of({}),
     of({}),
-    constant({ supported: false, processor: undefined }),
   );
   logger.info("CallViewModelCreated");
 
-  // create data listener
-  const data$ = new Subject<{ rtcBackendIdentity: string; data: string }>();
-
-  const lkTextStreamHandlerFunction = async (
-    reader: TextStreamReader,
-    participantInfo: { identity: string },
-    livekitRoom: LivekitRoom,
-  ): Promise<void> => {
-    const info = reader.info;
-    logger.info(
-      `Received text stream from ${participantInfo.identity}\n` +
-        `  Topic: ${info.topic}\n` +
-        `  Timestamp: ${info.timestamp}\n` +
-        `  ID: ${info.id}\n` +
-        `  Size: ${info.size}`, // Optional, only available if the stream was sent with `sendText`
-    );
-
-    const participants = callViewModel.livekitRoomItems$.value.find(
-      (i) => i.livekitRoom === livekitRoom,
-    )?.participants;
-    if (participants && participants.includes(participantInfo.identity)) {
-      const text = await reader.readAll();
-      logger.info(`Received text: ${text}`);
-      data$.next({ rtcBackendIdentity: participantInfo.identity, data: text });
-    } else {
-      logger.warn(
-        "Received text from unknown participant",
-        participantInfo.identity,
-      );
-    }
-  };
-
-  const livekitRoomItemsSub = callViewModel.livekitRoomItems$
-    .pipe(
-      tap((beforecurrentAndPrev) => {
-        logger.info(
-          `LiveKit room items updated: ${beforecurrentAndPrev.length}`,
-          beforecurrentAndPrev,
-        );
-      }),
-      currentAndPrev,
-      tap((aftercurrentAndPrev) => {
-        logger.info(
-          `LiveKit room items updated: ${aftercurrentAndPrev.current.length}, ${aftercurrentAndPrev.prev.length}`,
-          aftercurrentAndPrev,
-        );
-      }),
-    )
-    .subscribe({
-      next: ({ prev, current }) => {
-        const prevRooms = prev.map((i) => i.livekitRoom);
-        const currentRooms = current.map((i) => i.livekitRoom);
-        const addedRooms = currentRooms.filter((r) => !prevRooms.includes(r));
-        const removedRooms = prevRooms.filter((r) => !currentRooms.includes(r));
-        addedRooms.forEach((r) => {
-          logger.info(`Registering text stream handler for room `);
-          r.registerTextStreamHandler(
-            TEXT_LK_TOPIC,
-            (reader, participantInfo) =>
-              void lkTextStreamHandlerFunction(reader, participantInfo, r),
-          );
-        });
-        removedRooms.forEach((r) => {
-          logger.info(`Unregistering text stream handler for room `);
-          r.unregisterTextStreamHandler(TEXT_LK_TOPIC);
-        });
-      },
-      complete: () => {
-        logger.info("Livekit room items subscription completed");
-        for (const item of callViewModel.livekitRoomItems$.value) {
-          logger.info("unregistering room item from room", item.url);
-          item.livekitRoom.unregisterTextStreamHandler(TEXT_LK_TOPIC);
-        }
-      },
-    });
-
-  // create sendData function
-  const sendFn: Behavior<(data: string) => Promise<TextStreamInfo>> =
-    scope.behavior(
-      callViewModel.localMatrixLivekitMember$.pipe(
-        switchMap((m) => {
-          if (!m)
-            return of((data: string): never => {
-              throw Error("local membership not yet ready.");
-            });
-          return m.participant.value$.pipe(
-            map((p) => {
-              if (p === null) {
-                return (data: string): never => {
-                  throw Error("local participant not yet ready to send data.");
-                };
-              } else {
-                return async (data: string): Promise<TextStreamInfo> =>
-                  p.sendText(data, { topic: TEXT_LK_TOPIC });
-              }
-            }),
-          );
-        }),
-      ),
-    );
+  // Data arrives from attested members only; the SDK has matched the sender
+  const data$ = rtcClient.data$.pipe(
+    filter(({ topic }) => topic === TEXT_LK_TOPIC),
+    map(({ member, text }) => {
+      logger.info(`Received text from ${member.id}: ${text}`);
+      return { rtcBackendIdentity: member.id, data: text };
+    }),
+  );
 
   const sendData = async (data: unknown): Promise<void> => {
     const dataString = JSON.stringify(data);
     logger.info("try sending: ", dataString);
     try {
-      await Promise.resolve();
-      const info = await sendFn.value(dataString);
-      logger.info(`Sent text with stream ID: ${info.id}`);
+      await rtcClient.sendData(TEXT_LK_TOPIC, dataString);
+      logger.info("sent text");
     } catch (e) {
       logger.error("failed sending: ", dataString, e);
     }
@@ -287,13 +213,12 @@ export async function createMatrixRTCSdk(
   // after hangup gets called
   const leaveSubs = callViewModel.leave$.subscribe(() => {
     const scheduleWidgetCloseOnLeave = async (): Promise<void> => {
-      const leaveResolver = Promise.withResolvers<void>();
       logger.info("waiting for RTC leave");
-      rtcSession.on(MatrixRTCSessionEvent.JoinStateChanged, (isJoined) => {
-        logger.info("received RTC join update: ", isJoined);
-        if (!isJoined) leaveResolver.resolve();
+      await new Promise<void>((resolve) => {
+        rtcClient.status$
+          .pipe(filter((status) => status === "disconnected"))
+          .subscribe(() => resolve());
       });
-      await leaveResolver.promise;
       logger.info("send Unstick");
       await hostBridge
         .setAlwaysOnScreen(false)
@@ -314,6 +239,15 @@ export async function createMatrixRTCSdk(
 
   logger.info("createMatrixRTCSdk done");
 
+  const flatten = (member: RTCMember): Observable<MatrixRTCSdkMember> =>
+    member.membership$.pipe(
+      map((membership) => ({
+        connection: null,
+        membership,
+        participant: null,
+      })),
+    );
+
   return {
     join: (): void => {
       // first lets try making the widget sticky
@@ -325,54 +259,22 @@ export async function createMatrixRTCSdk(
     },
     stop: (): void => {
       leaveSubs.unsubscribe();
-      livekitRoomItemsSub.unsubscribe();
       scope.end();
     },
     data$,
     localMember$: scope.behavior(
-      callViewModel.localMatrixLivekitMember$.pipe(
-        tap((member) =>
-          logger.info("localMatrixLivekitMember$ next: ", member),
-        ),
-        switchMap((member) => {
-          if (member === null) return of(null);
-          return combineLatest([
-            member.connection$,
-            member.membership$,
-            member.participant.value$,
-          ]).pipe(
-            map(([connection, membership, participant]) => ({
-              connection,
-              membership,
-              participant,
-            })),
-          );
-        }),
-        tap((member) => logger.info("localMember$ next: ", member)),
+      rtcClient.localMember$.pipe(
+        switchMap((member) => (member === null ? of(null) : flatten(member))),
       ),
     ),
     connected$: callViewModel.connected$,
     remoteMembers$: scope.behavior(
-      callViewModel.remoteMatrixLivekitMembers$.pipe(
-        switchMap((members) => {
-          const listOfMemberObservables = members.map((member) =>
-            combineLatest([
-              member.connection$,
-              member.membership$,
-              member.participant.value$,
-            ]).pipe(
-              map(([connection, membership, participant]) => ({
-                connection,
-                membership,
-                participant,
-              })),
-              // using shareReplay instead of a Behavior here because the behavior would need
-              // a tricky scope.end() setup.
-              shareReplay({ bufferSize: 1, refCount: true }),
-            ),
-          );
-          return combineLatest(listOfMemberObservables);
-        }),
+      rtcClient.remoteMembers$.pipe(
+        switchMap((members) =>
+          members.length === 0
+            ? of([])
+            : combineLatest(members.map((member) => flatten(member))),
+        ),
       ),
       [],
     ),

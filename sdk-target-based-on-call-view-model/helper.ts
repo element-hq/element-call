@@ -6,14 +6,12 @@ Please see LICENSE in the repository root for full details.
 */
 
 /**
- * This file contains helper functions and types for the MatrixRTC SDK.
+ * This file contains helper functions and types for the legacy SDK bundle.
  */
 
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
-import { scan } from "rxjs";
 
 import { type WidgetHelpers } from "../src/widget";
-import { type LivekitRoomItem } from "../src/state/CallViewModel/CallViewModel";
 
 export const tryMakeSticky = (widget: WidgetHelpers): void => {
   const logger = rootLogger.getChild("[MatrixRTCSdk]");
@@ -27,25 +25,5 @@ export const tryMakeSticky = (widget: WidgetHelpers): void => {
       logger.error("failed to make sticky MatrixRTCSdk", error);
     });
 };
+/** The data channel topic this bundle has always used, so that old and new builds talk. */
 export const TEXT_LK_TOPIC = "matrixRTC";
-/**
- * simple helper operator to combine the last emitted and the current emitted value of a rxjs observable
- *
- * I think there should be a builtin for this but i did not find it...
- */
-export const currentAndPrev = scan<
-  LivekitRoomItem[],
-  {
-    prev: LivekitRoomItem[];
-    current: LivekitRoomItem[];
-  }
->(
-  ({ current: lastCurrentVal }, items) => ({
-    prev: lastCurrentVal,
-    current: items,
-  }),
-  {
-    prev: [],
-    current: [],
-  },
-);

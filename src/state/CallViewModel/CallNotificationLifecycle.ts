@@ -6,7 +6,6 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  type CallMembership,
   type IRTCNotificationContent,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
@@ -35,9 +34,7 @@ import {
 } from "matrix-js-sdk";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 
-import { type Behavior } from "../Behavior";
-import { type Epoch, type ObservableScope } from "../ObservableScope";
-import { type RoomMemberMap } from "./remoteMembers/MatrixMemberMetadata";
+import { type Behavior, type ObservableScope } from "@element-hq/matrixrtc-sdk";
 
 export type AutoLeaveReason = "allOthersLeft" | "timeout" | "decline";
 
@@ -81,8 +78,10 @@ export function createReceivedDecline$(
 
 export interface Props {
   scope: ObservableScope;
-  memberships$: Behavior<Epoch<CallMembership[]>>;
-  matrixRoomMembers$: Behavior<RoomMemberMap>;
+  /** The user ids of the session's members, ours included. */
+  memberUserIds$: Behavior<string[]>;
+  /** The user ids of the room's members, ours included. */
+  roomMemberUserIds$: Behavior<string[]>;
   sentCallNotification$: Observable<CallNotificationWrapper | null>;
   receivedDecline$: Observable<
     Parameters<EventTimelineSetHandlerMap[RoomEvent.Timeline]>
@@ -93,8 +92,8 @@ export interface Props {
 
 export function createCallNotificationLifecycle$({
   scope,
-  memberships$,
-  matrixRoomMembers$,
+  memberUserIds$,
+  roomMemberUserIds$,
   sentCallNotification$,
   receivedDecline$,
   options,
@@ -127,7 +126,7 @@ export function createCallNotificationLifecycle$({
       switchMap((notificationEvent) => {
         // We assume that there is only one other user in the room when ringing
         // TODO: Respect io.element.functional_members
-        const recipient = [...matrixRoomMembers$.value.keys()].find(
+        const recipient = roomMemberUserIds$.value.find(
           (userId) => userId !== localUser.userId,
         );
         if (recipient === undefined) {
@@ -140,8 +139,8 @@ export function createCallNotificationLifecycle$({
           map(() => "timeout" as const),
         );
         // Call is accepted when the recipient joins
-        const accept$ = memberships$.pipe(
-          filter((ms) => ms.value.some((m) => m.userId === recipient)),
+        const accept$ = memberUserIds$.pipe(
+          filter((userIds) => userIds.includes(recipient)),
           map(() => "accept" as const),
         );
         // Call is declined when we receive a decline event
@@ -171,12 +170,12 @@ export function createCallNotificationLifecycle$({
       scope.share,
     );
 
-  const allOthersLeft$ = memberships$.pipe(
+  const allOthersLeft$ = memberUserIds$.pipe(
     pairwise(),
     filter(
-      ([{ value: prev }, { value: current }]) =>
-        current.every((m) => m.userId === localUser.userId) &&
-        prev.some((m) => m.userId !== localUser.userId),
+      ([prev, current]) =>
+        current.every((userId) => userId === localUser.userId) &&
+        prev.some((userId) => userId !== localUser.userId),
     ),
     map(() => {}),
   );

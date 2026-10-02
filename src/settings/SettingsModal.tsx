@@ -9,7 +9,6 @@ import { type FC, type ReactNode, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type MatrixClient } from "matrix-js-sdk";
 import { Button, Root as Form, Separator } from "@vector-im/compound-web";
-import { type Room as LivekitRoom } from "livekit-client";
 
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
@@ -28,10 +27,11 @@ import {
 import { PreferencesSettingsTab } from "./PreferencesSettingsTab";
 import { Slider } from "../Slider";
 import { DeviceSelection } from "./DeviceSelection";
-import { useTrackProcessor } from "../livekit/TrackProcessorContext";
+import { useTrackProcessor } from "../tracks/TrackProcessorContext";
 import {
   DeveloperSettingsTab,
   type DeveloperSettingsSnapshot,
+  type TransportInfo,
 } from "./DeveloperSettingsTab";
 import { FieldRow, InputField } from "../input/Input";
 import { useSubmitRageshake } from "./submit-rageshake";
@@ -56,11 +56,8 @@ interface Props {
   onTabChange: (tab: SettingsTab) => void;
   client: MatrixClient;
   roomId?: string;
-  livekitRooms?: {
-    room: LivekitRoom;
-    url: string;
-    isLocal?: boolean;
-  }[];
+  /** The transports the client is connected to, while in a call. */
+  transports?: TransportInfo[];
   /** Only available while in a call. Used by the developer tab. */
   developerSettingsVm?: ViewModel<DeveloperSettingsSnapshot>;
 }
@@ -74,7 +71,7 @@ export const SettingsModal: FC<Props> = ({
   onTabChange,
   client,
   roomId,
-  livekitRooms,
+  transports,
   developerSettingsVm,
 }) => {
   const { t } = useTranslation();
@@ -227,7 +224,7 @@ export const SettingsModal: FC<Props> = ({
       <DeveloperSettingsTab
         env={import.meta.env}
         client={client}
-        livekitRooms={livekitRooms}
+        transports={transports}
         roomId={roomId}
         vm={developerSettingsVm ?? outOfCallDeveloperSettingsTabViewModel}
       />

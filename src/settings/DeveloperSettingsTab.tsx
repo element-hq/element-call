@@ -11,7 +11,6 @@ import {
   type ReactNode,
   useCallback,
   useEffect,
-  useMemo,
   useId,
   useState,
 } from "react";
@@ -32,7 +31,6 @@ import {
   RadioControl,
   Separator,
 } from "@vector-im/compound-web";
-import { type Room as LivekitRoom } from "livekit-client";
 
 import { FieldRow, InputField } from "../input/Input";
 import { Config } from "../config/Config";
@@ -67,13 +65,23 @@ import styles from "./DeveloperSettingsTab.module.css";
 import settingsStyles from "./SettingsModal.module.css";
 import { Slider } from "../Slider";
 import { useUrlParams } from "../UrlParams";
-import { getSFUConfigWithOpenID } from "../livekit/openIDSFU";
+import {
+  authenticateWithTransport,
+  type TransportMetadata,
+} from "@element-hq/matrixrtc-sdk";
 import { useBehavior } from "../useBehavior";
 import { type ViewModel } from "../state/ViewModel.ts";
 
 /**
  * The state of MatrixRTC's media key rotation.
  */
+/** One connected transport, as the panel shows it. */
+export interface TransportInfo {
+  transport: TransportMetadata;
+  /** Whether this is the transport the local member publishes on. */
+  local: boolean;
+}
+
 export interface KeyRotationInfo {
   /** Whether the call is large enough that MatrixRTC has stopped rotating the media key. */
   suppressed: boolean;
@@ -105,19 +113,15 @@ const KeyRotationStatus: FC<{ info: KeyRotationInfo }> = ({ info }) => (
 interface Props {
   client: MatrixClient;
   roomId?: string;
-  livekitRooms?: {
-    room: LivekitRoom;
-    url: string;
-    isLocal?: boolean;
-    livekitAlias?: string;
-  }[];
+  /** The transports the client is connected to, while in a call. */
+  transports?: TransportInfo[];
   env: ImportMetaEnv;
   vm: ViewModel<DeveloperSettingsSnapshot>;
 }
 
 export const DeveloperSettingsTab: FC<Props> = ({
   client,
-  livekitRooms,
+  transports,
   roomId,
   env,
   vm,
@@ -181,17 +185,6 @@ export const DeveloperSettingsTab: FC<Props> = ({
   const [muteAllAudio, setMuteAllAudio] = useSetting(muteAllAudioSetting);
 
   const urlParams = useUrlParams();
-
-  const localSfuUrl = useMemo((): URL | null => {
-    const localRoom = livekitRooms?.find((r) => r.isLocal)?.room;
-    if (localRoom?.engine.client.ws?.url) {
-      // strip the URL params
-      const url = new URL(localRoom.engine.client.ws.url);
-      url.search = "";
-      return url;
-    }
-    return null;
-  }, [livekitRooms]);
 
   const MediaQualitySettings: React.FC<{
     id: string;
@@ -518,7 +511,7 @@ export const DeveloperSettingsTab: FC<Props> = ({
               if (userId === null || deviceId === null) {
                 throw new Error("Invalid user or device ID");
               }
-              await getSFUConfigWithOpenID(
+              await authenticateWithTransport(
                 client,
                 { userId, deviceId, memberId: "" },
                 customLivekitUrlTextBuffer,
@@ -590,39 +583,8 @@ export const DeveloperSettingsTab: FC<Props> = ({
           </HelpMessage>
         </InlineField>
       </Form>
-      {livekitRooms?.map((livekitRoom) => (
-        <div className={styles.livekit_room_box}>
-          <h4>
-            {t("developer_mode.livekit_sfu", {
-              url: livekitRoom.url || "unknown",
-            })}
-          </h4>
-          <p>LivekitAlias: {livekitRoom.livekitAlias}</p>
-          <p>connectionState (wont hot reload): {livekitRoom.room.state}</p>
-          {livekitRoom.isLocal && <p>ws-url: {localSfuUrl?.href}</p>}
-          <p>
-            {t("developer_mode.livekit_server_info")}(
-            {livekitRoom.isLocal ? "local" : "remote"})
-          </p>
-          <pre className={styles.pre}>
-            {livekitRoom.room.serverInfo
-              ? JSON.stringify(livekitRoom.room.serverInfo, null, 2)
-              : "undefined"}
-            {livekitRoom.room.metadata}
-          </pre>
-          <p>Local Participant</p>
-          <pre className={styles.pre}>
-            {livekitRoom.room.localParticipant.identity}
-          </pre>
-          <p>Remote Participants</p>
-          <ul>
-            {Array.from(livekitRoom.room.remoteParticipants.keys()).map(
-              (id) => (
-                <li key={id}>{id}</li>
-              ),
-            )}
-          </ul>
-        </div>
+      {transports?.map(({ transport, local }) => (
+        <TransportBox key={transport.id} transport={transport} local={local} />
       ))}
       <Separator />
       <MediaQualitySettings
@@ -684,5 +646,27 @@ export const DeveloperSettingsTab: FC<Props> = ({
       <p>{t("developer_mode.url_params")}</p>
       <pre className={styles.pre}>{JSON.stringify(urlParams, null, 2)}</pre>
     </>
+  );
+};
+
+const TransportBox: FC<TransportInfo> = ({ transport, local }) => {
+  const { t } = useTranslation();
+  const resolved = useBehavior(transport.resolved$);
+  return (
+    <div className={styles.livekit_room_box}>
+      <h4>{t("developer_mode.livekit_sfu", { url: transport.id })}</h4>
+      <p>
+        {t("developer_mode.livekit_server_info")}({local ? "local" : "remote"})
+      </p>
+      <pre className={styles.pre}>
+        {resolved === undefined
+          ? "not connected"
+          : JSON.stringify(
+              { ...resolved, token: resolved.token && "<redacted>" },
+              null,
+              2,
+            )}
+      </pre>
+    </div>
   );
 };

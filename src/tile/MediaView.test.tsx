@@ -9,26 +9,13 @@ import { describe, expect, it, test } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { axe } from "vitest-axe";
 import { TooltipProvider } from "@vector-im/compound-web";
-import {
-  type TrackReference,
-  type TrackReferencePlaceholder,
-} from "@livekit/components-core";
-import { type LocalTrackPublication, Track } from "livekit-client";
 import { type ComponentProps } from "react";
 
 import { MediaView } from "./MediaView";
-import { mockLocalParticipant } from "../utils/test";
+import { mockVideoTrack } from "../utils/test";
 
 describe("MediaView", () => {
-  const participant = mockLocalParticipant({});
-  const trackReferencePlaceholder: TrackReferencePlaceholder = {
-    participant,
-    source: Track.Source.Camera,
-  };
-  const trackReference: TrackReference = {
-    ...trackReferencePlaceholder,
-    publication: {} as Partial<LocalTrackPublication> as LocalTrackPublication,
-  };
+  const track = mockVideoTrack({ source: "camera" });
 
   const baseProps: ComponentProps<typeof MediaView> = {
     displayName: "some name",
@@ -38,7 +25,7 @@ describe("MediaView", () => {
     mirror: false,
     unencryptedWarning: false,
     showNameTags: true,
-    video: trackReference,
+    video: track,
     userId: "@alice:example.com",
     mxcAvatarUrl: undefined,
     focusable: true,
@@ -47,16 +34,6 @@ describe("MediaView", () => {
   test("is accessible", async () => {
     const { container } = render(<MediaView {...baseProps} />);
     expect(await axe(container)).toHaveNoViolations();
-  });
-
-  describe("placeholder track", () => {
-    test("neither video nor avatar are shown", () => {
-      render(<MediaView {...baseProps} video={trackReferencePlaceholder} />);
-      expect(screen.queryByTestId("video")).toBeNull();
-      expect(
-        screen.queryAllByRole("img", { name: "@alice:example.com" }).length,
-      ).toBe(0);
-    });
   });
 
   describe("with no video", () => {

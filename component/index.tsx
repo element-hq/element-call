@@ -74,7 +74,7 @@ import {
 import { MediaDevicesContext } from "../src/MediaDevicesContext";
 import { MediaDevices } from "../src/state/MediaDevices";
 import { ObservableScope } from "../src/state/ObservableScope";
-import { ProcessorProvider } from "../src/livekit/TrackProcessorContext";
+import { ProcessorProvider } from "../src/tracks/TrackProcessorContext";
 import { Config } from "../src/config/Config";
 import { type ConfigOptions } from "../src/config/ConfigOptions";
 import { i18n } from "../src/utils/i18n";
