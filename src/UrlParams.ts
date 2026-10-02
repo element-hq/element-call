@@ -373,7 +373,7 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     "intent:",
     intent,
     "\nproperties:",
-    redact(properties, "password"),
+    redact(properties, "password", "posthogUserId"),
     "configuration:",
     configuration,
   );
