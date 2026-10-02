@@ -5,18 +5,19 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type TrackReferenceOrPlaceholder } from "@livekit/components-core";
+import { type VideoMediaTrack } from "@element-hq/matrixrtc-sdk";
 import { animated } from "@react-spring/web";
 import {
-  type FC,
   type ComponentProps,
+  type FC,
   type ReactNode,
   type SyntheticEvent,
+  useEffect,
+  useRef,
   useState,
 } from "react";
 import { useTranslation } from "react-i18next";
 import classNames from "classnames";
-import { VideoTrack } from "@livekit/components-react";
 import { Text, Tooltip } from "@vector-im/compound-web";
 import { ErrorSolidIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 
@@ -39,7 +40,7 @@ interface Props extends ComponentProps<typeof animated.div> {
   style?: ComponentProps<typeof animated.div>["style"];
   targetWidth: number;
   targetHeight: number;
-  video: TrackReferenceOrPlaceholder | undefined;
+  video: VideoMediaTrack | undefined;
   /**
    * How to fit the video content inside the tile. When undefined, MediaView
    * chooses a smart default based on the aspect ratios of the tile and video.
@@ -127,13 +128,23 @@ export const MediaView: FC<Props> = ({
     setOurVideoAspectRatio(ratio);
     setTheirVideoAspectRatio?.(ratio);
   };
+  const videoElement = useRef<HTMLVideoElement | null>(null);
   const videoRef = (el: HTMLVideoElement | null) => {
+    videoElement.current = el;
     if (el !== null) setVideoAspectRatio(el.videoWidth / el.videoHeight);
   };
   const onResize = (ev: SyntheticEvent<HTMLVideoElement>) =>
     setVideoAspectRatio(
       ev.currentTarget.videoWidth / ev.currentTarget.videoHeight,
     );
+  // The SDK plays the track on the element and watches its size, so the
+  // element has to be handed back before it leaves the DOM
+  useEffect(() => {
+    const el = videoElement.current;
+    if (video === undefined || el === null) return;
+    video.attach(el);
+    return (): void => video.detach(el);
+  }, [video]);
 
   const warnings = unencryptedWarning && (
     <Tooltip
@@ -185,9 +196,10 @@ export const MediaView: FC<Props> = ({
           className={styles.avatar}
           style={{ display: video && videoEnabled ? "none" : "initial" }}
         />
-        {video?.publication !== undefined && (
-          <VideoTrack
-            trackRef={video}
+        {video !== undefined && (
+          // A live camera has no captions to offer
+          // eslint-disable-next-line jsx-a11y/media-has-caption
+          <video
             // There's no reason for this to be focusable
             tabIndex={-1}
             disablePictureInPicture

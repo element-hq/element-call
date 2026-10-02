@@ -1,8 +1,9 @@
-# SDK mode (EXPERIMENTAL, superseded)
+# SDK mode (LEGACY)
 
 > Superseded by the `sdk/` package (`@element-hq/matrixrtc-sdk`) and its harness in
-> `sdk/dev`; see `sdk-plan.md`. This folder still builds, with its own script, until
-> that package can do what this does.
+> `sdk/dev`; see `sdk/SdkArchitecture.md`. This bundle is in production use, so it
+> keeps building as a thin layer over that package, with its interface unchanged,
+> until its consumers have moved to the package directly. It will then be removed.
 
 EC can be build in sdk mode. This will result in a compiled js file that can be imported in very simple webapps.
 

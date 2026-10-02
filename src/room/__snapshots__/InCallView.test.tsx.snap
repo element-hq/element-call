@@ -84,6 +84,9 @@ exports[`InCallView > rendering > renders 1`] = `
         class="_nav_e4b327 _rightNav_e4b327"
       />
     </header>
+    <div>
+      mocked: MemberAudioRenderer
+    </div>
     <div
       class="_scrollingGrid_4e7ff8 _grid_b0d1cd"
     >

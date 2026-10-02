@@ -30,7 +30,7 @@
         div.appendChild(child);
       });
 
-      sdk.members$.subscribe((memberObjects) => {
+      sdk.remoteMembers$.subscribe((memberObjects) => {
         const div = document.getElementById("members");
         div.innerHTML = "<h3>Members:</h3>";
 
