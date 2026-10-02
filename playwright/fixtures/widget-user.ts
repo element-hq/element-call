@@ -132,7 +132,7 @@ export const widgetTest = test.extend<MyFixtures>({
 
       await ewPage1
         .getByRole("navigation", { name: "Room list" })
-        .getByRole("button", { name: "New conversation" })
+        .getByRole("button", { name: "New", exact: true })
         .click();
 
       await ewPage1.getByRole("menuitem", { name: "Start chat" }).click();
