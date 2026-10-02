@@ -15,7 +15,6 @@ import {
   MediaDeviceFailure,
 } from "livekit-client";
 import { observeParticipantEvents } from "@livekit/components-core";
-import { type MatrixClient } from "matrix-js-sdk";
 import {
   Status as RTCSessionStatus,
   type LivekitTransport,
@@ -80,7 +79,10 @@ import {
 } from "../remoteMembers/Connection.ts";
 import { type HomeserverConnected } from "./HomeserverConnected.ts";
 import { type LocalTransport } from "./LocalTransport.ts";
-import { getSFUConfigWithOpenID } from "../../../livekit/openIDSFU.ts";
+import {
+  type ClientDelegationParts,
+  delegateDelayedLeave,
+} from "../../../livekit/auth/index.ts";
 
 export enum TransportState {
   /** Not even a transport is available to the LocalMembership */
@@ -150,7 +152,7 @@ interface Props {
   roomId: string;
   ownMembershipIdentity: CallMembershipIdentityParts;
   localTransport$: Observable<LocalTransport>;
-  client: Pick<MatrixClient, "getDeviceId" | "getOpenIdToken">;
+  client: ClientDelegationParts;
   matrixRTCSession: Pick<MatrixRTCSession, "updateCallIntent" | "leave">;
   /** Whether to hide the screen-sharing button. */
   hideScreensharing: boolean;
@@ -308,15 +310,16 @@ export const createLocalMembership$ = ({
   const joinParams$ = scope.behavior(
     localTransport$.pipe(
       switchMap(async ({ transport }) => {
-        const transportSupportsDelegation = checkDelegationSupport(
-          transport.livekit_service_url + "/delegate_delayed_leave",
-          `transport ${transport.livekit_service_url}`,
-        );
+        const transportSupportsDelegation =
+          "livekit_service_url" in transport &&
+          (await checkDelegationSupport(
+            transport.livekit_service_url + "/delegate_delayed_leave",
+            `transport ${transport.livekit_service_url}`,
+          ));
         return {
           transport,
           delegationSupported:
-            (await homeserverSupportsDelegation) ||
-            (await transportSupportsDelegation),
+            transportSupportsDelegation || (await homeserverSupportsDelegation),
         };
       }),
     ),
@@ -334,7 +337,7 @@ export const createLocalMembership$ = ({
       ),
       tap((connection) => {
         logger.info(
-          `Local connection updated: ${connection?.transport?.livekit_service_url}`,
+          `Local connection updated: ${JSON.stringify(connection?.transport)}`,
         );
       }),
     ),
@@ -406,7 +409,7 @@ export const createLocalMembership$ = ({
   scope.reconcile(localConnection$, async (connection) => {
     logger.info(
       "reconcile based on new localConnection:",
-      connection?.transport.livekit_service_url,
+      JSON.stringify(connection?.transport),
     );
     if (connection !== null) {
       const publisher = createPublisherFactory(connection);
@@ -702,23 +705,22 @@ export const createLocalMembership$ = ({
     async ([joinParams, delayId]) => {
       if (joinParams?.delegationSupported && delayId !== null) {
         try {
-          // This will technically cause the service to issue a new JWT token,
-          // but it's safe to discard. We're only interested in triggering
-          // delegation.
-          await getSFUConfigWithOpenID(
-            client,
-            ownMembershipIdentity,
-            joinParams.transport.livekit_service_url,
-            roomId,
-            { matrixRTCMode, delayEndpointBaseUrl: baseUrl, delayId },
-            logger,
+          logger.info(
+            `Delegating delayed leave to ${JSON.stringify(joinParams.transport)}…`,
           );
+          await delegateDelayedLeave({
+            client,
+            membership: ownMembershipIdentity,
+            transport: joinParams.transport,
+            roomId,
+            delayId,
+            matrixRTCMode,
+            logger,
+          });
+          logger.info("Delayed leave successfully delegated");
         } catch (e) {
           // TODO: Surface this to the user as a service interruption?
-          logger.error(
-            `Failed to delegate leave to ${joinParams.transport.livekit_service_url}`,
-            e,
-          );
+          logger.error(`Failed to delegate leave`, e);
         }
       }
     },

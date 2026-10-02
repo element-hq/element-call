@@ -16,54 +16,11 @@ import { type Logger } from "matrix-js-sdk/lib/logger";
 import {
   FailToGetOpenIdToken,
   NoMatrix2AuthorizationService,
-} from "../utils/errors";
-import { doNetworkOperationWithRetry } from "../utils/matrix";
-import { Config } from "../config/Config";
-import { MatrixRTCMode } from "../config/ConfigOptions";
-
-/**
- * Configuration and access tokens provided by the SFU on successful authentication.
- */
-export interface SFUConfig {
-  url: string;
-  jwt: string;
-  livekitAlias: string;
-  // NOTE: Currently unused.
-  livekitIdentity: string;
-}
-
-/**
- * Decoded details from the JWT.
- */
-interface SFUJWTPayload {
-  /**
-   * Expiration time for the JWT.
-   * Note: This value is in seconds since Unix epoch.
-   */
-  exp: number;
-  /**
-   * Name of the instance which authored the JWT
-   */
-  iss: string;
-  /**
-   * Time at which the JWT can start to be used.
-   * Note: This value is in seconds since Unix epoch.
-   */
-  nbf: number;
-  /**
-   * Subject. The Livekit alias in this context.
-   */
-  sub: string;
-  /**
-   * The set of permissions for the user.
-   */
-  video: {
-    canPublish: boolean;
-    canSubscribe: boolean;
-    room: string;
-    roomJoin: boolean;
-  };
-}
+} from "../../utils/errors";
+import { doNetworkOperationWithRetry } from "../../utils/matrix";
+import { Config } from "../../config/Config";
+import { MatrixRTCMode } from "../../config/ConfigOptions";
+import { extractFullConfigFromToken, type SFUConfig } from "./types";
 
 // The bits we need from MatrixClient
 export type OpenIDClientParts = Pick<
@@ -90,7 +47,7 @@ export type OpenIDClientParts = Pick<
  * @returns Object containing the token information
  * @throws FailToGetOpenIdToken
  */
-export async function getSFUConfigWithOpenID(
+export async function getSFUConfig(
   client: OpenIDClientParts,
   membership: CallMembershipIdentityParts,
   serviceUrl: string,
@@ -169,23 +126,6 @@ export async function getSFUConfigWithOpenID(
   }
 }
 
-function extractFullConfigFromToken(sfuConfig: {
-  url: string;
-  jwt: string;
-}): SFUConfig {
-  const [, payloadStr] = sfuConfig.jwt.split(".");
-  const payload = JSON.parse(global.atob(payloadStr)) as SFUJWTPayload;
-  return {
-    jwt: sfuConfig.jwt,
-    url: sfuConfig.url,
-    livekitAlias: payload.video.room,
-    // NOTE: Currently unused.
-    // Probably also not helpful since we now compute the backendIdentity on joining the call so we can use it for the encryption manager.
-    // The only reason for us to know it locally is to connect the right users with the lk world. (and to set our own keys)
-    livekitIdentity: payload.sub,
-  };
-}
-
 async function getLiveKitJWTLegacy(
   deviceId: string,
   livekitServiceURL: string,
@@ -261,7 +201,7 @@ class NotSupportedError extends Error {
   }
 }
 
-export async function getLiveKitJWT(
+async function getLiveKitJWT(
   membership: CallMembershipIdentityParts,
   livekitServiceURL: string,
   matrixRoomId: string,
