@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { describe, expect, it, vi } from "vitest";
 import { BehaviorSubject } from "rxjs";
 
-import { ObservableScope } from "../../../src/state/ObservableScope";
+import { ObservableScope } from "../reactive/ObservableScope";
 import { mapScoped } from "./mapScoped";
 
 describe("mapScoped", () => {

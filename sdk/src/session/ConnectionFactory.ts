@@ -18,20 +18,22 @@ import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 import { BehaviorSubject, combineLatest, map } from "rxjs";
 
-import { buildLiveKitOptions } from "../../../src/livekit/options";
-import {
-  type OpenIDClientParts,
-  type SFUConfig,
-} from "../../../src/livekit/openIDSFU";
-import { type Behavior } from "../../../src/state/Behavior";
-import {
-  Connection,
-  type ConnectionOpts,
-  ConnectionState,
-} from "../../../src/state/CallViewModel/remoteMembers/Connection";
-import { type ConnectionFactory } from "../../../src/state/CallViewModel/remoteMembers/ConnectionFactory";
-import { type ObservableScope } from "../../../src/state/ObservableScope";
+import { buildLiveKitOptions } from "./livekitOptions";
+import { type OpenIDClientParts, type SFUConfig } from "./openIDSFU";
+import { type Behavior } from "../reactive/Behavior";
+import { Connection, type ConnectionOpts, ConnectionState } from "./Connection";
+import { type ObservableScope } from "../reactive/ObservableScope";
 import { type LocalMediaInputs, type ResolvedTransport } from "../api";
+
+export interface ConnectionFactory {
+  createConnection(
+    scope: ObservableScope,
+    transport: LivekitTransport,
+    ownMembershipIdentity: CallMembershipIdentityParts,
+    logger: Logger,
+    sfuConfig?: SFUConfig,
+  ): Connection;
+}
 
 /**
  * A connection that keeps what it fetched from the JWT service, so that the

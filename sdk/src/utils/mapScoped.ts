@@ -7,8 +7,8 @@ Please see LICENSE in the repository root for full details.
 
 import { Observable, of, switchMap } from "rxjs";
 
-import { type Behavior } from "../../../src/state/Behavior";
-import { ObservableScope } from "../../../src/state/ObservableScope";
+import { type Behavior } from "../reactive/Behavior";
+import { ObservableScope } from "../reactive/ObservableScope";
 
 /**
  * Builds one item per present value of a behavior, each in a scope of its own

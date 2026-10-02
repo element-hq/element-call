@@ -13,10 +13,7 @@ import {
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
-import {
-  DEFAULT_CONFIG,
-  MatrixRTCMode,
-} from "../../../src/config/ConfigOptions";
+import { defaultSessionTimings, MatrixRTCMode } from "../config";
 
 interface Options {
   encryptMedia: boolean;
@@ -25,11 +22,8 @@ interface Options {
   applicationData?: Record<string, unknown>;
 }
 
-/** The session's timing defaults; a later slice makes them an input. */
-export const sessionTimings = {
-  syncDisconnectGracePeriodMs: DEFAULT_CONFIG.sync_disconnect_grace_period_ms,
-  ...DEFAULT_CONFIG.matrix_rtc_session,
-};
+/** The session's timings; a later slice makes them an input. */
+export const sessionTimings = defaultSessionTimings;
 
 /**
  * Sends the membership and starts the membership manager, which keeps it
@@ -51,7 +45,7 @@ export function joinJsSdkSession(
   const intent = applicationData?.["m.call.intent"];
   const callIntent =
     typeof intent === "string" ? (intent as RTCCallIntent) : undefined;
-  const timings = sessionTimings.delayed_leave;
+  const timings = sessionTimings.delayedLeave;
   // Give up on the network as soon as either the sync has been down for the
   // grace period or the delayed leave has probably been sent, whichever is
   // sooner
@@ -66,12 +60,12 @@ export function joinJsSdkSession(
     delayedLeaveEventRestartMs: timings.restart_ms,
     delayedLeaveEventDelayMs: timings.delay_ms,
     delayedLeaveEventRestartLocalTimeoutMs: timings.restart_timeout_ms,
-    networkErrorRetryMs: sessionTimings.network_error_retry_ms,
-    makeKeyDelay: sessionTimings.wait_for_key_rotation_ms,
-    membershipEventExpiryMs: sessionTimings.membership_event_expiry_ms,
-    keyRotationParticipantLimit: sessionTimings.key_rotation_participant_limit,
+    networkErrorRetryMs: sessionTimings.networkErrorRetryMs,
+    makeKeyDelay: sessionTimings.waitForKeyRotationMs,
+    membershipEventExpiryMs: sessionTimings.membershipEventExpiryMs,
+    keyRotationParticipantLimit: sessionTimings.keyRotationParticipantLimit,
     unstableSendStickyEvents: matrixRTCMode === MatrixRTCMode.Matrix_2_0,
     maximumNetworkErrorRetryCount:
-      Math.ceil(maxWaitMs / sessionTimings.network_error_retry_ms) + 1,
+      Math.ceil(maxWaitMs / sessionTimings.networkErrorRetryMs) + 1,
   });
 }

@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { describe, expect, it } from "vitest";
 import { Status } from "matrix-js-sdk/lib/matrixrtc";
 
-import { ConnectionState } from "../../../src/state/CallViewModel/remoteMembers/Connection";
+import { ConnectionState } from "./Connection";
 import { MatrixRTCError } from "../api";
 import {
   type LocalMemberState,

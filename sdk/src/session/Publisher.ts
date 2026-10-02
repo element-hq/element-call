@@ -17,8 +17,8 @@ import {
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import { combineLatest, distinctUntilChanged, map, skip } from "rxjs";
 
-import { type Behavior } from "../../../src/state/Behavior";
-import { ObservableScope } from "../../../src/state/ObservableScope";
+import { type Behavior } from "../reactive/Behavior";
+import { ObservableScope } from "../reactive/ObservableScope";
 import { type LocalMediaInputs } from "../api";
 
 /**

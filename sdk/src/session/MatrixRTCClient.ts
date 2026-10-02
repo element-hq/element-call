@@ -15,21 +15,21 @@ import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/En
 import { v4 as uuidv4 } from "uuid";
 import { combineLatest, from, fromEvent, map } from "rxjs";
 
-import { MatrixRTCMode } from "../../../src/config/ConfigOptions";
-import { type ObservableScope } from "../../../src/state/ObservableScope";
+import { MatrixRTCMode } from "../config";
+import { type ObservableScope } from "../reactive/ObservableScope";
 import {
   createKeyRotationSuppressed$,
   createMemberships$,
   membershipsAndTransports$,
-} from "../../../src/state/SessionBehaviors";
-import { createHomeserverConnected$ } from "../../../src/state/CallViewModel/localMember/HomeserverConnected";
-import { createConnectionManager$ } from "../../../src/state/CallViewModel/remoteMembers/ConnectionManager";
-import { createRemoteMatrixLivekitMembers$ } from "../../../src/state/CallViewModel/remoteMembers/MatrixLivekitMembers";
+} from "./SessionBehaviors";
+import { createHomeserverConnected$ } from "./HomeserverConnected";
+import { createConnectionManager$ } from "./ConnectionManager";
+import { createRemoteMatrixLivekitMembers$ } from "./MatrixLivekitMembers";
 import {
   createMatrixMemberMetadata$,
   createRoomMembers$,
-} from "../../../src/state/CallViewModel/remoteMembers/MatrixMemberMetadata";
-import { filterBehavior, generateItems } from "../../../src/utils/observable";
+} from "./MatrixMemberMetadata";
+import { filterBehavior, generateItems } from "../reactive/observable";
 import {
   type LocalMediaInputs,
   type LocalRTCMember,

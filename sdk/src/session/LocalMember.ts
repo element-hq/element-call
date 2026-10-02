@@ -5,8 +5,11 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
+import { observeParticipantEvents } from "@livekit/components-core";
 import {
   type LocalParticipant,
+  type Participant,
+  ParticipantEvent,
   type ScreenShareCaptureOptions,
 } from "livekit-client";
 import { type Logger } from "matrix-js-sdk/lib/logger";
@@ -32,17 +35,17 @@ import {
   switchMap,
 } from "rxjs";
 
-import { type Behavior } from "../../../src/state/Behavior";
-import { type ObservableScope } from "../../../src/state/ObservableScope";
-import { type HomeserverConnected } from "../../../src/state/CallViewModel/localMember/HomeserverConnected";
-import { observeSharingScreen$ } from "../../../src/state/CallViewModel/localMember/LocalMember";
+import { type Behavior } from "../reactive/Behavior";
+import { type ObservableScope } from "../reactive/ObservableScope";
+import { type HomeserverConnected } from "./HomeserverConnected";
+import { type Connection, ConnectionState } from "./Connection";
+import { type IConnectionManager } from "./ConnectionManager";
 import {
-  type Connection,
-  ConnectionState,
-} from "../../../src/state/CallViewModel/remoteMembers/Connection";
-import { type IConnectionManager } from "../../../src/state/CallViewModel/remoteMembers/ConnectionManager";
-import { type MatrixRTCError } from "../api";
-import { toMatrixRTCError } from "../utils/errors";
+  FailToStartLivekitConnection,
+  type MatrixRTCError,
+  MembershipManagerError,
+  toMatrixRTCError,
+} from "../errors";
 import { type LocalTransport } from "./LocalTransport";
 import { type Publisher } from "./Publisher";
 
@@ -171,7 +174,11 @@ export function createLocalMembership$({
         } else if (publisher.shouldPublish) await publisher.stopPublishing();
       } catch (e) {
         if (publishError$.value === null)
-          publishError$.next(toMatrixRTCError(e));
+          publishError$.next(
+            new FailToStartLivekitConnection(
+              e instanceof Error ? e.message : String(e),
+            ),
+          );
         else logger.error("Another publish error", e);
       }
     },
@@ -199,7 +206,12 @@ export function createLocalMembership$({
 
   membershipManagerError$.pipe(scope.bind()).subscribe((e) => {
     logger.error("The membership manager stopped", e);
-    if (matrixError$.value === null) matrixError$.next(toMatrixRTCError(e));
+    if (matrixError$.value === null)
+      matrixError$.next(
+        new MembershipManagerError(
+          e instanceof Error ? e : new Error(String(e)),
+        ),
+      );
   });
 
   cameraEnabled$.pipe(scope.bind()).subscribe((videoEnabled) => {
@@ -356,3 +368,13 @@ const screenShareCaptureOptions: ScreenShareCaptureOptions = {
   surfaceSwitching: "include",
   systemAudio: "include",
 };
+
+function observeSharingScreen$(participant: Participant): Observable<boolean> {
+  return observeParticipantEvents(
+    participant,
+    ParticipantEvent.TrackPublished,
+    ParticipantEvent.TrackUnpublished,
+    ParticipantEvent.LocalTrackPublished,
+    ParticipantEvent.LocalTrackUnpublished,
+  ).pipe(map((p) => p.isScreenShareEnabled));
+}
