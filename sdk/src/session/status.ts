@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type RtcSessionError, type SessionConnectionStatus } from "../api";
+import { type MatrixRTCError, type ConnectionStatus } from "../api";
 import { type LocalMemberState, TransportState } from "./LocalMember";
 
 /** The local member's state, collapsed to what a host shows. */
@@ -14,7 +14,7 @@ export function sessionStatus(
   joinRequested: boolean,
   connected: boolean,
   reconnecting: boolean,
-): SessionConnectionStatus {
+): ConnectionStatus {
   if (fatalError(state) !== null) return "disconnected";
   if (state === TransportState.Waiting) return "waitingForTransport";
   if (connected) return "connected";
@@ -23,7 +23,7 @@ export function sessionStatus(
 }
 
 /** The error that stops the session, if the state holds one. */
-export function fatalError(state: LocalMemberState): RtcSessionError | null {
+export function fatalError(state: LocalMemberState): MatrixRTCError | null {
   if (state === TransportState.Waiting) return null;
   if (state instanceof Error) return state;
   if (state.matrix instanceof Error) return state.matrix;

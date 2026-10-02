@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import {
   type LivekitTransport,
-  type MatrixRTCSession as JsSdkRtcSession,
+  type MatrixRTCSession as JsSdkRTCSession,
   type RTCCallIntent,
   type RTCNotificationType,
 } from "matrix-js-sdk/lib/matrixrtc";
@@ -22,7 +22,7 @@ interface Options {
   encryptMedia: boolean;
   matrixRTCMode: MatrixRTCMode;
   sendNotificationType?: RTCNotificationType;
-  callIntent?: RTCCallIntent;
+  applicationData?: Record<string, unknown>;
 }
 
 /** The session's timing defaults; a later slice makes them an input. */
@@ -36,12 +36,21 @@ export const sessionTimings = {
  * alive and retries on failure.
  * @throws If the join could not be started.
  */
-export function joinRtcSession(
-  session: JsSdkRtcSession,
+export function joinJsSdkSession(
+  session: JsSdkRTCSession,
   ownMembershipIdentity: CallMembershipIdentityParts,
   transport: LivekitTransport,
-  { encryptMedia, matrixRTCMode, sendNotificationType, callIntent }: Options,
+  {
+    encryptMedia,
+    matrixRTCMode,
+    sendNotificationType,
+    applicationData,
+  }: Options,
 ): void {
+  // The one piece of application data the js-sdk can put in a membership
+  const intent = applicationData?.["m.call.intent"];
+  const callIntent =
+    typeof intent === "string" ? (intent as RTCCallIntent) : undefined;
   const timings = sessionTimings.delayed_leave;
   // Give up on the network as soon as either the sync has been down for the
   // grace period or the delayed leave has probably been sent, whichever is

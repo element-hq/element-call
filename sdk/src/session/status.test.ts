@@ -9,7 +9,7 @@ import { describe, expect, it } from "vitest";
 import { Status } from "matrix-js-sdk/lib/matrixrtc";
 
 import { ConnectionState } from "../../../src/state/CallViewModel/remoteMembers/Connection";
-import { RtcSessionError } from "../api";
+import { MatrixRTCError } from "../api";
 import {
   type LocalMemberState,
   PublishState,
@@ -25,7 +25,7 @@ const connecting: LocalMemberState = {
   media: { connection: ConnectionState.LivekitConnecting },
   matrix: Status.Connecting,
 };
-const error = new RtcSessionError("gone");
+const error = new MatrixRTCError("gone");
 
 describe("sessionStatus", () => {
   it.each<[string, LocalMemberState, boolean, boolean, boolean, string]>([

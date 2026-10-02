@@ -21,13 +21,13 @@ import {
 } from "rxjs";
 import {
   constant,
-  createRtcSession,
+  createMatrixRTCClient,
   E2eeType,
   MatrixRTCMode,
   type MediaTrack,
   ObservableScope,
-  type RtcMember,
-  type RtcSession,
+  type RTCMember,
+  type MatrixRTCClient,
 } from "@element-hq/matrixrtc-sdk";
 
 import { createSession, joinRoom, type Login } from "./session";
@@ -73,7 +73,7 @@ async function start(
     const scope = new ObservableScope();
     const microphoneEnabled$ = new BehaviorSubject(true);
     const cameraEnabled$ = new BehaviorSubject(true);
-    const session = createRtcSession(
+    const rtcClient = createMatrixRTCClient(
       scope,
       client,
       room,
@@ -89,20 +89,20 @@ async function start(
         matrixRTCMode: MatrixRTCMode.Compatibility,
       },
     );
-    session.status$.pipe(scope.bind()).subscribe((s) => {
+    rtcClient.status$.pipe(scope.bind()).subscribe((s) => {
       status.textContent = s;
     });
-    session.fatalError$.pipe(scope.bind()).subscribe((error) => {
+    rtcClient.fatalError$.pipe(scope.bind()).subscribe((error) => {
       if (error !== null) status.textContent = `Error: ${error.message}`;
     });
-    showMembers(scope, session);
-    session.join();
+    showMembers(scope, rtcClient);
+    rtcClient.join();
 
     toggle(buttons.microphone, microphoneEnabled$);
     toggle(buttons.camera, cameraEnabled$);
     buttons.leave.hidden = false;
     buttons.leave.onclick = (): void => {
-      session.leave();
+      rtcClient.leave();
       scope.end();
       members.replaceChildren();
       for (const button of Object.values(buttons)) button.hidden = true;
@@ -125,9 +125,9 @@ function toggle(
   };
 }
 
-function showMembers(scope: ObservableScope, session: RtcSession): void {
+function showMembers(scope: ObservableScope, rtcClient: MatrixRTCClient): void {
   const tiles = new Map<string, HTMLElement>();
-  combineLatest([session.localMember$, session.remoteMembers$])
+  combineLatest([rtcClient.localMember$, rtcClient.remoteMembers$])
     .pipe(scope.bind())
     .subscribe(([local, remote]) => {
       const current = local === null ? remote : [local, ...remote];
@@ -145,7 +145,7 @@ function showMembers(scope: ObservableScope, session: RtcSession): void {
     });
 }
 
-function memberTile(scope: ObservableScope, member: RtcMember): HTMLElement {
+function memberTile(scope: ObservableScope, member: RTCMember): HTMLElement {
   const tile = document.createElement("section");
   tile.dataset.testid = "member";
   tile.dataset.userId = member.userId;
