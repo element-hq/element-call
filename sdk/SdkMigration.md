@@ -26,6 +26,25 @@ have to change in the same step. The view model tests drive a fake
 `MatrixRTCClient` (`mockMatrixRTCClient` in `src/utils/test.ts`) instead of mocked
 LiveKit rooms; the tests of the deleted modules live on in `sdk/src`.
 
+## What still binds Element Call to LiveKit, as slices
+
+Element Call still imports the LiveKit packages in a few places. Each is a gap in
+the SDK's API rather than something to rename: the import goes away when the SDK
+grows the piece. The names Element Call owes to the outside stay as they are: the
+`livekit.livekit_service_url` key in `config.json`, the persisted setting keys
+`extended-livekit-logs` and `custom-livekit-url`, the Posthog fields
+`callBackend` and `callReconnectingCountLivekit`, the rageshake field
+`call_backend`, and the translated error strings.
+
+| Slice                                                                                                                                                                       | Where it shows today                                                                             |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| 6. Preview before `join()`: an SDK API that creates the local tracks for the lobby and hands them out as `MediaTrack`s, so the preview renders like `MediaView`             | `LobbyView` (`usePreviewTracks`), `VideoPreview` (`LocalVideoTrack`, `facingModeFromLocalTrack`) |
+| 7. A transport-neutral processor type on `LocalMediaInputs.videoProcessor$`, so the blur feature in `src/tracks/` no longer types against LiveKit                           | `TrackProcessorContext`, `BlurBackgroundTransformer`, the `TrackProcessor` type in `api.ts`      |
+| 8. Device enumeration without LiveKit's helpers, on the browser API or an SDK utility                                                                                       | `MediaDevices` (`createMediaDeviceObserver`), `CallView` (`Room.getLocalDevices`)                |
+| 9. A `logging` option on the client: log level and a sink for the transport's logs, so the rageshake wiring leaves `initializer.tsx`                                        | `initializer.tsx`, the `extended-livekit-logs` setting                                           |
+| 10. A `capabilities` field: output selection and background processors, asked of the SDK rather than of LiveKit                                                             | `CallFooterViewModel` (`supportsAudioOutputSelection`, `supportsBackgroundProcessors`)           |
+| 11. Element Call's error and analytics types on the SDK's: `DisconnectReason` and the error classes, and a rename of the two `Livekit*` error classes on both sides at once | `PosthogEvents` (`DisconnectReason`), `errors.ts` (`ConnectionError`, `LivekitConnectionError`)  |
+
 ## What was copied from `src/`, and what changed on the way
 
 All of these are gone from `src/` as of slice 4; the table records where they went.
