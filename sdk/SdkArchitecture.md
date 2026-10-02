@@ -301,6 +301,28 @@ export interface MatrixRTCClient {
    * needs.
    */
   connectedTransports$: Behavior<TransportMetadata[]>;
+
+  /**
+   * Sends a short text to every member on the local transport, over a
+   * reliable data channel beside the media. A packet holds about 15 KiB;
+   * anything larger belongs in a room event. Rejects while the local
+   * transport is not connected. Encrypted on the wire like the media, but
+   * not end to end with the media key.
+   */
+  sendData(topic: string, text: string): Promise<void>;
+  /**
+   * What remote members sent with `sendData`, on every transport the client
+   * is connected to. A message from an identity that is not a member is
+   * dropped, so a host only ever hears from attested members.
+   */
+  data$: Observable<DataMessage>;
+}
+
+/** One `sendData` call as it arrives at a remote member. */
+export interface DataMessage {
+  member: RemoteRTCMember;
+  topic: string;
+  text: string;
 }
 ```
 
@@ -603,6 +625,13 @@ public API only.
 - **Developer panel.** `resolved$` on each connected transport covers what the
   panel shows today. Anything beyond that (LiveKit room state, connection
   quality) needs an opaque `debug$` per transport.
+- **Data beside the media.** `sendData`/`data$` ride on LiveKit's reliable data
+  packets: topic-agnostic, matched to members by identity, received on every
+  connection but sent only on the local transport, so a member on another
+  transport does not hear us. They are transport-encrypted, not end to end:
+  LiveKit can encrypt data packets with the media key, but that is not wired
+  through the key provider yet. A host that needs either reach or end-to-end
+  encryption uses room events.
 - **Unencrypted rooms with per-participant keys.** Keys only reach devices the
   crypto tracks, which are the members of encrypted rooms. If the SDK is to work
   in an unencrypted room, tracking the members' devices becomes its job.

@@ -153,6 +153,28 @@ export interface MatrixRTCClient {
 
   /** Transports the session currently holds a live connection to. */
   connectedTransports$: Behavior<TransportMetadata[]>;
+
+  /**
+   * Sends a short text to every member on the local transport, over a
+   * reliable data channel beside the media. A packet holds about 15 KiB;
+   * anything larger belongs in a room event. Rejects while the local
+   * transport is not connected. Encrypted on the wire like the media, but
+   * not end to end with the media key.
+   */
+  sendData(topic: string, text: string): Promise<void>;
+  /**
+   * What remote members sent with `sendData`, on every transport the client
+   * is connected to. A message from an identity that is not a member is
+   * dropped, so a host only ever hears from attested members.
+   */
+  data$: Observable<DataMessage>;
+}
+
+/** One `sendData` call as it arrives at a remote member. */
+export interface DataMessage {
+  member: RemoteRTCMember;
+  topic: string;
+  text: string;
 }
 
 // ---------------------------------------------------------------------------

@@ -29,6 +29,8 @@ import { createSession, joinRoom, type Login } from "./session";
 const form = document.querySelector("form")!;
 const status = document.getElementById("status")!;
 const members = document.getElementById("members")!;
+const dataForm = document.getElementById("data") as HTMLFormElement;
+const messages = document.getElementById("messages")!;
 const buttons = {
   microphone: document.getElementById("microphone") as HTMLButtonElement,
   camera: document.getElementById("camera") as HTMLButtonElement,
@@ -89,6 +91,7 @@ async function start(
       if (error !== null) status.textContent = `Error: ${error.message}`;
     });
     showMembers(scope, rtcClient);
+    showMessages(scope, rtcClient);
     rtcClient.join();
 
     toggle(buttons.microphone, async (enabled) =>
@@ -102,6 +105,8 @@ async function start(
       rtcClient.leave();
       scope.end();
       members.replaceChildren();
+      messages.replaceChildren();
+      dataForm.hidden = true;
       for (const button of Object.values(buttons)) button.hidden = true;
       status.textContent = "Left";
     };
@@ -122,6 +127,31 @@ function toggle(
       button.ariaPressed = String(enabled);
     });
   };
+}
+
+/** Sends what the form holds on the "chat" topic, and lists what arrives. */
+function showMessages(
+  scope: ObservableScope,
+  rtcClient: MatrixRTCClient,
+): void {
+  dataForm.hidden = false;
+  dataForm.onsubmit = (event): void => {
+    event.preventDefault();
+    const text = new FormData(dataForm).get("text") as string;
+    rtcClient.sendData("chat", text).then(
+      () => dataForm.reset(),
+      (e: unknown) => {
+        status.textContent = `Error: ${e}`;
+      },
+    );
+  };
+  rtcClient.data$.pipe(scope.bind()).subscribe(({ member, topic, text }) => {
+    const line = messages.appendChild(document.createElement("li"));
+    line.dataset.testid = "message";
+    line.dataset.topic = topic;
+    line.dataset.userId = member.userId;
+    line.textContent = `${member.displayName$.value}: ${text}`;
+  });
 }
 
 function showMembers(scope: ObservableScope, rtcClient: MatrixRTCClient): void {

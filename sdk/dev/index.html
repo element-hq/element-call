@@ -63,6 +63,12 @@ Please see LICENSE in the repository root for full details.
       <button type="button" id="leave" hidden>Leave</button>
     </form>
     <p id="status" data-testid="status"></p>
+    <!-- A line of text to the other members, beside the media -->
+    <form id="data" hidden>
+      <input name="text" placeholder="message" />
+      <button type="submit">Send</button>
+    </form>
+    <ul id="messages"></ul>
     <main id="members"></main>
     <script type="module" src="./main.ts"></script>
   </body>

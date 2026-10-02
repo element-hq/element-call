@@ -53,6 +53,7 @@ import {
   membershipKeys,
 } from "./Members";
 import { createConnectionManager$ } from "./ConnectionManager";
+import { createDataChannel$ } from "./DataChannel";
 import { type DesiredMedia, Publisher } from "./Publisher";
 import {
   createKeyRotationSuppressed$,
@@ -248,6 +249,14 @@ export function createMatrixRTCClient(
     ).pipe(map((member) => member ?? null)),
   );
 
+  const { data$, sendData } = createDataChannel$({
+    scope,
+    connectionManager,
+    remoteMembers$,
+    connection$: localMembership.connection$,
+    logger,
+  });
+
   const status$ = scope.behavior(
     combineLatest(
       [
@@ -280,6 +289,8 @@ export function createMatrixRTCClient(
     ),
     keyRotationSuppressed$: createKeyRotationSuppressed$(scope, jsSdkSession),
     connectedTransports$: transports.connected$,
+    sendData,
+    data$,
   };
 }
 
