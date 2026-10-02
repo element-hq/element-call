@@ -10,46 +10,55 @@ import { type Logger, logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import {
   MatrixRTCSessionEvent,
   MatrixRTCSessionManager,
+  MembershipManagerEvent,
 } from "matrix-js-sdk/lib/matrixrtc";
+import { type IMembershipManager } from "matrix-js-sdk/lib/matrixrtc/IMembershipManager";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 import { v4 as uuidv4 } from "uuid";
-import { combineLatest, from, fromEvent, map } from "rxjs";
-
-import { MatrixRTCMode } from "../config";
-import { type ObservableScope } from "../reactive/ObservableScope";
 import {
-  createKeyRotationSuppressed$,
-  createMemberships$,
-  membershipsAndTransports$,
-} from "./SessionBehaviors";
+  BehaviorSubject,
+  combineLatest,
+  from,
+  fromEvent,
+  map,
+  type Observable,
+} from "rxjs";
+
+import { defaultSessionTimings, MatrixRTCMode } from "../config";
+import { type ObservableScope } from "../reactive/ObservableScope";
+import { filterBehavior, generateItems } from "../reactive/observable";
+import { mapScoped } from "../utils/mapScoped";
+import {
+  type LocalMediaInputs,
+  type LocalRTCMember,
+  type MatrixRTCClient,
+  type MatrixRTCClientOptions,
+  type RemoteRTCMember,
+} from "../api";
+import { MatrixRTCError } from "../errors";
+import { LivekitConnectionFactory } from "./ConnectionFactory";
 import { createHomeserverConnected$ } from "./HomeserverConnected";
-import { createConnectionManager$ } from "./ConnectionManager";
+import { joinJsSdkSession } from "./joinJsSdkSession";
+import { createKeyProvider } from "./KeyProvider";
+import { createLocalMembership$ } from "./LocalMember";
+import { getLocalTransport } from "./LocalTransport";
 import { createRemoteMatrixLivekitMembers$ } from "./MatrixLivekitMembers";
 import {
   createMatrixMemberMetadata$,
   createRoomMembers$,
 } from "./MatrixMemberMetadata";
-import { filterBehavior, generateItems } from "../reactive/observable";
-import {
-  type LocalMediaInputs,
-  type LocalRTCMember,
-  type RemoteRTCMember,
-  type MatrixRTCClient,
-  MatrixRTCError,
-  type MatrixRTCClientOptions,
-} from "../api";
-import { LivekitConnectionFactory } from "./ConnectionFactory";
-import { joinJsSdkSession, sessionTimings } from "./joinJsSdkSession";
-import { createKeyProvider } from "./KeyProvider";
-import { createLocalMembership$ } from "./LocalMember";
-import { getLocalTransport } from "./LocalTransport";
 import {
   createLocalRTCMember,
   createRemoteRTCMember,
   membershipKeys,
 } from "./Members";
-import { Publisher } from "./Publisher";
-import { mapScoped } from "../utils/mapScoped";
+import { createConnectionManager$ } from "./ConnectionManager";
+import { type DesiredMedia, Publisher } from "./Publisher";
+import {
+  createKeyRotationSuppressed$,
+  createMemberships$,
+  membershipsAndTransports$,
+} from "./SessionBehaviors";
 import { fatalError, sessionStatus } from "./status";
 import { createTransportRegistry } from "./Transports";
 
@@ -73,6 +82,7 @@ export function createMatrixRTCClient(
   if (!(userId && deviceId))
     throw new MatrixRTCError("The client has to be logged in");
   const { encryptionSystem, matrixRTCMode } = options;
+  const timings = { ...defaultSessionTimings, ...options.timings };
 
   const jsSdkSession = sessionManager(
     scope,
@@ -106,9 +116,16 @@ export function createMatrixRTCClient(
       ownMembershipIdentity,
       roomId: room.roomId,
       matrixRTCMode,
+      transportUrl: options.transportUrl,
+      fallbackTransportUrl: options.fallbackTransportUrl,
       logger,
     }),
   );
+
+  const desired: DesiredMedia = {
+    microphone$: new BehaviorSubject(localMedia.microphoneEnabled),
+    camera$: new BehaviorSubject(localMedia.cameraEnabled),
+  };
 
   const connectionManager = createConnectionManager$({
     scope,
@@ -117,6 +134,8 @@ export function createMatrixRTCClient(
       room.roomId,
       localMedia,
       keyProvider,
+      options.mediaQuality,
+      options.capture,
     ),
     localTransport$,
     remoteTransports$: transports$,
@@ -133,29 +152,48 @@ export function createMatrixRTCClient(
       scope,
       client,
       jsSdkSession,
-      sessionTimings.syncDisconnectGracePeriodMs,
+      timings.syncDisconnectGracePeriodMs,
     ),
     createPublisher: (connection) =>
       new Publisher(
         connection.livekitRoom,
         localMedia,
+        desired,
         logger.getChild(
           `[Publisher ${connection.transport.livekit_service_url}]`,
         ),
       ),
-    joinMatrixRTC: (transport) =>
+    joinMatrixRTC: (transport, delayedLeave) =>
       joinJsSdkSession(jsSdkSession, ownMembershipIdentity, transport, {
         encryptMedia: keyProvider !== undefined,
         matrixRTCMode,
         sendNotificationType: options.sendNotificationType,
         applicationData: options.applicationData,
+        timings,
+        delayedLeave,
       }),
     membershipManagerError$: fromEvent(
       jsSdkSession,
       MatrixRTCSessionEvent.MembershipManagerError,
     ),
     matrixRTCSession: jsSdkSession,
-    cameraEnabled$: localMedia.cameraEnabled$,
+    delayId$: scope.behavior(
+      (
+        fromEvent(
+          jsSdkSession,
+          MembershipManagerEvent.DelayIdChanged,
+          // The re-emitted event carries the original emitter as the second argument
+        ) as Observable<[string | undefined, IMembershipManager]>
+      ).pipe(map(([delayId]) => delayId ?? null)),
+      jsSdkSession.delayId ?? null,
+    ),
+    client,
+    roomId: room.roomId,
+    ownMembershipIdentity,
+    matrixRTCMode,
+    timings,
+    desired,
+    screenShare: options.capture?.screenShare,
     logger,
   });
 
@@ -228,6 +266,9 @@ export function createMatrixRTCClient(
     status$,
     connected$: localMembership.connected$,
     reconnecting$: localMembership.reconnecting$,
+    disconnectReason$: localMembership.disconnectReason$,
+    setMicrophoneEnabled: localMembership.setMicrophoneEnabled,
+    setCameraEnabled: localMembership.setCameraEnabled,
     fatalError$: scope.behavior(localMembership.state$.pipe(map(fatalError))),
     localMember$,
     remoteMembers$,

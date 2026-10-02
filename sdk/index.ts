@@ -10,18 +10,49 @@ Please see LICENSE in the repository root for full details.
  *
  * MatrixRTC sessions with LiveKit media, without Element Call's UI: the call
  * model Element Call's own view model is built on, for hosts that want to
- * build a different one. The design and the migration from Element Call's
- * `CallViewModel` are in `sdk-plan.md` at the repository root.
+ * build a different one. The design is in `SdkArchitecture.md` next to this
+ * file.
  */
 
-// Shared with Element Call. They live in `src` until the view model consumes
-// the SDK, at which point they move here; a consumer gets them from this
-// module either way.
 export { type Behavior, constant } from "./src/reactive/Behavior";
-export { ObservableScope } from "./src/reactive/ObservableScope";
-export { E2eeType } from "./src/encryption";
-export { type EncryptionSystem } from "./src/encryption";
-export { MatrixRTCMode } from "./src/config";
+export {
+  Epoch,
+  mapEpoch,
+  ObservableScope,
+  trackEpoch,
+} from "./src/reactive/ObservableScope";
+export {
+  filterBehavior,
+  finalizeValue,
+  generateItems,
+  generateItemsWithEpoch,
+  pauseWhen,
+} from "./src/reactive/observable";
+export { E2eeType, type EncryptionSystem } from "./src/encryption";
+export {
+  defaultMediaQuality,
+  defaultSessionTimings,
+  type DelayedLeaveTimings,
+  MatrixRTCMode,
+  type MediaQuality,
+  type SessionTimings,
+} from "./src/config";
+export {
+  ErrorCategory,
+  ErrorCode,
+  FailToGetOpenIdToken,
+  FailToStartLivekitConnection,
+  InsufficientCapacityError,
+  LivekitConnectionError,
+  MatrixRTCTransportMissingError,
+  MembershipManagerError,
+  NoMatrix2AuthorizationService,
+  PeerConnectionTimeoutError,
+  SFURoomCreationRestrictedError,
+  UnknownCallError as UnknownRTCError,
+} from "./src/errors";
 
 export * from "./src/api";
 export { createMatrixRTCClient } from "./src/session/MatrixRTCClient";
+// For a developer panel to check a transport url before using it
+export { getSFUConfigWithOpenID as authenticateWithTransport } from "./src/session/openIDSFU";

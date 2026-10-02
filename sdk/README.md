@@ -9,8 +9,9 @@ in [`SdkMigration.md`](./SdkMigration.md).
 
 **Status:** first implementation. `createMatrixRTCClient` joins the session, connects to
 the transport, publishes the local media and exposes every member's media; the
-development harness and its e2e tests in `playwright/sdk` drive it. It depends on
-nothing in Element Call's `src/`; Element Call does not consume it yet.
+development harness and its e2e tests in `playwright/sdk` drive it, and Element
+Call's own `CallViewModel` is built on it. It depends on nothing in Element Call's
+`src/`.
 
 ## Using it
 
@@ -29,10 +30,11 @@ const rtcClient = createMatrixRTCClient(
   client, // a matrix-js-sdk MatrixClient, logged in and syncing
   room, // the matrix-js-sdk Room, from client.getRoom() once the join has synced
   {
-    microphoneEnabled$: constant(true),
-    cameraEnabled$: constant(true),
+    microphoneEnabled: true,
+    cameraEnabled: true,
     audioInputDeviceId$: constant(undefined),
     videoInputDeviceId$: constant(undefined),
+    audioOutputDeviceId$: constant(undefined),
     videoProcessor$: constant(undefined),
   },
   {

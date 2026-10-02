@@ -15,12 +15,20 @@ import {
   type RTCNotificationType,
   type Transport,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { type Track, type TrackProcessor } from "livekit-client";
+import {
+  type Track,
+  type TrackProcessor,
+  type VideoCodec,
+} from "livekit-client";
 import { type Observable } from "rxjs";
 
 import { type Behavior } from "./reactive/Behavior";
 import { type EncryptionSystem } from "./encryption";
-import { type MatrixRTCMode } from "./config";
+import {
+  type MatrixRTCMode,
+  type MediaQuality,
+  type SessionTimings,
+} from "./config";
 
 // ---------------------------------------------------------------------------
 // Session
@@ -45,14 +53,48 @@ export interface MatrixRTCClientOptions {
    * (`"audio"` or `"video"`); anything else is dropped until it can.
    */
   applicationData?: Record<string, unknown>;
+  /** Session timings the host has configured; the defaults otherwise. */
+  timings?: Partial<SessionTimings>;
+  /** Limits on what is published; LiveKit's defaults otherwise. */
+  mediaQuality?: MediaQuality;
+  /** How the local tracks are captured and encoded. */
+  capture?: CaptureSettings;
+  /** Use this transport instead of asking the homeserver. */
+  transportUrl?: string;
+  /** Use this transport when the homeserver advertises none. */
+  fallbackTransportUrl?: string;
 }
 
-/** What the local member publishes. */
+/** Capture and encoding settings for the local tracks, applied at creation. */
+export interface CaptureSettings {
+  audio?: {
+    echoCancellation?: boolean;
+    noiseSuppression?: boolean;
+    autoGainControl?: boolean;
+  };
+  camera?: VideoCaptureSettings;
+  screenShare?: VideoCaptureSettings;
+}
+
+export interface VideoCaptureSettings {
+  resolution?: { width: number; height: number; frameRate?: number };
+  maxBitrate?: number;
+  maxFramerate?: number;
+  codec?: VideoCodec;
+}
+
+/**
+ * What the local member publishes. The enabled flags are the initial state;
+ * from then on `setMicrophoneEnabled` and `setCameraEnabled` on the client
+ * change it, and report what the device allowed.
+ */
 export interface LocalMediaInputs {
-  microphoneEnabled$: Behavior<boolean>;
-  cameraEnabled$: Behavior<boolean>;
+  microphoneEnabled: boolean;
+  cameraEnabled: boolean;
   audioInputDeviceId$: Behavior<string | undefined>;
   videoInputDeviceId$: Behavior<string | undefined>;
+  /** Undefined where the host routes audio itself, or to leave the browser's choice. */
+  audioOutputDeviceId$: Behavior<string | undefined>;
   /** Background blur and the like. */
   videoProcessor$: Behavior<TrackProcessor<Track.Kind.Video> | undefined>;
 }
@@ -63,6 +105,9 @@ export type ConnectionStatus =
   | "connected"
   | "reconnecting"
   | "disconnected";
+
+/** Why the client is not connected: the first failing of its three links. */
+export type DisconnectReason = "sync" | "membership" | "probablyLeft" | "media";
 
 import { type MatrixRTCError } from "./errors";
 
@@ -81,6 +126,17 @@ export interface MatrixRTCClient {
   status$: Behavior<ConnectionStatus>;
   connected$: Behavior<boolean>;
   reconnecting$: Behavior<boolean>;
+  /** Null while connected, the first failing link otherwise. */
+  disconnectReason$: Behavior<DisconnectReason | null>;
+
+  /**
+   * Publishes or mutes the microphone. Resolves with the state that
+   * resulted, which differs from the request where the device could not be
+   * used. Before the transport is connected the request is remembered and
+   * applied once it is.
+   */
+  setMicrophoneEnabled(enabled: boolean): Promise<boolean>;
+  setCameraEnabled(enabled: boolean): Promise<boolean>;
   /** A transport, Matrix or connection error that stops the session. */
   fatalError$: Behavior<MatrixRTCError | null>;
 
@@ -239,4 +295,11 @@ export interface MemberMedia {
 
 export interface LocalMemberMedia extends MemberMedia {
   local: true;
+  /**
+   * Restarts the camera facing the other way, on devices with a front and a
+   * back camera, and resolves with the id of the device now in use. Does
+   * nothing without a camera track or where the facing mode is unknown (see
+   * `VideoMediaTrack.facingMode$`).
+   */
+  switchCamera(): Promise<string | undefined>;
 }

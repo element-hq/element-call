@@ -24,7 +24,7 @@ export interface DelayedLeaveTimings {
   /** How long (in milliseconds) the homeserver waits before sending the delayed leave. */
   delay_ms: number;
   /** How often (in milliseconds) the client restarts the delayed leave. */
-  restart_ms: number;
+  restart_ms?: number;
   /** How long (in milliseconds) a restart may take before it counts as failed. */
   restart_timeout_ms?: number;
 }
@@ -45,12 +45,18 @@ export interface SessionTimings {
   /** The session size at which the media key stops being rotated. */
   keyRotationParticipantLimit?: number;
   delayedLeave: DelayedLeaveTimings;
+  /**
+   * The timings used where the SFU restarts the delayed leave on the
+   * client's behalf, which lets the client stop renewing it itself.
+   */
+  delegatedDelayedLeave: DelayedLeaveTimings;
 }
 
 export const defaultSessionTimings: SessionTimings = {
   syncDisconnectGracePeriodMs: 10_000,
   networkErrorRetryMs: 1_000,
   delayedLeave: { delay_ms: 18_000, restart_ms: 4_000 },
+  delegatedDelayedLeave: { delay_ms: 3_600_000, restart_ms: 300_000 },
 };
 
 /** Media quality settings a host may pass; everything is optional. */
