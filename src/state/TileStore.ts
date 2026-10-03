@@ -8,12 +8,15 @@ Please see LICENSE in the repository root for full details.
 import { BehaviorSubject } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 
-import { GridTileViewModel, SpotlightTileViewModel } from "./TileViewModel";
+import {
+  type GridTileMediaViewModel,
+  GridTileViewModel,
+  SpotlightTileViewModel,
+} from "./TileViewModel";
 import { fillGaps } from "../utils/iter";
 import { debugTileLayout } from "../settings/settings";
 import { type MediaViewModel } from "./media/MediaViewModel";
 import { type UserMediaViewModel } from "./media/UserMediaViewModel";
-import { type RingingMediaViewModel } from "./media/RingingMediaViewModel";
 
 type SpotlightBackground = "solid" | "transparent";
 
@@ -68,10 +71,8 @@ class SpotlightTileData {
 }
 
 class GridTileData {
-  private readonly media$: BehaviorSubject<
-    UserMediaViewModel | RingingMediaViewModel
-  >;
-  public get media(): UserMediaViewModel | RingingMediaViewModel {
+  private readonly media$: BehaviorSubject<GridTileMediaViewModel>;
+  public get media(): GridTileMediaViewModel {
     return this.media$.value;
   }
   public set media(value: UserMediaViewModel) {
@@ -80,7 +81,7 @@ class GridTileData {
 
   public readonly vm: GridTileViewModel;
 
-  public constructor(media: UserMediaViewModel | RingingMediaViewModel) {
+  public constructor(media: GridTileMediaViewModel) {
     this.media$ = new BehaviorSubject(media);
     this.vm = new GridTileViewModel(this.media$);
   }
@@ -140,7 +141,7 @@ export class TileStoreBuilder {
       : null;
 
   private readonly prevGridByMedia: Map<
-    MediaViewModel,
+    GridTileMediaViewModel,
     [GridTileData, number]
   > = new Map(
     this.prevGrid.map((entry, i) => [entry.media, [entry, i]] as const),
@@ -205,9 +206,7 @@ export class TileStoreBuilder {
    * Sets up a grid tile for the given media. If this is never called for some
    * media, then that media will have no grid tile.
    */
-  public registerGridTile(
-    media: UserMediaViewModel | RingingMediaViewModel,
-  ): void {
+  public registerGridTile(media: GridTileMediaViewModel): void {
     if (DEBUG_ENABLED)
       logger.debug(
         `[TileStore, ${this.generation}] register grid tile: ${media.displayName$.value}`,
@@ -215,8 +214,10 @@ export class TileStoreBuilder {
 
     if (this.spotlight !== null) {
       // We actually *don't* want spotlight speakers to appear in both the
-      // spotlight and the grid, so they're filtered out here
+      // spotlight and the grid, so they're filtered out here. (Unknown
+      // participants never make it into the spotlight.)
       if (
+        media.type !== "unknown participant" &&
         !(media.type === "user" && media.local) &&
         this.spotlight.media.includes(media)
       )
