@@ -115,7 +115,7 @@ without anyone hearing it. `leave()` pauses the upstream again and sends the lea
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
 | client            | a `MatrixRTCClient`: one room, one slot, one local member                                                                                   | `MatrixClient` is always written out |
 | session           | the MatrixRTC session in the room: the set of memberships. Only used for the js-sdk object, which stays inside the SDK as `JsSdkRTCSession` | MSC4143                              |
-| membership        | one device's MatrixRTC state event, the js-sdk `CallMembership`. The js-sdk name is kept until it renames it                                |                                      |
+| membership        | one device's MatrixRTC state event, seen by hosts as `RTCMembership`, the js-sdk `CallMembership` behind it                                 |                                      |
 | member            | an `RTCMember`: a membership plus what the SDK derives from it (display name, transport, media)                                             | Element Call's "matrixLivekitMember" |
 | participant       | a LiveKit participant, the media side of a member. Never leaves the SDK                                                                     |                                      |
 | transport         | where media is exchanged: a LiveKit service url today, described by `TransportMetadata`                                                     | MSC4143 "focus"                      |
@@ -334,7 +334,23 @@ export interface DataMessage {
 ### Members
 
 ```ts
-import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
+/**
+ * What a membership says, as hosts read it. The js-sdk `CallMembership` is
+ * behind it; anything beyond this is the js-sdk's API, not the SDK's.
+ */
+export type RTCMembership = Pick<
+  CallMembership,
+  | "userId"
+  | "deviceId"
+  | "memberId"
+  | "rtcBackendIdentity"
+  | "application"
+  | "applicationData"
+  | "getTransport"
+  | "transports"
+  | "createdTs"
+  | "getAbsoluteExpiry"
+>;
 
 export interface RTCMember {
   local: boolean;
@@ -346,7 +362,7 @@ export interface RTCMember {
   id: string;
   userId: string;
   deviceId: string;
-  membership$: Behavior<CallMembership>;
+  membership$: Behavior<RTCMembership>;
   /**
    * Matrix room state rather than MatrixRTC, but the SDK already holds the
    * room and every consumer wants them next to the membership. Disambiguated
@@ -658,9 +674,8 @@ public API only.
 
 - **Publishing before `join()`.** The initial requests are published at the
   join; creating the tracks earlier, for a lobby preview, is still missing.
-- **`applicationData` after the join.** The option is read once. The client
-  still updates `m.call.intent` from the camera state, as Element Call did; that
-  moves to the host once the data can be updated.
+- **`applicationData` after the join.** The option is read once; there is no
+  way to update it on a live membership yet.
 - **Raw local state.** The local member's state machine (`LocalMemberState`) stays
   internal; `status$`, `disconnectReason$` and `fatalError$` are its public view.
   A developer panel may want it as `LocalRTCMember.state$`.

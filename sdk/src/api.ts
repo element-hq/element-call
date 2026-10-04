@@ -48,9 +48,10 @@ export interface MatrixRTCClientOptions {
   /** The application's slot in the room. Default `ROOM`. */
   slot?: string;
   /**
-   * Whatever the application wants to say about itself in the membership.
-   * Opaque to the SDK. Today the js-sdk carries one key, `m.call.intent`
-   * (`"audio"` or `"video"`); anything else is dropped until it can.
+   * Whatever the application wants to say about itself in the membership,
+   * under namespaced keys. Opaque to the SDK, apart from `m.call.intent`
+   * (`"audio"` or `"video"`), which the membership format carries as a
+   * field of its own.
    */
   applicationData?: Record<string, unknown>;
   /** Session timings the host has configured; the defaults otherwise. */
@@ -211,13 +212,31 @@ export type ResolvedTransport =
 // ---------------------------------------------------------------------------
 // Members
 
+/**
+ * What a membership says, as hosts read it. The js-sdk `CallMembership` is
+ * behind it; anything beyond this is the js-sdk's API, not the SDK's.
+ */
+export type RTCMembership = Pick<
+  CallMembership,
+  | "userId"
+  | "deviceId"
+  | "memberId"
+  | "rtcBackendIdentity"
+  | "application"
+  | "applicationData"
+  | "getTransport"
+  | "transports"
+  | "createdTs"
+  | "getAbsoluteExpiry"
+>;
+
 export interface RTCMember {
   local: boolean;
   /** The identity the media backend knows this member by. */
   id: string;
   userId: string;
   deviceId: string;
-  membership$: Behavior<CallMembership>;
+  membership$: Behavior<RTCMembership>;
   displayName$: Behavior<string>;
   avatarUrl$: Behavior<string | undefined>;
   /** Which transport this member is on; undefined when the membership has none. */

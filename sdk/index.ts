@@ -49,7 +49,7 @@ export {
   NoMatrix2AuthorizationService,
   PeerConnectionTimeoutError,
   SFURoomCreationRestrictedError,
-  UnknownCallError as UnknownRTCError,
+  UnknownRTCError,
 } from "./src/errors";
 
 export * from "./src/api";

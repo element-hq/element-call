@@ -40,7 +40,7 @@ import {
   LivekitConnectionError,
   PeerConnectionTimeoutError,
   SFURoomCreationRestrictedError,
-  UnknownCallError,
+  UnknownRTCError,
 } from "../errors";
 
 export interface ConnectionOpts {
@@ -381,8 +381,8 @@ export class Connection {
         error instanceof MatrixRTCError
           ? error
           : error instanceof Error
-            ? new UnknownCallError(error)
-            : new UnknownCallError(new Error(`${error}`)),
+            ? new UnknownRTCError(error)
+            : new UnknownRTCError(new Error(`${error}`)),
       );
       // Its okay to ignore the throw. The error is part of the state.
       throw error;

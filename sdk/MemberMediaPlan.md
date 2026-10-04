@@ -383,8 +383,7 @@ No behaviour change; one PR of renames and type narrowing.
 
 ## Changed behaviour
 
-What a host sees differently, per slice. The first block is implemented; the
-rest follows the slices above and is marked as planned.
+What a host sees differently, per slice. All four blocks are implemented.
 
 ### `tracks$` and `isActive$` (this plan, implemented)
 
@@ -416,19 +415,20 @@ Differences in what the values mean:
   before had an order.
 - The harness labels audio elements with `data-active`. Test ids are unchanged.
 
-### Slice 1, local track controls (planned)
+### Slice 1, local track controls
 
 - `switchCamera()` on the local media becomes `switchFacingMode()` on the local
-  camera track; it rejects, instead of resolving `undefined`, when there is no
-  camera track.
+  camera track, so there is always a track to call it on; it still resolves
+  `undefined` where the facing mode is unknown.
 - Input device and processor changes are calls on the track. The SDK no longer
   reacts to `audioInputDeviceId$`, `videoInputDeviceId$` or `videoProcessor$`;
   a host that changed a setting and expected the SDK to follow now calls
-  `setDevice` or `setProcessor` itself.
+  `setDevice` or `setProcessor` itself. The initial device and processor travel
+  with the publish request instead.
 - `setEnabled(false)` on a local track mutes it and keeps the publication, as
   `setMicrophoneEnabled(false)` does today.
 
-### Slice 2, `publish` and `unpublish` (planned)
+### Slice 2, `publish` and `unpublish`
 
 - Screen sharing is `publish({ source: "screenShare" })` and `unpublish(id)`.
   A capture failure rejects the promise; there is no `screenShareError$` to
@@ -444,12 +444,13 @@ false, cameraEnabled: false` before.
 - Capture settings travel with each request. A host that set
   `capture.screenShare` once sets it on each screen share publish instead.
 
-### Slice 3, names (planned)
+### Slice 3, names
 
 - `membership$` is typed as `RTCMembership`. A host that reached for a
   `CallMembership` member outside the narrowed set must import the js-sdk type
   itself; the object is unchanged.
-- `UnknownCallError` is renamed; `index.ts` stops exporting it as
-  `UnknownRTCError`. Error codes do not change.
-- `applicationData` is forwarded whole once the js-sdk takes it. Until then the
-  behaviour is as today: only `m.call.intent` reaches the membership.
+- `UnknownCallError` is `UnknownRTCError` in the SDK too, not only in the
+  export. Error codes do not change. The two `Livekit*` errors are left to
+  slice 11 of `SdkMigration.md`, which renames them on both sides at once.
+- `applicationData` is forwarded whole: the js-sdk takes it next to
+  `m.call.intent`, which the membership format carries as a field of its own.

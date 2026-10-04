@@ -80,7 +80,7 @@ export class MembershipManagerError extends MatrixRTCError {
   }
 }
 
-export class UnknownCallError extends MatrixRTCError {
+export class UnknownRTCError extends MatrixRTCError {
   public constructor(cause: Error) {
     super(
       cause.message || "Unknown error",

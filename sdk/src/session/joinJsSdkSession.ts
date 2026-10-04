@@ -47,8 +47,8 @@ export function joinJsSdkSession(
     delayedLeave,
   }: Options,
 ): void {
-  // The one piece of application data the js-sdk can put in a membership
-  const intent = applicationData?.["m.call.intent"];
+  // The membership format carries the intent as a field of its own
+  const { "m.call.intent": intent, ...rest } = applicationData ?? {};
   const callIntent =
     typeof intent === "string" ? (intent as RTCCallIntent) : undefined;
   // Give up on the network as soon as either the sync has been down for the
@@ -61,6 +61,7 @@ export function joinJsSdkSession(
   session.joinRTCSession(ownMembershipIdentity, [transport], {
     notificationType: sendNotificationType,
     callIntent,
+    applicationData: rest,
     manageMediaKeys: encryptMedia,
     delayedLeaveEventRestartMs: delayedLeave.restart_ms,
     delayedLeaveEventDelayMs: delayedLeave.delay_ms,
