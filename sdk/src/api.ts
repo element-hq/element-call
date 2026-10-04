@@ -57,23 +57,16 @@ export interface MatrixRTCClientOptions {
   timings?: Partial<SessionTimings>;
   /** Limits on what is published; LiveKit's defaults otherwise. */
   mediaQuality?: MediaQuality;
-  /** How the local tracks are captured and encoded. */
-  capture?: CaptureSettings;
   /** Use this transport instead of asking the homeserver. */
   transportUrl?: string;
   /** Use this transport when the homeserver advertises none. */
   fallbackTransportUrl?: string;
 }
 
-/** Capture and encoding settings for the local tracks, applied at creation. */
-export interface CaptureSettings {
-  audio?: {
-    echoCancellation?: boolean;
-    noiseSuppression?: boolean;
-    autoGainControl?: boolean;
-  };
-  camera?: VideoCaptureSettings;
-  screenShare?: VideoCaptureSettings;
+export interface AudioCaptureSettings {
+  echoCancellation?: boolean;
+  noiseSuppression?: boolean;
+  autoGainControl?: boolean;
 }
 
 export interface VideoCaptureSettings {
@@ -84,17 +77,29 @@ export interface VideoCaptureSettings {
 }
 
 /**
- * What the local member publishes when it joins. Initial values: from then on
- * `setMicrophoneEnabled` and `setCameraEnabled` on the client, and the
- * controls on the local tracks, change it.
+ * One thing to publish: a source, where to capture it from and how to encode
+ * it. Where the device and the settings are left out, the browser's and
+ * LiveKit's defaults apply.
  */
+export type PublishRequest =
+  | { source: "microphone"; deviceId?: string; capture?: AudioCaptureSettings }
+  | {
+      source: "camera";
+      deviceId?: string;
+      /** Background blur and the like. */
+      processor?: TrackProcessor<Track.Kind.Video>;
+      capture?: VideoCaptureSettings;
+    }
+  | {
+      source: "screenShare";
+      /** Whether to capture the screen's audio too. Default true. */
+      audio?: boolean;
+      capture?: VideoCaptureSettings;
+    };
+
 export interface LocalMediaInputs {
-  microphoneEnabled: boolean;
-  cameraEnabled: boolean;
-  audioInputDeviceId?: string;
-  videoInputDeviceId?: string;
-  /** Background blur and the like. */
-  videoProcessor?: TrackProcessor<Track.Kind.Video>;
+  /** Published at the join; `publish` on the local member adds to it from then on. */
+  publish: PublishRequest[];
   /** Undefined where the host routes audio itself, or to leave the browser's choice. */
   audioOutputDeviceId$: Behavior<string | undefined>;
 }
@@ -129,14 +134,6 @@ export interface MatrixRTCClient {
   /** Null while connected, the first failing link otherwise. */
   disconnectReason$: Behavior<DisconnectReason | null>;
 
-  /**
-   * Publishes or mutes the microphone. Resolves with the state that
-   * resulted, which differs from the request where the device could not be
-   * used. Before the transport is connected the request is remembered and
-   * applied once it is.
-   */
-  setMicrophoneEnabled(enabled: boolean): Promise<boolean>;
-  setCameraEnabled(enabled: boolean): Promise<boolean>;
   /** A transport, Matrix or connection error that stops the session. */
   fatalError$: Behavior<MatrixRTCError | null>;
 
@@ -239,11 +236,18 @@ export interface RemoteRTCMember extends RTCMember {
 export interface LocalRTCMember extends RTCMember {
   local: true;
   media$: Behavior<LocalMemberMedia | null>;
-  sharingScreen$: Behavior<boolean>;
-  /** Null when the platform cannot share a screen. */
-  toggleScreenSharing: (() => void) | null;
-  screenShareError$: Behavior<Error | null>;
-  dismissScreenShareError(): void;
+  /**
+   * Publishes a source and resolves with its track once it is in `tracks$`.
+   * Before the transport is connected the request is remembered and applied
+   * once it is. Rejects where the device could not be used, including the
+   * user closing the picker. One publication per source: publishing a source
+   * again unmutes it.
+   */
+  publish(
+    request: PublishRequest,
+  ): Promise<LocalAudioMediaTrack | LocalVideoMediaTrack>;
+  /** Removes one of our tracks; a screen share takes its audio with it. */
+  unpublish(id: string): Promise<void>;
 }
 
 // ---------------------------------------------------------------------------

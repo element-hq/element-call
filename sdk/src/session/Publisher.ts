@@ -10,19 +10,32 @@ import {
   type LocalTrackPublication,
   ParticipantEvent,
   type Room as LivekitRoom,
-  Track,
+  type Track,
 } from "livekit-client";
 import { type Logger } from "matrix-js-sdk/lib/logger";
-import { type BehaviorSubject } from "rxjs";
 
 import { ObservableScope } from "../reactive/ObservableScope";
-import { type LocalMediaInputs } from "../api";
+import {
+  type LocalMediaInputs,
+  type MediaSource,
+  type PublishRequest,
+} from "../api";
+import { livekitSources, mediaSources } from "../media/LivekitMediaTrack";
+import {
+  audioCaptureOptions,
+  screenShareCaptureOptions,
+  screenSharePublishOptions,
+  videoCaptureOptions,
+  videoPublishOptions,
+} from "./publishOptions";
 
-/** What the host last asked for, kept across publishers. */
-export interface DesiredMedia {
-  microphone$: BehaviorSubject<boolean>;
-  camera$: BehaviorSubject<boolean>;
+/** What the host asked to publish, kept across publishers for a reconnection. */
+export interface DesiredPublication {
+  request: PublishRequest;
+  enabled: boolean;
 }
+
+export type DesiredMedia = Map<MediaSource, DesiredPublication>;
 
 /**
  * Publishes the local media on one LiveKit room, following the host's
@@ -35,7 +48,8 @@ export interface DesiredMedia {
  */
 export class Publisher {
   public shouldPublish = false;
-  private tracksRequested = false;
+  /** Whether the initial requests have been published; `publish` is immediate from then on. */
+  public started = false;
   private readonly scope = new ObservableScope();
   private readonly room: LivekitRoom;
 
@@ -64,53 +78,106 @@ export class Publisher {
       this.onLocalTrackPublished,
     );
     try {
-      await this.stopTracks();
+      for (const { track } of this.publications())
+        if (track) await this.room.localParticipant.unpublishTrack(track, true);
     } catch (e) {
       this.logger.error("Failed to stop the local tracks", e);
     }
   }
 
-  /**
-   * Creates the microphone and camera tracks the host asked for. Both are
-   * enabled in one call so that the browser asks for permission once. Safe to
-   * call more than once.
-   */
-  public createAndSetupTracks(): void {
-    if (this.tracksRequested) return;
-    this.tracksRequested = true;
+  /** Publishes what the host asked for, less what it has muted since. Safe to call more than once. */
+  public start(): void {
+    if (this.started) return;
+    this.started = true;
+    const requests = [...this.desired.values()]
+      .filter(({ enabled }) => enabled)
+      .map(({ request }) => request);
+    const sources = new Set(requests.map((request) => request.source));
+    // Microphone and camera in one call so that the browser asks for
+    // permission once; the room defaults carry their options. LiveKit
+    // resolves these once the track is published, which may block on the
+    // connection; LocalTrackPublished is what tells us a track exists.
+    if (sources.has("microphone") && sources.has("camera"))
+      void this.room.localParticipant.enableCameraAndMicrophone();
+    for (const request of requests)
+      if (
+        request.source === "screenShare" ||
+        !(sources.has("microphone") && sources.has("camera"))
+      )
+        this.publish(request).catch((e) => {
+          this.logger.error(`Failed to publish the ${request.source}`, e);
+        });
+  }
+
+  /** Publishes one request and resolves with its publication once LiveKit has it. */
+  public async publish(
+    request: PublishRequest,
+  ): Promise<LocalTrackPublication | undefined> {
     const participant = this.room.localParticipant;
-    const audio = this.desired.microphone$.value;
-    const video = this.desired.camera$.value;
-    // LiveKit resolves these once the track is published, which may block on
-    // the connection; LocalTrackPublished is what tells us a track exists.
-    if (audio && video) void participant.enableCameraAndMicrophone();
-    else if (audio) void participant.setMicrophoneEnabled(true);
-    else if (video) void participant.setCameraEnabled(true);
+    let publication: LocalTrackPublication | undefined;
+    if (request.source === "microphone")
+      publication = await participant.setMicrophoneEnabled(
+        true,
+        audioCaptureOptions(request),
+      );
+    else if (request.source === "camera")
+      publication = await participant.setCameraEnabled(
+        true,
+        videoCaptureOptions(request),
+        videoPublishOptions(request.capture),
+      );
+    else
+      publication = await participant.setScreenShareEnabled(
+        true,
+        screenShareCaptureOptions(request),
+        screenSharePublishOptions(request.capture),
+      );
+    // Until the member has joined, the upstream has to stay paused
+    if (!this.shouldPublish) await this.pauseUpstreams();
+    return publication;
+  }
+
+  public async unpublish(source: MediaSource): Promise<void> {
+    const participant = this.room.localParticipant;
+    // Takes the screen share audio with it
+    if (source === "screenShare") {
+      await participant.setScreenShareEnabled(false);
+      return;
+    }
+    const track = participant.getTrackPublication(
+      livekitSources[source],
+    )?.track;
+    if (track) await participant.unpublishTrack(track, true);
   }
 
   /**
-   * Enables or disables a source and reports what resulted: the request where
+   * Mutes or unmutes a source and reports what resulted: the request where
    * it succeeded, the state LiveKit is left in where it did not (a denied
    * permission, a missing device).
    */
   public async setEnabled(
-    source: Track.Source.Microphone | Track.Source.Camera,
+    source: MediaSource,
     enabled: boolean,
   ): Promise<boolean> {
     const participant = this.room.localParticipant;
+    const livekitSource = livekitSources[source];
     try {
-      if (source === Track.Source.Microphone)
+      if (source === "microphone")
         await participant.setMicrophoneEnabled(enabled);
-      else await participant.setCameraEnabled(enabled);
+      else if (source === "camera") await participant.setCameraEnabled(enabled);
+      else {
+        const publication = participant.getTrackPublication(livekitSource);
+        if (!publication) return false;
+        if (enabled) await publication.unmute();
+        else await publication.mute();
+      }
       // Unmuting restarts the upstream; until the member has joined, it has
       // to stay paused
-      if (enabled && !this.shouldPublish) await this.pauseUpstreams([source]);
+      if (enabled && !this.shouldPublish) await this.pauseUpstreams();
       return enabled;
     } catch (e) {
       this.logger.error(`Failed to set ${source} enabled=${enabled}`, e);
-      return source === Track.Source.Microphone
-        ? participant.isMicrophoneEnabled
-        : participant.isCameraEnabled;
+      return !(participant.getTrackPublication(livekitSource)?.isMuted ?? true);
     }
   }
 
@@ -119,64 +186,34 @@ export class Publisher {
     this.shouldPublish = true;
     // Enabling a track does not resume an upstream that was paused while it
     // was already enabled, so it is done explicitly
-    await this.resumeUpstreams([Track.Source.Microphone, Track.Source.Camera]);
+    for (const { track } of this.publications())
+      if (track?.isUpstreamPaused) await track.resumeUpstream();
   }
 
   public async stopPublishing(): Promise<void> {
     this.shouldPublish = false;
-    await this.pauseUpstreams([
-      Track.Source.Microphone,
-      Track.Source.Camera,
-      Track.Source.ScreenShare,
-    ]);
-  }
-
-  private async stopTracks(): Promise<void> {
-    const participant = this.room.localParticipant;
-    for (const source of [
-      Track.Source.Microphone,
-      Track.Source.Camera,
-      Track.Source.ScreenShare,
-    ]) {
-      const track = participant.getTrackPublication(source)?.track;
-      if (track) await participant.unpublishTrack(track, true);
-    }
+    await this.pauseUpstreams();
   }
 
   private onLocalTrackPublished(publication: LocalTrackPublication): void {
     this.logger.info(`Local ${publication.source} track published`);
     if (!this.shouldPublish)
-      this.pauseUpstreams([publication.source]).catch((e) => {
+      this.pauseUpstreams().catch((e) => {
         this.logger.error("Failed to pause the upstream", e);
       });
     // The host may have changed its mind while the track was being created
-    const desired =
-      publication.source === Track.Source.Microphone
-        ? this.desired.microphone$.value
-        : publication.source === Track.Source.Camera
-          ? this.desired.camera$.value
-          : undefined;
-    if (desired === false)
-      void this.setEnabled(
-        publication.source as Track.Source.Microphone | Track.Source.Camera,
-        false,
-      );
+    const source = mediaSources[publication.source as Track.Source];
+    if (this.desired.get(source)?.enabled === false)
+      void this.setEnabled(source, false);
   }
 
-  private async pauseUpstreams(sources: Track.Source[]): Promise<void> {
-    for (const source of sources) {
-      const track =
-        this.room.localParticipant.getTrackPublication(source)?.track;
+  private async pauseUpstreams(): Promise<void> {
+    for (const { track } of this.publications())
       if (track && !track.isUpstreamPaused) await track.pauseUpstream();
-    }
   }
 
-  private async resumeUpstreams(sources: Track.Source[]): Promise<void> {
-    for (const source of sources) {
-      const track =
-        this.room.localParticipant.getTrackPublication(source)?.track;
-      if (track?.isUpstreamPaused) await track.resumeUpstream();
-    }
+  private publications(): LocalTrackPublication[] {
+    return [...this.room.localParticipant.trackPublications.values()];
   }
 
   private followAudioOutput(): void {

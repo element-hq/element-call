@@ -11,7 +11,15 @@ import {
   type Room as LivekitRoom,
 } from "livekit-client";
 import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
-import { combineLatest, distinctUntilChanged, map } from "rxjs";
+import {
+  combineLatest,
+  distinctUntilChanged,
+  filter,
+  firstValueFrom,
+  map,
+  of,
+  switchMap,
+} from "rxjs";
 
 import { type Behavior } from "../reactive/Behavior";
 import { type ObservableScope } from "../reactive/ObservableScope";
@@ -80,26 +88,40 @@ export function createLocalRTCMember(
   localMembership: LocalMembership,
   context: MemberContext,
 ): LocalRTCMember {
+  const media$ = mediaFor(
+    scope,
+    localMembership.participant$,
+    localMembership.connection$,
+    (mediaScope, participant, room) =>
+      createLocalLivekitMemberMedia(
+        mediaScope,
+        participant,
+        room,
+        context.encryptionSystem,
+        localMembership.setEnabled,
+      ),
+  );
   return {
     ...createRTCMember(scope, membership$, context),
     local: true,
-    media$: mediaFor(
-      scope,
-      localMembership.participant$,
-      localMembership.connection$,
-      (mediaScope, participant, room) =>
-        createLocalLivekitMemberMedia(
-          mediaScope,
-          participant,
-          room,
-          context.encryptionSystem,
-          localMembership.setEnabled,
+    media$,
+    publish: async (request) => {
+      const { trackSid } = await localMembership.publish(request);
+      return firstValueFrom(
+        media$.pipe(
+          switchMap((media) => media?.tracks$ ?? of([])),
+          map((tracks) => tracks.find((track) => track.id === trackSid)),
+          filter((track) => track !== undefined),
         ),
-    ),
-    sharingScreen$: localMembership.sharingScreen$,
-    toggleScreenSharing: localMembership.toggleScreenSharing,
-    screenShareError$: localMembership.screenShareError$,
-    dismissScreenShareError: localMembership.dismissScreenShareError,
+      );
+    },
+    unpublish: async (id) => {
+      const track = media$.value?.tracks$.value.find((t) => t.id === id);
+      if (track === undefined) return;
+      await localMembership.unpublish(
+        track.source === "screenShareAudio" ? "screenShare" : track.source,
+      );
+    },
   };
 }
 

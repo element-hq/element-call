@@ -52,7 +52,7 @@ import {
 import { MatrixRTCError } from "../errors";
 import { LazyBehavior } from "../utils/LazyBehavior";
 
-const sources: Record<Track.Source, MediaSource> = {
+export const mediaSources: Record<Track.Source, MediaSource> = {
   [Track.Source.Microphone]: "microphone",
   [Track.Source.Camera]: "camera",
   [Track.Source.ScreenShare]: "screenShare",
@@ -114,7 +114,7 @@ export function createLivekitMediaTrack(
     publication.isMuted,
   );
   const base: MediaTrack = {
-    source: sources[publication.source],
+    source: mediaSources[publication.source],
     kind: publication.kind === Track.Kind.Audio ? "audio" : "video",
     id: publication.trackSid,
     muted$,

@@ -23,12 +23,14 @@ import { type OpenIDClientParts, type SFUConfig } from "./openIDSFU";
 import { type Behavior } from "../reactive/Behavior";
 import { Connection, type ConnectionOpts, ConnectionState } from "./Connection";
 import { type ObservableScope } from "../reactive/ObservableScope";
-import {
-  type CaptureSettings,
-  type LocalMediaInputs,
-  type ResolvedTransport,
-} from "../api";
+import { type LocalMediaInputs, type ResolvedTransport } from "../api";
 import { type MediaQuality } from "../config";
+import {
+  audioCaptureOptions,
+  type PublishRequestFor,
+  videoCaptureOptions,
+  videoPublishOptions,
+} from "./publishOptions";
 
 export interface ConnectionFactory {
   createConnection(
@@ -93,7 +95,6 @@ export class LivekitConnectionFactory implements ConnectionFactory {
     private readonly localMedia: LocalMediaInputs,
     private readonly keyProvider: BaseKeyProvider | undefined,
     private readonly mediaQuality: MediaQuality | undefined,
-    private readonly capture: CaptureSettings | undefined,
   ) {}
 
   public createConnection(
@@ -112,12 +113,7 @@ export class LivekitConnectionFactory implements ConnectionFactory {
         scope,
         livekitRoomFactory: () =>
           new LivekitRoom(
-            roomOptions(
-              this.localMedia,
-              this.keyProvider,
-              this.mediaQuality,
-              this.capture,
-            ),
+            roomOptions(this.localMedia, this.keyProvider, this.mediaQuality),
           ),
         ownMembershipIdentity,
       },
@@ -126,40 +122,41 @@ export class LivekitConnectionFactory implements ConnectionFactory {
   }
 }
 
+/** The initial requests become the room's defaults, so that one permission prompt covers both. */
 function roomOptions(
   localMedia: LocalMediaInputs,
   keyProvider: BaseKeyProvider | undefined,
   mediaQuality: MediaQuality | undefined,
-  capture: CaptureSettings | undefined,
 ): RoomOptions {
   const base = buildLiveKitOptions(mediaQuality);
-  const camera = capture?.camera;
+  const microphone = initialRequest(localMedia, "microphone");
+  const camera = initialRequest(localMedia, "camera");
   return {
     ...base,
     videoCaptureDefaults: {
       ...base.videoCaptureDefaults,
-      deviceId: localMedia.videoInputDeviceId,
-      processor: localMedia.videoProcessor,
-      ...(camera?.resolution && { resolution: camera.resolution }),
+      ...(camera && videoCaptureOptions(camera)),
     },
     publishDefaults: {
       ...base.publishDefaults,
-      ...(camera?.maxBitrate !== undefined && {
-        videoEncoding: {
-          maxBitrate: camera.maxBitrate,
-          maxFramerate: camera.maxFramerate,
-        },
-      }),
-      ...(camera?.codec && { videoCodec: camera.codec }),
+      ...(camera && videoPublishOptions(camera.capture)),
     },
     audioCaptureDefaults: {
       ...base.audioCaptureDefaults,
-      deviceId: localMedia.audioInputDeviceId,
-      ...capture?.audio,
+      ...(microphone && audioCaptureOptions(microphone)),
     },
     audioOutput: { deviceId: localMedia.audioOutputDeviceId$.value },
     // Every room needs a worker of its own: one gets confused by streams from
     // several rooms
     e2ee: keyProvider && { keyProvider, worker: new E2EEWorker() },
   };
+}
+
+function initialRequest<S extends "microphone" | "camera">(
+  localMedia: LocalMediaInputs,
+  source: S,
+): PublishRequestFor<S> | undefined {
+  return localMedia.publish.find(
+    (request): request is PublishRequestFor<S> => request.source === source,
+  );
 }

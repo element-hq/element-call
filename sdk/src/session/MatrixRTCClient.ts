@@ -15,14 +15,7 @@ import {
 import { type IMembershipManager } from "matrix-js-sdk/lib/matrixrtc/IMembershipManager";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 import { v4 as uuidv4 } from "uuid";
-import {
-  BehaviorSubject,
-  combineLatest,
-  from,
-  fromEvent,
-  map,
-  type Observable,
-} from "rxjs";
+import { combineLatest, from, fromEvent, map, type Observable } from "rxjs";
 
 import { defaultSessionTimings, MatrixRTCMode } from "../config";
 import { type ObservableScope } from "../reactive/ObservableScope";
@@ -123,10 +116,12 @@ export function createMatrixRTCClient(
     }),
   );
 
-  const desired: DesiredMedia = {
-    microphone$: new BehaviorSubject(localMedia.microphoneEnabled),
-    camera$: new BehaviorSubject(localMedia.cameraEnabled),
-  };
+  const desired: DesiredMedia = new Map(
+    localMedia.publish.map((request) => [
+      request.source,
+      { request, enabled: true },
+    ]),
+  );
 
   const connectionManager = createConnectionManager$({
     scope,
@@ -136,7 +131,6 @@ export function createMatrixRTCClient(
       localMedia,
       keyProvider,
       options.mediaQuality,
-      options.capture,
     ),
     localTransport$,
     remoteTransports$: transports$,
@@ -194,7 +188,6 @@ export function createMatrixRTCClient(
     matrixRTCMode,
     timings,
     desired,
-    screenShare: options.capture?.screenShare,
     logger,
   });
 
@@ -276,8 +269,6 @@ export function createMatrixRTCClient(
     connected$: localMembership.connected$,
     reconnecting$: localMembership.reconnecting$,
     disconnectReason$: localMembership.disconnectReason$,
-    setMicrophoneEnabled: localMembership.setMicrophoneEnabled,
-    setCameraEnabled: localMembership.setCameraEnabled,
     fatalError$: scope.behavior(localMembership.state$.pipe(map(fatalError))),
     localMember$,
     remoteMembers$,

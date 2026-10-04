@@ -36,6 +36,7 @@ const messages = document.getElementById("messages")!;
 const buttons = {
   microphone: document.getElementById("microphone") as HTMLButtonElement,
   camera: document.getElementById("camera") as HTMLButtonElement,
+  screenShare: document.getElementById("screenShare") as HTMLButtonElement,
   leave: document.getElementById("leave") as HTMLButtonElement,
 };
 
@@ -74,8 +75,7 @@ async function start(
       client,
       room,
       {
-        microphoneEnabled: true,
-        cameraEnabled: true,
+        publish: [{ source: "microphone" }, { source: "camera" }],
         audioOutputDeviceId$: constant(undefined),
       },
       {
@@ -94,10 +94,13 @@ async function start(
     rtcClient.join();
 
     toggle(buttons.microphone, async (enabled) =>
-      rtcClient.setMicrophoneEnabled(enabled),
+      setPublished(rtcClient, "microphone", enabled),
     );
     toggle(buttons.camera, async (enabled) =>
-      rtcClient.setCameraEnabled(enabled),
+      setPublished(rtcClient, "camera", enabled),
+    );
+    toggle(buttons.screenShare, async (enabled) =>
+      setPublished(rtcClient, "screenShare", enabled),
     );
     buttons.leave.hidden = false;
     buttons.leave.onclick = (): void => {
@@ -113,6 +116,31 @@ async function start(
     status.textContent = `Error: ${e}`;
     logger.error(e);
   }
+}
+
+/**
+ * Turns one of our sources on or off: a microphone or camera is muted and
+ * unmuted while it exists and published when it does not; a screen share is
+ * published and unpublished.
+ */
+async function setPublished(
+  rtcClient: MatrixRTCClient,
+  source: "microphone" | "camera" | "screenShare",
+  enabled: boolean,
+): Promise<boolean> {
+  const member = rtcClient.localMember$.value;
+  if (member === null) return !enabled;
+  const track = member.media$.value?.tracks$.value.find(
+    (t) => t.source === source,
+  );
+  if (track && source === "screenShare") {
+    if (!enabled) await member.unpublish(track.id);
+    return enabled;
+  }
+  if (track) return track.setEnabled(enabled);
+  if (!enabled) return false;
+  await member.publish({ source });
+  return true;
 }
 
 /** A pressed button means the source is on; the SDK says what it could do. */

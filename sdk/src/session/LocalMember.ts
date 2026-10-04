@@ -8,11 +8,8 @@ Please see LICENSE in the repository root for full details.
 import { observeParticipantEvents } from "@livekit/components-core";
 import {
   type LocalParticipant,
-  type Participant,
+  type LocalTrackPublication,
   ParticipantEvent,
-  type ScreenShareCaptureOptions,
-  Track,
-  type TrackPublishOptions,
 } from "livekit-client";
 import { type MatrixClient } from "matrix-js-sdk";
 import { type Logger } from "matrix-js-sdk/lib/logger";
@@ -29,6 +26,8 @@ import {
   combineLatest,
   concat,
   distinctUntilChanged,
+  filter,
+  firstValueFrom,
   map,
   NEVER,
   type Observable,
@@ -49,7 +48,7 @@ import {
 import {
   type DisconnectReason,
   type MediaSource,
-  type VideoCaptureSettings,
+  type PublishRequest,
 } from "../api";
 import {
   FailToStartLivekitConnection,
@@ -105,7 +104,6 @@ interface Props {
   matrixRTCMode: MatrixRTCMode;
   timings: SessionTimings;
   desired: DesiredMedia;
-  screenShare?: VideoCaptureSettings;
   logger: Logger;
 }
 
@@ -121,14 +119,11 @@ export interface LocalMembership {
   /** Connected once, and currently not. */
   reconnecting$: Behavior<boolean>;
   disconnectReason$: Behavior<DisconnectReason | null>;
-  setMicrophoneEnabled: (enabled: boolean) => Promise<boolean>;
-  setCameraEnabled: (enabled: boolean) => Promise<boolean>;
+  /** Resolves with the publication, once a publisher has made it. */
+  publish: (request: PublishRequest) => Promise<LocalTrackPublication>;
+  unpublish: (source: MediaSource) => Promise<void>;
   /** Mutes or unmutes one of our publications; the result is the state that resulted. */
   setEnabled: (source: MediaSource, enabled: boolean) => Promise<boolean>;
-  sharingScreen$: Behavior<boolean>;
-  toggleScreenSharing: (() => void) | null;
-  screenShareError$: Behavior<Error | null>;
-  dismissScreenShareError: () => void;
 }
 
 /**
@@ -152,7 +147,6 @@ export function createLocalMembership$({
   matrixRTCMode,
   timings,
   desired,
-  screenShare,
   logger: parentLogger,
 }: Props): LocalMembership {
   const logger = parentLogger.getChild("[LocalMember]");
@@ -222,7 +216,7 @@ export function createLocalMembership$({
       if (publisher === null) return;
       try {
         if (shouldPublish) {
-          publisher.createAndSetupTracks();
+          publisher.start();
           await publisher.startPublishing();
         } else if (publisher.shouldPublish) await publisher.stopPublishing();
       } catch (e) {
@@ -398,73 +392,61 @@ export function createLocalMembership$({
       }
     });
 
+  const publish = async (
+    request: PublishRequest,
+  ): Promise<LocalTrackPublication> => {
+    desired.set(request.source, { request, enabled: true });
+    const publisher = publisher$.value;
+    try {
+      // Before the start, the publisher publishes everything desired itself
+      if (publisher?.started) {
+        const publication = await publisher.publish(request);
+        if (publication) return publication;
+      }
+      return await firstValueFrom(publication$(request.source));
+    } catch (e) {
+      desired.delete(request.source);
+      throw toMatrixRTCError(e);
+    }
+  };
+
+  const publication$ = (
+    source: MediaSource,
+  ): Observable<LocalTrackPublication> =>
+    participant$.pipe(
+      switchMap((participant) =>
+        participant === null
+          ? NEVER
+          : observeParticipantEvents(
+              participant,
+              ParticipantEvent.LocalTrackPublished,
+            ).pipe(
+              map(() =>
+                participant.getTrackPublication(livekitSources[source]),
+              ),
+            ),
+      ),
+      filter((publication) => publication !== undefined),
+    );
+
+  const unpublish = async (source: MediaSource): Promise<void> => {
+    desired.delete(source);
+    await publisher$.value?.unpublish(source);
+  };
+
   const setEnabled = async (
     source: MediaSource,
     enabled: boolean,
   ): Promise<boolean> => {
-    if (source !== "microphone" && source !== "camera")
-      return setPublicationEnabled(source, enabled);
-    const desired$ =
-      source === "microphone" ? desired.microphone$ : desired.camera$;
-    desired$.next(enabled);
+    const wanted = desired.get(source);
+    if (wanted) wanted.enabled = enabled;
     // Without a publisher the request waits for the tracks to be created
     const publisher = publisher$.value;
     if (publisher === null) return enabled;
-    const result = await publisher.setEnabled(
-      source === "microphone" ? Track.Source.Microphone : Track.Source.Camera,
-      enabled,
-    );
-    if (result !== enabled) desired$.next(result);
+    const result = await publisher.setEnabled(source, enabled);
+    if (wanted && result !== enabled) wanted.enabled = result;
     return result;
   };
-
-  // A publication the publisher does not recreate on reconnection, so there
-  // is nothing to remember for it
-  const setPublicationEnabled = async (
-    source: MediaSource,
-    enabled: boolean,
-  ): Promise<boolean> => {
-    const publication = participant$.value?.getTrackPublication(
-      livekitSources[source],
-    );
-    if (!publication) return false;
-    if (enabled) await publication.unmute();
-    else await publication.mute();
-    return !publication.isMuted;
-  };
-
-  const sharingScreen$ = scope.behavior(
-    participant$.pipe(
-      switchMap((p) => (p === null ? of(false) : observeSharingScreen$(p))),
-    ),
-  );
-  const screenShareError$ = new BehaviorSubject<Error | null>(null);
-  const toggleScreenSharing =
-    "getDisplayMedia" in (navigator.mediaDevices ?? {})
-      ? (): void => {
-          const participant = participant$.value;
-          if (participant === null) return;
-          const enable = !sharingScreen$.value;
-          participant
-            .setScreenShareEnabled(
-              enable,
-              screenShareCaptureOptions(screenShare),
-              screenSharePublishOptions(screenShare),
-            )
-            .catch((e: unknown) => {
-              logger.error(
-                `Screen share ${enable ? "start" : "stop"} failed`,
-                e,
-              );
-              // The user closing the picker is not an error worth showing
-              if (e instanceof DOMException && e.name === "NotAllowedError")
-                return;
-              screenShareError$.next(
-                e instanceof Error ? e : new Error(String(e)),
-              );
-            });
-        }
-      : null;
 
   return {
     requestJoinAndPublish: () => joinRequested$.next(true),
@@ -476,13 +458,9 @@ export function createLocalMembership$({
     connected$,
     reconnecting$,
     disconnectReason$,
-    setMicrophoneEnabled: async (enabled) => setEnabled("microphone", enabled),
-    setCameraEnabled: async (enabled) => setEnabled("camera", enabled),
+    publish,
+    unpublish,
     setEnabled,
-    sharingScreen$,
-    toggleScreenSharing,
-    screenShareError$,
-    dismissScreenShareError: () => screenShareError$.next(null),
   };
 }
 
@@ -510,47 +488,4 @@ async function checkDelegationSupport(
     );
     return false;
   }
-}
-
-function screenShareCaptureOptions(
-  settings: VideoCaptureSettings | undefined,
-): ScreenShareCaptureOptions {
-  return {
-    // No echo cancellation: it would cancel the other members' voices out of
-    // the shared audio
-    audio: {
-      autoGainControl: false,
-      noiseSuppression: false,
-      voiceIsolation: false,
-    },
-    selfBrowserSurface: "include",
-    surfaceSwitching: "include",
-    systemAudio: "include",
-    ...(settings?.resolution && { resolution: settings.resolution }),
-  };
-}
-
-function screenSharePublishOptions(
-  settings: VideoCaptureSettings | undefined,
-): TrackPublishOptions | undefined {
-  if (settings === undefined) return undefined;
-  return {
-    ...(settings.maxBitrate !== undefined && {
-      screenShareEncoding: {
-        maxBitrate: settings.maxBitrate,
-        maxFramerate: settings.maxFramerate,
-      },
-    }),
-    ...(settings.codec && { videoCodec: settings.codec }),
-  };
-}
-
-function observeSharingScreen$(participant: Participant): Observable<boolean> {
-  return observeParticipantEvents(
-    participant,
-    ParticipantEvent.TrackPublished,
-    ParticipantEvent.TrackUnpublished,
-    ParticipantEvent.LocalTrackPublished,
-    ParticipantEvent.LocalTrackUnpublished,
-  ).pipe(map((p) => p.isScreenShareEnabled));
 }

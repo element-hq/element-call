@@ -189,8 +189,6 @@ export interface MatrixRTCClientOptions {
   timings?: Partial<SessionTimings>;
   /** Limits on what is published; LiveKit's defaults otherwise. */
   mediaQuality?: MediaQuality;
-  /** How the local tracks are captured and encoded: audio processing, camera and screen share resolution, bitrate, codec. */
-  capture?: CaptureSettings;
   /** Use this transport instead of asking the homeserver. */
   transportUrl?: string;
   /** Use this transport when the homeserver advertises none. */
@@ -198,18 +196,33 @@ export interface MatrixRTCClientOptions {
 }
 
 /**
- * What the local member publishes when it joins. Initial values: from then on
- * `setMicrophoneEnabled` and `setCameraEnabled` on the client, and the
- * controls on the local tracks, change it. Device enumeration, permission
- * prompts and the lobby preview stay with the host.
+ * One thing to publish: a source, where to capture it from and how to encode
+ * it. Where the device and the settings are left out, the browser's and
+ * LiveKit's defaults apply.
+ */
+export type PublishRequest =
+  | { source: "microphone"; deviceId?: string; capture?: AudioCaptureSettings }
+  | {
+      source: "camera";
+      deviceId?: string;
+      /** Background blur and the like. */
+      processor?: TrackProcessor<Track.Kind.Video>;
+      capture?: VideoCaptureSettings;
+    }
+  | {
+      source: "screenShare";
+      /** Whether to capture the screen's audio too. Default true. */
+      audio?: boolean;
+      capture?: VideoCaptureSettings;
+    };
+
+/**
+ * Device enumeration, permission prompts and the lobby preview stay with the
+ * host.
  */
 export interface LocalMediaInputs {
-  microphoneEnabled: boolean;
-  cameraEnabled: boolean;
-  audioInputDeviceId?: string;
-  videoInputDeviceId?: string;
-  /** Background blur and the like. */
-  videoProcessor?: TrackProcessor<Track.Kind.Video>;
+  /** Published at the join; `publish` on the local member adds to it from then on. */
+  publish: PublishRequest[];
   /** Undefined where the host routes audio itself, or to leave the browser's choice. */
   audioOutputDeviceId$: Behavior<string | undefined>;
 }
@@ -268,14 +281,6 @@ export interface MatrixRTCClient {
   /** Null while connected, the first failing link otherwise. */
   disconnectReason$: Behavior<DisconnectReason | null>;
 
-  /**
-   * Publishes or mutes the microphone. Resolves with the state that
-   * resulted, which differs from the request where the device could not be
-   * used. Before the transport is connected the request is remembered and
-   * applied once it is.
-   */
-  setMicrophoneEnabled(enabled: boolean): Promise<boolean>;
-  setCameraEnabled(enabled: boolean): Promise<boolean>;
   /**
    * A transport, Matrix or connection error that stops the session. Null
    * while fine. A failed publication is not fatal: the member can still
@@ -367,12 +372,18 @@ export interface RemoteRTCMember extends RTCMember {
 export interface LocalRTCMember extends RTCMember {
   local: true;
   media$: Behavior<LocalMemberMedia | null>;
-  sharingScreen$: Behavior<boolean>;
-  /** Null when the platform cannot share a screen (no getDisplayMedia). Hiding the button is the host's policy. */
-  toggleScreenSharing: (() => void) | null;
-  /** The last error from toggling, until dismissed. The user closing the picker is not one. */
-  screenShareError$: Behavior<Error | null>;
-  dismissScreenShareError(): void;
+  /**
+   * Publishes a source and resolves with its track once it is in `tracks$`.
+   * Before the transport is connected the request is remembered and applied
+   * once it is. Rejects where the device could not be used, including the
+   * user closing the picker. One publication per source: publishing a source
+   * again unmutes it.
+   */
+  publish(
+    request: PublishRequest,
+  ): Promise<LocalAudioMediaTrack | LocalVideoMediaTrack>;
+  /** Removes one of our tracks; a screen share takes its audio with it. */
+  unpublish(id: string): Promise<void>;
 }
 ```
 
@@ -426,7 +437,7 @@ they only make sense for a call:
 | `autoLeave$` / `AutoLeaveReason` (`"allOthersLeft" \| "timeout" \| "decline"`)                               | hanging up because the other side declined or everyone left is call etiquette, not session semantics | `CallViewModel.leave$`, built from `remoteMembers$` and the room timeline                           |
 | `ringAttempts$`, `createCallNotificationLifecycle$`, `createSentCallNotification$`, `createReceivedDecline$` | ringing, pickup timeouts and decline events are MSC4075 call-notify UX                               | `src/state/CallViewModel/CallNotificationLifecycle.ts`, fed by `remoteMembers$` and the Matrix room |
 | `waitForCallPickup`, `autoLeaveWhenOthersLeft` options                                                       | inputs to the above                                                                                  | `CallViewModelOptions`                                                                              |
-| `hideScreensharing` option                                                                                   | a UI policy; the session can always share a screen if the platform can                               | `CallViewModel` nulls `toggleScreenSharing`                                                         |
+| `hideScreensharing` option                                                                                   | a UI policy; the session can always share a screen if the platform can                               | `CallViewModel` offers no screen share control                                                      |
 | `ringingVm$`, `ringingStatusLocation`                                                                        | view models                                                                                          | `CallViewModel`                                                                                     |
 | `hostBridge.hangUp$`, `hangup()`, `userHangup$`                                                              | widget / host integration                                                                            | `CallViewModel`                                                                                     |
 | `ElementCallError`                                                                                           | carries Element Call translation keys                                                                | the view model wraps `MatrixRTCError`, reading `cause`                                              |
@@ -645,11 +656,8 @@ public API only.
 
 ## Open decisions
 
-- **`LocalMediaInputs` shape.** Everything in it is an initial value; the
-  setters on the client and the controls on the local tracks change it from
-  then on, because they have to report what the device allowed. Creating the
-  tracks before `join()` for a preview is still missing: today they are created
-  at the join.
+- **Publishing before `join()`.** The initial requests are published at the
+  join; creating the tracks earlier, for a lobby preview, is still missing.
 - **`applicationData` after the join.** The option is read once. The client
   still updates `m.call.intent` from the camera state, as Element Call did; that
   moves to the host once the data can be updated.

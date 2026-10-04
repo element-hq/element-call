@@ -30,8 +30,7 @@ const rtcClient = createMatrixRTCClient(
   client, // a matrix-js-sdk MatrixClient, logged in and syncing
   room, // the matrix-js-sdk Room, from client.getRoom() once the join has synced
   {
-    microphoneEnabled: true,
-    cameraEnabled: true,
+    publish: [{ source: "microphone" }, { source: "camera" }],
     audioOutputDeviceId$: constant(undefined),
   },
   {
