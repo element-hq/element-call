@@ -10,13 +10,11 @@ import {
   roomEventSelector,
 } from "@livekit/components-core";
 import {
-  facingModeFromLocalTrack,
   type LocalParticipant,
-  LocalVideoTrack,
   type Participant,
   type Room as LivekitRoom,
   RoomEvent,
-  Track,
+  type TrackPublication,
 } from "livekit-client";
 import { filter, map, type Observable } from "rxjs";
 
@@ -24,12 +22,17 @@ import { type ObservableScope } from "../reactive/ObservableScope";
 import { generateItems } from "../reactive/observable";
 import { E2eeType } from "../encryption";
 import { type EncryptionSystem } from "../encryption";
+import { type Behavior } from "../reactive/Behavior";
 import {
   type EncryptionError,
   type LocalMemberMedia,
+  type MediaSource,
   type MemberMedia,
 } from "../api";
-import { createLivekitMediaTrack } from "./LivekitMediaTrack";
+import {
+  createLivekitMediaTrack,
+  createLocalLivekitMediaTrack,
+} from "./LivekitMediaTrack";
 
 /**
  * A participant as `MemberMedia`. The only place, with `LivekitMediaTrack`,
@@ -43,26 +46,9 @@ export function createLivekitMemberMedia(
   encryptionSystem: EncryptionSystem,
 ): MemberMedia {
   return {
-    local: participant.isLocal,
-    // One track per publication, each living as long as its publication is
-    // in the participant's map
-    tracks$: scope.behavior(
-      observeParticipantMedia(participant).pipe(
-        generateItems(
-          `${participant.identity} tracks$`,
-          function* () {
-            for (const publication of participant.trackPublications.values())
-              yield { keys: [publication.trackSid], data: publication };
-          },
-          (trackScope, publication$) =>
-            createLivekitMediaTrack(
-              trackScope,
-              participant,
-              publication$.value,
-              room,
-            ),
-        ),
-      ),
+    local: false,
+    tracks$: memberTracks$(scope, participant, (trackScope, publication) =>
+      createLivekitMediaTrack(trackScope, participant, publication, room),
     ),
     encryptionError$: encryptionErrors$(
       scope,
@@ -78,21 +64,46 @@ export function createLocalLivekitMemberMedia(
   participant: LocalParticipant,
   room: LivekitRoom,
   encryptionSystem: EncryptionSystem,
+  setEnabled: (source: MediaSource, enabled: boolean) => Promise<boolean>,
 ): LocalMemberMedia {
   return {
-    ...createLivekitMemberMedia(scope, participant, room, encryptionSystem),
     local: true,
-    switchCamera: async () => {
-      const track = participant.getTrackPublication(Track.Source.Camera)?.track;
-      if (!(track instanceof LocalVideoTrack)) return;
-      const { facingMode } = facingModeFromLocalTrack(track);
-      if (facingMode !== "user" && facingMode !== "environment") return;
-      await track.restartTrack({
-        facingMode: facingMode === "user" ? "environment" : "user",
-      });
-      return track.mediaStreamTrack.getSettings().deviceId;
-    },
+    tracks$: memberTracks$(scope, participant, (trackScope, publication) =>
+      createLocalLivekitMediaTrack(
+        trackScope,
+        participant,
+        publication,
+        room,
+        setEnabled,
+      ),
+    ),
+    encryptionError$: encryptionErrors$(
+      scope,
+      participant,
+      room,
+      encryptionSystem,
+    ),
   };
+}
+
+/** One track per publication, each living as long as its publication is in the participant's map. */
+function memberTracks$<T>(
+  scope: ObservableScope,
+  participant: Participant,
+  factory: (scope: ObservableScope, publication: TrackPublication) => T,
+): Behavior<T[]> {
+  return scope.behavior(
+    observeParticipantMedia(participant).pipe(
+      generateItems(
+        `${participant.identity} tracks$`,
+        function* () {
+          for (const publication of participant.trackPublications.values())
+            yield { keys: [publication.trackSid], data: publication };
+        },
+        (trackScope, publication$) => factory(trackScope, publication$.value),
+      ),
+    ),
+  );
 }
 
 function encryptionErrors$(

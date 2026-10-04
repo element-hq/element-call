@@ -93,6 +93,7 @@ export function createLocalRTCMember(
           participant,
           room,
           context.encryptionSystem,
+          localMembership.setEnabled,
         ),
     ),
     sharingScreen$: localMembership.sharingScreen$,

@@ -5,24 +5,16 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { observeParticipantMedia } from "@livekit/components-core";
 import {
   ConnectionState as LivekitConnectionState,
   type LocalTrackPublication,
-  LocalVideoTrack,
   ParticipantEvent,
   type Room as LivekitRoom,
   Track,
 } from "livekit-client";
 import { type Logger } from "matrix-js-sdk/lib/logger";
-import {
-  type BehaviorSubject,
-  combineLatest,
-  distinctUntilChanged,
-  map,
-} from "rxjs";
+import { type BehaviorSubject } from "rxjs";
 
-import { type Behavior } from "../reactive/Behavior";
 import { ObservableScope } from "../reactive/ObservableScope";
 import { type LocalMediaInputs } from "../api";
 
@@ -57,8 +49,7 @@ export class Publisher {
     room.setE2EEEnabled(room.options.e2ee !== undefined)?.catch((e: Error) => {
       this.logger.error("Failed to enable E2EE on the room", e);
     });
-    this.followVideoProcessor();
-    this.followDevices();
+    this.followAudioOutput();
     this.onLocalTrackPublished = this.onLocalTrackPublished.bind(this);
     room.localParticipant.on(
       ParticipantEvent.LocalTrackPublished,
@@ -188,54 +179,19 @@ export class Publisher {
     }
   }
 
-  private followDevices(): void {
-    const sync = (
-      kind: MediaDeviceKind,
-      deviceId$: Behavior<string | undefined>,
-    ): void => {
-      deviceId$.pipe(this.scope.bind()).subscribe((deviceId) => {
+  private followAudioOutput(): void {
+    this.inputs.audioOutputDeviceId$
+      .pipe(this.scope.bind())
+      .subscribe((deviceId) => {
         if (
           deviceId === undefined ||
           this.room.state !== LivekitConnectionState.Connected ||
-          this.room.getActiveDevice(kind) === deviceId
+          this.room.getActiveDevice("audiooutput") === deviceId
         )
           return;
         this.room
-          .switchActiveDevice(kind, deviceId)
-          .catch((e) => this.logger.error(`Failed to switch ${kind}`, e));
-      });
-    };
-    sync("audioinput", this.inputs.audioInputDeviceId$);
-    sync("audiooutput", this.inputs.audioOutputDeviceId$);
-    sync("videoinput", this.inputs.videoInputDeviceId$);
-  }
-
-  private followVideoProcessor(): void {
-    const participant = this.room.localParticipant;
-    const cameraTrack$ = observeParticipantMedia(participant).pipe(
-      map(() => {
-        const track = participant.getTrackPublication(
-          Track.Source.Camera,
-        )?.track;
-        return track instanceof LocalVideoTrack ? track : undefined;
-      }),
-      distinctUntilChanged(),
-    );
-    combineLatest([cameraTrack$, this.inputs.videoProcessor$])
-      .pipe(this.scope.bind())
-      .subscribe(([track, processor]) => {
-        if (!track) return;
-        if (processor && !track.getProcessor()) {
-          // A processor cannot be built on a track that has already ended
-          if (track.mediaStreamTrack.readyState === "ended") return;
-          track.setProcessor(processor).catch((e) => {
-            this.logger.warn("Failed to attach the video processor", e);
-          });
-        } else if (!processor && track.getProcessor()) {
-          track.stopProcessor().catch((e) => {
-            this.logger.warn("Failed to stop the video processor", e);
-          });
-        }
+          .switchActiveDevice("audiooutput", deviceId)
+          .catch((e) => this.logger.error("Failed to switch audiooutput", e));
       });
   }
 }

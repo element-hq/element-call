@@ -198,20 +198,20 @@ export interface MatrixRTCClientOptions {
 }
 
 /**
- * What the local member publishes. The enabled flags are the initial state;
- * from then on `setMicrophoneEnabled` and `setCameraEnabled` on the client
- * change it, and report what the device allowed. Device enumeration,
- * permission prompts and the lobby preview stay with the host.
+ * What the local member publishes when it joins. Initial values: from then on
+ * `setMicrophoneEnabled` and `setCameraEnabled` on the client, and the
+ * controls on the local tracks, change it. Device enumeration, permission
+ * prompts and the lobby preview stay with the host.
  */
 export interface LocalMediaInputs {
   microphoneEnabled: boolean;
   cameraEnabled: boolean;
-  audioInputDeviceId$: Behavior<string | undefined>;
-  videoInputDeviceId$: Behavior<string | undefined>;
+  audioInputDeviceId?: string;
+  videoInputDeviceId?: string;
+  /** Background blur and the like. */
+  videoProcessor?: TrackProcessor<Track.Kind.Video>;
   /** Undefined where the host routes audio itself, or to leave the browser's choice. */
   audioOutputDeviceId$: Behavior<string | undefined>;
-  /** Background blur and the like. */
-  videoProcessor$: Behavior<TrackProcessor<Track.Kind.Video> | undefined>;
 }
 
 /**
@@ -500,8 +500,28 @@ export interface AudioMediaTrack extends MediaTrack {
 
 export interface VideoMediaTrack extends MediaTrack {
   kind: "video";
-  /** For mirroring and switching cameras. Undefined for remote tracks. */
-  facingMode$?: Behavior<"user" | "environment" | undefined>;
+}
+
+/** The controls a member has over a track it publishes itself. */
+export interface LocalMediaTrack {
+  /** Mutes or unmutes. Resolves with the state that resulted. */
+  setEnabled(enabled: boolean): Promise<boolean>;
+  /** Captures from another device. Rejects for a screen share, which has none. */
+  setDevice(deviceId: string): Promise<void>;
+}
+
+export interface LocalAudioMediaTrack
+  extends AudioMediaTrack, LocalMediaTrack {}
+
+export interface LocalVideoMediaTrack extends VideoMediaTrack, LocalMediaTrack {
+  /** For mirroring; undefined where the camera does not say which way it faces. */
+  facingMode$: Behavior<"user" | "environment" | undefined>;
+  /** Restarts the camera facing the other way; resolves with the device now in use. */
+  switchFacingMode(): Promise<string | undefined>;
+  /** Background blur and the like; undefined removes the processor. */
+  setProcessor(
+    processor: TrackProcessor<Track.Kind.Video> | undefined,
+  ): Promise<void>;
 }
 
 export type EncryptionError = "MissingKey" | "InvalidKey";
@@ -532,12 +552,7 @@ export function trackBySource$<S extends MediaSource>(
 
 export interface LocalMemberMedia extends MemberMedia {
   local: true;
-  /**
-   * Restarts the camera facing the other way, on devices with a front and a
-   * back camera, and resolves with the id of the device now in use. Does
-   * nothing without a camera track or where the facing mode is unknown.
-   */
-  switchCamera(): Promise<string | undefined>;
+  tracks$: Behavior<(LocalAudioMediaTrack | LocalVideoMediaTrack)[]>;
 }
 ```
 
@@ -630,11 +645,11 @@ public API only.
 
 ## Open decisions
 
-- **`LocalMediaInputs` shape.** The enabled flags are initial values and the
-  setters on the client change them, because the setters have to report what
-  the device allowed; the device ids and the processor stay behaviors. Creating
-  the tracks before `join()` for a preview is still missing: today they are
-  created at the join.
+- **`LocalMediaInputs` shape.** Everything in it is an initial value; the
+  setters on the client and the controls on the local tracks change it from
+  then on, because they have to report what the device allowed. Creating the
+  tracks before `join()` for a preview is still missing: today they are created
+  at the join.
 - **`applicationData` after the join.** The option is read once. The client
   still updates `m.call.intent` from the camera state, as Element Call did; that
   moves to the host once the data can be updated.

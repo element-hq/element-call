@@ -12,6 +12,7 @@ import {
 } from "@livekit/components-core";
 import {
   facingModeFromLocalTrack,
+  type LocalParticipant,
   LocalTrack,
   LocalVideoTrack,
   type Participant,
@@ -41,11 +42,14 @@ import { type Behavior } from "../reactive/Behavior";
 import { type ObservableScope } from "../reactive/ObservableScope";
 import {
   type AudioMediaTrack,
+  type LocalAudioMediaTrack,
+  type LocalVideoMediaTrack,
   type MediaSource,
   type MediaStreamStats,
   type MediaTrack,
   type VideoMediaTrack,
 } from "../api";
+import { MatrixRTCError } from "../errors";
 import { LazyBehavior } from "../utils/LazyBehavior";
 
 const sources: Record<Track.Source, MediaSource> = {
@@ -54,6 +58,14 @@ const sources: Record<Track.Source, MediaSource> = {
   [Track.Source.ScreenShare]: "screenShare",
   [Track.Source.ScreenShareAudio]: "screenShareAudio",
   [Track.Source.Unknown]: "unknown",
+};
+
+export const livekitSources: Record<MediaSource, Track.Source> = {
+  microphone: Track.Source.Microphone,
+  camera: Track.Source.Camera,
+  screenShare: Track.Source.ScreenShare,
+  screenShareAudio: Track.Source.ScreenShareAudio,
+  unknown: Track.Source.Unknown,
 };
 
 // One timer for every track so that a large session does not keep hundreds of
@@ -72,17 +84,7 @@ export function createLivekitMediaTrack(
   room: LivekitRoom,
 ): AudioMediaTrack | VideoMediaTrack {
   const mediaChanged$ = observeParticipantMedia(participant);
-  const track$: Behavior<Track | undefined> = scope.behavior(
-    merge(
-      mediaChanged$,
-      fromEvent(publication, TrackEvent.Subscribed),
-      fromEvent(publication, TrackEvent.Unsubscribed),
-    ).pipe(
-      map(() => publication.track),
-      startWith(publication.track),
-      distinctUntilChanged(),
-    ),
-  );
+  const track$ = publicationTrack$(scope, participant, publication);
 
   const attached = new Set<HTMLMediaElement>();
   let audioContext: AudioContext | undefined;
@@ -172,11 +174,83 @@ export function createLivekitMediaTrack(
       },
     };
 
+  return { ...base, kind: "video" };
+}
+
+/**
+ * One of our own publications, with the controls over it. `setEnabled` goes
+ * through the local member so that what it remembers for a reconnection
+ * stays in step.
+ */
+export function createLocalLivekitMediaTrack(
+  scope: ObservableScope,
+  participant: LocalParticipant,
+  publication: TrackPublication,
+  room: LivekitRoom,
+  setEnabled: (source: MediaSource, enabled: boolean) => Promise<boolean>,
+): LocalAudioMediaTrack | LocalVideoMediaTrack {
+  const base = createLivekitMediaTrack(scope, participant, publication, room);
+  const local = {
+    setEnabled: async (enabled: boolean) => setEnabled(base.source, enabled),
+    setDevice: async (deviceId: string): Promise<void> => {
+      if (base.source !== "microphone" && base.source !== "camera")
+        throw new MatrixRTCError(`A ${base.source} track has no device`);
+      await room.switchActiveDevice(
+        base.kind === "audio" ? "audioinput" : "videoinput",
+        deviceId,
+      );
+    },
+  };
+  if (base.kind === "audio") return { ...base, ...local };
+
+  const videoTrack = (): LocalVideoTrack | undefined =>
+    publication.track instanceof LocalVideoTrack
+      ? publication.track
+      : undefined;
   return {
     ...base,
-    kind: "video",
-    ...(participant.isLocal && { facingMode$: facingMode$(scope, track$) }),
+    ...local,
+    facingMode$: facingMode$(
+      scope,
+      publicationTrack$(scope, participant, publication),
+    ),
+    switchFacingMode: async () => {
+      const track = videoTrack();
+      if (!track) return;
+      const { facingMode } = facingModeFromLocalTrack(track);
+      if (facingMode !== "user" && facingMode !== "environment") return;
+      await track.restartTrack({
+        facingMode: facingMode === "user" ? "environment" : "user",
+      });
+      return track.mediaStreamTrack.getSettings().deviceId;
+    },
+    setProcessor: async (processor) => {
+      const track = videoTrack();
+      // A processor cannot be built on a track that has already ended
+      if (!track || track.mediaStreamTrack.readyState === "ended") return;
+      if (processor) await track.setProcessor(processor);
+      else if (track.getProcessor()) await track.stopProcessor();
+    },
   };
+}
+
+/** The track behind a publication; a remote one arrives on subscription. */
+function publicationTrack$(
+  scope: ObservableScope,
+  participant: Participant,
+  publication: TrackPublication,
+): Behavior<Track | undefined> {
+  return scope.behavior(
+    merge(
+      observeParticipantMedia(participant),
+      fromEvent(publication, TrackEvent.Subscribed),
+      fromEvent(publication, TrackEvent.Unsubscribed),
+    ).pipe(
+      map(() => publication.track),
+      startWith(publication.track),
+      distinctUntilChanged(),
+    ),
+  );
 }
 
 async function rtpStreamStats(

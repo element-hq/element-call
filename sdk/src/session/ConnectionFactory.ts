@@ -138,8 +138,8 @@ function roomOptions(
     ...base,
     videoCaptureDefaults: {
       ...base.videoCaptureDefaults,
-      deviceId: localMedia.videoInputDeviceId$.value,
-      processor: localMedia.videoProcessor$.value,
+      deviceId: localMedia.videoInputDeviceId,
+      processor: localMedia.videoProcessor,
       ...(camera?.resolution && { resolution: camera.resolution }),
     },
     publishDefaults: {
@@ -154,7 +154,7 @@ function roomOptions(
     },
     audioCaptureDefaults: {
       ...base.audioCaptureDefaults,
-      deviceId: localMedia.audioInputDeviceId$.value,
+      deviceId: localMedia.audioInputDeviceId,
       ...capture?.audio,
     },
     audioOutput: { deviceId: localMedia.audioOutputDeviceId$.value },

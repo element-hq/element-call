@@ -32,10 +32,7 @@ const rtcClient = createMatrixRTCClient(
   {
     microphoneEnabled: true,
     cameraEnabled: true,
-    audioInputDeviceId$: constant(undefined),
-    videoInputDeviceId$: constant(undefined),
     audioOutputDeviceId$: constant(undefined),
-    videoProcessor$: constant(undefined),
   },
   {
     encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },

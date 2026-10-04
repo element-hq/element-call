@@ -84,19 +84,19 @@ export interface VideoCaptureSettings {
 }
 
 /**
- * What the local member publishes. The enabled flags are the initial state;
- * from then on `setMicrophoneEnabled` and `setCameraEnabled` on the client
- * change it, and report what the device allowed.
+ * What the local member publishes when it joins. Initial values: from then on
+ * `setMicrophoneEnabled` and `setCameraEnabled` on the client, and the
+ * controls on the local tracks, change it.
  */
 export interface LocalMediaInputs {
   microphoneEnabled: boolean;
   cameraEnabled: boolean;
-  audioInputDeviceId$: Behavior<string | undefined>;
-  videoInputDeviceId$: Behavior<string | undefined>;
+  audioInputDeviceId?: string;
+  videoInputDeviceId?: string;
+  /** Background blur and the like. */
+  videoProcessor?: TrackProcessor<Track.Kind.Video>;
   /** Undefined where the host routes audio itself, or to leave the browser's choice. */
   audioOutputDeviceId$: Behavior<string | undefined>;
-  /** Background blur and the like. */
-  videoProcessor$: Behavior<TrackProcessor<Track.Kind.Video> | undefined>;
 }
 
 export type ConnectionStatus =
@@ -300,8 +300,35 @@ export interface AudioMediaTrack extends MediaTrack {
 
 export interface VideoMediaTrack extends MediaTrack {
   kind: "video";
-  /** Undefined for remote tracks. */
-  facingMode$?: Behavior<"user" | "environment" | undefined>;
+}
+
+/** The controls a member has over a track it publishes itself. */
+export interface LocalMediaTrack {
+  /**
+   * Mutes or unmutes. Resolves with the state that resulted, which differs
+   * from the request where the device could not be used.
+   */
+  setEnabled(enabled: boolean): Promise<boolean>;
+  /** Captures from another device. Rejects for a screen share, which has none. */
+  setDevice(deviceId: string): Promise<void>;
+}
+
+export interface LocalAudioMediaTrack
+  extends AudioMediaTrack, LocalMediaTrack {}
+
+export interface LocalVideoMediaTrack extends VideoMediaTrack, LocalMediaTrack {
+  /** For mirroring; undefined where the camera does not say which way it faces. */
+  facingMode$: Behavior<"user" | "environment" | undefined>;
+  /**
+   * Restarts the camera facing the other way, on devices with a front and a
+   * back camera, and resolves with the id of the device now in use. Does
+   * nothing where the facing mode is unknown.
+   */
+  switchFacingMode(): Promise<string | undefined>;
+  /** Background blur and the like; undefined removes the processor. */
+  setProcessor(
+    processor: TrackProcessor<Track.Kind.Video> | undefined,
+  ): Promise<void>;
 }
 
 export type EncryptionError = "MissingKey" | "InvalidKey";
@@ -325,11 +352,5 @@ export interface MemberMedia {
 
 export interface LocalMemberMedia extends MemberMedia {
   local: true;
-  /**
-   * Restarts the camera facing the other way, on devices with a front and a
-   * back camera, and resolves with the id of the device now in use. Does
-   * nothing without a camera track or where the facing mode is unknown (see
-   * `VideoMediaTrack.facingMode$`).
-   */
-  switchCamera(): Promise<string | undefined>;
+  tracks$: Behavior<(LocalAudioMediaTrack | LocalVideoMediaTrack)[]>;
 }

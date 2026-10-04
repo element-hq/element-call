@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { EventEmitter } from "events";
 import {
+  type LocalParticipant,
   ParticipantEvent,
   RemoteAudioTrack,
   type RemoteParticipant,
@@ -19,7 +20,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ObservableScope } from "../reactive/ObservableScope";
 import { type AudioMediaTrack } from "../api";
-import { createLivekitMediaTrack } from "./LivekitMediaTrack";
+import {
+  createLivekitMediaTrack,
+  createLocalLivekitMediaTrack,
+} from "./LivekitMediaTrack";
 
 describe("createLivekitMediaTrack", () => {
   let scope: ObservableScope;
@@ -126,6 +130,27 @@ describe("createLivekitMediaTrack", () => {
     publication.isMuted = true;
     emitter.emit(ParticipantEvent.TrackMuted, publication);
     expect(track.isActive$.value).toBe(false);
+  });
+
+  it("gives our own track its controls", async () => {
+    const { participant, publication, room } = fakes({
+      kind: Track.Kind.Audio,
+    });
+    const setEnabled = vi.fn().mockResolvedValue(false);
+    const switchActiveDevice = vi.fn().mockResolvedValue(true);
+    const track = createLocalLivekitMediaTrack(
+      scope,
+      Object.assign(participant, {
+        isLocal: true,
+      }) as unknown as LocalParticipant,
+      publication as unknown as TrackPublication,
+      Object.assign(room, { switchActiveDevice }),
+      setEnabled,
+    );
+    await expect(track.setEnabled(false)).resolves.toBe(false);
+    expect(setEnabled).toHaveBeenCalledWith("microphone", false);
+    await track.setDevice("mic-2");
+    expect(switchActiveDevice).toHaveBeenCalledWith("audioinput", "mic-2");
   });
 });
 

@@ -46,7 +46,11 @@ import {
   type MatrixRTCMode,
   type SessionTimings,
 } from "../config";
-import { type DisconnectReason, type VideoCaptureSettings } from "../api";
+import {
+  type DisconnectReason,
+  type MediaSource,
+  type VideoCaptureSettings,
+} from "../api";
 import {
   FailToStartLivekitConnection,
   type MatrixRTCError,
@@ -58,6 +62,7 @@ import { type Connection, ConnectionState } from "./Connection";
 import { type IConnectionManager } from "./ConnectionManager";
 import { type LocalTransport } from "./LocalTransport";
 import { getSFUConfigWithOpenID } from "./openIDSFU";
+import { livekitSources } from "../media/LivekitMediaTrack";
 import { type DesiredMedia, type Publisher } from "./Publisher";
 
 export enum TransportState {
@@ -118,6 +123,8 @@ export interface LocalMembership {
   disconnectReason$: Behavior<DisconnectReason | null>;
   setMicrophoneEnabled: (enabled: boolean) => Promise<boolean>;
   setCameraEnabled: (enabled: boolean) => Promise<boolean>;
+  /** Mutes or unmutes one of our publications; the result is the state that resulted. */
+  setEnabled: (source: MediaSource, enabled: boolean) => Promise<boolean>;
   sharingScreen$: Behavior<boolean>;
   toggleScreenSharing: (() => void) | null;
   screenShareError$: Behavior<Error | null>;
@@ -392,20 +399,38 @@ export function createLocalMembership$({
     });
 
   const setEnabled = async (
-    source: Track.Source.Microphone | Track.Source.Camera,
+    source: MediaSource,
     enabled: boolean,
   ): Promise<boolean> => {
+    if (source !== "microphone" && source !== "camera")
+      return setPublicationEnabled(source, enabled);
     const desired$ =
-      source === Track.Source.Microphone
-        ? desired.microphone$
-        : desired.camera$;
+      source === "microphone" ? desired.microphone$ : desired.camera$;
     desired$.next(enabled);
     // Without a publisher the request waits for the tracks to be created
     const publisher = publisher$.value;
     if (publisher === null) return enabled;
-    const result = await publisher.setEnabled(source, enabled);
+    const result = await publisher.setEnabled(
+      source === "microphone" ? Track.Source.Microphone : Track.Source.Camera,
+      enabled,
+    );
     if (result !== enabled) desired$.next(result);
     return result;
+  };
+
+  // A publication the publisher does not recreate on reconnection, so there
+  // is nothing to remember for it
+  const setPublicationEnabled = async (
+    source: MediaSource,
+    enabled: boolean,
+  ): Promise<boolean> => {
+    const publication = participant$.value?.getTrackPublication(
+      livekitSources[source],
+    );
+    if (!publication) return false;
+    if (enabled) await publication.unmute();
+    else await publication.mute();
+    return !publication.isMuted;
   };
 
   const sharingScreen$ = scope.behavior(
@@ -451,10 +476,9 @@ export function createLocalMembership$({
     connected$,
     reconnecting$,
     disconnectReason$,
-    setMicrophoneEnabled: async (enabled) =>
-      setEnabled(Track.Source.Microphone, enabled),
-    setCameraEnabled: async (enabled) =>
-      setEnabled(Track.Source.Camera, enabled),
+    setMicrophoneEnabled: async (enabled) => setEnabled("microphone", enabled),
+    setCameraEnabled: async (enabled) => setEnabled("camera", enabled),
+    setEnabled,
     sharingScreen$,
     toggleScreenSharing,
     screenShareError$,
