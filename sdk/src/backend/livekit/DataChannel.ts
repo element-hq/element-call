@@ -10,7 +10,6 @@ import {
   type Room as LivekitRoom,
   RoomEvent,
 } from "livekit-client";
-import { type Logger } from "matrix-js-sdk/lib/logger";
 import {
   distinctUntilChanged,
   filter,
@@ -22,39 +21,34 @@ import {
   switchMap,
 } from "rxjs";
 
-import { type DataMessage, type RemoteRTCMember } from "../api";
-import { type Behavior } from "../reactive/Behavior";
-import { type ObservableScope } from "../reactive/ObservableScope";
+import { type Behavior } from "../../reactive/Behavior";
+import { type ObservableScope } from "../../reactive/ObservableScope";
+import { type DataPacket } from "../api";
 import { type Connection, ConnectionState } from "./Connection";
 import { type IConnectionManager } from "./ConnectionManager";
 
 interface Props {
   scope: ObservableScope;
   connectionManager: IConnectionManager;
-  /** Used to resolve the sender of each message, by its transport identity. */
-  remoteMembers$: Behavior<RemoteRTCMember[]>;
   /** The local member's connection, which carries what we send. */
   connection$: Behavior<Connection | null>;
-  logger: Logger;
 }
 
 export interface DataChannel {
-  data$: Observable<DataMessage>;
+  data$: Observable<DataPacket>;
   sendData: (topic: string, text: string) => Promise<void>;
 }
 
 /**
  * A text channel beside the media: LiveKit's reliable data packets, received
  * on every connection the client holds and sent on the local member's. The
- * sender is matched to a member by its identity, so the packet's own claim of
- * who sent it never reaches the host.
+ * sender is reported by its identity; the packet's own claim of who sent it
+ * never reaches the host.
  */
 export function createDataChannel$({
   scope,
   connectionManager,
-  remoteMembers$,
   connection$,
-  logger,
 }: Props): DataChannel {
   const decoder = new TextDecoder();
   const encoder = new TextEncoder();
@@ -68,19 +62,17 @@ export function createDataChannel$({
 
   const data$ = rooms$.pipe(
     switchMap((rooms) => merge(...rooms.map(receivedOn))),
-    map(({ payload, participant, topic }): DataMessage | null => {
+    map(({ payload, participant, topic }): DataPacket | null =>
       // Only the server sends without a participant; a host has no use for it
-      if (participant === undefined) return null;
-      const member = remoteMembers$.value.find(
-        (m) => m.id === participant.identity,
-      );
-      if (member === undefined) {
-        logger.warn(`Dropping data from ${participant.identity}: not a member`);
-        return null;
-      }
-      return { member, topic: topic ?? "", text: decoder.decode(payload) };
-    }),
-    filter((message) => message !== null),
+      participant === undefined
+        ? null
+        : {
+            senderId: participant.identity,
+            topic: topic ?? "",
+            text: decoder.decode(payload),
+          },
+    ),
+    filter((packet) => packet !== null),
     scope.bind(),
     share(),
   );

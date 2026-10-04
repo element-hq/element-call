@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { describe, expect, it } from "vitest";
 import { Status } from "matrix-js-sdk/lib/matrixrtc";
 
-import { ConnectionState } from "./Connection";
+import { MediaConnectionState } from "../backend/api";
 import { MatrixRTCError } from "../api";
 import {
   type LocalMemberState,
@@ -22,7 +22,7 @@ const publishing: LocalMemberState = {
   matrix: Status.Connected,
 };
 const connecting: LocalMemberState = {
-  media: { connection: ConnectionState.LivekitConnecting },
+  media: { connection: MediaConnectionState.Connecting },
   matrix: Status.Connecting,
 };
 const error = new MatrixRTCError("gone");

@@ -15,7 +15,7 @@ import {
   VideoPreset as VideoPresetClass,
 } from "livekit-client";
 
-import { defaultMediaQuality, type MediaQuality } from "../config";
+import { defaultMediaQuality, type MediaQuality } from "../../config";
 
 /**
  * Find the closest matching VideoPreset for a given height.

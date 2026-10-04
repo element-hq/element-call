@@ -6,10 +6,10 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  type LivekitTransport,
   type MatrixRTCSession as JsSdkRTCSession,
   type RTCCallIntent,
   type RTCNotificationType,
+  type Transport,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
@@ -37,7 +37,7 @@ interface Options {
 export function joinJsSdkSession(
   session: JsSdkRTCSession,
   ownMembershipIdentity: CallMembershipIdentityParts,
-  transport: LivekitTransport,
+  transport: Transport,
   {
     encryptMedia,
     matrixRTCMode,

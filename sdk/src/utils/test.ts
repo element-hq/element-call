@@ -20,7 +20,6 @@ import {
 import {
   CallMembership,
   type LivekitFocusSelection,
-  type LivekitTransport,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
   type MatrixRTCSessionEventHandlerMap,
@@ -36,10 +35,6 @@ import {
 } from "matrix-js-sdk/lib/matrixrtc/IKeyTransport";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 import { TypedEventEmitter } from "matrix-js-sdk/lib/models/typed-event-emitter";
-import {
-  type RemoteParticipant,
-  type RemoteTrackPublication,
-} from "livekit-client";
 import { randomUUID } from "crypto";
 import EventEmitter from "events";
 
@@ -159,7 +154,7 @@ export function mockEmitter<T>(): EmitterMock<T> {
   };
 }
 
-export const exampleTransport: LivekitTransport = {
+const exampleTransport: Transport = {
   type: "livekit",
   livekit_service_url: "https://lk.example.org",
 };
@@ -240,21 +235,6 @@ export function mockMatrixRoomMember(
 
 export function mockMatrixRoom(room: Partial<MatrixRoom>): MatrixRoom {
   return { ...mockEmitter(), ...room } as Partial<MatrixRoom> as MatrixRoom;
-}
-
-export function mockRemoteParticipant(
-  participant: Partial<RemoteParticipant>,
-): RemoteParticipant {
-  return {
-    isLocal: false,
-    setVolume() {},
-    getTrackPublication: () =>
-      ({}) as Partial<RemoteTrackPublication> as RemoteTrackPublication,
-    // this will only get used for `getTrackPublications().length`
-    getTrackPublications: () => [0],
-    ...mockEmitter(),
-    ...participant,
-  } as RemoteParticipant;
 }
 
 export class MockRTCSession extends TypedEventEmitter<

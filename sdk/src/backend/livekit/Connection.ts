@@ -32,8 +32,8 @@ import {
   type OpenIDClientParts,
   type SFUConfig,
 } from "./openIDSFU";
-import { type Behavior } from "../reactive/Behavior";
-import { type ObservableScope } from "../reactive/ObservableScope";
+import { type Behavior } from "../../reactive/Behavior";
+import { type ObservableScope } from "../../reactive/ObservableScope";
 import {
   MatrixRTCError,
   InsufficientCapacityError,
@@ -41,7 +41,7 @@ import {
   PeerConnectionTimeoutError,
   SFURoomCreationRestrictedError,
   UnknownRTCError,
-} from "../errors";
+} from "../../errors";
 
 export interface ConnectionOpts {
   /**

@@ -14,13 +14,13 @@ import {
 } from "livekit-client";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 
-import { ObservableScope } from "../reactive/ObservableScope";
+import { ObservableScope } from "../../reactive/ObservableScope";
 import {
   type LocalMediaInputs,
   type MediaSource,
   type PublishRequest,
-} from "../api";
-import { livekitSources, mediaSources } from "../media/LivekitMediaTrack";
+} from "../../api";
+import { livekitSources, mediaSources } from "./LivekitMediaTrack";
 import {
   audioCaptureOptions,
   screenShareCaptureOptions,

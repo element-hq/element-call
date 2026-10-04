@@ -1,11 +1,13 @@
 # MatrixRTC SDK (EXPERIMENTAL)
 
 `@element-hq/matrixrtc-sdk` is the call model under Element Call, on its own:
-MatrixRTC memberships and transports, LiveKit connections, publishing, E2EE keys and
+MatrixRTC memberships and transports, media connections, publishing, E2EE keys and
 the media of every member, as observables. It has no UI. Element Call's own
 `CallViewModel` is meant to become one consumer of it. The design is in
 [`SdkArchitecture.md`](./SdkArchitecture.md), the migration from the view model
-in [`SdkMigration.md`](./SdkMigration.md).
+in [`SdkMigration.md`](./SdkMigration.md). Media goes through one media backend
+behind `MediaBackend`; LiveKit, under `src/backend/livekit/`, is the only one
+today and the only place that imports `livekit-client`.
 
 **Status:** first implementation. `createMatrixRTCClient` joins the session, connects to
 the transport, publishes the local media and exposes every member's media; the

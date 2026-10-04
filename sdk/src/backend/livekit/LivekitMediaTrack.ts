@@ -38,8 +38,8 @@ import {
   switchMap,
 } from "rxjs";
 
-import { type Behavior } from "../reactive/Behavior";
-import { type ObservableScope } from "../reactive/ObservableScope";
+import { type Behavior } from "../../reactive/Behavior";
+import { type ObservableScope } from "../../reactive/ObservableScope";
 import {
   type AudioMediaTrack,
   type LocalAudioMediaTrack,
@@ -48,9 +48,9 @@ import {
   type MediaStreamStats,
   type MediaTrack,
   type VideoMediaTrack,
-} from "../api";
-import { MatrixRTCError } from "../errors";
-import { LazyBehavior } from "../utils/LazyBehavior";
+} from "../../api";
+import { MatrixRTCError } from "../../errors";
+import { LazyBehavior } from "../../utils/LazyBehavior";
 
 export const mediaSources: Record<Track.Source, MediaSource> = {
   [Track.Source.Microphone]: "microphone",

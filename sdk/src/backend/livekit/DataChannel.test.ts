@@ -7,17 +7,17 @@ Please see LICENSE in the repository root for full details.
 
 import { EventEmitter } from "events";
 import { type RemoteParticipant, RoomEvent } from "livekit-client";
-import { logger } from "matrix-js-sdk/lib/logger";
 import { BehaviorSubject } from "rxjs";
 import { describe, expect, it, vi } from "vitest";
 
-import { type DataMessage, type RemoteRTCMember } from "../api";
-import { Epoch } from "../reactive/ObservableScope";
-import { constant } from "../reactive/Behavior";
+import { Epoch } from "../../reactive/ObservableScope";
+import { constant } from "../../reactive/Behavior";
+import { type DataPacket } from "../api";
 import { type Connection, ConnectionState } from "./Connection";
 import { ConnectionManagerData } from "./ConnectionManager";
 import { createDataChannel$ } from "./DataChannel";
-import { exampleTransport, testScope } from "../utils/test";
+import { testScope } from "../../utils/test";
+import { exampleTransport } from "./test";
 
 const encode = (text: string): Uint8Array => new TextEncoder().encode(text);
 
@@ -39,15 +39,8 @@ function fakeConnection(
   return { connection, room, publishData };
 }
 
-function member(id: string): RemoteRTCMember {
-  return { id, userId: `@${id}:example.org` } as RemoteRTCMember;
-}
-
-function setup(
-  connections: Connection[],
-  members: RemoteRTCMember[] = [member("alice")],
-): {
-  received: DataMessage[];
+function setup(connections: Connection[]): {
+  received: DataPacket[];
   connections$: BehaviorSubject<Epoch<ConnectionManagerData>>;
   sendData: (topic: string, text: string) => Promise<void>;
 } {
@@ -57,17 +50,15 @@ function setup(
   const { data$, sendData } = createDataChannel$({
     scope: testScope(),
     connectionManager: { connectionManagerData$: connections$ },
-    remoteMembers$: constant(members),
     connection$: constant(connections[0] ?? null),
-    logger,
   });
-  const received: DataMessage[] = [];
+  const received: DataPacket[] = [];
   data$.subscribe((message) => received.push(message));
   return { received, connections$, sendData };
 }
 
 describe("data$", () => {
-  it("delivers a packet from a member with its topic and text", () => {
+  it("delivers a packet with its sender, topic and text", () => {
     const { connection, room } = fakeConnection("https://sfu");
     const { received } = setup([connection]);
 
@@ -80,18 +71,15 @@ describe("data$", () => {
     );
 
     expect(received).toEqual([
-      { member: member("alice"), topic: "chat", text: "hello" },
+      { senderId: "alice", topic: "chat", text: "hello" },
     ]);
   });
 
-  it("drops packets from the server and from identities that are not members", () => {
+  it("drops packets from the server", () => {
     const { connection, room } = fakeConnection("https://sfu");
     const { received } = setup([connection]);
 
     room.emit(RoomEvent.DataReceived, encode("server"), undefined);
-    room.emit(RoomEvent.DataReceived, encode("stranger"), {
-      identity: "mallory",
-    } as RemoteParticipant);
 
     expect(received).toEqual([]);
   });
@@ -99,10 +87,7 @@ describe("data$", () => {
   it("listens on every connection, including ones added later", () => {
     const first = fakeConnection("https://sfu-1");
     const second = fakeConnection("https://sfu-2");
-    const { received, connections$ } = setup(
-      [first.connection],
-      [member("alice"), member("bob")],
-    );
+    const { received, connections$ } = setup([first.connection]);
 
     const data = new ConnectionManagerData();
     data.add(first.connection, []);
@@ -116,7 +101,7 @@ describe("data$", () => {
       identity: "bob",
     } as RemoteParticipant);
 
-    expect(received.map((m) => [m.member.id, m.text])).toEqual([
+    expect(received.map((m) => [m.senderId, m.text])).toEqual([
       ["alice", "one"],
       ["bob", "two"],
     ]);

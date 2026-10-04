@@ -8,13 +8,14 @@ symbols, so it ages with the code; the architecture document should not.
 
 ## Status
 
-| Slice                                                                                                                                                                           | State                |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| 1. Scaffold: `sdk/` packaging, the interface, the harness, the smoke test                                                                                                       | done, October 2026   |
-| 2. First implementation of `createMatrixRTCClient` under `sdk/src`, the media adapter, the e2e suite                                                                            | done, 1 October 2026 |
-| 3. Copy the shared modules into `sdk/src/` with their tests, drop every `src/` import, turn on the import boundary                                                              | done, 2 October 2026 |
-| 4. `createCallViewModel$` consumes the client; media view models take `media$`; Element Call imports the primitives and enums from the SDK and deletes its own copies           | done, 2 October 2026 |
-| 5. `sendData`/`data$` on the client; the legacy bundle `sdk-target-based-on-call-view-model/` is rebuilt on the SDK with its interface unchanged, since it is in production use | done, 2 October 2026 |
+| Slice                                                                                                                                                                                        | State                |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| 1. Scaffold: `sdk/` packaging, the interface, the harness, the smoke test                                                                                                                    | done, October 2026   |
+| 2. First implementation of `createMatrixRTCClient` under `sdk/src`, the media adapter, the e2e suite                                                                                         | done, 1 October 2026 |
+| 3. Copy the shared modules into `sdk/src/` with their tests, drop every `src/` import, turn on the import boundary                                                                           | done, 2 October 2026 |
+| 4. `createCallViewModel$` consumes the client; media view models take `media$`; Element Call imports the primitives and enums from the SDK and deletes its own copies                        | done, 2 October 2026 |
+| 5. `sendData`/`data$` on the client; the legacy bundle `sdk-target-based-on-call-view-model/` is rebuilt on the SDK with its interface unchanged, since it is in production use              | done, 2 October 2026 |
+| 12. The media backend seam: everything LiveKit behind `MediaBackend` in `sdk/src/backend/livekit/`, the `backend` option, the lint guard; see [`MediaBackendPlan.md`](./MediaBackendPlan.md) | done, 4 October 2026 |
 
 Element Call now consumes the SDK. `InCallView` creates the client from the
 configuration, settings and URL parameters, and hands it to `createCallViewModel$`,

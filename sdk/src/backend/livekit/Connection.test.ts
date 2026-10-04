@@ -37,11 +37,12 @@ import {
   ConnectionState,
   type ConnectionOpts,
 } from "./Connection.ts";
-import { ObservableScope } from "../reactive/ObservableScope";
+import { ObservableScope } from "../../reactive/ObservableScope";
 import { type OpenIDClientParts } from "./openIDSFU";
-import { MatrixRTCError, FailToGetOpenIdToken } from "../errors";
-import { testJWTToken } from "../utils/test-fixtures";
-import { mockRemoteParticipant, ownMemberMock } from "../utils/test";
+import { MatrixRTCError, FailToGetOpenIdToken } from "../../errors";
+import { testJWTToken } from "../../utils/test-fixtures";
+import { ownMemberMock } from "../../utils/test";
+import { mockRemoteParticipant } from "./test";
 
 let testScope: ObservableScope;
 

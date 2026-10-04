@@ -11,16 +11,20 @@ import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { type RemoteParticipant } from "livekit-client";
 import { logger } from "matrix-js-sdk/lib/logger";
 
-import { Epoch, mapEpoch, ObservableScope } from "../reactive/ObservableScope";
+import {
+  Epoch,
+  mapEpoch,
+  ObservableScope,
+} from "../../reactive/ObservableScope";
 import {
   createConnectionManager$,
   ConnectionManagerData,
+  areLivekitTransportsEqual,
 } from "./ConnectionManager.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
 import { type Connection } from "./Connection.ts";
-import { ownMemberMock, withTestScheduler } from "../utils/test";
-import { areLivekitTransportsEqual } from "./MatrixLivekitMembers.ts";
-import { type Behavior } from "../reactive/Behavior";
+import { ownMemberMock, withTestScheduler } from "../../utils/test";
+import { type Behavior } from "../../reactive/Behavior";
 
 // Some test constants
 

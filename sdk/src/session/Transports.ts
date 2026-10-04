@@ -5,18 +5,13 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import {
-  isLivekitTransport,
-  type Transport,
-} from "matrix-js-sdk/lib/matrixrtc";
-import { combineLatest, distinctUntilChanged, map, of, switchMap } from "rxjs";
+import { type Transport } from "matrix-js-sdk/lib/matrixrtc";
+import { distinctUntilChanged, map } from "rxjs";
 
-import { constant, type Behavior } from "../reactive/Behavior";
+import { type Behavior } from "../reactive/Behavior";
 import { type ObservableScope } from "../reactive/ObservableScope";
-import { ConnectionState } from "./Connection";
-import { type IConnectionManager } from "./ConnectionManager";
 import { type TransportMetadata } from "../api";
-import { ResolvedConnection } from "./ConnectionFactory";
+import { type MediaBackend, MediaConnectionState } from "../backend/api";
 
 export interface TransportRegistry {
   /** The one `TransportMetadata` for a transport, however many memberships name it. */
@@ -27,7 +22,7 @@ export interface TransportRegistry {
 
 export function createTransportRegistry(
   scope: ObservableScope,
-  connectionManager: IConnectionManager,
+  connections$: MediaBackend["connections$"],
 ): TransportRegistry {
   const transports = new Map<string, TransportMetadata>();
 
@@ -35,29 +30,19 @@ export function createTransportRegistry(
     const id = transportId(raw);
     let transport = transports.get(id);
     if (transport === undefined) {
-      transport = createTransportMetadata(scope, connectionManager, raw, id);
+      transport = createTransportMetadata(scope, connections$, raw, id);
       transports.set(id, transport);
     }
     return transport;
   };
 
   const connected$ = scope.behavior(
-    connectionManager.connectionManagerData$.pipe(
-      switchMap(({ value }) => {
-        const connections = value.getConnections();
-        if (connections.length === 0) return of([]);
-        return combineLatest(
-          connections.map((connection) =>
-            connection.state$.pipe(
-              map((state) =>
-                state === ConnectionState.LivekitConnected
-                  ? get(connection.transport)
-                  : null,
-              ),
-            ),
-          ),
-        ).pipe(map((transports) => transports.filter((t) => t !== null)));
-      }),
+    connections$.pipe(
+      map((connections) =>
+        connections
+          .filter(({ state }) => state === MediaConnectionState.Connected)
+          .map(({ transport }) => get(transport)),
+      ),
     ),
   );
 
@@ -66,28 +51,31 @@ export function createTransportRegistry(
 
 function createTransportMetadata(
   scope: ObservableScope,
-  connectionManager: IConnectionManager,
+  connections$: MediaBackend["connections$"],
   raw: Transport,
   id: string,
 ): TransportMetadata {
-  const resolved$ = isLivekitTransport(raw)
-    ? scope.behavior(
-        connectionManager.connectionManagerData$.pipe(
-          map(({ value }) => value.getConnectionForTransport(raw)),
-          distinctUntilChanged(),
-          switchMap((connection) =>
-            connection instanceof ResolvedConnection
-              ? connection.resolved$
-              : of(undefined),
-          ),
+  return {
+    type: raw.type,
+    id,
+    raw,
+    resolved$: scope.behavior(
+      connections$.pipe(
+        map(
+          (connections) =>
+            connections.find((c) => transportId(c.transport) === id)?.resolved,
         ),
-      )
-    : constant(undefined);
-  return { type: raw.type, id, raw, resolved$ };
+        distinctUntilChanged(),
+      ),
+    ),
+  };
 }
 
-function transportId(raw: Transport): string {
-  return isLivekitTransport(raw)
-    ? raw.livekit_service_url
-    : JSON.stringify(raw);
+/**
+ * Transports are plain JSON out of membership events, so the same transport
+ * serialises the same way wherever it appears. Keys are sorted so that the
+ * order a sender wrote them in does not matter.
+ */
+export function transportId(raw: Transport): string {
+  return JSON.stringify(raw, Object.keys(raw).sort());
 }

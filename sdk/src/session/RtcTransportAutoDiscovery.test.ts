@@ -64,6 +64,7 @@ describe("RtcTransportAutoDiscovery", () => {
 
       const discovery = new RtcTransportAutoDiscovery({
         client,
+        transportType: "livekit",
         fallbackTransportUrl: configTransport.livekit_service_url,
         logger: rootLogger,
       });
@@ -94,6 +95,7 @@ describe("RtcTransportAutoDiscovery", () => {
 
     const discovery = new RtcTransportAutoDiscovery({
       client,
+      transportType: "livekit",
       fallbackTransportUrl: "https://config.example.org",
       logger: rootLogger,
     });
@@ -117,6 +119,7 @@ describe("RtcTransportAutoDiscovery", () => {
 
       const discovery = new RtcTransportAutoDiscovery({
         client,
+        transportType: "livekit",
         fallbackTransportUrl: configTransport.livekit_service_url,
         logger: rootLogger,
       });
@@ -133,6 +136,7 @@ describe("RtcTransportAutoDiscovery", () => {
 
     const discovery = new RtcTransportAutoDiscovery({
       client,
+      transportType: "livekit",
       fallbackTransportUrl: undefined,
       logger: rootLogger,
     });

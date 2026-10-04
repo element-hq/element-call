@@ -15,8 +15,8 @@ import {
 } from "livekit-client";
 import { describe, expect, it } from "vitest";
 
-import { E2eeType } from "../encryption";
-import { testScope } from "../utils/test";
+import { E2eeType } from "../../encryption";
+import { testScope } from "../../utils/test";
 import { createLivekitMemberMedia } from "./LivekitMemberMedia";
 
 describe("createLivekitMemberMedia", () => {

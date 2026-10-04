@@ -1,9 +1,16 @@
 # Media backend: trapping LiveKit behind one seam
 
+> **Status: implemented, 4 October 2026.** All six steps landed in one change;
+> the interface is in `sdk/src/backend/api.ts`, the LiveKit backend in
+> `sdk/src/backend/livekit/`, and the architecture document has the section
+> "Media backend". The text below is the plan as it was written, kept for the
+> reasoning behind the shape.
+
 The SDK's public API in `sdk/src/api.ts` names LiveKit in three places: the video
-processor type, the video codec in the capture settings, and the LiveKit-flavoured
-client options (`mediaQuality`, `capture`, `transportUrl`, `fallbackTransportUrl`).
-The implementation is a different story. LiveKit participants, rooms, connections,
+processor type in `PublishRequest` and `LocalVideoMediaTrack.setProcessor`, the
+video codec in `VideoCaptureSettings`, and the LiveKit-flavoured client options
+(`mediaQuality`, `transportUrl`, `fallbackTransportUrl`). The implementation is a
+different story. LiveKit participants, rooms, connections,
 tokens and data packets run through most of `sdk/src/session/`. Only the two
 adapters in `sdk/src/media/` are the clean boundary they were meant to be.
 
@@ -33,23 +40,23 @@ slice 11 (the error renames) get easier once the folder exists.
 Everything under `sdk/src/session/` that imports `livekit-client`,
 `@livekit/components-core`, or speaks the LiveKit token protocol:
 
-| Module | What it is |
-| --- | --- |
-| `media/LivekitMediaTrack.ts`, `media/LivekitMemberMedia.ts` | Participant to `MemberMedia`. Clean already. |
-| `session/Connection.ts`, `ConnectionFactory.ts`, `ConnectionManager.ts` | One LiveKit room per transport URL, the multi-SFU policy, the token fetch per connection. |
-| `session/MatrixLivekitMembers.ts` | Matches a participant identity to a membership, epoch-paired. |
-| `session/Publisher.ts` | Local tracks, upstream pausing, device switching, the processor. |
-| `session/KeyProvider.ts`, `MatrixKeyProvider.ts` | LiveKit's key provider on the js-sdk key stream. |
-| `session/DataChannel.ts` | LiveKit data packets. |
-| `session/openIDSFU.ts`, `livekitOptions.ts` | The JWT service protocol, including delegation, and room options. |
-| `session/LocalTransport.ts` | The pre-join token fetch. Discovery itself is a homeserver endpoint and stays; see "Discovery stays in the session". |
-| `session/RtcTransportAutoDiscovery.ts` | Generic apart from its `isLivekitTransport` filter and the fallback URL. Stays. |
-| `session/LocalMember.ts` | `participant$`, `connection$`, upstream pausing, screen share, the delegation probe and handover, `Track.Source` in `setEnabled`. Roughly 150 of 530 lines. |
-| `session/Members.ts` | `mediaFor` takes a participant and a room. |
-| `session/Transports.ts` | Transport id, the connected check and `resolved$` assume LiveKit. |
-| `session/SessionBehaviors.ts` | `membershipsAndTransports$` filters to LiveKit transports. Deleted in step 3, not moved. |
-| `session/MatrixRTCClient.ts` | Wires all of the above. |
-| `utils/test.ts` | `mockRemoteParticipant`, `exampleTransport`. |
+| Module                                                                  | What it is                                                                                                                                                            |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `media/LivekitMediaTrack.ts`, `media/LivekitMemberMedia.ts`             | Participant to `MemberMedia`. Clean already.                                                                                                                          |
+| `session/Connection.ts`, `ConnectionFactory.ts`, `ConnectionManager.ts` | One LiveKit room per transport URL, the multi-SFU policy, the token fetch per connection.                                                                             |
+| `session/MatrixLivekitMembers.ts`                                       | Matches a participant identity to a membership, epoch-paired.                                                                                                         |
+| `session/Publisher.ts`, `publishOptions.ts`                             | Publish requests onto the local participant, upstream pausing, audio output switching, the capture and publish option builders.                                       |
+| `session/KeyProvider.ts`, `MatrixKeyProvider.ts`                        | LiveKit's key provider on the js-sdk key stream.                                                                                                                      |
+| `session/DataChannel.ts`                                                | LiveKit data packets.                                                                                                                                                 |
+| `session/openIDSFU.ts`, `livekitOptions.ts`                             | The JWT service protocol, including delegation, and room options.                                                                                                     |
+| `session/LocalTransport.ts`                                             | The pre-join token fetch. Discovery itself is a homeserver endpoint and stays; see "Discovery stays in the session".                                                  |
+| `session/RtcTransportAutoDiscovery.ts`                                  | Generic apart from its `isLivekitTransport` filter and the fallback URL. Stays.                                                                                       |
+| `session/LocalMember.ts`                                                | `participant$`, `connection$`, upstream pausing, the delegation probe and handover, and `publish` resolving with a `LocalTrackPublication`. Roughly 120 of 490 lines. |
+| `session/Members.ts`                                                    | `mediaFor` takes a participant and a room; `publish` maps a `trackSid` back to a track.                                                                               |
+| `session/Transports.ts`                                                 | Transport id, the connected check and `resolved$` assume LiveKit.                                                                                                     |
+| `session/SessionBehaviors.ts`                                           | `membershipsAndTransports$` filters to LiveKit transports. Deleted in step 3, not moved.                                                                              |
+| `session/MatrixRTCClient.ts`                                            | Wires all of the above.                                                                                                                                               |
+| `utils/test.ts`                                                         | `mockRemoteParticipant`, `exampleTransport`.                                                                                                                          |
 
 `errors.ts` has a type-only import for `LivekitConnectionError`; that is slice 11's
 business and stays. `index.ts` exports `getSFUConfigWithOpenID` as
@@ -61,8 +68,10 @@ the backend folder.
 All of it lives in `sdk/src/backend/api.ts`. Types not defined here come from
 `sdk/src/api.ts` (`MemberMedia`, `LocalMemberMedia`, `LocalMediaInputs`,
 `ResolvedTransport`), `sdk/src/config.ts` (`SessionTimings`),
-`sdk/src/encryption.ts` and matrix-js-sdk (`Transport`, `CallMembership`,
-`CallMembershipIdentityParts`). The js-sdk session itself never reaches a
+`sdk/src/encryption.ts` and matrix-js-sdk (`Transport`,
+`CallMembershipIdentityParts`). Memberships reach a backend as the SDK's
+`RTCMembership`, whose pick covers the two things a backend reads,
+`rtcBackendIdentity` and `getTransport()`. The js-sdk session itself never reaches a
 backend: `MatrixKeyProvider` reads three things from it today, the
 `EncryptionKeyChanged` event, one `reemitEncryptionKeys()` call to replay the
 keys it already holds, and the room id for a log line, and `mediaKeys$` covers
@@ -138,21 +147,32 @@ export type MediaBackendFactory = (
 ```
 
 `LocalMediaInputs` is unchanged from `sdk/src/api.ts` and is the only input the
-backend reads about the local devices:
+backend reads about the local media. Since the `MemberMediaPlan.md` slices, the
+devices and the processor are no longer behaviors the SDK watches: they are
+fields of the initial requests, and later changes go to the track's own
+`setDevice` and `setProcessor`.
 
 ```ts
 export interface LocalMediaInputs {
-  /** Initial state; `setMicrophoneEnabled` and `setCameraEnabled` change it from then on. */
-  microphoneEnabled: boolean;
-  cameraEnabled: boolean;
-  audioInputDeviceId$: Behavior<string | undefined>;
-  videoInputDeviceId$: Behavior<string | undefined>;
+  /** Published at the join; `publish` on the local member adds to it from then on. */
+  publish: PublishRequest[];
   /** Undefined where the host routes audio itself, or to leave the browser's choice. */
   audioOutputDeviceId$: Behavior<string | undefined>;
-  /** Background blur and the like. The LiveKit type on the public API; slice 7. */
-  videoProcessor$: Behavior<TrackProcessor<Track.Kind.Video> | undefined>;
 }
+
+export type PublishRequest =
+  | { source: "microphone"; deviceId?: string; capture?: AudioCaptureSettings }
+  | {
+      source: "camera";
+      deviceId?: string;
+      processor?: TrackProcessor<Track.Kind.Video>;
+      capture?: VideoCaptureSettings;
+    }
+  | { source: "screenShare"; audio?: boolean; capture?: VideoCaptureSettings };
 ```
+
+The processor type in the camera request is the LiveKit type on the public API;
+slice 7 of the migration.
 
 ### The backend
 
@@ -220,7 +240,7 @@ export interface MediaBackend {
    */
   mediaFor$(
     scope: ObservableScope,
-    membership$: Behavior<CallMembership>,
+    membership$: Behavior<RTCMembership>,
   ): Behavior<MemberMedia | null>;
 
   /**
@@ -278,21 +298,27 @@ export interface LocalMediaBackend {
   readonly publishError$: Behavior<Error | null>;
 
   /**
-   * Enables or disables a source and resolves with what resulted, which
-   * differs from the request where the device could not be used. Remembered
-   * across connections, so a request before the transport is up is applied
-   * when the tracks are created. Today's `DesiredMedia` lives behind this.
+   * Publishes a source and resolves with its track once it is in `media$`'s
+   * `tracks$`. Remembered across connections, so a request before the
+   * transport is up is applied when the connection comes, and republished
+   * after a reconnection. Rejects where the device could not be used,
+   * including the user closing the screen picker. Today's `DesiredMedia`
+   * map lives behind this.
    */
-  setEnabled(source: "microphone" | "camera", enabled: boolean): Promise<boolean>;
-
-  readonly sharingScreen$: Behavior<boolean>;
-  /**
-   * Rejects with the browser's `DOMException` when the user closes the
-   * picker; the session filters that out before showing an error.
-   */
-  setScreenShareEnabled(enabled: boolean): Promise<void>;
+  publish(
+    request: PublishRequest,
+  ): Promise<LocalAudioMediaTrack | LocalVideoMediaTrack>;
+  /** Removes one of our tracks by id; a screen share takes its audio with it. */
+  unpublish(id: string): Promise<void>;
 }
 ```
+
+Muting, device switching and the processor are not on the backend: they are
+methods of `LocalAudioMediaTrack` and `LocalVideoMediaTrack`, which the backend
+builds in `media$`. The `setEnabled` callback that `createLocalLivekitMemberMedia`
+takes today, so that a track's mute keeps the desired map in step, is wired
+inside the backend. Screen sharing has no members of its own any more: it is a
+`publish` request, and "sharing" is `tracks$` holding a `screenShare` track.
 
 There is one publish switch, not two. Today `LocalMember.ts` pauses the
 upstream from two places: `stopPublishing()` on leave, and a separate
@@ -310,11 +336,8 @@ There is no publisher on the interface. Today's `Publisher` wraps one LiveKit
 room's local participant and so lives and dies with the local connection, and
 `LocalMember.ts` re-applies the join intent to each new one. That lifecycle is a
 LiveKit detail: the backend keeps the publish intent, as it keeps the desired
-media for `setEnabled`, and re-applies both to every connection it opens. A
+requests for `publish`, and re-applies both to every connection it opens. A
 mesh backend has no publisher object at all.
-
-Whether the platform can share a screen at all stays in the session: it is a
-`getDisplayMedia` check, the same for every backend.
 
 ### Delayed leave delegation
 
@@ -362,23 +385,31 @@ const prepared$ = from(
   ),
 ); // errors become fatalTransportError$
 
-scope.reconcile(combineLatest([prepared$, joinRequested$]), ([prepared, join]) => {
-  if (prepared === null || !join) return;
-  joinMatrixRTC(
-    prepared.transport,
-    prepared.canDelegateDelayedLeave ? timings.delegatedDelayedLeave : timings.delayedLeave,
-  );
-  return leaveOnCleanup;
-});
+scope.reconcile(
+  combineLatest([prepared$, joinRequested$]),
+  ([prepared, join]) => {
+    if (prepared === null || !join) return;
+    joinMatrixRTC(
+      prepared.transport,
+      prepared.canDelegateDelayedLeave
+        ? timings.delegatedDelayedLeave
+        : timings.delayedLeave,
+    );
+    return leaveOnCleanup;
+  },
+);
 
-scope.reconcile(combineLatest([prepared$, delayId$]), async ([prepared, delayId]) => {
-  if (!prepared?.canDelegateDelayedLeave || delayId === null) return;
-  try {
-    await backend.delegateDelayedLeave(delayId);
-  } catch (e) {
-    logger.error("Failed to delegate the leave", e);
-  }
-});
+scope.reconcile(
+  combineLatest([prepared$, delayId$]),
+  async ([prepared, delayId]) => {
+    if (!prepared?.canDelegateDelayedLeave || delayId === null) return;
+    try {
+      await backend.delegateDelayedLeave(delayId);
+    } catch (e) {
+      logger.error("Failed to delegate the leave", e);
+    }
+  },
+);
 ```
 
 A mesh backend answers `canDelegateDelayedLeave: false` and is never asked to
@@ -420,19 +451,19 @@ nobody has a tile for, and that member's transport would never connect.
 
 ### Where the LiveKit backend gets each member from
 
-| Interface member | Today | Moves from |
-| --- | --- | --- |
-| `prepareLocalTransport` | OpenID and JWT fetch kept as `existingSFUConfig`, delegation probe | `LocalTransport.ts`, `LocalMember.ts` |
-| `delegateDelayedLeave` | `getSFUConfigWithOpenID` with `delayId` | `LocalMember.ts` |
-| `local.connectionState$` | `connection$.state$` for the local transport | `LocalMember.ts` |
-| `local.media$` | `mediaFor(participant$, connection$)` with `createLocalLivekitMemberMedia` | `Members.ts` |
-| `local.setPublishing`, `publishError$` | `scope.reconcile(connection$, createPublisher)`, the `[publisher$, joinRequested$]` reconcile with its `publishError$`, and the homeserver-connectivity loop over `participant.trackPublications` | `LocalMember.ts`, `MatrixRTCClient.ts` |
-| `local.setEnabled` | `DesiredMedia` plus `Publisher.setEnabled(Track.Source, …)` | `LocalMember.ts`, `Publisher.ts` |
-| `local.sharingScreen$`, `setScreenShareEnabled` | `observeSharingScreen$`, `setScreenShareEnabled` with capture and publish options | `LocalMember.ts` |
-| `mediaFor$` | `createRemoteMatrixLivekitMembers$` matching plus `mediaFor` | `Members.ts`, `MatrixLivekitMembers.ts` |
-| `connections$` | `connectionManagerData$` joined with each connection's `state$` and `ResolvedConnection.resolved$` | `Transports.ts`, `ConnectionFactory.ts` |
-| `sendData`, `data$` | `createDataChannel$` minus the member lookup | `DataChannel.ts` |
-| internal | key provider on `mediaKeys$` instead of `setRTCSession`, room options, E2EE worker, connection manager fed by the transports registered through `mediaFor$` | `KeyProvider.ts`, `MatrixKeyProvider.ts`, `livekitOptions.ts`, `ConnectionFactory.ts`, `ConnectionManager.ts` |
+| Interface member                       | Today                                                                                                                                                                                             | Moves from                                                                                                    |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `prepareLocalTransport`                | OpenID and JWT fetch kept as `existingSFUConfig`, delegation probe                                                                                                                                | `LocalTransport.ts`, `LocalMember.ts`                                                                         |
+| `delegateDelayedLeave`                 | `getSFUConfigWithOpenID` with `delayId`                                                                                                                                                           | `LocalMember.ts`                                                                                              |
+| `local.connectionState$`               | `connection$.state$` for the local transport                                                                                                                                                      | `LocalMember.ts`                                                                                              |
+| `local.media$`                         | `mediaFor(participant$, connection$)` with `createLocalLivekitMemberMedia`                                                                                                                        | `Members.ts`                                                                                                  |
+| `local.setPublishing`, `publishError$` | `scope.reconcile(connection$, createPublisher)`, the `[publisher$, joinRequested$]` reconcile with its `publishError$`, and the homeserver-connectivity loop over `participant.trackPublications` | `LocalMember.ts`, `MatrixRTCClient.ts`                                                                        |
+| `local.publish`, `unpublish`           | `publish` and `unpublish` with the `DesiredMedia` map and `publication$`, and the `trackSid` to track lookup                                                                                      | `LocalMember.ts`, `Members.ts`, `Publisher.ts`                                                                |
+| internal                               | the `setEnabled(source, enabled)` callback into `createLocalLivekitMemberMedia`                                                                                                                   | `LocalMember.ts`, `Members.ts`                                                                                |
+| `mediaFor$`                            | `createRemoteMatrixLivekitMembers$` matching plus `mediaFor`                                                                                                                                      | `Members.ts`, `MatrixLivekitMembers.ts`                                                                       |
+| `connections$`                         | `connectionManagerData$` joined with each connection's `state$` and `ResolvedConnection.resolved$`                                                                                                | `Transports.ts`, `ConnectionFactory.ts`                                                                       |
+| `sendData`, `data$`                    | `createDataChannel$` minus the member lookup                                                                                                                                                      | `DataChannel.ts`                                                                                              |
+| internal                               | key provider on `mediaKeys$` instead of `setRTCSession`, room options, E2EE worker, connection manager fed by the transports registered through `mediaFor$`                                       | `KeyProvider.ts`, `MatrixKeyProvider.ts`, `livekitOptions.ts`, `ConnectionFactory.ts`, `ConnectionManager.ts` |
 
 ### Discovery stays in the session
 
@@ -446,9 +477,12 @@ only asked to prepare what the session picked:
 export async function discoverLocalTransport(
   client: Pick<MatrixClient, "getDomain" | "_unstable_getRTCTransports">,
   transportType: string,
-  options: Pick<MatrixRTCClientOptions, "transportUrl" | "fallbackTransportUrl">,
+  options: Pick<
+    MatrixRTCClientOptions,
+    "transportUrl" | "fallbackTransportUrl"
+  >,
   logger: Logger,
-): Promise<Transport>;   // throws MatrixRTCTransportMissingError
+): Promise<Transport>; // throws MatrixRTCTransportMissingError
 ```
 
 `RtcTransportAutoDiscovery` does the list fetch today and stays where it is,
@@ -487,7 +521,6 @@ export interface LivekitBackendOptions {
    */
   client: Pick<MatrixClient, "getOpenIdToken" | "baseUrl">;
   mediaQuality?: MediaQuality;
-  capture?: CaptureSettings;
   /**
    * Which token service endpoint to use for the local transport: the MSC4195
    * one, or the legacy one with the old identity format. Remote transports
@@ -520,8 +553,9 @@ Pure move, no code change beyond import paths.
 
 - `git mv` into `sdk/src/backend/livekit/`: `media/*`, `Connection`,
   `ConnectionFactory`, `ConnectionManager`, `DataChannel`, `KeyProvider`,
-  `MatrixKeyProvider`, `MatrixLivekitMembers`, `Publisher`, `livekitOptions`,
-  `openIDSFU`, each with its test. `RtcTransportAutoDiscovery` and
+  `MatrixKeyProvider`, `MatrixLivekitMembers`, `Publisher`, `publishOptions`,
+  `livekitOptions`, `openIDSFU`, each with its test. `utils/tracks.ts` is
+  neutral and stays. `RtcTransportAutoDiscovery` and
   `LocalTransport` stay in `session/`.
 - Split `utils/test.ts`: `mockRemoteParticipant` and `exampleTransport` go to
   `backend/livekit/test.ts`.
@@ -595,24 +629,28 @@ with the second's.
   transport's connection mapped onto `MediaConnectionState`, `media$` through
   `createLocalLivekitMemberMedia`, `setPublishing` and `publishError$` by
   reconciling a `Publisher` per connection against the remembered intent,
-  which is the two reconciles from `LocalMember.ts` moved as they are,
-  `setEnabled` over a backend-owned `DesiredMedia` and the current publisher,
-  `sharingScreen$` and `setScreenShareEnabled` with today's capture and publish
-  options. The homeserver-connectivity loop is not moved; `setPublishing`
-  covers it.
+  which is the two reconciles from `LocalMember.ts` moved as they are, and
+  `publish` and `unpublish` over a backend-owned `DesiredMedia` map and the
+  current publisher, with the `trackSid` to track lookup that `Members.ts`
+  does today done inside. The `setEnabled` callback into
+  `createLocalLivekitMemberMedia` is wired here too. The
+  homeserver-connectivity loop is not moved; `setPublishing` covers it.
 - `LocalMember.ts` takes `backend.local` instead of `connectionManager`,
   `createPublisher` and `desired`. Its publisher reconcile and the pause and
   resume loop become one subscription,
   `joinRequested$ && homeserverConnected.combined$` into
   `backend.local.setPublishing`, and `backend.local.publishError$` feeds
-  `state$` where the local subject did. It
-  loses `participant$`, `connection$`, the `livekitRoom` access, the pause and
-  resume loop, `Track.Source`, `ScreenShareCaptureOptions` and
-  `TrackPublishOptions`, and compares against `MediaConnectionState.Connected`
-  in `mediaState$` and `disconnectReason$`. `LocalMembership` no longer exposes
-  `participant$` or `connection$`.
+  `state$` where the local subject did. It loses `participant$`,
+  `connection$`, the `livekitRoom` access, the pause and resume loop,
+  `publish`, `unpublish`, `setEnabled` and `publication$`, and compares
+  against `MediaConnectionState.Connected` in `mediaState$` and
+  `disconnectReason$`. `LocalMembership` shrinks to the join state machine
+  and no longer names a LiveKit type.
+- `Members.ts`: `createLocalRTCMember` forwards `publish` and `unpublish` to
+  `backend.local` and drops its own `trackSid` lookup.
 - `MatrixRTCClient.ts` stops passing `createPublisher`, `desired` and the
-  connection manager. The transitional field goes.
+  connection manager, and stops building the `DesiredMedia` map. The
+  transitional field goes.
 - `status.test.ts` moves to `MediaConnectionState`.
 
 New unit test: `LocalMember.test.ts` against a fake `LocalMediaBackend`. This is
@@ -660,8 +698,7 @@ and that a new delay id triggers a handover.
 - Extend `eslint/SdkImportBoundary.js`: under `sdk/src/session/`, in
   `sdk/src/api.ts` and in `sdk/index.ts`, `livekit-client` and `@livekit/*` are
   banned except as `import type`. From here on the seam is enforced, not
-  documented. `oxlint` currently reports no files under `sdk/`, so that has to
-  be fixed first for the rule to bite at all.
+  documented.
 - `SdkArchitecture.md` gets a "Media backend" section built from this plan, the
   README's description of what imports LiveKit is updated, and `SdkMigration.md`
   records the slice as done.

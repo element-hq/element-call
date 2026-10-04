@@ -8,6 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { type MatrixClient, type Room } from "matrix-js-sdk";
 import { type Logger, logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import {
+  type MatrixRTCSession as JsSdkRTCSession,
   MatrixRTCSessionEvent,
   MatrixRTCSessionManager,
   MembershipManagerEvent,
@@ -15,27 +16,32 @@ import {
 import { type IMembershipManager } from "matrix-js-sdk/lib/matrixrtc/IMembershipManager";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 import { v4 as uuidv4 } from "uuid";
-import { combineLatest, from, fromEvent, map, type Observable } from "rxjs";
+import { combineLatest, filter, from, fromEvent, map, Observable } from "rxjs";
 
 import { defaultSessionTimings, MatrixRTCMode } from "../config";
+import { E2eeType } from "../encryption";
 import { type ObservableScope } from "../reactive/ObservableScope";
 import { filterBehavior, generateItems } from "../reactive/observable";
 import { mapScoped } from "../utils/mapScoped";
 import {
+  type DataMessage,
   type LocalMediaInputs,
   type LocalRTCMember,
   type MatrixRTCClient,
   type MatrixRTCClientOptions,
   type RemoteRTCMember,
 } from "../api";
+import {
+  type MediaBackend,
+  type MediaBackendContext,
+  type MediaKey,
+} from "../backend/api";
+import { createLivekitBackend } from "../backend/livekit/LivekitBackend";
 import { MatrixRTCError } from "../errors";
-import { LivekitConnectionFactory } from "./ConnectionFactory";
 import { createHomeserverConnected$ } from "./HomeserverConnected";
 import { joinJsSdkSession } from "./joinJsSdkSession";
-import { createKeyProvider } from "./KeyProvider";
-import { createLocalMembership$ } from "./LocalMember";
-import { getLocalTransport } from "./LocalTransport";
-import { createRemoteMatrixLivekitMembers$ } from "./MatrixLivekitMembers";
+import { createLocalMembership$, type PreparedTransport } from "./LocalMember";
+import { discoverLocalTransport } from "./LocalTransport";
 import {
   createMatrixMemberMetadata$,
   createRoomMembers$,
@@ -45,13 +51,9 @@ import {
   createRemoteRTCMember,
   membershipKeys,
 } from "./Members";
-import { createConnectionManager$ } from "./ConnectionManager";
-import { createDataChannel$ } from "./DataChannel";
-import { type DesiredMedia, Publisher } from "./Publisher";
 import {
   createKeyRotationSuppressed$,
   createMemberships$,
-  membershipsAndTransports$,
 } from "./SessionBehaviors";
 import { fatalError, sessionStatus } from "./status";
 import { createTransportRegistry } from "./Transports";
@@ -84,7 +86,6 @@ export function createMatrixRTCClient(
     options,
     logger,
   ).getRoomSession(room);
-  const keyProvider = createKeyProvider(encryptionSystem, jsSdkSession, logger);
 
   const ownMembershipIdentity: CallMembershipIdentityParts = {
     userId,
@@ -98,69 +99,43 @@ export function createMatrixRTCClient(
         : `${userId}:${deviceId}`,
   };
 
-  const memberships$ = createMemberships$(scope, jsSdkSession);
-  const { membershipsWithTransport$, transports$ } = membershipsAndTransports$(
-    scope,
-    memberships$,
-  );
-
-  const localTransport$ = from(
-    getLocalTransport({
-      client,
-      ownMembershipIdentity,
-      roomId: room.roomId,
-      matrixRTCMode,
-      transportUrl: options.transportUrl,
-      fallbackTransportUrl: options.fallbackTransportUrl,
-      logger,
-    }),
-  );
-
-  const desired: DesiredMedia = new Map(
-    localMedia.publish.map((request) => [
-      request.source,
-      { request, enabled: true },
-    ]),
-  );
-
-  const connectionManager = createConnectionManager$({
-    scope,
-    connectionFactory: new LivekitConnectionFactory(
-      client,
-      room.roomId,
-      localMedia,
-      keyProvider,
-      options.mediaQuality,
-    ),
-    localTransport$,
-    remoteTransports$: transports$,
-    logger,
+  const backend = createBackend(scope, client, options, {
+    roomId: room.roomId,
     ownMembershipIdentity,
+    localMedia,
+    encryptionSystem,
+    mediaKeys$: mediaKeys$(jsSdkSession),
+    timings,
+    logger,
   });
-  const transports = createTransportRegistry(scope, connectionManager);
+
+  const memberships$ = createMemberships$(scope, jsSdkSession);
+  const transports = createTransportRegistry(scope, backend.connections$);
+
+  const preparedTransport$ = from(
+    discoverLocalTransport(client, backend.transportType, options, logger).then(
+      async (transport): Promise<PreparedTransport> => ({
+        transport,
+        ...(await backend.prepareLocalTransport(transport)),
+      }),
+    ),
+  );
 
   const localMembership = createLocalMembership$({
     scope,
-    connectionManager,
-    localTransport$,
+    local: backend.local,
+    delegateDelayedLeave: async (delayId) =>
+      backend.delegateDelayedLeave(delayId),
+    preparedTransport$,
     homeserverConnected: createHomeserverConnected$(
       scope,
       client,
       jsSdkSession,
       timings.syncDisconnectGracePeriodMs,
     ),
-    createPublisher: (connection) =>
-      new Publisher(
-        connection.livekitRoom,
-        localMedia,
-        desired,
-        logger.getChild(
-          `[Publisher ${connection.transport.livekit_service_url}]`,
-        ),
-      ),
     joinMatrixRTC: (transport, delayedLeave) =>
       joinJsSdkSession(jsSdkSession, ownMembershipIdentity, transport, {
-        encryptMedia: keyProvider !== undefined,
+        encryptMedia: encryptionSystem.kind !== E2eeType.NONE,
         matrixRTCMode,
         sendNotificationType: options.sendNotificationType,
         applicationData: options.applicationData,
@@ -182,12 +157,7 @@ export function createMatrixRTCClient(
       ).pipe(map(([delayId]) => delayId ?? null)),
       jsSdkSession.delayId ?? null,
     ),
-    client,
-    roomId: room.roomId,
-    ownMembershipIdentity,
-    matrixRTCMode,
     timings,
-    desired,
     logger,
   });
 
@@ -198,28 +168,30 @@ export function createMatrixRTCClient(
       createRoomMembers$(scope, room),
     ),
     transports,
-    encryptionSystem,
   };
 
   const remoteMembers$ = scope.behavior<RemoteRTCMember[]>(
-    createRemoteMatrixLivekitMembers$({
-      scope,
-      membershipsWithTransport$,
-      connectionManager,
-      localUser: { userId, deviceId },
-    }).pipe(
+    memberships$.pipe(
       map(({ value }) => value),
       generateItems(
         "MatrixRTCClient remoteMembers",
-        function* (members) {
-          for (const member of members)
-            yield {
-              keys: membershipKeys(member.membership$.value),
-              data: member,
-            };
+        function* (memberships) {
+          for (const membership of memberships) {
+            if (
+              membership.userId === userId &&
+              membership.deviceId === deviceId
+            )
+              continue;
+            yield { keys: membershipKeys(membership), data: membership };
+          }
         },
-        (memberScope, member$) =>
-          createRemoteRTCMember(memberScope, member$.value, context),
+        (memberScope, membership$) =>
+          createRemoteRTCMember(
+            memberScope,
+            membership$,
+            backend.mediaFor$(memberScope, membership$),
+            context,
+          ),
       ),
     ),
   );
@@ -238,17 +210,23 @@ export function createMatrixRTCClient(
   );
   const localMember$ = scope.behavior<LocalRTCMember | null>(
     mapScoped(scope, localMembership$, (memberScope, membership$) =>
-      createLocalRTCMember(memberScope, membership$, localMembership, context),
+      createLocalRTCMember(memberScope, membership$, backend.local, context),
     ).pipe(map((member) => member ?? null)),
   );
 
-  const { data$, sendData } = createDataChannel$({
-    scope,
-    connectionManager,
-    remoteMembers$,
-    connection$: localMembership.connection$,
-    logger,
-  });
+  // A packet from an identity that is not a member is dropped, so a host only
+  // ever hears from attested members
+  const data$ = backend.data$.pipe(
+    map(({ senderId, topic, text }): DataMessage | null => {
+      const member = remoteMembers$.value.find((m) => m.id === senderId);
+      if (member === undefined) {
+        logger.warn(`Dropping data from ${senderId}: not a member`);
+        return null;
+      }
+      return { member, topic, text };
+    }),
+    filter((message) => message !== null),
+  );
 
   const status$ = scope.behavior(
     combineLatest(
@@ -280,9 +258,40 @@ export function createMatrixRTCClient(
     ),
     keyRotationSuppressed$: createKeyRotationSuppressed$(scope, jsSdkSession),
     connectedTransports$: transports.connected$,
-    sendData,
+    sendData: async (topic, text) => backend.sendData(topic, text),
     data$,
   };
+}
+
+/** The host's backend, or LiveKit configured from the client options. */
+function createBackend(
+  scope: ObservableScope,
+  client: MatrixClient,
+  { backend, mediaQuality, matrixRTCMode }: MatrixRTCClientOptions,
+  context: MediaBackendContext,
+): MediaBackend {
+  if (backend) return backend(scope, context);
+  return createLivekitBackend(scope, context, {
+    client,
+    mediaQuality,
+    tokenEndpoint:
+      matrixRTCMode === MatrixRTCMode.Matrix_2_0 ? "msc4195" : "legacy",
+  });
+}
+
+/** The session's per-participant keys: the ones it already holds on subscribe, then each new one. */
+function mediaKeys$(session: JsSdkRTCSession): Observable<MediaKey> {
+  return new Observable((subscriber) => {
+    const onKey = (
+      key: Uint8Array<ArrayBuffer>,
+      index: number,
+      _membership: CallMembershipIdentityParts,
+      participantId: string,
+    ): void => subscriber.next({ participantId, index, key });
+    session.on(MatrixRTCSessionEvent.EncryptionKeyChanged, onKey);
+    session.reemitEncryptionKeys();
+    return () => session.off(MatrixRTCSessionEvent.EncryptionKeyChanged, onKey);
+  });
 }
 
 /**

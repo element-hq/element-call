@@ -7,8 +7,6 @@ Please see LICENSE in the repository root for full details.
 
 import { mockRtcMembership, mockMatrixRoomMember } from "./test";
 
-export const localRtcMember = mockRtcMembership("@local:example.org", "1111");
-
 export const aliceDeviceId = "AAAA";
 export const aliceUserId = "@alice:example.org";
 export const aliceRtcMember = mockRtcMembership(aliceUserId, aliceDeviceId);

@@ -18,9 +18,9 @@ import fetchMock from "fetch-mock";
 import { MatrixError } from "matrix-js-sdk";
 
 import { getSFUConfigWithOpenID, type OpenIDClientParts } from "./openIDSFU";
-import { testJWTToken } from "../utils/test-fixtures";
-import { ownMemberMock } from "../utils/test";
-import { FailToGetOpenIdToken } from "../errors";
+import { testJWTToken } from "../../utils/test-fixtures";
+import { ownMemberMock } from "../../utils/test";
+import { FailToGetOpenIdToken } from "../../errors";
 
 const sfuUrl = "https://sfu.example.org";
 
@@ -30,7 +30,6 @@ describe("getSFUConfigWithOpenID", () => {
     fetchMock.catch(404);
     matrixClient = {
       getOpenIdToken: vitest.fn(),
-      getDeviceId: vitest.fn(),
     };
   });
   afterEach(() => {

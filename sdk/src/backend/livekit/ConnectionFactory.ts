@@ -20,11 +20,11 @@ import { BehaviorSubject, combineLatest, map } from "rxjs";
 
 import { buildLiveKitOptions } from "./livekitOptions";
 import { type OpenIDClientParts, type SFUConfig } from "./openIDSFU";
-import { type Behavior } from "../reactive/Behavior";
+import { type Behavior } from "../../reactive/Behavior";
 import { Connection, type ConnectionOpts, ConnectionState } from "./Connection";
-import { type ObservableScope } from "../reactive/ObservableScope";
-import { type LocalMediaInputs, type ResolvedTransport } from "../api";
-import { type MediaQuality } from "../config";
+import { type ObservableScope } from "../../reactive/ObservableScope";
+import { type LocalMediaInputs, type ResolvedTransport } from "../../api";
+import { type MediaQuality } from "../../config";
 import {
   audioCaptureOptions,
   type PublishRequestFor,
@@ -54,14 +54,17 @@ export class ResolvedConnection extends Connection {
   public constructor(opts: ConnectionOpts, logger: Logger) {
     super(opts, logger);
     this.sfuConfig$ = new BehaviorSubject(opts.existingSFUConfig);
+    // One object per fetch, so that a change of state does not read as a
+    // change of what was fetched
+    const resolved$ = this.sfuConfig$.pipe(
+      map((config) => config && resolvedTransport(config)),
+    );
     this.resolved$ = opts.scope.behavior(
-      combineLatest([this.sfuConfig$, this.state$]).pipe(
-        map(([config, state]) =>
-          config === undefined ||
-          state === ConnectionState.Stopped ||
-          state instanceof Error
+      combineLatest([resolved$, this.state$]).pipe(
+        map(([resolved, state]) =>
+          state === ConnectionState.Stopped || state instanceof Error
             ? undefined
-            : resolvedTransport(config),
+            : resolved,
         ),
       ),
     );

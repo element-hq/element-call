@@ -23,6 +23,7 @@ import {
 import { type Observable } from "rxjs";
 
 import { type Behavior } from "./reactive/Behavior";
+import { type MediaBackendFactory } from "./backend/api";
 import { type EncryptionSystem } from "./encryption";
 import {
   type MatrixRTCMode,
@@ -62,6 +63,11 @@ export interface MatrixRTCClientOptions {
   transportUrl?: string;
   /** Use this transport when the homeserver advertises none. */
   fallbackTransportUrl?: string;
+  /**
+   * What carries the media. LiveKit, configured from the options above, when
+   * left out; see `createLivekitBackend` for building one with other options.
+   */
+  backend?: MediaBackendFactory;
 }
 
 export interface AudioCaptureSettings {
@@ -186,7 +192,7 @@ export interface DataMessage {
 export interface TransportMetadata {
   /** `"livekit"` today. */
   type: string;
-  /** Stable key, unique per transport in the session. For LiveKit, the service url. */
+  /** Stable key, unique per transport in the session: the raw transport, serialised with sorted keys. */
   id: string;
   /** The transport object as it appears in the membership. */
   raw: Transport;

@@ -7,74 +7,38 @@ Please see LICENSE in the repository root for full details.
 
 import { type MatrixClient } from "matrix-js-sdk";
 import { type Logger } from "matrix-js-sdk/lib/logger";
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
-import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
+import { type Transport } from "matrix-js-sdk/lib/matrixrtc";
 
-import { type MatrixRTCMode } from "../config";
-import { getSFUConfigWithOpenID, type SFUConfig } from "./openIDSFU";
-import { RtcTransportAutoDiscovery } from "./RtcTransportAutoDiscovery";
+import { type MatrixRTCClientOptions } from "../api";
 import { MatrixRTCTransportMissingError } from "../errors";
-
-/** The transport the local member publishes on, authenticated with. */
-export interface LocalTransport {
-  transport: LivekitTransport;
-  sfuConfig: SFUConfig;
-}
-
-export function isLocalTransport(
-  obj: LivekitTransport | LocalTransport,
-): obj is LocalTransport {
-  return "transport" in obj && "sfuConfig" in obj;
-}
-
-interface Props {
-  client: Pick<
-    MatrixClient,
-    | "getDomain"
-    | "_unstable_getRTCTransports"
-    | "getOpenIdToken"
-    | "getDeviceId"
-  >;
-  ownMembershipIdentity: CallMembershipIdentityParts;
-  roomId: string;
-  matrixRTCMode: MatrixRTCMode;
-  /** Skip discovery and use this transport. */
-  transportUrl?: string;
-  /** Use this transport when the homeserver advertises none. */
-  fallbackTransportUrl?: string;
-  logger: Logger;
-}
+import { RtcTransportAutoDiscovery } from "./RtcTransportAutoDiscovery";
 
 /**
- * The transport the local member publishes on: the one the host names, else
- * the homeserver's preferred one, else the host's fallback; authenticated
- * with, so that the session can be joined with a token in hand.
+ * The transport the local member advertises: the one the host names, else the
+ * homeserver's first of the type the backend serves, else the host's fallback.
+ * The two URL options are LiveKit service URLs, and turning one into a
+ * membership transport is the one piece of LiveKit knowledge outside the
+ * backend. It stays here, for hosts that configure a URL rather than a
+ * transport, and goes once the options take a `Transport`.
  */
-export async function getLocalTransport({
-  client,
-  ownMembershipIdentity,
-  roomId,
-  matrixRTCMode,
-  transportUrl,
-  fallbackTransportUrl,
-  logger,
-}: Props): Promise<LocalTransport> {
-  const transport: LivekitTransport | null = transportUrl
+export async function discoverLocalTransport(
+  client: Pick<MatrixClient, "getDomain" | "_unstable_getRTCTransports">,
+  transportType: string,
+  {
+    transportUrl,
+    fallbackTransportUrl,
+  }: Pick<MatrixRTCClientOptions, "transportUrl" | "fallbackTransportUrl">,
+  logger: Logger,
+): Promise<Transport> {
+  const transport = transportUrl
     ? { type: "livekit", livekit_service_url: transportUrl }
     : await new RtcTransportAutoDiscovery({
         client,
+        transportType,
         fallbackTransportUrl,
         logger,
       }).discoverPreferredTransport();
   if (transport === null)
     throw new MatrixRTCTransportMissingError(client.getDomain() ?? "");
-  const sfuConfig = await getSFUConfigWithOpenID(
-    client,
-    ownMembershipIdentity,
-    transport.livekit_service_url,
-    roomId,
-    { matrixRTCMode },
-    logger,
-  );
-  return { transport, sfuConfig };
+  return transport;
 }

@@ -7,16 +7,16 @@ Please see LICENSE in the repository root for full details.
 
 import { type BaseKeyProvider, ExternalE2EEKeyProvider } from "livekit-client";
 import { type Logger } from "matrix-js-sdk/lib/logger";
-import { type MatrixRTCSession as JsSdkRTCSession } from "matrix-js-sdk/lib/matrixrtc";
+import { type Observable } from "rxjs";
 
-import { E2eeType } from "../encryption";
+import { E2eeType, type EncryptionSystem } from "../../encryption";
+import { type MediaKey } from "../api";
 import { MatrixKeyProvider } from "./MatrixKeyProvider";
-import { type EncryptionSystem } from "../encryption";
 
 /** The LiveKit key provider for the encryption the host asked for, or none. */
 export function createKeyProvider(
   encryptionSystem: EncryptionSystem,
-  session: JsSdkRTCSession,
+  mediaKeys$: Observable<MediaKey>,
   logger: Logger,
 ): BaseKeyProvider | undefined {
   switch (encryptionSystem.kind) {
@@ -24,7 +24,7 @@ export function createKeyProvider(
       return undefined;
     case E2eeType.PER_PARTICIPANT: {
       const keyProvider = new MatrixKeyProvider();
-      keyProvider.setRTCSession(session);
+      keyProvider.setMediaKeys(mediaKeys$);
       return keyProvider;
     }
     case E2eeType.SHARED_KEY: {

@@ -18,17 +18,17 @@ import {
 } from "livekit-client";
 import { filter, map, type Observable } from "rxjs";
 
-import { type ObservableScope } from "../reactive/ObservableScope";
-import { generateItems } from "../reactive/observable";
-import { E2eeType } from "../encryption";
-import { type EncryptionSystem } from "../encryption";
-import { type Behavior } from "../reactive/Behavior";
+import { type ObservableScope } from "../../reactive/ObservableScope";
+import { generateItems } from "../../reactive/observable";
+import { E2eeType } from "../../encryption";
+import { type EncryptionSystem } from "../../encryption";
+import { type Behavior } from "../../reactive/Behavior";
 import {
   type EncryptionError,
   type LocalMemberMedia,
   type MediaSource,
   type MemberMedia,
-} from "../api";
+} from "../../api";
 import {
   createLivekitMediaTrack,
   createLocalLivekitMediaTrack,

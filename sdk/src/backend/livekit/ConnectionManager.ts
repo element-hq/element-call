@@ -21,13 +21,11 @@ import { type Logger } from "matrix-js-sdk/lib/logger";
 import { type RemoteParticipant } from "livekit-client";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
-import { type Behavior } from "../reactive/Behavior";
+import { type Behavior } from "../../reactive/Behavior";
 import { type Connection } from "./Connection.ts";
-import { Epoch, type ObservableScope } from "../reactive/ObservableScope";
-import { generateItemsWithEpoch } from "../reactive/observable";
-import { areLivekitTransportsEqual } from "./MatrixLivekitMembers.ts";
+import { Epoch, type ObservableScope } from "../../reactive/ObservableScope";
+import { generateItemsWithEpoch } from "../../reactive/observable";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
-import { isLocalTransport, type LocalTransport } from "./LocalTransport";
 import { type SFUConfig } from "./openIDSFU";
 
 export class ConnectionManagerData {
@@ -276,4 +274,24 @@ function removeDuplicateTransports<T extends LivekitTransport>(
       acc.push(transport);
     return acc;
   }, [] as T[]);
+}
+
+/** The transport the local member publishes on, authenticated with. */
+export interface LocalTransport {
+  transport: LivekitTransport;
+  sfuConfig: SFUConfig;
+}
+
+export function isLocalTransport(
+  obj: LivekitTransport | LocalTransport,
+): obj is LocalTransport {
+  return "transport" in obj && "sfuConfig" in obj;
+}
+
+export function areLivekitTransportsEqual<T extends LivekitTransport>(
+  t1: T | null,
+  t2: T | null,
+): boolean {
+  if (t1 && t2) return t1.livekit_service_url === t2.livekit_service_url;
+  return !t1 && !t2;
 }

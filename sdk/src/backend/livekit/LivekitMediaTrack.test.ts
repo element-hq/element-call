@@ -18,8 +18,8 @@ import {
 } from "livekit-client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ObservableScope } from "../reactive/ObservableScope";
-import { type AudioMediaTrack } from "../api";
+import { ObservableScope } from "../../reactive/ObservableScope";
+import { type AudioMediaTrack } from "../../api";
 import {
   createLivekitMediaTrack,
   createLocalLivekitMediaTrack,
