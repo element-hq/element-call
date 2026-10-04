@@ -34,7 +34,6 @@ import {
   of,
   switchMap,
 } from "rxjs";
-import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import {
   type Behavior,
@@ -43,11 +42,13 @@ import {
   E2eeType,
   ObservableScope,
   type RTCMember,
+  type RTCMembership,
 } from "@element-hq/matrixrtc-sdk";
 
 import {
   callViewModelOptionsFromParams,
   createCallViewModel$,
+  initialPublishRequests,
 } from "../src/state/CallViewModel/CallViewModel";
 import { getUrlParams } from "../src/UrlParams";
 import { MuteStates } from "../src/state/MuteStates";
@@ -57,6 +58,7 @@ import { initializeWidget } from "../src/widget";
 import { createWidgetHostBridge } from "../src/HostBridge";
 import { observeElementSize$ } from "../src/utils/elementSize";
 import {
+  captureSettings,
   matrixRTCClientOptions,
   selectedDeviceId$,
 } from "../src/room/InCallView";
@@ -70,7 +72,7 @@ import {
 interface MatrixRTCSdkMember {
   /** @deprecated Always null: the SDK owns the transport connection. */
   connection: null;
-  membership: CallMembership;
+  membership: RTCMembership;
   /** @deprecated Always null: the SDK owns the transport participant. */
   participant: null;
 }
@@ -140,19 +142,16 @@ export async function createMatrixRTCSdk(
 
   // rtc client: the session, the transport and the media, as in the app
   const encryptionSystem = { kind: E2eeType.PER_PARTICIPANT } as const;
+  const capture = captureSettings();
   const rtcClient = createMatrixRTCClient(
     scope,
     client,
     room,
     {
-      microphoneEnabled: muteStates.audio.enabled$.value,
-      cameraEnabled: muteStates.video.enabled$.value,
-      audioInputDeviceId$: selectedDeviceId$(scope, mediaDevices.audioInput),
-      videoInputDeviceId$: selectedDeviceId$(scope, mediaDevices.videoInput),
+      publish: initialPublishRequests(muteStates, mediaDevices, capture),
       audioOutputDeviceId$: controlledAudioDevices
         ? constant(undefined)
         : selectedDeviceId$(scope, mediaDevices.audioOutput),
-      videoProcessor$: constant(undefined),
     },
     {
       ...matrixRTCClientOptions(urlParams, encryptionSystem),
@@ -171,6 +170,7 @@ export async function createMatrixRTCSdk(
     {
       ...callViewModelOptionsFromParams(urlParams),
       encryptionSystem,
+      capture,
       hostBridge,
       // The SDK owns its page, so the body is the space it has
       windowSize$: scope.behavior(observeElementSize$(document.body)),

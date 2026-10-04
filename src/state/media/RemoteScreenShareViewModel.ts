@@ -42,8 +42,10 @@ export function createRemoteScreenShare(
   scope: ObservableScope,
   { pretendToBeDisconnected$, ...inputs }: RemoteScreenShareInputs,
 ): RemoteScreenShareViewModel {
-  const audio$ = scope.behavior(
-    memberTrack$<AudioMediaTrack>(inputs.media$, "screenShareAudio"),
+  const audio$ = memberTrack$<AudioMediaTrack>(
+    scope,
+    inputs.media$,
+    "screenShareAudio",
   );
   return {
     ...createBaseScreenShare(scope, inputs),

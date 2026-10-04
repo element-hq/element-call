@@ -8,6 +8,7 @@ Please see LICENSE in the repository root for full details.
 
 import {
   type AudioMediaTrack,
+  type MediaSource,
   type MemberMedia,
   type RemoteRTCMember,
 } from "@element-hq/matrixrtc-sdk";
@@ -123,33 +124,37 @@ const MemberAudio: FC<{
   const media = useBehavior(media$);
   return (
     media !== null && (
-      <>
-        <AudioTrack
-          track$={media.microphone$}
-          muted={muted}
-          plugins={plugins}
-        />
-        <AudioTrack
-          track$={media.screenShareAudio$}
-          muted={muted}
-          plugins={plugins}
-        />
-      </>
+      <MemberTracksAudio
+        tracks$={media.tracks$}
+        muted={muted}
+        plugins={plugins}
+      />
     )
   );
 };
 
-const AudioTrack: FC<{
-  track$: MemberMedia["microphone$"];
+/** The sources a call plays; anything published without one stays silent. */
+const playedSources = new Set<MediaSource>(["microphone", "screenShareAudio"]);
+
+const MemberTracksAudio: FC<{
+  tracks$: MemberMedia["tracks$"];
   muted?: boolean;
   plugins: AudioPlugins;
-}> = ({ track$, muted, plugins }) => {
-  const track = useBehavior(track$);
-  return (
-    track !== undefined && (
-      <TrackAudio track={track} muted={muted} plugins={plugins} />
+}> = ({ tracks$, muted, plugins }) => {
+  const tracks = useBehavior(tracks$);
+  return tracks
+    .filter(
+      (track): track is AudioMediaTrack =>
+        track.kind === "audio" && playedSources.has(track.source),
     )
-  );
+    .map((track) => (
+      <TrackAudio
+        key={track.id}
+        track={track}
+        muted={muted}
+        plugins={plugins}
+      />
+    ));
 };
 
 /**

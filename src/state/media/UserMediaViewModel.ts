@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
+  type AudioMediaTrack,
   type Behavior,
   type MediaStreamStats,
   type MediaTrack,
@@ -86,7 +87,7 @@ export function createBaseUserMedia(
     source: "microphone" | "camera",
   ): Behavior<boolean> =>
     scope.behavior(
-      memberTrack$<MediaTrack>(media$, source).pipe(
+      memberTrack$<MediaTrack>(scope, media$, source).pipe(
         switchMap((track) =>
           track === undefined
             ? of(false)
@@ -101,7 +102,7 @@ export function createBaseUserMedia(
   ): Behavior<MediaStreamStats> =>
     scope.behavior(
       combineLatest([
-        memberTrack$<MediaTrack>(media$, source),
+        memberTrack$<MediaTrack>(scope, media$, source),
         showConnectionStats.value$,
       ]).pipe(
         switchMap(([track, show]) =>
@@ -117,9 +118,10 @@ export function createBaseUserMedia(
       videoSource: "camera",
     }),
     type: "user",
+    // What a call calls speaking is the microphone carrying sound
     speaking$: scope.behavior(
-      media$.pipe(
-        switchMap((media) => (media === null ? of(false) : media.speaking$)),
+      memberTrack$<AudioMediaTrack>(scope, media$, "microphone").pipe(
+        switchMap((track) => track?.isActive$ ?? of(false)),
       ),
     ),
     audioEnabled$: enabled$(scope, "microphone"),

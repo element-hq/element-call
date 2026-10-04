@@ -12,7 +12,7 @@ import {
   type MemberMedia,
   type ObservableScope,
 } from "@element-hq/matrixrtc-sdk";
-import { combineLatest, map, of, switchMap } from "rxjs";
+import { combineLatest, distinctUntilChanged, map, of } from "rxjs";
 
 import { observeSpeaker$ } from "./observeSpeaker.ts";
 import { type UserMediaViewModel } from "./UserMediaViewModel.ts";
@@ -27,6 +27,7 @@ import {
 } from "./RemoteUserMediaViewModel.ts";
 import { createLocalScreenShare } from "./LocalScreenShareViewModel.ts";
 import { createRemoteScreenShare } from "./RemoteScreenShareViewModel.ts";
+import { memberTrack$ } from "./MemberMediaViewModel.ts";
 
 /**
  * Sorting bins defining the order in which media tiles appear in the layout.
@@ -107,10 +108,9 @@ export function createWrappedUserMedia(
   const media$: Behavior<MemberMedia | null> = _media$;
 
   const screenShares$ = scope.behavior(
-    media$.pipe(
-      switchMap((media) =>
-        media === null ? of(false) : media.screenShareEnabled$,
-      ),
+    memberTrack$(scope, media$, "screenShare").pipe(
+      map((track) => track !== undefined),
+      distinctUntilChanged(),
       // Technically more than one screen share might be possible... our
       // MediaViewModels don't support it though since they look for a unique
       // track for the given source. So generateItems here is a bit overkill.
