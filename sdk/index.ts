@@ -53,6 +53,7 @@ export {
 } from "./src/errors";
 
 export * from "./src/api";
+export { trackBySource$, type TrackOfSource } from "./src/utils/tracks";
 export { createMatrixRTCClient } from "./src/session/MatrixRTCClient";
 // For a developer panel to check a transport url before using it
 export { getSFUConfigWithOpenID as authenticateWithTransport } from "./src/session/openIDSFU";

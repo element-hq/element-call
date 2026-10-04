@@ -14,14 +14,16 @@ Please see LICENSE in the repository root for full details.
 import { logger } from "matrix-js-sdk/lib/logger";
 import { combineLatest, type Observable, of, switchMap } from "rxjs";
 import {
+  type AudioMediaTrack,
   constant,
   createMatrixRTCClient,
   E2eeType,
   MatrixRTCMode,
-  type MediaTrack,
   ObservableScope,
   type RTCMember,
   type MatrixRTCClient,
+  trackBySource$,
+  type VideoMediaTrack,
 } from "@element-hq/matrixrtc-sdk";
 
 import { createSession, joinRoom, type Login } from "./session";
@@ -185,21 +187,21 @@ function memberTile(scope: ObservableScope, member: RTCMember): HTMLElement {
     name.textContent = n;
   });
 
-  const camera$ = member.media$.pipe(
-    switchMap((media) => media?.camera$ ?? of(undefined)),
+  const tracks$ = scope.behavior(
+    member.media$.pipe(switchMap((media) => media?.tracks$ ?? of([]))),
   );
-  render(scope, camera$, tile.appendChild(document.createElement("video")));
+  render(
+    scope,
+    trackBySource$(scope, tracks$, "camera"),
+    tile.appendChild(document.createElement("video")),
+  );
   // Our own microphone would only echo
-  if (!member.local) {
-    const microphone$ = member.media$.pipe(
-      switchMap((media) => media?.microphone$ ?? of(undefined)),
-    );
+  if (!member.local)
     render(
       scope,
-      microphone$,
+      trackBySource$(scope, tracks$, "microphone"),
       tile.appendChild(document.createElement("audio")),
     );
-  }
   return tile;
 }
 
@@ -209,10 +211,10 @@ function memberTile(scope: ObservableScope, member: RTCMember): HTMLElement {
  */
 function render(
   scope: ObservableScope,
-  track$: Observable<MediaTrack | undefined>,
+  track$: Observable<AudioMediaTrack | VideoMediaTrack | undefined>,
   element: HTMLMediaElement,
 ): void {
-  let attached: MediaTrack | undefined;
+  let attached: AudioMediaTrack | VideoMediaTrack | undefined;
   track$.pipe(scope.bind()).subscribe((track) => {
     attached?.detach(element);
     attached = track;
@@ -230,7 +232,7 @@ function render(
     });
   };
   const of$ = <T>(
-    pick: (track: MediaTrack) => Observable<T>,
+    pick: (track: AudioMediaTrack | VideoMediaTrack) => Observable<T>,
   ): Observable<T | undefined> =>
     track$.pipe(switchMap((track) => (track ? pick(track) : of(undefined))));
   label(
@@ -240,6 +242,10 @@ function render(
   label(
     "encrypted",
     of$((t) => t.encrypted$),
+  );
+  label(
+    "active",
+    of$((t) => (t.kind === "audio" ? t.isActive$ : of(undefined))),
   );
   const stats$ = of$((t) => t.stats$);
   label("frameWidth", stats$.pipe(switchMap((s) => of(frames(s)?.frameWidth))));

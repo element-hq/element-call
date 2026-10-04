@@ -8,6 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { EventEmitter } from "events";
 import {
   ParticipantEvent,
+  RemoteAudioTrack,
   type RemoteParticipant,
   type Room as LivekitRoom,
   Track,
@@ -34,7 +35,6 @@ describe("createLivekitMediaTrack", () => {
       participant,
       publication as unknown as TrackPublication,
       room,
-      "camera",
     );
     expect(track.kind).toBe("video");
     expect(track.source).toBe("camera");
@@ -52,7 +52,6 @@ describe("createLivekitMediaTrack", () => {
       participant,
       publication as unknown as TrackPublication,
       room,
-      "camera",
     );
     track.attach(element);
     track.attach(element);
@@ -76,7 +75,6 @@ describe("createLivekitMediaTrack", () => {
       participant,
       publication as unknown as TrackPublication,
       room,
-      "camera",
     );
     track.attach(element);
     scope.end();
@@ -90,7 +88,6 @@ describe("createLivekitMediaTrack", () => {
       participant,
       publication as unknown as TrackPublication,
       room,
-      "camera",
     );
     expect(track.muted$.value).toBe(false);
     publication.isMuted = true;
@@ -107,19 +104,35 @@ describe("createLivekitMediaTrack", () => {
       participant,
       publication as unknown as TrackPublication,
       room,
-      "microphone",
     ) as AudioMediaTrack;
     track.setVolume(0.5);
-    expect(participant.setVolume).toHaveBeenCalledWith(
-      0.5,
-      Track.Source.Microphone,
-    );
+    expect(publication.track!.setVolume).toHaveBeenCalledWith(0.5);
+  });
+
+  it("is active while the member speaks and the track is not muted", () => {
+    const { participant, publication, room, emitter } = fakes({
+      kind: Track.Kind.Audio,
+    });
+    const track = createLivekitMediaTrack(
+      scope,
+      participant,
+      publication as unknown as TrackPublication,
+      room,
+    ) as AudioMediaTrack;
+    expect(track.isActive$.value).toBe(false);
+    participant.isSpeaking = true;
+    emitter.emit(ParticipantEvent.IsSpeakingChanged, true);
+    expect(track.isActive$.value).toBe(true);
+    publication.isMuted = true;
+    emitter.emit(ParticipantEvent.TrackMuted, publication);
+    expect(track.isActive$.value).toBe(false);
   });
 });
 
 type FakeTrack = Track & {
   attach: ReturnType<typeof vi.fn>;
   detach: ReturnType<typeof vi.fn>;
+  setVolume: ReturnType<typeof vi.fn>;
 };
 
 type FakePublication = Omit<TrackPublication, "track" | "isMuted"> & {
@@ -128,14 +141,20 @@ type FakePublication = Omit<TrackPublication, "track" | "isMuted"> & {
 };
 
 function fakeTrack(): FakeTrack {
-  return { attach: vi.fn(), detach: vi.fn() } as unknown as FakeTrack;
+  return Object.assign(Object.create(RemoteAudioTrack.prototype), {
+    attach: vi.fn(),
+    detach: vi.fn(),
+    setVolume: vi.fn(),
+    setAudioContext: vi.fn(),
+    setWebAudioPlugins: vi.fn(),
+  }) as FakeTrack;
 }
 
 function fakes({
   track = fakeTrack(),
   kind = Track.Kind.Video,
 }: { track?: FakeTrack | undefined; kind?: Track.Kind } = {}): {
-  participant: RemoteParticipant & { setVolume: ReturnType<typeof vi.fn> };
+  participant: RemoteParticipant & { isSpeaking: boolean };
   publication: FakePublication;
   room: LivekitRoom;
   emitter: EventEmitter;
@@ -143,13 +162,15 @@ function fakes({
   const emitter = new EventEmitter();
   const participant = Object.assign(emitter, {
     isLocal: false,
+    isSpeaking: false,
     identity: "@alice:example.org:DEVICE",
-    setVolume: vi.fn(),
     getTrackPublication: (): TrackPublication =>
       publication as unknown as TrackPublication,
-  }) as unknown as RemoteParticipant & { setVolume: ReturnType<typeof vi.fn> };
+  }) as unknown as RemoteParticipant & { isSpeaking: boolean };
   const publication = Object.assign(emitter, {
     kind,
+    source:
+      kind === Track.Kind.Audio ? Track.Source.Microphone : Track.Source.Camera,
     trackSid: "TR_1",
     isMuted: false,
     isEncrypted: true,

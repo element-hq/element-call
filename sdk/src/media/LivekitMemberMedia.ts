@@ -6,7 +6,6 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  observeParticipantEvents,
   observeParticipantMedia,
   roomEventSelector,
 } from "@livekit/components-core";
@@ -15,28 +14,22 @@ import {
   type LocalParticipant,
   LocalVideoTrack,
   type Participant,
-  ParticipantEvent,
   type Room as LivekitRoom,
   RoomEvent,
   Track,
-  type TrackPublication,
 } from "livekit-client";
-import { distinctUntilChanged, filter, map, type Observable } from "rxjs";
+import { filter, map, type Observable } from "rxjs";
 
-import { type Behavior } from "../reactive/Behavior";
 import { type ObservableScope } from "../reactive/ObservableScope";
+import { generateItems } from "../reactive/observable";
 import { E2eeType } from "../encryption";
 import { type EncryptionSystem } from "../encryption";
 import {
-  type AudioMediaTrack,
   type EncryptionError,
   type LocalMemberMedia,
-  type MediaSource,
   type MemberMedia,
-  type VideoMediaTrack,
 } from "../api";
-import { mapScoped } from "../utils/mapScoped";
-import { createLivekitMediaTrack, livekitSources } from "./LivekitMediaTrack";
+import { createLivekitMediaTrack } from "./LivekitMediaTrack";
 
 /**
  * A participant as `MemberMedia`. The only place, with `LivekitMediaTrack`,
@@ -49,31 +42,28 @@ export function createLivekitMemberMedia(
   room: LivekitRoom,
   encryptionSystem: EncryptionSystem,
 ): MemberMedia {
-  const mediaChanged$ = observeParticipantMedia(participant);
-  const track$ = <T extends AudioMediaTrack | VideoMediaTrack>(
-    source: MediaSource,
-  ): Behavior<T | undefined> =>
-    memberTrack$(scope, participant, room, source, mediaChanged$) as Behavior<
-      T | undefined
-    >;
-
   return {
     local: participant.isLocal,
-    speaking$: scope.behavior(
-      observeParticipantEvents(
-        participant,
-        ParticipantEvent.IsSpeakingChanged,
-      ).pipe(map((p) => p.isSpeaking)),
-      participant.isSpeaking,
+    // One track per publication, each living as long as its publication is
+    // in the participant's map
+    tracks$: scope.behavior(
+      observeParticipantMedia(participant).pipe(
+        generateItems(
+          `${participant.identity} tracks$`,
+          function* () {
+            for (const publication of participant.trackPublications.values())
+              yield { keys: [publication.trackSid], data: publication };
+          },
+          (trackScope, publication$) =>
+            createLivekitMediaTrack(
+              trackScope,
+              participant,
+              publication$.value,
+              room,
+            ),
+        ),
+      ),
     ),
-    screenShareEnabled$: scope.behavior(
-      mediaChanged$.pipe(map((media) => media.isScreenShareEnabled)),
-      participant.isScreenShareEnabled,
-    ),
-    microphone$: track$<AudioMediaTrack>("microphone"),
-    camera$: track$<VideoMediaTrack>("camera"),
-    screenShare$: track$<VideoMediaTrack>("screenShare"),
-    screenShareAudio$: track$<AudioMediaTrack>("screenShareAudio"),
     encryptionError$: encryptionErrors$(
       scope,
       participant,
@@ -103,33 +93,6 @@ export function createLocalLivekitMemberMedia(
       return track.mediaStreamTrack.getSettings().deviceId;
     },
   };
-}
-
-/** The member's track for a source, as long as the same publication is behind it. */
-function memberTrack$(
-  scope: ObservableScope,
-  participant: Participant,
-  room: LivekitRoom,
-  source: MediaSource,
-  mediaChanged$: Observable<unknown>,
-): Behavior<AudioMediaTrack | VideoMediaTrack | undefined> {
-  const publication = (): TrackPublication | undefined =>
-    participant.getTrackPublication(livekitSources[source]);
-  return mapScoped(
-    scope,
-    scope.behavior(
-      mediaChanged$.pipe(map(publication), distinctUntilChanged()),
-      publication(),
-    ),
-    (trackScope, publication) =>
-      createLivekitMediaTrack(
-        trackScope,
-        participant,
-        publication,
-        room,
-        source,
-      ),
-  );
 }
 
 function encryptionErrors$(

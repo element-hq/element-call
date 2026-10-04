@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
+  observeParticipantEvents,
   observeParticipantMedia,
   roomEventSelector,
 } from "@livekit/components-core";
@@ -14,8 +15,8 @@ import {
   LocalTrack,
   LocalVideoTrack,
   type Participant,
+  ParticipantEvent,
   RemoteAudioTrack,
-  type RemoteParticipant,
   RemoteTrack,
   type Room as LivekitRoom,
   RoomEvent,
@@ -24,6 +25,7 @@ import {
   type TrackPublication,
 } from "livekit-client";
 import {
+  combineLatest,
   distinctUntilChanged,
   fromEvent,
   interval,
@@ -46,11 +48,12 @@ import {
 } from "../api";
 import { LazyBehavior } from "../utils/LazyBehavior";
 
-export const livekitSources: Record<MediaSource, Track.Source> = {
-  microphone: Track.Source.Microphone,
-  camera: Track.Source.Camera,
-  screenShare: Track.Source.ScreenShare,
-  screenShareAudio: Track.Source.ScreenShareAudio,
+const sources: Record<Track.Source, MediaSource> = {
+  [Track.Source.Microphone]: "microphone",
+  [Track.Source.Camera]: "camera",
+  [Track.Source.ScreenShare]: "screenShare",
+  [Track.Source.ScreenShareAudio]: "screenShareAudio",
+  [Track.Source.Unknown]: "unknown",
 };
 
 // One timer for every track so that a large session does not keep hundreds of
@@ -67,7 +70,6 @@ export function createLivekitMediaTrack(
   participant: Participant,
   publication: TrackPublication,
   room: LivekitRoom,
-  source: MediaSource,
 ): AudioMediaTrack | VideoMediaTrack {
   const mediaChanged$ = observeParticipantMedia(participant);
   const track$: Behavior<Track | undefined> = scope.behavior(
@@ -85,17 +87,19 @@ export function createLivekitMediaTrack(
   const attached = new Set<HTMLMediaElement>();
   let audioContext: AudioContext | undefined;
   let audioPlugins: AudioNode[] = [];
-  const applyAudioContext = (track: Track | undefined): void => {
+  let volume: number | undefined;
+  const applyAudioSettings = (track: Track | undefined): void => {
     if (!(track instanceof RemoteAudioTrack)) return;
     track.setAudioContext(audioContext);
     track.setWebAudioPlugins(audioPlugins);
+    if (volume !== undefined) track.setVolume(volume);
   };
 
   let current = track$.value;
   track$.pipe(scope.bind()).subscribe((track) => {
     for (const element of attached) current?.detach(element);
     current = track;
-    applyAudioContext(track);
+    applyAudioSettings(track);
     for (const element of attached) track?.attach(element);
   });
   scope.onEnd(() => {
@@ -103,14 +107,15 @@ export function createLivekitMediaTrack(
     attached.clear();
   });
 
+  const muted$ = scope.behavior(
+    mediaChanged$.pipe(map(() => publication.isMuted)),
+    publication.isMuted,
+  );
   const base: MediaTrack = {
-    source,
+    source: sources[publication.source],
     kind: publication.kind === Track.Kind.Audio ? "audio" : "video",
     id: publication.trackSid,
-    muted$: scope.behavior(
-      mediaChanged$.pipe(map(() => publication.isMuted)),
-      publication.isMuted,
-    ),
+    muted$,
     encrypted$: scope.behavior(
       merge(
         mediaChanged$,
@@ -140,19 +145,30 @@ export function createLivekitMediaTrack(
     return {
       ...base,
       kind: "audio",
+      // LiveKit detects speakers per participant, so this is the member's
+      // activity, narrowed to the tracks that can be carrying it
+      isActive$: scope.behavior(
+        combineLatest(
+          [
+            observeParticipantEvents(
+              participant,
+              ParticipantEvent.IsSpeakingChanged,
+            ).pipe(map((p) => p.isSpeaking)),
+            muted$,
+          ],
+          (speaking, muted) => speaking && !muted,
+        ),
+        participant.isSpeaking && !publication.isMuted,
+      ),
       setAudioContext: (ctx, plugins = []) => {
         audioContext = ctx;
         audioPlugins = plugins;
-        applyAudioContext(current);
+        applyAudioSettings(current);
       },
-      setVolume: (volume) => {
+      setVolume: (v) => {
         // Our own audio is never played back, so there is nothing to scale
-        if (participant.isLocal) return;
-        const remote = participant as RemoteParticipant;
-        if (source === "microphone")
-          remote.setVolume(volume, Track.Source.Microphone);
-        else if (source === "screenShareAudio")
-          remote.setVolume(volume, Track.Source.ScreenShareAudio);
+        volume = v;
+        applyAudioSettings(current);
       },
     };
 

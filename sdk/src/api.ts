@@ -253,7 +253,9 @@ export type MediaSource =
   | "microphone"
   | "camera"
   | "screenShare"
-  | "screenShareAudio";
+  | "screenShareAudio"
+  /** Published without a source; the application knows what it is. */
+  | "unknown";
 
 export type MediaStreamStats =
   | RTCInboundRtpStreamStats
@@ -284,6 +286,13 @@ export interface MediaTrack {
 
 export interface AudioMediaTrack extends MediaTrack {
   kind: "audio";
+  /**
+   * Whether the track carries sound right now, as the backend measures it.
+   * False while muted. A call reads this on the microphone track and calls it
+   * "speaking". LiveKit measures it per member, so every audio track of a
+   * member reports the same value.
+   */
+  isActive$: Behavior<boolean>;
   /** Route playback through Web Audio, for earpiece pan and gain. Undefined resets. */
   setAudioContext(ctx: AudioContext | undefined, plugins?: AudioNode[]): void;
   setVolume(volume: number): void;
@@ -303,13 +312,12 @@ export type EncryptionError = "MissingKey" | "InvalidKey";
  */
 export interface MemberMedia {
   local: boolean;
-  speaking$: Behavior<boolean>;
-  screenShareEnabled$: Behavior<boolean>;
-
-  microphone$: Behavior<AudioMediaTrack | undefined>;
-  camera$: Behavior<VideoMediaTrack | undefined>;
-  screenShare$: Behavior<VideoMediaTrack | undefined>;
-  screenShareAudio$: Behavior<AudioMediaTrack | undefined>;
+  /**
+   * One entry per published track, in publication order. An entry stays the
+   * same object for as long as the same publication is behind it. Which
+   * track is which is in its `source`; `trackBySource$` picks one out.
+   */
+  tracks$: Behavior<(AudioMediaTrack | VideoMediaTrack)[]>;
 
   /** Emits when the SFU reports a key problem for this member. */
   encryptionError$: Observable<EncryptionError>;

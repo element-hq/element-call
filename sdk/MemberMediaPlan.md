@@ -314,3 +314,69 @@ three are the ones this plan makes visible.
 | `UnknownCallError` in `errors.ts`                                                                                                 | Name only.                                                                                                                                                                    | Rename with the two `Livekit*` errors in slice 11 of `SdkMigration.md`.                                                                                                          |
 | `observeSharingScreen$` in `LocalMember.ts`                                                                                       | Reads `participant.isScreenShareEnabled`.                                                                                                                                     | Goes with `sharingScreen$`, or reads `tracks$` from the local media in the meantime.                                                                                             |
 | `sendNotificationType`                                                                                                            | Kept on purpose; see "Call-specific things kept out of the client" in `SdkArchitecture.md`.                                                                                   | Nothing.                                                                                                                                                                         |
+
+## Plan for the refactors above
+
+Four slices, in dependency order. Each is one PR, green on its own, with the
+`playwright/sdk` specs and the dev harness as the proof that behaviour is kept.
+Element Call follows on its own branch after each.
+
+### 1. Local track controls
+
+The local member's tracks become objects a host can act on, instead of methods
+named after a call's devices.
+
+- **Add** `LocalAudioMediaTrack` and `LocalVideoMediaTrack` (`local: true`) in
+  `api.ts`, with `setEnabled(enabled)`, `setDevice(deviceId)` and, on video,
+  `switchFacingMode()` and `setProcessor(processor)`. `tracks$` on
+  `LocalMemberMedia` is typed to them.
+- **Remove** `LocalMemberMedia.switchCamera`, and `audioInputDeviceId$`,
+  `videoInputDeviceId$`, `videoProcessor$` from `LocalMediaInputs`. The host
+  subscribes to its settings and calls the track; the SDK stops watching
+  behaviors it does not own. `audioOutputDeviceId$` stays: playback is not a
+  track.
+- **Keep** `setMicrophoneEnabled` / `setCameraEnabled` for now: they also cover
+  "no track yet", which slice 2 solves.
+- **Touches** `LivekitMediaTrack.ts`, `Publisher.ts` (the processor and device
+  code moves onto the track), `MatrixRTCClient.ts`, the harness buttons.
+
+### 2. `publish` and `unpublish`
+
+One way to put media on the session, whatever it is.
+
+- **Add** to `LocalRTCMember`: `publish(request): Promise<LocalMediaTrack>` and
+  `unpublish(id): Promise<void>`. A request is `{ source, deviceId?, capture? }`
+  for `"microphone"` and `"camera"`, `{ source: "screenShare", audio?, capture?
+}` for a screen. Failures reject the promise with a `MatrixRTCError`.
+- **Remove** `sharingScreen$`, `toggleScreenSharing`, `screenShareError$`,
+  `dismissScreenShareError`, `observeSharingScreen$`, and the two
+  `set*Enabled` methods on the client. "Sharing" is `tracks$.some(...)` on the
+  local media; "enable" is `publish` or `track.setEnabled`.
+- **Replace** `LocalMediaInputs.microphoneEnabled` / `cameraEnabled` with
+  `publish: PublishRequest[]`, applied once the transport is up, as today.
+  `CaptureSettings` becomes the `capture` of a request; `MediaQuality` keeps its
+  `config.json` shape and is mapped to per-request capture at the edge.
+- **Touches** `LocalMember.ts` (the screen share block and `setEnabled`),
+  `Publisher.ts` (iterates requests instead of enumerating three sources),
+  `livekitOptions.ts`, `lifecycle.spec.ts` and `media.spec.ts` for the new
+  buttons.
+
+### 3. Names that say "call"
+
+No behaviour change; one PR of renames and type narrowing.
+
+- `RTCMember.membership$` is typed as an SDK `RTCMembership`: the subset of
+  `CallMembership` hosts read (`userId`, `deviceId`, `memberId`,
+  `rtcBackendIdentity`, `getTransport()`, `applicationData`). The js-sdk object
+  is still what is behind it.
+- `UnknownCallError` is renamed with the two `Livekit*` errors, as slice 11 of
+  `SdkMigration.md` already plans; `index.ts` drops its alias.
+- `applicationData` is passed through whole once the js-sdk accepts more than
+  `m.call.intent`; until then the README says which key survives.
+
+### Not planned
+
+- `MediaSource` keeps its five values. A `name` on `MediaTrack` (LiveKit's
+  `trackName`) is a one-line addition when the first non-call application asks
+  for it; adding it now would be a guess at that application's needs.
+- `sendNotificationType` stays, as `SdkArchitecture.md` already decided.
