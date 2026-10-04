@@ -60,7 +60,7 @@ export function createRemoteUserMedia(
     ...createVolumeControls(scope, {
       pretendToBeDisconnected$,
       sink$: scope.behavior(
-        memberTrack$<AudioMediaTrack>(inputs.media$, "microphone").pipe(
+        memberTrack$<AudioMediaTrack>(scope, inputs.media$, "microphone").pipe(
           map((track) => (volume: number) => track?.setVolume(volume)),
         ),
       ),

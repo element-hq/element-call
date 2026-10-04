@@ -59,18 +59,19 @@ import {
 import { Config } from "../config/Config";
 import { type MediaDevices } from "../state/MediaDevices";
 import {
-  type AudioMediaTrack,
   type Behavior,
   constant,
   type DisconnectReason,
+  type LocalAudioMediaTrack,
   type LocalMemberMedia,
   type LocalRTCMember,
+  type LocalVideoMediaTrack,
   type MatrixRTCClient,
   type MatrixRTCError,
   type MemberMedia,
+  type PublishRequest,
   type RemoteRTCMember,
   type TransportMetadata,
-  type VideoMediaTrack,
 } from "@element-hq/matrixrtc-sdk";
 import { ObservableScope } from "../state/ObservableScope";
 import { MuteStates } from "../state/MuteStates";
@@ -288,9 +289,12 @@ export function mockMatrixRoom(room: Partial<MatrixRoom>): MatrixRoom {
   return { ...mockEmitter(), ...room } as Partial<MatrixRoom> as MatrixRoom;
 }
 
-/** A track as the SDK hands it out, with spies where a test may look. */
-export type MockMediaTrack = Omit<AudioMediaTrack, "kind"> &
-  Omit<VideoMediaTrack, "kind"> & { kind: "audio" | "video" };
+/**
+ * A track as the SDK hands it out, with spies where a test may look. It
+ * carries the local controls too, so that one mock serves either side.
+ */
+export type MockMediaTrack = Omit<LocalAudioMediaTrack, "kind"> &
+  Omit<LocalVideoMediaTrack, "kind"> & { kind: "audio" | "video" };
 
 export function mockMediaTrack(
   track: Partial<MockMediaTrack> = {},
@@ -302,28 +306,33 @@ export function mockMediaTrack(
     muted$: constant(false),
     encrypted$: constant(true),
     stats$: constant(undefined),
+    isActive$: constant(false),
     attach: vi.fn(),
     detach: vi.fn(),
     setAudioContext: vi.fn(),
     setVolume: vi.fn(),
+    setEnabled: vi.fn(async (enabled: boolean) => Promise.resolve(enabled)),
+    setDevice: vi.fn(async () => Promise.resolve()),
     facingMode$: constant(undefined),
+    switchFacingMode: vi.fn(async () => Promise.resolve(undefined)),
+    setProcessor: vi.fn(async () => Promise.resolve()),
     ...track,
   };
 }
 
 export const mockVideoTrack = (
   track: Partial<MockMediaTrack> = {},
-): VideoMediaTrack =>
-  mockMediaTrack({ kind: "video", ...track }) as VideoMediaTrack;
+): LocalVideoMediaTrack =>
+  mockMediaTrack({ kind: "video", ...track }) as LocalVideoMediaTrack;
 
 export const mockAudioTrack = (
   track: Partial<MockMediaTrack> = {},
-): AudioMediaTrack =>
+): LocalAudioMediaTrack =>
   mockMediaTrack({
     kind: "audio",
     source: "microphone",
     ...track,
-  }) as AudioMediaTrack;
+  }) as LocalAudioMediaTrack;
 
 /** A member's media as the SDK hands it out, with nothing published unless given. */
 export function mockMemberMedia(
@@ -331,14 +340,8 @@ export function mockMemberMedia(
 ): LocalMemberMedia {
   return {
     local: false,
-    speaking$: constant(false),
-    screenShareEnabled$: constant(false),
-    microphone$: constant(undefined),
-    camera$: constant(undefined),
-    screenShare$: constant(undefined),
-    screenShareAudio$: constant(undefined),
+    tracks$: constant([]),
     encryptionError$: NEVER,
-    switchCamera: vi.fn().mockResolvedValue(undefined),
     ...media,
   } as LocalMemberMedia;
 }
@@ -460,10 +463,14 @@ export function mockRTCMember(
   return {
     ...base,
     local: true,
-    sharingScreen$: constant(false),
-    toggleScreenSharing: null,
-    screenShareError$: constant(null),
-    dismissScreenShareError: vi.fn(),
+    publish: vi.fn(async (request: PublishRequest) =>
+      Promise.resolve(
+        request.source === "microphone"
+          ? mockAudioTrack()
+          : mockVideoTrack({ source: request.source }),
+      ),
+    ),
+    unpublish: vi.fn(async () => Promise.resolve()),
   };
 }
 
@@ -501,12 +508,6 @@ export function mockMatrixRTCClient(
     connected$,
     reconnecting$,
     disconnectReason$,
-    setMicrophoneEnabled: vi.fn(async (enabled: boolean) =>
-      Promise.resolve(enabled),
-    ),
-    setCameraEnabled: vi.fn(async (enabled: boolean) =>
-      Promise.resolve(enabled),
-    ),
     fatalError$,
     localMember$,
     remoteMembers$,

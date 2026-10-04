@@ -9,6 +9,7 @@ Please see LICENSE in the repository root for full details.
 import {
   type Behavior,
   type LocalMemberMedia,
+  type LocalVideoMediaTrack,
   type ObservableScope,
 } from "@element-hq/matrixrtc-sdk";
 import { map, of, switchMap } from "rxjs";
@@ -22,6 +23,7 @@ import {
 import { alwaysShowSelf } from "../../settings/settings";
 import { platform } from "../../Platform";
 import { type MediaDevices } from "../MediaDevices";
+import { memberTrack$ } from "./MemberMediaViewModel";
 
 export interface LocalUserMediaViewModel extends BaseUserMediaViewModel {
   local: true;
@@ -51,10 +53,14 @@ export function createLocalUserMedia(
   { mediaDevices, ...inputs }: LocalUserMediaInputs,
 ): LocalUserMediaViewModel {
   const baseUserMedia = createBaseUserMedia(scope, inputs);
+  // Our own camera track, which carries the controls a remote one lacks
+  const camera$ = memberTrack$<LocalVideoMediaTrack>(
+    scope,
+    inputs.media$,
+    "camera",
+  );
   const facingMode$ = scope.behavior(
-    baseUserMedia.video$.pipe(
-      switchMap((video) => video?.facingMode$ ?? of(undefined)),
-    ),
+    camera$.pipe(switchMap((camera) => camera?.facingMode$ ?? of(undefined))),
   );
 
   return {
@@ -76,8 +82,8 @@ export function createLocalUserMedia(
               facingMode === undefined
                 ? null
                 : (): void =>
-                    void inputs.media$.value
-                      ?.switchCamera()
+                    void camera$.value
+                      ?.switchFacingMode()
                       .then((deviceId) => {
                         // Inform the MediaDevices which camera was chosen
                         if (deviceId !== undefined)

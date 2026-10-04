@@ -34,6 +34,7 @@ import {
   mockMatrixRoom,
   mockMatrixRoomMember,
   mockMatrixRTCClient,
+  mockAudioTrack,
   mockMediaDevices,
   mockVideoTrack,
   mockMemberMedia,
@@ -152,26 +153,34 @@ export function withCallViewModel(mode: MatrixRTCMode) {
       scope: ObservableScope,
       participant: Participant,
       local: boolean,
-    ): LocalMemberMedia =>
-      mockMemberMedia({
-        local,
-        speaking$: speaking.get(participant) ?? constant(false),
-        screenShareEnabled$: sharingScreen.get(participant) ?? constant(false),
-        camera$: scope.behavior(
+    ): LocalMemberMedia => {
+      // A microphone and a camera are always published; the screen share
+      // comes and goes
+      const microphone = mockAudioTrack({
+        isActive$: speaking.get(participant) ?? constant(false),
+      });
+      const camera = mockVideoTrack({
+        source: "camera",
+        muted$: scope.behavior(
           (videoEnabled.get(participant) ?? constant(false)).pipe(
-            map((enabled) =>
-              mockVideoTrack({ source: "camera", muted$: constant(!enabled) }),
-            ),
+            map((enabled) => !enabled),
           ),
         ),
-        screenShare$: scope.behavior(
+      });
+      const screenShare = mockVideoTrack({ source: "screenShare" });
+      return mockMemberMedia({
+        local,
+        tracks$: scope.behavior(
           (sharingScreen.get(participant) ?? constant(false)).pipe(
             map((sharing) =>
-              sharing ? mockVideoTrack({ source: "screenShare" }) : undefined,
+              sharing
+                ? [microphone, camera, screenShare]
+                : [microphone, camera],
             ),
           ),
         ),
       });
+    };
     const participantOf = (
       scope: ObservableScope,
       membership: CallMembership,

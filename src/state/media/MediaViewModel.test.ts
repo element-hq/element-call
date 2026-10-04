@@ -42,7 +42,7 @@ test("control a participant's volume", () => {
     rtcMembership,
     {},
     mockMemberMedia({
-      microphone$: constant(mockAudioTrack({ setVolume })),
+      tracks$: constant([mockAudioTrack({ setVolume })]),
     }),
   );
   withTestScheduler(({ expectObservable, schedule }) => {
@@ -93,9 +93,9 @@ test("control a participant's screen share volume", () => {
     rtcMembership,
     {},
     mockMemberMedia({
-      screenShareAudio$: constant(
+      tracks$: constant([
         mockAudioTrack({ source: "screenShareAudio", setVolume }),
-      ),
+      ]),
     }),
   );
   withTestScheduler(({ expectObservable, schedule }) => {
@@ -169,7 +169,7 @@ test("switch cameras", async () => {
   );
   // The SDK restarts the camera the other way round and says which device it
   // ended up on
-  const switchCamera = vi.fn(async (): Promise<string> => {
+  const switchFacingMode = vi.fn(async (): Promise<string> => {
     const back = facingMode$.value === "user";
     facingMode$.next(back ? "environment" : "user");
     return Promise.resolve(back ? "back camera" : "front camera");
@@ -180,8 +180,7 @@ test("switch cameras", async () => {
     {},
     mockMemberMedia({
       local: true,
-      camera$: constant(mockVideoTrack({ facingMode$ })),
-      switchCamera,
+      tracks$: constant([mockVideoTrack({ facingMode$, switchFacingMode })]),
     }),
     mockMediaDevices({
       videoInput: {
@@ -195,7 +194,7 @@ test("switch cameras", async () => {
 
   // Switch to back camera
   vm.switchCamera$.value!();
-  expect(switchCamera).toHaveBeenCalledTimes(1);
+  expect(switchFacingMode).toHaveBeenCalledTimes(1);
   await waitFor(() => {
     expect(selectVideoInput).toHaveBeenCalledWith("back camera");
   });
@@ -203,7 +202,7 @@ test("switch cameras", async () => {
 
   // Switch to front camera
   vm.switchCamera$.value!();
-  expect(switchCamera).toHaveBeenCalledTimes(2);
+  expect(switchFacingMode).toHaveBeenCalledTimes(2);
   await waitFor(() => {
     expect(selectVideoInput).toHaveBeenLastCalledWith("front camera");
   });
@@ -216,7 +215,7 @@ test("no camera switch where the facing mode is unknown", () => {
   const vm = mockLocalMedia(
     rtcMembership,
     {},
-    mockMemberMedia({ local: true, camera$: constant(mockVideoTrack()) }),
+    mockMemberMedia({ local: true, tracks$: constant([mockVideoTrack()]) }),
     mockMediaDevices({}),
   );
   expect(vm.switchCamera$.value).toBeNull();
@@ -242,8 +241,10 @@ test("audio and video follow the tracks' mute state", () => {
     rtcMembership,
     {},
     mockMemberMedia({
-      microphone$: constant(mockAudioTrack({ muted$: constant(false) })),
-      camera$: constant(mockVideoTrack({ muted$: constant(true) })),
+      tracks$: constant([
+        mockAudioTrack({ muted$: constant(false) }),
+        mockVideoTrack({ muted$: constant(true) }),
+      ]),
     }),
   );
   expect(vm.audioEnabled$.value).toBe(true);
@@ -259,13 +260,13 @@ test("user media polls stream stats only while the setting is on", () => {
       rtcMembership,
       {},
       mockMemberMedia({
-        microphone$: constant(
+        tracks$: constant([
           mockAudioTrack({
             stats$: cold("-s", {
               s: stats,
             }) as unknown as Behavior<MediaStreamStats>,
           }),
-        ),
+        ]),
       }),
     );
     schedule("-a-b", {

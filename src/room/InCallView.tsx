@@ -42,7 +42,9 @@ import { InviteButton } from "../button/InviteButton";
 import {
   type CallViewModel,
   callViewModelOptionsFromParams,
+  type CaptureSettings,
   createCallViewModel$,
+  initialPublishRequests,
 } from "../state/CallViewModel/CallViewModel.ts";
 import { Grid, type TileProps } from "../grid/Grid";
 import { SpotlightTile } from "../tile/SpotlightTile";
@@ -160,22 +162,21 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     const { autoLeaveWhenOthersLeft, waitForCallPickup, sendNotificationType } =
       urlParams;
 
+    const capture = captureSettings();
     const rtcClient = createMatrixRTCClient(
       scope,
       props.client,
       props.matrixRoom,
       {
-        microphoneEnabled: props.muteStates.audio.enabled$.value,
-        cameraEnabled: props.muteStates.video.enabled$.value,
-        audioInputDeviceId$: selectedDeviceId$(scope, mediaDevices.audioInput),
-        videoInputDeviceId$: selectedDeviceId$(scope, mediaDevices.videoInput),
+        publish: initialPublishRequests(
+          props.muteStates,
+          mediaDevices,
+          capture,
+        ),
         // A host that routes audio itself leaves the browser's output alone
         audioOutputDeviceId$: urlParams.controlledAudioDevices
           ? constant(undefined)
           : selectedDeviceId$(scope, mediaDevices.audioOutput),
-        videoProcessor$: scope.behavior(
-          trackProcessorState$.pipe(map((state) => state.processor)),
-        ),
       },
       matrixRTCClientOptions(urlParams, props.e2eeSystem),
     );
@@ -188,6 +189,10 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       {
         ...callViewModelOptionsFromParams(urlParams),
         encryptionSystem: props.e2eeSystem,
+        capture,
+        videoProcessor$: scope.behavior(
+          trackProcessorState$.pipe(map((state) => state.processor)),
+        ),
         hostBridge,
         autoLeaveWhenOthersLeft,
         waitForCallPickup: waitForCallPickup && sendNotificationType === "ring",
@@ -748,16 +753,12 @@ export function selectedDeviceId$(
 }
 
 /**
- * What the client needs from Element Call's configuration, settings and URL:
- * the SDK reads none of them itself. Shared with the legacy SDK bundle so that
- * a widget built from it behaves like the app.
+ * How the tracks are captured and encoded, from Element Call's settings and
+ * configuration. Shared with the legacy SDK bundle so that a widget built from
+ * it behaves like the app.
  */
-export function matrixRTCClientOptions(
-  urlParams: ReturnType<typeof useUrlParams>,
-  encryptionSystem: EncryptionSystem,
-): MatrixRTCClientOptions {
+export function captureSettings(): CaptureSettings {
   const config = Config.get();
-  const session = config.matrix_rtc_session;
   const cameraSettings = advancedCamera.getValue()
     ? {
         resolution: {
@@ -790,6 +791,28 @@ export function matrixRTCClientOptions(
         }
       : undefined;
   return {
+    audio: {
+      echoCancellation: echoCancellationSetting.getValue(),
+      noiseSuppression: noiseSuppressionSetting.getValue(),
+      autoGainControl: autoGainControlSetting.getValue(),
+    },
+    camera: cameraSettings,
+    screenShare: screenShareSettings,
+  };
+}
+
+/**
+ * What the client needs from Element Call's configuration, settings and URL:
+ * the SDK reads none of them itself. Shared with the legacy SDK bundle so that
+ * a widget built from it behaves like the app.
+ */
+export function matrixRTCClientOptions(
+  urlParams: ReturnType<typeof useUrlParams>,
+  encryptionSystem: EncryptionSystem,
+): MatrixRTCClientOptions {
+  const config = Config.get();
+  const session = config.matrix_rtc_session;
+  return {
     encryptionSystem,
     // matrix_rtc_mode in config.json overrides the user's Developer Settings
     // choice. We merely sample the current mode here, so the user would need
@@ -811,15 +834,6 @@ export function matrixRTCClientOptions(
       delegatedDelayedLeave: session.delegated_delayed_leave,
     },
     mediaQuality: config.media_quality,
-    capture: {
-      audio: {
-        echoCancellation: echoCancellationSetting.getValue(),
-        noiseSuppression: noiseSuppressionSetting.getValue(),
-        autoGainControl: autoGainControlSetting.getValue(),
-      },
-      camera: cameraSettings,
-      screenShare: screenShareSettings,
-    },
     transportUrl: customLivekitUrl.value$.value ?? undefined,
     fallbackTransportUrl: config.livekit?.livekit_service_url,
   };

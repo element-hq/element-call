@@ -7,19 +7,27 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
+  type AudioCaptureSettings,
   type Behavior,
   constant,
   type DisconnectReason,
   type EncryptionSystem,
   generateItems,
+  type LocalAudioMediaTrack,
+  type LocalMediaTrack,
   type LocalRTCMember,
+  type LocalVideoMediaTrack,
   type MatrixRTCClient,
   type ObservableScope,
   pauseWhen,
+  type PublishRequest,
   type RemoteRTCMember,
   type RTCMember,
+  trackBySource$,
   type TransportMetadata,
+  type VideoCaptureSettings,
 } from "@element-hq/matrixrtc-sdk";
+import { type Track, type TrackProcessor } from "livekit-client";
 import {
   KnownMembership,
   type Room as MatrixRoom,
@@ -73,8 +81,8 @@ import {
 } from "../../reactions";
 import { shallowEquals as shallowArrayEquals } from "../../utils/array";
 import { shallowEquals as shallowObjectEquals } from "../../utils/object";
-import { type MediaDevices } from "../MediaDevices";
-import { type MuteStates } from "../MuteStates";
+import { type MediaDevice, type MediaDevices } from "../MediaDevices";
+import { type Handler, type MuteStates } from "../MuteStates";
 import { HeaderStyle, type UrlParams } from "../../UrlParams";
 import { type HostBridge, nullHostBridge } from "../../HostBridge";
 import {
@@ -120,8 +128,59 @@ import {
 } from "../media/RingingMediaViewModel.ts";
 import { type GridTileViewModel } from "../TileViewModel.ts";
 
+/** How a call captures and encodes the tracks it publishes. */
+export interface CaptureSettings {
+  audio?: AudioCaptureSettings;
+  camera?: VideoCaptureSettings;
+  screenShare?: VideoCaptureSettings;
+}
+
+/**
+ * What to publish for a microphone or camera: the device the user picked and
+ * the host's capture settings. The video processor is not in here; the call
+ * attaches it to the camera track once that exists.
+ */
+export function publishRequest(
+  source: "microphone" | "camera",
+  mediaDevices: MediaDevices,
+  capture: CaptureSettings,
+): PublishRequest {
+  return source === "microphone"
+    ? {
+        source,
+        deviceId: mediaDevices.audioInput.selected$.value?.id,
+        capture: capture.audio,
+      }
+    : {
+        source,
+        deviceId: mediaDevices.videoInput.selected$.value?.id,
+        capture: capture.camera,
+      };
+}
+
+/** What the client publishes at the join: the sources whose mute switch is on. */
+export function initialPublishRequests(
+  muteStates: MuteStates,
+  mediaDevices: MediaDevices,
+  capture: CaptureSettings,
+): PublishRequest[] {
+  const requests: PublishRequest[] = [];
+  if (muteStates.audio.enabled$.value)
+    requests.push(publishRequest("microphone", mediaDevices, capture));
+  if (muteStates.video.enabled$.value)
+    requests.push(publishRequest("camera", mediaDevices, capture));
+  return requests;
+}
+
 export interface CallViewModelOptions {
   encryptionSystem: EncryptionSystem;
+  /**
+   * How our tracks are captured and encoded; the browser's and LiveKit's
+   * defaults otherwise.
+   */
+  capture?: CaptureSettings;
+  /** Background blur and the like, applied to the camera as it changes. */
+  videoProcessor$?: Behavior<TrackProcessor<Track.Kind.Video> | undefined>;
   /**
    * The application hosting Element Call, which can ask it to hang up and wants
    * to know when the user joins or leaves. Defaults to no host.
@@ -419,14 +478,106 @@ export function createCallViewModel$(
     sentCallNotification$ = of(null),
   } = options;
 
-  // The mute switches drive the client, which reports back what the device
-  // allowed, so a denied permission flips the switch back
-  muteStates.audio.setHandler(rtcClient.setMicrophoneEnabled);
-  muteStates.video.setHandler(rtcClient.setCameraEnabled);
+  const { capture = {}, videoProcessor$ = constant(undefined) } = options;
+  const localTracks$ = scope.behavior<
+    (LocalAudioMediaTrack | LocalVideoMediaTrack)[]
+  >(
+    rtcClient.localMember$.pipe(
+      switchMap((member) => member?.media$ ?? of(null)),
+      switchMap((media) => media?.tracks$ ?? of([])),
+    ),
+  );
+  // Our own tracks, which carry the controls remote ones lack
+  const microphone$ = trackBySource$(
+    scope,
+    localTracks$,
+    "microphone",
+  ) as Behavior<LocalAudioMediaTrack | undefined>;
+  const camera$ = trackBySource$(scope, localTracks$, "camera") as Behavior<
+    LocalVideoMediaTrack | undefined
+  >;
+  const screenShare$ = trackBySource$(
+    scope,
+    localTracks$,
+    "screenShare",
+  ) as Behavior<LocalVideoMediaTrack | undefined>;
+
+  // The mute switches drive our tracks, which report back what the device
+  // allowed, so a denied permission flips the switch back. A source is muted
+  // and unmuted while its track exists and published when it does not.
+  const followMuteState = (
+    muteState: {
+      setHandler: (handler: Handler) => void;
+      enabled$: Behavior<boolean>;
+    },
+    track$: Behavior<LocalMediaTrack | undefined>,
+    source: "microphone" | "camera",
+  ): void => {
+    // What the switch asks for, ahead of what it shows: the switch follows
+    // only once the handler has resolved
+    let desired = muteState.enabled$.value;
+    muteState.setHandler(async (enabled) => {
+      desired = enabled;
+      const track = track$.value;
+      if (track !== undefined) {
+        desired = await track.setEnabled(enabled);
+        return desired;
+      }
+      if (!enabled) return false;
+      const member = rtcClient.localMember$.value;
+      if (member === null) return false;
+      try {
+        await member.publish(publishRequest(source, mediaDevices, capture));
+        return true;
+      } catch (e) {
+        logger.error(`Failed to publish the ${source}`, e);
+        desired = false;
+        return false;
+      }
+    });
+    // A track that arrives after its switch was flipped off catches up with it
+    track$.pipe(scope.bind()).subscribe((track) => {
+      if (track !== undefined && !desired)
+        track.setEnabled(false).catch((e) => {
+          logger.error(`Failed to mute the ${source}`, e);
+        });
+    });
+  };
+  followMuteState(muteStates.audio, microphone$, "microphone");
+  followMuteState(muteStates.video, camera$, "camera");
   scope.onEnd(() => {
     muteStates.audio.unsetHandler();
     muteStates.video.unsetHandler();
   });
+
+  // The device the user picked follows onto the track as it is made and as the
+  // choice changes; the SDK does not watch the settings itself
+  const followDevice = (
+    track$: Behavior<LocalMediaTrack | undefined>,
+    device: MediaDevice<unknown, { id: string }>,
+    source: "microphone" | "camera",
+  ): void => {
+    combineLatest([track$, device.selected$])
+      .pipe(scope.bind())
+      .subscribe(([track, selected]) => {
+        if (track === undefined || selected === undefined) return;
+        track.setDevice(selected.id).catch((e) => {
+          logger.error(`Failed to switch the ${source} device`, e);
+        });
+      });
+  };
+  followDevice(microphone$, mediaDevices.audioInput, "microphone");
+  followDevice(camera$, mediaDevices.videoInput, "camera");
+
+  // Attached once the camera track exists rather than carried in the publish
+  // request, so that a new track and a change of processor take the same path
+  combineLatest([camera$, videoProcessor$])
+    .pipe(scope.bind())
+    .subscribe(([camera, processor]) => {
+      camera?.setProcessor(processor).catch((e) => {
+        logger.error("Failed to set the video processor", e);
+      });
+    });
 
   const members$ = scope.behavior<RTCMember[]>(
     combineLatest(
@@ -1285,14 +1436,13 @@ export function createCallViewModel$(
   );
 
   /**
-   * Whether we are sharing our screen.
+   * Whether we are sharing our screen: one of our tracks is a screen share.
    */
   const sharingScreen$ = scope.behavior(
-    rtcClient.localMember$.pipe(
-      switchMap((member) => member?.sharingScreen$ ?? of(false)),
-    ),
+    screenShare$.pipe(map((track) => track !== undefined)),
   );
 
+  const screenShareError$ = new BehaviorSubject<Error | null>(null);
   /**
    * Callback to toggle screen sharing. If null, screen sharing is not possible:
    * the platform cannot capture a screen, or the host hides the button.
@@ -1301,13 +1451,28 @@ export function createCallViewModel$(
     options.toggleScreensharing ??
     (hideScreensharing || !("getDisplayMedia" in (navigator.mediaDevices ?? {}))
       ? null
-      : (): void => rtcClient.localMember$.value?.toggleScreenSharing?.());
-
-  const screenShareError$ = scope.behavior(
-    rtcClient.localMember$.pipe(
-      switchMap((member) => member?.screenShareError$ ?? of(null)),
-    ),
-  );
+      : (): void => {
+          const member = rtcClient.localMember$.value;
+          if (member === null) return;
+          const track = screenShare$.value;
+          (track === undefined
+            ? member.publish({
+                source: "screenShare",
+                capture: capture.screenShare,
+              })
+            : member.unpublish(track.id)
+          ).catch((e: unknown) => {
+            logger.error(
+              `Screen share ${track === undefined ? "start" : "stop"} failed`,
+              e,
+            );
+            // The user closing the picker is not an error worth showing
+            if (isPermissionDenied(e)) return;
+            screenShareError$.next(
+              e instanceof Error ? e : new Error(String(e)),
+            );
+          });
+        });
 
   // Tell the host and the analytics about the user's joins and leaves
   const join = (): void => {
@@ -1403,9 +1568,14 @@ export function createCallViewModel$(
     reconnecting$: rtcClient.reconnecting$,
     connected$: rtcClient.connected$,
     screenShareError$,
-    dismissScreenShareError: (): void =>
-      rtcClient.localMember$.value?.dismissScreenShareError(),
+    dismissScreenShareError: (): void => screenShareError$.next(null),
   };
+}
+
+/** Whether an error, or the browser error the SDK wrapped, is the user saying no. */
+function isPermissionDenied(e: unknown): boolean {
+  const cause = e instanceof Error && e.cause !== undefined ? e.cause : e;
+  return cause instanceof DOMException && cause.name === "NotAllowedError";
 }
 
 /** The members a call can be with: those in the room and those invited. */
