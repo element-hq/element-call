@@ -30,8 +30,8 @@ therefore `Element Call → sdk`, never the reverse. The migration from today's
 │                                                                              │
 │   per member    RTCMember   { id userId deviceId membership$ displayName$    │
 │                               avatarUrl$ transport$ media$ }                 │
-│   per media     MemberMedia { speaking$ microphone$ camera$ screenShare$ … } │
-│   per track     MediaTrack  { muted$ encrypted$ stats$ attach() detach() }   │
+│   per media     MemberMedia { tracks$ encryptionError$ }                     │
+│   per track     MediaTrack  { source kind muted$ encrypted$ stats$ attach() }│
 │                                                                              │
 │  ┌──────────────────────────┐   memberships    ┌───────────────────────────┐ │
 │  │ MatrixRTC core           │ ───────────────▶ │ transports                │ │
@@ -447,7 +447,12 @@ is wrapped in a `MemberMedia`, so that nothing outside the SDK imports
 
 ```ts
 export type MediaSource =
-  "microphone" | "camera" | "screenShare" | "screenShareAudio";
+  | "microphone"
+  | "camera"
+  | "screenShare"
+  | "screenShareAudio"
+  /** Published without a source; the application knows what it is. */
+  | "unknown";
 
 export type MediaStreamStats =
   RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats | undefined;
@@ -480,6 +485,13 @@ export interface MediaTrack {
 
 export interface AudioMediaTrack extends MediaTrack {
   kind: "audio";
+  /**
+   * Whether the track carries sound right now, as the backend measures it.
+   * False while muted. A call reads this on the microphone track and calls it
+   * "speaking". LiveKit measures it per member, so every audio track of a
+   * member reports the same value.
+   */
+  isActive$: Behavior<boolean>;
   /** Route playback through Web Audio, for earpiece pan and gain. Undefined resets. */
   setAudioContext(ctx: AudioContext | undefined, plugins?: AudioNode[]): void;
   /** No-op for our own audio, which is never played back. */
@@ -501,17 +513,22 @@ export type EncryptionError = "MissingKey" | "InvalidKey";
  */
 export interface MemberMedia {
   local: boolean;
-  speaking$: Behavior<boolean>;
-  screenShareEnabled$: Behavior<boolean>;
-
-  microphone$: Behavior<AudioMediaTrack | undefined>;
-  camera$: Behavior<VideoMediaTrack | undefined>;
-  screenShare$: Behavior<VideoMediaTrack | undefined>;
-  screenShareAudio$: Behavior<AudioMediaTrack | undefined>;
-
+  /**
+   * One entry per published track, in publication order. An entry stays the
+   * same object for as long as the same publication is behind it. Which
+   * track is which is in its `source`; `trackBySource$` picks one out.
+   */
+  tracks$: Behavior<(AudioMediaTrack | VideoMediaTrack)[]>;
   /** Emits when the SFU reports a key problem for this member. */
   encryptionError$: Observable<EncryptionError>;
 }
+
+/** The member's first track of a source; undefined while there is none. */
+export function trackBySource$<S extends MediaSource>(
+  scope: ObservableScope,
+  tracks$: Behavior<MediaTrack[]>,
+  source: S,
+): Behavior<TrackOfSource<S> | undefined>;
 
 export interface LocalMemberMedia extends MemberMedia {
   local: true;
@@ -600,12 +617,14 @@ What it does: log in with a password, or with an access token the URL hands it (
 tests register users through the admin API and skip `/login`, which the dev
 homeserver rate-limits); join the room and wait for the sync to hold it; create the
 client with microphone and camera enabled; show one tile per member with the display
-name, a `<video>` attached from `media$.camera$` and, for remote members, an
-`<audio>` from `media$.microphone$`; toggle the microphone and camera; leave.
+name, a `<video>` attached from the member's `"camera"` track and, for remote
+members, an `<audio>` from the `"microphone"` track, both picked out of
+`media$.tracks$` with `trackBySource$`; toggle the microphone and camera; leave.
 
 Every media element carries the track's state as `data-*` attributes (`muted`,
-`encrypted`, `frameWidth`, `frames`), which is what the tests read to check mute
-propagation, encryption, adaptive resolution and paused subscriptions. That is more
+`encrypted`, `active`, `frameWidth`, `frames`), which is what the tests read to
+check mute propagation, encryption, speaker detection, adaptive resolution and
+paused subscriptions. That is more
 than the smallest consumer needs, and the price of testing the SDK through its
 public API only.
 

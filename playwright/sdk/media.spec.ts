@@ -90,6 +90,37 @@ test("muting the microphone and the camera is seen by the peer", async () => {
   });
 });
 
+test("the peer's microphone is active while it sends sound, and not while muted", async ({
+  browserName,
+}) => {
+  // The SFU's speaker detection picks up Firefox's fake microphone, a steady
+  // tone. Chromium's fake microphone never registers as a speaker there, so
+  // the test has nothing to measure on it.
+  test.skip(
+    browserName === "chromium",
+    "Chromium's fake microphone is silent to the SFU",
+  );
+  const [page] = pages;
+  const audio = remoteTile(1, 0).locator("audio");
+  // The SFU only announces a change of speakers, so a tone that has been
+  // playing since before the peer subscribed is not announced to it. Muting
+  // and unmuting is the change that is.
+  await page.getByRole("button", { name: "Microphone" }).click();
+  await expect(audio).toHaveAttribute("data-muted", "true", {
+    timeout: 20_000,
+  });
+  await expect(audio).toHaveAttribute("data-active", "false");
+  await page.getByRole("button", { name: "Microphone" }).click();
+  await expect(audio).toHaveAttribute("data-active", "true", {
+    timeout: 30_000,
+  });
+  await page.getByRole("button", { name: "Microphone" }).click();
+  await expect(audio).toHaveAttribute("data-active", "false", {
+    timeout: 20_000,
+  });
+  await page.getByRole("button", { name: "Microphone" }).click();
+});
+
 test("a larger tile receives a higher resolution", async () => {
   const peer = remoteTile(1, 0);
   const video = peer.locator("video");

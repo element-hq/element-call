@@ -380,3 +380,76 @@ No behaviour change; one PR of renames and type narrowing.
   `trackName`) is a one-line addition when the first non-call application asks
   for it; adding it now would be a guess at that application's needs.
 - `sendNotificationType` stays, as `SdkArchitecture.md` already decided.
+
+## Changed behaviour
+
+What a host sees differently, per slice. The first block is implemented; the
+rest follows the slices above and is marked as planned.
+
+### `tracks$` and `isActive$` (this plan, implemented)
+
+| Before                                                                 | After                                                                |
+| ---------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `media.camera$`, `.microphone$`, `.screenShare$`, `.screenShareAudio$` | `trackBySource$(scope, media.tracks$, "camera")`, and so on          |
+| `media.screenShareEnabled$`                                            | `media.tracks$` mapped to `some((t) => t.source === "screenShare")`  |
+| `media.speaking$`                                                      | `isActive$` on the `"microphone"` track; `false` while there is none |
+| `createLivekitMediaTrack(…, source)`                                   | the source is read from the publication (internal)                   |
+
+Differences in what the values mean:
+
+- **Tracks published without a source now appear**, with `source: "unknown"`.
+  Before, they were invisible. A host that renders every track must be ready
+  for a track it has no name for.
+- **`isActive$` is `false` while the track is muted**, even if LiveKit still
+  reports the member as speaking. `speaking$` was not gated by mute.
+- **`isActive$` is the same on every audio track of a member**, because LiveKit
+  detects speakers per participant. A member sharing a screen with audio lights
+  both tracks while either carries sound.
+- **`setVolume` applies to the track, not the source.** It is remembered and
+  reapplied when the remote track arrives on subscription, so a volume set
+  before the track exists is no longer lost. It still does nothing on our own
+  tracks.
+- **One `MediaTrack` object per publication**, stable across unrelated media
+  events. Before, a slot's object also changed only with its publication, so
+  nothing changes for the four known sources.
+- **The list is in publication order** (the participant's map order). Nothing
+  before had an order.
+- The harness labels audio elements with `data-active`. Test ids are unchanged.
+
+### Slice 1, local track controls (planned)
+
+- `switchCamera()` on the local media becomes `switchFacingMode()` on the local
+  camera track; it rejects, instead of resolving `undefined`, when there is no
+  camera track.
+- Input device and processor changes are calls on the track. The SDK no longer
+  reacts to `audioInputDeviceId$`, `videoInputDeviceId$` or `videoProcessor$`;
+  a host that changed a setting and expected the SDK to follow now calls
+  `setDevice` or `setProcessor` itself.
+- `setEnabled(false)` on a local track mutes it and keeps the publication, as
+  `setMicrophoneEnabled(false)` does today.
+
+### Slice 2, `publish` and `unpublish` (planned)
+
+- Screen sharing is `publish({ source: "screenShare" })` and `unpublish(id)`.
+  A capture failure rejects the promise; there is no `screenShareError$` to
+  dismiss.
+- "Am I sharing" is derived from `tracks$` by the host. The SDK no longer
+  exposes `sharingScreen$`.
+- `setMicrophoneEnabled` / `setCameraEnabled` are gone. Before the transport
+  is connected, `publish` is remembered and applied once it is, which is what
+  the two methods did.
+- The initial microphone and camera are `LocalMediaInputs.publish`, a list;
+  an empty list joins without publishing, which needed `microphoneEnabled:
+false, cameraEnabled: false` before.
+- Capture settings travel with each request. A host that set
+  `capture.screenShare` once sets it on each screen share publish instead.
+
+### Slice 3, names (planned)
+
+- `membership$` is typed as `RTCMembership`. A host that reached for a
+  `CallMembership` member outside the narrowed set must import the js-sdk type
+  itself; the object is unchanged.
+- `UnknownCallError` is renamed; `index.ts` stops exporting it as
+  `UnknownRTCError`. Error codes do not change.
+- `applicationData` is forwarded whole once the js-sdk takes it. Until then the
+  behaviour is as today: only `m.call.intent` reaches the membership.
