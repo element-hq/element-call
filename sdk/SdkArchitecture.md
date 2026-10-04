@@ -665,8 +665,9 @@ members, an `<audio>` from the `"microphone"` track, both picked out of
 
 Every media element carries the track's state as `data-*` attributes (`muted`,
 `encrypted`, `active`, `frameWidth`, `frames`), which is what the tests read to
-check mute propagation, encryption, speaker detection, adaptive resolution and
-paused subscriptions. That is more
+check mute propagation, encryption, adaptive resolution and paused subscriptions
+(the speaker detection check is a `fixme`: the fake microphones do not reliably
+register at the SFU). That is more
 than the smallest consumer needs, and the price of testing the SDK through its
 public API only.
 
