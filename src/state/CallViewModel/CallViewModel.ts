@@ -140,6 +140,8 @@ import {
   createSentCallNotification$,
 } from "./CallNotificationLifecycle.ts";
 import {
+  createFunctionalMembers$,
+  createHumanRoomMembers$,
   createMatrixMemberMetadata$,
   createRoomMembers$,
 } from "./remoteMembers/MatrixMemberMetadata.ts";
@@ -717,6 +719,12 @@ export function createCallViewModel$(
   // matrixMemberMetadataStore
 
   const matrixRoomMembers$ = createRoomMembers$(scope, matrixRoom);
+  const functionalMembers$ = createFunctionalMembers$(scope, matrixRoom);
+  const humanRoomMembers$ = createHumanRoomMembers$(
+    scope,
+    matrixRoomMembers$,
+    functionalMembers$,
+  );
   const matrixMemberMetadataStore = createMatrixMemberMetadata$(
     scope,
     scope.behavior(memberships$.pipe(map((mems) => mems.value))),
@@ -731,7 +739,7 @@ export function createCallViewModel$(
   const { ringAttempts$, autoLeave$ } = createCallNotificationLifecycle$({
     scope,
     memberships$,
-    matrixRoomMembers$,
+    matrixRoomMembers$: humanRoomMembers$,
     sentCallNotification$: createSentCallNotification$(scope, matrixRTCSession),
     receivedDecline$: createReceivedDecline$(matrixRoom),
     options,
@@ -1393,18 +1401,21 @@ export function createCallViewModel$(
     layoutMedia$.pipe(
       switchMap((l) =>
         l.type === "pip" || l.type === "one-on-one-mobile"
-          ? matrixRoomMembers$.pipe(
+          ? combineLatest([
+              humanRoomMembers$,
+              memberships$,
+              functionalMembers$,
+            ]).pipe(
               map(
-                (members) =>
+                ([humanMembers, memberships, functional]) =>
                   // Hide name tags by default in these layouts. For safety we
                   // still need to show them in case it wouldn't be clear who
-                  // the spotlight media belongs to.
-                  // TODO: Respect io.element.functional_members (while still
-                  // being careful to never show a functional member's media
-                  // without a name tag!)
+                  // the spotlight media belongs to: a third person in the room,
+                  // or a functional member in the call.
                   // TODO: Only hide name tags in DMs, not group chats that just
                   // happen to have only 2 users
-                  members.size > 2,
+                  humanMembers.size > 2 ||
+                  memberships.value.some((m) => functional.has(m.userId)),
               ),
             )
           : of(true),

@@ -6,7 +6,11 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { describe, expect, vi, it, beforeEach } from "vitest";
-import { createRoomWidgetClient, EventType } from "matrix-js-sdk";
+import {
+  createRoomWidgetClient,
+  EventType,
+  UNSTABLE_ELEMENT_FUNCTIONAL_USERS,
+} from "matrix-js-sdk";
 
 import { getUrlParams } from "./UrlParams";
 import { initializeWidget } from "./widget";
@@ -85,6 +89,7 @@ describe("widget", () => {
       { eventType: EventType.RoomName },
       { eventType: EventType.RoomMember },
       { eventType: EventType.RoomEncryption },
+      { eventType: UNSTABLE_ELEMENT_FUNCTIONAL_USERS.name },
       { eventType: EventType.GroupCallMemberPrefix },
     ];
 
