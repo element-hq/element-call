@@ -22,7 +22,6 @@ import {
   pauseWhen,
   type PublishRequest,
   type RemoteRTCMember,
-  type RTCMember,
   trackBySource$,
   type TransportMetadata,
   type VideoCaptureSettings,
@@ -192,6 +191,12 @@ export interface CallViewModelOptions {
   showControls?: boolean;
   /** Whether to hide the screen-sharing button. Defaults to false. */
   hideScreensharing?: boolean;
+  /**
+   * Whether the host routes the audio itself, outside the browser, so that
+   * the selected output device is never handed to the client. Defaults to
+   * false.
+   */
+  controlledAudioDevices?: boolean;
   autoLeaveWhenOthersLeft?: boolean;
   /**
    * If the call is started in a way where we want it to behave like a telephone usecase
@@ -231,11 +236,15 @@ export interface CallViewModelOptions {
  */
 export function callViewModelOptionsFromParams(
   params: UrlParams,
-): Pick<CallViewModelOptions, "header" | "showControls" | "hideScreensharing"> {
+): Pick<
+  CallViewModelOptions,
+  "header" | "showControls" | "hideScreensharing" | "controlledAudioDevices"
+> {
   return {
     header: params.header,
     showControls: params.showControls,
     hideScreensharing: params.hideScreensharing,
+    controlledAudioDevices: params.controlledAudioDevices,
   };
 }
 
@@ -483,8 +492,8 @@ export function createCallViewModel$(
     (LocalAudioMediaTrack | LocalVideoMediaTrack)[]
   >(
     rtcClient.localMember$.pipe(
-      switchMap((member) => member?.media$ ?? of(null)),
-      switchMap((media) => media?.tracks$ ?? of([])),
+      switchMap((member) => member?.tracks$ ?? of(null)),
+      map((tracks) => tracks ?? []),
     ),
   );
   // Our own tracks, which carry the controls remote ones lack
@@ -569,6 +578,19 @@ export function createCallViewModel$(
   followDevice(microphone$, mediaDevices.audioInput, "microphone");
   followDevice(camera$, mediaDevices.videoInput, "camera");
 
+  // The output device follows the selection onto the client the same way. A
+  // host that routes audio itself picks the output outside the browser, so the
+  // client is left alone
+  if (!options.controlledAudioDevices)
+    mediaDevices.audioOutput.selected$
+      .pipe(scope.bind())
+      .subscribe((selected) => {
+        if (selected === undefined) return;
+        rtcClient.setAudioOutputDeviceId(selected.id).catch((e) => {
+          logger.error("Failed to switch the audio output device", e);
+        });
+      });
+
   // Attached once the camera track exists rather than carried in the publish
   // request, so that a new track and a change of processor take the same path
   combineLatest([camera$, videoProcessor$])
@@ -579,7 +601,7 @@ export function createCallViewModel$(
       });
     });
 
-  const members$ = scope.behavior<RTCMember[]>(
+  const members$ = scope.behavior<(LocalRTCMember | RemoteRTCMember)[]>(
     combineLatest(
       [rtcClient.localMember$, rtcClient.remoteMembers$],
       (local, remote) => (local === null ? remote : [local, ...remote]),
@@ -650,9 +672,7 @@ export function createCallViewModel$(
             id: `${mediaId}:${dup}`,
             userId: member.userId,
             rtcBackendIdentity: member.id,
-            ...(member.local
-              ? { local: true, media$: (member as LocalRTCMember).media$ }
-              : { local: false, media$: member.media$ }),
+            member,
             encryptionSystem: options.encryptionSystem,
             focusUrl$: scope.behavior(
               member.transport$.pipe(map((transport) => transport?.id)),

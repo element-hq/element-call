@@ -7,15 +7,13 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  type AudioMediaTrack,
   type Behavior,
   E2eeType,
   type EncryptionError,
   type EncryptionSystem,
-  type MediaSource,
   type MediaTrack,
-  type MemberMedia,
   type ObservableScope,
+  type RTCMember,
   trackBySource$,
   type VideoMediaTrack,
 } from "@element-hq/matrixrtc-sdk";
@@ -64,33 +62,24 @@ export interface BaseMemberMediaViewModel extends BaseMediaViewModel {
   encryptionStatus$: Behavior<EncryptionStatus>;
 }
 
+/** The member whose media this is, as far as the media view models read it. */
+export type MediaMember = Pick<
+  RTCMember,
+  "local" | "tracks$" | "encryptionError$"
+>;
+
 export interface MemberMediaInputs extends BaseMediaViewModel {
-  media$: Behavior<MemberMedia | null>;
+  member: MediaMember;
   audioSource: "microphone" | "screenShareAudio";
   videoSource: "camera" | "screenShare";
   focusUrl$: Behavior<string | undefined>;
   encryptionSystem: EncryptionSystem;
 }
 
-/**
- * The member's first track of a source: `trackBySource$` over media that may
- * not have arrived yet. `T` narrows to a local track where the media is ours.
- */
-export function memberTrack$<T extends MediaTrack>(
-  scope: ObservableScope,
-  media$: Behavior<MemberMedia | null>,
-  source: MediaSource,
-): Behavior<T | undefined> {
-  const tracks$ = scope.behavior<MediaTrack[]>(
-    media$.pipe(switchMap((media) => media?.tracks$ ?? of([]))),
-  );
-  return trackBySource$(scope, tracks$, source) as Behavior<T | undefined>;
-}
-
 export function createMemberMedia(
   scope: ObservableScope,
   {
-    media$,
+    member,
     audioSource,
     videoSource,
     focusUrl$,
@@ -98,8 +87,8 @@ export function createMemberMedia(
     ...inputs
   }: MemberMediaInputs,
 ): BaseMemberMediaViewModel {
-  const audio$ = memberTrack$<AudioMediaTrack>(scope, media$, audioSource);
-  const video$ = memberTrack$<VideoMediaTrack>(scope, media$, videoSource);
+  const audio$ = trackBySource$(scope, member.tracks$, audioSource);
+  const video$ = trackBySource$(scope, member.tracks$, videoSource);
   const unencrypted$ = (
     track$: Behavior<MediaTrack | undefined>,
   ): Observable<boolean> =>
@@ -122,16 +111,16 @@ export function createMemberMedia(
       ),
     ),
     encryptionStatus$: scope.behavior(
-      media$.pipe(
-        switchMap((media): Observable<EncryptionStatus> => {
-          if (media === null) return of(EncryptionStatus.Connecting);
-          if (media.local || encryptionSystem.kind === E2eeType.NONE)
+      member.tracks$.pipe(
+        switchMap((tracks): Observable<EncryptionStatus> => {
+          if (tracks === null) return of(EncryptionStatus.Connecting);
+          if (member.local || encryptionSystem.kind === E2eeType.NONE)
             return of(EncryptionStatus.Okay);
           const perParticipant =
             encryptionSystem.kind === E2eeType.PER_PARTICIPANT;
           return combineLatest([
-            encryptionError$(media, "MissingKey"),
-            encryptionError$(media, "InvalidKey"),
+            encryptionError$(member.encryptionError$, "MissingKey"),
+            encryptionError$(member.encryptionError$, "InvalidKey"),
             receivingOkay$(audio$),
             receivingOkay$(video$),
           ]).pipe(
@@ -155,10 +144,10 @@ export function createMemberMedia(
 }
 
 function encryptionError$(
-  media: MemberMedia,
+  errors$: Observable<EncryptionError>,
   criteria: EncryptionError,
 ): Observable<boolean> {
-  return media.encryptionError$.pipe(
+  return errors$.pipe(
     map((error) => error === criteria),
     distinctUntilChanged(),
     throttleTime(1000), // Throttle to avoid spamming the UI

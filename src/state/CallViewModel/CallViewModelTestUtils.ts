@@ -10,8 +10,8 @@ import {
   type Behavior,
   constant,
   E2eeType,
-  type LocalMemberMedia,
   type LocalRTCMember,
+  type MatrixRTCClient,
   type MatrixRTCMode,
   type ObservableScope,
   type RemoteRTCMember,
@@ -37,7 +37,7 @@ import {
   mockAudioTrack,
   mockMediaDevices,
   mockVideoTrack,
-  mockMemberMedia,
+  type MockTracks,
   mockMuteStates,
   MockRTCSession,
   mockRTCMember,
@@ -112,6 +112,8 @@ export function withCallViewModel(mode: MatrixRTCMode) {
       rtcSession: MockRTCSession,
       subjects: {
         raisedHands$: BehaviorSubject<Record<string, RaisedHandInfo>>;
+        /** The client the view model was built on, with spies for its calls. */
+        rtcClient: MatrixRTCClient;
       },
       setSyncState: (value: SyncState) => void,
     ) => void,
@@ -149,11 +151,10 @@ export function withCallViewModel(mode: MatrixRTCMode) {
     );
     const scope = testScope();
 
-    const mediaOf = (
+    const tracksOf = (
       scope: ObservableScope,
       participant: Participant,
-      local: boolean,
-    ): LocalMemberMedia => {
+    ): Behavior<MockTracks> => {
       // A microphone and a camera are always published; the screen share
       // comes and goes
       const microphone = mockAudioTrack({
@@ -168,18 +169,13 @@ export function withCallViewModel(mode: MatrixRTCMode) {
         ),
       });
       const screenShare = mockVideoTrack({ source: "screenShare" });
-      return mockMemberMedia({
-        local,
-        tracks$: scope.behavior(
-          (sharingScreen.get(participant) ?? constant(false)).pipe(
-            map((sharing) =>
-              sharing
-                ? [microphone, camera, screenShare]
-                : [microphone, camera],
-            ),
+      return scope.behavior(
+        (sharingScreen.get(participant) ?? constant(false)).pipe(
+          map((sharing) =>
+            sharing ? [microphone, camera, screenShare] : [microphone, camera],
           ),
         ),
-      });
+      );
     };
     const participantOf = (
       scope: ObservableScope,
@@ -202,12 +198,12 @@ export function withCallViewModel(mode: MatrixRTCMode) {
         membership,
         roomMember: roomMembers.find((m) => m.userId === membership.userId),
         transportUrl: "http://my-default-service-url.com",
-        media$: scope.behavior(
+        tracks$: scope.behavior(
           participantOf(scope, membership).pipe(
-            map((participant) =>
+            switchMap((participant) =>
               participant === undefined
-                ? null
-                : mediaOf(scope, participant, false),
+                ? of(null)
+                : tracksOf(scope, participant),
             ),
           ),
         ),
@@ -237,7 +233,7 @@ export function withCallViewModel(mode: MatrixRTCMode) {
                 membership: localRtcMember,
                 roomMember: carol,
                 transportUrl: "http://my-default-service-url.com",
-                media$: constant(mediaOf(scope, localParticipant, true)),
+                tracks$: tracksOf(scope, localParticipant),
               })
             : null,
         ),
@@ -281,6 +277,6 @@ export function withCallViewModel(mode: MatrixRTCMode) {
     );
     void mode;
 
-    continuation(vm, rtcSession, { raisedHands$: raisedHands$ }, setSyncState);
+    continuation(vm, rtcSession, { raisedHands$, rtcClient }, setSyncState);
   };
 }

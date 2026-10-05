@@ -7,9 +7,9 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  type AudioMediaTrack,
   type Behavior,
   type ObservableScope,
+  trackBySource$,
 } from "@element-hq/matrixrtc-sdk";
 import { combineLatest, map, of, switchMap } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
@@ -20,7 +20,6 @@ import {
   type BaseUserMediaViewModel,
   createBaseUserMedia,
 } from "./UserMediaViewModel";
-import { memberTrack$ } from "./MemberMediaViewModel";
 
 export interface RemoteUserMediaViewModel
   extends BaseUserMediaViewModel, VolumeControls {
@@ -44,11 +43,11 @@ export function createRemoteUserMedia(
 
   const waitingForMedia$ = scope.behavior(
     combineLatest(
-      [inputs.focusUrl$, inputs.media$],
+      [inputs.focusUrl$, inputs.member.tracks$],
       // Without a transport the user is not attempting to publish anywhere
       // and so we shouldn't expect media. (They might be a subscribe-only bot
       // for example.)
-      (focusUrl, media) => focusUrl !== undefined && media === null,
+      (focusUrl, tracks) => focusUrl !== undefined && tracks === null,
     ),
   );
   waitingForMedia$.pipe(scope.bind()).subscribe((waiting) => {
@@ -60,7 +59,7 @@ export function createRemoteUserMedia(
     ...createVolumeControls(scope, {
       pretendToBeDisconnected$,
       sink$: scope.behavior(
-        memberTrack$<AudioMediaTrack>(scope, inputs.media$, "microphone").pipe(
+        trackBySource$(scope, inputs.member.tracks$, "microphone").pipe(
           map((track) => (volume: number) => track?.setVolume(volume)),
         ),
       ),

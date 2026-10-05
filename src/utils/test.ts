@@ -59,19 +59,20 @@ import {
 import { Config } from "../config/Config";
 import { type MediaDevices } from "../state/MediaDevices";
 import {
+  type AudioMediaTrack,
   type Behavior,
   constant,
   type DisconnectReason,
+  type EncryptionError,
   type LocalAudioMediaTrack,
-  type LocalMemberMedia,
   type LocalRTCMember,
   type LocalVideoMediaTrack,
   type MatrixRTCClient,
   type MatrixRTCError,
-  type MemberMedia,
   type PublishRequest,
   type RemoteRTCMember,
   type TransportMetadata,
+  type VideoMediaTrack,
 } from "@element-hq/matrixrtc-sdk";
 import { ObservableScope } from "../state/ObservableScope";
 import { MuteStates } from "../state/MuteStates";
@@ -334,17 +335,8 @@ export const mockAudioTrack = (
     ...track,
   }) as LocalAudioMediaTrack;
 
-/** A member's media as the SDK hands it out, with nothing published unless given. */
-export function mockMemberMedia(
-  media: Partial<Omit<LocalMemberMedia, "local">> & { local?: boolean } = {},
-): LocalMemberMedia {
-  return {
-    local: false,
-    tracks$: constant([]),
-    encryptionError$: NEVER,
-    ...media,
-  } as LocalMemberMedia;
-}
+/** The tracks a member has, or null while its media has not arrived. */
+export type MockTracks = (AudioMediaTrack | VideoMediaTrack)[] | null;
 
 /** Whoever publishes media, known by identity only. */
 export function mockRemoteParticipant(
@@ -360,7 +352,7 @@ export function mockRemoteParticipant(
 export function mockLocalMedia(
   rtcMember: CallMembership,
   roomMember: Partial<RoomMember>,
-  media: LocalMemberMedia | null,
+  tracks: MockTracks,
   mediaDevices: MediaDevices,
 ): LocalUserMediaViewModel {
   const member = mockMatrixRoomMember(rtcMember, roomMember);
@@ -368,7 +360,11 @@ export function mockLocalMedia(
     id: "local",
     userId: member.userId,
     rtcBackendIdentity: rtcMember.rtcBackendIdentity,
-    media$: constant(media),
+    member: mockRTCMember(true, {
+      membership: rtcMember,
+      roomMember,
+      tracks$: constant(tracks),
+    }),
     encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
     focusUrl$: constant("https://rtc-example.org"),
     mediaDevices,
@@ -382,7 +378,8 @@ export function mockLocalMedia(
 export function mockRemoteMedia(
   rtcMember: CallMembership,
   roomMember: Partial<RoomMember>,
-  media: MemberMedia | null,
+  /** The tracks, or a behavior of them for a test that has them arrive. */
+  tracks: MockTracks | Behavior<MockTracks>,
   { focusUrl }: { focusUrl?: string } = { focusUrl: "https://rtc-example.org" },
 ): RemoteUserMediaViewModel {
   const member = mockMatrixRoomMember(rtcMember, roomMember);
@@ -390,7 +387,12 @@ export function mockRemoteMedia(
     id: "remote",
     userId: member.userId,
     rtcBackendIdentity: rtcMember.rtcBackendIdentity,
-    media$: constant(media),
+    member: mockRTCMember(false, {
+      membership: rtcMember,
+      roomMember,
+      tracks$:
+        tracks === null || Array.isArray(tracks) ? constant(tracks) : tracks,
+    }),
     encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
     focusUrl$: constant(focusUrl),
     pretendToBeDisconnected$: constant(false),
@@ -404,13 +406,17 @@ export function mockRemoteMedia(
 export function mockRemoteScreenShare(
   rtcMember: CallMembership,
   roomMember: Partial<RoomMember>,
-  media: MemberMedia | null,
+  tracks: MockTracks,
 ): RemoteScreenShareViewModel {
   const member = mockMatrixRoomMember(rtcMember, roomMember);
   return createRemoteScreenShare(testScope(), {
     id: "screenshare",
     userId: member.userId,
-    media$: constant(media),
+    member: mockRTCMember(false, {
+      membership: rtcMember,
+      roomMember,
+      tracks$: constant(tracks),
+    }),
     encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
     focusUrl$: constant("https://rtc-example.org"),
     pretendToBeDisconnected$: constant(false),
@@ -422,7 +428,9 @@ export function mockRemoteScreenShare(
 export interface MockMemberInputs {
   membership: CallMembership;
   roomMember?: Partial<RoomMember>;
-  media$?: Behavior<LocalMemberMedia | null>;
+  /** Null, the default, is a member whose media has not arrived. */
+  tracks$?: Behavior<MockTracks>;
+  encryptionError$?: Observable<EncryptionError>;
   transportUrl?: string | undefined;
 }
 
@@ -437,7 +445,13 @@ export function mockRTCMember(
 ): RemoteRTCMember;
 export function mockRTCMember(
   local: boolean,
-  { membership, roomMember, media$, transportUrl }: MockMemberInputs,
+  {
+    membership,
+    roomMember,
+    tracks$ = constant(null),
+    encryptionError$ = NEVER,
+    transportUrl,
+  }: MockMemberInputs,
 ): LocalRTCMember | RemoteRTCMember {
   const member = mockMatrixRoomMember(membership, roomMember);
   const transport: TransportMetadata | undefined =
@@ -457,12 +471,16 @@ export function mockRTCMember(
     displayName$: constant(member.rawDisplayName ?? membership.userId),
     avatarUrl$: constant(member.getMxcAvatarUrl()),
     transport$: constant(transport),
-    media$: media$ ?? constant(null),
+    encryptionError$,
   };
-  if (!local) return { ...base, local: false };
+  if (!local) return { ...base, local: false, tracks$ };
   return {
     ...base,
     local: true,
+    // The mock tracks carry the local controls, whichever side they stand in for
+    tracks$: tracks$ as Behavior<
+      (LocalAudioMediaTrack | LocalVideoMediaTrack)[] | null
+    >,
     publish: vi.fn(async (request: PublishRequest) =>
       Promise.resolve(
         request.source === "microphone"
@@ -519,6 +537,7 @@ export function mockMatrixRTCClient(
     ),
     keyRotationSuppressed$,
     connectedTransports$,
+    setAudioOutputDeviceId: vi.fn(async () => Promise.resolve()),
     sendData: vi.fn(async () => Promise.resolve()),
     data$: NEVER,
   };

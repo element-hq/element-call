@@ -8,6 +8,7 @@ Please see LICENSE in the repository root for full details.
 
 import { test, vi, onTestFinished, it, describe, expect } from "vitest";
 import {
+  BehaviorSubject,
   combineLatest,
   debounceTime,
   distinctUntilChanged,
@@ -26,6 +27,7 @@ import { deepCompare } from "matrix-js-sdk/lib/utils";
 import { type Layout } from "../layout-types.ts";
 import {
   mockMatrixRoomMember,
+  mockMediaDevices,
   mockRemoteParticipant,
   withTestScheduler,
   mockRtcMembership,
@@ -46,7 +48,10 @@ import {
   localRtcMember,
   localRtcMemberDevice2,
 } from "../../utils/test-fixtures.ts";
-import { MediaDevices } from "../MediaDevices.ts";
+import {
+  MediaDevices,
+  type SelectedAudioOutputDevice,
+} from "../MediaDevices.ts";
 import { getValue } from "../../utils/observable.ts";
 import { type Behavior, constant } from "../Behavior.ts";
 import {
@@ -235,6 +240,51 @@ const modes = [[MatrixRTCMode.Compatibility], [MatrixRTCMode.Matrix_2_0]];
 
 describe.each(modes)("CallViewModel (%s mode)", (mode) => {
   const withCallViewModel = withCallViewModelInMode(mode);
+
+  /** Media devices whose audio output the test selects. */
+  const withAudioOutput = (): {
+    mediaDevices: MediaDevices;
+    selected$: BehaviorSubject<SelectedAudioOutputDevice | undefined>;
+  } => {
+    const selected$ = new BehaviorSubject<
+      SelectedAudioOutputDevice | undefined
+    >(undefined);
+    const mediaDevices = mockMediaDevices({
+      audioOutput: {
+        available$: constant(new Map()),
+        selected$,
+        select: vi.fn(),
+      },
+    });
+    return { mediaDevices, selected$ };
+  };
+
+  test("the selected audio output is handed to the client as it changes", () => {
+    const { mediaDevices, selected$ } = withAudioOutput();
+    withCallViewModel({ mediaDevices }, (_vm, _session, { rtcClient }) => {
+      // Nothing selected yet, so the browser's choice stands
+      expect(rtcClient.setAudioOutputDeviceId).not.toHaveBeenCalled();
+      selected$.next({ id: "speaker", virtualEarpiece: false });
+      expect(rtcClient.setAudioOutputDeviceId).toHaveBeenCalledWith("speaker");
+      selected$.next({ id: "headphones", virtualEarpiece: false });
+      expect(rtcClient.setAudioOutputDeviceId).toHaveBeenLastCalledWith(
+        "headphones",
+      );
+      expect(rtcClient.setAudioOutputDeviceId).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  test("a host that controls the audio devices keeps the output from the client", () => {
+    const { mediaDevices, selected$ } = withAudioOutput();
+    withCallViewModel(
+      { mediaDevices },
+      (_vm, _session, { rtcClient }) => {
+        selected$.next({ id: "earpiece", virtualEarpiece: true });
+        expect(rtcClient.setAudioOutputDeviceId).not.toHaveBeenCalled();
+      },
+      { controlledAudioDevices: true },
+    );
+  });
 
   test("participants are retained during a focus switch", () => {
     withTestScheduler(({ behavior, expectObservable }) => {

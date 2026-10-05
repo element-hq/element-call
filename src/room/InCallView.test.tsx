@@ -27,7 +27,6 @@ import {
   mockRtcMembership,
   type MockRTCSession,
   mockMatrixRTCClient,
-  mockMemberMedia,
   mockRTCMember,
 } from "../utils/test";
 import { E2eeType } from "../e2ee/e2eeType";
@@ -103,13 +102,13 @@ beforeEach(() => {
       localMember$: constant(
         mockRTCMember(true, {
           membership: localRtcMember,
-          media$: constant(mockMemberMedia({ local: true })),
+          tracks$: constant([]),
         }),
       ),
       remoteMembers$: constant([
         mockRTCMember(false, {
           membership: aliceRtcMember,
-          media$: constant(mockMemberMedia()),
+          tracks$: constant([]),
         }),
       ]),
     }),

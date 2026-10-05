@@ -8,9 +8,10 @@ Please see LICENSE in the repository root for full details.
 
 import {
   type Behavior,
-  type LocalMemberMedia,
+  type LocalRTCMember,
   type LocalVideoMediaTrack,
   type ObservableScope,
+  trackBySource$,
 } from "@element-hq/matrixrtc-sdk";
 import { map, of, switchMap } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
@@ -23,7 +24,6 @@ import {
 import { alwaysShowSelf } from "../../settings/settings";
 import { platform } from "../../Platform";
 import { type MediaDevices } from "../MediaDevices";
-import { memberTrack$ } from "./MemberMediaViewModel";
 
 export interface LocalUserMediaViewModel extends BaseUserMediaViewModel {
   local: true;
@@ -42,9 +42,9 @@ export interface LocalUserMediaViewModel extends BaseUserMediaViewModel {
 
 export interface LocalUserMediaInputs extends Omit<
   BaseUserMediaInputs,
-  "media$"
+  "member"
 > {
-  media$: Behavior<LocalMemberMedia | null>;
+  member: Pick<LocalRTCMember, "local" | "tracks$" | "encryptionError$">;
   mediaDevices: MediaDevices;
 }
 
@@ -54,11 +54,11 @@ export function createLocalUserMedia(
 ): LocalUserMediaViewModel {
   const baseUserMedia = createBaseUserMedia(scope, inputs);
   // Our own camera track, which carries the controls a remote one lacks
-  const camera$ = memberTrack$<LocalVideoMediaTrack>(
+  const camera$ = trackBySource$(
     scope,
-    inputs.media$,
+    inputs.member.tracks$,
     "camera",
-  );
+  ) as Behavior<LocalVideoMediaTrack | undefined>;
   const facingMode$ = scope.behavior(
     camera$.pipe(switchMap((camera) => camera?.facingMode$ ?? of(undefined))),
   );

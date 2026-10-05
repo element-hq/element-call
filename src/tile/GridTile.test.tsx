@@ -17,7 +17,6 @@ import {
   mockRemoteMedia,
   mockLocalMedia,
   mockMediaDevices,
-  mockMemberMedia,
 } from "../utils/test";
 import { GridTileViewModel } from "../state/TileViewModel";
 import { ReactionsSenderProvider } from "../reactions/useReactionsSender";
@@ -62,7 +61,7 @@ test("GridTile displays remote media", async () => {
       rawDisplayName: "Alice",
       getMxcAvatarUrl: () => "mxc://adfsg",
     },
-    mockMemberMedia(),
+    [],
   );
 
   const { container } = render(
@@ -92,7 +91,7 @@ test("GridTile displays local media", async () => {
       rawDisplayName: "Alice",
       getMxcAvatarUrl: () => "mxc://adfsg",
     },
-    mockMemberMedia({ local: true }),
+    [],
     mockMediaDevices({}),
   );
 

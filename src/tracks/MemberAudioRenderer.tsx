@@ -9,7 +9,6 @@ Please see LICENSE in the repository root for full details.
 import {
   type AudioMediaTrack,
   type MediaSource,
-  type MemberMedia,
   type RemoteRTCMember,
 } from "@element-hq/matrixrtc-sdk";
 import { type FC, useEffect, useMemo, useState } from "react";
@@ -102,7 +101,7 @@ export const MemberAudioRenderer: FC<MemberAudioRendererProps> = ({
       {members.map((member) => (
         <MemberAudio
           key={member.id}
-          media$={member.media$}
+          tracks$={member.tracks$}
           muted={muted}
           plugins={plugins}
         />
@@ -116,32 +115,16 @@ interface AudioPlugins {
   nodes: AudioNode[];
 }
 
-const MemberAudio: FC<{
-  media$: RemoteRTCMember["media$"];
-  muted?: boolean;
-  plugins: AudioPlugins;
-}> = ({ media$, muted, plugins }) => {
-  const media = useBehavior(media$);
-  return (
-    media !== null && (
-      <MemberTracksAudio
-        tracks$={media.tracks$}
-        muted={muted}
-        plugins={plugins}
-      />
-    )
-  );
-};
-
 /** The sources a call plays; anything published without one stays silent. */
 const playedSources = new Set<MediaSource>(["microphone", "screenShareAudio"]);
 
-const MemberTracksAudio: FC<{
-  tracks$: MemberMedia["tracks$"];
+/** One member's audio tracks; nothing while its media has not arrived. */
+const MemberAudio: FC<{
+  tracks$: RemoteRTCMember["tracks$"];
   muted?: boolean;
   plugins: AudioPlugins;
 }> = ({ tracks$, muted, plugins }) => {
-  const tracks = useBehavior(tracks$);
+  const tracks = useBehavior(tracks$) ?? [];
   return tracks
     .filter(
       (track): track is AudioMediaTrack =>
