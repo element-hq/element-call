@@ -30,6 +30,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
+          # Inside a called workflow, github.repository is the caller so we need to make sure to still check out the EC repo here.
+          repository: ${{ inputs.matrix-js-sdk-sha && 'element-hq/element-call' || github.repository }}
           persist-credentials: false
       - name: Enable Corepack
         run: corepack enable
@@ -59,9 +61,9 @@ jobs:
       - name: Vitest
         run: pnpm vitest --coverage.enabled="$ENABLE_COVERAGE"
         env:
-          ENABLE_COVERAGE: ${{ inputs.enable_coverage }}
+          ENABLE_COVERAGE: ${{ inputs.enable_coverage != false }}
       - name: Upload to codecov
-        if: ${{ inputs.enable_coverage }}
+        if: ${{ inputs.enable_coverage != false }}
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -70,12 +72,14 @@ jobs:
           fail_ci_if_error: true
   playwright:
     name: Run end-to-end tests
-    if: ${{ inputs.enable_e2e_tests }}
+    if: ${{ inputs.enable_e2e_tests != false }}
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
+          # Inside a called workflow, github.repository is the caller so we need to make sure to still check out the EC repo here.
+          repository: ${{ inputs.matrix-js-sdk-sha && 'element-hq/element-call' || github.repository }}
           persist-credentials: false
       - name: Enable Corepack
         run: corepack enable
