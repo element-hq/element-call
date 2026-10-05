@@ -568,8 +568,6 @@ export function createCallViewModel$(
     // membership advertises `${userId}:${deviceId}` as its `membershipID`
     // instead, so a uuid there names a member no peer can resolve.
     memberId:
-      // TODO: Make this conditional on the transport instead
-      // or else avoid using it in key messages
       matrixRTCMode === MatrixRTCMode.Matrix_2_0
         ? uuidv4()
         : `${userId}:${deviceId}`,

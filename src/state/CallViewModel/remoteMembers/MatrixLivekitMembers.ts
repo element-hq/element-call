@@ -60,7 +60,9 @@ export interface RemoteMatrixLivekitMember extends MatrixLivekitMember {
 interface Props {
   scope: ObservableScope;
   membershipsWithTransport$: Behavior<
-    Epoch<{ membership: CallMembership; transport?: UnstableLivekitTransport }[]>
+    Epoch<
+      { membership: CallMembership; transport?: UnstableLivekitTransport }[]
+    >
   >;
   connectionManager: IConnectionManager;
   localUser: { deviceId: string; userId: string };
@@ -111,8 +113,8 @@ export function createRemoteMatrixLivekitMembers$({
             const participants = transport
               ? managerData.getParticipantsForTransport(transport)
               : [];
-            const matches = participants.filter(
-              (p) => p.identity == membership.rtcBackendIdentity,
+            const matches = participants.filter((p) =>
+              membership.backendIdentities.includes(p.identity),
             );
             const participant = matches[0] ?? null;
             const connection = transport
@@ -143,9 +145,9 @@ export function createRemoteMatrixLivekitMembers$({
           // Log whether the member could be matched to a LiveKit participant,
           // since a tile shows "waiting for media" for as long as it cannot.
           participant$.pipe(scope.bind()).subscribe((p) => {
-            const url = data$.value.connection?.transport.livekit_service_url;
+            const transport = data$.value.connection?.transport;
             logger.info(
-              `[RemoteMatrixLivekitMembers] ${rtcBackendIdentity}: LiveKit participant ${p ? `matched (${p.sid})` : "missing"} on ${url ?? "no connection"}`,
+              `[RemoteMatrixLivekitMembers] ${rtcBackendIdentity}: LiveKit participant ${p ? `matched (${p.sid})` : "missing"} on ${transport ? JSON.stringify(transport) : "no connection"}`,
             );
           });
           // will only get called once per backend identity.
@@ -165,10 +167,9 @@ export function createRemoteMatrixLivekitMembers$({
 // TODO add back in the callviewmodel pauseWhen(this.pretendToBeDisconnected$)
 
 // TODO add this to the JS-SDK
-export function areUnstableLivekitTransportsEqual<T extends UnstableLivekitTransport>(
-  t1: T | null,
-  t2: T | null,
-): boolean {
+export function areUnstableLivekitTransportsEqual<
+  T extends UnstableLivekitTransport,
+>(t1: T | null, t2: T | null): boolean {
   if (t1 && t2) {
     return t1.livekit_service_url === t2.livekit_service_url;
   }
