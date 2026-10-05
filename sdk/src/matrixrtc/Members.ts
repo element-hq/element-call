@@ -13,10 +13,10 @@ import { type ObservableScope } from "../reactive/ObservableScope";
 import { type createMatrixMemberMetadata$ } from "./MatrixMemberMetadata";
 import {
   type LocalRTCMember,
-  type MemberMedia,
   type RemoteRTCMember,
   type RTCMember,
 } from "../api";
+import { type MemberMedia } from "../media-api";
 import { type LocalMediaBackend } from "../media-backend/api";
 import { type TransportRegistry } from "./Transports";
 

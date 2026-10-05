@@ -28,7 +28,7 @@ import {
   type LocalMemberMedia,
   type MediaSource,
   type MemberMedia,
-} from "../../api";
+} from "../../media-api";
 import {
   createLivekitMediaTrack,
   createLocalLivekitMediaTrack,

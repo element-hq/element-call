@@ -23,7 +23,8 @@ import { type OpenIDClientParts, type SFUConfig } from "./openIDSFU";
 import { type Behavior } from "../../reactive/Behavior";
 import { Connection, type ConnectionOpts, ConnectionState } from "./Connection";
 import { type ObservableScope } from "../../reactive/ObservableScope";
-import { type PublishRequest, type ResolvedTransport } from "../../api";
+import { type ResolvedTransport } from "../../api";
+import { type PublishRequest } from "../../media-api";
 import { type MediaQuality } from "../../config";
 import {
   audioCaptureOptions,

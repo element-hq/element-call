@@ -12,7 +12,10 @@ import {
   type VideoCaptureOptions,
 } from "livekit-client";
 
-import { type PublishRequest, type VideoCaptureSettings } from "../../api";
+import {
+  type PublishRequest,
+  type VideoCaptureSettings,
+} from "../../media-api";
 
 export type PublishRequestFor<S extends PublishRequest["source"]> = Extract<
   PublishRequest,

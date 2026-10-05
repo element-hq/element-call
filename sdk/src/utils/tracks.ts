@@ -14,7 +14,7 @@ import {
   type MediaSource,
   type MediaTrack,
   type VideoMediaTrack,
-} from "../api";
+} from "../media-api";
 
 export type TrackOfSource<S extends MediaSource> = S extends
   | "microphone"

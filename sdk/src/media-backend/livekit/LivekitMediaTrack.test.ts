@@ -19,7 +19,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ObservableScope } from "../../reactive/ObservableScope";
-import { type AudioMediaTrack } from "../../api";
+import { type AudioMediaTrack } from "../../media-api";
 import {
   createLivekitMediaTrack,
   createLocalLivekitMediaTrack,

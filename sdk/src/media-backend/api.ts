@@ -17,15 +17,14 @@ import { type Transport } from "matrix-js-sdk/lib/matrixrtc";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 import { type Observable } from "rxjs";
 
+import { type ResolvedTransport, type RTCMembership } from "../api";
 import {
   type LocalAudioMediaTrack,
   type LocalMemberMedia,
   type LocalVideoMediaTrack,
   type MemberMedia,
   type PublishRequest,
-  type ResolvedTransport,
-  type RTCMembership,
-} from "../api";
+} from "../media-api";
 import { type SessionTimings } from "../config";
 import { type EncryptionSystem } from "../encryption";
 import { type Behavior } from "../reactive/Behavior";

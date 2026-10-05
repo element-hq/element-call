@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { BehaviorSubject } from "rxjs";
 import { describe, expect, it } from "vitest";
 
-import { type MediaTrack } from "../api";
+import { type MediaTrack } from "../media-api";
 import { testScope } from "./test";
 import { trackBySource$ } from "./tracks";
 

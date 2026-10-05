@@ -48,7 +48,7 @@ import {
   type MediaStreamStats,
   type MediaTrack,
   type VideoMediaTrack,
-} from "../../api";
+} from "../../media-api";
 import { MatrixRTCError } from "../../errors";
 import { LazyBehavior } from "../../utils/LazyBehavior";
 

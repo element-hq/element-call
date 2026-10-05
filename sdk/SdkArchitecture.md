@@ -707,7 +707,8 @@ Layout:
 ```
 sdk/
   index.ts            the entry point: re-exports the API and the primitives
-  src/api.ts          the public types above
+  src/api.ts          the public types above: client, members, transports
+  src/media-api.ts    the public media types: publish requests, tracks, MemberMedia
   src/errors.ts       MatrixRTCError and its codes
   src/config.ts       MatrixRTCMode, session timings, media quality
   src/encryption.ts   E2eeType, EncryptionSystem

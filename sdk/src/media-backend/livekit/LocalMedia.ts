@@ -32,7 +32,7 @@ import {
   type LocalVideoMediaTrack,
   type MediaSource,
   type PublishRequest,
-} from "../../api";
+} from "../../media-api";
 import { type EncryptionSystem } from "../../encryption";
 import { FailToStartLivekitConnection, toMatrixRTCError } from "../../errors";
 import { type Behavior } from "../../reactive/Behavior";

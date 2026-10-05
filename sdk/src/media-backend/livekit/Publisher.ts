@@ -14,7 +14,7 @@ import {
 } from "livekit-client";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 
-import { type MediaSource, type PublishRequest } from "../../api";
+import { type MediaSource, type PublishRequest } from "../../media-api";
 import { livekitSources, mediaSources } from "./LivekitMediaTrack";
 import {
   audioCaptureOptions,

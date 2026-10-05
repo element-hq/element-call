@@ -23,11 +23,8 @@ import {
   switchMap,
 } from "rxjs";
 
-import {
-  type MemberMedia,
-  type ResolvedTransport,
-  type RTCMembership,
-} from "../../api";
+import { type ResolvedTransport, type RTCMembership } from "../../api";
+import { type MemberMedia } from "../../media-api";
 import { type MediaQuality } from "../../config";
 import { MatrixRTCError } from "../../errors";
 import { type Behavior } from "../../reactive/Behavior";
