@@ -19,7 +19,6 @@ import { type Observable } from "rxjs";
 
 import {
   type LocalAudioMediaTrack,
-  type LocalMediaInputs,
   type LocalMemberMedia,
   type LocalVideoMediaTrack,
   type MemberMedia,
@@ -55,7 +54,8 @@ export interface MediaKey {
 export interface MediaBackendContext {
   roomId: string;
   ownMembershipIdentity: CallMembershipIdentityParts;
-  localMedia: LocalMediaInputs;
+  /** What the local member publishes at the join. */
+  publish: PublishRequest[];
   encryptionSystem: EncryptionSystem;
   /**
    * Every media key the session knows: the current ones replayed on
@@ -146,6 +146,9 @@ export interface MediaBackend {
 
   /** Every connection the backend holds. For debugging and devtool purposes.*/
   readonly connections$: Behavior<BackendConnection[]>;
+
+  /** Plays the members' audio on this device, on the connections of now and later. */
+  setAudioOutputDeviceId(deviceId: string): Promise<void>;
 
   /**
    * A text channel beside the media: sent on the local transport, received on every one.

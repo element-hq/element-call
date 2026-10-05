@@ -28,7 +28,6 @@ import {
 
 import {
   type LocalAudioMediaTrack,
-  type LocalMediaInputs,
   type LocalMemberMedia,
   type LocalVideoMediaTrack,
   type MediaSource,
@@ -54,7 +53,9 @@ interface Props {
   scope: ObservableScope;
   connectionManager: IConnectionManager;
   localTransport$: Observable<LocalTransport>;
-  localMedia: LocalMediaInputs;
+  publish: PublishRequest[];
+  /** Read by the connection factory for the rooms it creates from now on. */
+  audioOutputDeviceId$: BehaviorSubject<string | undefined>;
   encryptionSystem: EncryptionSystem;
   logger: Logger;
 }
@@ -62,6 +63,7 @@ interface Props {
 export interface LivekitLocalMedia extends LocalMediaBackend {
   /** The connection the local member publishes on; the data channel sends on it. */
   connection$: Behavior<Connection | null>;
+  setAudioOutputDeviceId(deviceId: string): Promise<void>;
 }
 
 /**
@@ -73,7 +75,8 @@ export function createLivekitLocalMedia({
   scope,
   connectionManager,
   localTransport$,
-  localMedia,
+  publish: initialRequests,
+  audioOutputDeviceId$,
   encryptionSystem,
   logger: parentLogger,
 }: Props): LivekitLocalMedia {
@@ -102,7 +105,7 @@ export function createLivekitLocalMedia({
   );
 
   const desired: DesiredMedia = new Map(
-    localMedia.publish.map((request) => [
+    initialRequests.map((request) => [
       request.source,
       { request, enabled: true },
     ]),
@@ -115,7 +118,6 @@ export function createLivekitLocalMedia({
     if (connection === null) return;
     const publisher = new Publisher(
       connection.livekitRoom,
-      localMedia,
       desired,
       logger.getChild(
         `[Publisher ${connection.transport.livekit_service_url}]`,
@@ -209,6 +211,11 @@ export function createLivekitLocalMedia({
     await publisher$.value?.unpublish(source);
   };
 
+  const setAudioOutputDeviceId = async (deviceId: string): Promise<void> => {
+    audioOutputDeviceId$.next(deviceId);
+    await publisher$.value?.setAudioOutputDevice(deviceId);
+  };
+
   return {
     connection$,
     connectionState$,
@@ -217,6 +224,7 @@ export function createLivekitLocalMedia({
     publishError$,
     publish,
     unpublish,
+    setAudioOutputDeviceId,
   };
 }
 

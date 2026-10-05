@@ -18,7 +18,7 @@ therefore `Element Call → sdk`, never the reverse. The migration from today's
 ```
  host application (Element Call, a whiteboard, watch-together, …)
    │
-   │  createMatrixRTCClient(scope, matrixClient, room, localMedia, options)
+   │  createMatrixRTCClient(scope, matrixClient, room, options)
    ▼
 ┌──────────────────────────────────────────────────────────────────────────────┐
 │ MatrixRTCClient                                                              │
@@ -135,7 +135,7 @@ it, and `leave()` also sends the leave.
 | media             | a `MemberMedia`: what a member sends, once it has arrived on its transport. `null` while waiting for media                                                                                            | Element Call's `MediaViewModel` is a view of it                   |
 | track             | a `MediaTrack`: one publication of a member, audio or video, with `source`, `kind`, `id` and the behaviors on it. `LocalAudioMediaTrack` and `LocalVideoMediaTrack` add the controls over our own     | LiveKit `TrackPublication` and `Track`, which never leave the SDK |
 | source            | a `MediaSource`: what a track is captured from, `microphone`, `camera`, `screenShare`, `screenShareAudio` or `unknown`. Picked out of `tracks$` with `trackBySource$`                                 | LiveKit `Track.Source`                                            |
-| publish request   | a `PublishRequest`: a source, where to capture it from and how to encode it. Given at the join in `LocalMediaInputs.publish`, or later to `publish` on the local member                               |                                                                   |
+| publish request   | a `PublishRequest`: a source, where to capture it from and how to encode it. Given at the join in `options.publish`, or later to `publish` on the local member                                        |                                                                   |
 | active            | `isActive$` on an audio track: the track carries sound, as the backend measures it. "Speaking" is a call's reading of it on the microphone track                                                      | LiveKit "speaking", `isSpeaking`                                  |
 | attach, detach    | handing a `<video>` or `<audio>` element to a track and taking it back. The SDK owns the stream and the observers on the element                                                                      | LiveKit `Track.attach`                                            |
 | transport         | where media is exchanged: a LiveKit service url today, described by `TransportMetadata`                                                                                                               | MSC4143 "focus"                                                   |
@@ -182,7 +182,7 @@ context, it is in the view model.
 
 ### Creating one
 
-```ts
+````ts
 import { type MatrixClient, type Room } from "matrix-js-sdk";
 import { type RTCNotificationType } from "matrix-js-sdk/lib/matrixrtc";
 
@@ -190,6 +190,8 @@ export interface MatrixRTCClientOptions {
   encryptionSystem: EncryptionSystem;
   /** Resolved by the host; the SDK reads neither config.json nor settings. */
   matrixRTCMode: MatrixRTCMode;
+  /** Published at the join; `publish` on the local member adds to it from then on. */
+  publish: PublishRequest[];
   /**
    * MSC4075 notification sent with the join. A parameter of the MatrixRTC
    * join itself, so it is here even though it is named after calls; reacting
@@ -236,18 +238,12 @@ export type PublishRequest =
       audio?: boolean;
       capture?: VideoCaptureSettings;
     };
+```
 
-/**
- * Device enumeration, permission prompts and the lobby preview stay with the
- * host.
- */
-export interface LocalMediaInputs {
-  /** Published at the join; `publish` on the local member adds to it from then on. */
-  publish: PublishRequest[];
-  /** Undefined where the host routes audio itself, or to leave the browser's choice. */
-  audioOutputDeviceId$: Behavior<string | undefined>;
-}
+Device enumeration, permission prompts and the lobby preview stay with the
+host: it hands over publish requests naming the devices it chose.
 
+```ts
 /**
  * Takes the whole MatrixClient, not a narrow pick, and finds the MatrixRTC
  * session itself. The js-sdk is the MatrixRTC implementation today; when the
@@ -263,10 +259,9 @@ export function createMatrixRTCClient(
   scope: ObservableScope,
   client: MatrixClient,
   room: Room,
-  localMedia: LocalMediaInputs,
   options: MatrixRTCClientOptions,
 ): MatrixRTCClient;
-```
+````
 
 ### The client
 
@@ -327,6 +322,13 @@ export interface MatrixRTCClient {
    * needs.
    */
   connectedTransports$: Behavior<TransportMetadata[]>;
+
+  /**
+   * Plays the members' audio on this device from now on. Rejects where the
+   * browser cannot switch to it. A host that routes audio itself, or leaves
+   * the browser's choice, never calls it.
+   */
+  setAudioOutputDeviceId(deviceId: string): Promise<void>;
 
   /**
    * Sends a short text to every member on the local transport, over a

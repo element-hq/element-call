@@ -23,7 +23,7 @@ import { type OpenIDClientParts, type SFUConfig } from "./openIDSFU";
 import { type Behavior } from "../../reactive/Behavior";
 import { Connection, type ConnectionOpts, ConnectionState } from "./Connection";
 import { type ObservableScope } from "../../reactive/ObservableScope";
-import { type LocalMediaInputs, type ResolvedTransport } from "../../api";
+import { type PublishRequest, type ResolvedTransport } from "../../api";
 import { type MediaQuality } from "../../config";
 import {
   audioCaptureOptions,
@@ -95,7 +95,8 @@ export class LivekitConnectionFactory implements ConnectionFactory {
   public constructor(
     private readonly client: OpenIDClientParts,
     private readonly roomId: string,
-    private readonly localMedia: LocalMediaInputs,
+    private readonly publish: PublishRequest[],
+    private readonly audioOutputDeviceId$: Behavior<string | undefined>,
     private readonly keyProvider: BaseKeyProvider | undefined,
     private readonly mediaQuality: MediaQuality | undefined,
   ) {}
@@ -116,7 +117,12 @@ export class LivekitConnectionFactory implements ConnectionFactory {
         scope,
         livekitRoomFactory: () =>
           new LivekitRoom(
-            roomOptions(this.localMedia, this.keyProvider, this.mediaQuality),
+            roomOptions(
+              this.publish,
+              this.audioOutputDeviceId$.value,
+              this.keyProvider,
+              this.mediaQuality,
+            ),
           ),
         ownMembershipIdentity,
       },
@@ -127,13 +133,14 @@ export class LivekitConnectionFactory implements ConnectionFactory {
 
 /** The initial requests become the room's defaults, so that one permission prompt covers both. */
 function roomOptions(
-  localMedia: LocalMediaInputs,
+  publish: PublishRequest[],
+  audioOutputDeviceId: string | undefined,
   keyProvider: BaseKeyProvider | undefined,
   mediaQuality: MediaQuality | undefined,
 ): RoomOptions {
   const base = buildLiveKitOptions(mediaQuality);
-  const microphone = initialRequest(localMedia, "microphone");
-  const camera = initialRequest(localMedia, "camera");
+  const microphone = initialRequest(publish, "microphone");
+  const camera = initialRequest(publish, "camera");
   return {
     ...base,
     videoCaptureDefaults: {
@@ -148,7 +155,7 @@ function roomOptions(
       ...base.audioCaptureDefaults,
       ...(microphone && audioCaptureOptions(microphone)),
     },
-    audioOutput: { deviceId: localMedia.audioOutputDeviceId$.value },
+    audioOutput: { deviceId: audioOutputDeviceId },
     // Every room needs a worker of its own: one gets confused by streams from
     // several rooms
     e2ee: keyProvider && { keyProvider, worker: new E2EEWorker() },
@@ -156,10 +163,10 @@ function roomOptions(
 }
 
 function initialRequest<S extends "microphone" | "camera">(
-  localMedia: LocalMediaInputs,
+  publish: PublishRequest[],
   source: S,
 ): PublishRequestFor<S> | undefined {
-  return localMedia.publish.find(
+  return publish.find(
     (request): request is PublishRequestFor<S> => request.source === source,
   );
 }

@@ -77,7 +77,7 @@ export function createLivekitBackend(
   {
     roomId,
     ownMembershipIdentity,
-    localMedia,
+    publish,
     encryptionSystem,
     mediaKeys$,
     timings,
@@ -89,13 +89,17 @@ export function createLivekitBackend(
   const keyProvider = createKeyProvider(encryptionSystem, mediaKeys$, logger);
   const transports = createTransportRegistry(scope);
   const localTransport$ = new ReplaySubject<LocalTransport>(1);
+  const audioOutputDeviceId$ = new BehaviorSubject<string | undefined>(
+    undefined,
+  );
 
   const connectionManager = createConnectionManager$({
     scope,
     connectionFactory: new LivekitConnectionFactory(
       client,
       roomId,
-      localMedia,
+      publish,
+      audioOutputDeviceId$,
       keyProvider,
       mediaQuality,
     ),
@@ -215,7 +219,8 @@ export function createLivekitBackend(
     scope,
     connectionManager,
     localTransport$,
-    localMedia,
+    publish,
+    audioOutputDeviceId$,
     encryptionSystem,
     logger,
   });
@@ -233,6 +238,7 @@ export function createLivekitBackend(
     local: localMedia_,
     mediaFor$,
     connections$,
+    setAudioOutputDeviceId: localMedia_.setAudioOutputDeviceId,
     sendData,
     data$,
   };

@@ -19,7 +19,6 @@ Call's own `CallViewModel` is built on it. It depends on nothing in Element Call
 
 ```ts
 import {
-  constant,
   createMatrixRTCClient,
   E2eeType,
   MatrixRTCMode,
@@ -32,12 +31,9 @@ const rtcClient = createMatrixRTCClient(
   client, // a matrix-js-sdk MatrixClient, logged in and syncing
   room, // the matrix-js-sdk Room, from client.getRoom() once the join has synced
   {
-    publish: [{ source: "microphone" }, { source: "camera" }],
-    audioOutputDeviceId$: constant(undefined),
-  },
-  {
     encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
     matrixRTCMode: MatrixRTCMode.Compatibility,
+    publish: [{ source: "microphone" }, { source: "camera" }],
   },
 );
 rtcClient.join();

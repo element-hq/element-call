@@ -32,12 +32,14 @@ import {
 } from "./config";
 
 // ---------------------------------------------------------------------------
-// Session
+// MatrixRTCClient
 
 export interface MatrixRTCClientOptions {
   encryptionSystem: EncryptionSystem;
   /** Resolved by the host; the SDK reads neither config.json nor settings. */
   matrixRTCMode: MatrixRTCMode;
+  /** Published at the join; `publish` on the local member adds to it from then on. */
+  publish: PublishRequest[];
   /**
    * MSC4075 notification sent with the join. A parameter of the MatrixRTC
    * join itself, so it is here even though it is named after calls; reacting
@@ -104,13 +106,6 @@ export type PublishRequest =
       capture?: VideoCaptureSettings;
     };
 
-export interface LocalMediaInputs {
-  /** Published at the join; `publish` on the local member adds to it from then on. */
-  publish: PublishRequest[];
-  /** Undefined where the host routes audio itself, or to leave the browser's choice. */
-  audioOutputDeviceId$: Behavior<string | undefined>;
-}
-
 export type ConnectionStatus =
   | "waitingForTransport"
   | "connecting"
@@ -157,6 +152,13 @@ export interface MatrixRTCClient {
 
   /** Transports the session currently holds a live connection to. */
   connectedTransports$: Behavior<TransportMetadata[]>;
+
+  /**
+   * Plays the members' audio on this device from now on. Rejects where the
+   * browser cannot switch to it. A host that routes audio itself, or leaves
+   * the browser's choice, never calls it.
+   */
+  setAudioOutputDeviceId(deviceId: string): Promise<void>;
 
   /**
    * Sends a short text to every member on the local transport, over a

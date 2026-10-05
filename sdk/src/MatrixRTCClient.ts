@@ -25,7 +25,6 @@ import { filterBehavior, generateItems } from "./reactive/observable";
 import { mapScoped } from "./utils/mapScoped";
 import {
   type DataMessage,
-  type LocalMediaInputs,
   type LocalRTCMember,
   type MatrixRTCClient,
   type MatrixRTCClientOptions,
@@ -72,7 +71,6 @@ export function createMatrixRTCClient(
   scope: ObservableScope,
   client: MatrixClient,
   room: Room,
-  localMedia: LocalMediaInputs,
   options: MatrixRTCClientOptions,
 ): MatrixRTCClient {
   const logger = rootLogger.getChild("[MatrixRTCClient]");
@@ -105,7 +103,7 @@ export function createMatrixRTCClient(
   const backend = createBackend(scope, client, options, {
     roomId: room.roomId,
     ownMembershipIdentity,
-    localMedia,
+    publish: options.publish,
     encryptionSystem,
     mediaKeys$: mediaKeys$(jsSdkSession),
     timings,
@@ -261,6 +259,8 @@ export function createMatrixRTCClient(
     ),
     keyRotationSuppressed$: createKeyRotationSuppressed$(scope, jsSdkSession),
     connectedTransports$: transports.connected$,
+    setAudioOutputDeviceId: async (deviceId) =>
+      backend.setAudioOutputDeviceId(deviceId),
     sendData: async (topic, text) => backend.sendData(topic, text),
     data$,
   };

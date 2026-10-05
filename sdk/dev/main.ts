@@ -15,7 +15,6 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import { combineLatest, type Observable, of, switchMap } from "rxjs";
 import {
   type AudioMediaTrack,
-  constant,
   createMatrixRTCClient,
   E2eeType,
   MatrixRTCMode,
@@ -70,19 +69,11 @@ async function start(
     const room = await joinRoom(client, roomIdOrAlias);
 
     const scope = new ObservableScope();
-    const rtcClient = createMatrixRTCClient(
-      scope,
-      client,
-      room,
-      {
-        publish: [{ source: "microphone" }, { source: "camera" }],
-        audioOutputDeviceId$: constant(undefined),
-      },
-      {
-        encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
-        matrixRTCMode: MatrixRTCMode.Compatibility,
-      },
-    );
+    const rtcClient = createMatrixRTCClient(scope, client, room, {
+      encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+      matrixRTCMode: MatrixRTCMode.Compatibility,
+      publish: [{ source: "microphone" }, { source: "camera" }],
+    });
     rtcClient.status$.pipe(scope.bind()).subscribe((s) => {
       status.textContent = s;
     });

@@ -14,12 +14,7 @@ import {
 } from "livekit-client";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 
-import { ObservableScope } from "../../reactive/ObservableScope";
-import {
-  type LocalMediaInputs,
-  type MediaSource,
-  type PublishRequest,
-} from "../../api";
+import { type MediaSource, type PublishRequest } from "../../api";
 import { livekitSources, mediaSources } from "./LivekitMediaTrack";
 import {
   audioCaptureOptions,
@@ -50,12 +45,10 @@ export class Publisher {
   public shouldPublish = false;
   /** Whether the initial requests have been published; `publish` is immediate from then on. */
   public started = false;
-  private readonly scope = new ObservableScope();
   private readonly room: LivekitRoom;
 
   public constructor(
     room: LivekitRoom,
-    private readonly inputs: LocalMediaInputs,
     private readonly desired: DesiredMedia,
     private readonly logger: Logger,
   ) {
@@ -63,7 +56,6 @@ export class Publisher {
     room.setE2EEEnabled(room.options.e2ee !== undefined)?.catch((e: Error) => {
       this.logger.error("Failed to enable E2EE on the room", e);
     });
-    this.followAudioOutput();
     this.onLocalTrackPublished = this.onLocalTrackPublished.bind(this);
     room.localParticipant.on(
       ParticipantEvent.LocalTrackPublished,
@@ -72,7 +64,6 @@ export class Publisher {
   }
 
   public async destroy(): Promise<void> {
-    this.scope.end();
     this.room.localParticipant.off(
       ParticipantEvent.LocalTrackPublished,
       this.onLocalTrackPublished,
@@ -216,19 +207,13 @@ export class Publisher {
     return [...this.room.localParticipant.trackPublications.values()];
   }
 
-  private followAudioOutput(): void {
-    this.inputs.audioOutputDeviceId$
-      .pipe(this.scope.bind())
-      .subscribe((deviceId) => {
-        if (
-          deviceId === undefined ||
-          this.room.state !== LivekitConnectionState.Connected ||
-          this.room.getActiveDevice("audiooutput") === deviceId
-        )
-          return;
-        this.room
-          .switchActiveDevice("audiooutput", deviceId)
-          .catch((e) => this.logger.error("Failed to switch audiooutput", e));
-      });
+  /** A room that is not connected yet takes the device from its options instead. */
+  public async setAudioOutputDevice(deviceId: string): Promise<void> {
+    if (
+      this.room.state !== LivekitConnectionState.Connected ||
+      this.room.getActiveDevice("audiooutput") === deviceId
+    )
+      return;
+    await this.room.switchActiveDevice("audiooutput", deviceId);
   }
 }
