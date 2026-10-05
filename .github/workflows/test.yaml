@@ -3,6 +3,25 @@ on:
   pull_request: {}
   push:
     branches: [main]
+  workflow_call:
+    inputs:
+      matrix-js-sdk-sha:
+        type: string
+        required: false
+        description: The matrix-js-sdk commit to build against instead of the locked one
+      disable_coverage:
+        type: boolean
+        required: false
+        default: false
+        description: Skip generating and uploading coverage reports
+      disable_e2e_tests:
+        type: boolean
+        required: false
+        default: false
+        description: Skip the end-to-end tests
+    secrets:
+      CODECOV_TOKEN:
+        required: false
 jobs:
   vitest:
     name: Run unit tests
@@ -11,6 +30,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
+          # Inside a called workflow, github.repository is the caller so we need to make sure to still check out the EC repo here.
+          repository: ${{ inputs.matrix-js-sdk-sha && 'element-hq/element-call' || github.repository }}
           persist-credentials: false
       - name: Enable Corepack
         run: corepack enable
@@ -24,6 +45,7 @@ jobs:
         run: "scripts/layered.sh --ignore-pnpmfile"
         env:
           PR_HEAD_REPO_OWNER: ${{ github.event.pull_request.head.repo.owner.login }}
+          JS_SDK_GITHUB_BASE_REF: ${{ inputs.matrix-js-sdk-sha }}
       - name: Get Playwright version
         run: echo "PLAYWRIGHT_VERSION=$(pnpm list @playwright/test --depth=0 --json | jq -r '.[0].devDependencies["@playwright/test"].version')" >> $GITHUB_ENV
       - name: Cache Playwright binaries
@@ -37,8 +59,11 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm playwright install --with-deps
       - name: Vitest
-        run: "pnpm run test:coverage"
+        run: pnpm vitest --coverage.enabled="$ENABLE_COVERAGE"
+        env:
+          ENABLE_COVERAGE: ${{ !inputs.disable_coverage }}
       - name: Upload to codecov
+        if: ${{ !inputs.disable_coverage }}
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -47,11 +72,14 @@ jobs:
           fail_ci_if_error: true
   playwright:
     name: Run end-to-end tests
+    if: ${{ !inputs.disable_e2e_tests }}
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
+          # Inside a called workflow, github.repository is the caller so we need to make sure to still check out the EC repo here.
+          repository: ${{ inputs.matrix-js-sdk-sha && 'element-hq/element-call' || github.repository }}
           persist-credentials: false
       - name: Enable Corepack
         run: corepack enable
@@ -64,6 +92,7 @@ jobs:
         run: scripts/layered.sh --ignore-pnpmfile
         env:
           PR_HEAD_REPO_OWNER: ${{ github.event.pull_request.head.repo.owner.login }}
+          JS_SDK_GITHUB_BASE_REF: ${{ inputs.matrix-js-sdk-sha }}
       - name: Get Playwright version
         run: echo "PLAYWRIGHT_VERSION=$(pnpm list @playwright/test --depth=0 --json | jq -r '.[0].devDependencies["@playwright/test"].version')" >> $GITHUB_ENV
       - name: Cache Playwright binaries
