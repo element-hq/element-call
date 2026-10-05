@@ -3,23 +3,22 @@ on:
   pull_request: {}
   push:
     branches: [main]
-  # Lets matrix-js-sdk run these tests against one of its commits before merging it.
   workflow_call:
     inputs:
       matrix-js-sdk-sha:
         type: string
         required: false
         description: The matrix-js-sdk commit to build against instead of the locked one
-      disable_coverage:
+      enable_coverage:
         type: boolean
         required: false
-        default: false
-        description: Skip generating and uploading coverage
-      skip_e2e:
+        default: true
+        description: Enable generating and uploading coverage reports
+      enable_e2e_tests:
         type: boolean
         required: false
-        default: false
-        description: Skip the end-to-end tests
+        default: true
+        description: Enable the end-to-end tests
     secrets:
       CODECOV_TOKEN:
         required: false
@@ -60,9 +59,9 @@ jobs:
       - name: Vitest
         run: pnpm vitest --coverage.enabled="$ENABLE_COVERAGE"
         env:
-          ENABLE_COVERAGE: ${{ !inputs.disable_coverage }}
+          ENABLE_COVERAGE: ${{ inputs.enable_coverage }}
       - name: Upload to codecov
-        if: ${{ !inputs.disable_coverage }}
+        if: ${{ inputs.enable_coverage }}
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -71,7 +70,7 @@ jobs:
           fail_ci_if_error: true
   playwright:
     name: Run end-to-end tests
-    if: ${{ !inputs.skip_e2e }}
+    if: ${{ inputs.enable_e2e_tests }}
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
