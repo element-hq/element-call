@@ -16,8 +16,10 @@ import {
   type RemoteRTCMember,
   type RTCMember,
 } from "../api";
-import { type MemberMedia } from "../media-api";
-import { type LocalMediaBackend } from "../media-backend/api";
+import {
+  type LocalMediaBackend,
+  type MemberMediaFields,
+} from "../media-backend/api";
 import { type TransportRegistry } from "./Transports";
 
 /** What every member is built from, besides its own membership and media. */
@@ -41,26 +43,31 @@ export function membershipKeys(
 export function createRemoteRTCMember(
   scope: ObservableScope,
   membership$: Behavior<CallMembership>,
-  media$: Behavior<MemberMedia | null>,
+  media: MemberMediaFields,
   context: MemberContext,
 ): RemoteRTCMember {
   return {
     ...createRTCMember(scope, membership$, context),
     local: false,
-    media$,
+    tracks$: media.tracks$,
+    encryptionError$: media.encryptionError$,
   };
 }
 
 export function createLocalRTCMember(
   scope: ObservableScope,
   membership$: Behavior<CallMembership>,
-  local: Pick<LocalMediaBackend, "media$" | "publish" | "unpublish">,
+  local: Pick<
+    LocalMediaBackend,
+    "tracks$" | "encryptionError$" | "publish" | "unpublish"
+  >,
   context: MemberContext,
 ): LocalRTCMember {
   return {
     ...createRTCMember(scope, membership$, context),
     local: true,
-    media$: local.media$,
+    tracks$: local.tracks$,
+    encryptionError$: local.encryptionError$,
     publish: async (request) => local.publish(request),
     unpublish: async (id) => local.unpublish(id),
   };
@@ -70,7 +77,7 @@ function createRTCMember(
   scope: ObservableScope,
   membership$: Behavior<CallMembership>,
   { metadata, transports }: MemberContext,
-): Omit<RTCMember, "local" | "media$"> {
+): Omit<RTCMember, "local" | "tracks$" | "encryptionError$"> {
   const { userId, deviceId, rtcBackendIdentity } = membership$.value;
   return {
     id: rtcBackendIdentity,

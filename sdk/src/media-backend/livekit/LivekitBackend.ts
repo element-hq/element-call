@@ -24,7 +24,7 @@ import {
 } from "rxjs";
 
 import { type ResolvedTransport, type RTCMembership } from "../../api";
-import { type MemberMedia } from "../../media-api";
+
 import { type MediaQuality } from "../../config";
 import { MatrixRTCError } from "../../errors";
 import { type Behavior } from "../../reactive/Behavior";
@@ -33,11 +33,11 @@ import {
   type ObservableScope,
   trackEpoch,
 } from "../../reactive/ObservableScope";
-import { mapScoped } from "../../utils/mapScoped";
 import {
   type BackendConnection,
   type MediaBackend,
   type MediaBackendContext,
+  type MemberMediaFields,
   type TransportCapabilities,
 } from "../api";
 import { type Connection } from "./Connection";
@@ -150,7 +150,7 @@ export function createLivekitBackend(
   const mediaFor$ = (
     memberScope: ObservableScope,
     membership$: Behavior<RTCMembership>,
-  ): Behavior<MemberMedia | null> => {
+  ): MemberMediaFields => {
     const identity = membership$.value.rtcBackendIdentity;
     const transport$ = memberScope.behavior(
       membership$.pipe(
@@ -190,16 +190,7 @@ export function createLivekitBackend(
         `${identity}: LiveKit participant ${source ? `matched (${source.participant.sid})` : "missing"}`,
       );
     });
-    return memberScope.behavior(
-      mapScoped(memberScope, source$, (mediaScope, { participant, room }) =>
-        createLivekitMemberMedia(
-          mediaScope,
-          participant,
-          room,
-          encryptionSystem,
-        ),
-      ).pipe(map((media) => media ?? null)),
-    );
+    return createLivekitMemberMedia(memberScope, source$, encryptionSystem);
   };
 
   const connections$ = scope.behavior<BackendConnection[]>(

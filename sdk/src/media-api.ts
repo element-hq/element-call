@@ -16,8 +16,6 @@ import {
   type TrackProcessor,
   type VideoCodec,
 } from "livekit-client";
-import { type Observable } from "rxjs";
-
 import { type Behavior } from "./reactive/Behavior";
 
 export interface AudioCaptureSettings {
@@ -137,25 +135,3 @@ export interface LocalVideoMediaTrack extends VideoMediaTrack, LocalMediaTrack {
 }
 
 export type EncryptionError = "MissingKey" | "InvalidKey";
-
-/**
- * The media of one member, backed by a LiveKit participant inside the SDK.
- * There is no identity field: the LiveKit identity is the member's `id`.
- */
-export interface MemberMedia {
-  local: boolean;
-  /**
-   * One entry per published track, in publication order. An entry stays the
-   * same object for as long as the same publication is behind it. Which
-   * track is which is in its `source`; `trackBySource$` picks one out.
-   */
-  tracks$: Behavior<(AudioMediaTrack | VideoMediaTrack)[]>;
-
-  /** Emits when the SFU reports a key problem for this member. */
-  encryptionError$: Observable<EncryptionError>;
-}
-
-export interface LocalMemberMedia extends MemberMedia {
-  local: true;
-  tracks$: Behavior<(LocalAudioMediaTrack | LocalVideoMediaTrack)[]>;
-}

@@ -24,17 +24,17 @@ export type TrackOfSource<S extends MediaSource> = S extends
     ? VideoMediaTrack
     : AudioMediaTrack | VideoMediaTrack;
 
-/** The member's first track of a source; undefined while there is none. */
+/** The member's first track of a source; undefined while there is none, or no media yet. */
 export function trackBySource$<S extends MediaSource>(
   scope: ObservableScope,
-  tracks$: Behavior<MediaTrack[]>,
+  tracks$: Behavior<MediaTrack[] | null>,
   source: S,
 ): Behavior<TrackOfSource<S> | undefined> {
   return scope.behavior(
     tracks$.pipe(
       map(
         (tracks) =>
-          tracks.find((t) => t.source === source) as
+          tracks?.find((t) => t.source === source) as
             | TrackOfSource<S>
             | undefined,
       ),

@@ -39,7 +39,7 @@ const rtcClient = createMatrixRTCClient(
 rtcClient.join();
 
 rtcClient.remoteMembers$.subscribe((members) => {
-  // each member has displayName$, media$ and more; a media track is rendered
+  // each member has displayName$, tracks$ and more; a media track is rendered
   // by handing it a <video> or <audio> element: track.attach(element)
 });
 

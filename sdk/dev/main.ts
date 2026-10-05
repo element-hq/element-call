@@ -121,9 +121,7 @@ async function setPublished(
 ): Promise<boolean> {
   const member = rtcClient.localMember$.value;
   if (member === null) return !enabled;
-  const track = member.media$.value?.tracks$.value.find(
-    (t) => t.source === source,
-  );
+  const track = member.tracks$.value?.find((t) => t.source === source);
   if (track && source === "screenShare") {
     if (!enabled) await member.unpublish(track.id);
     return enabled;
@@ -203,19 +201,16 @@ function memberTile(scope: ObservableScope, member: RTCMember): HTMLElement {
     name.textContent = n;
   });
 
-  const tracks$ = scope.behavior(
-    member.media$.pipe(switchMap((media) => media?.tracks$ ?? of([]))),
-  );
   render(
     scope,
-    trackBySource$(scope, tracks$, "camera"),
+    trackBySource$(scope, member.tracks$, "camera"),
     tile.appendChild(document.createElement("video")),
   );
   // Our own microphone would only echo
   if (!member.local)
     render(
       scope,
-      trackBySource$(scope, tracks$, "microphone"),
+      trackBySource$(scope, member.tracks$, "microphone"),
       tile.appendChild(document.createElement("audio")),
     );
   return tile;

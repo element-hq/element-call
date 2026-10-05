@@ -29,8 +29,7 @@ therefore `Element Call → sdk`, never the reverse. The migration from today's
 │     keyRotationSuppressed$ connectedTransports$                              │
 │                                                                              │
 │   per member    RTCMember   { id userId deviceId membership$ displayName$    │
-│                               avatarUrl$ transport$ media$ }                 │
-│   per media     MemberMedia { tracks$ encryptionError$ }                     │
+│                               avatarUrl$ transport$ tracks$ encryptionError$ }│
 │   per track     MediaTrack  { source kind muted$ encrypted$ stats$ attach() }│
 │                                                                              │
 │  ┌───────────────────────────┐  MediaBackend   ┌───────────────────────────┐ │
@@ -80,7 +79,7 @@ in through `options.backend`, and nothing in the left box changes.
 │ CallViewModel                                                  │
 │   layout, ringing and notifications, auto-leave, sounds,       │
 │   reactions, hand raise, settings, audio routing, host bridge  │
-│    ▲ status$, localMember$, remoteMembers$, MemberMedia        │
+│    ▲ status$, localMember$, remoteMembers$, tracks$            │
 │ MatrixRTCClient                   @element-hq/matrixrtc-sdk    │
 └────────────────────────────────────────────────────────────────┘
      │ MatrixClient + Room                        │ livekit-client
@@ -91,7 +90,7 @@ in through `options.backend`, and nothing in the left box changes.
 All three modes already hold a `MatrixClient` and a `Room` by the time a call
 starts: standalone after `useLoadGroupCall`, the component from the host's `client`
 prop, the widget from `createRoomWidgetClient`. The view model passes them on and
-builds its media view models from `RTCMember` and `MemberMedia` instead of from
+builds its media view models from `RTCMember` and its `tracks$` instead of from
 LiveKit participants.
 
 ### Joining, in order
@@ -112,7 +111,7 @@ LiveKit participants.
   │             │ create tracks, resume upstream ──────────────────────────────▶│
   │             │ media key to every other member (to-device) ──▶│               │
   │             │◀── other memberships (sync) ──────────│◀── participants ────────│
-  │◀─ status$ "connected", localMember$, remoteMembers$ with media$ ──────────────│
+  │◀─ status$ "connected", localMember$, remoteMembers$ with tracks$ ─────────────│
 ```
 
 The session discovers the transport from the homeserver and the backend prepares
@@ -132,7 +131,7 @@ it, and `leave()` also sends the leave.
 | client            | a `MatrixRTCClient`: one room, one slot, one local member                                                                                                                                             | `MatrixClient` is always written out                              |
 | membership        | one device's MatrixRTC state event, seen by hosts as `RTCMembership`, the js-sdk `CallMembership` behind it                                                                                           |                                                                   |
 | member            | an `RTCMember`: a membership plus what the SDK derives from it (display name, transport, media)                                                                                                       | Element Call's "matrixLivekitMember"                              |
-| media             | a `MemberMedia`: what a member sends, once it has arrived on its transport. `null` while waiting for media                                                                                            | Element Call's `MediaViewModel` is a view of it                   |
+| media             | what a member sends, once it has arrived on its transport: `tracks$` on the member, `null` while waiting for media, and `encryptionError$` beside it. The backend supplies the same two fields        | Element Call's `MediaViewModel` is a view of it                   |
 | track             | a `MediaTrack`: one publication of a member, audio or video, with `source`, `kind`, `id` and the behaviors on it. `LocalAudioMediaTrack` and `LocalVideoMediaTrack` add the controls over our own     | LiveKit `TrackPublication` and `Track`, which never leave the SDK |
 | source            | a `MediaSource`: what a track is captured from, `microphone`, `camera`, `screenShare`, `screenShareAudio` or `unknown`. Picked out of `tracks$` with `trackBySource$`                                 | LiveKit `Track.Source`                                            |
 | publish request   | a `PublishRequest`: a source, where to capture it from and how to encode it. Given at the join in `options.publish`, or later to `publish` on the local member                                        |                                                                   |
@@ -396,12 +395,16 @@ export interface RTCMember {
   /** Which transport this member is on; undefined when the membership names none. */
   transport$: Behavior<TransportMetadata | undefined>;
   /**
-   * Null while the member has a transport but no participant has shown up on
-   * it yet ("waiting for media"). Hand raise and reactions are room events
-   * keyed by member and stay with the host for now; they are the obvious next
-   * fields here.
+   * The member's tracks, in publication order, once it has shown up on its
+   * transport; null until then ("waiting for media"). An entry stays the same
+   * object for as long as the same publication is behind it. Which track is
+   * which is in its `source`; `trackBySource$` picks one out. Hand raise and
+   * reactions are room events keyed by member and stay with the host for now;
+   * they are the obvious next fields here.
    */
-  media$: Behavior<MemberMedia | null>;
+  tracks$: Behavior<(AudioMediaTrack | VideoMediaTrack)[] | null>;
+  /** Emits when the SFU reports a key problem for this member. */
+  encryptionError$: Observable<EncryptionError>;
 }
 
 export interface RemoteRTCMember extends RTCMember {
@@ -410,7 +413,7 @@ export interface RemoteRTCMember extends RTCMember {
 
 export interface LocalRTCMember extends RTCMember {
   local: true;
-  media$: Behavior<LocalMemberMedia | null>;
+  tracks$: Behavior<(LocalAudioMediaTrack | LocalVideoMediaTrack)[] | null>;
   /**
    * Publishes a source and resolves with its track once it is in `tracks$`.
    * Before the transport is connected the request is remembered and applied
@@ -505,6 +508,9 @@ and full mesh has one peer connection per member and no token service. So a
 backend is handed the whole session's view and gives back media:
 
 ```ts
+/** The fields of a member the backend supplies, as the member exposes them. */
+type MemberMediaFields = Pick<RTCMember, "tracks$" | "encryptionError$">;
+
 export interface MediaBackend {
   readonly transportType: string; // "livekit"
   /** Authenticate with the transport the client found; the probe for delegation runs here. */
@@ -513,12 +519,12 @@ export interface MediaBackend {
   ): Promise<{ canDelegateDelayedLeave: boolean }>;
   /** Hand over the delayed leave, each time the membership manager has a new delay id. */
   delegateDelayedLeave(delayId: string): Promise<void>;
-  readonly local: LocalMediaBackend; // connectionState$ media$ setPublishing publishError$ publish unpublish
+  readonly local: LocalMediaBackend; // tracks$ encryptionError$ connectionState$ setPublishing publishError$ publish unpublish
   /** A remote member's media; also how the backend learns which transports to connect to. */
   mediaFor$(
     scope: ObservableScope,
     membership$: Behavior<RTCMembership>,
-  ): Behavior<MemberMedia | null>;
+  ): MemberMediaFields;
   readonly connections$: Behavior<BackendConnection[]>; // transport, state, resolved; diagnostics
   sendData(topic: string, text: string): Promise<void>;
   readonly data$: Observable<DataPacket>;
@@ -543,13 +549,16 @@ without one, LiveKit is built from the LiveKit-flavoured client options. The
 reasoning behind each of these choices is in
 [`MediaBackendPlan.md`](./MediaBackendPlan.md).
 
-## Media: `MemberMedia`
+## Media: `tracks$` and `MediaTrack`
 
 Every member has media. Today, in Element Call, that media _is_ a `livekit-client`
 participant, handed straight through to the view models. In the SDK the participant
-is wrapped in a `MemberMedia`, so that nothing outside the SDK imports
-`Participant`, `TrackPublication`, `Track` or `TrackReference`. The adapter in
-`sdk/src/media-backend/livekit/` is the only place that reads a participant.
+becomes the member's `tracks$`, a list of `MediaTrack`s, so that nothing outside
+the SDK imports `Participant`, `TrackPublication`, `Track` or `TrackReference`.
+The adapter in `sdk/src/media-backend/livekit/` is the only place that reads a
+participant. The backend supplies the same two fields through `mediaFor$`, so
+there is one shape from the LiveKit participant to the host and nobody has to
+subscribe through one Behavior to reach another.
 
 ```ts
 export type MediaSource =
@@ -632,34 +641,12 @@ export interface LocalVideoMediaTrack extends VideoMediaTrack, LocalMediaTrack {
 
 export type EncryptionError = "MissingKey" | "InvalidKey";
 
-/**
- * The media of one member, backed by a LiveKit participant inside the SDK.
- * There is no identity field: the LiveKit identity is the member's `id`, and
- * the SDK does the matching before a MemberMedia exists.
- */
-export interface MemberMedia {
-  local: boolean;
-  /**
-   * One entry per published track, in publication order. An entry stays the
-   * same object for as long as the same publication is behind it. Which
-   * track is which is in its `source`; `trackBySource$` picks one out.
-   */
-  tracks$: Behavior<(AudioMediaTrack | VideoMediaTrack)[]>;
-  /** Emits when the SFU reports a key problem for this member. */
-  encryptionError$: Observable<EncryptionError>;
-}
-
-/** The member's first track of a source; undefined while there is none. */
+/** The member's first track of a source; undefined while there is none, or no media yet. */
 export function trackBySource$<S extends MediaSource>(
   scope: ObservableScope,
-  tracks$: Behavior<MediaTrack[]>,
+  tracks$: Behavior<MediaTrack[] | null>,
   source: S,
 ): Behavior<TrackOfSource<S> | undefined>;
-
-export interface LocalMemberMedia extends MemberMedia {
-  local: true;
-  tracks$: Behavior<(LocalAudioMediaTrack | LocalVideoMediaTrack)[]>;
-}
 ```
 
 ### Rendering: `attach` and `detach`
@@ -708,7 +695,7 @@ Layout:
 sdk/
   index.ts            the entry point: re-exports the API and the primitives
   src/api.ts          the public types above: client, members, transports
-  src/media-api.ts    the public media types: publish requests, tracks, MemberMedia
+  src/media-api.ts    the public media types: publish requests, tracks
   src/errors.ts       MatrixRTCError and its codes
   src/config.ts       MatrixRTCMode, session timings, media quality
   src/encryption.ts   E2eeType, EncryptionSystem
@@ -717,7 +704,7 @@ sdk/
   src/matrixrtc/      the MatrixRTC side: the local member, memberships, member
                       metadata, transports, discovery, status, the js-sdk join
   src/media-backend/  the MediaBackend interface in api.ts; livekit/ is the one
-                      backend: connections, publisher, JWT, keys, MemberMedia, MediaTrack
+                      backend: connections, publisher, JWT, keys, the tracks
   src/utils/          LazyBehavior, mapScoped, network retry, display names, test helpers
   dev/                the harness (below)
   SdkArchitecture.md  this document
@@ -743,7 +730,7 @@ homeserver rate-limits); join the room and wait for the sync to hold it; create 
 client with microphone and camera enabled; show one tile per member with the display
 name, a `<video>` attached from the member's `"camera"` track and, for remote
 members, an `<audio>` from the `"microphone"` track, both picked out of
-`media$.tracks$` with `trackBySource$`; toggle the microphone and camera; leave.
+`tracks$` with `trackBySource$`; toggle the microphone and camera; leave.
 
 Every media element carries the track's state as `data-*` attributes (`muted`,
 `encrypted`, `active`, `frameWidth`, `frames`), which is what the tests read to

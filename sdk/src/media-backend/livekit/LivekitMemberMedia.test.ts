@@ -16,29 +16,32 @@ import {
 import { describe, expect, it } from "vitest";
 
 import { E2eeType } from "../../encryption";
+import { constant } from "../../reactive/Behavior";
 import { testScope } from "../../utils/test";
 import { createLivekitMemberMedia } from "./LivekitMemberMedia";
 
 describe("createLivekitMemberMedia", () => {
   it("lists one stable track per publication, in publication order", () => {
     const { participant, publications, room, emitter } = fakes();
-    const media = createLivekitMemberMedia(testScope(), participant, room, {
-      kind: E2eeType.NONE,
-    });
+    const media = createLivekitMemberMedia(
+      testScope(),
+      constant({ participant, room }),
+      { kind: E2eeType.NONE },
+    );
     expect(media.tracks$.value).toEqual([]);
 
     const microphone = publish(publications, "TR_1", Track.Source.Microphone);
     const camera = publish(publications, "TR_2", Track.Source.Camera);
     emitter.emit(ParticipantEvent.TrackPublished, camera);
-    const [first, second] = media.tracks$.value;
+    const [first, second] = media.tracks$.value!;
     expect(first.source).toBe("microphone");
     expect(second.source).toBe("camera");
 
     // An unrelated media event keeps the same objects
     microphone.isMuted = true;
     emitter.emit(ParticipantEvent.TrackMuted, microphone);
-    expect(media.tracks$.value[0]).toBe(first);
-    expect(media.tracks$.value[1]).toBe(second);
+    expect(media.tracks$.value![0]).toBe(first);
+    expect(media.tracks$.value![1]).toBe(second);
 
     publications.delete("TR_1");
     emitter.emit(ParticipantEvent.TrackUnpublished, microphone);
@@ -47,14 +50,16 @@ describe("createLivekitMemberMedia", () => {
 
   it("includes a track published without a source", () => {
     const { participant, publications, room, emitter } = fakes();
-    const media = createLivekitMemberMedia(testScope(), participant, room, {
-      kind: E2eeType.NONE,
-    });
+    const media = createLivekitMemberMedia(
+      testScope(),
+      constant({ participant, room }),
+      { kind: E2eeType.NONE },
+    );
     emitter.emit(
       ParticipantEvent.TrackPublished,
       publish(publications, "TR_1", Track.Source.Unknown),
     );
-    expect(media.tracks$.value.map((t) => t.source)).toEqual(["unknown"]);
+    expect(media.tracks$.value!.map((t) => t.source)).toEqual(["unknown"]);
   });
 });
 

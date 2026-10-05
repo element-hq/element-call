@@ -28,7 +28,6 @@ import {
 
 import {
   type LocalAudioMediaTrack,
-  type LocalMemberMedia,
   type LocalVideoMediaTrack,
   type MediaSource,
   type PublishRequest,
@@ -37,7 +36,6 @@ import { type EncryptionSystem } from "../../encryption";
 import { FailToStartLivekitConnection, toMatrixRTCError } from "../../errors";
 import { type Behavior } from "../../reactive/Behavior";
 import { type ObservableScope } from "../../reactive/ObservableScope";
-import { mapScoped } from "../../utils/mapScoped";
 import { type LocalMediaBackend, MediaConnectionState } from "../api";
 import { type Connection } from "./Connection";
 import {
@@ -169,19 +167,11 @@ export function createLivekitLocalMedia({
     return result;
   };
 
-  const media$ = scope.behavior<LocalMemberMedia | null>(
-    mapScoped(
-      scope,
-      participantAndRoom$(scope, participant$, connection$),
-      (mediaScope, { participant, room }) =>
-        createLocalLivekitMemberMedia(
-          mediaScope,
-          participant,
-          room,
-          encryptionSystem,
-          setEnabled,
-        ),
-    ).pipe(map((media) => media ?? null)),
+  const { tracks$, encryptionError$ } = createLocalLivekitMemberMedia(
+    scope,
+    participantAndRoom$(scope, participant$, connection$),
+    encryptionSystem,
+    setEnabled,
   );
 
   const publish = async (
@@ -194,7 +184,7 @@ export function createLivekitLocalMedia({
       const publication =
         (publisher?.started ? await publisher.publish(request) : undefined) ??
         (await firstValueFrom(publication$(participant$, request.source)));
-      return await firstValueFrom(trackWithId$(media$, publication.trackSid));
+      return await firstValueFrom(trackWithId$(tracks$, publication.trackSid));
     } catch (e) {
       desired.delete(request.source);
       throw toMatrixRTCError(e);
@@ -202,7 +192,7 @@ export function createLivekitLocalMedia({
   };
 
   const unpublish = async (id: string): Promise<void> => {
-    const track = media$.value?.tracks$.value.find((t) => t.id === id);
+    const track = tracks$.value?.find((t) => t.id === id);
     if (track === undefined) return;
     // The screen share audio goes with its video
     const source =
@@ -219,7 +209,8 @@ export function createLivekitLocalMedia({
   return {
     connection$,
     connectionState$,
-    media$,
+    tracks$,
+    encryptionError$,
     setPublishing: (publish) => publishing$.next(publish),
     publishError$,
     publish,
@@ -228,7 +219,7 @@ export function createLivekitLocalMedia({
   };
 }
 
-/** The pair a `MemberMedia` is built on, changing only when one of the two does. */
+/** The pair the local tracks are built on, changing only when one of the two does. */
 function participantAndRoom$(
   scope: ObservableScope,
   participant$: Behavior<LocalParticipant | null>,
@@ -269,12 +260,11 @@ function publication$(
 }
 
 function trackWithId$(
-  media$: Behavior<LocalMemberMedia | null>,
+  tracks$: Behavior<(LocalAudioMediaTrack | LocalVideoMediaTrack)[] | null>,
   id: string,
 ): Observable<LocalAudioMediaTrack | LocalVideoMediaTrack> {
-  return media$.pipe(
-    switchMap((media) => media?.tracks$ ?? of([])),
-    map((tracks) => tracks.find((track) => track.id === id)),
+  return tracks$.pipe(
+    map((tracks) => tracks?.find((track) => track.id === id)),
     filter((track) => track !== undefined),
   );
 }

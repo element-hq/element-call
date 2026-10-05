@@ -7,7 +7,13 @@ Please see LICENSE in the repository root for full details.
 
 import { logger } from "matrix-js-sdk/lib/logger";
 import { Status, type Transport } from "matrix-js-sdk/lib/matrixrtc";
-import { BehaviorSubject, type Observable, Subject, throwError } from "rxjs";
+import {
+  BehaviorSubject,
+  EMPTY,
+  type Observable,
+  Subject,
+  throwError,
+} from "rxjs";
 import { describe, expect, it, vi } from "vitest";
 
 import { defaultSessionTimings } from "../config";
@@ -192,7 +198,8 @@ function fakeLocalMediaBackend(): FakeLocalMediaBackend {
     connectionState$: new BehaviorSubject<MediaConnectionState | Error>(
       MediaConnectionState.Initialized,
     ),
-    media$: new BehaviorSubject(null),
+    tracks$: new BehaviorSubject(null),
+    encryptionError$: EMPTY,
     setPublishing: vi.fn<LocalMediaBackend["setPublishing"]>(),
     publishError$: new BehaviorSubject<Error | null>(null),
     publish: vi.fn<LocalMediaBackend["publish"]>(),

@@ -20,11 +20,12 @@ import { type Observable } from "rxjs";
 
 import { type Behavior } from "./reactive/Behavior";
 import {
+  type AudioMediaTrack,
+  type EncryptionError,
   type LocalAudioMediaTrack,
-  type LocalMemberMedia,
   type LocalVideoMediaTrack,
-  type MemberMedia,
   type PublishRequest,
+  type VideoMediaTrack,
 } from "./media-api";
 import { type MediaBackendFactory } from "./media-backend/api";
 import { type EncryptionSystem } from "./encryption";
@@ -219,10 +220,14 @@ export interface RTCMember {
   /** Which transport this member is on; undefined when the membership has none. */
   transport$: Behavior<TransportMetadata | undefined>;
   /**
-   * Null while the member has a transport but no media has arrived on it yet
-   * ("waiting for media").
+   * The member's tracks, in publication order, once it has shown up on its
+   * transport; null until then ("waiting for media"). An entry stays the same
+   * object for as long as the same publication is behind it. Which track is
+   * which is in its `source`; `trackBySource$` picks one out.
    */
-  media$: Behavior<MemberMedia | null>;
+  tracks$: Behavior<(AudioMediaTrack | VideoMediaTrack)[] | null>;
+  /** Emits when the SFU reports a key problem for this member. */
+  encryptionError$: Observable<EncryptionError>;
 }
 
 export interface RemoteRTCMember extends RTCMember {
@@ -231,7 +236,7 @@ export interface RemoteRTCMember extends RTCMember {
 
 export interface LocalRTCMember extends RTCMember {
   local: true;
-  media$: Behavior<LocalMemberMedia | null>;
+  tracks$: Behavior<(LocalAudioMediaTrack | LocalVideoMediaTrack)[] | null>;
   /**
    * Publishes a source and resolves with its track once it is in `tracks$`.
    * Before the transport is connected the request is remembered and applied

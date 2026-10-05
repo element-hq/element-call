@@ -17,12 +17,15 @@ import { type Transport } from "matrix-js-sdk/lib/matrixrtc";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 import { type Observable } from "rxjs";
 
-import { type ResolvedTransport, type RTCMembership } from "../api";
+import {
+  type LocalRTCMember,
+  type ResolvedTransport,
+  type RTCMember,
+  type RTCMembership,
+} from "../api";
 import {
   type LocalAudioMediaTrack,
-  type LocalMemberMedia,
   type LocalVideoMediaTrack,
-  type MemberMedia,
   type PublishRequest,
 } from "../media-api";
 import { type SessionTimings } from "../config";
@@ -49,6 +52,13 @@ export interface MediaKey {
   index: number;
   key: Uint8Array<ArrayBuffer>;
 }
+
+/** The fields of a member the backend supplies, as the member exposes them. */
+export type MemberMediaFields = Pick<RTCMember, "tracks$" | "encryptionError$">;
+export type LocalMemberMediaFields = Pick<
+  LocalRTCMember,
+  "tracks$" | "encryptionError$"
+>;
 
 export interface MediaBackendContext {
   roomId: string;
@@ -132,16 +142,17 @@ export interface MediaBackend {
   readonly local: LocalMediaBackend;
 
   /**
-   * The media of one remote member, null while nothing has arrived for it on
-   * its transport. Built in `scope`, which the caller ends with the member.
-   * This is also how the backend learns which remote transports exist: it
-   * follows the membership's transport for as long as `scope` lives, and
-   * connects to every transport some member is on.
+   * The media of one remote member: its tracks, null while nothing has
+   * arrived for it on its transport, and its key errors. Built in `scope`,
+   * which the caller ends with the member. This is also how the backend
+   * learns which remote transports exist: it follows the membership's
+   * transport for as long as `scope` lives, and connects to every transport
+   * some member is on.
    */
   mediaFor$(
     scope: ObservableScope,
     membership$: Behavior<RTCMembership>,
-  ): Behavior<MemberMedia | null>;
+  ): MemberMediaFields;
 
   /** Every connection the backend holds. For debugging and devtool purposes.*/
   readonly connections$: Behavior<BackendConnection[]>;
@@ -158,15 +169,13 @@ export interface MediaBackend {
   readonly data$: Observable<DataPacket>;
 }
 
-export interface LocalMediaBackend {
+/** `tracks$` is null until the connection carries a local participant. */
+export interface LocalMediaBackend extends LocalMemberMediaFields {
   /**
    * State of the connection the local member publishes on. `Initialized`
    * while there is none; an `Error` is the connection's failure.
    */
   readonly connectionState$: Behavior<MediaConnectionState | Error>;
-
-  /** The local member's own media; null until the connection carries a local participant. */
-  readonly media$: Behavior<LocalMemberMedia | null>;
 
   /**
    * Whether the local tracks reach the transport. The session sets it to
@@ -179,8 +188,8 @@ export interface LocalMediaBackend {
   readonly publishError$: Behavior<Error | null>;
 
   /**
-   * Publishes a source and resolves with its track once it is in `media$`'s
-   * `tracks$`. Remembered across connections, so a request before the
+   * Publishes a source and resolves with its track once it is in `tracks$`.
+   * Remembered across connections, so a request before the
    * transport is up is applied once it is, and republished after a
    * reconnection. Rejects where the device could not be used.
    */
