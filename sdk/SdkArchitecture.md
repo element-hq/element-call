@@ -33,18 +33,18 @@ therefore `Element Call → sdk`, never the reverse. The migration from today's
 │   per track     MediaTrack  { source kind muted$ encrypted$ stats$ attach() }│
 │                                                                              │
 │  ┌───────────────────────────┐  MediaBackend   ┌───────────────────────────┐ │
-│  │ session: MatrixRTC        │  backend/api.ts │ media backend             │ │
-│  │                           │                 │ backend/livekit/ today,   │ │
-│  │ js-sdk MatrixRTCSession,  │                 │ or options.backend        │ │
+│  │ session: MatrixRTC        │ media-backend/  │ media backend             │ │
+│  │                           │   api.ts        │ media-backend/livekit/    │ │
+│  │ js-sdk MatrixRTCSession,  │                 │ today, or options.backend │ │
 │  │   later the rust-rtc      │ prepareLocal    │                           │ │
 │  │   crate behind a bridge   │   Transport ───▶│ token service:            │ │
 │  │ memberships from room     │ delegateDelayed │   OpenID → JWT,           │ │
 │  │   state and sticky events │   Leave ───────▶│   delegation probe        │ │
 │  │ own membership, delayed   │                 │ ConnectionManager:        │ │
 │  │   leave, retries          │ mediaKeys$ ────▶│   one LiveKit room per    │ │
-│  │ discovery of the local    │                 │   transport url, local    │ │
-│  │   transport (homeserver)  │ mediaFor$ ─────▶│   published, remote       │ │
-│  │ join state machine        │ ◀────── media$  │   subscribed              │ │
+│  │ discovery of the local    │ mediaFor$ ─────▶│   transport url, local    │ │
+│  │   transport (homeserver)  │ ◀─ tracks$,     │   published, remote       │ │
+│  │ join state machine        │ encryptionError$│   subscribed              │ │
 │  │   (LocalMember)           │ local.publish,  │ Publisher: local tracks,  │ │
 │  │ transport registry        │   setPublishing▶│   upstream paused until   │ │
 │  │   (TransportMetadata)     │ ◀─ connections$ │   joined                  │ │

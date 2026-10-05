@@ -6,7 +6,6 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  ConnectionState as LivekitConnectionState,
   type LocalTrackPublication,
   ParticipantEvent,
   type Room as LivekitRoom,
@@ -207,13 +206,12 @@ export class Publisher {
     return [...this.room.localParticipant.trackPublications.values()];
   }
 
-  /** A room that is not connected yet takes the device from its options instead. */
+  /**
+   * Works on a room that is still connecting too: LiveKit keeps the device
+   * in the room's options and gives it to every participant that arrives.
+   */
   public async setAudioOutputDevice(deviceId: string): Promise<void> {
-    if (
-      this.room.state !== LivekitConnectionState.Connected ||
-      this.room.getActiveDevice("audiooutput") === deviceId
-    )
-      return;
+    if (this.room.getActiveDevice("audiooutput") === deviceId) return;
     await this.room.switchActiveDevice("audiooutput", deviceId);
   }
 }

@@ -9,7 +9,7 @@ Please see LICENSE in the repository root for full details.
  * The seam between the session and whatever carries its media. The session
  * speaks MatrixRTC: memberships, transports as they appear in them, the
  * delayed leave. A backend speaks one media protocol and hands back the
- * media of each member. `backend/livekit/` is the one backend today.
+ * media of each member. `media-backend/livekit/` is the one backend today.
  */
 
 import { type Logger } from "matrix-js-sdk/lib/logger";
@@ -157,7 +157,12 @@ export interface MediaBackend {
   /** Every connection the backend holds. For debugging and devtool purposes.*/
   readonly connections$: Behavior<BackendConnection[]>;
 
-  /** Plays the members' audio on this device, on the connections of now and later. */
+  /**
+   * Plays the members' audio on this device: on the local transport's
+   * connection, whether it is connected yet or not, and on every connection
+   * created from then on. A connection to a remote transport that already
+   * exists keeps the device it was created with.
+   */
   setAudioOutputDeviceId(deviceId: string): Promise<void>;
 
   /**
