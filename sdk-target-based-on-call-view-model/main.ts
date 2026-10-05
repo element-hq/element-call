@@ -37,7 +37,6 @@ import {
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import {
   type Behavior,
-  constant,
   createMatrixRTCClient,
   E2eeType,
   ObservableScope,
@@ -60,7 +59,6 @@ import { observeElementSize$ } from "../src/utils/elementSize";
 import {
   captureSettings,
   matrixRTCClientOptions,
-  selectedDeviceId$,
 } from "../src/room/InCallView";
 
 /**
@@ -143,22 +141,12 @@ export async function createMatrixRTCSdk(
   // rtc client: the session, the transport and the media, as in the app
   const encryptionSystem = { kind: E2eeType.PER_PARTICIPANT } as const;
   const capture = captureSettings();
-  const rtcClient = createMatrixRTCClient(
-    scope,
-    client,
-    room,
-    {
-      publish: initialPublishRequests(muteStates, mediaDevices, capture),
-      audioOutputDeviceId$: controlledAudioDevices
-        ? constant(undefined)
-        : selectedDeviceId$(scope, mediaDevices.audioOutput),
-    },
-    {
-      ...matrixRTCClientOptions(urlParams, encryptionSystem),
-      application,
-      slot: id,
-    },
-  );
+  const rtcClient = createMatrixRTCClient(scope, client, room, {
+    ...matrixRTCClientOptions(urlParams, encryptionSystem),
+    publish: initialPublishRequests(muteStates, mediaDevices, capture),
+    application,
+    slot: id,
+  });
 
   // call view model: the host bridge's hang-up handling and the leave flow
   const callViewModel = createCallViewModel$(

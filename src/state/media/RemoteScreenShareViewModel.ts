@@ -7,9 +7,9 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  type AudioMediaTrack,
   type Behavior,
   type ObservableScope,
+  trackBySource$,
 } from "@element-hq/matrixrtc-sdk";
 import { map } from "rxjs";
 
@@ -19,7 +19,6 @@ import {
   createBaseScreenShare,
 } from "./ScreenShareViewModel";
 import { createVolumeControls, type VolumeControls } from "../VolumeControls";
-import { memberTrack$ } from "./MemberMediaViewModel";
 
 export interface RemoteScreenShareViewModel
   extends BaseScreenShareViewModel, VolumeControls {
@@ -42,9 +41,9 @@ export function createRemoteScreenShare(
   scope: ObservableScope,
   { pretendToBeDisconnected$, ...inputs }: RemoteScreenShareInputs,
 ): RemoteScreenShareViewModel {
-  const audio$ = memberTrack$<AudioMediaTrack>(
+  const audio$ = trackBySource$(
     scope,
-    inputs.media$,
+    inputs.member.tracks$,
     "screenShareAudio",
   );
   return {

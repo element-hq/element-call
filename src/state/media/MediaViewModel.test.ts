@@ -18,14 +18,15 @@ import {
   mockAudioTrack,
   mockLocalMedia,
   mockMediaDevices,
-  mockMemberMedia,
   mockRemoteMedia,
   mockRemoteScreenShare,
   mockRtcMembership,
+  type MockTracks,
   mockVideoTrack,
   withTestScheduler,
 } from "../../utils/test";
 import { showConnectionStats } from "../../settings/settings";
+import { EncryptionStatus } from "./MemberMediaViewModel";
 
 const platformMock = vi.hoisted(() => vi.fn(() => "desktop"));
 vi.mock("../../Platform", () => ({
@@ -38,13 +39,9 @@ const rtcMembership = mockRtcMembership("@alice:example.org", "AAAA");
 
 test("control a participant's volume", () => {
   const setVolume = vi.fn();
-  const vm = mockRemoteMedia(
-    rtcMembership,
-    {},
-    mockMemberMedia({
-      tracks$: constant([mockAudioTrack({ setVolume })]),
-    }),
-  );
+  const vm = mockRemoteMedia(rtcMembership, {}, [
+    mockAudioTrack({ setVolume }),
+  ]);
   withTestScheduler(({ expectObservable, schedule }) => {
     schedule("-ab---c---d|", {
       a() {
@@ -89,15 +86,9 @@ test("control a participant's volume", () => {
 
 test("control a participant's screen share volume", () => {
   const setVolume = vi.fn();
-  const vm = mockRemoteScreenShare(
-    rtcMembership,
-    {},
-    mockMemberMedia({
-      tracks$: constant([
-        mockAudioTrack({ source: "screenShareAudio", setVolume }),
-      ]),
-    }),
-  );
+  const vm = mockRemoteScreenShare(rtcMembership, {}, [
+    mockAudioTrack({ source: "screenShareAudio", setVolume }),
+  ]);
   withTestScheduler(({ expectObservable, schedule }) => {
     schedule("-ab---c---d|", {
       a() {
@@ -137,23 +128,13 @@ test("control a participant's screen share volume", () => {
 });
 
 test("local media remembers whether it should always be shown", () => {
-  const vm1 = mockLocalMedia(
-    rtcMembership,
-    {},
-    mockMemberMedia({ local: true }),
-    mockMediaDevices({}),
-  );
+  const vm1 = mockLocalMedia(rtcMembership, {}, [], mockMediaDevices({}));
   withTestScheduler(({ expectObservable, schedule }) => {
     schedule("-a|", { a: () => vm1.setAlwaysShow(false) });
     expectObservable(vm1.alwaysShow$).toBe("ab", { a: true, b: false });
   });
   // Next local media should start out *not* always shown
-  const vm2 = mockLocalMedia(
-    rtcMembership,
-    {},
-    mockMemberMedia({ local: true }),
-    mockMediaDevices({}),
-  );
+  const vm2 = mockLocalMedia(rtcMembership, {}, [], mockMediaDevices({}));
   withTestScheduler(({ expectObservable, schedule }) => {
     schedule("-a|", { a: () => vm2.setAlwaysShow(true) });
     expectObservable(vm2.alwaysShow$).toBe("ab", { a: false, b: true });
@@ -178,10 +159,7 @@ test("switch cameras", async () => {
   const vm = mockLocalMedia(
     rtcMembership,
     {},
-    mockMemberMedia({
-      local: true,
-      tracks$: constant([mockVideoTrack({ facingMode$, switchFacingMode })]),
-    }),
+    [mockVideoTrack({ facingMode$, switchFacingMode })],
     mockMediaDevices({
       videoInput: {
         available$: constant(new Map()),
@@ -215,7 +193,7 @@ test("no camera switch where the facing mode is unknown", () => {
   const vm = mockLocalMedia(
     rtcMembership,
     {},
-    mockMemberMedia({ local: true, tracks$: constant([mockVideoTrack()]) }),
+    [mockVideoTrack()],
     mockMediaDevices({}),
   );
   expect(vm.switchCamera$.value).toBeNull();
@@ -227,8 +205,22 @@ test("remote media is in waiting state while its media has not arrived", () => {
 });
 
 test("remote media is not in waiting state once its media is there", () => {
-  const vm = mockRemoteMedia(rtcMembership, {}, mockMemberMedia());
+  const vm = mockRemoteMedia(rtcMembership, {}, []);
   expect(vm.waitingForMedia$.value).toBe(false);
+});
+
+test("remote media stops waiting once its tracks arrive, however few", () => {
+  const tracks$ = new BehaviorSubject<MockTracks>(null);
+  const vm = mockRemoteMedia(rtcMembership, {}, tracks$);
+  expect(vm.waitingForMedia$.value).toBe(true);
+  expect(vm.encryptionStatus$.value).toBe(EncryptionStatus.Connecting);
+  tracks$.next([]);
+  expect(vm.waitingForMedia$.value).toBe(false);
+});
+
+test("local media never reports an encryption problem", () => {
+  const vm = mockLocalMedia(rtcMembership, {}, [], mockMediaDevices({}));
+  expect(vm.encryptionStatus$.value).toBe(EncryptionStatus.Okay);
 });
 
 test("remote media is not in waiting state when user does not intend to publish anywhere", () => {
@@ -237,16 +229,10 @@ test("remote media is not in waiting state when user does not intend to publish 
 });
 
 test("audio and video follow the tracks' mute state", () => {
-  const vm = mockRemoteMedia(
-    rtcMembership,
-    {},
-    mockMemberMedia({
-      tracks$: constant([
-        mockAudioTrack({ muted$: constant(false) }),
-        mockVideoTrack({ muted$: constant(true) }),
-      ]),
-    }),
-  );
+  const vm = mockRemoteMedia(rtcMembership, {}, [
+    mockAudioTrack({ muted$: constant(false) }),
+    mockVideoTrack({ muted$: constant(true) }),
+  ]);
   expect(vm.audioEnabled$.value).toBe(true);
   expect(vm.videoEnabled$.value).toBe(false);
 });
@@ -256,19 +242,13 @@ test("user media polls stream stats only while the setting is on", () => {
   withTestScheduler(({ cold, expectObservable, schedule }) => {
     const stats = { type: "inbound-rtp" } as RTCInboundRtpStreamStats;
     // A behavior that only runs its source while subscribed, as the SDK's does
-    const vm = mockRemoteMedia(
-      rtcMembership,
-      {},
-      mockMemberMedia({
-        tracks$: constant([
-          mockAudioTrack({
-            stats$: cold("-s", {
-              s: stats,
-            }) as unknown as Behavior<MediaStreamStats>,
-          }),
-        ]),
+    const vm = mockRemoteMedia(rtcMembership, {}, [
+      mockAudioTrack({
+        stats$: cold("-s", {
+          s: stats,
+        }) as unknown as Behavior<MediaStreamStats>,
       }),
-    );
+    ]);
     schedule("-a-b", {
       a() {
         showConnectionStats.setValue(true);

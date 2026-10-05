@@ -7,11 +7,10 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  type AudioMediaTrack,
   type Behavior,
   type MediaStreamStats,
-  type MediaTrack,
   type ObservableScope,
+  trackBySource$,
 } from "@element-hq/matrixrtc-sdk";
 import {
   BehaviorSubject,
@@ -27,7 +26,6 @@ import { type LocalUserMediaViewModel } from "./LocalUserMediaViewModel";
 import {
   createMemberMedia,
   type MemberMediaInputs,
-  memberTrack$,
   type BaseMemberMediaViewModel,
 } from "./MemberMediaViewModel";
 import { type RemoteUserMediaViewModel } from "./RemoteUserMediaViewModel";
@@ -79,7 +77,7 @@ export function createBaseUserMedia(
     ...inputs
   }: BaseUserMediaInputs,
 ): BaseUserMediaViewModel {
-  const { media$ } = inputs;
+  const { tracks$ } = inputs.member;
   const toggleCropVideo$ = new Subject<void>();
   const videoAspectRatio$ = new BehaviorSubject(NaN);
   const enabled$ = (
@@ -87,7 +85,7 @@ export function createBaseUserMedia(
     source: "microphone" | "camera",
   ): Behavior<boolean> =>
     scope.behavior(
-      memberTrack$<MediaTrack>(scope, media$, source).pipe(
+      trackBySource$(scope, tracks$, source).pipe(
         switchMap((track) =>
           track === undefined
             ? of(false)
@@ -102,7 +100,7 @@ export function createBaseUserMedia(
   ): Behavior<MediaStreamStats> =>
     scope.behavior(
       combineLatest([
-        memberTrack$<MediaTrack>(scope, media$, source),
+        trackBySource$(scope, tracks$, source),
         showConnectionStats.value$,
       ]).pipe(
         switchMap(([track, show]) =>
@@ -120,7 +118,7 @@ export function createBaseUserMedia(
     type: "user",
     // What a call calls speaking is the microphone carrying sound
     speaking$: scope.behavior(
-      memberTrack$<AudioMediaTrack>(scope, media$, "microphone").pipe(
+      trackBySource$(scope, tracks$, "microphone").pipe(
         switchMap((track) => track?.isActive$ ?? of(false)),
       ),
     ),

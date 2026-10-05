@@ -72,7 +72,6 @@ import {
   createMatrixRTCClient,
   type MatrixRTCClientOptions,
   constant,
-  type Behavior,
 } from "@element-hq/matrixrtc-sdk";
 import { map } from "rxjs";
 import {
@@ -94,7 +93,6 @@ import {
   screenShareResolution,
 } from "../settings/settings";
 import { Config } from "../config/Config";
-import { type MediaDevice } from "../state/MediaDevices";
 import { createSentCallNotification$ } from "../state/CallViewModel/CallNotificationLifecycle.ts";
 import { ReactionsReader } from "../reactions/ReactionsReader";
 import { MemberAudioRenderer } from "../tracks/MemberAudioRenderer.tsx";
@@ -168,17 +166,13 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       props.client,
       props.matrixRoom,
       {
+        ...matrixRTCClientOptions(urlParams, props.e2eeSystem),
         publish: initialPublishRequests(
           props.muteStates,
           mediaDevices,
           capture,
         ),
-        // A host that routes audio itself leaves the browser's output alone
-        audioOutputDeviceId$: urlParams.controlledAudioDevices
-          ? constant(undefined)
-          : selectedDeviceId$(scope, mediaDevices.audioOutput),
       },
-      matrixRTCClientOptions(urlParams, props.e2eeSystem),
     );
     const vm = createCallViewModel$(
       scope,
@@ -744,14 +738,6 @@ export const InCallView: FC<InCallViewProps> = ({
   );
 };
 
-/** The id of the device the user picked, for the client to capture or play on. */
-export function selectedDeviceId$(
-  scope: ObservableScope,
-  device: MediaDevice<unknown, { id: string }>,
-): Behavior<string | undefined> {
-  return scope.behavior(device.selected$.pipe(map((d) => d?.id)));
-}
-
 /**
  * How the tracks are captured and encoded, from Element Call's settings and
  * configuration. Shared with the legacy SDK bundle so that a widget built from
@@ -803,13 +789,14 @@ export function captureSettings(): CaptureSettings {
 
 /**
  * What the client needs from Element Call's configuration, settings and URL:
- * the SDK reads none of them itself. Shared with the legacy SDK bundle so that
- * a widget built from it behaves like the app.
+ * the SDK reads none of them itself. What to publish depends on the mute
+ * switches and the devices, so the caller adds that. Shared with the legacy
+ * SDK bundle so that a widget built from it behaves like the app.
  */
 export function matrixRTCClientOptions(
   urlParams: ReturnType<typeof useUrlParams>,
   encryptionSystem: EncryptionSystem,
-): MatrixRTCClientOptions {
+): Omit<MatrixRTCClientOptions, "publish"> {
   const config = Config.get();
   const session = config.matrix_rtc_session;
   return {
