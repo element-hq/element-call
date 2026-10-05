@@ -21,11 +21,11 @@ import {
 } from "matrix-js-sdk/lib/matrixrtc";
 
 import {
-  RtcTransportAutoDiscovery,
-  type RtcTransportAutoDiscoveryProps,
-} from "./RtcTransportAutoDiscovery.ts";
+  TransportAutoDiscovery,
+  type TransportAutoDiscoveryProps,
+} from "./TransportAutoDiscovery.ts";
 
-type DiscoveryClient = RtcTransportAutoDiscoveryProps["client"];
+type DiscoveryClient = TransportAutoDiscoveryProps["client"];
 
 const backendTransport: LivekitTransport = {
   type: "livekit",
@@ -47,7 +47,7 @@ function makeClient(): MockedObject<DiscoveryClient> {
   } as unknown as MockedObject<DiscoveryClient>;
 }
 
-describe("RtcTransportAutoDiscovery", () => {
+describe("TransportAutoDiscovery", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -62,7 +62,7 @@ describe("RtcTransportAutoDiscovery", () => {
       const client = makeClient();
       client._unstable_getRTCTransports.mockResolvedValue(transports);
 
-      const discovery = new RtcTransportAutoDiscovery({
+      const discovery = new TransportAutoDiscovery({
         client,
         transportType: "livekit",
         fallbackTransportUrl: configTransport.livekit_service_url,
@@ -93,7 +93,7 @@ describe("RtcTransportAutoDiscovery", () => {
       )
       .mockResolvedValue([backendTransport]);
 
-    const discovery = new RtcTransportAutoDiscovery({
+    const discovery = new TransportAutoDiscovery({
       client,
       transportType: "livekit",
       fallbackTransportUrl: "https://config.example.org",
@@ -117,7 +117,7 @@ describe("RtcTransportAutoDiscovery", () => {
       const client = makeClient();
       client._unstable_getRTCTransports.mockResolvedValue(transports);
 
-      const discovery = new RtcTransportAutoDiscovery({
+      const discovery = new TransportAutoDiscovery({
         client,
         transportType: "livekit",
         fallbackTransportUrl: configTransport.livekit_service_url,
@@ -134,7 +134,7 @@ describe("RtcTransportAutoDiscovery", () => {
     const client = makeClient();
     client._unstable_getRTCTransports.mockResolvedValue([]);
 
-    const discovery = new RtcTransportAutoDiscovery({
+    const discovery = new TransportAutoDiscovery({
       client,
       transportType: "livekit",
       fallbackTransportUrl: undefined,

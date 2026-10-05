@@ -11,7 +11,7 @@ import { type Transport } from "matrix-js-sdk/lib/matrixrtc";
 
 import { type MatrixRTCClientOptions } from "../api";
 import { MatrixRTCTransportMissingError } from "../errors";
-import { RtcTransportAutoDiscovery } from "./RtcTransportAutoDiscovery";
+import { TransportAutoDiscovery } from "./TransportAutoDiscovery";
 
 /**
  * The transport the local member advertises: the one the host names, else the
@@ -32,7 +32,7 @@ export async function discoverLocalTransport(
 ): Promise<Transport> {
   const transport = transportUrl
     ? { type: "livekit", livekit_service_url: transportUrl }
-    : await new RtcTransportAutoDiscovery({
+    : await new TransportAutoDiscovery({
         client,
         transportType,
         fallbackTransportUrl,

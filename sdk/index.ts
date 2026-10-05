@@ -53,15 +53,15 @@ export {
 } from "./src/errors";
 
 export * from "./src/api";
-export * from "./src/backend/api";
+export * from "./src/media-backend/api";
 export { trackBySource$, type TrackOfSource } from "./src/utils/tracks";
-export { createMatrixRTCClient } from "./src/session/MatrixRTCClient";
+export { createMatrixRTCClient } from "./src/MatrixRTCClient";
 export {
   createLivekitBackend,
   type LivekitBackendOptions,
-} from "./src/backend/livekit/LivekitBackend";
+} from "./src/media-backend/livekit/LivekitBackend";
 // For a developer panel to check a transport url before using it
 export {
   getSFUConfigWithOpenID as authenticateWithTransport,
   type TokenEndpoint,
-} from "./src/backend/livekit/openIDSFU";
+} from "./src/media-backend/livekit/openIDSFU";

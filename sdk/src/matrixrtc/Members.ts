@@ -17,7 +17,7 @@ import {
   type RemoteRTCMember,
   type RTCMember,
 } from "../api";
-import { type LocalMediaBackend } from "../backend/api";
+import { type LocalMediaBackend } from "../media-backend/api";
 import { type TransportRegistry } from "./Transports";
 
 /** What every member is built from, besides its own membership and media. */

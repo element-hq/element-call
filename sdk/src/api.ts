@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 /**
- * The public types of the SDK. `createMatrixRTCClient` in `session/MatrixRTCClient.ts`
+ * The public types of the SDK. `createMatrixRTCClient` in `MatrixRTCClient.ts`
  * is the only way to obtain an implementation of them.
  */
 
@@ -23,7 +23,7 @@ import {
 import { type Observable } from "rxjs";
 
 import { type Behavior } from "./reactive/Behavior";
-import { type MediaBackendFactory } from "./backend/api";
+import { type MediaBackendFactory } from "./media-backend/api";
 import { type EncryptionSystem } from "./encryption";
 import {
   type MatrixRTCMode,

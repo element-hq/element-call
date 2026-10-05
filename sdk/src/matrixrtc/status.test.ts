@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { describe, expect, it } from "vitest";
 import { Status } from "matrix-js-sdk/lib/matrixrtc";
 
-import { MediaConnectionState } from "../backend/api";
+import { MediaConnectionState } from "../media-backend/api";
 import { MatrixRTCError } from "../api";
 import {
   type LocalMemberState,

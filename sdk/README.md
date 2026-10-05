@@ -6,7 +6,7 @@ the media of every member, as observables. It has no UI. Element Call's own
 `CallViewModel` is meant to become one consumer of it. The design is in
 [`SdkArchitecture.md`](./SdkArchitecture.md), the migration from the view model
 in [`SdkMigration.md`](./SdkMigration.md). Media goes through one media backend
-behind `MediaBackend`; LiveKit, under `src/backend/livekit/`, is the only one
+behind `MediaBackend`; LiveKit, under `src/media-backend/livekit/`, is the only one
 today and the only place that imports `livekit-client`.
 
 **Status:** first implementation. `createMatrixRTCClient` joins the session, connects to

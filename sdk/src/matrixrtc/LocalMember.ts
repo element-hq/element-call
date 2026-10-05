@@ -42,7 +42,7 @@ import {
   type MediaBackend,
   MediaConnectionState,
   type TransportCapabilities,
-} from "../backend/api";
+} from "../media-backend/api";
 import { type HomeserverConnected } from "./HomeserverConnected";
 
 export enum TransportState {

@@ -22,8 +22,8 @@ const BANNED_PACKAGES = [
 
 /**
  * Packages only a media backend may import. The session speaks MatrixRTC and
- * sees media through `sdk/src/backend/api.ts`; a backend under
- * `sdk/src/backend/<name>/` is the one place its protocol's library appears.
+ * sees media through `sdk/src/media-backend/api.ts`; a backend under
+ * `sdk/src/media-backend/<name>/` is the one place its protocol's library appears.
  */
 const BACKEND_PACKAGES = ["livekit-client", "@livekit/"];
 
@@ -32,7 +32,7 @@ const BACKEND_PACKAGES = ["livekit-client", "@livekit/"];
  * outside `sdk/` by relative path (that is `src/`, `component/`,
  * `playwright/`) or one of the packages above. The development harness under
  * `sdk/dev/` is a host, not part of the library, and is exempt. Keeps the
- * session free of any one media backend, too: outside `sdk/src/backend/`,
+ * session free of any one media backend, too: outside `sdk/src/media-backend/`,
  * a backend's packages may only be imported for their types, and only in
  * the public API, the errors and the test helpers that have to name them.
  */
@@ -52,7 +52,7 @@ const rule = ESLintUtils.RuleCreator(
       bannedPackage:
         "The SDK must not import '{{specifier}}': a host supplies that, the SDK has no UI.",
       backendPackage:
-        "Only a media backend under sdk/src/backend/ may import '{{specifier}}'; the session sees media through backend/api.ts.",
+        "Only a media backend under sdk/src/media-backend/ may import '{{specifier}}'; the session sees media through media-backend/api.ts.",
     },
     schema: [],
   },
@@ -63,7 +63,7 @@ const rule = ESLintUtils.RuleCreator(
     if (!filename.startsWith(sdkRoot)) return {};
     if (filename.startsWith(resolve(sdkRoot, "dev") + sep)) return {};
     const inBackend = filename.startsWith(
-      resolve(sdkRoot, "src", "backend") + sep,
+      resolve(sdkRoot, "src", "media-backend") + sep,
     );
 
     const matchesPackage = (specifier, pkg) =>

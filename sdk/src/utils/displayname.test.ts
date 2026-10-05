@@ -20,7 +20,7 @@ import {
   daveRTL,
 } from "./test-fixtures";
 import { mockMatrixRoom } from "./test";
-import { roomToMembersMap } from "../session/MatrixMemberMetadata";
+import { roomToMembersMap } from "../matrixrtc/MatrixMemberMetadata";
 
 describe("shouldDisambiguate", () => {
   test("should not disambiguate a solo member", () => {

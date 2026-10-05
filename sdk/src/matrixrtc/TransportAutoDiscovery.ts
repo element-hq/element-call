@@ -15,7 +15,7 @@ type TransportDiscoveryClient = Pick<
   "getDomain" | "_unstable_getRTCTransports"
 >;
 
-export interface RtcTransportAutoDiscoveryProps {
+export interface TransportAutoDiscoveryProps {
   client: TransportDiscoveryClient;
   /** The transport type the media backend serves. */
   transportType: string;
@@ -24,7 +24,7 @@ export interface RtcTransportAutoDiscoveryProps {
   logger: Logger;
 }
 
-export class RtcTransportAutoDiscovery {
+export class TransportAutoDiscovery {
   private readonly client: TransportDiscoveryClient;
   private readonly transportType: string;
   private readonly fallbackTransportUrl: string | undefined;
@@ -35,11 +35,11 @@ export class RtcTransportAutoDiscovery {
     transportType,
     fallbackTransportUrl,
     logger,
-  }: RtcTransportAutoDiscoveryProps) {
+  }: TransportAutoDiscoveryProps) {
     this.client = client;
     this.transportType = transportType;
     this.fallbackTransportUrl = fallbackTransportUrl;
-    this.logger = logger.getChild("[RtcTransportAutoDiscovery]");
+    this.logger = logger.getChild("[TransportAutoDiscovery]");
   }
 
   public async discoverPreferredTransport(): Promise<Transport | null> {

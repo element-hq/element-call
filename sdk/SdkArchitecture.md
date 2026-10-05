@@ -64,10 +64,10 @@ therefore `Element Call → sdk`, never the reverse. The migration from today's
 The left box is MatrixRTC: who is in the session, with which transport, the
 keys, the delayed leave, and the join state machine. The right box is a media
 backend: whatever carries the media, behind the `MediaBackend` interface in
-`sdk/src/backend/api.ts`. The client is the join of the two: a member exists
+`sdk/src/media-backend/api.ts`. The client is the join of the two: a member exists
 once its membership does, and gets its media once the backend has something
 for that membership on its transport. LiveKit is the one backend today; a
-cascading SFU or full mesh is another folder under `sdk/src/backend/`, handed
+cascading SFU or full mesh is another folder under `sdk/src/media-backend/`, handed
 in through `options.backend`, and nothing in the left box changes.
 
 ### How Element Call uses it
@@ -127,20 +127,20 @@ it, and `leave()` also sends the leave.
 
 ## Vocabulary
 
-| Word              | Meaning here                                                                                                                                                                                      | Elsewhere                                                         |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| client            | a `MatrixRTCClient`: one room, one slot, one local member                                                                                                                                         | `MatrixClient` is always written out                              |
-| membership        | one device's MatrixRTC state event, seen by hosts as `RTCMembership`, the js-sdk `CallMembership` behind it                                                                                       |                                                                   |
-| member            | an `RTCMember`: a membership plus what the SDK derives from it (display name, transport, media)                                                                                                   | Element Call's "matrixLivekitMember"                              |
-| media             | a `MemberMedia`: what a member sends, once it has arrived on its transport. `null` while waiting for media                                                                                        | Element Call's `MediaViewModel` is a view of it                   |
-| track             | a `MediaTrack`: one publication of a member, audio or video, with `source`, `kind`, `id` and the behaviors on it. `LocalAudioMediaTrack` and `LocalVideoMediaTrack` add the controls over our own | LiveKit `TrackPublication` and `Track`, which never leave the SDK |
-| source            | a `MediaSource`: what a track is captured from, `microphone`, `camera`, `screenShare`, `screenShareAudio` or `unknown`. Picked out of `tracks$` with `trackBySource$`                             | LiveKit `Track.Source`                                            |
-| publish request   | a `PublishRequest`: a source, where to capture it from and how to encode it. Given at the join in `LocalMediaInputs.publish`, or later to `publish` on the local member                           |                                                                   |
-| active            | `isActive$` on an audio track: the track carries sound, as the backend measures it. "Speaking" is a call's reading of it on the microphone track                                                  | LiveKit "speaking", `isSpeaking`                                  |
-| attach, detach    | handing a `<video>` or `<audio>` element to a track and taking it back. The SDK owns the stream and the observers on the element                                                                  | LiveKit `Track.attach`                                            |
-| transport         | where media is exchanged: a LiveKit service url today, described by `TransportMetadata`                                                                                                           | MSC4143 "focus"                                                   |
-| media backend     | a `MediaBackend`: what carries the media, behind `sdk/src/backend/api.ts`. One per client, chosen with `options.backend`; LiveKit under `sdk/src/backend/livekit/` is the one that exists         | "SFU", a LiveKit room, a peer connection                          |
-| application, slot | what the session is for (`m.call`) and which one of them in the room (`ROOM`)                                                                                                                     | MSC4143                                                           |
+| Word              | Meaning here                                                                                                                                                                                          | Elsewhere                                                         |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| client            | a `MatrixRTCClient`: one room, one slot, one local member                                                                                                                                             | `MatrixClient` is always written out                              |
+| membership        | one device's MatrixRTC state event, seen by hosts as `RTCMembership`, the js-sdk `CallMembership` behind it                                                                                           |                                                                   |
+| member            | an `RTCMember`: a membership plus what the SDK derives from it (display name, transport, media)                                                                                                       | Element Call's "matrixLivekitMember"                              |
+| media             | a `MemberMedia`: what a member sends, once it has arrived on its transport. `null` while waiting for media                                                                                            | Element Call's `MediaViewModel` is a view of it                   |
+| track             | a `MediaTrack`: one publication of a member, audio or video, with `source`, `kind`, `id` and the behaviors on it. `LocalAudioMediaTrack` and `LocalVideoMediaTrack` add the controls over our own     | LiveKit `TrackPublication` and `Track`, which never leave the SDK |
+| source            | a `MediaSource`: what a track is captured from, `microphone`, `camera`, `screenShare`, `screenShareAudio` or `unknown`. Picked out of `tracks$` with `trackBySource$`                                 | LiveKit `Track.Source`                                            |
+| publish request   | a `PublishRequest`: a source, where to capture it from and how to encode it. Given at the join in `LocalMediaInputs.publish`, or later to `publish` on the local member                               |                                                                   |
+| active            | `isActive$` on an audio track: the track carries sound, as the backend measures it. "Speaking" is a call's reading of it on the microphone track                                                      | LiveKit "speaking", `isSpeaking`                                  |
+| attach, detach    | handing a `<video>` or `<audio>` element to a track and taking it back. The SDK owns the stream and the observers on the element                                                                      | LiveKit `Track.attach`                                            |
+| transport         | where media is exchanged: a LiveKit service url today, described by `TransportMetadata`                                                                                                               | MSC4143 "focus"                                                   |
+| media backend     | a `MediaBackend`: what carries the media, behind `sdk/src/media-backend/api.ts`. One per client, chosen with `options.backend`; LiveKit under `sdk/src/media-backend/livekit/` is the one that exists | "SFU", a LiveKit room, a peer connection                          |
+| application, slot | what the session is for (`m.call`) and which one of them in the room (`ROOM`)                                                                                                                         | MSC4143                                                           |
 
 Names use `RTC` in capitals, as the js-sdk does: `MatrixRTCClient`, `RTCMember`,
 `matrixRTCMode`.
@@ -489,10 +489,10 @@ call-specific.
 
 The client speaks MatrixRTC: memberships, the transports named in them, the
 delayed leave, the keys. What carries the media is a backend behind one
-interface, `MediaBackend` in `sdk/src/backend/api.ts`, created once per client.
-LiveKit under `sdk/src/backend/livekit/` is the only backend today, and the only
+interface, `MediaBackend` in `sdk/src/media-backend/api.ts`, created once per client.
+LiveKit under `sdk/src/media-backend/livekit/` is the only backend today, and the only
 place in the SDK that imports `livekit-client`; the import boundary lint rule
-enforces that outside `sdk/src/backend/` the LiveKit packages appear in type
+enforces that outside `sdk/src/media-backend/` the LiveKit packages appear in type
 imports only.
 
 The seam sits above the connection manager on purpose. One connection per
@@ -547,7 +547,7 @@ Every member has media. Today, in Element Call, that media _is_ a `livekit-clien
 participant, handed straight through to the view models. In the SDK the participant
 is wrapped in a `MemberMedia`, so that nothing outside the SDK imports
 `Participant`, `TrackPublication`, `Track` or `TrackReference`. The adapter in
-`sdk/src/media/` is the only place that reads a participant.
+`sdk/src/media-backend/livekit/` is the only place that reads a participant.
 
 ```ts
 export type MediaSource =
@@ -709,10 +709,12 @@ sdk/
   src/errors.ts       MatrixRTCError and its codes
   src/config.ts       MatrixRTCMode, session timings, media quality
   src/encryption.ts   E2eeType, EncryptionSystem
+  src/MatrixRTCClient.ts  createMatrixRTCClient: wires the two folders below
   src/reactive/       Behavior, ObservableScope, the observable operators
-  src/session/        MatrixRTCClient, the local member, publisher, connections,
-                      memberships, transports, discovery, JWT, join
-  src/media/          the LiveKit adapter: MemberMedia and MediaTrack
+  src/matrixrtc/      the MatrixRTC side: the local member, memberships, member
+                      metadata, transports, discovery, status, the js-sdk join
+  src/media-backend/  the MediaBackend interface in api.ts; livekit/ is the one
+                      backend: connections, publisher, JWT, keys, MemberMedia, MediaTrack
   src/utils/          LazyBehavior, mapScoped, network retry, display names, test helpers
   dev/                the harness (below)
   SdkArchitecture.md  this document

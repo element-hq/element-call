@@ -11,7 +11,7 @@ import { distinctUntilChanged, map } from "rxjs";
 import { type Behavior } from "../reactive/Behavior";
 import { type ObservableScope } from "../reactive/ObservableScope";
 import { type TransportMetadata } from "../api";
-import { type MediaBackend, MediaConnectionState } from "../backend/api";
+import { type MediaBackend, MediaConnectionState } from "../media-backend/api";
 
 export interface TransportRegistry {
   /** The one `TransportMetadata` for a transport, however many memberships name it. */

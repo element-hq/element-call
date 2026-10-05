@@ -12,7 +12,10 @@ import { describe, expect, it, vi } from "vitest";
 
 import { defaultSessionTimings } from "../config";
 import { MatrixRTCError } from "../errors";
-import { type LocalMediaBackend, MediaConnectionState } from "../backend/api";
+import {
+  type LocalMediaBackend,
+  MediaConnectionState,
+} from "../media-backend/api";
 import { type HomeserverConnected } from "./HomeserverConnected";
 import {
   createLocalMembership$,

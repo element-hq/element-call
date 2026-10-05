@@ -9,10 +9,10 @@ import { describe, expect, it, vi } from "vitest";
 import { MatrixRTCSessionEvent } from "matrix-js-sdk/lib/matrixrtc";
 import { EventEmitter } from "events";
 
-import { createKeyRotationSuppressed$ } from "./SessionBehaviors";
+import { createKeyRotationSuppressed$ } from "./JsRtcSessionBehaviors";
 import { testScope } from "../utils/test";
 
-describe("SessionBehaviors", () => {
+describe("JsRtcSessionBehaviors", () => {
   describe("createKeyRotationSuppressed$", () => {
     it("emits initial value from isKeyRotationSuppressed and updates when KeyRotationSuppressedChanged event is emitted", () => {
       const scope = testScope();

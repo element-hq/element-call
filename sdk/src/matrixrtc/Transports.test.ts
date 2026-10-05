@@ -10,7 +10,10 @@ import { BehaviorSubject } from "rxjs";
 import { describe, expect, it } from "vitest";
 
 import { type ResolvedTransport } from "../api";
-import { type BackendConnection, MediaConnectionState } from "../backend/api";
+import {
+  type BackendConnection,
+  MediaConnectionState,
+} from "../media-backend/api";
 import { testScope } from "../utils/test";
 import { createTransportRegistry, transportId } from "./Transports";
 

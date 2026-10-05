@@ -18,11 +18,11 @@ import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/En
 import { v4 as uuidv4 } from "uuid";
 import { combineLatest, filter, from, fromEvent, map, Observable } from "rxjs";
 
-import { defaultSessionTimings, MatrixRTCMode } from "../config";
-import { E2eeType } from "../encryption";
-import { type ObservableScope } from "../reactive/ObservableScope";
-import { filterBehavior, generateItems } from "../reactive/observable";
-import { mapScoped } from "../utils/mapScoped";
+import { defaultSessionTimings, MatrixRTCMode } from "./config";
+import { E2eeType } from "./encryption";
+import { type ObservableScope } from "./reactive/ObservableScope";
+import { filterBehavior, generateItems } from "./reactive/observable";
+import { mapScoped } from "./utils/mapScoped";
 import {
   type DataMessage,
   type LocalMediaInputs,
@@ -30,33 +30,36 @@ import {
   type MatrixRTCClient,
   type MatrixRTCClientOptions,
   type RemoteRTCMember,
-} from "../api";
+} from "./api";
 import {
   type MediaBackend,
   type MediaBackendContext,
   type MediaKey,
-} from "../backend/api";
-import { createLivekitBackend } from "../backend/livekit/LivekitBackend";
-import { MatrixRTCError } from "../errors";
-import { createHomeserverConnected$ } from "./HomeserverConnected";
-import { joinJsSdkSession } from "./joinJsSdkSession";
-import { createLocalMembership$, type PreparedTransport } from "./LocalMember";
-import { discoverLocalTransport } from "./LocalTransport";
+} from "./media-backend/api";
+import { createLivekitBackend } from "./media-backend/livekit/LivekitBackend";
+import { MatrixRTCError } from "./errors";
+import { createHomeserverConnected$ } from "./matrixrtc/HomeserverConnected";
+import { joinJsSdkSession } from "./matrixrtc/joinJsSdkSession";
+import {
+  createLocalMembership$,
+  type PreparedTransport,
+} from "./matrixrtc/LocalMember";
+import { discoverLocalTransport } from "./matrixrtc/LocalTransport";
 import {
   createMatrixMemberMetadata$,
   createRoomMembers$,
-} from "./MatrixMemberMetadata";
+} from "./matrixrtc/MatrixMemberMetadata";
 import {
   createLocalRTCMember,
   createRemoteRTCMember,
   membershipKeys,
-} from "./Members";
+} from "./matrixrtc/Members";
 import {
   createKeyRotationSuppressed$,
   createMemberships$,
-} from "./SessionBehaviors";
-import { fatalError, sessionStatus } from "./status";
-import { createTransportRegistry } from "./Transports";
+} from "./matrixrtc/JsRtcSessionBehaviors";
+import { fatalError, sessionStatus } from "./matrixrtc/status";
+import { createTransportRegistry } from "./matrixrtc/Transports";
 
 /**
  * Takes the whole `MatrixClient` rather than a slice of it, and finds the
