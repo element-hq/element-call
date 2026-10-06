@@ -56,6 +56,7 @@ import {
   createToggle$,
   filterBehavior,
   generateItems,
+  mapScoped,
   pauseWhen,
 } from "../../utils/observable";
 import {
@@ -104,17 +105,14 @@ import {
   type SpotlightPortraitLayoutMedia,
 } from "../layout-types.ts";
 import { ElementCallError, UnknownCallError } from "../../utils/errors.ts";
-import { type Epoch, type ObservableScope } from "../ObservableScope.ts";
+import { Epoch, type ObservableScope } from "../ObservableScope.ts";
 import { createHomeserverConnected$ } from "./localMember/HomeserverConnected.ts";
 import {
   createLocalMembership$,
   enterRTCSession,
   TransportState,
 } from "./localMember/LocalMember.ts";
-import {
-  getLocalTransport,
-  type LocalTransport,
-} from "./localMember/LocalTransport.ts";
+import { getLocalTransport } from "./localMember/LocalTransport.ts";
 import {
   createKeyRotationSuppressed$,
   createMemberships$,
@@ -125,8 +123,9 @@ import {
   ECConnectionFactory,
 } from "./remoteMembers/ConnectionFactory.ts";
 import {
-  type ConnectionManagerData,
+  ConnectionManagerData,
   createConnectionManager$,
+  type IConnectionManager,
 } from "./remoteMembers/ConnectionManager.ts";
 import {
   createRemoteMatrixLivekitMembers$,
@@ -215,7 +214,7 @@ export interface CallViewModelOptions {
    */
   windowSize$: Behavior<{ width: number; height: number }>;
   /** Optional value overriding the local transport, for testing purposes. */
-  localTransport?: LocalTransport;
+  localTransport?: UnstableLivekitTransport;
   /** Optional value overriding the connection factory, for testing purposes. */
   connectionFactory?: ConnectionFactory;
   /** The version & compatibility mode of MatrixRTC that we should use. */
@@ -575,13 +574,7 @@ export function createCallViewModel$(
 
   const localTransport$ = options.localTransport
     ? constant(options.localTransport)
-    : from(
-        getLocalTransport({
-          ownMembershipIdentity,
-          client,
-          roomId: matrixRoom.roomId,
-        }),
-      );
+    : from(getLocalTransport(client));
 
   const connectionFactory =
     options.connectionFactory ??
@@ -595,14 +588,24 @@ export function createCallViewModel$(
       options.livekitRoomFactory,
     );
 
-  const connectionManager = createConnectionManager$({
-    scope: scope,
-    connectionFactory: connectionFactory,
-    localTransport$,
-    remoteTransports$: membershipsAndTransports.transports$,
-    logger: logger,
-    ownMembershipIdentity,
-  });
+  const connectionManager: IConnectionManager = {
+    connectionManagerData$: scope.behavior(
+      localTransport$.pipe(
+        mapScoped("connectionManager$", (scope, localTransport) =>
+          createConnectionManager$({
+            scope,
+            connectionFactory,
+            localTransport,
+            remoteTransports$: membershipsAndTransports.transports$,
+            logger,
+            ownMembershipIdentity,
+          }),
+        ),
+        switchMap(({ connectionManagerData$ }) => connectionManagerData$),
+      ),
+      new Epoch(new ConnectionManagerData()),
+    ),
+  };
 
   const remoteMatrixLivekitMembers$: Behavior<
     Epoch<RemoteMatrixLivekitMember[]>
@@ -737,49 +740,27 @@ export function createCallViewModel$(
   const allConnections$ = scope.behavior(
     connectionManager.connectionManagerData$.pipe(map((d) => d.value)),
   );
-  const livekitRoomItems$ = scope.behavior(
-    remoteMatrixLivekitMembers$.pipe(
-      switchMap((members) => {
-        const a$ = combineLatest(
-          members.value.map((member) =>
-            combineLatest([member.connection$, member.participant.value$]).pipe(
-              map(([connection, participant]) => {
-                // do not render audio for local participant
-                if (!connection || !participant || participant.isLocal)
-                  return null;
-                const livekitRoom = connection.livekitRoom;
-                const url = connection.transport.livekit_service_url;
-
-                return {
-                  url,
-                  livekitRoom,
-                  participant: participant.identity,
-                };
-              }),
+  const livekitRoomItems$ = scope.behavior<LivekitRoomItem[]>(
+    allConnections$.pipe(
+      switchMap((connections) =>
+        combineLatest(
+          connections.getConnections().map((connection) =>
+            remoteMatrixLivekitMembers$.pipe(
+              switchMap((members) =>
+                combineLatest(members.value.map((m) => m.participant.value$)),
+              ),
+              map((participants) => ({
+                url: JSON.stringify(connection.transport), // TODO
+                livekitRoom: connection.livekitRoom,
+                participants: participants
+                  .filter((p) => p !== null)
+                  .map((p) => p.identity),
+              })),
             ),
           ),
-        );
-        return a$;
-      }),
-      map((members) =>
-        members.reduce<LivekitRoomItem[]>((acc, curr) => {
-          if (!curr) return acc;
-
-          const existing = acc.find((item) => item.url === curr.url);
-          if (existing) {
-            existing.participants.push(curr.participant);
-          } else {
-            acc.push({
-              livekitRoom: curr.livekitRoom,
-              participants: [curr.participant],
-              url: curr.url,
-            });
-          }
-          return acc;
-        }, []),
+        ),
       ),
     ),
-    [],
   );
 
   const handsRaised$ = scope.behavior(
@@ -837,7 +818,7 @@ export function createCallViewModel$(
               connection$.pipe(map((c) => c?.livekitRoom)),
             ),
             focusUrl$: scope.behavior(
-              connection$.pipe(map((c) => c?.transport.livekit_service_url)),
+              connection$.pipe(map((c) => JSON.stringify(c?.transport))), // TODO
             ),
             mediaDevices,
             pretendToBeDisconnected$: localMembership.reconnecting$,

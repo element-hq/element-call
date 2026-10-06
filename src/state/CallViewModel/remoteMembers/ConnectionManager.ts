@@ -7,31 +7,21 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
-import {
-  combineLatest,
-  map,
-  type Observable,
-  of,
-  switchMap,
-  startWith,
-  catchError,
-  NEVER,
-} from "rxjs";
+import { combineLatest, map, of, switchMap, tap } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import { type RemoteParticipant } from "livekit-client";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
 import { type Behavior } from "../../Behavior.ts";
 import { type Connection } from "./Connection.ts";
-import { Epoch, type ObservableScope } from "../../ObservableScope.ts";
+import {
+  Epoch,
+  mapEpoch,
+  type ObservableScope,
+} from "../../ObservableScope.ts";
 import { generateItemsWithEpoch } from "../../../utils/observable.ts";
 import { areUnstableLivekitTransportsEqual } from "./MatrixLivekitMembers.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
-import {
-  isLocalTransport,
-  type LocalTransport,
-} from "../localMember/LocalTransport.ts";
-import { type SFUConfig } from "../../../livekit/auth";
 
 export class ConnectionManagerData {
   private readonly store: Map<
@@ -92,7 +82,7 @@ export class ConnectionManagerData {
 interface Props {
   scope: ObservableScope;
   connectionFactory: ConnectionFactory;
-  localTransport$: Observable<LocalTransport>;
+  localTransport: UnstableLivekitTransport;
   remoteTransports$: Behavior<Epoch<UnstableLivekitTransport[]>>;
 
   logger: Logger;
@@ -127,7 +117,7 @@ export interface IConnectionManager {
 export function createConnectionManager$({
   scope,
   connectionFactory,
-  localTransport$,
+  localTransport,
   remoteTransports$,
   logger: parentLogger,
   ownMembershipIdentity,
@@ -135,49 +125,21 @@ export function createConnectionManager$({
   const logger = parentLogger.getChild("[ConnectionManager]");
   // TODO logger: only construct one logger from the client and make it compatible via a EC specific sing
 
-  const localTransportAsArray$ = localTransport$.pipe(
-    // LocalMember already surfaces local transport errors properly in the UI,
-    // here we can just swallow them
-    catchError(() => NEVER),
-    map((transport) => [transport]),
-    startWith([]),
-  );
-
   /**
-   * All transports currently managed by the ConnectionManager.
-   *
-   * This list does not include duplicate transports.
-   *
-   * It is build based on the list of subscribed transports (`transportsSubscriptions$`).
-   * externally this is modified via `registerTransports()`.
+   * All transports currently managed by the ConnectionManager. This list does
+   * not include duplicate transports.
    */
-  const localAndRemoteTransports$: Behavior<
-    Epoch<(UnstableLivekitTransport | LocalTransport)[]>
-  > = scope.behavior(
-    combineLatest([localTransportAsArray$, remoteTransports$]).pipe(
-      // Combine local and remote transports into one transport array
-      // and set the forceOldJwtEndpoint property on the local transport
-      map(([localTransportAsArray, remoteTransports]) => {
-        const dedupedRemote = removeDuplicateTransports(remoteTransports.value);
-        const remoteWithoutLocal = dedupedRemote.filter(
-          (transport) =>
-            !localTransportAsArray.find((l) =>
-              areUnstableLivekitTransportsEqual(l.transport, transport),
-            ),
-        );
-        logger.debug(
-          "remoteWithoutLocal",
-          remoteWithoutLocal,
-          "localTransportAsArray",
-          localTransportAsArray,
-        );
-        return new Epoch(
-          [...localTransportAsArray, ...remoteWithoutLocal],
-          remoteTransports.epoch,
-        );
-      }),
-    ),
-  );
+  const localAndRemoteTransports$: Behavior<Epoch<UnstableLivekitTransport[]>> =
+    scope.behavior(
+      remoteTransports$.pipe(
+        mapEpoch((remoteTransports) =>
+          removeDuplicateTransports([localTransport, ...remoteTransports]),
+        ),
+        tap((transports) =>
+          logger.debug("localAndRemoteTransports$ = ", transports),
+        ),
+      ),
+    );
 
   /**
    * Connections for each transport in use by one or more session members.
@@ -188,39 +150,31 @@ export function createConnectionManager$({
         "ConnectionManager connections$",
         function* (transports) {
           for (const transport of transports) {
-            if (isLocalTransport(transport)) {
-              // This is the local transport; only the `LocalTransport`
-              // interface has a `sfuConfig` field.
-              yield {
-                keys: [
-                  transport.transport.livekit_service_url,
-                  transport.sfuConfig,
-                ],
-                data: undefined,
-              };
-            } else {
-              yield {
-                keys: [
-                  transport.livekit_service_url,
-                  undefined as SFUConfig | undefined,
-                ],
-                data: undefined,
-              };
-            }
+            const role =
+              transport === localTransport
+                ? ("publisher" as const)
+                : ("subscriber" as const);
+            const url = "url" in transport ? transport.url : undefined;
+            const serviceUrl =
+              "livekit_service_url" in transport
+                ? transport.livekit_service_url
+                : undefined;
+            yield { keys: [role, url, serviceUrl], data: undefined };
           }
         },
-        (scope, _data$, serviceUrl, sfuConfig) => {
+        (scope, _data$, role, url, serviceUrl) => {
           const connection = connectionFactory.createConnection(
             scope,
+            role,
             {
               type: "livekit",
-              livekit_service_url: serviceUrl,
-            },
+              ...(url === undefined ? {} : { url }),
+              ...(serviceUrl === undefined
+                ? {}
+                : { livekit_service_url: serviceUrl }),
+            } as UnstableLivekitTransport,
             ownMembershipIdentity,
             logger,
-            // TODO: This whole optional SFUConfig parameter is not particularly elegant.
-            // I would like it if connections always fetched the SFUConfig by themselves.
-            sfuConfig,
           );
           // Start the connection immediately
           // Use connection state to track connection progress

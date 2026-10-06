@@ -218,6 +218,28 @@ export function filterBehavior<T, S extends T>(
     );
 }
 
+/**
+ * Maps a changing input value to an item whose lifetime is tied to a certain
+ * computed key. The item may capture some dynamic data from the input.
+ */
+export function mapScoped<A, B>(
+  name: string,
+  project: (scope: ObservableScope, a: A) => B,
+): OperatorFunction<A, B> {
+  return (a$) =>
+    a$.pipe(
+      generateItemsInternal(
+        name,
+        function* (a) {
+          yield { keys: [a], data: undefined };
+        },
+        (scope, _data$, a) => project(scope, a),
+        (items) => items,
+      ),
+      map(([item]) => item),
+    );
+}
+
 function generateItemsInternal<
   Input,
   Keys extends [unknown, ...unknown[]],

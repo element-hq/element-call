@@ -78,7 +78,6 @@ import {
   type FailedToStartError,
 } from "../remoteMembers/Connection.ts";
 import { type HomeserverConnected } from "./HomeserverConnected.ts";
-import { type LocalTransport } from "./LocalTransport.ts";
 import {
   type ClientDelegationParts,
   delegateDelayedLeave,
@@ -152,7 +151,7 @@ interface Props {
   homeserverConnected: HomeserverConnected;
   roomId: string;
   ownMembershipIdentity: CallMembershipIdentityParts;
-  localTransport$: Observable<LocalTransport>;
+  localTransport$: Observable<UnstableLivekitTransport>;
   client: ClientDelegationParts & ClientOpenIDParts;
   matrixRTCSession: Pick<MatrixRTCSession, "updateCallIntent" | "leave">;
   /** Whether to hide the screen-sharing button. */
@@ -308,7 +307,7 @@ export const createLocalMembership$ = ({
   // to whether delayed event delegation is supported
   const joinParams$ = scope.behavior(
     localTransport$.pipe(
-      switchMap(async ({ transport }) => {
+      switchMap(async (transport) => {
         const transportSupportsDelegation =
           "livekit_service_url" in transport &&
           (await checkDelegationSupport(
@@ -331,7 +330,7 @@ export const createLocalMembership$ = ({
       connectionManager.connectionManagerData$,
       localTransport$,
     ]).pipe(
-      map(([{ value: connectionData }, { transport }]) =>
+      map(([{ value: connectionData }, transport]) =>
         connectionData.getConnectionForTransport(transport),
       ),
       tap((connection) => {

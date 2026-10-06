@@ -38,17 +38,16 @@ import {
 import {
   type ClientGetTokenParts,
   type ClientOpenIDParts,
-  type SFUConfig,
 } from "../../../livekit/auth";
 
 // TODO evaluate if this should be done like the Publisher Factory
 export interface ConnectionFactory {
   createConnection(
     scope: ObservableScope,
+    role: "publisher" | "subscriber",
     transport: UnstableLivekitTransport,
     ownMembershipIdentity: CallMembershipIdentityParts,
     logger: Logger,
-    sfuConfig?: SFUConfig,
   ): Connection;
 }
 
@@ -104,15 +103,15 @@ export class ECConnectionFactory implements ConnectionFactory {
    */
   public createConnection(
     scope: ObservableScope,
+    role: "publisher" | "subscriber",
     transport: UnstableLivekitTransport,
     ownMembershipIdentity: CallMembershipIdentityParts,
     logger: Logger,
-    sfuConfig?: SFUConfig,
   ): Connection {
     return new Connection(
       {
-        existingSFUConfig: sfuConfig,
         roomId: this.roomId,
+        role,
         transport,
         client: this.client,
         scope: scope,
