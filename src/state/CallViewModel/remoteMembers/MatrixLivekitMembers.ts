@@ -171,7 +171,22 @@ export function areUnstableLivekitTransportsEqual<
   T extends UnstableLivekitTransport,
 >(t1: T | null, t2: T | null): boolean {
   if (t1 && t2) {
-    return t1.livekit_service_url === t2.livekit_service_url;
+    if ("url" in t1 !== "url" in t2) return false;
+    if ("livekit_service_url" in t1 !== "livekit_service_url" in t2)
+      return false;
+    if (
+      "url" in t1 &&
+      t1.url !== (t2 as UnstableLivekitTransport & { url: string }).url
+    )
+      return false;
+    if (
+      "livekit_service_url" in t1 &&
+      t1.livekit_service_url !==
+        (t2 as UnstableLivekitTransport & { livekit_service_url: string })
+          .livekit_service_url
+    )
+      return false;
+    return true;
   }
   return !t1 && !t2;
 }

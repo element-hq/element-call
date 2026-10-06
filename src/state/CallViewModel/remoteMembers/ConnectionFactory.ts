@@ -20,10 +20,6 @@ import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 
 import { type ObservableScope } from "../../ObservableScope.ts";
 import { Connection } from "./Connection.ts";
-import type {
-  ClientOpenIDParts,
-  SFUConfig,
-} from "../../../livekit/openIDSFU.ts";
 import type { MediaDevices } from "../../MediaDevices.ts";
 import type { Behavior } from "../../Behavior.ts";
 import type { ProcessorState } from "../../../livekit/TrackProcessorContext.tsx";
@@ -39,6 +35,11 @@ import {
   noiseSuppressionSetting,
   autoGainControlSetting,
 } from "../../../settings/settings.ts";
+import {
+  type ClientGetTokenParts,
+  type ClientOpenIDParts,
+  type SFUConfig,
+} from "../../../livekit/auth";
 
 // TODO evaluate if this should be done like the Publisher Factory
 export interface ConnectionFactory {
@@ -66,7 +67,7 @@ export class ECConnectionFactory implements ConnectionFactory {
    * @param livekitRoomFactory - Optional factory function (for testing) to create LivekitRoom instances. If not provided, a default factory is used.
    */
   public constructor(
-    private client: ClientOpenIDParts,
+    private client: ClientGetTokenParts & ClientOpenIDParts,
     private readonly roomId: string,
     private devices: MediaDevices,
     private processorState$: Behavior<ProcessorState>,

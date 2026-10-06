@@ -59,7 +59,12 @@ export class ConnectionManagerData {
   private getKey(transport: UnstableLivekitTransport): string {
     // This is enough as a key because the ConnectionManager is already scoped by room.
     // We also do not need to consider the slotId at this point since each `MatrixRTCSession` is already scoped by `slotDescription: {id, application}`.
-    return transport.livekit_service_url;
+    return JSON.stringify([
+      "url" in transport ? transport.url : undefined,
+      "livekit_service_url" in transport
+        ? transport.livekit_service_url
+        : undefined,
+    ]);
   }
 
   public getConnections(): Connection[] {
