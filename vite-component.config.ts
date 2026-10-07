@@ -72,6 +72,11 @@ export default defineConfig(({ mode }) => {
         // host's Compound stylesheet only when the two happened to be the same
         // version.
         //
+        // LiveKit is deliberately not in this list. No host imports
+        // `livekit-client` itself, so bundling it duplicates nothing, and the
+        // exact version Element Call was tested against travels with it instead
+        // of being something every host has to pin and keep in step.
+        //
         // Every subpath has to be named. Element Call reaches most of the Matrix
         // SDK as `matrix-js-sdk/lib/…`, and a bare "matrix-js-sdk" would not
         // catch those — while the pattern and callback forms of this option are
@@ -88,7 +93,6 @@ export default defineConfig(({ mode }) => {
           "react/compiler-runtime",
           "react-dom",
           "react-dom/client",
-          "livekit-client",
           "matrix-js-sdk",
           "matrix-js-sdk/lib/browser-index",
           "matrix-js-sdk/lib/client",
