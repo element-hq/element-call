@@ -36,25 +36,17 @@ Please see LICENSE in the repository root for full details.
   }
 }
 
+/* The width design sets: a long device name wraps. */
 .menu {
-  display: flex;
-  flex-direction: column;
+  inline-size: 296px;
 }
 
-/* Only the device lists scroll, bounded by the measured call area: the menu is
-   portalled out of the root, so CSS can't size it against the call. */
+/* Its share of the measured call area: the menu is portalled out of the root,
+   so CSS can't size it against the call. */
 .deviceList {
-  /* A list that scrolls can paint above the menu's outline, hiding it. */
-  margin-inline: var(--cpd-border-width-1);
-  inline-size: calc(
-    var(--device-list-inline-size) - 2 * var(--cpd-border-width-1)
-  );
-  overflow-y: auto;
-  min-block-size: 0;
   max-block-size: var(--device-list-max-height);
-  /* Keeps a row reached by keyboard clear of the sticky heading and meter. */
-  scroll-padding-block: var(--device-list-scroll-padding-start, 0)
-    var(--device-list-scroll-padding-end, 0);
+  /* Keeps a row reached by keyboard clear of the sticky heading. */
+  scroll-padding-block-start: var(--device-list-scroll-padding-start, 0);
 }
 
 /* Compound's heading rule heads each section; the design adds space below it. */
@@ -67,21 +59,38 @@ Please see LICENSE in the repository root for full details.
   margin-block-start: var(--cpd-space-7x);
 }
 
-/* Sticky within its own section. Opaque and inset a border width so it doesn't
-   paint over the menu's outline. */
+/* Sticky within its own section, and opaque so rows scroll under it. */
 .sectionHeading {
   position: sticky;
   inset-block-start: 0;
   background: var(--cpd-color-bg-canvas-default);
-  margin-block-start: var(--cpd-border-width-1);
 }
 
-/* Sticky at the foot of the microphone section; opaque and inset as above. */
+/* Sticky at the foot of the microphone section; opaque as above. */
 .stickyMeter {
   position: sticky;
   inset-block-end: 0;
   background: var(--cpd-color-bg-canvas-default);
-  margin-block-end: var(--cpd-border-width-1);
+}
+
+/* Fills the band between the meter and the frame, or rows show through it. */
+.stickyMeter::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 100%;
+  block-size: var(--cpd-menu-padding-block-end, 0px);
+  background: var(--cpd-color-bg-canvas-default);
+}
+
+/* Not Compound's fade: that stays at the edge while a bounce carries the meter.
+   This one starts at the chevron, below the meter at rest. */
+.deviceList.deviceListWithMeter[data-more-below] {
+  mask-image: linear-gradient(
+    to bottom,
+    #000 calc(100% - var(--cpd-space-6x)),
+    transparent calc(100% - var(--cpd-space-3x))
+  );
 }
 
 /* Radix focuses whatever the pointer is over, so the browser's ring would
