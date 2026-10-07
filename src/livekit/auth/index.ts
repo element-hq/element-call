@@ -37,6 +37,15 @@ function isEndpointUnsupported(e: unknown): boolean {
   );
 }
 
+export interface GetSFUConfigParams {
+  client: csApi.ClientGetTokenParts & openID.ClientOpenIDParts;
+  membership: CallMembershipIdentityParts;
+  transport: UnstableLivekitTransport;
+  roomId: string;
+  role: "publisher" | "subscriber";
+  logger: Logger;
+}
+
 export async function getSFUConfig({
   client,
   membership,
@@ -44,14 +53,7 @@ export async function getSFUConfig({
   roomId,
   role,
   logger,
-}: {
-  client: csApi.ClientGetTokenParts & openID.ClientOpenIDParts;
-  membership: CallMembershipIdentityParts;
-  transport: UnstableLivekitTransport;
-  roomId: string;
-  role: "publisher" | "subscriber";
-  logger: Logger;
-}): Promise<SFUConfig> {
+}: GetSFUConfigParams): Promise<SFUConfig> {
   if ("url" in transport) {
     try {
       return await csApi.getSFUConfig({
@@ -91,6 +93,15 @@ export async function getSFUConfig({
   });
 }
 
+export interface DelegateDelayedLeaveParams {
+  client: csApi.ClientDelegationParts & openID.ClientOpenIDParts;
+  membership: CallMembershipIdentityParts;
+  transport: UnstableLivekitTransport;
+  roomId: string;
+  delayId: string;
+  logger: Logger;
+}
+
 export async function delegateDelayedLeave({
   client,
   membership,
@@ -98,14 +109,7 @@ export async function delegateDelayedLeave({
   roomId,
   delayId,
   logger,
-}: {
-  client: csApi.ClientDelegationParts & openID.ClientOpenIDParts;
-  membership: CallMembershipIdentityParts;
-  transport: UnstableLivekitTransport;
-  roomId: string;
-  delayId: string;
-  logger: Logger;
-}): Promise<void> {
+}: DelegateDelayedLeaveParams): Promise<void> {
   if ("url" in transport) {
     try {
       await csApi.delegateDelayedLeave({

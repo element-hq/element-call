@@ -78,7 +78,6 @@ import {
   type RemoteScreenShareViewModel,
 } from "../state/media/RemoteScreenShareViewModel";
 import { Connection } from "../state/CallViewModel/remoteMembers/Connection";
-import { type SFUConfig } from "../livekit/auth";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();

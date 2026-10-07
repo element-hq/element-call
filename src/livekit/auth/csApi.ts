@@ -49,19 +49,21 @@ export type ClientDelegationParts = Pick<
   "_unstable_delegateDelayedLeave" | "baseUrl"
 >;
 
+export interface DelegateDelayedLeaveParams {
+  client: ClientDelegationParts;
+  membership: CallMembershipIdentityParts;
+  url: string;
+  roomId: string;
+  delayId: string;
+}
+
 export async function delegateDelayedLeave({
   client,
   membership,
   url,
   roomId,
   delayId,
-}: {
-  client: ClientDelegationParts;
-  membership: CallMembershipIdentityParts;
-  url: string;
-  roomId: string;
-  delayId: string;
-}): Promise<void> {
+}: DelegateDelayedLeaveParams): Promise<void> {
   await doNetworkOperationWithRetry(async () =>
     client._unstable_delegateDelayedLeave({
       url,
