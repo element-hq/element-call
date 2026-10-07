@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import {
   useCallback,
+  useId,
   useState,
   type CSSProperties,
   type FC,
@@ -20,11 +21,11 @@ import {
   MenuScrollArea,
   MenuTitle,
   RadioInput,
-  ToggleMenuItem,
 } from "@vector-im/compound-web";
 import {
   ChevronUpIcon,
   ChevronDownIcon,
+  InfoIcon,
   SpinnerIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import classNames from "classnames";
@@ -41,6 +42,10 @@ import { useMediaDevices } from "../MediaDevicesContext";
 import { useRootElement } from "../RootElementContext";
 import { observeElementSize$ } from "../utils/elementSize";
 import { LiveMicrophoneLevelMeter } from "./MicrophoneLevelMeter";
+import {
+  BackgroundEffectGrid,
+  type BackgroundEffectOption,
+} from "./BackgroundEffectGrid";
 
 export interface MenuOptions {
   label: DeviceLabel | AudioOutputDeviceLabel;
@@ -65,16 +70,19 @@ export interface MediaMuteAndSwitchButtonProps {
   selectedOutputOption?: string;
   /** Picks an output device. Undefined disables the speaker section. */
   onSelectOutput?: (id: string) => void;
-  videoBlurToggleClick?: () => void;
-  videoBlurEnabled?: boolean;
+  /** Camera menu only. None or an empty list leaves the section out. */
+  backgroundEffects?: BackgroundEffectOption[];
+  selectedBackgroundEffect?: string;
+  /** Undefined where effects can't run: all but no effect are disabled. */
+  onSelectBackgroundEffect?: (id: string) => void;
+  /** What the user should know before choosing an effect, if anything. */
+  backgroundEffectNotice?: string;
   /**
    * For any toggle and option this method will be called.
    * So toggles need to be implemented by listening here and setting the right toggle item to `enabled`
    */
   onSelect?: (id: string) => void;
 }
-
-const BLUR_ID = "blur";
 
 /** Id of the placeholder "Default" row, shown when the platform lists no outputs. */
 const DEFAULT_OUTPUT_ID = "default";
@@ -98,8 +106,10 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   outputOptions,
   selectedOutputOption,
   onSelectOutput,
-  videoBlurEnabled,
-  videoBlurToggleClick,
+  backgroundEffects,
+  selectedBackgroundEffect,
+  onSelectBackgroundEffect,
+  backgroundEffectNotice,
   onSelect,
 }) => {
   // Requested but not yet selected. Keyed by kind too, since Chrome uses
@@ -117,6 +127,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   const isBusy = busy ?? false;
   const { t } = useTranslation();
   const devices = useMediaDevices();
+  const noticeId = useId();
 
   /**
    * Records on the menu whether the keyboard or the pointer moved focus, for
@@ -189,16 +200,8 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
     />
   );
 
-  const toggles =
-    iconsAndLabels === "video" && videoBlurToggleClick !== undefined
-      ? [
-          {
-            label: t("action.blur_background"),
-            enabled: videoBlurEnabled ?? false,
-            id: BLUR_ID,
-          },
-        ]
-      : [];
+  const showEffects =
+    iconsAndLabels === "video" && (backgroundEffects?.length ?? 0) > 0;
 
   let optionsButtonLabel: string;
   let menuTitle: string;
@@ -408,19 +411,30 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
               )}
             </div>
           </div>
+          {showEffects && (
+            <BackgroundEffectGrid
+              label={t("settings.background_effects_header")}
+              heading={
+                <div aria-hidden className={styles.sectionHeading}>
+                  <MenuTitle title={t("settings.background_effects_header")} />
+                </div>
+              }
+              effects={backgroundEffects ?? []}
+              selected={selectedBackgroundEffect}
+              onSelect={onSelectBackgroundEffect}
+              describedBy={
+                backgroundEffectNotice === undefined ? undefined : noticeId
+              }
+            />
+          )}
+          {/* In the list, so the menu grows no taller for it. */}
+          {showEffects && backgroundEffectNotice !== undefined && (
+            <div id={noticeId} role="none" className={styles.notice}>
+              <InfoIcon width={20} height={20} />
+              <span>{backgroundEffectNotice}</span>
+            </div>
+          )}
         </MenuScrollArea>
-        {toggles.length > 0 && <hr />}
-        {toggles.map((toggle) => (
-          <ToggleMenuItem
-            label={toggle.label}
-            onSelect={(e) => {
-              videoBlurToggleClick?.();
-              e.preventDefault();
-            }}
-            checked={toggle.enabled}
-            key={toggle.id}
-          />
-        ))}
       </Menu>
     </div>
   );
