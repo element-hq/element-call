@@ -45,6 +45,8 @@ Please see LICENSE in the repository root for full details.
    so CSS can't size it against the call. */
 .deviceList {
   max-block-size: var(--device-list-max-height);
+  /* The raised headings stay raised within the list, under the menu's frame. */
+  isolation: isolate;
 }
 
 /* Compound's heading rule heads each section; the design adds space below it. */
@@ -57,6 +59,12 @@ Please see LICENSE in the repository root for full details.
   margin-block-start: var(--cpd-space-7x);
 }
 
+/* Raised, or the positioned effect tiles scroll over the heading they sit
+   under. Compound's sticky heading is the section's aria-hidden first child. */
+.deviceList [role="group"] > [aria-hidden="true"]:first-child {
+  z-index: 1;
+}
+
 /* Radix focuses whatever the pointer is over, so the browser's ring would
    follow the mouse. Replaced by one shown only for keyboard focus. */
 .menu [role^="menuitem"]:focus,
@@ -67,4 +75,21 @@ Please see LICENSE in the repository root for full details.
 .menu[data-focus-source="keyboard"] [role^="menuitem"]:focus {
   outline: var(--cpd-border-width-2) solid var(--cpd-color-border-focused);
   outline-offset: calc(-1 * var(--cpd-border-width-2));
+}
+
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--cpd-space-3x);
+  margin: var(--cpd-space-2x) var(--cpd-space-4x) 0;
+  padding: var(--cpd-space-3x);
+  border-radius: var(--cpd-space-2x);
+  background: var(--cpd-color-bg-subtle-secondary);
+  color: var(--cpd-color-text-primary);
+  font: var(--cpd-font-body-md-regular);
+}
+
+.notice > svg {
+  flex-shrink: 0;
+  color: var(--cpd-color-icon-secondary);
 }

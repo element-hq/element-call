@@ -3,7 +3,6 @@
     "user_menu": "User menu"
   },
   "action": {
-    "blur_background": "Blur background",
     "close": "Close",
     "copy_link": "Copy link",
     "edit": "Edit",
@@ -23,6 +22,12 @@
     "upload_file": "Upload file"
   },
   "analytics_notice": "By participating in this beta, you consent to the collection of anonymous data, which we use to improve the product. You can find more information about which data we track in our <2>Privacy Policy</2> and our <6>Cookie Policy</6>.",
+  "background_effects": {
+    "blur": "Blur",
+    "none": "None",
+    "numbered": "Background {{n}}",
+    "unavailable": "Background effects are not supported on this platform."
+  },
   "call_ended_view": {
     "create_account_button": "Create account",
     "create_account_prompt": "<0>Why not finish by setting up a password to keep your account?</0><1>You'll be able to keep your name and set an avatar for use on future calls</1>",
@@ -212,6 +217,7 @@
     "auto_gain_control_label": "Automatic gain control",
     "background_blur_header": "Background",
     "background_blur_label": "Blur the background of the video",
+    "background_effects_header": "Background effects",
     "bitrate_label": "Bitrate",
     "blur_not_supported_by_browser": "(Background blur is not supported by this device.)",
     "camera_header": "Camera quality",
