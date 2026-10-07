@@ -148,9 +148,20 @@ export const enableExtendedLivekitLogs = new Setting<boolean>(
   false,
 );
 
+export function defaultMatrixRTCMode(
+  buildValue: string | undefined = import.meta.env.VITE_MATRIX_RTC_MODE,
+): MatrixRTCMode {
+  if (buildValue === undefined) return MatrixRTCMode.Compatibility;
+  if (Object.values<string>(MatrixRTCMode).includes(buildValue)) {
+    return buildValue as MatrixRTCMode;
+  }
+  logger.warn(`Ignoring invalid VITE_MATRIX_RTC_MODE: ${buildValue}`);
+  return MatrixRTCMode.Compatibility;
+}
+
 export const matrixRTCMode = new Setting<MatrixRTCMode>(
   "matrix-rtc-mode",
-  MatrixRTCMode.Compatibility,
+  defaultMatrixRTCMode(),
 );
 
 export const customLivekitUrl = new Setting<string | null>(

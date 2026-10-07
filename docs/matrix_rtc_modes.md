@@ -46,3 +46,11 @@ Valid values are `compatibility` and `matrix_2_0`; an invalid value is
 ignored (with a warning) and the user's choice applies. Pinning `matrix_2_0` on a
 homeserver without sticky event support makes joining fail with a "sticky events
 required" error.
+
+A build can change the default mode, for setups without a `config.json` by setting
+`VITE_MATRIX_RTC_MODE` at build time:
+
+```sh
+VITE_MATRIX_RTC_MODE=matrix_2_0 pnpm build:embedded
+```
+

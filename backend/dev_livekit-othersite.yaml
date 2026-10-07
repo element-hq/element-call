@@ -6,6 +6,11 @@ rtc:
   port_range_start: 50300
   port_range_end: 50400
   use_external_ip: false
+  # Advertise the loopback address instead of the container IP, which is not
+  # routable from the host when Docker runs in a VM (colima, Docker Desktop).
+  # The browser then reaches the SFU through the published ports. Firefox
+  # ignores loopback candidates, so this only works in Chromium-based browsers.
+  node_ip: 127.0.0.1
 turn:
   enabled: false
   domain: localhost

@@ -360,6 +360,33 @@ pnpm backend
 # podman-compose -f docker-compose-dev.yml up
 ```
 
+The two Element Web instances load the Element Call widget from
+`./dist-embedded`, which is mounted over the copy bundled in the Element Web
+image. Build it from the current sources before starting the backend, and keep
+it rebuilding on change:
+
+```sh
+VITE_MATRIX_RTC_MODE=matrix_2_0 pnpm build:embedded:development --outDir dist-embedded --watch
+```
+
+Build it at least once before the first `pnpm backend`, since Docker otherwise
+creates an empty `dist-embedded` directory that the build cannot write to.
+Reload the page after a rebuild to pick up the new widget. The widget has no
+`config.json` in this setup, so `VITE_MATRIX_RTC_MODE` sets the default
+MatrixRTC mode of the build instead (see
+[docs/matrix_rtc_modes.md](docs/matrix_rtc_modes.md)); it can still be changed
+under Settings → Developer. Do not delete `dist-embedded` while the backend is
+running: the containers hold a mount of the directory, and a new directory of
+the same name is not picked up until they are recreated.
+
+> [!NOTE]
+> When Docker runs in a VM (colima, Docker Desktop), the SFUs' container IPs
+> are not routable from the host, so they advertise `127.0.0.1` as their ICE
+> candidate instead and the browser reaches them through the published ports.
+> This only works in Chromium-based browsers: Firefox ignores loopback
+> candidates, and calls drop about fifteen seconds after joining. Media runs
+> over ICE-TCP, since the UDP port ranges are not forwarded out of the VM.
+
 > [!NOTE]
 > To ensure your local development frontend functions properly, you’ll need to
 > add certificate exceptions in your browser for `https://localhost:3000` and
