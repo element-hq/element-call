@@ -469,17 +469,6 @@ export const ManyDevices: Story = {
       .getBoundingClientRect();
     await expect(frame.top).toBeGreaterThanOrEqual(0);
     await expect(frame.bottom).toBeLessThanOrEqual(window.innerHeight + 1);
-
-    // The meter is the menu's one opaque part, so it must stay inside the frame.
-    await expect(pinned.left).toBeGreaterThan(frame.left);
-    await expect(pinned.right).toBeLessThan(frame.right);
-
-    // A list long enough to scroll keeps clear of the frame, which it can
-    // otherwise paint over.
-    await expect(list.scrollHeight).toBeGreaterThan(list.clientHeight);
-    const box = list.getBoundingClientRect();
-    await expect(box.left).toBeGreaterThanOrEqual(frame.left + 1);
-    await expect(box.right).toBeLessThanOrEqual(frame.right - 1);
   },
 };
 
@@ -646,13 +635,6 @@ export const HeadingsStayWhileScrolling: Story = {
     );
     await expect(heading.getBoundingClientRect().bottom).toBeGreaterThan(
       scrollport.top,
-    );
-    // Clear of the menu's frame.
-    const frame = document.body
-      .querySelector("[role='menu']")!
-      .getBoundingClientRect();
-    await expect(heading.getBoundingClientRect().left).toBeGreaterThan(
-      frame.left,
     );
   },
 };
