@@ -58,8 +58,8 @@ import { ConnectionState, type Connection } from "../remoteMembers/Connection";
 import { type Publisher } from "./Publisher";
 import { initializeWidget } from "../../../widget";
 import { nullHostBridge } from "../../../HostBridge";
-import { type LocalTransport } from "./LocalTransport";
-import * as openIDSFU from "../../../livekit/openIDSFU";
+import { type SFUConfig } from "../../../livekit/auth";
+import * as livekitAuth from "../../../livekit/auth";
 
 initializeWidget();
 
@@ -110,6 +110,7 @@ const delegatedTimings: ResolvedDelayedLeaveTimings = {
 };
 
 const mockedClient = {
+  baseUrl: "https://matrix.example.org",
   getDomain: vi.fn().mockReturnValue("example.org"),
   getDeviceId: vi.fn().mockReturnValue("AAAA"),
   getOpenIdToken: vi.fn().mockResolvedValue({
@@ -118,6 +119,7 @@ const mockedClient = {
     matrix_server_name: "localhost",
     expires_in: 10000,
   }),
+  _unstable_delegateDelayedLeave: vi.fn().mockResolvedValue({}),
 };
 
 describe("enterRTCSession", () => {
@@ -315,19 +317,17 @@ describe("LocalMembership", () => {
     scope.end();
   });
 
-  const mockTransportConfig = {
-    livekit_service_url: "a",
+  const mockTransport: UnstableLivekitTransport = {
+    type: "livekit",
+    url: "https://sfu.example.org",
   } as UnstableLivekitTransport;
 
-  const mockTransport = {
-    transport: mockTransportConfig,
-    sfuConfig: {
-      jwt: "foo",
-      livekitAlias: "bar",
-      livekitIdentity: "baz",
-      url: "bro",
-    },
-  } as LocalTransport;
+  const mockSFUConfig: SFUConfig = {
+    jwt: "foo",
+    livekitAlias: "bar",
+    livekitIdentity: "baz",
+    url: "bro",
+  };
 
   const connectionTransportAConnected = {
     livekitRoom: mockLivekitRoom({
@@ -337,7 +337,7 @@ describe("LocalMembership", () => {
       } as unknown as LocalParticipant,
     }),
     state$: constant(ConnectionState.LivekitConnected),
-    transport: mockTransportConfig,
+    transport: mockTransport,
   } as Connection;
   const connectionTransportAConnecting = {
     ...connectionTransportAConnected,
@@ -346,8 +346,8 @@ describe("LocalMembership", () => {
   } as unknown as Connection;
 
   const authCallSpy = vi
-    .spyOn(openIDSFU, "getSFUConfigWithOpenID")
-    .mockImplementation(() => mockedClient.getOpenIdToken());
+    .spyOn(livekitAuth, "getSFUConfig")
+    .mockResolvedValue(mockSFUConfig);
   afterEach(() => authCallSpy.mockClear());
 
   it.each([
@@ -386,7 +386,7 @@ describe("LocalMembership", () => {
       await flushPromises();
       // Joins with timings appropriate for the level of delegation support
       expect(joinMatrixRTC).toHaveBeenCalledWith(
-        mockTransportConfig,
+        mockTransport,
         delayedLeaveTimings,
       );
 
@@ -480,7 +480,7 @@ describe("LocalMembership", () => {
   it("tracks livekit state correctly", async () => {
     const scope = new ObservableScope();
     const connectionManagerData = new ConnectionManagerData();
-    const localTransport$ = new Subject<LocalTransport>();
+    const localTransport$ = new Subject<UnstableLivekitTransport>();
 
     const connectionManagerData$ = new BehaviorSubject(
       new Epoch(connectionManagerData),
@@ -553,7 +553,7 @@ describe("LocalMembership", () => {
     });
 
     (
-      connectionManagerData2.getConnectionForTransport(mockTransportConfig)!
+      connectionManagerData2.getConnectionForTransport(mockTransport)!
         .state$ as BehaviorSubject<ConnectionState>
     ).next(ConnectionState.LivekitConnected);
     expect(localMembership.localMemberState$.value).toStrictEqual({
@@ -858,7 +858,7 @@ describe("LocalMembership", () => {
       const setScreenShareEnabled = vi.fn().mockRejectedValue(error);
       const connection = {
         state$: constant(ConnectionState.LivekitConnected),
-        transport: mockTransportConfig,
+        transport: mockTransport,
         livekitRoom: mockLivekitRoom({
           localParticipant: mockLocalParticipant({
             isScreenShareEnabled: false,

@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { test, vi, expect, beforeEach, afterEach } from "vitest";
-import { BehaviorSubject, NEVER } from "rxjs";
+import { BehaviorSubject } from "rxjs";
 import { type Room as LivekitRoom } from "livekit-client";
 import EventEmitter from "events";
 import fetchMock from "fetch-mock";
@@ -19,8 +19,12 @@ import {
   trackEpoch,
 } from "../../ObservableScope.ts";
 import { ECConnectionFactory } from "./ConnectionFactory.ts";
-import { type ClientOpenIDParts } from "../../../livekit/openIDSFU.ts";
 import {
+  type ClientGetTokenParts,
+  type ClientOpenIDParts,
+} from "../../../livekit/auth";
+import {
+  exampleTransport,
   mockMediaDevices,
   mockRtcMembership,
   ownMemberMock,
@@ -40,7 +44,7 @@ import { localRtcMember, testJWTToken } from "../../../utils/test-fixtures.ts";
 
 let testScope: ObservableScope;
 let ecConnectionFactory: ECConnectionFactory;
-let mockClient: ClientOpenIDParts;
+let mockClient: ClientGetTokenParts & ClientOpenIDParts;
 let lkRoomFactory: () => LivekitRoom;
 
 const createdMockLivekitRooms: Map<string, LivekitRoom> = new Map();
@@ -50,6 +54,7 @@ beforeEach(() => {
   mockClient = {
     getOpenIdToken: vi.fn().mockReturnValue(""),
     getDeviceId: vi.fn().mockReturnValue("DEV000"),
+    _unstable_getLivekitToken: vi.fn().mockResolvedValue({ jwt: testJWTToken }),
   };
 
   lkRoomFactory = vi.fn().mockImplementation(() => {
@@ -123,7 +128,7 @@ test("bob, carl, then bob joining no tracks yet", () => {
     const connectionManager = createConnectionManager$({
       scope: testScope,
       connectionFactory: ecConnectionFactory,
-      localTransport$: NEVER,
+      localTransport: exampleTransport,
       remoteTransports$: membershipsAndTransports.transports$,
       logger: logger,
       ownMembershipIdentity: ownMemberMock,

@@ -17,20 +17,39 @@ import {
 import fetchMock from "fetch-mock";
 import { MatrixError } from "matrix-js-sdk";
 
-import { getSFUConfigWithOpenID, type ClientOpenIDParts } from "./openIDSFU";
-import { testJWTToken } from "../utils/test-fixtures";
-import { ownMemberMock } from "../utils/test";
-import { FailToGetOpenIdToken } from "../utils/errors";
+import {
+  getSFUConfig,
+  type GetSFUConfigParams,
+  type ClientOpenIDParts,
+} from "./openID";
+import { testJWTToken } from "../../utils/test-fixtures";
+import { ownMemberMock } from "../../utils/test";
+import { FailToGetOpenIdToken } from "../../utils/errors";
+import { logger } from "matrix-js-sdk/lib/logger";
 
-const sfuUrl = "https://sfu.example.org";
+const serviceUrl = "https://sfu.example.org";
 
-describe("getSFUConfigWithOpenID", () => {
+const delayParams = {
+  delayEndpointBaseUrl: "https://matrix.homeserverserver.org",
+  delayId: "mock_delay_id",
+};
+
+describe("getSFUConfig", () => {
   let matrixClient: MockedObject<ClientOpenIDParts>;
+  let params: GetSFUConfigParams;
   beforeEach(() => {
     fetchMock.catch(404);
     matrixClient = {
       getOpenIdToken: vitest.fn(),
       getDeviceId: vitest.fn(),
+    };
+    params = {
+      client: matrixClient,
+      membership: ownMemberMock,
+      serviceUrl: "https://sfu.example.org",
+      roomId: "!example_room_id",
+      role: "subscriber",
+      logger,
     };
   });
   afterEach(() => {
@@ -42,18 +61,13 @@ describe("getSFUConfigWithOpenID", () => {
     fetchMock.post("https://sfu.example.org/sfu/get", () => {
       return {
         status: 200,
-        body: { url: sfuUrl, jwt: testJWTToken },
+        body: { url: serviceUrl, jwt: testJWTToken },
       };
     });
-    const config = await getSFUConfigWithOpenID(
-      matrixClient,
-      ownMemberMock,
-      "https://sfu.example.org",
-      "!example_room_id",
-    );
+    const config = await getSFUConfig(params);
     expect(config).toEqual({
       jwt: testJWTToken,
-      url: sfuUrl,
+      url: serviceUrl,
       livekitIdentity: "@me:example.org:ABCDEF",
       livekitAlias: "!example_room_id",
     });
@@ -71,12 +85,7 @@ describe("getSFUConfigWithOpenID", () => {
       };
     });
     try {
-      await getSFUConfigWithOpenID(
-        matrixClient,
-        ownMemberMock,
-        "https://sfu.example.org",
-        "!example_room_id",
-      );
+      await getSFUConfig(params);
     } catch (ex: unknown) {
       expect(ex).toBeInstanceOf(FailToGetOpenIdToken);
       expect((ex as FailToGetOpenIdToken).cause).toBeInstanceOf(MatrixError);
@@ -116,23 +125,14 @@ describe("getSFUConfigWithOpenID", () => {
 
         return {
           status: 200,
-          body: { url: sfuUrl, jwt: testJWTToken },
+          body: { url: serviceUrl, jwt: testJWTToken },
         };
       },
       { overwriteRoutes: true },
     );
 
-    // Note: Assuming getSFUConfigWithOpenID eventually calls getLiveKitJWT
-    const config = await getSFUConfigWithOpenID(
-      matrixClient,
-      ownMemberMock,
-      "https://sfu.example.org",
-      "!example_room_id",
-      {
-        delayEndpointBaseUrl: "https://matrix.homeserverserver.org",
-        delayId: "mock_delay_id",
-      },
-    );
+    // Note: Assuming getSFUConfig eventually calls getLiveKitJWT
+    const config = await getSFUConfig({ ...params, ...delayParams });
 
     expect(config.jwt).toBe(testJWTToken);
     expect(callCount).toBe(2);
@@ -153,7 +153,7 @@ describe("getSFUConfigWithOpenID", () => {
         ) {
           return {
             status: 200,
-            body: { url: sfuUrl, jwt: testJWTToken },
+            body: { url: serviceUrl, jwt: testJWTToken },
           };
         }
         return {
@@ -164,21 +164,12 @@ describe("getSFUConfigWithOpenID", () => {
       { overwriteRoutes: true },
     );
 
-    const config = await getSFUConfigWithOpenID(
-      matrixClient,
-      ownMemberMock,
-      "https://sfu.example.org",
-      "!example_room_id",
-      {
-        delayEndpointBaseUrl: "https://homeserverserver.org/cs_api",
-        delayId: "mock_delay_id",
-      },
-    );
+    const config = await getSFUConfig({ ...params, ...delayParams });
 
     // Prüfe das Ergebnis
     expect(config).toMatchObject({
       jwt: testJWTToken,
-      url: sfuUrl,
+      url: serviceUrl,
     });
 
     void (await fetchMock.flush());
@@ -204,16 +195,7 @@ describe("getSFUConfigWithOpenID", () => {
       };
     });
     try {
-      await getSFUConfigWithOpenID(
-        matrixClient,
-        ownMemberMock,
-        "https://sfu.example.org",
-        "!example_room_id",
-        {
-          delayEndpointBaseUrl: "https://matrix.homeserverserver.org",
-          delayId: "mock_delay_id",
-        },
-      );
+      await getSFUConfig({ ...params, ...delayParams });
     } catch (ex) {
       expect(ex).toBeInstanceOf(FailToGetOpenIdToken);
       expect((ex as FailToGetOpenIdToken).cause).toBeInstanceOf(MatrixError);
@@ -251,7 +233,7 @@ describe("getSFUConfigWithOpenID", () => {
     fetchMock.post("https://sfu.example.org/get_token", () => {
       return {
         status: 200,
-        body: { url: sfuUrl, jwt: testJWTToken },
+        body: { url: serviceUrl, jwt: testJWTToken },
       };
     });
     fetchMock.post("https://sfu.example.org/sfu/get", () => {
@@ -261,16 +243,7 @@ describe("getSFUConfigWithOpenID", () => {
       };
     });
     try {
-      await getSFUConfigWithOpenID(
-        matrixClient,
-        ownMemberMock,
-        "https://sfu.example.org",
-        "!example_room_id",
-        {
-          delayEndpointBaseUrl: "https://matrix.homeserverserver.org",
-          delayId: "mock_delay_id",
-        },
-      );
+      await getSFUConfig({ ...params, ...delayParams });
     } catch (ex) {
       expect(ex).toBeInstanceOf(FailToGetOpenIdToken);
       expect((ex as FailToGetOpenIdToken).cause).toEqual(
@@ -309,18 +282,13 @@ describe("getSFUConfigWithOpenID", () => {
     fetchMock.post("https://sfu.example.org/sfu/get", () => {
       return {
         status: 200,
-        body: { url: sfuUrl, jwt: testJWTToken },
+        body: { url: serviceUrl, jwt: testJWTToken },
       };
     });
-    const config = await getSFUConfigWithOpenID(
-      matrixClient,
-      ownMemberMock,
-      "https://sfu.example.org",
-      "!example_room_id",
-    );
+    const config = await getSFUConfig({ ...params, ...delayParams });
     expect(config).toEqual({
       jwt: testJWTToken,
-      url: sfuUrl,
+      url: serviceUrl,
       livekitIdentity: "@me:example.org:ABCDEF",
       livekitAlias: "!example_room_id",
     });

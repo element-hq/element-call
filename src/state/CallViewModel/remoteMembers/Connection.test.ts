@@ -28,7 +28,7 @@ import {
 } from "livekit-client";
 import fetchMock from "fetch-mock";
 import EventEmitter from "events";
-import { type IOpenIDToken } from "matrix-js-sdk";
+import { MatrixError, type IOpenIDToken } from "matrix-js-sdk";
 import { logger, type Logger } from "matrix-js-sdk/lib/logger";
 import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 
@@ -38,17 +38,20 @@ import {
   type ConnectionOpts,
 } from "./Connection.ts";
 import { ObservableScope } from "../../ObservableScope.ts";
-import { type ClientOpenIDParts } from "../../../livekit/openIDSFU.ts";
 import {
   ElementCallError,
   FailToGetOpenIdToken,
 } from "../../../utils/errors.ts";
 import { testJWTToken } from "../../../utils/test-fixtures.ts";
 import { mockRemoteParticipant, ownMemberMock } from "../../../utils/test.ts";
+import {
+  type ClientGetTokenParts,
+  type ClientOpenIDParts,
+} from "../../../livekit/auth";
 
 let testScope: ObservableScope;
 
-let client: MockedObject<ClientOpenIDParts>;
+let client: MockedObject<ClientGetTokenParts & ClientOpenIDParts>;
 
 let fakeLivekitRoom: MockedObject<LivekitRoom>;
 
@@ -57,14 +60,14 @@ let fakeLocalParticipant: MockedObject<LocalParticipant>;
 
 const ROOM_ID = "!roomID:example.org";
 
-const livekitFocus: UnstableLivekitTransport = {
-  livekit_service_url: "https://matrix-rtc.example.org/livekit/jwt",
+const transport: UnstableLivekitTransport = {
   type: "livekit",
+  url: "wss://matrix-rtc.m.localhost/livekit/sfu",
 };
 
 function setupTest(): void {
   testScope = new ObservableScope();
-  client = vi.mocked<ClientOpenIDParts>({
+  client = vi.mocked<ClientGetTokenParts & ClientOpenIDParts>({
     getOpenIdToken: vi.fn().mockResolvedValue({
       access_token: "rYsmGUEwNjKgJYyeNUkZseJN",
       token_type: "Bearer",
@@ -72,7 +75,8 @@ function setupTest(): void {
       expires_in: 3600,
     }),
     getDeviceId: vi.fn().mockReturnValue("ABCDEF"),
-  } as unknown as ClientOpenIDParts);
+    _unstable_getLivekitToken: vi.fn().mockResolvedValue({ jwt: testJWTToken }),
+  });
 
   localParticipantEventEmiter = new EventEmitter();
 
@@ -118,21 +122,12 @@ function setupRemoteConnection(): Connection {
   const opts: ConnectionOpts = {
     client: client,
     roomId: ROOM_ID,
-    transport: livekitFocus,
+    role: "subscriber",
+    transport: transport,
     scope: testScope,
     ownMembershipIdentity: ownMemberMock,
     livekitRoomFactory: () => fakeLivekitRoom,
   };
-
-  fetchMock.post(`${livekitFocus.livekit_service_url}/sfu/get`, () => {
-    return {
-      status: 200,
-      body: {
-        url: "wss://matrix-rtc.m.localhost/livekit/sfu",
-        jwt: testJWTToken,
-      },
-    };
-  });
 
   fakeLivekitRoom.connect.mockImplementation(async (): Promise<void> => {
     const changeEv = RoomEvent.ConnectionStateChanged;
@@ -174,7 +169,8 @@ describe("Start connection states", () => {
     const opts: ConnectionOpts = {
       client: client,
       roomId: ROOM_ID,
-      transport: livekitFocus,
+      role: "subscriber",
+      transport: transport,
       scope: testScope,
       ownMembershipIdentity: ownMemberMock,
       livekitRoomFactory: () => fakeLivekitRoom,
@@ -191,7 +187,8 @@ describe("Start connection states", () => {
     const opts: ConnectionOpts = {
       client: client,
       roomId: ROOM_ID,
-      transport: livekitFocus,
+      role: "subscriber",
+      transport: transport,
       scope: testScope,
       ownMembershipIdentity: ownMemberMock,
       livekitRoomFactory: () => fakeLivekitRoom,
@@ -228,7 +225,7 @@ describe("Start connection states", () => {
     capturedState = capturedStates.pop();
     if (capturedState instanceof Error) {
       expect(capturedState.message).toEqual("Something went wrong");
-      expect(connection.transport).toEqual(livekitFocus);
+      expect(connection.transport).toEqual(transport);
     } else {
       expect.fail("Expected FailedToStart state but got " + capturedState);
     }
@@ -241,7 +238,8 @@ describe("Start connection states", () => {
     const opts: ConnectionOpts = {
       client: client,
       roomId: ROOM_ID,
-      transport: livekitFocus,
+      role: "subscriber",
+      transport: transport,
       scope: testScope,
       ownMembershipIdentity: ownMemberMock,
       livekitRoomFactory: () => fakeLivekitRoom,
@@ -256,16 +254,15 @@ describe("Start connection states", () => {
     onTestFinished(() => s.unsubscribe());
 
     const deferredSFU = Promise.withResolvers<void>();
-    // mock the /sfu/get call
-    fetchMock.post(`${livekitFocus.livekit_service_url}/sfu/get`, async () => {
+    client._unstable_getLivekitToken.mockImplementation(async () => {
       await deferredSFU.promise;
-      return {
-        status: 500,
-        body: {
+      throw new MatrixError(
+        {
           errcode: "M_LOOKUP_FAILED",
           error: "Failed to look up user info from homeserver",
         },
-      };
+        500,
+      );
     });
 
     connection.start().catch(() => {
@@ -288,7 +285,7 @@ describe("Start connection states", () => {
       expect(capturedState.cause.message).toContain(
         "Failed to look up user info from homeserver",
       );
-      expect(connection.transport).toEqual(livekitFocus);
+      expect(connection.transport).toEqual(transport);
     } else {
       expect.fail("Expected FailedToStart state but got " + capturedState);
     }
@@ -301,7 +298,8 @@ describe("Start connection states", () => {
     const opts: ConnectionOpts = {
       client: client,
       roomId: ROOM_ID,
-      transport: livekitFocus,
+      role: "subscriber",
+      transport: transport,
       scope: testScope,
       ownMembershipIdentity: ownMemberMock,
       livekitRoomFactory: () => fakeLivekitRoom,
@@ -316,17 +314,6 @@ describe("Start connection states", () => {
     onTestFinished(() => s.unsubscribe());
 
     const deferredSFU = Promise.withResolvers<void>();
-    // mock the /sfu/get call
-    fetchMock.post(`${livekitFocus.livekit_service_url}/sfu/get`, () => {
-      return {
-        status: 200,
-        body: {
-          url: "wss://matrix-rtc.m.localhost/livekit/sfu",
-          jwt: testJWTToken,
-        },
-      };
-    });
-
     fakeLivekitRoom.connect.mockImplementation(async () => {
       await deferredSFU.promise;
       throw new Error("Failed to connect to livekit");
@@ -353,7 +340,7 @@ describe("Start connection states", () => {
       expect(capturedState.cause.message).toContain(
         "Failed to connect to livekit",
       );
-      expect(connection.transport).toEqual(livekitFocus);
+      expect(connection.transport).toEqual(transport);
     } else {
       expect.fail(
         "Expected FailedToStart state but got " + JSON.stringify(capturedState),
@@ -550,7 +537,8 @@ describe("remote track logging", () => {
       {
         client,
         roomId: ROOM_ID,
-        transport: livekitFocus,
+        role: "subscriber",
+        transport: transport,
         scope: testScope,
         ownMembershipIdentity: ownMemberMock,
         livekitRoomFactory: () => fakeLivekitRoom,

@@ -30,7 +30,6 @@ import {
   type CallViewModelOptions,
 } from "./CallViewModel";
 import {
-  exampleSfuConfig,
   exampleTransport,
   mockConfig,
   MockConnection,
@@ -209,24 +208,21 @@ export function withCallViewModel(mode: MatrixRTCMode) {
         livekitRoomFactory,
         connectionState$,
         windowSize$,
-        localTransport: {
-          transport: exampleTransport,
-          sfuConfig: exampleSfuConfig,
-        },
+        localTransport: exampleTransport,
         connectionFactory: {
           createConnection(
             scope,
+            role,
             transport,
             ownMembershipIdentity,
             logger,
-            sfuConfig,
           ) {
             return new MockConnection(
               {
                 scope,
+                role,
                 transport,
                 ownMembershipIdentity,
-                existingSFUConfig: sfuConfig,
                 client: room.client,
                 roomId: room.roomId,
                 livekitRoomFactory,

@@ -20,17 +20,19 @@ export type ClientGetTokenParts = Pick<
   "_unstable_getLivekitToken"
 >;
 
+export interface GetSFUConfigParams {
+  client: ClientGetTokenParts;
+  membership: CallMembershipIdentityParts;
+  url: string;
+  roomId: string;
+}
+
 export async function getSFUConfig({
   client,
   membership,
   url,
   roomId,
-}: {
-  client: ClientGetTokenParts;
-  membership: CallMembershipIdentityParts;
-  url: string;
-  roomId: string;
-}): Promise<SFUConfig> {
+}: GetSFUConfigParams): Promise<SFUConfig> {
   const res = await doNetworkOperationWithRetry(async () =>
     client._unstable_getLivekitToken({
       url,

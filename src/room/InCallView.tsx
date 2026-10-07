@@ -694,15 +694,19 @@ export const InCallView: FC<InCallViewProps> = ({
             tab={settingsTab}
             onTabChange={setSettingsTab}
             developerSettingsVm={developerSettingsVm}
-            livekitRooms={allConnections
-              .getConnections()
-              .map((connectionItem) => ({
-                room: connectionItem.livekitRoom,
-                livekitAlias: connectionItem.livekitAlias,
-                // TODO compute is local or tag it in the livekit room items already
-                isLocal: undefined,
-                url: connectionItem.transport.livekit_service_url,
-              }))}
+            livekitRooms={allConnections.map(
+              ({ livekitRoom: room, livekitAlias, transport, role }) => ({
+                room,
+                livekitAlias,
+                role,
+                url:
+                  // It should be relatively clear to the user which kind of URL
+                  // this is, based on the scheme (ws:// vs. http://)
+                  "url" in transport
+                    ? transport.url
+                    : transport.livekit_service_url,
+              }),
+            )}
           />
         </>
       )}

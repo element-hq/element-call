@@ -24,22 +24,40 @@ export type ClientOpenIDParts = Pick<
   "getOpenIdToken" | "getDeviceId"
 >;
 
+export interface GetSFUConfigParams {
+  client: ClientOpenIDParts;
+  /**
+   * Our own membership identity parts used to send to the JWT service.
+   */
+  membership: CallMembershipIdentityParts;
+  /**
+   * The base URL of the LiveKit JWT service.
+   */
+  serviceUrl: string;
+  /**
+   * The room ID used in the request. This is NOT the livekit_alias. The JWT
+   * service will provide the alias. It maps Matrix room IDs to LiveKit aliases.
+   */
+  roomId: string;
+  /**
+   * Whether we want to publish or only subscribe on this transport.
+   */
+  role: "publisher" | "subscriber";
+  /**
+   * The base URL of the Matrix homeserver, for delayed leave delegation.
+   */
+  delayEndpointBaseUrl?: string;
+  /**
+   * The delay ID of the leave event to be delegated to the JWT service.
+   */
+  delayId?: string;
+  logger: Logger;
+}
+
 /**
  * Gets a bearer token from the homeserver and then use it to authenticate
  * to the matrix RTC backend in order to get acces to the SFU.
  * It has built-in retry for calls to the homeserver with a backoff policy.
- * @param client The Matrix client
- * @param membership Our own membership identity parts used to send to jwt service.
- * @param serviceUrl The URL of the livekit SFU service
- * @param roomId The room id used in the jwt request. This is NOT the livekit_alias. The jwt service will provide the alias. It maps matrix room ids <-> Livekit aliases.
- * @param opts Additional options to modify which endpoint with which data will be used to acquire the jwt token.
- * @param opts.matrixRTCMode Determines which version of the JWT endpoint to use, which affects whether the
- * RTC backend identity is based on string concatenation (legacy) or a hash (Matrix 2.0).
- * This function by default uses whatever is possible with the current jwt service installed next to the SFU.
- * For remote connections this does not matter, since we will not publish there we can rely on the newest option.
- * @param opts.delayEndpointBaseUrl The URL of the matrix homeserver.
- * @param opts.delayId The delay id used for the jwt service to manage.
- * @param logger optional logger.
  * @returns Object containing the token information
  * @throws FailToGetOpenIdToken
  */
@@ -52,16 +70,7 @@ export async function getSFUConfig({
   delayEndpointBaseUrl,
   delayId,
   logger,
-}: {
-  client: ClientOpenIDParts;
-  membership: CallMembershipIdentityParts;
-  serviceUrl: string;
-  roomId: string;
-  role: "publisher" | "subscriber";
-  delayEndpointBaseUrl?: string;
-  delayId?: string;
-  logger: Logger;
-}): Promise<SFUConfig> {
+}: GetSFUConfigParams): Promise<SFUConfig> {
   let openIdToken: IOpenIDToken;
   try {
     openIdToken = await doNetworkOperationWithRetry(async () =>

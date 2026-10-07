@@ -78,7 +78,7 @@ import {
   type RemoteScreenShareViewModel,
 } from "../state/media/RemoteScreenShareViewModel";
 import { Connection } from "../state/CallViewModel/remoteMembers/Connection";
-import { type SFUConfig } from "../livekit/openIDSFU";
+import { type SFUConfig } from "../livekit/auth";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();
@@ -214,13 +214,6 @@ export const exampleTransport: UnstableLivekitTransport = {
   livekit_service_url: "https://lk.example.org",
 };
 
-export const exampleSfuConfig: SFUConfig = {
-  jwt: "foo",
-  livekitAlias: "bar",
-  livekitIdentity: "baz",
-  url: "bro",
-};
-
 export function mockRtcMembership(
   user: string | RoomMember,
   deviceId: string,
@@ -261,11 +254,12 @@ export function mockRtcMembership(
     content: data,
   });
 
-  const membershipData = CallMembership.membershipDataFromMatrixEvent(event);
+  const backendIdentity = rtcBackendIdentity ?? `${userId}:${deviceId}`;
   const cms = new CallMembership(
     event,
-    membershipData,
-    rtcBackendIdentity ?? `${userId}:${deviceId}`,
+    CallMembership.membershipDataFromMatrixEvent(event),
+    [backendIdentity],
+    backendIdentity,
   );
   vi.mocked(cms).getTransport = vi.fn().mockReturnValue(fociPreferred[0]);
 

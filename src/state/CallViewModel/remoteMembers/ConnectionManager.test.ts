@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { BehaviorSubject, NEVER } from "rxjs";
+import { BehaviorSubject } from "rxjs";
 import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { type RemoteParticipant } from "livekit-client";
 import { logger } from "matrix-js-sdk/lib/logger";
@@ -74,7 +74,7 @@ describe("connections$ stream", () => {
       const { connectionManagerData$ } = createConnectionManager$({
         scope: testScope,
         connectionFactory: fakeConnectionFactory,
-        localTransport$: NEVER,
+        localTransport: TRANSPORT_1,
         remoteTransports$: behavior("a", {
           a: new Epoch([TRANSPORT_1, TRANSPORT_2], 0),
         }),
@@ -115,7 +115,7 @@ describe("connections$ stream", () => {
       const { connectionManagerData$ } = createConnectionManager$({
         scope: testScope,
         connectionFactory: fakeConnectionFactory,
-        localTransport$: NEVER,
+        localTransport: TRANSPORT_1,
         remoteTransports$: behavior("abcdef", {
           a: new Epoch([TRANSPORT_1], 0),
           b: new Epoch([TRANSPORT_1], 1),
@@ -162,7 +162,7 @@ describe("connections$ stream", () => {
       const { connectionManagerData$ } = createConnectionManager$({
         scope: testScope,
         connectionFactory: fakeConnectionFactory,
-        localTransport$: NEVER,
+        localTransport: TRANSPORT_1,
         remoteTransports$: behavior("abc", {
           a: new Epoch([TRANSPORT_1], 0),
           b: new Epoch([TRANSPORT_1, TRANSPORT_2], 1),
@@ -226,7 +226,12 @@ describe("connectionManagerData$ stream", () => {
   let fakeRemoteParticipantsStreams: Map<string, Behavior<RemoteParticipant[]>>;
 
   function keyForTransport(transport: UnstableLivekitTransport): string {
-    return `${transport.livekit_service_url}`;
+    return JSON.stringify([
+      "url" in transport ? transport.url : undefined,
+      "livekit_service_url" in transport
+        ? transport.livekit_service_url
+        : undefined,
+    ]);
   }
 
   beforeEach(() => {
@@ -297,7 +302,7 @@ describe("connectionManagerData$ stream", () => {
       const { connectionManagerData$ } = createConnectionManager$({
         scope: testScope,
         connectionFactory: fakeConnectionFactory,
-        localTransport$: NEVER,
+        localTransport: TRANSPORT_1,
         remoteTransports$: behavior("a", {
           a: new Epoch([TRANSPORT_1, TRANSPORT_2], 0),
         }),

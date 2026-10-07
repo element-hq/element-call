@@ -11,7 +11,7 @@ import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 
 import { Config } from "../../../config/Config.ts";
 import { MatrixRTCTransportMissingError } from "../../../utils/errors.ts";
-import { customLivekitUrl } from "../../../settings/settings.ts";
+import { customTransport as customTransportSetting } from "../../../settings/settings.ts";
 import { RtcTransportAutoDiscovery } from "./RtcTransportAutoDiscovery.ts";
 
 /**
@@ -22,16 +22,15 @@ export async function getLocalTransport(
   client: Pick<MatrixClient, "getDomain" | "_unstable_getRTCTransports">,
 ): Promise<UnstableLivekitTransport> {
   const discovery = new RtcTransportAutoDiscovery({
-    client: client,
+    client,
     resolvedConfig: Config.get(),
     logger: rootLogger.getChild("[LocalTransport]"),
   });
-  const customUrl = customLivekitUrl.value$.value;
 
-  // Respect the user's custom URL, if set
-  const transport: UnstableLivekitTransport | null = customUrl
-    ? { type: "livekit", livekit_service_url: customUrl }
-    : await discovery.discoverPreferredTransport();
+  // Respect the user's custom transport, if set
+  const transport =
+    customTransportSetting.value$.value ??
+    (await discovery.discoverPreferredTransport());
 
   if (transport === null)
     throw new MatrixRTCTransportMissingError(client.getDomain() ?? "");

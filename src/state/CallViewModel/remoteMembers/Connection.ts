@@ -102,7 +102,10 @@ export class Connection {
    */
   public readonly state$: Behavior<ConnectionState | Error> = this._state$;
 
-  private readonly role: "publisher" | "subscriber";
+  /**
+   * Whether we want to publish or only subscribe on this connection.
+   */
+  public readonly role: "publisher" | "subscriber";
 
   /**
    * The media transport to connect to.

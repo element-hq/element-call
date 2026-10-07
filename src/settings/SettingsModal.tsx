@@ -59,7 +59,7 @@ interface Props {
   livekitRooms?: {
     room: LivekitRoom;
     url: string;
-    isLocal?: boolean;
+    role: "publisher" | "subscriber";
   }[];
   /** Only available while in a call. Used by the developer tab. */
   developerSettingsVm?: ViewModel<DeveloperSettingsSnapshot>;

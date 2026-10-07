@@ -15,9 +15,9 @@ import * as csApi from "./csApi";
 import { type SFUConfig } from "./types";
 import { NoMatrix2AuthorizationService } from "../../utils/errors";
 
-export { ClientOpenIDParts } from "./openID";
-export { ClientGetTokenParts, ClientDelegationParts } from "./csApi";
-export * from "./types";
+export type { ClientOpenIDParts } from "./openID";
+export type { ClientGetTokenParts, ClientDelegationParts } from "./csApi";
+export type * from "./types";
 
 /**
  * Checks whether an error means "this homeserver does not implement the

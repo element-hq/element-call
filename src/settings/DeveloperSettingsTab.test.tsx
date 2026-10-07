@@ -18,14 +18,14 @@ import {
 } from "./DeveloperSettingsTab";
 import { outOfCallDeveloperSettingsTabViewModel } from "./DeveloperSettingsTabViewModel";
 import { createStaticViewModel } from "../state/ViewModel";
-import { getSFUConfigWithOpenID } from "../livekit/openIDSFU";
 import {
-  customLivekitUrl as customLivekitUrlSetting,
+  customTransport as customTransportSetting,
   enableExtendedLivekitLogs as enableExtendedLivekitLogsSetting,
   matrixRTCMode as matrixRTCModeSetting,
 } from "./settings";
 import { MatrixRTCMode } from "../config/ConfigOptions";
 import { mockConfig } from "../utils/test";
+import { getSFUConfig } from "../livekit/auth";
 
 // Mock url params hook to avoid environment-dependent snapshot churn.
 vi.mock("../UrlParams", () => ({
@@ -36,8 +36,8 @@ vi.mock("../UrlParams", () => ({
 }));
 
 // IMPORTANT: mock the same specifier used by DeveloperSettingsTab
-vi.mock("../livekit/openIDSFU", () => ({
-  getSFUConfigWithOpenID: vi.fn().mockResolvedValue({
+vi.mock("../livekit/auth", () => ({
+  getSFUConfig: vi.fn().mockResolvedValue({
     url: "mock-url",
     jwt: "mock-jwt",
   }),
@@ -126,7 +126,7 @@ describe("DeveloperSettingsTab", () => {
   });
   describe("custom livekit url", () => {
     afterEach(() => {
-      customLivekitUrlSetting.setValue(null);
+      customTransportSetting.setValue(null);
     });
     const client = {
       doesServerSupportUnstableFeature: vi.fn().mockResolvedValue(true),
@@ -153,9 +153,9 @@ describe("DeveloperSettingsTab", () => {
 
       const saveButton = screen.getByRole("button", { name: "Save" });
       await user.click(saveButton);
-      expect(getSFUConfigWithOpenID).not.toHaveBeenCalled();
+      expect(getSFUConfig).not.toHaveBeenCalled();
 
-      expect(customLivekitUrlSetting.getValue()).toBe(null);
+      expect(customTransportSetting.getValue()).toBe(null);
     });
     it("will not update custom livekit url without text in input", async () => {
       const user = userEvent.setup();
@@ -176,9 +176,9 @@ describe("DeveloperSettingsTab", () => {
 
       const saveButton = screen.getByRole("button", { name: "Save" });
       await user.click(saveButton);
-      expect(getSFUConfigWithOpenID).not.toHaveBeenCalled();
+      expect(getSFUConfig).not.toHaveBeenCalled();
 
-      expect(customLivekitUrlSetting.getValue()).toBe(null);
+      expect(customTransportSetting.getValue()).toBe(null);
     });
     it("will not update custom livekit url when pressing cancel", async () => {
       const user = userEvent.setup();
@@ -202,9 +202,9 @@ describe("DeveloperSettingsTab", () => {
         name: "Reset overwrite",
       });
       await user.click(cancelButton);
-      expect(getSFUConfigWithOpenID).not.toHaveBeenCalled();
+      expect(getSFUConfig).not.toHaveBeenCalled();
 
-      expect(customLivekitUrlSetting.getValue()).toBe(null);
+      expect(customTransportSetting.getValue()).toBe(null);
     });
     it("will update custom livekit url", async () => {
       const user = userEvent.setup();
@@ -226,14 +226,14 @@ describe("DeveloperSettingsTab", () => {
 
       const saveButton = screen.getByRole("button", { name: "Save" });
       await user.click(saveButton);
-      expect(getSFUConfigWithOpenID).toHaveBeenCalledWith(
+      expect(getSFUConfig).toHaveBeenCalledWith(
         expect.anything(),
         expect.anything(),
         "wss://example.livekit.valid",
         "#testRoom",
       );
 
-      expect(customLivekitUrlSetting.getValue()).toBe(
+      expect(customTransportSetting.getValue()).toBe(
         "wss://example.livekit.valid",
       );
     });
@@ -256,14 +256,14 @@ describe("DeveloperSettingsTab", () => {
       await user.type(input, "wss://example.livekit.valid");
 
       const saveButton = screen.getByRole("button", { name: "Save" });
-      (getSFUConfigWithOpenID as Mock).mockImplementation(() => {
+      (getSFUConfig as Mock).mockImplementation(() => {
         throw new Error("Invalid URL");
       });
       await user.click(saveButton);
       expect(
         screen.getByText("invalid URL (did not update)"),
       ).toBeInTheDocument();
-      expect(customLivekitUrlSetting.getValue()).toBe(null);
+      expect(customTransportSetting.getValue()).toBe(null);
     });
   });
 

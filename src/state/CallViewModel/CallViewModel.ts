@@ -39,6 +39,7 @@ import {
   timer,
   takeUntil,
   from,
+  concatWith,
 } from "rxjs";
 import { type Logger, logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import {
@@ -383,7 +384,7 @@ export interface CallViewModel {
    * key is generated when someone joins or leaves.
    */
   keyRotationSuppressed$: Behavior<boolean>;
-  allConnections$: Behavior<ConnectionManagerData>;
+  allConnections$: Behavior<Connection[]>;
   /** Participants sorted by livekit room so they can be used in the audio rendering */
   livekitRoomItems$: Behavior<LivekitRoomItem[]>;
   /** use the layout instead, this is just for the sdk export. */
@@ -591,6 +592,7 @@ export function createCallViewModel$(
   const connectionManager: IConnectionManager = {
     connectionManagerData$: scope.behavior(
       localTransport$.pipe(
+        concatWith(NEVER), // So the Observable doesn't complete prematurely
         mapScoped("connectionManager$", (scope, localTransport) =>
           createConnectionManager$({
             scope,
@@ -738,13 +740,16 @@ export function createCallViewModel$(
   });
 
   const allConnections$ = scope.behavior(
-    connectionManager.connectionManagerData$.pipe(map((d) => d.value)),
+    connectionManager.connectionManagerData$.pipe(
+      map((d) => d.value.getConnections()),
+    ),
   );
   const livekitRoomItems$ = scope.behavior<LivekitRoomItem[]>(
     allConnections$.pipe(
-      switchMap((connections) =>
-        combineLatest(
-          connections.getConnections().map((connection) =>
+      switchMap((connections) => {
+        if (connections.length === 0) return of([]);
+        return combineLatest(
+          connections.map((connection) =>
             remoteMatrixLivekitMembers$.pipe(
               switchMap((members) =>
                 combineLatest(members.value.map((m) => m.participant.value$)),
@@ -758,8 +763,8 @@ export function createCallViewModel$(
               })),
             ),
           ),
-        ),
-      ),
+        );
+      }),
     ),
   );
 
