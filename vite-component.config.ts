@@ -88,7 +88,6 @@ export default defineConfig(({ mode }) => {
           "react/compiler-runtime",
           "react-dom",
           "react-dom/client",
-          "livekit-client",
           "matrix-js-sdk",
           "matrix-js-sdk/lib/browser-index",
           "matrix-js-sdk/lib/client",
