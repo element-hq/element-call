@@ -269,7 +269,7 @@ function render(
     "active",
     of$((t) => (t.kind === "audio" ? t.isActive$ : of(undefined))),
   );
-  const stats$ = of$((t) => t.stats$);
+  const stats$ = of$((t) => t.stats$(1000));
   label("frameWidth", stats$.pipe(switchMap((s) => of(frames(s)?.frameWidth))));
   label("frames", stats$.pipe(switchMap((s) => of(frames(s)?.count))));
 }

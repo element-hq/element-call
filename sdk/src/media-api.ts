@@ -94,13 +94,12 @@ export interface MediaTrack {
    * of the track: a publisher that changes its encryption publishes anew.
    */
   encrypted: boolean;
-  /** Polled while subscribed. */
-  // REVIEW: we want the perf gain of not having it always run.
-  //
-  // proposals
-  //  - obs -> on subscribe start polling timer
-  //  - add public method the MediaTrack: for example: actiavteStatsPolling(ms)
-  stats$: Behavior<MediaStreamStats>;
+  /**
+   * Inbound statistics for a remote track, outbound for a local one, polled
+   * every `intervalMs` while the observable is subscribed and not at all
+   * otherwise. Each subscription runs its own poll, so a view shares one.
+   */
+  stats$(intervalMs: number): Observable<MediaStreamStats>;
   /**
    * Rendering. The view hands its `<video>` or `<audio>` element over; the SDK
    * sets its stream and, for video, registers the size and on-screen observers
@@ -117,11 +116,17 @@ export interface AudioMediaTrack extends MediaTrack {
   /**
    * Whether the track carries sound right now, as the backend measures it.
    * False while muted. A call reads this on the microphone track and calls it
-   * "speaking". LiveKit measures it per member, so every audio track of a
-   * member reports the same value.
+   * "speaking".
+   * This is different to audioLevel = 0. The backend might run some hysteresis on it.
    */
-  // REVIEW: audio Level (could even super-seed isActive "audioLevel != 0")
   isActive$: Behavior<boolean>;
+  /**
+   * How loud the track is right now, 0 to 1, as the backend measures it. 0
+   * while muted. Not what decides `isActive$`: the backend applies its own
+   * threshold and hysteresis to that, so a level above 0 may not be active and
+   * an active track may briefly sit at 0.
+   */
+  audioLevel$: Behavior<number>;
   /** Route playback through Web Audio, for earpiece pan and gain. Undefined resets. */
   setAudioContext(ctx: AudioContext | undefined, plugins?: AudioNode[]): void;
   setVolume(volume: number): void;

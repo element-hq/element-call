@@ -599,11 +599,11 @@ export interface MediaTrack {
   /** False when the SFU reports the track as unencrypted. Fixed for the life of the track. */
   encrypted: boolean;
   /**
-   * Inbound statistics for a remote track, outbound for a local one. Polled
-   * once a second, but only while someone is subscribed, so a statistics
-   * panel costs nothing while closed.
+   * Inbound statistics for a remote track, outbound for a local one, polled
+   * every `intervalMs` while the observable is subscribed and not at all
+   * otherwise, so a statistics panel costs nothing while closed.
    */
-  stats$: Behavior<MediaStreamStats>;
+  stats$(intervalMs: number): Observable<MediaStreamStats>;
   /**
    * Rendering. The view hands its <video> or <audio> element over; the SDK
    * sets its stream and, for video, registers the size and on-screen
@@ -624,6 +624,12 @@ export interface AudioMediaTrack extends MediaTrack {
    * member reports the same value.
    */
   isActive$: Behavior<boolean>;
+  /**
+   * How loud the track is right now, 0 to 1, as the backend measures it. 0
+   * while muted. Not what decides `isActive$`: the backend applies its own
+   * threshold and hysteresis to that.
+   */
+  audioLevel$: Behavior<number>;
   /** Route playback through Web Audio, for earpiece pan and gain. Undefined resets. */
   setAudioContext(ctx: AudioContext | undefined, plugins?: AudioNode[]): void;
   /** No-op for our own audio, which is never played back. */
@@ -721,7 +727,7 @@ sdk/
                       metadata, transports, discovery, the js-sdk join
   src/media-backend/  the MediaBackend interface in api.ts; livekit/ is the one
                       backend: connections, publisher, JWT, keys, the tracks
-  src/utils/          LazyBehavior, mapScoped, network retry, display names, test helpers
+  src/utils/          mapScoped, network retry, display names, test helpers
   dev/                the harness (below)
   SdkArchitecture.md  this document
   SdkMigration.md     how Element Call gets from CallViewModel to the client

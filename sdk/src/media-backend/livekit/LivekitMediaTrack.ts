@@ -8,6 +8,7 @@ Please see LICENSE in the repository root for full details.
 import {
   observeParticipantEvents,
   observeParticipantMedia,
+  roomEventSelector,
 } from "@livekit/components-core";
 import {
   facingModeFromLocalTrack,
@@ -19,6 +20,7 @@ import {
   RemoteAudioTrack,
   RemoteTrack,
   type Room as LivekitRoom,
+  RoomEvent,
   Track,
   TrackEvent,
   type TrackPublication,
@@ -27,13 +29,13 @@ import {
   combineLatest,
   distinctUntilChanged,
   fromEvent,
-  interval,
   map,
   merge,
+  type Observable,
   of,
-  share,
   startWith,
   switchMap,
+  timer,
 } from "rxjs";
 
 import { type Behavior } from "../../reactive/Behavior";
@@ -48,7 +50,6 @@ import {
   type VideoMediaTrack,
 } from "../../media-api";
 import { MatrixRTCError } from "../../errors";
-import { LazyBehavior } from "../../utils/LazyBehavior";
 import { convertToLivekitProcessor } from "./videoProcessor";
 
 export const mediaSources: Record<Track.Source, MediaSource> = {
@@ -67,10 +68,6 @@ export const livekitSources: Record<MediaSource, Track.Source> = {
   unknown: Track.Source.Unknown,
 };
 
-// One timer for every track so that a large session does not keep hundreds of
-// them, each firing a statistics request, in the event loop.
-const refreshStats$ = interval(1000).pipe(startWith(0), share());
-
 /**
  * One publication of a participant as a `MediaTrack`. The publication is
  * fixed; the track behind it may come and go (a remote track arrives on
@@ -80,6 +77,7 @@ export function createLivekitMediaTrack(
   scope: ObservableScope,
   participant: Participant,
   publication: TrackPublication,
+  room: LivekitRoom,
 ): AudioMediaTrack | VideoMediaTrack {
   const mediaChanged$ = observeParticipantMedia(participant);
   const track$ = publicationTrack$(scope, participant, publication);
@@ -117,13 +115,11 @@ export function createLivekitMediaTrack(
     id: publication.trackSid,
     muted$,
     encrypted: publication.isEncrypted,
-    stats$: new LazyBehavior<MediaStreamStats>(
-      refreshStats$.pipe(
+    stats$: (intervalMs): Observable<MediaStreamStats> =>
+      timer(0, intervalMs).pipe(
         switchMap(async () => rtpStreamStats(publication, participant.isLocal)),
         scope.bind(),
       ),
-      undefined,
-    ),
     attach: (element) => {
       if (attached.has(element)) return;
       attached.add(element);
@@ -154,6 +150,20 @@ export function createLivekitMediaTrack(
         ),
         participant.isSpeaking && !publication.isMuted,
       ),
+      // The level has no event of its own: it is written to the participant
+      // with each speaker update, which the room announces
+      audioLevel$: scope.behavior(
+        combineLatest(
+          [
+            roomEventSelector(room, RoomEvent.ActiveSpeakersChanged).pipe(
+              map(() => participant.audioLevel),
+              startWith(participant.audioLevel),
+            ),
+            muted$,
+          ],
+          (level, muted) => (muted ? 0 : level),
+        ),
+      ),
       setAudioContext: (ctx, plugins = []) => {
         audioContext = ctx;
         audioPlugins = plugins;
@@ -181,7 +191,7 @@ export function createLocalLivekitMediaTrack(
   room: LivekitRoom,
   setEnabled: (source: MediaSource, enabled: boolean) => Promise<boolean>,
 ): LocalAudioMediaTrack | LocalVideoMediaTrack {
-  const base = createLivekitMediaTrack(scope, participant, publication);
+  const base = createLivekitMediaTrack(scope, participant, publication, room);
   const local = {
     setEnabled: async (enabled: boolean) => setEnabled(base.source, enabled),
     setDevice: async (deviceId: string): Promise<void> => {
