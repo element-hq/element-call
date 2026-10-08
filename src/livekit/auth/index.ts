@@ -38,14 +38,32 @@ function isEndpointUnsupported(e: unknown): boolean {
 }
 
 export interface GetSFUConfigParams {
+  /**
+   * The Matrix client.
+   */
   client: csApi.ClientGetTokenParts & openID.ClientOpenIDParts;
+  /**
+   * Data identifying the local user's session membership.
+   */
   membership: CallMembershipIdentityParts;
+  /**
+   * The transport for which we wish to get an access token.
+   */
   transport: UnstableLivekitTransport;
+  /**
+   * The ID of the Matrix room in which the session takes place.
+   */
   roomId: string;
+  /**
+   * Whether we want to publish or only subscribe on the {@link transport}.
+   */
   role: "publisher" | "subscriber";
   logger: Logger;
 }
 
+/**
+ * Gets an {@link SFUConfig} appropriate for connecting to a given transport.
+ */
 export async function getSFUConfig({
   client,
   membership,
@@ -64,6 +82,10 @@ export async function getSFUConfig({
       });
     } catch (e) {
       if (isEndpointUnsupported(e)) {
+        // Publishers should never fall back. If a homeserver advertises a `url`
+        // but doesn't support MSC4195 itself, that's a misconfiguration which
+        // the admin should know about so they can prepare for the future
+        // deprecation of `livekit_service_url`.
         const mayFallBack =
           role === "subscriber" && "livekit_service_url" in transport;
         if (mayFallBack) {
@@ -94,14 +116,34 @@ export async function getSFUConfig({
 }
 
 export interface DelegateDelayedLeaveParams {
+  /**
+   * The Matrix client.
+   */
   client: csApi.ClientDelegationParts & openID.ClientOpenIDParts;
+  /**
+   * Data identifying the local user's session membership.
+   */
   membership: CallMembershipIdentityParts;
+  /**
+   * The transport to which we are publishing and wish to delegate the delayed
+   * leave event.
+   */
   transport: UnstableLivekitTransport;
+  /**
+   * The ID of the room in which the session takes place.
+   */
   roomId: string;
+  /**
+   * The delay ID of the leave event to be delegated.
+   */
   delayId: string;
   logger: Logger;
 }
 
+/**
+ * Delegates a delayed leave event to a given transport, so that the event will
+ * be sent on our behalf whenever we disconnect from the transport's SFU.
+ */
 export async function delegateDelayedLeave({
   client,
   membership,

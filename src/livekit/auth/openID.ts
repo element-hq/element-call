@@ -27,7 +27,7 @@ export type ClientOpenIDParts = Pick<
 export interface GetSFUConfigParams {
   client: ClientOpenIDParts;
   /**
-   * Our own membership identity parts used to send to the JWT service.
+   * Data identifying the local user's session membership.
    */
   membership: CallMembershipIdentityParts;
   /**
@@ -35,12 +35,11 @@ export interface GetSFUConfigParams {
    */
   serviceUrl: string;
   /**
-   * The room ID used in the request. This is NOT the livekit_alias. The JWT
-   * service will provide the alias. It maps Matrix room IDs to LiveKit aliases.
+   * The ID of the Matrix room in which the session takes place.
    */
   roomId: string;
   /**
-   * Whether we want to publish or only subscribe on this transport.
+   * Whether we want to publish or only subscribe on the {@link transport}.
    */
   role: "publisher" | "subscriber";
   /**
@@ -55,10 +54,8 @@ export interface GetSFUConfigParams {
 }
 
 /**
- * Gets a bearer token from the homeserver and then use it to authenticate
- * to the matrix RTC backend in order to get acces to the SFU.
- * It has built-in retry for calls to the homeserver with a backoff policy.
- * @returns Object containing the token information
+ * Gets an {@link SFUConfig} appropriate for connecting to the SFU behind a
+ * given service URL, using the legacy OpenID flow.
  * @throws FailToGetOpenIdToken
  */
 export async function getSFUConfig({
@@ -123,6 +120,11 @@ export async function getSFUConfig({
   }
 }
 
+/**
+ * Gets a JWT token appropriate for connecting to the SFU behind a given service
+ * URL, using the legacy `/sfu/get` endpoint, which assigns us a legacy
+ * (`<user_id>:<device_id>`) participant identity.
+ */
 async function getLiveKitJWTLegacy(
   membership: CallMembershipIdentityParts,
   livekitServiceURL: string,
@@ -198,6 +200,11 @@ class NotSupportedError extends Error {
   }
 }
 
+/**
+ * Gets a JWT token appropriate for connecting to the SFU behind a given service
+ * URL, using the default `/get_token` endpoint, which assigns us a hashed
+ * (pseudonymised) participant identity.
+ */
 async function getLiveKitJWT(
   membership: CallMembershipIdentityParts,
   livekitServiceURL: string,

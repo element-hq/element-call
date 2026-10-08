@@ -21,12 +21,28 @@ export type ClientGetTokenParts = Pick<
 >;
 
 export interface GetSFUConfigParams {
+  /**
+   * The Matrix client.
+   */
   client: ClientGetTokenParts;
+  /**
+   * Data identifying the local user's session membership.
+   */
   membership: CallMembershipIdentityParts;
+  /**
+   * The WebSocket URL of the SFU for which we wish to get an access token.
+   */
   url: string;
+  /**
+   * The ID of the Matrix room in which the session takes place.
+   */
   roomId: string;
 }
 
+/**
+ * Gets an {@link SFUConfig} appropriate for connecting to a given SFU, using
+ * the MSC4195 LiveKit client-server API endpoints.
+ */
 export async function getSFUConfig({
   client,
   membership,
@@ -50,13 +66,33 @@ export type ClientDelegationParts = Pick<
 >;
 
 export interface DelegateDelayedLeaveParams {
+  /**
+   * The Matrix client.
+   */
   client: ClientDelegationParts;
+  /**
+   * Data identifying the local user's session membership.
+   */
   membership: CallMembershipIdentityParts;
+  /**
+   * The WebSocket URL of the SFU to which we are publishing and wish to
+   * delegate the delayed leave event.
+   */
   url: string;
+  /**
+   * The ID of the room in which the session takes place.
+   */
   roomId: string;
+  /**
+   * The delay ID of the leave event to be delegated.
+   */
   delayId: string;
 }
 
+/**
+ * Delegates a delayed leave event to a given SFU, so that the event will
+ * be sent on our behalf whenever we disconnect from the SFU.
+ */
 export async function delegateDelayedLeave({
   client,
   membership,
