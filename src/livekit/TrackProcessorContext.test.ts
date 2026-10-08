@@ -48,8 +48,8 @@ vi.mock("@livekit/track-processors", () => ({
   }),
   supportsBackgroundProcessors: (): boolean => true,
 }));
-// A phone: the pipeline must not ask.
-vi.mock("../Platform", () => ({ platform: "ios" }));
+const platformMock = vi.hoisted(() => ({ platform: "desktop" }));
+vi.mock("../Platform", () => platformMock);
 vi.mock("./BackgroundEffectTransformer", () => ({
   BackgroundEffectTransformer: vi.fn(),
 }));
@@ -176,6 +176,7 @@ describe("ProcessorProvider", () => {
     pipelines.built = 0;
     pipelines.destroyed = 0;
     pipelines.switches = [];
+    platformMock.platform = "desktop";
     backgroundBlur.setValue(false);
   });
   afterEach(() => backgroundBlur.setValue(false));
@@ -194,13 +195,14 @@ describe("ProcessorProvider", () => {
     expect(track.stopProcessor).not.toHaveBeenCalled();
   });
 
-  it("runs on a phone whose browser can run it", async () => {
+  it("does not run on a phone, even where its browser could", async () => {
+    platformMock.platform = "ios";
     const track = cameraTrack();
     render(surfaces(track));
     await blur(true);
 
-    expect(latest().supported).toBe(true);
-    expect(track.setProcessor).toHaveBeenCalledWith(latest().processor);
+    expect(latest().supported).toBe(false);
+    expect(track.setProcessor).not.toHaveBeenCalled();
   });
 
   it("preview and call share one pipeline", async () => {
