@@ -817,7 +817,6 @@ export function rtcParticipationOptions(
     timings: {
       syncDisconnectGracePeriodMs: config.sync_disconnect_grace_period_ms,
       networkErrorRetryMs: session.network_error_retry_ms,
-      waitForKeyRotationMs: session.wait_for_key_rotation_ms,
       membershipEventExpiryMs: session.membership_event_expiry_ms,
       keyRotationParticipantLimit: session.key_rotation_participant_limit,
       delayedLeave: session.delayed_leave,
