@@ -30,23 +30,21 @@ export interface VideoCaptureSettings {
   codec?: VideoCodec;
 }
 
-/** What a processor is given to work on: the captured track and, where a view is attached, its element. */
-export interface VideoProcessorInit {
-  track: MediaStreamTrack;
-  element?: HTMLMediaElement;
-}
-
 /**
  * Transforms a camera track before it is published: background blur and the
- * like. `processedTrack` is what gets published once `init` has resolved;
- * `restart` is called with the new track where the camera changes. The shape
- * is that of a LiveKit track processor, so one of those can be passed as is.
+ * like. `init` resolves with the track to publish in place of the captured
+ * one; `restart` does the same for a new capture, where the camera changes.
  */
 export interface VideoProcessor {
   name: string;
-  processedTrack?: MediaStreamTrack;
-  init(opts: VideoProcessorInit): Promise<void>;
-  restart(opts: VideoProcessorInit): Promise<void>;
+  init(
+    track: MediaStreamTrack,
+    element?: HTMLMediaElement,
+  ): Promise<MediaStreamTrack>;
+  restart(
+    track: MediaStreamTrack,
+    element?: HTMLMediaElement,
+  ): Promise<MediaStreamTrack>;
   destroy(): Promise<void>;
 }
 

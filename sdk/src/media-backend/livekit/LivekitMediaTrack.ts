@@ -49,6 +49,7 @@ import {
 } from "../../media-api";
 import { MatrixRTCError } from "../../errors";
 import { LazyBehavior } from "../../utils/LazyBehavior";
+import { convertToLivekitProcessor } from "./videoProcessor";
 
 export const mediaSources: Record<Track.Source, MediaSource> = {
   [Track.Source.Microphone]: "microphone",
@@ -219,7 +220,8 @@ export function createLocalLivekitMediaTrack(
       const track = videoTrack();
       // A processor cannot be built on a track that has already ended
       if (!track || track.mediaStreamTrack.readyState === "ended") return;
-      if (processor) await track.setProcessor(processor);
+      if (processor)
+        await track.setProcessor(convertToLivekitProcessor(processor));
       else if (track.getProcessor()) await track.stopProcessor();
     },
   };
