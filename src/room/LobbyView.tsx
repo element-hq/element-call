@@ -24,6 +24,7 @@ import {
   type LocalVideoTrack,
   Track,
 } from "livekit-client";
+import { convertToLivekitProcessor } from "@element-hq/matrixrtc-sdk";
 
 import inCallStyles from "./InCallView.module.css";
 import styles from "./LobbyView.module.css";
@@ -150,7 +151,8 @@ export const LobbyView: FC<Props> = ({
       audio: Object.assign({}, initialAudioOptions),
       video: videoEnabled && {
         deviceId: videoInputId,
-        processor: initialProcessor,
+        processor:
+          initialProcessor && convertToLivekitProcessor(initialProcessor),
       },
     }),
     [initialAudioOptions, videoEnabled, videoInputId, initialProcessor],

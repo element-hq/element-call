@@ -18,9 +18,13 @@ import {
   useEffect,
   useMemo,
 } from "react";
-import { type LocalVideoTrack } from "livekit-client";
+import { type LocalVideoTrack, Track } from "livekit-client";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { combineLatest } from "rxjs";
+import {
+  convertToLivekitProcessor,
+  type VideoProcessor,
+} from "@element-hq/matrixrtc-sdk";
 
 import {
   backgroundBlur as backgroundBlurSettings,
@@ -38,8 +42,35 @@ import { useValueBehavior } from "../useValueBehavior";
 
 export type ProcessorState = {
   supported: boolean | undefined;
-  processor: undefined | ProcessorWrapper<BackgroundOptions>;
+  processor: undefined | VideoProcessor;
 };
+
+/**
+ * This allows to use a LiveKit processor for the matrixRTCSDK (VideoProcessor).
+ * They have slightly different apis so we need to convert them with this
+ * function before we can use them in the matrixRTCSDK.
+ */
+export function fromLivekitProcessor(
+  wrapper: ProcessorWrapper<BackgroundOptions>,
+): VideoProcessor {
+  const processedTrack = (): MediaStreamTrack => {
+    if (wrapper.processedTrack === undefined)
+      throw new Error(`Processor ${wrapper.name} produced no track`);
+    return wrapper.processedTrack;
+  };
+  return {
+    name: wrapper.name,
+    init: async (track: MediaStreamTrack, element?: HTMLMediaElement) => {
+      await wrapper.init({ kind: Track.Kind.Video, track, element });
+      return processedTrack();
+    },
+    restart: async (track: MediaStreamTrack, element?: HTMLMediaElement) => {
+      await wrapper.restart({ kind: Track.Kind.Video, track, element });
+      return processedTrack();
+    },
+    destroy: async () => wrapper.destroy(),
+  };
+}
 
 const ProcessorContext = createContext<ProcessorState | undefined>(undefined);
 
@@ -62,7 +93,7 @@ export function useTrackProcessorState$(): Behavior<ProcessorState> {
  */
 export function applyProcessor(
   videoTrack: LocalVideoTrack,
-  processor: ProcessorWrapper<BackgroundOptions> | undefined,
+  processor: VideoProcessor | undefined,
 ): void {
   if (processor && !videoTrack.getProcessor()) {
     // A MediaStreamTrackProcessor cannot be constructed on an ended track
@@ -73,7 +104,7 @@ export function applyProcessor(
       logger.debug("Not attaching video processor to an ended track");
       return;
     }
-    videoTrack.setProcessor(processor).catch((e) => {
+    videoTrack.setProcessor(convertToLivekitProcessor(processor)).catch((e) => {
       logger.warn("Failed to attach video processor", e);
     });
   }
@@ -125,9 +156,11 @@ export const ProcessorProvider: FC<Props> = ({ children }) => {
   const supported = useMemo(() => supportsBackgroundProcessors(), []);
   const blur = useMemo(
     () =>
-      new ProcessorWrapper(
-        new BlurBackgroundTransformer({ blurRadius: 15 }),
-        "background-blur",
+      fromLivekitProcessor(
+        new ProcessorWrapper(
+          new BlurBackgroundTransformer({ blurRadius: 15 }),
+          "background-blur",
+        ),
       ),
     [],
   );
