@@ -82,6 +82,7 @@ import {
   type ReactionOption,
 } from "../../reactions";
 import { shallowEquals as shallowArrayEquals } from "../../utils/array";
+import { shallowEquals as shallowObjectEquals } from "../../utils/object";
 import { type MediaDevices } from "../MediaDevices";
 import { constant, type Behavior } from "../Behavior";
 import { E2eeType } from "../../e2ee/e2eeType";
@@ -91,7 +92,6 @@ import { HeaderStyle, type UrlParams } from "../../UrlParams";
 import { type ProcessorState } from "../../livekit/TrackProcessorContext";
 import { type HostBridge, nullHostBridge } from "../../HostBridge";
 import {
-  layoutShallowEquals,
   type Alignment,
   type Layout,
   type LayoutMedia,
@@ -1028,7 +1028,7 @@ export function createCallViewModel$(
       [ringingMedia$, screenShares$, spotlightSpeaker$, localUserMediaForPip$],
       (ringing, screenShares, speaker, localPip) =>
         computeSpotlight({ ringing, screenShares, speaker, localPip }),
-    ).pipe(distinctUntilChanged(layoutShallowEquals)),
+    ).pipe(distinctUntilChanged(shallowObjectEquals)),
   );
 
   const spotlight$ = scope.behavior<MediaViewModel[]>(
@@ -1185,7 +1185,7 @@ export function createCallViewModel$(
           desktop: platform === "desktop",
         }),
       ),
-      distinctUntilChanged(layoutShallowEquals),
+      distinctUntilChanged(shallowObjectEquals<LayoutMedia>),
     ),
   );
 
@@ -1486,7 +1486,7 @@ export function createCallViewModel$(
     layoutInternals$.pipe(
       map(({ layout }) => layout),
       // Drop redundant layout updates before they would hit React.
-      distinctUntilChanged<Layout>(layoutShallowEquals),
+      distinctUntilChanged(shallowObjectEquals<Layout>),
     ),
   );
 
