@@ -16,25 +16,13 @@ import {
 } from "vitest";
 import fetchMock from "fetch-mock";
 
-import { mockConfig, ownMemberMock } from "../../../utils/test";
+import { mockConfig } from "../../../utils/test";
 import { getLocalTransport } from "./LocalTransport";
-import {
-  MatrixRTCTransportMissingError,
-  FailToGetOpenIdToken,
-} from "../../../utils/errors";
-import * as livekitAuth from "../../../livekit/auth";
+import { MatrixRTCTransportMissingError } from "../../../utils/errors";
 import { customTransport } from "../../../settings/settings";
-import { testJWTToken } from "../../../utils/test-fixtures";
 import { type MatrixClient } from "matrix-js-sdk";
 
 describe("LocalTransport", () => {
-  const sfuConfig: livekitAuth.SFUConfig = {
-    url: "https://lk.example.org",
-    jwt: testJWTToken,
-    livekitAlias: "Akph4alDMhen",
-    livekitIdentity: "@lk_user:ABCDEF",
-  };
-
   beforeEach(() => vi.clearAllMocks());
 
   it("throws if config is missing", async () => {
@@ -46,34 +34,10 @@ describe("LocalTransport", () => {
     ).rejects.toThrow(new MatrixRTCTransportMissingError("example.org"));
   });
 
-  it("threes if SFU config fetch fails", async () => {
-    // Provide a valid config so makeTransportInternal resolves a transport
-    mockConfig({
-      livekit: { livekit_service_url: "https://lk.example.org" },
-    });
-    vi.spyOn(livekitAuth, "getSFUConfig").mockRejectedValue(
-      new FailToGetOpenIdToken(new Error("no openid")),
-    );
-
-    await expect(
-      getLocalTransport({
-        getDomain: () => "example.org",
-        _unstable_getRTCTransports: async () => Promise.resolve([]),
-      }),
-    ).rejects.toThrow(new FailToGetOpenIdToken(new Error("no openid")));
-  });
-
   it("returns preferred transport", async () => {
-    // Use config so transport discovery succeeds, but delay OpenID JWT fetch
+    // Use config so transport discovery succeeds
     mockConfig({
       livekit: { livekit_service_url: "https://lk.example.org" },
-    });
-
-    vi.spyOn(livekitAuth, "getSFUConfig").mockResolvedValue({
-      url: "https://lk.example.org",
-      jwt: "jwt",
-      livekitAlias: "Akph4alDMhen",
-      livekitIdentity: ownMemberMock.userId + ":" + ownMemberMock.deviceId,
     });
 
     expect(
@@ -82,16 +46,8 @@ describe("LocalTransport", () => {
         getDomain: () => "example.org",
       }),
     ).toStrictEqual({
-      transport: {
-        livekit_service_url: "https://lk.example.org",
-        type: "livekit",
-      },
-      sfuConfig: {
-        jwt: "jwt",
-        livekitAlias: "Akph4alDMhen",
-        livekitIdentity: "@alice:example.org:DEVICE",
-        url: "https://lk.example.org",
-      },
+      livekit_service_url: "https://lk.example.org",
+      type: "livekit",
     });
   });
 
@@ -116,19 +72,10 @@ describe("LocalTransport", () => {
       mockConfig({
         livekit: { livekit_service_url: "https://lk.example.org" },
       });
-      vi.spyOn(livekitAuth, "getSFUConfig").mockResolvedValue(sfuConfig);
 
       expect(await getLocalTransport(client)).toStrictEqual({
-        transport: {
-          livekit_service_url: "https://lk.example.org",
-          type: "livekit",
-        },
-        sfuConfig: {
-          jwt: "e30=.eyJzdWIiOiJAbWU6ZXhhbXBsZS5vcmc6QUJDREVGIiwidmlkZW8iOnsicm9vbSI6IiFleGFtcGxlX3Jvb21faWQifX0=.e30=",
-          livekitAlias: "Akph4alDMhen",
-          livekitIdentity: "@lk_user:ABCDEF",
-          url: "https://lk.example.org",
-        },
+        livekit_service_url: "https://lk.example.org",
+        type: "livekit",
       });
     });
 
@@ -137,19 +84,10 @@ describe("LocalTransport", () => {
         type: "livekit",
         livekit_service_url: "https://lk.example.org",
       });
-      vi.spyOn(livekitAuth, "getSFUConfig").mockResolvedValue(sfuConfig);
 
       expect(await getLocalTransport(client)).toStrictEqual({
-        transport: {
-          livekit_service_url: "https://lk.example.org",
-          type: "livekit",
-        },
-        sfuConfig: {
-          jwt: "e30=.eyJzdWIiOiJAbWU6ZXhhbXBsZS5vcmc6QUJDREVGIiwidmlkZW8iOnsicm9vbSI6IiFleGFtcGxlX3Jvb21faWQifX0=.e30=",
-          livekitAlias: "Akph4alDMhen",
-          livekitIdentity: "@lk_user:ABCDEF",
-          url: "https://lk.example.org",
-        },
+        livekit_service_url: "https://lk.example.org",
+        type: "livekit",
       });
     });
 
@@ -157,33 +95,11 @@ describe("LocalTransport", () => {
       client._unstable_getRTCTransports.mockResolvedValue([
         { type: "livekit", livekit_service_url: "https://lk.example.org" },
       ]);
-      vi.spyOn(livekitAuth, "getSFUConfig").mockResolvedValue(sfuConfig);
 
       expect(await getLocalTransport(client)).toStrictEqual({
-        transport: {
-          livekit_service_url: "https://lk.example.org",
-          type: "livekit",
-        },
-        sfuConfig: {
-          jwt: "e30=.eyJzdWIiOiJAbWU6ZXhhbXBsZS5vcmc6QUJDREVGIiwidmlkZW8iOnsicm9vbSI6IiFleGFtcGxlX3Jvb21faWQifX0=.e30=",
-          livekitAlias: "Akph4alDMhen",
-          livekitIdentity: "@lk_user:ABCDEF",
-          url: "https://lk.example.org",
-        },
+        livekit_service_url: "https://lk.example.org",
+        type: "livekit",
       });
-    });
-
-    it("fails fast if the openID request fails for backend config", async () => {
-      client._unstable_getRTCTransports.mockResolvedValue([
-        { type: "livekit", livekit_service_url: "https://lk.example.org" },
-      ]);
-      vi.spyOn(livekitAuth, "getSFUConfig").mockRejectedValue(
-        new FailToGetOpenIdToken(new Error("Test driven error")),
-      );
-
-      await expect(getLocalTransport(client)).rejects.toThrow(
-        expect.any(FailToGetOpenIdToken),
-      );
     });
 
     it("throws if no options are available", async () => {
