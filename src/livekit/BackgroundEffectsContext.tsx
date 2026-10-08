@@ -9,6 +9,7 @@ Please see LICENSE in the repository root for full details.
 import {
   type ProcessorWrapper,
   type BackgroundOptions,
+  supportsBackgroundProcessors,
 } from "@livekit/track-processors";
 import { createContext, type FC, type JSX, use, useEffect } from "react";
 import { type LocalVideoTrack } from "livekit-client";
@@ -18,7 +19,6 @@ import { combineLatest } from "rxjs";
 import { backgroundEffect as backgroundEffectSetting } from "../settings/settings";
 import { BackgroundEffectTransformer } from "./BackgroundEffectTransformer";
 import { OneStepPipeline } from "./OneStepPipeline";
-import { supportsBackgroundProcessors } from "./backgroundProcessing";
 import { type Behavior } from "../state/Behavior";
 import { type ObservableScope } from "../state/ObservableScope";
 import {

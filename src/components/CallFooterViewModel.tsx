@@ -13,11 +13,11 @@ import {
   switchMap,
 } from "rxjs";
 import { supportsAudioOutputSelection } from "livekit-client";
-
 import {
   supportsBackgroundProcessors,
-  usesFallbackProcessing,
-} from "../livekit/backgroundProcessing";
+  supportsModernBackgroundProcessors,
+} from "@livekit/track-processors";
+
 import {
   parseEffect,
   serializeEffect,
@@ -112,7 +112,7 @@ function buildDeviceBehaviors(
     );
 
   const supported = supportsBackgroundProcessors();
-  const slow = usesFallbackProcessing();
+  const slow = !supportsModernBackgroundProcessors();
   const offered$ = disableSwitcher$.pipe(
     map((switcherDisabled) => !switcherDisabled && supported),
   );
