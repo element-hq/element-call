@@ -316,7 +316,7 @@ export class MockRTCSession extends TypedEventEmitter<
     if (value !== prev) this.emit(MembershipManagerEvent.ProbablyLeft, value);
   }
 
-  public async joinRTCSession(): Promise<void> {
+  public async join(): Promise<void> {
     return Promise.resolve();
   }
 }

@@ -58,7 +58,7 @@ export function joinJsSdkSession(
     timings.syncDisconnectGracePeriodMs,
     delayedLeave.delay_ms,
   );
-  session.joinRTCSession(ownMembershipIdentity, [transport], {
+  session.join(ownMembershipIdentity, [transport], {
     notificationType: sendNotificationType,
     callIntent,
     applicationData: rest,

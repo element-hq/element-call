@@ -39,6 +39,7 @@ export default defineConfig(({ mode }) => {
         external: [
           "livekit-client",
           "matrix-js-sdk",
+          "matrix-js-sdk/lib/@types/event",
           "matrix-js-sdk/lib/browser-index",
           "matrix-js-sdk/lib/client",
           "matrix-js-sdk/lib/crypto-api",
@@ -49,8 +50,10 @@ export default defineConfig(({ mode }) => {
           "matrix-js-sdk/lib/matrixrtc/EncryptionManager",
           "matrix-js-sdk/lib/matrixrtc/IKeyTransport",
           "matrix-js-sdk/lib/matrixrtc/IMembershipManager",
+          "matrix-js-sdk/lib/models/event",
           "matrix-js-sdk/lib/models/relations-container",
           "matrix-js-sdk/lib/models/room",
+          "matrix-js-sdk/lib/models/room-state",
           "matrix-js-sdk/lib/models/typed-event-emitter",
           "matrix-js-sdk/lib/randomstring",
           "matrix-js-sdk/lib/sync",
