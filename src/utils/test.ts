@@ -63,7 +63,6 @@ import {
   type AudioMediaTrack,
   type Behavior,
   constant,
-  type DisconnectReason,
   type EncryptionError,
   type LocalAudioMediaTrack,
   type LocalRTCMember,
@@ -71,7 +70,7 @@ import {
   type RTCMember,
   type RTCParticipation,
   type RTCSlot,
-  type MatrixRTCError,
+  type ParticipationState,
   type PublishRequest,
   type RemoteRTCMember,
   type TransportMetadata,
@@ -491,10 +490,7 @@ export function mockRTCMember(
 export interface MockParticipationInputs {
   localMember$?: Behavior<LocalRTCMember | null>;
   remoteMembers$?: Behavior<RemoteRTCMember[]>;
-  connected$?: Behavior<boolean>;
-  reconnecting$?: Behavior<boolean>;
-  disconnectReason$?: Behavior<DisconnectReason | null>;
-  fatalError$?: Behavior<MatrixRTCError | null>;
+  state$?: Behavior<ParticipationState>;
   keyRotationSuppressed$?: Behavior<boolean>;
   connectedTransports$?: Behavior<TransportMetadata[]>;
 }
@@ -508,10 +504,7 @@ export function mockRTCParticipation(
   {
     localMember$ = constant(null),
     remoteMembers$ = constant([]),
-    connected$ = constant(true),
-    reconnecting$ = constant(false),
-    disconnectReason$ = constant(null),
-    fatalError$ = constant(null),
+    state$ = constant<ParticipationState>({ kind: "connected" }),
     keyRotationSuppressed$ = constant(false),
     connectedTransports$ = constant([]),
   }: MockParticipationInputs = {},
@@ -534,13 +527,7 @@ export function mockRTCParticipation(
   const participation: RTCParticipation = {
     slot,
     leave: vi.fn(),
-    status$: scope.behavior(
-      connected$.pipe(map((c) => (c ? "connected" : "connecting"))),
-    ),
-    connected$,
-    reconnecting$,
-    disconnectReason$,
-    fatalError$,
+    state$,
     localMember$,
     remoteMembers$,
     publish: vi.fn(async (request: PublishRequest) =>

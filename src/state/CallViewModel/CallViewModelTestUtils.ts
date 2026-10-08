@@ -11,13 +11,14 @@ import {
   constant,
   E2eeType,
   type LocalRTCMember,
+  type ParticipationState,
   type RTCParticipation,
   type MatrixRTCMode,
   type ObservableScope,
   type RemoteRTCMember,
 } from "@element-hq/matrixrtc-sdk";
 import { SyncState } from "matrix-js-sdk/lib/sync";
-import { BehaviorSubject, combineLatest, map, of, switchMap } from "rxjs";
+import { BehaviorSubject, map, of, switchMap } from "rxjs";
 import { ClientEvent, type RoomMember, type MatrixClient } from "matrix-js-sdk";
 import EventEmitter from "events";
 
@@ -242,11 +243,13 @@ export function withCallViewModel(mode: MatrixRTCMode) {
     const rtcParticipation = mockRTCParticipation(scope, {
       localMember$,
       remoteMembers$,
-      connected$,
-      reconnecting$: scope.behavior(
-        combineLatest([connected$, of(initialSyncState)]).pipe(
-          switchMap(() => connected$),
-          map((connected) => !connected),
+      state$: scope.behavior(
+        connected$.pipe(
+          map((connected): ParticipationState =>
+            connected
+              ? { kind: "connected" }
+              : { kind: "reconnecting", reason: "media" },
+          ),
         ),
       ),
     });
@@ -277,6 +280,11 @@ export function withCallViewModel(mode: MatrixRTCMode) {
     );
     void mode;
 
-    continuation(vm, rtcSession, { raisedHands$, rtcParticipation }, setSyncState);
+    continuation(
+      vm,
+      rtcSession,
+      { raisedHands$, rtcParticipation },
+      setSyncState,
+    );
   };
 }

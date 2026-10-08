@@ -147,8 +147,8 @@ export async function createMatrixRTCSdk(
       vm.leave$
         .pipe(
           switchMap(() =>
-            participation.status$.pipe(
-              filter((status) => status === "left"),
+            participation.state$.pipe(
+              filter((state) => state.kind === "left"),
               take(1),
             ),
           ),
@@ -164,7 +164,10 @@ export async function createMatrixRTCSdk(
     },
     leave: (): void => vm?.leave(),
     stop: (): void => scope.end(),
-    connected$: over((p) => p.connected$, false),
+    connected$: over(
+      (p) => p.state$.pipe(map((state) => state.kind === "connected")),
+      false,
+    ),
     localMember$: over((p) => p.localMember$, null),
     remoteMembers$: over((p) => p.remoteMembers$, []),
     // Attested members only: the SDK has matched the sender
