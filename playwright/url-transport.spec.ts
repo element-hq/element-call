@@ -125,6 +125,7 @@ test("Subscriber falls back to the JWT service when the homeserver lacks MSC4195
     "Pevara",
     "2_0",
   );
+
   // Wait for the call to connect and render.
   await SpaHelpers.expectVideoTilesCount(page, 2);
   await SpaHelpers.expectVideoTilesCount(guestPage, 2);
@@ -168,6 +169,58 @@ test("Publisher shows an error when the homeserver lacks MSC4195", async ({
       "The authorization service for your media server (SFU) is out of date.",
     ),
   ).toBeVisible();
+});
+
+test("Delegated leave on a url transport ends the membership when the guest drops", async ({
+  browser,
+  page,
+  browserName,
+}) => {
+  skipOnFirefox(browserName);
+
+  // The host starts the call.
+  await advertiseTransport(page, shapes.url);
+  await page.goto("/");
+  await SpaHelpers.createCall(page, "Androl", "HelloCall", true, "2_0");
+  const inviteLink = await SpaHelpers.getCallInviteLink(page);
+
+  // The guest joins.
+  const guestContext = await browser.newContext({ reducedMotion: "reduce" });
+  const guestPage = await guestContext.newPage();
+  await advertiseTransport(guestPage, shapes.url);
+  const delayedLeave = recordDelayedLeave(guestPage);
+  const delegations = recordDelegations(guestPage);
+  await SpaHelpers.joinCallFromInviteLink(
+    guestPage,
+    inviteLink,
+    "Pevara",
+    "2_0",
+  );
+
+  // Wait for the call to connect and render.
+  await SpaHelpers.expectVideoTilesCount(page, 2);
+  await SpaHelpers.expectVideoTilesCount(guestPage, 2);
+
+  // The guest handed its delayed leave to the homeserver, after probing it for
+  // delegation support with bodiless requests.
+  await expect
+    .poll(() => delegations.at(-1))
+    .toEqual({ status: 200, sfuUrl, delayId: delayedLeave.delayId });
+  const probes = delegations.slice(0, -1);
+  expect(probes.length).toBeGreaterThan(0);
+  for (const probe of probes) expect(probe).toEqual({ status: 401 });
+
+  // The delay is long enough that a leave within the window below cannot come
+  // from the delayed event expiring on its own.
+  expect(delayedLeave.delayMs).toBeGreaterThan(60_000);
+
+  // The guest drops without leaving.
+  await guestPage.reload();
+
+  // The host eventually sees the guest go once the delayed event fires.
+  await expect(page.getByTestId("videoTile")).toHaveCount(1, {
+    timeout: 30_000,
+  });
 });
 
 function skipOnFirefox(browserName: string): void {
@@ -216,6 +269,61 @@ async function rejectCsApiTokens(page: Page): Promise<void> {
   });
 }
 
+/** A recorded delayed leave event. */
+interface DelayedLeave {
+  delayMs?: number;
+  delayId?: string;
+}
+
+/** Records the delayed leave event the page schedules on joining. */
+function recordDelayedLeave(page: Page): DelayedLeave {
+  const delayedLeave: DelayedLeave = {};
+  page.on("response", (response) => {
+    const delay = new URL(response.request().url()).searchParams.get(
+      "org.matrix.msc4140.delay",
+    );
+    if (delay === null || response.status() !== 200) return;
+    delayedLeave.delayMs = Number(delay);
+    response
+      .json()
+      .then((body: { delay_id: string }) => {
+        delayedLeave.delayId = body.delay_id;
+      })
+      .catch(() => {});
+  });
+  return delayedLeave;
+}
+
+/** A recorded delegation request for a delayed leave event. */
+interface Delegation {
+  status: number;
+  sfuUrl?: string;
+  delayId?: string;
+}
+
+/** Records requests to the MSC4195 `delegate_delayed_leave` endpoint. */
+function recordDelegations(page: Page): Delegation[] {
+  const delegations: Delegation[] = [];
+  page.on("response", (response) => {
+    const request = response.request();
+    if (
+      request.method() !== "POST" ||
+      !request.url().endsWith("/rtc/livekit/delegate_delayed_leave")
+    )
+      return;
+    const body = request.postDataJSON() as {
+      url: string;
+      delay_id: string;
+    } | null;
+    delegations.push({
+      status: response.status(),
+      ...(body && { sfuUrl: body.url, delayId: body.delay_id }),
+    });
+  });
+  return delegations;
+}
+
+/** A recorded token request. */
 interface AuthRequest {
   flow: Flow;
   status: number;
@@ -223,6 +331,7 @@ interface AuthRequest {
   sfuUrl?: string;
 }
 
+/** Records token requests. */
 function recordAuthRequests(page: Page): AuthRequest[] {
   const requests: AuthRequest[] = [];
   page.on("response", (response) => {
