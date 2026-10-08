@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { afterEach, describe, expect, it, type Mock, vi } from "vitest";
 import { render, waitFor, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import userEvent, { type UserEvent } from "@testing-library/user-event";
 import { TooltipProvider } from "@vector-im/compound-web";
 
 import type { MatrixClient } from "matrix-js-sdk";
@@ -24,7 +24,7 @@ import {
   matrixRTCMode as matrixRTCModeSetting,
 } from "./settings";
 import { MatrixRTCMode } from "../config/ConfigOptions";
-import { mockConfig } from "../utils/test";
+import { exampleTransport, mockConfig } from "../utils/test";
 import { getSFUConfig } from "../livekit/auth";
 
 // Mock url params hook to avoid environment-dependent snapshot churn.
@@ -77,6 +77,21 @@ function createMockMatrixClient(): MatrixClient {
   } as unknown as MatrixClient;
 }
 
+/**
+ * Types the JSON representation of an object into the given element.
+ */
+async function typeJson(
+  user: UserEvent,
+  element: Element,
+  object: object,
+): Promise<void> {
+  // `user.type` requires us to escape brackets by doubling them
+  await user.type(
+    element,
+    JSON.stringify(object).replace(/([{[\]])/g, (c) => c + c),
+  );
+}
+
 describe("DeveloperSettingsTab", () => {
   it("renders and matches snapshot", async () => {
     const client = createMockMatrixClient();
@@ -124,7 +139,7 @@ describe("DeveloperSettingsTab", () => {
 
     expect(container).toMatchSnapshot();
   });
-  describe("custom livekit url", () => {
+  describe("custom transport", () => {
     afterEach(() => {
       customTransportSetting.setValue(null);
     });
@@ -134,7 +149,7 @@ describe("DeveloperSettingsTab", () => {
       getUserId: () => "@u:hs",
       getDeviceId: () => "DEVICE",
     } as unknown as MatrixClient;
-    it("will not update custom livekit url without roomId", async () => {
+    it("will not update custom transport without roomId", async () => {
       const user = userEvent.setup();
 
       render(
@@ -147,9 +162,9 @@ describe("DeveloperSettingsTab", () => {
         </TooltipProvider>,
       );
 
-      const input = screen.getByLabelText("Custom Livekit-url");
+      const input = screen.getByLabelText("Custom transport JSON");
       await user.clear(input);
-      await user.type(input, "wss://example.livekit.invalid");
+      await typeJson(user, input, exampleTransport);
 
       const saveButton = screen.getByRole("button", { name: "Save" });
       await user.click(saveButton);
@@ -157,7 +172,7 @@ describe("DeveloperSettingsTab", () => {
 
       expect(customTransportSetting.getValue()).toBe(null);
     });
-    it("will not update custom livekit url without text in input", async () => {
+    it("will not update custom transport without text in input", async () => {
       const user = userEvent.setup();
 
       render(
@@ -171,7 +186,7 @@ describe("DeveloperSettingsTab", () => {
         </TooltipProvider>,
       );
 
-      const input = screen.getByLabelText("Custom Livekit-url");
+      const input = screen.getByLabelText("Custom transport JSON");
       await user.clear(input);
 
       const saveButton = screen.getByRole("button", { name: "Save" });
@@ -180,7 +195,7 @@ describe("DeveloperSettingsTab", () => {
 
       expect(customTransportSetting.getValue()).toBe(null);
     });
-    it("will not update custom livekit url when pressing cancel", async () => {
+    it("will not update custom transport when pressing cancel", async () => {
       const user = userEvent.setup();
 
       render(
@@ -194,7 +209,7 @@ describe("DeveloperSettingsTab", () => {
         </TooltipProvider>,
       );
 
-      const input = screen.getByLabelText("Custom Livekit-url");
+      const input = screen.getByLabelText("Custom transport JSON");
       await user.clear(input);
       await user.type(input, "wss://example.livekit.invalid");
 
@@ -206,7 +221,7 @@ describe("DeveloperSettingsTab", () => {
 
       expect(customTransportSetting.getValue()).toBe(null);
     });
-    it("will update custom livekit url", async () => {
+    it("will update custom transport", async () => {
       const user = userEvent.setup();
 
       render(
@@ -220,24 +235,28 @@ describe("DeveloperSettingsTab", () => {
         </TooltipProvider>,
       );
 
-      const input = screen.getByLabelText("Custom Livekit-url");
+      const input = screen.getByLabelText("Custom transport JSON");
       await user.clear(input);
-      await user.type(input, "wss://example.livekit.valid");
+      await typeJson(user, input, {
+        type: "livekit",
+        url: "wss://example.livekit.valid",
+      });
 
       const saveButton = screen.getByRole("button", { name: "Save" });
       await user.click(saveButton);
       expect(getSFUConfig).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.anything(),
-        "wss://example.livekit.valid",
-        "#testRoom",
+        expect.objectContaining({
+          transport: { type: "livekit", url: "wss://example.livekit.valid" },
+          roomId: "#testRoom",
+        }),
       );
 
-      expect(customTransportSetting.getValue()).toBe(
-        "wss://example.livekit.valid",
-      );
+      expect(customTransportSetting.getValue()).toEqual({
+        type: "livekit",
+        url: "wss://example.livekit.valid",
+      });
     });
-    it("will show error on invalid url", async () => {
+    it("will show error on unreachable transport", async () => {
       const user = userEvent.setup();
 
       render(
@@ -251,24 +270,27 @@ describe("DeveloperSettingsTab", () => {
         </TooltipProvider>,
       );
 
-      const input = screen.getByLabelText("Custom Livekit-url");
+      const input = screen.getByLabelText("Custom transport JSON");
       await user.clear(input);
-      await user.type(input, "wss://example.livekit.valid");
+      await typeJson(user, input, {
+        type: "livekit",
+        url: "wss://example.livekit.valid",
+      });
 
       const saveButton = screen.getByRole("button", { name: "Save" });
       (getSFUConfig as Mock).mockImplementation(() => {
-        throw new Error("Invalid URL");
+        throw new Error("Failed to get SFU config");
       });
       await user.click(saveButton);
       expect(
-        screen.getByText("invalid URL (did not update)"),
+        screen.getByText("invalid transport (did not update)"),
       ).toBeInTheDocument();
       expect(customTransportSetting.getValue()).toBe(null);
     });
   });
 
   // Add this test inside the describe("DeveloperSettingsTab", () => { block,
-  // after the custom livekit url tests:
+  // after the custom transport tests:
 
   describe("enable extended livekit logs", () => {
     afterEach(() => {
