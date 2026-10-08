@@ -26,7 +26,9 @@ import {
   syncBackgroundEffects,
   useBackgroundEffects,
   useSyncBackgroundEffects,
+  createAppBackgroundEffects,
 } from "./BackgroundEffectsContext";
+import { type BackgroundEffects } from "../state/BackgroundEffects";
 import { backgroundBlur } from "../settings/settings";
 import { constant } from "../state/Behavior";
 import { flushPromises, testScope } from "../utils/test";
@@ -196,16 +198,17 @@ describe("BackgroundEffectsProvider", () => {
   };
   // One component for every render, so a rerender updates the tree rather than
   // mounting a second provider with a pipeline of its own.
+  let effects: BackgroundEffects | undefined;
   const Surfaces: FC<{ tracks: (LocalVideoTrack | null)[] }> = ({ tracks }) =>
-    createElement(
-      BackgroundEffectsProvider,
-      null,
-      createElement(
+    createElement(BackgroundEffectsProvider, {
+      // Made on first render, once a test has set up the platform.
+      effects: (effects ??= createAppBackgroundEffects(testScope())),
+      children: createElement(
         "div",
         null,
         ...tracks.map((track, key) => createElement(Surface, { key, track })),
       ),
-    );
+    });
   const surfaces = (
     ...tracks: (LocalVideoTrack | null)[]
   ): ReturnType<typeof createElement> => createElement(Surfaces, { tracks });
@@ -219,6 +222,7 @@ describe("BackgroundEffectsProvider", () => {
 
   beforeEach(() => {
     seen = [];
+    effects = undefined;
     pipelines.built = 0;
     pipelines.destroyed = 0;
     pipelines.switches = [];

@@ -28,6 +28,7 @@ import {
   type MockRTCSession,
   mockRTCSlot,
   mockRTCMember,
+  testScope,
 } from "../utils/test";
 import { E2eeType } from "../e2ee/e2eeType";
 import {
@@ -48,7 +49,10 @@ import { MediaDevicesContext } from "../MediaDevicesContext";
 import { type MediaDevices as ECMediaDevices } from "../state/MediaDevices";
 import { AppBar } from "../AppBar";
 import { type MatrixInfo } from "./VideoPreview";
-import { BackgroundEffectsProvider } from "../tracks/BackgroundEffectsContext";
+import {
+  BackgroundEffectsProvider,
+  createAppBackgroundEffects,
+} from "../tracks/BackgroundEffectsContext";
 import { initializeWidget } from "../widget";
 import { RootElementProvider } from "../RootElementContext";
 
@@ -234,7 +238,9 @@ describe("ActiveCall", () => {
     const { findByTestId } = render(
       <BrowserRouter>
         <MediaDevicesContext value={mediaDevices}>
-          <BackgroundEffectsProvider>
+          <BackgroundEffectsProvider
+            effects={createAppBackgroundEffects(testScope())}
+          >
             <TooltipProvider>
               <ActiveCall
                 client={matrixRoom.client}
@@ -282,7 +288,9 @@ describe("ActiveCall", () => {
         <BrowserRouter>
           <RootElementProvider value={root}>
             <MediaDevicesContext value={mediaDevices}>
-              <BackgroundEffectsProvider>
+              <BackgroundEffectsProvider
+                effects={createAppBackgroundEffects(testScope())}
+              >
                 <TooltipProvider>
                   <ActiveCall
                     client={matrixRoom.client}
