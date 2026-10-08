@@ -243,9 +243,9 @@ describe("createCallFooterViewModel", () => {
       );
     }
 
-    it("offers them on a phone whose browser can run them", () => {
+    it("offers nothing on a phone, where the pipeline would refuse them", () => {
       sdkSupportMock.mockReturnValue(true);
-      expect(lobbyOn("ios").toggleBlur$.value).toBeDefined();
+      expect(lobbyOn("ios").toggleBlur$.value).toBeUndefined();
     });
 
     it("offers them where the pipeline will honour them", () => {
