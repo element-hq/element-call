@@ -10,6 +10,7 @@ import { type BehaviorSubject } from "rxjs";
 import { type LocalUserMediaViewModel } from "./media/LocalUserMediaViewModel.ts";
 import { type MediaViewModel } from "./media/MediaViewModel.ts";
 import { type RingingMediaViewModel } from "./media/RingingMediaViewModel.ts";
+import { type UnknownParticipantMediaViewModel } from "./media/UnknownParticipantMediaViewModel.ts";
 import { type UserMediaViewModel } from "./media/UserMediaViewModel.ts";
 import {
   type GridTileViewModel,
@@ -18,25 +19,29 @@ import {
 import { type Behavior } from "./Behavior.ts";
 import { shallowEquals as arrayShallowEquals } from "../utils/array.ts";
 
+export type GridMediaViewModel =
+  | UserMediaViewModel
+  | UnknownParticipantMediaViewModel;
+
 export interface GridLayoutMedia {
   type: "grid";
   edgeToEdge: false;
   spotlight?: MediaViewModel[];
-  grid: UserMediaViewModel[];
+  grid: GridMediaViewModel[];
 }
 
 export interface SpotlightLandscapeLayoutMedia {
   type: "spotlight-landscape";
   edgeToEdge: boolean;
   spotlight: MediaViewModel[];
-  grid: UserMediaViewModel[];
+  grid: GridMediaViewModel[];
 }
 
 export interface SpotlightPortraitLayoutMedia {
   type: "spotlight-portrait";
   edgeToEdge: false;
   spotlight: MediaViewModel[];
-  grid: UserMediaViewModel[];
+  grid: GridMediaViewModel[];
 }
 
 export interface SpotlightExpandedLayoutMedia {
