@@ -10,7 +10,8 @@ import { BehaviorSubject, distinctUntilChanged, map } from "rxjs";
 import { type BackgroundProcessorWrapper } from "@livekit/track-processors";
 
 import {
-  BackgroundEffects,
+  type BackgroundEffects,
+  createBackgroundEffects,
   type BackgroundEffectsOptions,
 } from "./BackgroundEffects";
 import { type BackgroundEffectsState } from "../livekit/BackgroundEffectsContext";
@@ -58,7 +59,7 @@ describe("the pipeline's state", () => {
     expected: string;
   }): void {
     withTestScheduler(({ behavior, expectObservable }) => {
-      const effects = new BackgroundEffects(testScope(), {
+      const effects = createBackgroundEffects(testScope(), {
         supported: true,
         blur$: behavior(effect, { n: false, b: true }),
         pipeline: fakePipeline().pipeline,
@@ -80,7 +81,7 @@ describe("background effects", () => {
   function build(
     options: Partial<BackgroundEffectsOptions> = {},
   ): BackgroundEffects {
-    return new BackgroundEffects(testScope(), {
+    return createBackgroundEffects(testScope(), {
       supported: true,
       blur$,
       pipeline: fake.pipeline,

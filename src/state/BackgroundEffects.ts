@@ -29,44 +29,47 @@ export interface BackgroundEffectsOptions {
 }
 
 /** The background effect pipeline, as the camera tracks and the menus see it. */
-export class BackgroundEffects {
-  public readonly state$: Behavior<BackgroundEffectsState>;
+export interface BackgroundEffects {
+  readonly state$: Behavior<BackgroundEffectsState>;
+}
 
-  public constructor(
-    scope: ObservableScope,
-    { supported, blur$, pipeline }: BackgroundEffectsOptions,
-  ) {
-    this.state$ = scope.behavior(
-      blur$.pipe(
-        scan<boolean, BackgroundEffectsState>(
-          (previous, wanted) => {
-            // Attached the first time an effect is wanted and never detached
-            // after, so someone who never turns one on pays for none of it.
-            const enable =
-              previous.processor !== undefined || (supported && wanted);
-            return { supported, processor: enable ? pipeline : undefined };
-          },
-          { supported, processor: undefined },
-        ),
+/** Switches the pipeline as the choice changes, for as long as the scope lasts. */
+export function createBackgroundEffects(
+  scope: ObservableScope,
+  { supported, blur$, pipeline }: BackgroundEffectsOptions,
+): BackgroundEffects {
+  const state$ = scope.behavior(
+    blur$.pipe(
+      scan<boolean, BackgroundEffectsState>(
+        (previous, wanted) => {
+          // Attached the first time an effect is wanted and never detached
+          // after, so someone who never turns one on pays for none of it.
+          const enable =
+            previous.processor !== undefined || (supported && wanted);
+          return { supported, processor: enable ? pipeline : undefined };
+        },
+        { supported, processor: undefined },
       ),
-    );
+    ),
+  );
 
-    const switchTo = oneSwitchAtATime(pipeline);
-    combineLatest([this.state$, blur$])
-      .pipe(
-        filter(([{ processor }]) => processor !== undefined),
-        map(([, blur]): SwitchBackgroundProcessorOptions =>
-          blur ? { mode: "background-blur", blurRadius } : { mode: "disabled" },
-        ),
-        distinctUntilChanged(deepCompare),
-        scope.bind(),
-      )
-      .subscribe((options) => {
-        switchTo(options).catch((e) =>
-          logger.warn("Failed to switch background effect", e),
-        );
-      });
-  }
+  const switchTo = oneSwitchAtATime(pipeline);
+  combineLatest([state$, blur$])
+    .pipe(
+      filter(([{ processor }]) => processor !== undefined),
+      map(([, blur]): SwitchBackgroundProcessorOptions =>
+        blur ? { mode: "background-blur", blurRadius } : { mode: "disabled" },
+      ),
+      distinctUntilChanged(deepCompare),
+      scope.bind(),
+    )
+    .subscribe((options) => {
+      switchTo(options).catch((e) =>
+        logger.warn("Failed to switch background effect", e),
+      );
+    });
+
+  return { state$ };
 }
 
 /**

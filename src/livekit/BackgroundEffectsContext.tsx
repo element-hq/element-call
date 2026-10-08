@@ -28,7 +28,10 @@ import { OneStepPipeline } from "./OneStepPipeline";
 import { supportsBackgroundProcessors } from "./backgroundProcessing";
 import { type Behavior } from "../state/Behavior";
 import { ObservableScope } from "../state/ObservableScope";
-import { BackgroundEffects } from "../state/BackgroundEffects";
+import {
+  type BackgroundEffects,
+  createBackgroundEffects,
+} from "../state/BackgroundEffects";
 import { useBehavior } from "../useBehavior";
 
 //TODO-MULTI-SFU: This is not yet fully there.
@@ -124,7 +127,7 @@ export const BackgroundEffectsProvider: FC<Props> = ({ children }) => {
   useEffect(() => {
     const scope = new ObservableScope();
     setEffects(
-      new BackgroundEffects(scope, {
+      createBackgroundEffects(scope, {
         supported: supportsBackgroundProcessors(),
         blur$: backgroundBlurSettings.value$,
         pipeline: new OneStepPipeline(
