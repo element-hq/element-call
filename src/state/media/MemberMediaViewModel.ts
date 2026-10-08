@@ -90,13 +90,7 @@ export function createMemberMedia(
   const unencrypted$ = (
     track$: Behavior<MediaTrack | undefined>,
   ): Observable<boolean> =>
-    track$.pipe(
-      switchMap((track) =>
-        track === undefined
-          ? of(false)
-          : track.encrypted$.pipe(map((encrypted) => !encrypted)),
-      ),
-    );
+    track$.pipe(map((track) => track !== undefined && !track.encrypted));
 
   return {
     ...createBaseMedia(inputs),

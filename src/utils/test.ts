@@ -307,7 +307,7 @@ export function mockMediaTrack(
     kind: "video",
     id: "track",
     muted$: constant(false),
-    encrypted$: constant(true),
+    encrypted: true,
     stats$: constant(undefined),
     isActive$: constant(false),
     attach: vi.fn(),

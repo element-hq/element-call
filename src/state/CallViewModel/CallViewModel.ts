@@ -25,8 +25,8 @@ import {
   trackBySource$,
   type TransportMetadata,
   type VideoCaptureSettings,
+  type VideoProcessor,
 } from "@element-hq/matrixrtc-sdk";
-import { type Track, type TrackProcessor } from "livekit-client";
 import {
   KnownMembership,
   type Room as MatrixRoom,
@@ -179,7 +179,7 @@ export interface CallViewModelOptions {
    */
   capture?: CaptureSettings;
   /** Background blur and the like, applied to the camera as it changes. */
-  videoProcessor$?: Behavior<TrackProcessor<Track.Kind.Video> | undefined>;
+  videoProcessor$?: Behavior<VideoProcessor | undefined>;
   /**
    * The application hosting Element Call, which can ask it to hang up and wants
    * to know when the user joins or leaves. Defaults to no host.
