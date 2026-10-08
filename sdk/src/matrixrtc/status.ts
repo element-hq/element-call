@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type MatrixRTCError, type ParticipationStatus } from "../api";
-import { type LocalMemberState, TransportState } from "./LocalMember";
+import { type LocalMemberState, TransportState } from "./LocalMembership";
 
 /** The local member's state, collapsed to what a host shows. */
 export function participationStatus(

@@ -14,7 +14,7 @@ import {
   type LocalMemberState,
   PublishState,
   TransportState,
-} from "./LocalMember";
+} from "./LocalMembership";
 import { fatalError, participationStatus } from "./status";
 
 const publishing: LocalMemberState = {

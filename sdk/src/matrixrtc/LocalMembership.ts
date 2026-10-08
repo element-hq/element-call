@@ -116,7 +116,7 @@ export function createLocalMembership$({
   timings,
   logger: parentLogger,
 }: Props): LocalMembership {
-  const logger = parentLogger.getChild("[LocalMember]");
+  const logger = parentLogger.getChild("[LocalMembership]");
 
   const fatalTransportError$ = new Subject<MatrixRTCError>();
   const preparedTransport$ = preparedTransportWithErrors$.pipe(

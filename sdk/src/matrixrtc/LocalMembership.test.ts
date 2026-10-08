@@ -29,7 +29,7 @@ import {
   type PreparedTransport,
   PublishState,
   TransportState,
-} from "./LocalMember";
+} from "./LocalMembership";
 import { flushPromises, testScope } from "../utils/test";
 
 const transport: Transport = { type: "livekit", livekit_service_url: "u" };

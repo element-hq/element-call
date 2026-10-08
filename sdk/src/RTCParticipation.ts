@@ -52,7 +52,7 @@ import { joinJsSdkSession } from "./matrixrtc/joinJsSdkSession";
 import {
   createLocalMembership$,
   type PreparedTransport,
-} from "./matrixrtc/LocalMember";
+} from "./matrixrtc/LocalMembership";
 import { discoverLocalTransport } from "./matrixrtc/LocalTransport";
 import {
   createLocalRTCMember,
