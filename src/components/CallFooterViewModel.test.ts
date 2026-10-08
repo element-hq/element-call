@@ -254,12 +254,12 @@ describe("createCallFooterViewModel", () => {
       );
     }
 
-    it("offers nothing on a phone, where the pipeline would refuse them", () => {
+    it("offers them on a phone whose browser can run them", () => {
       sdkSupportMock.mockReturnValue(true);
-      expect(lobbyOn("ios").selectBackgroundEffect$.value).toBeUndefined();
+      expect(lobbyOn("ios").selectBackgroundEffect$.value).toBeDefined();
     });
 
-    it("offers them where the pipeline will honour them", () => {
+    it("offers them on a desktop whose browser can run them", () => {
       sdkSupportMock.mockReturnValue(true);
       expect(lobbyOn("desktop").selectBackgroundEffect$.value).toBeDefined();
     });

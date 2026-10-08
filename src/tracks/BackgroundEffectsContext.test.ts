@@ -245,14 +245,16 @@ describe("BackgroundEffectsProvider", () => {
     expect(track.stopProcessor).not.toHaveBeenCalled();
   });
 
-  it("does not run on a phone, even where its browser could", async () => {
+  it("runs on a phone whose browser can run it", async () => {
     platformMock.platform = "ios";
     const track = cameraTrack();
     render(surfaces(track));
     await blur(true);
 
-    expect(latest().supported).toBe(false);
-    expect(track.setProcessor).not.toHaveBeenCalled();
+    expect(latest().supported).toBe(true);
+    expect(track.setProcessor).toHaveBeenCalledWith(
+      convertToLivekitProcessor(latest().processor!),
+    );
   });
 
   it("preview and call share one pipeline", async () => {
