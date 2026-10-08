@@ -58,7 +58,6 @@ import { ConnectionState, type Connection } from "../remoteMembers/Connection";
 import { type Publisher } from "./Publisher";
 import { initializeWidget } from "../../../widget";
 import { nullHostBridge } from "../../../HostBridge";
-import { type SFUConfig } from "../../../livekit/auth";
 import * as livekitAuth from "../../../livekit/auth";
 
 initializeWidget();
@@ -320,14 +319,8 @@ describe("LocalMembership", () => {
   const mockTransport: UnstableLivekitTransport = {
     type: "livekit",
     url: "https://sfu.example.org",
+    livekit_service_url: "https://jwt.example.org",
   } as UnstableLivekitTransport;
-
-  const mockSFUConfig: SFUConfig = {
-    jwt: "foo",
-    livekitAlias: "bar",
-    livekitIdentity: "baz",
-    url: "bro",
-  };
 
   const connectionTransportAConnected = {
     livekitRoom: mockLivekitRoom({
@@ -345,10 +338,10 @@ describe("LocalMembership", () => {
     livekitRoom: mockLivekitRoom({}),
   } as unknown as Connection;
 
-  const authCallSpy = vi
-    .spyOn(livekitAuth, "getSFUConfig")
-    .mockResolvedValue(mockSFUConfig);
-  afterEach(() => authCallSpy.mockClear());
+  const delegationSpy = vi
+    .spyOn(livekitAuth, "delegateDelayedLeave")
+    .mockResolvedValue();
+  afterEach(() => delegationSpy.mockClear());
 
   it.each([
     ["no", null, timings],
@@ -357,7 +350,11 @@ describe("LocalMembership", () => {
       "https://matrix.example.org/_matrix/client/unstable/io.element.msc4195/rtc/livekit/delegate_delayed_leave",
       delegatedTimings,
     ],
-    ["transport", "/a/delegate_delayed_leave", delegatedTimings],
+    [
+      "transport",
+      "https://jwt.example.org/delegate_delayed_leave",
+      delegatedTimings,
+    ],
   ])(
     "joins session with %s delegation support",
     async (_serviceName, delegationUrl, delayedLeaveTimings) => {
@@ -390,27 +387,23 @@ describe("LocalMembership", () => {
         delayedLeaveTimings,
       );
 
-      expect(authCallSpy).not.toHaveBeenCalled();
+      expect(delegationSpy).not.toHaveBeenCalled();
       delayId$.next("leave1");
       await flushPromises();
       if (delegationUrl === null) {
-        expect(authCallSpy).not.toHaveBeenCalled();
+        expect(delegationSpy).not.toHaveBeenCalled();
       } else {
         // Delegation is supported in this test case, so go on to check that
         // LocalMember actually performs delegation
         const expectDelegation = (delayId: string) =>
-          expect(authCallSpy).toHaveBeenLastCalledWith(
-            mockedClient,
-            ownMemberMock,
-            "a",
-            "!test-room-id:example.org",
-            {
-              matrixRTCMode: MATRIX_RTC_MODE,
-              delayEndpointBaseUrl: "https://matrix.example.org",
-              delayId,
-            },
-            expect.anything(),
-          );
+          expect(delegationSpy).toHaveBeenLastCalledWith({
+            client: mockedClient,
+            membership: ownMemberMock,
+            transport: mockTransport,
+            roomId: "!test-room-id:example.org",
+            delayId,
+            logger: expect.anything(),
+          });
 
         expectDelegation("leave1");
         delayId$.next("leave2"); // Can change delegated leaves
