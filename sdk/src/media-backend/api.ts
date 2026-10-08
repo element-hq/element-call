@@ -17,15 +17,13 @@ import { type Transport } from "matrix-js-sdk/lib/matrixrtc";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 import { type Observable } from "rxjs";
 
-import {
-  type LocalRTCMember,
-  type ResolvedTransport,
-  type RTCMember,
-  type RTCMembership,
-} from "../api";
+import { type ResolvedTransport, type RTCMember } from "../api";
 import {
   type LocalAudioMediaTrack,
+  type LocalMemberMedia,
   type LocalVideoMediaTrack,
+  type MediaSource,
+  type MemberMedia,
   type PublishRequest,
 } from "../media-api";
 import { type SessionTimings } from "../config";
@@ -52,13 +50,6 @@ export interface MediaKey {
   index: number;
   key: Uint8Array<ArrayBuffer>;
 }
-
-/** The fields of a member the backend supplies, as the member exposes them. */
-export type MemberMediaFields = Pick<RTCMember, "tracks$" | "encryptionError$">;
-export type LocalMemberMediaFields = Pick<
-  LocalRTCMember,
-  "tracks$" | "encryptionError$"
->;
 
 export interface MediaBackendContext {
   roomId: string;
@@ -144,15 +135,12 @@ export interface MediaBackend {
   /**
    * The media of one remote member: its tracks, null while nothing has
    * arrived for it on its transport, and its key errors. Built in `scope`,
-   * which the caller ends with the member. This is also how the backend
-   * learns which remote transports exist: it follows the membership's
-   * transport for as long as `scope` lives, and connects to every transport
-   * some member is on.
+   * which the caller ends with the member or the participation, whichever
+   * goes first. This is also how the backend learns which remote transports
+   * exist: it follows the member's `transport$` for as long as `scope` lives,
+   * and connects to every transport some member is on.
    */
-  mediaFor$(
-    scope: ObservableScope,
-    membership$: Behavior<RTCMembership>,
-  ): MemberMediaFields;
+  mediaFor(scope: ObservableScope, member: RTCMember): MemberMedia;
 
   /** Every connection the backend holds. For debugging and devtool purposes.*/
   readonly connections$: Behavior<BackendConnection[]>;
@@ -175,7 +163,7 @@ export interface MediaBackend {
 }
 
 /** `tracks$` is null until the connection carries a local participant. */
-export interface LocalMediaBackend extends LocalMemberMediaFields {
+export interface LocalMediaBackend extends LocalMemberMedia {
   /**
    * State of the connection the local member publishes on. `Initialized`
    * while there is none; an `Error` is the connection's failure.
@@ -201,6 +189,6 @@ export interface LocalMediaBackend extends LocalMemberMediaFields {
   publish(
     request: PublishRequest,
   ): Promise<LocalAudioMediaTrack | LocalVideoMediaTrack>;
-  /** Removes one of our tracks by id; a screen share takes its audio with it. */
-  unpublish(id: string): Promise<void>;
+  /** Removes one of our publications; a screen share takes its audio with it. */
+  unpublish(source: MediaSource): Promise<void>;
 }

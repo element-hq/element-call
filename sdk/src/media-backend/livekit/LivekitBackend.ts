@@ -23,11 +23,12 @@ import {
   switchMap,
 } from "rxjs";
 
-import { type ResolvedTransport, type RTCMembership } from "../../api";
+import { type ResolvedTransport, type RTCMember } from "../../api";
 
 import { type MediaQuality } from "../../config";
 import { MatrixRTCError } from "../../errors";
 import { type Behavior } from "../../reactive/Behavior";
+import { type MemberMedia } from "../../media-api";
 import {
   type Epoch,
   type ObservableScope,
@@ -37,7 +38,6 @@ import {
   type BackendConnection,
   type MediaBackend,
   type MediaBackendContext,
-  type MemberMediaFields,
   type TransportCapabilities,
 } from "../api";
 import { type Connection } from "./Connection";
@@ -147,14 +147,14 @@ export function createLivekitBackend(
     );
   };
 
-  const mediaFor$ = (
+  const mediaFor = (
     memberScope: ObservableScope,
-    membership$: Behavior<RTCMembership>,
-  ): MemberMediaFields => {
-    const identity = membership$.value.rtcBackendIdentity;
+    member: RTCMember,
+  ): MemberMedia => {
+    const identity = member.rtcBackendIdentity;
     const transport$ = memberScope.behavior(
-      membership$.pipe(
-        map((membership) => membership.getTransport()),
+      member.transport$.pipe(
+        map((transport) => transport?.raw),
         map((transport) =>
           isLivekitTransport(transport) ? transport : undefined,
         ),
@@ -224,7 +224,7 @@ export function createLivekitBackend(
     prepareLocalTransport,
     delegateDelayedLeave,
     local: localMedia_,
-    mediaFor$,
+    mediaFor,
     connections$,
     setAudioOutputDeviceId: localMedia_.setAudioOutputDeviceId,
     sendData,

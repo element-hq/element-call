@@ -16,6 +16,8 @@ import {
   type TrackProcessor,
   type VideoCodec,
 } from "livekit-client";
+import { type Observable } from "rxjs";
+
 import { type Behavior } from "./reactive/Behavior";
 
 export interface AudioCaptureSettings {
@@ -42,6 +44,11 @@ export type PublishRequest =
       source: "camera";
       deviceId?: string;
       /** Background blur and the like. */
+      // REVIEW: this is ugly makes us need to import lk
+      // We need an interface:
+      //  - super high level: blur + background img
+      //  - lower level: rtc stream insertable stream (copy lk TrackProcessor concept)
+      //  - florian: should be independent of webCodec or WebRtc
       processor?: TrackProcessor<Track.Kind.Video>;
       capture?: VideoCaptureSettings;
     }
@@ -73,8 +80,14 @@ export interface MediaTrack {
   id: string;
   muted$: Behavior<boolean>;
   /** False when the SFU reports the track as unencrypted. */
+  // REVIEW: does it need to be a behavior
   encrypted$: Behavior<boolean>;
   /** Polled while subscribed. */
+  // REVIEW: we want the perf gain of not having it always run.
+  //
+  // proposals
+  //  - obs -> on subscribe start polling timer
+  //  - add public method the MediaTrack: for example: actiavteStatsPolling(ms)
   stats$: Behavior<MediaStreamStats>;
   /**
    * Rendering. The view hands its `<video>` or `<audio>` element over; the SDK
@@ -95,6 +108,7 @@ export interface AudioMediaTrack extends MediaTrack {
    * "speaking". LiveKit measures it per member, so every audio track of a
    * member reports the same value.
    */
+  // REVIEW: audio Level (could even super-seed isActive "audioLevel != 0")
   isActive$: Behavior<boolean>;
   /** Route playback through Web Audio, for earpiece pan and gain. Undefined resets. */
   setAudioContext(ctx: AudioContext | undefined, plugins?: AudioNode[]): void;
@@ -135,3 +149,24 @@ export interface LocalVideoMediaTrack extends VideoMediaTrack, LocalMediaTrack {
 }
 
 export type EncryptionError = "MissingKey" | "InvalidKey";
+
+/**
+ * What a member sends, once it has arrived on its transport: its tracks, null
+ * while nothing has arrived for it, and the key errors beside them. The media
+ * backend supplies exactly these two fields per member.
+ */
+export interface MemberMedia {
+  /**
+   * The member's tracks, in publication order, once it has shown up on its
+   * transport; null until then ("waiting for media"). An entry stays the same
+   * object for as long as the same publication is behind it. Which track is
+   * which is in its `source`; `trackBySource$` picks one out.
+   */
+  tracks$: Behavior<(AudioMediaTrack | VideoMediaTrack)[] | null>;
+  /** Emits when the SFU reports a key problem for this member. */
+  encryptionError$: Observable<EncryptionError>;
+}
+
+export interface LocalMemberMedia extends MemberMedia {
+  tracks$: Behavior<(LocalAudioMediaTrack | LocalVideoMediaTrack)[] | null>;
+}

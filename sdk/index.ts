@@ -56,7 +56,7 @@ export * from "./src/api";
 export * from "./src/media-api";
 export * from "./src/media-backend/api";
 export { trackBySource$, type TrackOfSource } from "./src/utils/tracks";
-export { createMatrixRTCClient } from "./src/MatrixRTCClient";
+export { createRTCSlot } from "./src/RTCSlot";
 export {
   createLivekitBackend,
   type LivekitBackendOptions,

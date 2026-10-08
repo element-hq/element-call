@@ -89,9 +89,8 @@ interface Props {
 }
 
 export interface LocalMembership {
-  requestJoinAndPublish: () => void;
-  requestDisconnect: () => void;
-  joinRequested$: Behavior<boolean>;
+  /** Sends the leave and stops publishing. Final: there is no joining again. */
+  leave: () => void;
   state$: Behavior<LocalMemberState>;
   /** Fully connected: to the homeserver, the session and the transport. */
   connected$: Behavior<boolean>;
@@ -101,8 +100,8 @@ export interface LocalMembership {
 }
 
 /**
- * The local member's state machine: waits for the transport, publishes once
- * asked to join, and enters and leaves the MatrixRTC session in step.
+ * The local member's state machine: waits for the transport, then publishes
+ * and enters the MatrixRTC session, and leaves both in step on `leave()`.
  */
 export function createLocalMembership$({
   scope,
@@ -131,22 +130,22 @@ export function createLocalMembership$({
     null,
   );
 
-  const joinRequested$ = new BehaviorSubject(false);
+  const joined$ = new BehaviorSubject(true);
   const matrixError$ = new BehaviorSubject<MatrixRTCError | null>(null);
 
   // Nothing leaves this device while it may already have been dropped from
   // the session: the member would show as away while still being heard
   combineLatest(
-    [joinRequested$, homeserverConnected.combined$],
-    (join, [connected]) => join && connected,
+    [joined$, homeserverConnected.combined$],
+    (joined, [connected]) => joined && connected,
   )
     .pipe(distinctUntilChanged(), scope.bind())
     .subscribe((publish) => local.setPublishing(publish));
 
   scope.reconcile(
-    scope.behavior(combineLatest([transport$, joinRequested$])),
-    async ([prepared, shouldJoin]) => {
-      if (prepared === null || !shouldJoin) return;
+    scope.behavior(combineLatest([transport$, joined$])),
+    async ([prepared, joined]) => {
+      if (prepared === null || !joined) return;
       try {
         joinMatrixRTC(
           prepared.transport,
@@ -191,8 +190,8 @@ export function createLocalMembership$({
   });
 
   const mediaState$ = scope.behavior<LocalMemberMediaState>(
-    combineLatest([local.connectionState$, joinRequested$]).pipe(
-      map(([connectionState, shouldPublish]) => {
+    combineLatest([local.connectionState$, joined$]).pipe(
+      map(([connectionState, joined]) => {
         if (connectionState !== MediaConnectionState.Connected)
           return {
             connection:
@@ -200,9 +199,7 @@ export function createLocalMembership$({
                 ? toMatrixRTCError(connectionState)
                 : connectionState,
           };
-        return shouldPublish
-          ? PublishState.Publishing
-          : PublishState.WaitingForUser;
+        return joined ? PublishState.Publishing : PublishState.WaitingForUser;
       }),
       distinctUntilChanged(deepCompare),
     ),
@@ -260,9 +257,7 @@ export function createLocalMembership$({
   );
 
   return {
-    requestJoinAndPublish: () => joinRequested$.next(true),
-    requestDisconnect: () => joinRequested$.next(false),
-    joinRequested$,
+    leave: () => joined$.next(false),
     state$,
     connected$,
     reconnecting$,

@@ -46,25 +46,22 @@ describe("createLocalMembership$", () => {
     });
 
     local.connectionState$.next(MediaConnectionState.Connected);
-    expect(membership.state$.value).toEqual({
-      media: PublishState.WaitingForUser,
-      matrix: Status.Connected,
-    });
-
-    membership.requestJoinAndPublish();
     await flushPromises();
     expect(membership.state$.value).toEqual({
       media: PublishState.Publishing,
       matrix: Status.Connected,
     });
     expect(membership.connected$.value).toBe(true);
+
+    membership.leave();
+    expect(membership.state$.value).toEqual({
+      media: PublishState.WaitingForUser,
+      matrix: Status.Connected,
+    });
   });
 
   it("publishes only while joined and the homeserver is reachable", async () => {
     const { membership, local, homeserver } = setup();
-    expect(local.setPublishing).toHaveBeenLastCalledWith(false);
-
-    membership.requestJoinAndPublish();
     expect(local.setPublishing).toHaveBeenLastCalledWith(true);
 
     homeserver.combined$.next([false, "sync"]);
@@ -72,7 +69,7 @@ describe("createLocalMembership$", () => {
     homeserver.combined$.next([true, null]);
     expect(local.setPublishing).toHaveBeenLastCalledWith(true);
 
-    membership.requestDisconnect();
+    membership.leave();
     expect(local.setPublishing).toHaveBeenLastCalledWith(false);
     // A sync outage after leaving must not bring the media back
     homeserver.combined$.next([false, "sync"]);
@@ -82,10 +79,8 @@ describe("createLocalMembership$", () => {
   });
 
   it("joins with the delegated timings and hands over each delay id where the backend can", async () => {
-    const { membership, prepared$, delayId$, joinMatrixRTC, delegate } =
-      setup();
+    const { prepared$, delayId$, joinMatrixRTC, delegate } = setup();
     prepared$.next({ transport, canDelegateDelayedLeave: true });
-    membership.requestJoinAndPublish();
     await flushPromises();
     expect(joinMatrixRTC).toHaveBeenCalledWith(
       transport,
@@ -101,10 +96,8 @@ describe("createLocalMembership$", () => {
   });
 
   it("never hands the leave over where the backend cannot take it", async () => {
-    const { membership, prepared$, delayId$, joinMatrixRTC, delegate } =
-      setup();
+    const { prepared$, delayId$, joinMatrixRTC, delegate } = setup();
     prepared$.next({ transport, canDelegateDelayedLeave: false });
-    membership.requestJoinAndPublish();
     delayId$.next("delay-1");
     await flushPromises();
     expect(joinMatrixRTC).toHaveBeenCalledWith(
@@ -124,7 +117,6 @@ describe("createLocalMembership$", () => {
     const { membership, local, prepared$ } = setup();
     prepared$.next({ transport, canDelegateDelayedLeave: false });
     local.connectionState$.next(MediaConnectionState.Connected);
-    membership.requestJoinAndPublish();
 
     local.connectionState$.next(MediaConnectionState.Reconnecting);
     expect(membership.state$.value).toEqual({

@@ -15,7 +15,7 @@ import {
   PublishState,
   TransportState,
 } from "./LocalMember";
-import { fatalError, sessionStatus } from "./status";
+import { fatalError, participationStatus } from "./status";
 
 const publishing: LocalMemberState = {
   media: PublishState.Publishing,
@@ -27,31 +27,39 @@ const connecting: LocalMemberState = {
 };
 const error = new MatrixRTCError("gone");
 
-describe("sessionStatus", () => {
+describe("participationStatus", () => {
   it.each<[string, LocalMemberState, boolean, boolean, boolean, string]>([
     [
       "no transport yet",
       TransportState.Waiting,
-      true,
+      false,
       false,
       false,
       "waitingForTransport",
     ],
-    ["not asked to join", connecting, false, false, false, "disconnected"],
-    ["joining", connecting, true, false, false, "connecting"],
-    ["connected", publishing, true, true, false, "connected"],
-    ["dropped after connecting", connecting, true, false, true, "reconnecting"],
-    ["a transport error", error, true, false, false, "disconnected"],
+    ["joining", connecting, false, false, false, "connecting"],
+    ["connected", publishing, true, false, false, "connected"],
+    [
+      "dropped after connecting",
+      connecting,
+      false,
+      true,
+      false,
+      "reconnecting",
+    ],
+    ["a transport error", error, false, false, false, "disconnected"],
     [
       "a matrix error",
       { ...publishing, matrix: error },
       true,
-      true,
+      false,
       false,
       "disconnected",
     ],
-  ])("%s", (_name, state, joinRequested, connected, reconnecting, expected) => {
-    expect(sessionStatus(state, joinRequested, connected, reconnecting)).toBe(
+    ["left", publishing, true, false, true, "left"],
+    ["left after an error", error, false, false, true, "left"],
+  ])("%s", (_name, state, connected, reconnecting, left, expected) => {
+    expect(participationStatus(state, connected, reconnecting, left)).toBe(
       expected,
     );
   });

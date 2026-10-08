@@ -15,12 +15,13 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import { combineLatest, type Observable, of, switchMap } from "rxjs";
 import {
   type AudioMediaTrack,
-  createMatrixRTCClient,
+  createRTCSlot,
   E2eeType,
+  type LocalRTCMember,
   MatrixRTCMode,
   ObservableScope,
-  type RTCMember,
-  type MatrixRTCClient,
+  type RemoteRTCMember,
+  type RTCParticipation,
   trackBySource$,
   type VideoMediaTrack,
 } from "@element-hq/matrixrtc-sdk";
@@ -69,33 +70,34 @@ async function start(
     const room = await joinRoom(client, roomIdOrAlias);
 
     const scope = new ObservableScope();
-    const rtcClient = createMatrixRTCClient(scope, client, room, {
+    const slot = createRTCSlot(scope, client, room, {
       encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
       matrixRTCMode: MatrixRTCMode.Compatibility,
+    });
+    const rtcParticipation = slot.join({
       publish: [{ source: "microphone" }, { source: "camera" }],
     });
-    rtcClient.status$.pipe(scope.bind()).subscribe((s) => {
+    rtcParticipation.status$.pipe(scope.bind()).subscribe((s) => {
       status.textContent = s;
     });
-    rtcClient.fatalError$.pipe(scope.bind()).subscribe((error) => {
+    rtcParticipation.fatalError$.pipe(scope.bind()).subscribe((error) => {
       if (error !== null) status.textContent = `Error: ${error.message}`;
     });
-    showMembers(scope, rtcClient);
-    showMessages(scope, rtcClient);
-    rtcClient.join();
+    showMembers(scope, rtcParticipation);
+    showMessages(scope, rtcParticipation);
 
     toggle(buttons.microphone, async (enabled) =>
-      setPublished(rtcClient, "microphone", enabled),
+      setPublished(rtcParticipation, "microphone", enabled),
     );
     toggle(buttons.camera, async (enabled) =>
-      setPublished(rtcClient, "camera", enabled),
+      setPublished(rtcParticipation, "camera", enabled),
     );
     toggle(buttons.screenShare, async (enabled) =>
-      setPublished(rtcClient, "screenShare", enabled),
+      setPublished(rtcParticipation, "screenShare", enabled),
     );
     buttons.leave.hidden = false;
     buttons.leave.onclick = (): void => {
-      rtcClient.leave();
+      rtcParticipation.leave();
       scope.end();
       members.replaceChildren();
       messages.replaceChildren();
@@ -115,20 +117,20 @@ async function start(
  * published and unpublished.
  */
 async function setPublished(
-  rtcClient: MatrixRTCClient,
+  rtcParticipation: RTCParticipation,
   source: "microphone" | "camera" | "screenShare",
   enabled: boolean,
 ): Promise<boolean> {
-  const member = rtcClient.localMember$.value;
-  if (member === null) return !enabled;
-  const track = member.tracks$.value?.find((t) => t.source === source);
+  const track = rtcParticipation.localMember$.value?.tracks$.value?.find(
+    (t) => t.source === source,
+  );
   if (track && source === "screenShare") {
-    if (!enabled) await member.unpublish(track.id);
+    if (!enabled) await rtcParticipation.unpublish(source);
     return enabled;
   }
   if (track) return track.setEnabled(enabled);
   if (!enabled) return false;
-  await member.publish({ source });
+  await rtcParticipation.publish({ source });
   return true;
 }
 
@@ -148,49 +150,57 @@ function toggle(
 /** Sends what the form holds on the "chat" topic, and lists what arrives. */
 function showMessages(
   scope: ObservableScope,
-  rtcClient: MatrixRTCClient,
+  rtcParticipation: RTCParticipation,
 ): void {
   dataForm.hidden = false;
   dataForm.onsubmit = (event): void => {
     event.preventDefault();
     const text = new FormData(dataForm).get("text") as string;
-    rtcClient.sendData("chat", text).then(
+    rtcParticipation.sendData("chat", text).then(
       () => dataForm.reset(),
       (e: unknown) => {
         status.textContent = `Error: ${e}`;
       },
     );
   };
-  rtcClient.data$.pipe(scope.bind()).subscribe(({ member, topic, text }) => {
-    const line = messages.appendChild(document.createElement("li"));
-    line.dataset.testid = "message";
-    line.dataset.topic = topic;
-    line.dataset.userId = member.userId;
-    line.textContent = `${member.displayName$.value}: ${text}`;
-  });
+  rtcParticipation.data$
+    .pipe(scope.bind())
+    .subscribe(({ member, topic, text }) => {
+      const line = messages.appendChild(document.createElement("li"));
+      line.dataset.testid = "message";
+      line.dataset.topic = topic;
+      line.dataset.userId = member.userId;
+      line.textContent = `${member.displayName$.value}: ${text}`;
+    });
 }
 
-function showMembers(scope: ObservableScope, rtcClient: MatrixRTCClient): void {
+function showMembers(
+  scope: ObservableScope,
+  rtcParticipation: RTCParticipation,
+): void {
   const tiles = new Map<string, HTMLElement>();
-  combineLatest([rtcClient.localMember$, rtcClient.remoteMembers$])
+  combineLatest([rtcParticipation.localMember$, rtcParticipation.remoteMembers$])
     .pipe(scope.bind())
     .subscribe(([local, remote]) => {
       const current = local === null ? remote : [local, ...remote];
       for (const [id, tile] of tiles)
-        if (!current.some((m) => m.id === id)) {
+        if (!current.some((m) => m.rtcBackendIdentity === id)) {
           tile.remove();
           tiles.delete(id);
         }
       for (const member of current)
-        if (!tiles.has(member.id)) {
+        if (!tiles.has(member.rtcBackendIdentity)) {
           const tile = memberTile(scope, member);
-          tiles.set(member.id, tile);
+          tiles.set(member.rtcBackendIdentity, tile);
           members.append(tile);
         }
     });
 }
 
-function memberTile(scope: ObservableScope, member: RTCMember): HTMLElement {
+function memberTile(
+  scope: ObservableScope,
+  member: LocalRTCMember | RemoteRTCMember,
+): HTMLElement {
   const tile = document.createElement("section");
   tile.dataset.testid = "member";
   tile.dataset.userId = member.userId;

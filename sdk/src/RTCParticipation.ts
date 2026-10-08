@@ -6,29 +6,40 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type MatrixClient, type Room } from "matrix-js-sdk";
-import { type Logger, logger as rootLogger } from "matrix-js-sdk/lib/logger";
+import { type Logger } from "matrix-js-sdk/lib/logger";
 import {
   type MatrixRTCSession as JsSdkRTCSession,
   MatrixRTCSessionEvent,
-  MatrixRTCSessionManager,
   MembershipManagerEvent,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type IMembershipManager } from "matrix-js-sdk/lib/matrixrtc/IMembershipManager";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 import { v4 as uuidv4 } from "uuid";
-import { combineLatest, filter, from, fromEvent, map, Observable } from "rxjs";
+import {
+  BehaviorSubject,
+  combineLatest,
+  filter,
+  from,
+  fromEvent,
+  map,
+  Observable,
+} from "rxjs";
 
 import { defaultSessionTimings, MatrixRTCMode } from "./config";
 import { E2eeType } from "./encryption";
+import { type Behavior } from "./reactive/Behavior";
 import { type ObservableScope } from "./reactive/ObservableScope";
-import { filterBehavior, generateItems } from "./reactive/observable";
+import { generateItems } from "./reactive/observable";
 import { mapScoped } from "./utils/mapScoped";
 import {
   type DataMessage,
   type LocalRTCMember,
-  type MatrixRTCClient,
-  type MatrixRTCClientOptions,
   type RemoteRTCMember,
+  type RTCMember,
+  type RTCParticipation,
+  type RTCParticipationOptions,
+  type RTCSlot,
+  type RTCSlotOptions,
 } from "./api";
 import {
   type MediaBackend,
@@ -36,7 +47,6 @@ import {
   type MediaKey,
 } from "./media-backend/api";
 import { createLivekitBackend } from "./media-backend/livekit/LivekitBackend";
-import { MatrixRTCError } from "./errors";
 import { createHomeserverConnected$ } from "./matrixrtc/HomeserverConnected";
 import { joinJsSdkSession } from "./matrixrtc/joinJsSdkSession";
 import {
@@ -45,48 +55,54 @@ import {
 } from "./matrixrtc/LocalMember";
 import { discoverLocalTransport } from "./matrixrtc/LocalTransport";
 import {
-  createMatrixMemberMetadata$,
-  createRoomMembers$,
-} from "./matrixrtc/MatrixMemberMetadata";
-import {
   createLocalRTCMember,
   createRemoteRTCMember,
-  membershipKeys,
 } from "./matrixrtc/Members";
-import {
-  createKeyRotationSuppressed$,
-  createMemberships$,
-} from "./matrixrtc/JsRtcSessionBehaviors";
-import { fatalError, sessionStatus } from "./matrixrtc/status";
-import { createTransportRegistry } from "./matrixrtc/Transports";
+import { createKeyRotationSuppressed$ } from "./matrixrtc/JsRtcSessionBehaviors";
+import { fatalError, participationStatus } from "./matrixrtc/status";
+import { type TransportRegistry } from "./matrixrtc/Transports";
+
+/** What the slot lends a participation. */
+export interface ParticipationDeps {
+  client: MatrixClient;
+  room: Room;
+  slot: RTCSlot;
+  jsSdkSession: JsSdkRTCSession;
+  members$: Behavior<RTCMember[]>;
+  transports: TransportRegistry;
+  slotOptions: Pick<RTCSlotOptions, "matrixRTCMode" | "encryptionSystem">;
+  logger: Logger;
+}
+
+/** The participation, plus what the slot reads from it without exposing it. */
+export interface ParticipationInternals {
+  participation: RTCParticipation;
+  connections$: MediaBackend["connections$"];
+}
 
 /**
- * Takes the whole `MatrixClient` rather than a slice of it, and finds the
- * MatrixRTC session itself. The js-sdk is the MatrixRTC implementation today;
- * when the rust-rtc crate replaces it, the SDK has to bridge the crate to the
- * js-sdk client, and only the SDK knows what that bridge needs. Holding the
- * client keeps that change inside the SDK.
+ * Our span in a slot: the backend, the local transport, the join state
+ * machine and the members with the media it carries for them. Starts joining
+ * at once and ends with `leave()`, which also ends `scope`.
  */
-export function createMatrixRTCClient(
+export function createRTCParticipation(
   scope: ObservableScope,
-  client: MatrixClient,
-  room: Room,
-  options: MatrixRTCClientOptions,
-): MatrixRTCClient {
-  const logger = rootLogger.getChild("[MatrixRTCClient]");
-  const userId = client.getUserId();
-  const deviceId = client.getDeviceId();
-  if (!(userId && deviceId))
-    throw new MatrixRTCError("The client has to be logged in");
-  const { encryptionSystem, matrixRTCMode } = options;
-  const timings = { ...defaultSessionTimings, ...options.timings };
-
-  const jsSdkSession = sessionManager(
-    scope,
+  {
     client,
-    options,
-    logger,
-  ).getRoomSession(room);
+    room,
+    slot,
+    jsSdkSession,
+    members$,
+    transports,
+    slotOptions: { matrixRTCMode, encryptionSystem },
+    logger: parentLogger,
+  }: ParticipationDeps,
+  options: RTCParticipationOptions,
+): ParticipationInternals {
+  const logger = parentLogger.getChild("[RTCParticipation]");
+  const userId = client.getUserId()!;
+  const deviceId = client.getDeviceId()!;
+  const timings = { ...defaultSessionTimings, ...options.timings };
 
   const ownMembershipIdentity: CallMembershipIdentityParts = {
     userId,
@@ -100,7 +116,7 @@ export function createMatrixRTCClient(
         : `${userId}:${deviceId}`,
   };
 
-  const backend = createBackend(scope, client, options, {
+  const backend = createBackend(scope, client, options, matrixRTCMode, {
     roomId: room.roomId,
     ownMembershipIdentity,
     publish: options.publish,
@@ -108,10 +124,7 @@ export function createMatrixRTCClient(
     mediaKeys$: mediaKeys$(jsSdkSession),
     timings,
     logger,
-  });
-
-  const memberships$ = createMemberships$(scope, jsSdkSession);
-  const transports = createTransportRegistry(scope, backend.connections$);
+    });
 
   const preparedTransport$ = from(
     discoverLocalTransport(client, backend.transportType, options, logger).then(
@@ -162,56 +175,40 @@ export function createMatrixRTCClient(
     logger,
   });
 
-  const context = {
-    metadata: createMatrixMemberMetadata$(
-      scope,
-      scope.behavior(memberships$.pipe(map(({ value }) => value))),
-      createRoomMembers$(scope, room),
-    ),
-    transports,
-  };
-
   const remoteMembers$ = scope.behavior<RemoteRTCMember[]>(
-    memberships$.pipe(
-      map(({ value }) => value),
+    members$.pipe(
       generateItems(
-        "MatrixRTCClient remoteMembers",
-        function* (memberships) {
-          for (const membership of memberships) {
-            if (
-              membership.userId === userId &&
-              membership.deviceId === deviceId
-            )
-              continue;
-            yield { keys: membershipKeys(membership), data: membership };
-          }
+        "RTCParticipation remoteMembers",
+        function* (members) {
+          for (const member of members)
+            if (!member.local) yield { keys: [member] as const, data: member };
         },
-        (memberScope, membership$) =>
+        (memberScope, member$) =>
           createRemoteRTCMember(
-            memberScope,
-            membership$,
-            backend.mediaFor$(memberScope, membership$),
-            context,
+            member$.value,
+            backend.mediaFor(memberScope, member$.value),
           ),
       ),
     ),
   );
 
-  const localMembership$ = scope.behavior(
-    memberships$.pipe(
+  // Matched by the identity we joined with: a stale membership of ours from
+  // an earlier participation is `local` in the slot but is not this one
+  const ownMember$ = scope.behavior(
+    members$.pipe(
       map(
-        ({ value }) =>
-          value.find(
-            (membership) =>
-              membership.userId === userId && membership.deviceId === deviceId,
+        (members) =>
+          members.find(
+            (member) =>
+              member.local &&
+              member.memberId === ownMembershipIdentity.memberId,
           ) ?? null,
       ),
-      filterBehavior((membership) => membership !== null),
     ),
   );
   const localMember$ = scope.behavior<LocalRTCMember | null>(
-    mapScoped(scope, localMembership$, (memberScope, membership$) =>
-      createLocalRTCMember(memberScope, membership$, backend.local, context),
+    mapScoped(scope, ownMember$, (_memberScope, member) =>
+      createLocalRTCMember(member, backend.local),
     ).pipe(map((member) => member ?? null)),
   );
 
@@ -219,7 +216,9 @@ export function createMatrixRTCClient(
   // ever hears from attested members
   const data$ = backend.data$.pipe(
     map(({ senderId, topic, text }): DataMessage | null => {
-      const member = remoteMembers$.value.find((m) => m.id === senderId);
+      const member = remoteMembers$.value.find(
+        (m) => m.rtcBackendIdentity === senderId,
+      );
       if (member === undefined) {
         logger.warn(`Dropping data from ${senderId}: not a member`);
         return null;
@@ -229,48 +228,56 @@ export function createMatrixRTCClient(
     filter((message) => message !== null),
   );
 
+  const left$ = new BehaviorSubject(false);
   const status$ = scope.behavior(
     combineLatest(
       [
         localMembership.state$,
-        localMembership.joinRequested$,
         localMembership.connected$,
         localMembership.reconnecting$,
+        left$,
       ],
-      sessionStatus,
+      participationStatus,
     ),
   );
 
+  const leave = (): void => {
+    if (left$.value) return;
+    left$.next(true);
+    localMembership.leave();
+    scope.end();
+  };
+
   return {
-    join: localMembership.requestJoinAndPublish,
-    leave: localMembership.requestDisconnect,
-    status$,
-    connected$: localMembership.connected$,
-    reconnecting$: localMembership.reconnecting$,
-    disconnectReason$: localMembership.disconnectReason$,
-    fatalError$: scope.behavior(localMembership.state$.pipe(map(fatalError))),
-    localMember$,
-    remoteMembers$,
-    memberCount$: scope.behavior(
-      combineLatest(
-        [localMember$, remoteMembers$],
-        (local, remote) => remote.length + (local === null ? 0 : 1),
-      ),
-    ),
-    keyRotationSuppressed$: createKeyRotationSuppressed$(scope, jsSdkSession),
-    connectedTransports$: transports.connected$,
-    setAudioOutputDeviceId: async (deviceId) =>
-      backend.setAudioOutputDeviceId(deviceId),
-    sendData: async (topic, text) => backend.sendData(topic, text),
-    data$,
+    connections$: backend.connections$,
+    participation: {
+      slot,
+      leave,
+      status$,
+      connected$: localMembership.connected$,
+      reconnecting$: localMembership.reconnecting$,
+      disconnectReason$: localMembership.disconnectReason$,
+      fatalError$: scope.behavior(localMembership.state$.pipe(map(fatalError))),
+      localMember$,
+      remoteMembers$,
+      publish: async (request) => backend.local.publish(request),
+      unpublish: async (source) => backend.local.unpublish(source),
+      keyRotationSuppressed$: createKeyRotationSuppressed$(scope, jsSdkSession),
+      connectedTransports$: transports.connected$,
+      setAudioOutputDeviceId: async (deviceId) =>
+        backend.setAudioOutputDeviceId(deviceId),
+      sendData: async (topic, text) => backend.sendData(topic, text),
+      data$,
+    },
   };
 }
 
-/** The host's backend, or LiveKit configured from the client options. */
+/** The host's backend, or LiveKit configured from the participation options. */
 function createBackend(
   scope: ObservableScope,
   client: MatrixClient,
-  { backend, mediaQuality, matrixRTCMode }: MatrixRTCClientOptions,
+  { backend, mediaQuality }: RTCParticipationOptions,
+  matrixRTCMode: MatrixRTCMode,
   context: MediaBackendContext,
 ): MediaBackend {
   if (backend) return backend(scope, context);
@@ -282,7 +289,7 @@ function createBackend(
   });
 }
 
-/** The session's per-participant keys: the ones it already holds on subscribe, then each new one. */
+/** The slot's per-participant keys: the ones it already holds on subscribe, then each new one. */
 function mediaKeys$(session: JsSdkRTCSession): Observable<MediaKey> {
   return new Observable((subscriber) => {
     const onKey = (
@@ -295,25 +302,4 @@ function mediaKeys$(session: JsSdkRTCSession): Observable<MediaKey> {
     session.reemitEncryptionKeys();
     return () => session.off(MatrixRTCSessionEvent.EncryptionKeyChanged, onKey);
   });
-}
-
-/**
- * The js-sdk keeps one session manager per slot. The client comes with the
- * manager for the default slot; any other slot gets a manager of its own,
- * which lives as long as the scope.
- */
-function sessionManager(
-  scope: ObservableScope,
-  client: MatrixClient,
-  { application = "m.call", slot = "ROOM" }: MatrixRTCClientOptions,
-  logger: Logger,
-): MatrixRTCSessionManager {
-  if (application === "m.call" && slot === "ROOM") return client.matrixRTC;
-  const manager = new MatrixRTCSessionManager(logger, client, {
-    application,
-    id: slot,
-  });
-  manager.start();
-  scope.onEnd(() => manager.stop());
-  return manager;
 }

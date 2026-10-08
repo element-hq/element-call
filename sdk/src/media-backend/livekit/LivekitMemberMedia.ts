@@ -23,8 +23,12 @@ import { generateItems } from "../../reactive/observable";
 import { E2eeType, type EncryptionSystem } from "../../encryption";
 import { type Behavior } from "../../reactive/Behavior";
 import { mapScoped } from "../../utils/mapScoped";
-import { type EncryptionError, type MediaSource } from "../../media-api";
-import { type LocalMemberMediaFields, type MemberMediaFields } from "../api";
+import {
+  type EncryptionError,
+  type LocalMemberMedia,
+  type MediaSource,
+  type MemberMedia,
+} from "../../media-api";
 import {
   createLivekitMediaTrack,
   createLocalLivekitMediaTrack,
@@ -45,7 +49,7 @@ export function createLivekitMemberMedia(
   scope: ObservableScope,
   source$: Behavior<ParticipantSource>,
   encryptionSystem: EncryptionSystem,
-): MemberMediaFields {
+): MemberMedia {
   return {
     tracks$: memberTracks$(
       scope,
@@ -62,7 +66,7 @@ export function createLocalLivekitMemberMedia(
   source$: Behavior<ParticipantSource<LocalParticipant>>,
   encryptionSystem: EncryptionSystem,
   setEnabled: (source: MediaSource, enabled: boolean) => Promise<boolean>,
-): LocalMemberMediaFields {
+): LocalMemberMedia {
   return {
     tracks$: memberTracks$(
       scope,

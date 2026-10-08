@@ -9,7 +9,7 @@ import { type MatrixClient } from "matrix-js-sdk";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import { type Transport } from "matrix-js-sdk/lib/matrixrtc";
 
-import { type MatrixRTCClientOptions } from "../api";
+import { type RTCParticipationOptions } from "../api";
 import { MatrixRTCTransportMissingError } from "../errors";
 import { TransportAutoDiscovery } from "./TransportAutoDiscovery";
 
@@ -27,7 +27,7 @@ export async function discoverLocalTransport(
   {
     transportUrl,
     fallbackTransportUrl,
-  }: Pick<MatrixRTCClientOptions, "transportUrl" | "fallbackTransportUrl">,
+  }: Pick<RTCParticipationOptions, "transportUrl" | "fallbackTransportUrl">,
   logger: Logger,
 ): Promise<Transport> {
   const transport = transportUrl

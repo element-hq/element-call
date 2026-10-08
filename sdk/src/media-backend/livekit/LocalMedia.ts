@@ -191,14 +191,11 @@ export function createLivekitLocalMedia({
     }
   };
 
-  const unpublish = async (id: string): Promise<void> => {
-    const track = tracks$.value?.find((t) => t.id === id);
-    if (track === undefined) return;
-    // The screen share audio goes with its video
-    const source =
-      track.source === "screenShareAudio" ? "screenShare" : track.source;
-    desired.delete(source);
-    await publisher$.value?.unpublish(source);
+  const unpublish = async (source: MediaSource): Promise<void> => {
+    const published = publishedSource(source);
+    if (published === undefined) return;
+    desired.delete(published);
+    await publisher$.value?.unpublish(published);
   };
 
   const setAudioOutputDeviceId = async (deviceId: string): Promise<void> => {
@@ -267,4 +264,18 @@ function trackWithId$(
     map((tracks) => tracks?.find((track) => track.id === id)),
     filter((track) => track !== undefined),
   );
+}
+
+/** The publication a source belongs to: the screen share audio goes with its video. */
+function publishedSource(
+  source: MediaSource,
+): PublishRequest["source"] | undefined {
+  switch (source) {
+    case "screenShareAudio":
+      return "screenShare";
+    case "unknown":
+      return undefined;
+    default:
+      return source;
+  }
 }

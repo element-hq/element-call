@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
+import { deepCompare } from "matrix-js-sdk/lib/utils";
 import { distinctUntilChanged, map } from "rxjs";
 
 import { type Behavior } from "../reactive/Behavior";
@@ -16,16 +17,15 @@ import {
   type RemoteRTCMember,
   type RTCMember,
 } from "../api";
-import {
-  type LocalMediaBackend,
-  type MemberMediaFields,
-} from "../media-backend/api";
+import { type LocalMemberMedia, type MemberMedia } from "../media-api";
 import { type TransportRegistry } from "./Transports";
 
-/** What every member is built from, besides its own membership and media. */
+/** What every member is built from, besides its own membership. */
 export interface MemberContext {
   metadata: ReturnType<typeof createMatrixMemberMetadata$>;
   transports: TransportRegistry;
+  /** Whose memberships are `local`. */
+  own: { userId: string; deviceId: string };
 }
 
 /** Everything that tells one membership from another, for keying items. */
@@ -40,50 +40,21 @@ export function membershipKeys(
   ];
 }
 
-export function createRemoteRTCMember(
+/** The slot's view of a membership: identity, room state and transport, no media. */
+export function createRTCMember(
   scope: ObservableScope,
   membership$: Behavior<CallMembership>,
-  media: MemberMediaFields,
-  context: MemberContext,
-): RemoteRTCMember {
+  { metadata, transports, own }: MemberContext,
+): RTCMember {
+  const { userId, deviceId, memberId, rtcBackendIdentity } = membership$.value;
   return {
-    ...createRTCMember(scope, membership$, context),
-    local: false,
-    tracks$: media.tracks$,
-    encryptionError$: media.encryptionError$,
-  };
-}
-
-export function createLocalRTCMember(
-  scope: ObservableScope,
-  membership$: Behavior<CallMembership>,
-  local: Pick<
-    LocalMediaBackend,
-    "tracks$" | "encryptionError$" | "publish" | "unpublish"
-  >,
-  context: MemberContext,
-): LocalRTCMember {
-  return {
-    ...createRTCMember(scope, membership$, context),
-    local: true,
-    tracks$: local.tracks$,
-    encryptionError$: local.encryptionError$,
-    publish: async (request) => local.publish(request),
-    unpublish: async (id) => local.unpublish(id),
-  };
-}
-
-function createRTCMember(
-  scope: ObservableScope,
-  membership$: Behavior<CallMembership>,
-  { metadata, transports }: MemberContext,
-): Omit<RTCMember, "local" | "tracks$" | "encryptionError$"> {
-  const { userId, deviceId, rtcBackendIdentity } = membership$.value;
-  return {
-    id: rtcBackendIdentity,
+    local: userId === own.userId && deviceId === own.deviceId,
+    // Read off the membership for now; the backend will derive it once the
+    // identity scheme is its own and not the js-sdk's
+    rtcBackendIdentity,
     userId,
     deviceId,
-    membership$,
+    memberId,
     displayName$: scope.behavior(
       metadata
         .createDisplayNameBehavior$(scope, userId)
@@ -97,5 +68,26 @@ function createRTCMember(
         map((transport) => transport && transports.get(transport)),
       ),
     ),
+    applicationData$: scope.behavior(
+      membership$.pipe(
+        map((membership) => membership.applicationData),
+        distinctUntilChanged(deepCompare),
+      ),
+    ),
   };
+}
+
+/** The participation's view of a remote member: the slot's member plus its media. */
+export function createRemoteRTCMember(
+  member: RTCMember,
+  media: MemberMedia,
+): RemoteRTCMember {
+  return { ...member, local: false, ...media };
+}
+
+export function createLocalRTCMember(
+  member: RTCMember,
+  media: LocalMemberMedia,
+): LocalRTCMember {
+  return { ...member, local: true, ...media };
 }
