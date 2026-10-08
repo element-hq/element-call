@@ -53,8 +53,10 @@ export interface ConnectionOpts {
   transport: UnstableLivekitTransport;
   /** The Matrix client to use for OpenID and SFU config requests. */
   client: ClientGetTokenParts & ClientOpenIDParts;
-  /** The room ID this connection is associated with. */
+  /** The ID of the Matrix room in which the session takes place. */
   roomId: string;
+  /** The ID of the MatrixRTC slot in which the session takes place. */
+  slotId: string;
   /** The observable scope to use for this connection. */
   scope: ObservableScope;
 
@@ -142,6 +144,7 @@ export class Connection {
   // TODO: can we just keep the ConnectionOpts object instead of spreading?
   private readonly client: ClientGetTokenParts & ClientOpenIDParts;
   private readonly roomId: string;
+  private readonly slotId: string;
   private readonly logger: Logger;
   private readonly ownMembershipIdentity: CallMembershipIdentityParts;
   /**
@@ -154,6 +157,7 @@ export class Connection {
   public constructor(opts: ConnectionOpts, logger: Logger) {
     this.ownMembershipIdentity = opts.ownMembershipIdentity;
     this.roomId = opts.roomId;
+    this.slotId = opts.slotId;
     this.logger = logger.getChild(
       `[Connection ${JSON.stringify(opts.transport)}]`,
     );
@@ -398,6 +402,7 @@ export class Connection {
       role: this.role,
       transport: this.transport,
       roomId: this.roomId,
+      slotId: this.slotId,
       logger: this.logger,
     });
   }

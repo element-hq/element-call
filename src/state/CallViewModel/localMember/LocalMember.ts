@@ -153,7 +153,10 @@ interface Props {
   ownMembershipIdentity: CallMembershipIdentityParts;
   localTransport$: Observable<UnstableLivekitTransport>;
   client: ClientDelegationParts & ClientOpenIDParts;
-  matrixRTCSession: Pick<MatrixRTCSession, "updateCallIntent" | "leave">;
+  matrixRTCSession: Pick<
+    MatrixRTCSession,
+    "slotId" | "updateCallIntent" | "leave"
+  >;
   /** Whether to hide the screen-sharing button. */
   hideScreensharing: boolean;
   /** The application hosting Element Call, to be kept informed of join/leave. */
@@ -710,6 +713,7 @@ export const createLocalMembership$ = ({
             client,
             membership: ownMembershipIdentity,
             transport: joinParams.transport,
+            slotId: matrixRTCSession.slotId,
             roomId,
             delayId,
             logger,

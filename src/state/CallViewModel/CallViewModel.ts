@@ -582,6 +582,7 @@ export function createCallViewModel$(
     new ECConnectionFactory(
       client,
       matrixRoom.roomId,
+      matrixRTCSession.slotId,
       mediaDevices,
       trackProcessorState$,
       livekitKeyProvider,

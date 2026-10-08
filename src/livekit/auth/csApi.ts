@@ -11,10 +11,6 @@ import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/En
 import { extractFullConfigFromToken, type SFUConfig } from "./types.ts";
 import { doNetworkOperationWithRetry } from "../../utils/matrix.ts";
 
-// TODO: This should come from the `MatrixRTCSession`s slot description instead
-// of being hardcoded here. (the legacy flow hardcodes it as well)
-const SLOT_ID = "m.call#ROOM";
-
 export type ClientGetTokenParts = Pick<
   MatrixClient,
   "_unstable_getLivekitToken"
@@ -37,6 +33,10 @@ export interface GetSFUConfigParams {
    * The ID of the Matrix room in which the session takes place.
    */
   roomId: string;
+  /**
+   * The ID of the MatrixRTC slot in which the session takes place.
+   */
+  slotId: string;
 }
 
 /**
@@ -48,12 +48,13 @@ export async function getSFUConfig({
   membership,
   url,
   roomId,
+  slotId,
 }: GetSFUConfigParams): Promise<SFUConfig> {
   const res = await doNetworkOperationWithRetry(async () =>
     client._unstable_getLivekitToken({
       url,
       room_id: roomId,
-      slot_id: "m.call#ROOM",
+      slot_id: slotId,
       member_id: membership.memberId,
     }),
   );
@@ -80,9 +81,13 @@ export interface DelegateDelayedLeaveParams {
    */
   url: string;
   /**
-   * The ID of the room in which the session takes place.
+   * The ID of the Matrix room in which the session takes place.
    */
   roomId: string;
+  /**
+   * The ID of the MatrixRTC slot in which the session takes place.
+   */
+  slotId: string;
   /**
    * The delay ID of the leave event to be delegated.
    */
@@ -98,13 +103,14 @@ export async function delegateDelayedLeave({
   membership,
   url,
   roomId,
+  slotId,
   delayId,
 }: DelegateDelayedLeaveParams): Promise<void> {
   await doNetworkOperationWithRetry(async () =>
     client._unstable_delegateDelayedLeave({
       url,
       room_id: roomId,
-      slot_id: SLOT_ID,
+      slot_id: slotId,
       member_id: membership.memberId,
       delay_id: delayId,
     }),

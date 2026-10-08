@@ -76,6 +76,7 @@ beforeEach(() => {
   ecConnectionFactory = new ECConnectionFactory(
     mockClient,
     "!roomid:example.org",
+    "m.call#room",
     mockMediaDevices({}),
     new BehaviorSubject<ProcessorState>({
       supported: true,

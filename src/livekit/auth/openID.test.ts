@@ -48,6 +48,7 @@ describe("getSFUConfig", () => {
       membership: ownMemberMock,
       serviceUrl: "https://sfu.example.org",
       roomId: "!example_room_id",
+      slotId: "m.call#room",
       role: "subscriber",
       logger,
     };

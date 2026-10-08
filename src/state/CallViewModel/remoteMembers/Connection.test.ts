@@ -59,6 +59,7 @@ let localParticipantEventEmiter: EventEmitter;
 let fakeLocalParticipant: MockedObject<LocalParticipant>;
 
 const ROOM_ID = "!roomID:example.org";
+const SLOT_ID = "m.call#room";
 
 const transport: UnstableLivekitTransport = {
   type: "livekit",
@@ -122,6 +123,7 @@ function setupRemoteConnection(): Connection {
   const opts: ConnectionOpts = {
     client: client,
     roomId: ROOM_ID,
+    slotId: SLOT_ID,
     role: "subscriber",
     transport: transport,
     scope: testScope,
@@ -169,6 +171,7 @@ describe("Start connection states", () => {
     const opts: ConnectionOpts = {
       client: client,
       roomId: ROOM_ID,
+      slotId: SLOT_ID,
       role: "subscriber",
       transport: transport,
       scope: testScope,
@@ -187,6 +190,7 @@ describe("Start connection states", () => {
     const opts: ConnectionOpts = {
       client: client,
       roomId: ROOM_ID,
+      slotId: SLOT_ID,
       role: "subscriber",
       transport: transport,
       scope: testScope,
@@ -238,6 +242,7 @@ describe("Start connection states", () => {
     const opts: ConnectionOpts = {
       client: client,
       roomId: ROOM_ID,
+      slotId: SLOT_ID,
       role: "subscriber",
       transport: transport,
       scope: testScope,
@@ -298,6 +303,7 @@ describe("Start connection states", () => {
     const opts: ConnectionOpts = {
       client: client,
       roomId: ROOM_ID,
+      slotId: SLOT_ID,
       role: "subscriber",
       transport: transport,
       scope: testScope,
@@ -537,6 +543,7 @@ describe("remote track logging", () => {
       {
         client,
         roomId: ROOM_ID,
+        slotId: SLOT_ID,
         role: "subscriber",
         transport: transport,
         scope: testScope,

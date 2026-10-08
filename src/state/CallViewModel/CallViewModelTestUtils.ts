@@ -225,6 +225,7 @@ export function withCallViewModel(mode: MatrixRTCMode) {
                 ownMembershipIdentity,
                 client: room.client,
                 roomId: room.roomId,
+                slotId: "m.call#room",
                 livekitRoomFactory,
               },
               logger,

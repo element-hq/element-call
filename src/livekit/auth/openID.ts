@@ -39,6 +39,10 @@ export interface GetSFUConfigParams {
    */
   roomId: string;
   /**
+   * The ID of the MatrixRTC slot in which the session takes place.
+   */
+  slotId: string;
+  /**
    * Whether we want to publish or only subscribe on the {@link transport}.
    */
   role: "publisher" | "subscriber";
@@ -56,13 +60,14 @@ export interface GetSFUConfigParams {
 /**
  * Gets an {@link SFUConfig} appropriate for connecting to the SFU behind a
  * given service URL, using the legacy OpenID flow.
- * @throws FailToGetOpenIdToken
+ * @throws {@link FailToGetOpenIdToken}
  */
 export async function getSFUConfig({
   client,
   membership,
   serviceUrl,
   roomId,
+  slotId,
   role,
   delayEndpointBaseUrl,
   delayId,
@@ -106,6 +111,7 @@ export async function getSFUConfig({
       membership,
       serviceUrl,
       roomId,
+      slotId,
       openIdToken,
       delayEndpointBaseUrl,
       delayId,
@@ -129,6 +135,7 @@ async function getLiveKitJWTLegacy(
   membership: CallMembershipIdentityParts,
   livekitServiceURL: string,
   matrixRoomId: string,
+  _slotId: string, // Unused - the legacy endpoint is from before slots existed.
   openIDToken: IOpenIDToken,
   delayEndpointBaseUrl?: string,
   delayId?: string,
@@ -209,6 +216,7 @@ async function getLiveKitJWT(
   membership: CallMembershipIdentityParts,
   livekitServiceURL: string,
   matrixRoomId: string,
+  slotId: string,
   openIDToken: IOpenIDToken,
   delayEndpointBaseUrl?: string,
   delayId?: string,
@@ -217,7 +225,7 @@ async function getLiveKitJWT(
 
   const body = {
     room_id: matrixRoomId,
-    slot_id: "m.call#ROOM",
+    slot_id: slotId,
     openid_token: openIDToken,
     member: {
       id: memberId,

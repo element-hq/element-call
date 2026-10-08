@@ -527,6 +527,7 @@ export const DeveloperSettingsTab: FC<Props> = ({
                 membership: { userId, deviceId, memberId: "" },
                 transport,
                 roomId,
+                slotId: "org.example.fake-slot#room",
                 role: "publisher",
                 logger,
               });

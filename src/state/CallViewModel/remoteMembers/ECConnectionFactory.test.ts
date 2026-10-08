@@ -84,6 +84,7 @@ describe("ECConnectionFactory - Audio inputs options", () => {
       const ecConnectionFactory = new ECConnectionFactory(
         mockClient,
         "!roomid:example.org",
+        "m.call#room",
         mockMediaDevices({}),
         new BehaviorSubject<ProcessorState>({
           supported: true,
@@ -127,6 +128,7 @@ describe("ECConnectionFactory - ControlledAudioDevice", () => {
       const ecConnectionFactory = new ECConnectionFactory(
         mockClient,
         "!roomid:example.org",
+        "m.call#room",
         mockMediaDevices({
           audioOutput: {
             available$: constant(new Map<never, never>()),
@@ -169,6 +171,7 @@ describe("ECConnectionFactory - Camera quality settings", () => {
     const ecConnectionFactory = new ECConnectionFactory(
       mockClient,
       "!roomid:example.org",
+      "m.call#room",
       mockMediaDevices({}),
       new BehaviorSubject<ProcessorState>({
         supported: true,
@@ -207,6 +210,7 @@ describe("ECConnectionFactory - Camera quality settings", () => {
     const ecConnectionFactory = new ECConnectionFactory(
       mockClient,
       "!roomid:example.org",
+      "m.call#room",
       mockMediaDevices({}),
       new BehaviorSubject<ProcessorState>({
         supported: true,
@@ -246,6 +250,7 @@ describe("ECConnectionFactory - Camera quality settings", () => {
     const ecConnectionFactory = new ECConnectionFactory(
       mockClient,
       "!roomid:example.org",
+      "m.call#room",
       mockMediaDevices({}),
       new BehaviorSubject<ProcessorState>({
         supported: true,

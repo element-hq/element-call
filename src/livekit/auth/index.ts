@@ -55,6 +55,10 @@ export interface GetSFUConfigParams {
    */
   roomId: string;
   /**
+   * The ID of the MatrixRTC slot in which the session takes place.
+   */
+  slotId: string;
+  /**
    * Whether we want to publish or only subscribe on the {@link transport}.
    */
   role: "publisher" | "subscriber";
@@ -69,6 +73,7 @@ export async function getSFUConfig({
   membership,
   transport,
   roomId,
+  slotId,
   role,
   logger,
 }: GetSFUConfigParams): Promise<SFUConfig> {
@@ -79,6 +84,7 @@ export async function getSFUConfig({
         membership,
         url: transport.url,
         roomId,
+        slotId,
       });
     } catch (e) {
       if (isEndpointUnsupported(e)) {
@@ -110,6 +116,7 @@ export async function getSFUConfig({
     membership,
     serviceUrl: transport.livekit_service_url,
     roomId,
+    slotId,
     role,
     logger,
   });
@@ -130,9 +137,13 @@ export interface DelegateDelayedLeaveParams {
    */
   transport: UnstableLivekitTransport;
   /**
-   * The ID of the room in which the session takes place.
+   * The ID of the Matrix room in which the session takes place.
    */
   roomId: string;
+  /**
+   * The ID of the MatrixRTC slot in which the session takes place.
+   */
+  slotId: string;
   /**
    * The delay ID of the leave event to be delegated.
    */
@@ -149,6 +160,7 @@ export async function delegateDelayedLeave({
   membership,
   transport,
   roomId,
+  slotId,
   delayId,
   logger,
 }: DelegateDelayedLeaveParams): Promise<void> {
@@ -159,6 +171,7 @@ export async function delegateDelayedLeave({
         membership,
         url: transport.url,
         roomId,
+        slotId,
         delayId,
       });
     } catch (e) {
@@ -176,6 +189,7 @@ export async function delegateDelayedLeave({
       membership,
       serviceUrl: transport.livekit_service_url,
       roomId,
+      slotId,
       role: "publisher",
       delayEndpointBaseUrl: client.baseUrl,
       delayId,

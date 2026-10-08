@@ -300,6 +300,7 @@ describe("LocalMembership", () => {
       scope,
       ...defaultCreateLocalMemberValues,
       matrixRTCSession: {
+        slotId: "m.call#room",
         updateCallIntent: vi.fn().mockImplementation(reject),
         leave: vi.fn(),
       },
