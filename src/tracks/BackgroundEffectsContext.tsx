@@ -5,12 +5,14 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { BackgroundProcessorWrapper } from "@livekit/track-processors";
+import {
+  BackgroundProcessorWrapper,
+  supportsBackgroundProcessors,
+} from "@livekit/track-processors";
 import { createContext, type FC, type JSX, use } from "react";
 
 import { backgroundEffect as backgroundEffectSetting } from "../settings/settings";
 import { BackgroundEffectTransformer } from "./BackgroundEffectTransformer";
-import { supportsBackgroundProcessors } from "./backgroundProcessing";
 import { type Behavior } from "../state/Behavior";
 import { type ObservableScope } from "../state/ObservableScope";
 import {

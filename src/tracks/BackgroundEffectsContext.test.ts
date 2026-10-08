@@ -93,13 +93,13 @@ describe("BackgroundEffectsProvider", () => {
     expect(latest().processor).toBeDefined();
   });
 
-  it("does not run on a phone, even where its browser could", async () => {
+  it("runs on a phone whose browser can run it", async () => {
     platformMock.platform = "ios";
     render(surface());
     await blur(true);
 
-    expect(latest().supported).toBe(false);
-    expect(latest().processor).toBeUndefined();
+    expect(latest().supported).toBe(true);
+    expect(latest().processor).toBeDefined();
   });
 
   it("switches to an effect chosen while the camera is off", async () => {
