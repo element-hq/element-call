@@ -306,9 +306,10 @@ directory target it rather than the repository; run them from the repository
 root. The host imports the component from
 `@element-hq/element-call-component` and the stylesheet from
 `@element-hq/element-call-component/style.css`, and has to provide `react`,
-`react-dom`, `matrix-js-sdk`, `livekit-client`, `@vector-im/compound-web` and
+`react-dom`, `matrix-js-sdk`, `@vector-im/compound-web` and
 `@vector-im/compound-design-tokens` itself, since the bundle leaves them
-external. Compound's stylesheet are the host's to load too: the component shares
+external.
+Compound's stylesheet are the host's to load too: the component shares
 the host's copy of Compound, (required for example for tooltips)
 
 The component is large, and a host will usually load it lazily, only once a

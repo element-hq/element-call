@@ -9,7 +9,7 @@ Please see LICENSE in the repository root for full details.
  * Checks that the component build leaves the packages a host must supply to
  * the host.
  *
- * A host application already has React, the Matrix SDK, LiveKit and Compound,
+ * A host application already has React, the Matrix SDK and Compound,
  * and a second copy of any of them is worse than dead weight: React would hold
  * two sets of hooks, the Matrix client would run two sync loops, and a second
  * Compound would style the tooltips it floats into the host's body with class
@@ -44,7 +44,6 @@ const MUST_BE_EXTERNAL = [
   "react",
   "react-dom",
   "matrix-js-sdk",
-  "livekit-client",
   "@vector-im/compound-web",
   "@vector-im/compound-design-tokens",
 ];
