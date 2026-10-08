@@ -27,6 +27,7 @@ import {
   createMemberMedia,
   type MemberMediaInputs,
   type BaseMemberMediaViewModel,
+  statsIntervalMs,
 } from "./MemberMediaViewModel";
 import { type RemoteUserMediaViewModel } from "./RemoteUserMediaViewModel";
 import { showConnectionStats } from "../../settings/settings";
@@ -104,7 +105,9 @@ export function createBaseUserMedia(
         showConnectionStats.value$,
       ]).pipe(
         switchMap(([track, show]) =>
-          track !== undefined && show ? track.stats$ : of(undefined),
+          track !== undefined && show
+            ? track.stats$(statsIntervalMs)
+            : of(undefined),
         ),
       ),
     );

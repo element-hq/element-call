@@ -6,11 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { expect, onTestFinished, test, vi } from "vitest";
-import {
-  type Behavior,
-  constant,
-  type MediaStreamStats,
-} from "@element-hq/matrixrtc-sdk";
+import { constant } from "@element-hq/matrixrtc-sdk";
 import { waitFor } from "@testing-library/dom";
 import { BehaviorSubject } from "rxjs";
 
@@ -241,12 +237,9 @@ test("user media polls stream stats only while the setting is on", () => {
   onTestFinished(() => showConnectionStats.setValue(false));
   withTestScheduler(({ cold, expectObservable, schedule }) => {
     const stats = { type: "inbound-rtp" } as RTCInboundRtpStreamStats;
-    // A behavior that only runs its source while subscribed, as the SDK's does
     const vm = mockRemoteMedia(rtcMembership, {}, [
       mockAudioTrack({
-        stats$: cold("-s", {
-          s: stats,
-        }) as unknown as Behavior<MediaStreamStats>,
+        stats$: () => cold("-s", { s: stats }),
       }),
     ]);
     schedule("-a-b", {

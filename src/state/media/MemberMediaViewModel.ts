@@ -34,6 +34,9 @@ import { type BaseMediaViewModel, createBaseMedia } from "./MediaViewModel";
 import { type UserMediaViewModel } from "./UserMediaViewModel";
 import { type ScreenShareViewModel } from "./ScreenShareViewModel";
 
+/** How often a view model reads a track's RTP statistics while it needs them. */
+export const statsIntervalMs = 1000;
+
 // TODO: Encryption status is kinda broken and thus unused right now. Remove?
 export enum EncryptionStatus {
   Connecting,
@@ -156,7 +159,7 @@ function receivingOkay$(
 ): Observable<boolean | undefined> {
   let last: { framesDecoded?: number; framesReceived?: number } = {};
   return track$.pipe(
-    switchMap((track) => track?.stats$ ?? of(undefined)),
+    switchMap((track) => track?.stats$(statsIntervalMs) ?? of(undefined)),
     map((stats): boolean | undefined => {
       if (stats === undefined || stats.type !== "inbound-rtp") return undefined;
       const { framesDecoded, framesReceived } =
