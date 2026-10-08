@@ -11,16 +11,21 @@ import {
   type BackgroundOptions,
   type ProcessorWrapper,
 } from "@livekit/track-processors";
+import { type VideoProcessor } from "@element-hq/matrixrtc-sdk";
 
-import { applyProcessor, trackProcessorSync } from "./TrackProcessorContext";
+import {
+  applyProcessor,
+  fromLivekitProcessor,
+  trackProcessorSync,
+} from "./TrackProcessorContext";
 import { constant } from "../state/Behavior";
 import { flushPromises, testScope } from "../utils/test";
 
-const processor = {} as ProcessorWrapper<BackgroundOptions>;
+const processor = { name: "blur" } as VideoProcessor;
 
 function mockTrack(
   readyState: MediaStreamTrackState,
-  current?: ProcessorWrapper<BackgroundOptions>,
+  current?: VideoProcessor,
 ): LocalVideoTrack {
   return {
     mediaStreamTrack: { readyState },
@@ -34,7 +39,9 @@ describe("applyProcessor", () => {
   it("attaches the processor to a live track", () => {
     const track = mockTrack("live");
     applyProcessor(track, processor);
-    expect(track.setProcessor).toHaveBeenCalledWith(processor);
+    expect(track.setProcessor).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "blur" }),
+    );
   });
 
   it("does not attach the processor to an ended track", () => {
@@ -82,6 +89,45 @@ describe("trackProcessorSync", () => {
       constant(track),
       constant({ supported: true, processor }),
     );
-    expect(track.setProcessor).toHaveBeenCalledWith(processor);
+    expect(track.setProcessor).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "blur" }),
+    );
+  });
+});
+
+describe("fromLivekitProcessor", () => {
+  const captured = { id: "captured" } as MediaStreamTrack;
+  const processed = { id: "processed" } as MediaStreamTrack;
+
+  function mockWrapper(
+    processedTrack: MediaStreamTrack | undefined,
+  ): ProcessorWrapper<BackgroundOptions> {
+    return {
+      name: "background-blur",
+      processedTrack,
+      init: vi.fn().mockResolvedValue(undefined),
+      restart: vi.fn().mockResolvedValue(undefined),
+      destroy: vi.fn().mockResolvedValue(undefined),
+    } as unknown as ProcessorWrapper<BackgroundOptions>;
+  }
+
+  it("resolves with the track the wrapper produced", async () => {
+    const wrapper = mockWrapper(processed);
+    const sdkProcessor = fromLivekitProcessor(wrapper);
+    expect(sdkProcessor.name).toBe("background-blur");
+    await expect(sdkProcessor.init(captured)).resolves.toBe(processed);
+    expect(wrapper.init).toHaveBeenCalledWith({
+      kind: "video",
+      track: captured,
+    });
+    await expect(sdkProcessor.restart(captured)).resolves.toBe(processed);
+    await sdkProcessor.destroy();
+    expect(wrapper.destroy).toHaveBeenCalled();
+  });
+
+  it("rejects where the wrapper produced no track", async () => {
+    await expect(
+      fromLivekitProcessor(mockWrapper(undefined)).init(captured),
+    ).rejects.toThrow("produced no track");
   });
 });
