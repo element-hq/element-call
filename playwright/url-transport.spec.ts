@@ -12,6 +12,12 @@ import { SpaHelpers } from "./spa-helpers";
 const sfuUrl = "wss://matrix-rtc.m.localhost/livekit/sfu";
 const serviceUrl = "https://matrix-rtc.m.localhost/livekit/jwt";
 
+const otherHomeserver = {
+  base_url: "https://synapse.othersite.m.localhost",
+  server_name: "synapse.othersite.m.localhost",
+};
+const otherSfuUrl = "wss://matrix-rtc.othersite.m.localhost/livekit/sfu";
+
 interface Transport {
   type: "livekit";
   url?: string;
@@ -223,11 +229,72 @@ test("Delegated leave on a url transport ends the membership when the guest drop
   });
 });
 
+test("Subscribers get tokens for a remote homeserver's SFU over federation", async ({
+  browser,
+  page,
+  browserName,
+}) => {
+  skipOnFirefox(browserName);
+
+  // The host lives on the other homeserver and publishes on its SFU.
+  await useHomeserver(page, otherHomeserver);
+  await advertiseTransport(page, { type: "livekit", url: otherSfuUrl });
+  const hostRequests = recordAuthRequests(page);
+  await page.goto("/");
+  await SpaHelpers.createCall(page, "Androl", "HelloCall", true, "2_0");
+  const inviteLink = await SpaHelpers.getCallInviteLink(page);
+
+  // The guest lives on the default homeserver and joins over federation.
+  const guestContext = await browser.newContext({ reducedMotion: "reduce" });
+  const guestPage = await guestContext.newPage();
+  await advertiseTransport(guestPage, shapes.url);
+  const guestRequests = recordAuthRequests(guestPage);
+  await SpaHelpers.joinCallFromInviteLink(
+    guestPage,
+    `${inviteLink}&viaServers=${otherHomeserver.server_name}`,
+    "Pevara",
+    "2_0",
+  );
+
+  // Wait for the call to connect and render.
+  await SpaHelpers.expectVideoTilesCount(page, 2);
+  await SpaHelpers.expectVideoTilesCount(guestPage, 2);
+
+  // Each side got a token for its own SFU and for the other side's SFU, all
+  // through its own homeserver.
+  for (const requests of [hostRequests, guestRequests]) {
+    expect(flowsOf(requests)).toEqual(new Set<Flow>(["cs-api"]));
+    expect(new Set(requests.map((r) => r.sfuUrl))).toEqual(
+      new Set([sfuUrl, otherSfuUrl]),
+    );
+    for (const request of requests) expect(request.status).toBe(200);
+  }
+});
+
+/** Skips the calling test if we're running on Firefox. */
 function skipOnFirefox(browserName: string): void {
   test.skip(
     browserName === "firefox",
     "The is test is not working on firefox CI environment. No mic/audio device inputs so cam/mic are disabled",
   );
+}
+
+/** Points this page's Element Call at another homeserver. */
+async function useHomeserver(
+  page: Page,
+  homeserver: typeof otherHomeserver,
+): Promise<void> {
+  await page.route("**/config.json", async (route) => {
+    const response = await route.fetch();
+    const config = (await response.json()) as Record<string, unknown>;
+    await route.fulfill({
+      response,
+      json: {
+        ...config,
+        default_server_config: { "m.homeserver": homeserver },
+      },
+    });
+  });
 }
 
 /**
