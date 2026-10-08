@@ -32,29 +32,48 @@ type Shape = keyof typeof shapes;
 /** Which endpoint a page asks for its SFU tokens. */
 type Flow = "cs-api" | "service-legacy" | "service-default";
 
-const pairs: [host: Shape, guest: Shape][] = [
-  ["url", "url"],
-  ["both", "both"],
-  ["url", "legacy"],
+const cases: {
+  hostShape: Shape;
+  guestShape: Shape;
+  hostFlows: Flow[];
+  guestFlows: Flow[];
+}[] = [
+  {
+    hostShape: "url",
+    guestShape: "url",
+    hostFlows: ["cs-api"],
+    guestFlows: ["cs-api"],
+  },
+  {
+    hostShape: "both",
+    guestShape: "both",
+    hostFlows: ["cs-api"],
+    guestFlows: ["cs-api"],
+  },
+  {
+    hostShape: "url",
+    guestShape: "legacy",
+    hostFlows: ["cs-api", "service-default"],
+    guestFlows: ["service-legacy", "cs-api"],
+  },
 ];
 
-for (const [hostShape, guestShape] of pairs) {
+for (const { hostShape, guestShape, hostFlows, guestFlows } of cases) {
   test(`One to one call with ${hostShape} host and ${guestShape} guest transport`, async ({
     browser,
     page,
     browserName,
   }) => {
-    test.skip(
-      browserName === "firefox",
-      "The is test is not working on firefox CI environment. No mic/audio device inputs so cam/mic are disabled",
-    );
+    skipOnFirefox(browserName);
 
+    // The host starts the call.
     await advertiseTransport(page, shapes[hostShape]);
     const hostRequests = recordAuthRequests(page);
     await page.goto("/");
     await SpaHelpers.createCall(page, "Androl", "HelloCall", true, "2_0");
     const inviteLink = await SpaHelpers.getCallInviteLink(page);
 
+    // The guest joins.
     const guestContext = await browser.newContext({ reducedMotion: "reduce" });
     const guestPage = await guestContext.newPage();
     await advertiseTransport(guestPage, shapes[guestShape]);
@@ -66,33 +85,104 @@ for (const [hostShape, guestShape] of pairs) {
       "2_0",
     );
 
+    // Wait for the call to connect and render.
     await SpaHelpers.expectVideoTilesCount(page, 2);
     await SpaHelpers.expectVideoTilesCount(guestPage, 2);
 
-    expect(hostRequests.flows).toEqual(expectedFlows(hostShape, guestShape));
-    expect(guestRequests.flows).toEqual(expectedFlows(guestShape, hostShape));
-    for (const requests of [hostRequests, guestRequests]) {
-      for (const url of requests.csApiUrls) expect(url).toBe(sfuUrl);
+    // The host and guest ran through the expected flows.
+    expect(flowsOf(hostRequests)).toEqual(new Set(hostFlows));
+    expect(flowsOf(guestRequests)).toEqual(new Set(guestFlows));
+
+    // All requests succeeded and the SFU URL was set on C-S requests.
+    for (const request of [...hostRequests, ...guestRequests]) {
+      expect(request.status).toBe(200);
+      if (request.flow === "cs-api") expect(request.sfuUrl).toBe(sfuUrl);
     }
   });
 }
 
+test("Subscriber falls back to the JWT service when the homeserver lacks MSC4195", async ({
+  browser,
+  page,
+  browserName,
+}) => {
+  skipOnFirefox(browserName);
+
+  // The host starts the call with both transport shapes.
+  await advertiseTransport(page, shapes.both);
+  await page.goto("/");
+  await SpaHelpers.createCall(page, "Androl", "HelloCall", true, "2_0");
+  const inviteLink = await SpaHelpers.getCallInviteLink(page);
+
+  // The guest joins but their C-S requests fail.
+  const guestContext = await browser.newContext({ reducedMotion: "reduce" });
+  const guestPage = await guestContext.newPage();
+  await rejectCsApiTokens(guestPage);
+  const guestRequests = recordAuthRequests(guestPage);
+  await SpaHelpers.joinCallFromInviteLink(
+    guestPage,
+    inviteLink,
+    "Pevara",
+    "2_0",
+  );
+  // Wait for the call to connect and render.
+  await SpaHelpers.expectVideoTilesCount(page, 2);
+  await SpaHelpers.expectVideoTilesCount(guestPage, 2);
+
+  // The guest ran through all flows.
+  expect(flowsOf(guestRequests)).toEqual(
+    new Set<Flow>(["cs-api", "service-legacy", "service-default"]),
+  );
+
+  // The C-S token requests failed.
+  for (const request of guestRequests) {
+    expect(request.status).toBe(request.flow === "cs-api" ? 404 : 200);
+  }
+
+  // The C-S token requests preceeded the fallback request.
+  const flows = guestRequests.map((r) => r.flow);
+  expect(flows.indexOf("service-default")).toBeGreaterThan(
+    flows.indexOf("cs-api"),
+  );
+});
+
+test("Publisher shows an error when the homeserver lacks MSC4195", async ({
+  page,
+  browserName,
+}) => {
+  skipOnFirefox(browserName);
+
+  // The host tries to start a call with only the C-S transport shape available but
+  // their C-S requests fail.
+  await advertiseTransport(page, shapes.url);
+  await rejectCsApiTokens(page);
+  await page.goto("/");
+  await SpaHelpers.createCall(page, "Androl", "HelloCall", true, "2_0");
+
+  // We land on an error page.
+  await expect(
+    page.getByRole("heading", { name: "Something went wrong" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(
+      "The authorization service for your media server (SFU) is out of date.",
+    ),
+  ).toBeVisible();
+});
+
+function skipOnFirefox(browserName: string): void {
+  test.skip(
+    browserName === "firefox",
+    "The is test is not working on firefox CI environment. No mic/audio device inputs so cam/mic are disabled",
+  );
+}
+
 /**
- * A page publishes on its own transport and subscribes on every other
- * transport in the call, so the flows it uses depend on both shapes.
+ * Maps recorded requests to a set of flows. Publisher and subscriber connections
+ * start concurrently so using arrays for comparison isn't convenient.
  */
-function expectedFlows(own: Shape, peer: Shape): Set<Flow> {
-  const flows = new Set<Flow>([publishFlow(own)]);
-  if (peer !== own) flows.add(subscribeFlow(peer));
-  return flows;
-}
-
-function publishFlow(shape: Shape): Flow {
-  return shape === "legacy" ? "service-legacy" : "cs-api";
-}
-
-function subscribeFlow(shape: Shape): Flow {
-  return shape === "legacy" ? "service-default" : "cs-api";
+function flowsOf(requests: AuthRequest[]): Set<Flow> {
+  return new Set(requests.map((r) => r.flow));
 }
 
 /**
@@ -111,24 +201,44 @@ async function advertiseTransport(
   });
 }
 
-interface AuthRequests {
-  flows: Set<Flow>;
-  /** The `url` field of every request to the MSC4195 `get_token` endpoint. */
-  csApiUrls: string[];
+/**
+ * Makes the homeserver look like one without MSC4195: its `get_token`
+ * endpoint answers as Synapse does for an unknown route.
+ */
+async function rejectCsApiTokens(page: Page): Promise<void> {
+  await page.route("**/rtc/livekit/get_token", async (route) => {
+    if (route.request().method() !== "POST") return route.continue();
+    await route.fulfill({
+      status: 404,
+      json: { errcode: "M_UNRECOGNIZED", error: "Unrecognized request" },
+      headers: { "Access-Control-Allow-Origin": "*" },
+    });
+  });
 }
 
-function recordAuthRequests(page: Page): AuthRequests {
-  const requests: AuthRequests = { flows: new Set(), csApiUrls: [] };
-  page.on("request", (request) => {
+interface AuthRequest {
+  flow: Flow;
+  status: number;
+  /** The SFU a request to the MSC4195 `get_token` endpoint asked for. */
+  sfuUrl?: string;
+}
+
+function recordAuthRequests(page: Page): AuthRequest[] {
+  const requests: AuthRequest[] = [];
+  page.on("response", (response) => {
+    const request = response.request();
     if (request.method() !== "POST") return;
     const url = request.url();
     if (url.endsWith("/rtc/livekit/get_token")) {
-      requests.flows.add("cs-api");
-      requests.csApiUrls.push((request.postDataJSON() as { url: string }).url);
+      requests.push({
+        flow: "cs-api",
+        status: response.status(),
+        sfuUrl: (request.postDataJSON() as { url: string }).url,
+      });
     } else if (url.endsWith("/livekit/jwt/sfu/get")) {
-      requests.flows.add("service-legacy");
+      requests.push({ flow: "service-legacy", status: response.status() });
     } else if (url.endsWith("/livekit/jwt/get_token")) {
-      requests.flows.add("service-default");
+      requests.push({ flow: "service-default", status: response.status() });
     }
   });
   return requests;
