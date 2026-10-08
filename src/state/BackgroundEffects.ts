@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { combineLatest, distinctUntilChanged, filter, map, scan } from "rxjs";
+import { combineLatest, distinctUntilChanged, map, scan } from "rxjs";
 import {
   type BackgroundProcessorWrapper,
   type SwitchBackgroundProcessorOptions,
@@ -53,41 +53,29 @@ export function createBackgroundEffects(
     ),
   );
 
-  const switchTo = oneSwitchAtATime(pipeline);
-  combineLatest([state$, blur$])
-    .pipe(
-      filter(([{ processor }]) => processor !== undefined),
-      map(([, blur]): SwitchBackgroundProcessorOptions =>
-        blur ? { mode: "background-blur", blurRadius } : { mode: "disabled" },
+  const switchOptions$ = scope.behavior<
+    SwitchBackgroundProcessorOptions | undefined
+  >(
+    combineLatest([state$, blur$]).pipe(
+      map(([{ processor }, blur]) =>
+        processor === undefined
+          ? undefined
+          : blur
+            ? { mode: "background-blur", blurRadius }
+            : { mode: "disabled" },
       ),
       distinctUntilChanged(deepCompare),
-      scope.bind(),
-    )
-    .subscribe((options) => {
-      switchTo(options).catch((e) =>
-        logger.warn("Failed to switch background effect", e),
-      );
-    });
+    ),
+  );
+  // In turn: a picture's switch ends once it loads, so an earlier one could land last.
+  scope.reconcile(switchOptions$, async (options) => {
+    if (options === undefined) return;
+    try {
+      await pipeline.switchTo(options);
+    } catch (e) {
+      logger.warn("Failed to switch background effect", e);
+    }
+  });
 
   return { state$ };
-}
-
-/**
- * Switches the pipeline one choice at a time, skipping those overtaken while
- * they waited. A switch to a picture ends only once it has loaded, so a
- * slower, earlier choice would otherwise land after a later one.
- */
-function oneSwitchAtATime(
-  pipeline: BackgroundProcessorWrapper,
-): (options: SwitchBackgroundProcessorOptions) => Promise<void> {
-  let latest: SwitchBackgroundProcessorOptions | undefined;
-  let queue = Promise.resolve();
-  return async (options) => {
-    latest = options;
-    const turn = queue.then(async () => {
-      if (options === latest) await pipeline.switchTo(options);
-    });
-    queue = turn.catch(() => {});
-    return turn;
-  };
 }

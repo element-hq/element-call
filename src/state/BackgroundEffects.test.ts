@@ -113,6 +113,14 @@ describe("background effects", () => {
     ]);
   });
 
+  it("keeps switching after a switch fails", async () => {
+    vi.mocked(fake.pipeline.switchTo).mockRejectedValueOnce(new Error("lost"));
+    build();
+    await blur(true);
+    await blur(false);
+    expect(fake.switches).toEqual([{ mode: "disabled" }]);
+  });
+
   it("switches one at a time, skipping those overtaken", async () => {
     const finished = fake.holdNext();
     build();
