@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { defineConfig } from "vite";
 
 import { vitePluginsConfig } from "./vite.config.ts";
-import { scopeStylesToRoot } from "./component/build/scopeStylesToRoot";
+import { scopeStylesToRoot } from "./component/build/scopeStylesToRoot.ts";
 
 // Config for Element Call as a React component, to be imported by an
 // application embedding it rather than served as a page of its own.
