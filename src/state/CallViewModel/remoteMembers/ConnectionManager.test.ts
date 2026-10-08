@@ -54,9 +54,15 @@ beforeEach(() => {
   vi.mocked(fakeConnectionFactory).createConnection = vi
     .fn()
     .mockImplementation(
-      (scope: ObservableScope, transport: UnstableLivekitTransport) => {
+      (
+        scope: ObservableScope,
+        _role: unknown,
+        transport: UnstableLivekitTransport,
+        serverName: string,
+      ) => {
         const mockConnection = {
           transport,
+          serverName,
           remoteParticipants$: new BehaviorSubject([]),
         } as unknown as Connection;
         vi.mocked(mockConnection).start = vi.fn();
@@ -229,14 +235,14 @@ describe("ConnectionManagerData", () => {
   test("warns when a second connection to the same URL is merged", () => {
     const warn = vi.spyOn(logger, "warn").mockImplementation(() => {});
     const data = new ConnectionManagerData(logger);
-    const connection = { transport: TRANSPORT_1 } as unknown as Connection;
+    const connection = TRANSPORT_1 as unknown as Connection;
     const p = (identity: string): RemoteParticipant =>
       ({ identity }) as unknown as RemoteParticipant;
     data.add(connection, [p("a")]);
     data.add({ ...connection } as Connection, [p("b")]);
     expect(warn).toHaveBeenCalledWith(
       expect.stringContaining(
-        "second connection to https://lk.example.org: existing [a], adding [b]",
+        'second connection to [null,"https://lk.example.org","example.org"]: existing [a], adding [b]',
       ),
     );
     expect(data.getParticipantsForTransport(TRANSPORT_1)).toHaveLength(2);
@@ -247,12 +253,14 @@ describe("connectionManagerData$ stream", () => {
   // Used in test to control fake connections' remoteParticipants$ streams
   let fakeRemoteParticipantsStreams: Map<string, Behavior<RemoteParticipant[]>>;
 
-  function keyForTransport(transport: UnstableLivekitTransport): string {
+  function keyForTransport({
+    transport,
+    serverName,
+  }: TransportLocator): string {
     return JSON.stringify([
-      "url" in transport ? transport.url : undefined,
-      "livekit_service_url" in transport
-        ? transport.livekit_service_url
-        : undefined,
+      "url" in transport ? transport.url : null,
+      "livekit_service_url" in transport ? transport.livekit_service_url : null,
+      serverName,
     ]);
   }
 
@@ -260,7 +268,7 @@ describe("connectionManagerData$ stream", () => {
     fakeRemoteParticipantsStreams = new Map();
 
     function getRemoteParticipantsFor(
-      transport: UnstableLivekitTransport,
+      transport: TransportLocator,
     ): Behavior<RemoteParticipant[]> {
       return (
         fakeRemoteParticipantsStreams.get(keyForTransport(transport)) ??
@@ -272,13 +280,22 @@ describe("connectionManagerData$ stream", () => {
     vi.mocked(fakeConnectionFactory).createConnection = vi
       .fn()
       .mockImplementation(
-        (scope: ObservableScope, transport: UnstableLivekitTransport) => {
+        (
+          scope: ObservableScope,
+          _role: unknown,
+          transport: UnstableLivekitTransport,
+          serverName: string,
+        ) => {
           const fakeRemoteParticipants$ = new BehaviorSubject<
             RemoteParticipant[]
           >([]);
           const mockConnection = {
             transport,
-            remoteParticipants$: getRemoteParticipantsFor(transport),
+            serverName,
+            remoteParticipants$: getRemoteParticipantsFor({
+              transport,
+              serverName,
+            }),
           } as unknown as Connection;
           vi.mocked(mockConnection).start = vi.fn();
           vi.mocked(mockConnection).stop = vi.fn();
@@ -288,7 +305,7 @@ describe("connectionManagerData$ stream", () => {
           });
 
           fakeRemoteParticipantsStreams.set(
-            keyForTransport(transport),
+            keyForTransport({ transport, serverName }),
             fakeRemoteParticipants$,
           );
           return mockConnection;
@@ -301,7 +318,7 @@ describe("connectionManagerData$ stream", () => {
       // Setup the fake participants streams behavior
       // ==============================
       fakeRemoteParticipantsStreams.set(
-        keyForTransport(TRANSPORT_1.transport),
+        keyForTransport(TRANSPORT_1),
         behavior("oa-b", {
           o: [],
           a: [{ identity: "user1A" } as RemoteParticipant],
@@ -313,7 +330,7 @@ describe("connectionManagerData$ stream", () => {
       );
 
       fakeRemoteParticipantsStreams.set(
-        keyForTransport(TRANSPORT_2.transport),
+        keyForTransport(TRANSPORT_2),
         behavior("o-a", {
           o: [],
           a: [{ identity: "user2A" } as RemoteParticipant],

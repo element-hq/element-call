@@ -742,9 +742,12 @@ export function createCallViewModel$(
         return combineLatest(
           connections.map((connection) =>
             remoteMatrixLivekitMembers$.pipe(
-              switchMap((members) =>
-                combineLatest(members.value.map((m) => m.participant.value$)),
-              ),
+              switchMap((members) => {
+                if (members.value.length === 0) return of([]);
+                return combineLatest(
+                  members.value.map((m) => m.participant.value$),
+                );
+              }),
               map((participants) => ({
                 url: JSON.stringify(connection.transport), // TODO
                 livekitRoom: connection.livekitRoom,

@@ -148,6 +148,7 @@ describe("DeveloperSettingsTab", () => {
       getCrypto: () => ({ getVersion: (): string => "x" }),
       getUserId: () => "@u:hs",
       getDeviceId: () => "DEVICE",
+      getDomain: () => "hs",
     } as unknown as MatrixClient;
     it("will not update custom transport without roomId", async () => {
       const user = userEvent.setup();

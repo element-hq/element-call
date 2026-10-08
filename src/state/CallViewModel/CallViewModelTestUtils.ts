@@ -122,6 +122,8 @@ export function withCallViewModel(mode: MatrixRTCMode) {
     };
     const room = mockMatrixRoom({
       client: new (class extends EventEmitter {
+        public readonly baseUrl = "https://matrix.example.com";
+
         public getUserId(): string | undefined {
           return localRtcMember.userId;
         }

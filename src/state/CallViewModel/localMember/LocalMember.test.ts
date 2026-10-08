@@ -337,6 +337,7 @@ describe("LocalMembership", () => {
     }),
     state$: constant(ConnectionState.LivekitConnected),
     transport: mockTransport,
+    serverName: "example.org",
   } as Connection;
   const connectionTransportAConnecting = {
     ...connectionTransportAConnected,
@@ -858,6 +859,7 @@ describe("LocalMembership", () => {
       const connection = {
         state$: constant(ConnectionState.LivekitConnected),
         transport: mockTransport,
+        serverName: "example.org",
         livekitRoom: mockLivekitRoom({
           localParticipant: mockLocalParticipant({
             isScreenShareEnabled: false,

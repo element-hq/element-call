@@ -142,6 +142,7 @@ test("should signal participant on a connection that is publishing", async () =>
 
   const connection = {
     transport: bobMembership.getTransport(),
+    serverName: "example.org",
   } as unknown as Connection;
   const dataWithPublisher = new ConnectionManagerData();
   dataWithPublisher.add(connection, [
@@ -185,6 +186,7 @@ test("should signal participant on a connection that is not publishing", async (
 
   const connection = {
     transport: bobMembership.getTransport(),
+    serverName: "example.org",
   } as unknown as Connection;
   const dataWithPublisher = new ConnectionManagerData();
   dataWithPublisher.add(connection, []);
@@ -226,9 +228,11 @@ describe("Publication edge case", () => {
     );
     const connectionA = {
       transport: transportA,
+      serverName: "example.org",
     } as unknown as Connection;
     const connectionB = {
       transport: transportB,
+      serverName: "sample.com",
     } as unknown as Connection;
 
     connectionWithPublisher.add(connectionA, [
@@ -284,8 +288,14 @@ test("bob is publishing in the wrong connection", async () => {
     bobMembership.userId,
     bobMembership.deviceId,
   );
-  const connectionA = { transport: transportA } as unknown as Connection;
-  const connectionB = { transport: transportB } as unknown as Connection;
+  const connectionA = {
+    transport: transportA,
+    serverName: "example.org",
+  } as unknown as Connection;
+  const connectionB = {
+    transport: transportB,
+    serverName: "sample.com",
+  } as unknown as Connection;
 
   // Bob is not publishing on A
   connectionWithPublisher.add(connectionA, []);

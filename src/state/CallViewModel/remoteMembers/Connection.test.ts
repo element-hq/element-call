@@ -28,9 +28,12 @@ import {
 } from "livekit-client";
 import fetchMock from "fetch-mock";
 import EventEmitter from "events";
-import { MatrixError, type IOpenIDToken } from "matrix-js-sdk";
+import { MatrixError } from "matrix-js-sdk";
 import { logger, type Logger } from "matrix-js-sdk/lib/logger";
-import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import {
+  type LivekitGetTokenResponse,
+  type UnstableLivekitTransport,
+} from "matrix-js-sdk/lib/matrixrtc";
 
 import {
   Connection,
@@ -185,7 +188,7 @@ describe("Start connection states", () => {
     expect(connection.state$.getValue()).toEqual("Initialized");
   });
 
-  it("fail to getOpenId token then error state", async () => {
+  it("fail to get SFU token then error state", async () => {
     setupTest();
     vi.useFakeTimers();
 
@@ -209,10 +212,10 @@ describe("Start connection states", () => {
     });
     onTestFinished(() => s.unsubscribe());
 
-    const deferred = Promise.withResolvers<IOpenIDToken>();
+    const deferred = Promise.withResolvers<LivekitGetTokenResponse>();
 
-    client.getOpenIdToken.mockImplementation(
-      async (): Promise<IOpenIDToken> => {
+    client._unstable_getLivekitToken.mockImplementation(
+      async (): Promise<LivekitGetTokenResponse> => {
         return await deferred.promise;
       },
     );
