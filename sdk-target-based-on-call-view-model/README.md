@@ -2,8 +2,9 @@
 
 > Superseded by the `sdk/` package (`@element-hq/matrixrtc-sdk`) and its harness in
 > `sdk/dev`; see `sdk/SdkArchitecture.md`. This bundle is in production use, so it
-> keeps building as a thin layer over that package, with its interface unchanged,
-> until its consumers have moved to the package directly. It will then be removed.
+> keeps building as a thin layer over that package until its consumers have moved
+> to the package directly. It will then be removed. Its members are the package's
+> `RTCMember`s now, in place of its own wrapper around the raw membership.
 
 EC can be build in sdk mode. This will result in a compiled js file that can be imported in very simple webapps.
 
