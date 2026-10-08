@@ -24,7 +24,7 @@ therefore `Element Call → sdk`, never the reverse. The migration from today's
 │ MatrixRTCClient                                                              │
 │                                                                              │
 │   public API, all Behaviors:                                                 │
-│     join() leave() status$ connected$ reconnecting$ fatalError$              │
+│     join() leave() state$                                                    │
 │     localMember$ remoteMembers$ memberCount$ sendData() data$                │
 │     keyRotationSuppressed$ connectedTransports$                              │
 │                                                                              │
@@ -44,8 +44,8 @@ therefore `Element Call → sdk`, never the reverse. The migration from today's
 │  │   leave, retries          │ mediaKeys$ ────▶│   one LiveKit room per    │ │
 │  │ discovery of the local    │ mediaFor$ ─────▶│   transport url, local    │ │
 │  │   transport (homeserver)  │ ◀─ tracks$,     │   published, remote       │ │
-│  │ join state machine        │ encryptionError$│   subscribed              │ │
-│  │   (LocalMember)           │ local.publish,  │ Publisher: local tracks,  │ │
+│  │ membership state machine  │ encryptionError$│   subscribed              │ │
+│  │   (LocalMembership)       │ local.publish,  │ Publisher: local tracks,  │ │
 │  │ transport registry        │   setPublishing▶│   upstream paused until   │ │
 │  │   (TransportMetadata)     │ ◀─ connections$ │   joined                  │ │
 │  │ data packet → member      │ ◀─ data$        │ LivekitMemberMedia:       │ │
@@ -61,11 +61,12 @@ therefore `Element Call → sdk`, never the reverse. The migration from today's
 ```
 
 The left box is MatrixRTC: who is in the session, with which transport, the
-keys, the delayed leave, and the join state machine. The right box is a media
-backend: whatever carries the media, behind the `MediaBackend` interface in
+keys, the delayed leave, and the membership state machine. The right box is a
+media backend: whatever carries the media, behind the `MediaBackend` interface in
 `sdk/src/media-backend/api.ts`. The client is the join of the two: a member exists
 once its membership does, and gets its media once the backend has something
-for that membership on its transport. LiveKit is the one backend today; a
+for that membership on its transport; `state$` is the membership state combined
+with the local media connection. LiveKit is the one backend today; a
 cascading SFU or full mesh is another folder under `sdk/src/media-backend/`, handed
 in through `options.backend`, and nothing in the left box changes.
 
@@ -79,7 +80,7 @@ in through `options.backend`, and nothing in the left box changes.
 │ CallViewModel                                                  │
 │   layout, ringing and notifications, auto-leave, sounds,       │
 │   reactions, hand raise, settings, audio routing, host bridge  │
-│    ▲ status$, localMember$, remoteMembers$, tracks$            │
+│    ▲ state$, localMember$, remoteMembers$, tracks$             │
 │ MatrixRTCClient                   @element-hq/matrixrtc-sdk    │
 └────────────────────────────────────────────────────────────────┘
      │ MatrixClient + Room                        │ livekit-client
@@ -111,7 +112,7 @@ LiveKit participants.
   │             │ create tracks, resume upstream ──────────────────────────────▶│
   │             │ media key to every other member (to-device) ──▶│               │
   │             │◀── other memberships (sync) ──────────│◀── participants ────────│
-  │◀─ status$ "connected", localMember$, remoteMembers$ with tracks$ ─────────────│
+  │◀─ state$ connected, localMember$, remoteMembers$ with tracks$ ───────────────│
 ```
 
 The session discovers the transport from the homeserver and the backend prepares
@@ -121,8 +122,8 @@ business: for LiveKit the token exchange, and the probe that decides whether the
 SFU can take over the delayed leave, which picks the delayed leave timings the
 join uses. Until `join()` the tracks exist but their upstream is paused: a host
 can show a preview without anyone hearing it. The upstream flows exactly while the
-member is joined and the homeserver is reachable; `leave()` or a sync outage pauses
-it, and `leave()` also sends the leave.
+membership is `joined`: a sync outage pauses it, and `leave()` pauses it for good
+and sends the leave.
 
 ## Vocabulary
 
@@ -134,7 +135,7 @@ the sections below still describe `MatrixRTCClient` until that lands.
 | Word                        | Meaning here                                                                                                                                                                                                                                           | Elsewhere                                                                                                   |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
 | slot                        | an `RTCSlot`: the namespace in a room that memberships join into, `application` plus `id`. It exists while the room does, with nobody in it too. Holds `members$`, its open or closed `status$`, and `join()`                                          | the js-sdk `MatrixRTCSession` is one per slot; the MSC4143 slot event                                       |
-| participation               | an `RTCParticipation`: the span between our `join()` of a slot and our `leave()`. Holds the connection and its `status$`, `localMember$`, `remoteMembers$`, the connected transports and the data channel. Made by `slot.join()`, never reused         | "session" is not used here, because in the js-sdk it means the slot                                         |
+| participation               | an `RTCParticipation`: the span between our `join()` of a slot and our `leave()`. Holds the connection and its `state$`, `localMember$`, `remoteMembers$`, the connected transports and the data channel. Made by `slot.join()`, never reused          | "session" is not used here, because in the js-sdk it means the slot                                         |
 | member                      | an `RTCMember`: one membership in a slot with what the SDK derives from it, `rtcBackendIdentity`, `userId`, `deviceId`, `memberId`, `displayName$`, `avatarUrl$`, `transport$` and `applicationData$`. No media. What the slot hands out in `members$` | the js-sdk `CallMembership` behind it, which never leaves the SDK; Element Call's old "matrixLivekitMember" |
 | local member, remote member | `LocalRTCMember` and `RemoteRTCMember`: an `RTCMember` plus its `MemberMedia`, which only a participation can carry. The local one's tracks carry the controls. What the participation hands out in `localMember$` and `remoteMembers$`                | LiveKit `LocalParticipant` and `RemoteParticipant`, which never leave the SDK                               |
 | media                       | a `MemberMedia`: what a member sends once it has arrived on its transport, `tracks$`, null while waiting, and `encryptionError$` beside it. The media backend supplies exactly these two fields per member                                             | Element Call's `MediaViewModel` is a view of it                                                             |
@@ -353,6 +354,21 @@ export interface DataMessage {
 }
 ```
 
+`state$` is two state machines, one per box in the diagram, combined by one pure
+function. `LocalMembership` knows only the Matrix side: `waitingForTransport`,
+`joining`, `joined`, `reconnecting` with a `MatrixDisconnectReason`, `failed`,
+`left`. The client folds the local media connection in: `joined` with the media
+up is `connected`, a media drop after that is `reconnecting: "media"`, a
+connection error is `failed`. Each step is computed in priority order from the
+previous state, so `left` and `failed` absorb everything after them, and
+`reconnecting` is only ever reached from `connected`; a membership that drops
+before the media ever came up stays `connecting`. One reason, not a set, because
+the links are a chain: without sync the membership is unknowable, and the media
+is worth little while the Matrix side is down, so the first broken link in that
+order is what a host shows and what Element Call's analytics count. A failed
+publication is not in here at all: the member can still receive, so it stays on
+the local member's media.
+
 ### Members
 
 ```ts
@@ -532,9 +548,10 @@ export interface MediaBackend {
 ```
 
 What stays on the client's side: discovery of the local transport from the
-homeserver's list (a homeserver endpoint, so not a backend's), the join state
-machine in `LocalMember.ts`, the choice of delayed leave timings, mapping a data
-packet's sender to a member, and the transport registry, which keys on the raw
+homeserver's list (a homeserver endpoint, so not a backend's), the membership
+state machine in `LocalMembership.ts` and its combination with
+`local.connectionState$` into `state$`, the choice of delayed leave timings,
+mapping a data packet's sender to a member, and the transport registry, which keys on the raw
 transport serialised with sorted keys and derives `connectedTransports$` and each
 `TransportMetadata.resolved$` from `connections$`.
 
@@ -700,9 +717,10 @@ sdk/
   src/config.ts       MatrixRTCMode, session timings, media quality
   src/encryption.ts   E2eeType, EncryptionSystem
   src/MatrixRTCClient.ts  createMatrixRTCClient: wires the two folders below
+  src/participationState.ts  the membership state combined with the media connection
   src/reactive/       Behavior, ObservableScope, the observable operators
-  src/matrixrtc/      the MatrixRTC side: the local member, memberships, member
-                      metadata, transports, discovery, status, the js-sdk join
+  src/matrixrtc/      the MatrixRTC side: the local membership, memberships, member
+                      metadata, transports, discovery, the js-sdk join
   src/media-backend/  the MediaBackend interface in api.ts; livekit/ is the one
                       backend: connections, publisher, JWT, keys, the tracks
   src/utils/          LazyBehavior, mapScoped, network retry, display names, test helpers
