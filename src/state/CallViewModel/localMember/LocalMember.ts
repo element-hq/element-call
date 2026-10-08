@@ -82,6 +82,7 @@ import {
   type ClientDelegationParts,
   delegateDelayedLeave,
   type ClientOpenIDParts,
+  type TransportLocator,
 } from "../../../livekit/auth";
 
 export enum TransportState {
@@ -151,7 +152,7 @@ interface Props {
   homeserverConnected: HomeserverConnected;
   roomId: string;
   ownMembershipIdentity: CallMembershipIdentityParts;
-  localTransport$: Observable<UnstableLivekitTransport>;
+  localTransport$: Observable<TransportLocator>;
   client: ClientDelegationParts & ClientOpenIDParts;
   matrixRTCSession: Pick<
     MatrixRTCSession,
@@ -310,7 +311,7 @@ export const createLocalMembership$ = ({
   // to whether delayed event delegation is supported
   const joinParams$ = scope.behavior(
     localTransport$.pipe(
-      switchMap(async (transport) => {
+      switchMap(async ({ transport }) => {
         const transportSupportsDelegation =
           "livekit_service_url" in transport &&
           (await checkDelegationSupport(

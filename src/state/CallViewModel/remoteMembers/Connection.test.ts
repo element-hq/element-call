@@ -121,11 +121,12 @@ function setupTest(): void {
 
 function setupRemoteConnection(): Connection {
   const opts: ConnectionOpts = {
-    client: client,
+    client,
     roomId: ROOM_ID,
     slotId: SLOT_ID,
     role: "subscriber",
-    transport: transport,
+    transport,
+    serverName: "m.localhost",
     scope: testScope,
     ownMembershipIdentity: ownMemberMock,
     livekitRoomFactory: () => fakeLivekitRoom,
@@ -169,11 +170,12 @@ describe("Start connection states", () => {
     setupTest();
 
     const opts: ConnectionOpts = {
-      client: client,
+      client,
       roomId: ROOM_ID,
       slotId: SLOT_ID,
       role: "subscriber",
-      transport: transport,
+      transport,
+      serverName: "m.localhost",
       scope: testScope,
       ownMembershipIdentity: ownMemberMock,
       livekitRoomFactory: () => fakeLivekitRoom,
@@ -188,11 +190,12 @@ describe("Start connection states", () => {
     vi.useFakeTimers();
 
     const opts: ConnectionOpts = {
-      client: client,
+      client,
       roomId: ROOM_ID,
       slotId: SLOT_ID,
       role: "subscriber",
-      transport: transport,
+      transport,
+      serverName: "m.localhost",
       scope: testScope,
       ownMembershipIdentity: ownMemberMock,
       livekitRoomFactory: () => fakeLivekitRoom,
@@ -240,11 +243,12 @@ describe("Start connection states", () => {
     vi.useFakeTimers();
 
     const opts: ConnectionOpts = {
-      client: client,
+      client,
       roomId: ROOM_ID,
       slotId: SLOT_ID,
       role: "subscriber",
-      transport: transport,
+      transport,
+      serverName: "m.localhost",
       scope: testScope,
       ownMembershipIdentity: ownMemberMock,
       livekitRoomFactory: () => fakeLivekitRoom,
@@ -301,11 +305,12 @@ describe("Start connection states", () => {
     vi.useFakeTimers();
 
     const opts: ConnectionOpts = {
-      client: client,
+      client,
       roomId: ROOM_ID,
       slotId: SLOT_ID,
       role: "subscriber",
-      transport: transport,
+      transport,
+      serverName: "m.localhost",
       scope: testScope,
       ownMembershipIdentity: ownMemberMock,
       livekitRoomFactory: () => fakeLivekitRoom,
@@ -545,7 +550,8 @@ describe("remote track logging", () => {
         roomId: ROOM_ID,
         slotId: SLOT_ID,
         role: "subscriber",
-        transport: transport,
+        transport,
+        serverName: "m.localhost",
         scope: testScope,
         ownMembershipIdentity: ownMemberMock,
         livekitRoomFactory: () => fakeLivekitRoom,

@@ -20,8 +20,8 @@ import {
   type ObservableScope,
 } from "../../ObservableScope.ts";
 import { generateItemsWithEpoch } from "../../../utils/observable.ts";
-import { areUnstableLivekitTransportsEqual } from "./MatrixLivekitMembers.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
+import { type TransportLocator } from "../../../livekit/auth/types.ts";
 
 export class ConnectionManagerData {
   private readonly store: Map<
@@ -32,7 +32,7 @@ export class ConnectionManagerData {
   public constructor(private readonly logger?: Logger) {}
 
   public add(connection: Connection, participants: RemoteParticipant[]): void {
-    const key = this.getKey(connection.transport);
+    const key = this.getKey(connection);
     const existing = this.store.get(key);
     if (!existing) {
       this.store.set(key, { connection, participants });
@@ -46,7 +46,7 @@ export class ConnectionManagerData {
     }
   }
 
-  private getKey(transport: UnstableLivekitTransport): string {
+  private getKey({ transport, serverName }: TransportLocator): string {
     // This is enough as a key because the ConnectionManager is already scoped by room.
     // We also do not need to consider the slotId at this point since each `MatrixRTCSession` is already scoped by `slotDescription: {id, application}`.
     return JSON.stringify([
@@ -54,6 +54,7 @@ export class ConnectionManagerData {
       "livekit_service_url" in transport
         ? transport.livekit_service_url
         : undefined,
+      serverName,
     ]);
   }
 
@@ -62,13 +63,13 @@ export class ConnectionManagerData {
   }
 
   public getConnectionForTransport(
-    transport: UnstableLivekitTransport,
+    transport: TransportLocator,
   ): Connection | null {
     return this.store.get(this.getKey(transport))?.connection ?? null;
   }
 
   public getParticipantsForTransport(
-    transport: UnstableLivekitTransport,
+    transport: TransportLocator,
   ): RemoteParticipant[] {
     const key = this.getKey(transport);
     const existing = this.store.get(key);
@@ -79,11 +80,44 @@ export class ConnectionManagerData {
   }
 }
 
+/**
+ * Unpacks an {@link UnstableLivekitTransport} into its constituent `url` and
+ * `serviceUrl`, discarding the type information that at least one of them must
+ * be defined.
+ */
+function unpackTransport(transport: UnstableLivekitTransport): {
+  url: string | undefined;
+  serviceUrl: string | undefined;
+} {
+  return {
+    url: "url" in transport ? transport.url : undefined,
+    serviceUrl:
+      "livekit_service_url" in transport
+        ? transport.livekit_service_url
+        : undefined,
+  };
+}
+
+/**
+ * Constructs an {@link UnstableLivekitTransport} from its constituent `url` and
+ * `serviceUrl`. This assumes that at least one of the two are defined.
+ */
+function repackTransport(
+  url: string | undefined,
+  serviceUrl: string | undefined,
+): UnstableLivekitTransport {
+  return {
+    type: "livekit",
+    ...(url === undefined ? {} : { url }),
+    ...(serviceUrl === undefined ? {} : { livekit_service_url: serviceUrl }),
+  } as UnstableLivekitTransport;
+}
+
 interface Props {
   scope: ObservableScope;
   connectionFactory: ConnectionFactory;
-  localTransport: UnstableLivekitTransport;
-  remoteTransports$: Behavior<Epoch<UnstableLivekitTransport[]>>;
+  localTransport: TransportLocator;
+  remoteTransports$: Behavior<Epoch<TransportLocator[]>>;
 
   logger: Logger;
   ownMembershipIdentity: CallMembershipIdentityParts;
@@ -129,11 +163,11 @@ export function createConnectionManager$({
    * All transports currently managed by the ConnectionManager. This list does
    * not include duplicate transports.
    */
-  const localAndRemoteTransports$: Behavior<Epoch<UnstableLivekitTransport[]>> =
+  const localAndRemoteTransports$: Behavior<Epoch<TransportLocator[]>> =
     scope.behavior(
       remoteTransports$.pipe(
         mapEpoch((remoteTransports) =>
-          removeDuplicateTransports([localTransport, ...remoteTransports]),
+          removeDuplicateLocators([localTransport, ...remoteTransports]),
         ),
         tap((transports) =>
           logger.debug("localAndRemoteTransports$ = ", transports),
@@ -149,30 +183,32 @@ export function createConnectionManager$({
       generateItemsWithEpoch(
         "ConnectionManager connections$",
         function* (transports) {
-          for (const transport of transports) {
+          for (const { transport, serverName } of transports) {
             const role =
-              transport === localTransport
+              serverName === localTransport.serverName &&
+              areUnstableLivekitTransportsEqual(
+                transport,
+                localTransport.transport,
+              )
                 ? ("publisher" as const)
                 : ("subscriber" as const);
-            const url = "url" in transport ? transport.url : undefined;
-            const serviceUrl =
-              "livekit_service_url" in transport
-                ? transport.livekit_service_url
-                : undefined;
-            yield { keys: [role, url, serviceUrl], data: undefined };
+            // In order to maintain a consistent set of map keys, we must
+            // temporarily downgrade `transport` to a weaker type
+            const { url, serviceUrl } = unpackTransport(transport);
+            yield {
+              keys: [role, url, serviceUrl, serverName],
+              data: undefined,
+            };
           }
         },
-        (scope, _data$, role, url, serviceUrl) => {
+        (scope, _data$, role, url, serviceUrl, serverName) => {
           const connection = connectionFactory.createConnection(
             scope,
             role,
-            {
-              type: "livekit",
-              ...(url === undefined ? {} : { url }),
-              ...(serviceUrl === undefined
-                ? {}
-                : { livekit_service_url: serviceUrl }),
-            } as UnstableLivekitTransport,
+            // Pack the transport keys back into a stronger
+            // `UnstableLivekitTransport` type
+            repackTransport(url, serviceUrl),
+            serverName,
             ownMembershipIdentity,
             logger,
           );
@@ -230,12 +266,65 @@ export function createConnectionManager$({
   return { connectionManagerData$ };
 }
 
-function removeDuplicateTransports<T extends UnstableLivekitTransport>(
-  transports: T[],
-): T[] {
-  return transports.reduce((acc, transport) => {
-    if (!acc.some((t) => areUnstableLivekitTransportsEqual(t, transport)))
-      acc.push(transport);
-    return acc;
-  }, [] as T[]);
+// TODO add this to the JS-SDK
+export function areUnstableLivekitTransportsEqual<
+  T extends UnstableLivekitTransport,
+>(t1: T | null, t2: T | null): boolean {
+  if (t1 && t2) {
+    if ("url" in t1 !== "url" in t2) return false;
+    if ("livekit_service_url" in t1 !== "livekit_service_url" in t2)
+      return false;
+    if (
+      "url" in t1 &&
+      t1.url !== (t2 as UnstableLivekitTransport & { url: string }).url
+    )
+      return false;
+    if (
+      "livekit_service_url" in t1 &&
+      t1.livekit_service_url !==
+        (t2 as UnstableLivekitTransport & { livekit_service_url: string })
+          .livekit_service_url
+    )
+      return false;
+    return true;
+  }
+  return !t1 && !t2;
+}
+
+function removeDuplicateLocators(
+  locators: TransportLocator[],
+): TransportLocator[] {
+  // Set tracking which locators we have added to `deduped` so far
+  // url -> serviceUrl -> serverNames
+  const byUrl = new Map<
+    string | undefined,
+    Map<string | undefined, Set<string>>
+  >();
+  const deduped: TransportLocator[] = [];
+
+  for (const locator of locators) {
+    const { transport, serverName } = locator;
+    const url = "url" in transport ? transport.url : undefined;
+    const serviceUrl =
+      "livekit_service_url" in transport
+        ? transport.livekit_service_url
+        : undefined;
+
+    let byServiceUrl = byUrl.get(url);
+    if (byServiceUrl === undefined) {
+      byServiceUrl = new Map();
+      byUrl.set(url, byServiceUrl);
+    }
+    let serverNames = byServiceUrl.get(serviceUrl);
+    if (serverNames === undefined) {
+      serverNames = new Set();
+      byServiceUrl.set(serviceUrl, serverNames);
+    }
+    if (!serverNames.has(serverName)) {
+      serverNames.add(serverName);
+      deduped.push(locator);
+    }
+  }
+
+  return deduped;
 }

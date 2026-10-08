@@ -46,6 +46,7 @@ export interface ConnectionFactory {
     scope: ObservableScope,
     role: "publisher" | "subscriber",
     transport: UnstableLivekitTransport,
+    serverName: string,
     ownMembershipIdentity: CallMembershipIdentityParts,
     logger: Logger,
   ): Connection;
@@ -98,6 +99,7 @@ export class ECConnectionFactory implements ConnectionFactory {
    *
    * @param scope The observable scope (used for clean-up)
    * @param transport The transport to use for this connection.
+   * @param serverName The name of the homeserver to which the {@link transport} belongs.
    * @param ownMembershipIdentity required to connect (using the jwt service) with the SFU.
    * @param logger The logger instance to use for this connection.
    * @param sfuConfig optional config in case we already have a token for this connection.
@@ -107,6 +109,7 @@ export class ECConnectionFactory implements ConnectionFactory {
     scope: ObservableScope,
     role: "publisher" | "subscriber",
     transport: UnstableLivekitTransport,
+    serverName: string,
     ownMembershipIdentity: CallMembershipIdentityParts,
     logger: Logger,
   ): Connection {
@@ -116,6 +119,7 @@ export class ECConnectionFactory implements ConnectionFactory {
         slotId: this.slotId,
         role,
         transport,
+        serverName,
         client: this.client,
         scope: scope,
         livekitRoomFactory: this.livekitRoomFactory,

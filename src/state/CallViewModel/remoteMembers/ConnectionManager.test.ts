@@ -15,23 +15,30 @@ import { Epoch, mapEpoch, ObservableScope } from "../../ObservableScope.ts";
 import {
   createConnectionManager$,
   ConnectionManagerData,
+  areUnstableLivekitTransportsEqual,
 } from "./ConnectionManager.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
 import { type Connection } from "./Connection.ts";
 import { ownMemberMock, withTestScheduler } from "../../../utils/test.ts";
-import { areUnstableLivekitTransportsEqual } from "./MatrixLivekitMembers.ts";
 import { type Behavior } from "../../Behavior.ts";
+import { type TransportLocator } from "../../../livekit/auth";
 
 // Some test constants
 
-const TRANSPORT_1: UnstableLivekitTransport = {
-  type: "livekit",
-  livekit_service_url: "https://lk.example.org",
+const TRANSPORT_1: TransportLocator = {
+  transport: {
+    type: "livekit",
+    livekit_service_url: "https://lk.example.org",
+  },
+  serverName: "example.org",
 };
 
-const TRANSPORT_2: UnstableLivekitTransport = {
-  type: "livekit",
-  livekit_service_url: "https://lk.sample.com",
+const TRANSPORT_2: TransportLocator = {
+  transport: {
+    type: "livekit",
+    livekit_service_url: "https://lk.sample.com",
+  },
+  serverName: "sample.com",
 };
 
 let fakeConnectionFactory: ConnectionFactory;
@@ -94,13 +101,19 @@ describe("connections$ stream", () => {
           ).toHaveBeenCalledTimes(2);
 
           const conn1 = connections.find((c) =>
-            areUnstableLivekitTransportsEqual(c.transport, TRANSPORT_1),
+            areUnstableLivekitTransportsEqual(
+              c.transport,
+              TRANSPORT_1.transport,
+            ),
           );
           expect(conn1).toBeDefined();
           expect(conn1!.start).toHaveBeenCalled();
 
           const conn2 = connections.find((c) =>
-            areUnstableLivekitTransportsEqual(c.transport, TRANSPORT_2),
+            areUnstableLivekitTransportsEqual(
+              c.transport,
+              TRANSPORT_2.transport,
+            ),
           );
           expect(conn2).toBeDefined();
           expect(conn2!.start).toHaveBeenCalled();
@@ -141,12 +154,18 @@ describe("connections$ stream", () => {
           ).toHaveBeenCalledTimes(2);
 
           const conn2 = connections.find((c) =>
-            areUnstableLivekitTransportsEqual(c.transport, TRANSPORT_2),
+            areUnstableLivekitTransportsEqual(
+              c.transport,
+              TRANSPORT_2.transport,
+            ),
           );
           expect(conn2).toBeDefined();
 
           const conn1 = connections.find((c) =>
-            areUnstableLivekitTransportsEqual(c.transport, TRANSPORT_1),
+            areUnstableLivekitTransportsEqual(
+              c.transport,
+              TRANSPORT_1.transport,
+            ),
           );
           expect(conn1).toBeDefined();
           expect(conn1!.start).toHaveBeenCalledOnce();
@@ -187,7 +206,10 @@ describe("connections$ stream", () => {
           expect(connections.length).toBe(1);
           // The second connection should have been stopped has it is no longer needed.
           const connection2 = allCreatedConnections.find((c) =>
-            areUnstableLivekitTransportsEqual(c.transport, TRANSPORT_2),
+            areUnstableLivekitTransportsEqual(
+              c.transport,
+              TRANSPORT_2.transport,
+            ),
           );
           expect(connection2).toBeDefined();
           expect(connection2!.stop).toHaveBeenCalled();
@@ -279,7 +301,7 @@ describe("connectionManagerData$ stream", () => {
       // Setup the fake participants streams behavior
       // ==============================
       fakeRemoteParticipantsStreams.set(
-        keyForTransport(TRANSPORT_1),
+        keyForTransport(TRANSPORT_1.transport),
         behavior("oa-b", {
           o: [],
           a: [{ identity: "user1A" } as RemoteParticipant],
@@ -291,7 +313,7 @@ describe("connectionManagerData$ stream", () => {
       );
 
       fakeRemoteParticipantsStreams.set(
-        keyForTransport(TRANSPORT_2),
+        keyForTransport(TRANSPORT_2.transport),
         behavior("o-a", {
           o: [],
           a: [{ identity: "user2A" } as RemoteParticipant],

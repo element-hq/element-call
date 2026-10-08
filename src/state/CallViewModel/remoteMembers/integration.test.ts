@@ -24,7 +24,7 @@ import {
   type ClientOpenIDParts,
 } from "../../../livekit/auth";
 import {
-  exampleTransport,
+  exampleTransportLocator,
   mockMediaDevices,
   mockRtcMembership,
   ownMemberMock,
@@ -32,11 +32,13 @@ import {
 } from "../../../utils/test.ts";
 import { type ProcessorState } from "../../../livekit/TrackProcessorContext.tsx";
 import {
-  areUnstableLivekitTransportsEqual,
   createRemoteMatrixLivekitMembers$,
   type RemoteMatrixLivekitMember,
 } from "./MatrixLivekitMembers.ts";
-import { createConnectionManager$ } from "./ConnectionManager.ts";
+import {
+  areUnstableLivekitTransportsEqual,
+  createConnectionManager$,
+} from "./ConnectionManager.ts";
 import { membershipsAndTransports$ } from "../../SessionBehaviors.ts";
 import { localRtcMember, testJWTToken } from "../../../utils/test-fixtures.ts";
 
@@ -129,7 +131,7 @@ test("bob, carl, then bob joining no tracks yet", () => {
     const connectionManager = createConnectionManager$({
       scope: testScope,
       connectionFactory: ecConnectionFactory,
-      localTransport: exampleTransport,
+      localTransport: exampleTransportLocator,
       remoteTransports$: membershipsAndTransports.transports$,
       logger: logger,
       ownMembershipIdentity: ownMemberMock,

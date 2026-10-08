@@ -30,6 +30,10 @@ export interface GetSFUConfigParams {
    */
   url: string;
   /**
+   * The name of the homeserver to which the SFU belongs.
+   */
+  serverName: string;
+  /**
    * The ID of the Matrix room in which the session takes place.
    */
   roomId: string;
@@ -47,12 +51,14 @@ export async function getSFUConfig({
   client,
   membership,
   url,
+  serverName,
   roomId,
   slotId,
 }: GetSFUConfigParams): Promise<SFUConfig> {
   const res = await doNetworkOperationWithRetry(async () =>
     client._unstable_getLivekitToken({
       url,
+      server_name: serverName,
       room_id: roomId,
       slot_id: slotId,
       member_id: membership.memberId,

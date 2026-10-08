@@ -51,6 +51,10 @@ export interface GetSFUConfigParams {
    */
   transport: UnstableLivekitTransport;
   /**
+   * The name of the homeserver to which the {@link transport} belongs.
+   */
+  serverName: string;
+  /**
    * The ID of the Matrix room in which the session takes place.
    */
   roomId: string;
@@ -72,6 +76,7 @@ export async function getSFUConfig({
   client,
   membership,
   transport,
+  serverName,
   roomId,
   slotId,
   role,
@@ -83,6 +88,7 @@ export async function getSFUConfig({
         client,
         membership,
         url: transport.url,
+        serverName,
         roomId,
         slotId,
       });

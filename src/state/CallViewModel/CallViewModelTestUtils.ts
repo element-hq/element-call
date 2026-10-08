@@ -30,7 +30,7 @@ import {
   type CallViewModelOptions,
 } from "./CallViewModel";
 import {
-  exampleTransport,
+  exampleTransportLocator,
   mockConfig,
   MockConnection,
   mockLivekitRoom,
@@ -208,12 +208,13 @@ export function withCallViewModel(mode: MatrixRTCMode) {
         livekitRoomFactory,
         connectionState$,
         windowSize$,
-        localTransport: exampleTransport,
+        localTransport: exampleTransportLocator,
         connectionFactory: {
           createConnection(
             scope,
             role,
             transport,
+            serverName,
             ownMembershipIdentity,
             logger,
           ) {
@@ -222,6 +223,7 @@ export function withCallViewModel(mode: MatrixRTCMode) {
                 scope,
                 role,
                 transport,
+                serverName,
                 ownMembershipIdentity,
                 client: room.client,
                 roomId: room.roomId,

@@ -6,10 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type LocalParticipant, type RemoteParticipant } from "livekit-client";
-import {
-  type CallMembership,
-  type UnstableLivekitTransport,
-} from "matrix-js-sdk/lib/matrixrtc";
+import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
 import { combineLatest, filter, map } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 
@@ -18,6 +15,7 @@ import { type IConnectionManager } from "./ConnectionManager";
 import { Epoch, type ObservableScope } from "../../ObservableScope";
 import { type Connection } from "./Connection";
 import { generateItemsWithEpoch } from "../../../utils/observable";
+import { type TransportLocator } from "../../../livekit/auth";
 
 interface LocalTaggedParticipant {
   type: "local";
@@ -61,7 +59,7 @@ interface Props {
   scope: ObservableScope;
   membershipsWithTransport$: Behavior<
     Epoch<
-      { membership: CallMembership; transport?: UnstableLivekitTransport }[]
+      { membership: CallMembership; transport: TransportLocator | undefined }[]
     >
   >;
   connectionManager: IConnectionManager;
@@ -165,28 +163,3 @@ export function createRemoteMatrixLivekitMembers$({
 }
 
 // TODO add back in the callviewmodel pauseWhen(this.pretendToBeDisconnected$)
-
-// TODO add this to the JS-SDK
-export function areUnstableLivekitTransportsEqual<
-  T extends UnstableLivekitTransport,
->(t1: T | null, t2: T | null): boolean {
-  if (t1 && t2) {
-    if ("url" in t1 !== "url" in t2) return false;
-    if ("livekit_service_url" in t1 !== "livekit_service_url" in t2)
-      return false;
-    if (
-      "url" in t1 &&
-      t1.url !== (t2 as UnstableLivekitTransport & { url: string }).url
-    )
-      return false;
-    if (
-      "livekit_service_url" in t1 &&
-      t1.livekit_service_url !==
-        (t2 as UnstableLivekitTransport & { livekit_service_url: string })
-          .livekit_service_url
-    )
-      return false;
-    return true;
-  }
-  return !t1 && !t2;
-}

@@ -526,6 +526,7 @@ export const DeveloperSettingsTab: FC<Props> = ({
                 client,
                 membership: { userId, deviceId, memberId: "" },
                 transport,
+                serverName: client.getDomain()!,
                 roomId,
                 slotId: "org.example.fake-slot#room",
                 role: "publisher",

@@ -5,7 +5,6 @@ SPDX-License-IdFentifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { type MatrixClient } from "matrix-js-sdk";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 
@@ -13,6 +12,7 @@ import { Config } from "../../../config/Config.ts";
 import { MatrixRTCTransportMissingError } from "../../../utils/errors.ts";
 import { customTransport as customTransportSetting } from "../../../settings/settings.ts";
 import { RtcTransportAutoDiscovery } from "./RtcTransportAutoDiscovery.ts";
+import { type TransportLocator } from "../../../livekit/auth/types.ts";
 
 /**
  * Determines the transport to advertise in our MatrixRTC membership and publish
@@ -20,7 +20,10 @@ import { RtcTransportAutoDiscovery } from "./RtcTransportAutoDiscovery.ts";
  */
 export async function getLocalTransport(
   client: Pick<MatrixClient, "getDomain" | "_unstable_getRTCTransports">,
-): Promise<UnstableLivekitTransport> {
+): Promise<TransportLocator> {
+  const serverName = client.getDomain();
+  if (serverName === null) throw new Error("No server name");
+
   const discovery = new RtcTransportAutoDiscovery({
     client,
     resolvedConfig: Config.get(),
@@ -32,11 +35,10 @@ export async function getLocalTransport(
     customTransportSetting.value$.value ??
     (await discovery.discoverPreferredTransport());
 
-  if (transport === null)
-    throw new MatrixRTCTransportMissingError(client.getDomain() ?? "");
+  if (transport === null) throw new MatrixRTCTransportMissingError(serverName);
 
   // TODO: Since this module no longer maps auth errors to fatal user-facing
   // errors (as it doesn't even perform auth), that needs to happen somewhere
   // else.
-  return transport;
+  return { transport, serverName };
 }

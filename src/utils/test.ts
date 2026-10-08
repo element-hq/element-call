@@ -78,6 +78,7 @@ import {
   type RemoteScreenShareViewModel,
 } from "../state/media/RemoteScreenShareViewModel";
 import { Connection } from "../state/CallViewModel/remoteMembers/Connection";
+import { type TransportLocator } from "../livekit/auth";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();
@@ -211,6 +212,11 @@ export function mockEmitter<T>(): EmitterMock<T> {
 export const exampleTransport: UnstableLivekitTransport = {
   type: "livekit",
   livekit_service_url: "https://lk.example.org",
+};
+
+export const exampleTransportLocator: TransportLocator = {
+  transport: exampleTransport,
+  serverName: "example.org",
 };
 
 export function mockRtcMembership(

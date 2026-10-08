@@ -305,7 +305,7 @@ describe("LocalMembership", () => {
         leave: vi.fn(),
       },
       connectionManager: mockConnectionManager,
-      localTransport$: constant(mockTransport),
+      localTransport$: constant(mockTransportLocator),
     });
     const expextedLog =
       "'not connected yet' while updating the call intent (this is expected on startup)";
@@ -321,7 +321,12 @@ describe("LocalMembership", () => {
     type: "livekit",
     url: "https://sfu.example.org",
     livekit_service_url: "https://jwt.example.org",
-  } as UnstableLivekitTransport;
+  };
+
+  const mockTransportLocator: livekitAuth.TransportLocator = {
+    transport: mockTransport,
+    serverName: "example.org",
+  };
 
   const connectionTransportAConnected = {
     livekitRoom: mockLivekitRoom({
@@ -375,7 +380,7 @@ describe("LocalMembership", () => {
           ),
         },
         joinMatrixRTC,
-        localTransport$: constant(mockTransport),
+        localTransport$: constant(mockTransportLocator),
         delayId$,
       });
 
@@ -452,7 +457,7 @@ describe("LocalMembership", () => {
       connectionManager: {
         connectionManagerData$: constant(new Epoch(connectionManagerData)),
       },
-      localTransport$: constant(mockTransport),
+      localTransport$: constant(mockTransportLocator),
     });
     await flushPromises();
     expect(publisherFactory).toHaveBeenCalledOnce();
@@ -474,7 +479,7 @@ describe("LocalMembership", () => {
   it("tracks livekit state correctly", async () => {
     const scope = new ObservableScope();
     const connectionManagerData = new ConnectionManagerData();
-    const localTransport$ = new Subject<UnstableLivekitTransport>();
+    const localTransport$ = new Subject<livekitAuth.TransportLocator>();
 
     const connectionManagerData$ = new BehaviorSubject(
       new Epoch(connectionManagerData),
@@ -522,7 +527,7 @@ describe("LocalMembership", () => {
     expect(localMembership.localMemberState$.value).toStrictEqual(
       TransportState.Waiting,
     );
-    localTransport$.next(mockTransport);
+    localTransport$.next(mockTransportLocator);
     await flushPromises();
     expect(localMembership.localMemberState$.value).toStrictEqual({
       matrix: RTCMemberStatus.Connected,
@@ -547,7 +552,7 @@ describe("LocalMembership", () => {
     });
 
     (
-      connectionManagerData2.getConnectionForTransport(mockTransport)!
+      connectionManagerData2.getConnectionForTransport(mockTransportLocator)!
         .state$ as BehaviorSubject<ConnectionState>
     ).next(ConnectionState.LivekitConnected);
     expect(localMembership.localMemberState$.value).toStrictEqual({
@@ -650,7 +655,7 @@ describe("LocalMembership", () => {
         connectionManager: {
           connectionManagerData$: constant(new Epoch(connectionManagerData)),
         },
-        localTransport$: constant(mockTransport),
+        localTransport$: constant(mockTransportLocator),
       });
 
       await flushPromises();
@@ -687,7 +692,7 @@ describe("LocalMembership", () => {
         connectionManager: {
           connectionManagerData$: constant(new Epoch(connectionManagerData)),
         },
-        localTransport$: constant(mockTransport),
+        localTransport$: constant(mockTransportLocator),
       });
 
       await flushPromises();
@@ -735,7 +740,7 @@ describe("LocalMembership", () => {
         connectionManager: {
           connectionManagerData$: constant(new Epoch(connectionManagerData)),
         },
-        localTransport$: constant(mockTransport),
+        localTransport$: constant(mockTransportLocator),
       });
 
       await flushPromises();
@@ -776,7 +781,7 @@ describe("LocalMembership", () => {
         connectionManager: {
           connectionManagerData$: constant(new Epoch(connectionManagerData)),
         },
-        localTransport$: constant(mockTransport),
+        localTransport$: constant(mockTransportLocator),
       });
 
       await flushPromises();
@@ -842,7 +847,7 @@ describe("LocalMembership", () => {
         connectionManager: {
           connectionManagerData$: constant(new Epoch(connectionManagerData)),
         },
-        localTransport$: constant(mockTransport),
+        localTransport$: constant(mockTransportLocator),
       });
       return { scope, localMembership };
     };

@@ -18,12 +18,7 @@ import {
   type RemoteMatrixLivekitMember,
   createRemoteMatrixLivekitMembers$,
 } from "./MatrixLivekitMembers.ts";
-import {
-  Epoch,
-  mapEpoch,
-  ObservableScope,
-  trackEpoch,
-} from "../../ObservableScope.ts";
+import { Epoch, ObservableScope, trackEpoch } from "../../ObservableScope.ts";
 import { ConnectionManagerData } from "./ConnectionManager.ts";
 import {
   flushPromises,
@@ -33,6 +28,8 @@ import {
 import { type Connection } from "./Connection.ts";
 import { constant } from "../../Behavior.ts";
 import { localRtcMember } from "../../../utils/test-fixtures.ts";
+import { type TransportLocator } from "../../../livekit/auth";
+import { membershipsAndTransports$ } from "../../SessionBehaviors.ts";
 
 let testScope: ObservableScope;
 
@@ -117,21 +114,15 @@ test("should signal participant not yet connected to livekit", async () => {
 function createEpochedMemberships$(m$: Observable<CallMembership[]>): {
   memberships$: Observable<Epoch<CallMembership[]>>;
   membershipsWithTransport$: Observable<
-    Epoch<{ membership: CallMembership; transport?: UnstableLivekitTransport }[]>
+    Epoch<
+      { membership: CallMembership; transport: TransportLocator | undefined }[]
+    >
   >;
 } {
-  const memberships$ = m$.pipe(trackEpoch());
-  const membershipsWithTransport$ = memberships$.pipe(
-    mapEpoch((members) => {
-      return members.map((m) => {
-        const tr = m.getTransport();
-        return {
-          membership: m,
-          transport:
-            tr?.type === "livekit" ? (tr as UnstableLivekitTransport) : undefined,
-        };
-      });
-    }),
+  const memberships$ = testScope.behavior(m$.pipe(trackEpoch()));
+  const { membershipsWithTransport$ } = membershipsAndTransports$(
+    testScope,
+    memberships$,
   );
   return {
     memberships$,
