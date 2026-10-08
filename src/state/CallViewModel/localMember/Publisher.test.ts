@@ -30,7 +30,7 @@ import {
   mockMediaDevices,
 } from "../../../utils/test";
 import { Publisher } from "./Publisher";
-import { type ProcessorState } from "../../../livekit/TrackProcessorContext";
+import { type BackgroundEffectsState } from "../../../livekit/BackgroundEffectsContext";
 import { type Connection } from "../remoteMembers/Connection";
 import { type MuteStates } from "../../MuteStates";
 
@@ -409,13 +409,13 @@ describe("Bug fix", () => {
 
 describe("turning the camera on with an effect chosen", () => {
   const processor = {} as ProcessorWrapper<BackgroundOptions>;
-  let state$: BehaviorSubject<ProcessorState>;
+  let state$: BehaviorSubject<BackgroundEffectsState>;
   let publisher: Publisher;
   /** The processor the SDK would give each camera track it made. */
   let madeWith: unknown[];
 
   beforeEach(() => {
-    state$ = new BehaviorSubject<ProcessorState>({
+    state$ = new BehaviorSubject<BackgroundEffectsState>({
       supported: true,
       processor: undefined,
     });

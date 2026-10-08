@@ -16,12 +16,12 @@ import {
 
 import {
   applyProcessor,
-  ProcessorProvider,
-  type ProcessorState,
-  trackProcessorSync,
-  useTrackProcessor,
-  useTrackProcessorSync,
-} from "./TrackProcessorContext";
+  BackgroundEffectsProvider,
+  type BackgroundEffectsState,
+  syncBackgroundEffects,
+  useBackgroundEffects,
+  useSyncBackgroundEffects,
+} from "./BackgroundEffectsContext";
 import { backgroundBlur } from "../settings/settings";
 import { constant } from "../state/Behavior";
 import { flushPromises, testScope } from "../utils/test";
@@ -112,10 +112,10 @@ describe("applyProcessor", () => {
   });
 });
 
-describe("trackProcessorSync", () => {
+describe("syncBackgroundEffects", () => {
   it("applies the processor to the current track", () => {
     const track = mockTrack("live");
-    trackProcessorSync(
+    syncBackgroundEffects(
       testScope(),
       constant(track),
       constant({ supported: true, processor }),
@@ -124,7 +124,7 @@ describe("trackProcessorSync", () => {
   });
 });
 
-describe("ProcessorProvider", () => {
+describe("BackgroundEffectsProvider", () => {
   /** A camera track that holds whatever processor it is given. */
   function cameraTrack(): LocalVideoTrack {
     let current: unknown;
@@ -142,17 +142,17 @@ describe("ProcessorProvider", () => {
     } as unknown as LocalVideoTrack;
   }
 
-  let seen: ProcessorState[];
+  let seen: BackgroundEffectsState[];
   const Surface: FC<{ track: LocalVideoTrack | null }> = ({ track }) => {
-    seen.push(useTrackProcessor());
-    useTrackProcessorSync(track);
+    seen.push(useBackgroundEffects());
+    useSyncBackgroundEffects(track);
     return null;
   };
   // One component for every render, so a rerender updates the tree rather than
   // mounting a second provider with a pipeline of its own.
   const Surfaces: FC<{ tracks: (LocalVideoTrack | null)[] }> = ({ tracks }) =>
     createElement(
-      ProcessorProvider,
+      BackgroundEffectsProvider,
       null,
       createElement(
         "div",
@@ -169,7 +169,7 @@ describe("ProcessorProvider", () => {
       await flushPromises();
     });
   };
-  const latest = (): ProcessorState => seen[seen.length - 1];
+  const latest = (): BackgroundEffectsState => seen[seen.length - 1];
 
   beforeEach(() => {
     seen = [];

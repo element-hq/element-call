@@ -79,7 +79,7 @@ import { useValueBehavior } from "../useValueBehavior.ts";
 import { constant } from "../state/Behavior.ts";
 import { Toast } from "../Toast.tsx";
 import overlayStyles from "../Overlay.module.css";
-import { useTrackProcessorState$ } from "../livekit/TrackProcessorContext.tsx";
+import { useBackgroundEffectsState$ } from "../livekit/BackgroundEffectsContext.tsx";
 import { type Layout } from "../state/layout-types.ts";
 import { ObservableScope } from "../state/ObservableScope.ts";
 import { CallFooter, type FooterSnapshot } from "../components/CallFooter.tsx";
@@ -120,7 +120,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
   const urlParams = useUrlParams();
   const hostBridge = useHostBridge();
   const mediaDevices = useMediaDevices();
-  const trackProcessorState$ = useTrackProcessorState$();
+  const backgroundEffectsState$ = useBackgroundEffectsState$();
   // The element we have to draw the call in: the page, or the container a host
   // gave us. Its size, not the window's, decides how the call is laid out.
   const rootElement = useRootElement();
@@ -150,7 +150,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       },
       reactionsReader.raisedHands$,
       reactionsReader.reactions$,
-      trackProcessorState$,
+      backgroundEffectsState$,
     );
     // TODO move this somewhere else once we use the callViewModel in the lobby as well!
     vm.join();
@@ -170,7 +170,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     urlParams,
     hostBridge,
     mediaDevices,
-    trackProcessorState$,
+    backgroundEffectsState$,
     props.client,
     rootElement,
   ]);
@@ -201,7 +201,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     props.onLeft,
     urlParams,
     mediaDevices,
-    trackProcessorState$,
+    backgroundEffectsState$,
     props.client,
     vm,
   ]);

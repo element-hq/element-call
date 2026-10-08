@@ -35,24 +35,24 @@ import { useBehavior } from "../useBehavior";
 // it is a combination of exposing observable and react hooks.
 // preferably we should not make this a context anymore and instead just a vm?
 
-export type ProcessorState = {
+export type BackgroundEffectsState = {
   supported: boolean | undefined;
   processor: undefined | ProcessorWrapper<BackgroundOptions>;
 };
 
-const ProcessorContext = createContext<BackgroundEffects | undefined>(
+const BackgroundEffectsContext = createContext<BackgroundEffects | undefined>(
   undefined,
 );
 
-export function useTrackProcessor(): ProcessorState {
-  return useBehavior(useTrackProcessorState$());
+export function useBackgroundEffects(): BackgroundEffectsState {
+  return useBehavior(useBackgroundEffectsState$());
 }
 
-export function useTrackProcessorState$(): Behavior<ProcessorState> {
-  const effects = use(ProcessorContext);
+export function useBackgroundEffectsState$(): Behavior<BackgroundEffectsState> {
+  const effects = use(BackgroundEffectsContext);
   if (effects === undefined)
     throw new Error(
-      "useTrackProcessor must be used within a ProcessorProvider",
+      "useBackgroundEffects must be used within a BackgroundEffectsProvider",
     );
   return effects.state$;
 }
@@ -91,24 +91,24 @@ export function applyProcessor(
 /**
  * Updates your video tracks to always use the given processor.
  */
-export const trackProcessorSync = (
+export const syncBackgroundEffects = (
   scope: ObservableScope,
   videoTrack$: Behavior<LocalVideoTrack | null>,
-  processor$: Behavior<ProcessorState>,
+  backgroundEffectsState$: Behavior<BackgroundEffectsState>,
 ): void => {
-  combineLatest([videoTrack$, processor$])
+  combineLatest([videoTrack$, backgroundEffectsState$])
     .pipe(scope.bind())
-    .subscribe(([videoTrack, processorState]) => {
-      if (!processorState) return;
+    .subscribe(([videoTrack, backgroundEffectsState]) => {
+      if (!backgroundEffectsState) return;
       if (!videoTrack) return;
-      applyProcessor(videoTrack, processorState.processor);
+      applyProcessor(videoTrack, backgroundEffectsState.processor);
     });
 };
 
-export const useTrackProcessorSync = (
+export const useSyncBackgroundEffects = (
   videoTrack: LocalVideoTrack | null,
 ): void => {
-  const { processor } = useTrackProcessor();
+  const { processor } = useBackgroundEffects();
   useEffect(() => {
     if (!videoTrack) return;
     applyProcessor(videoTrack, processor);
@@ -119,7 +119,7 @@ interface Props {
   children: JSX.Element;
 }
 
-export const ProcessorProvider: FC<Props> = ({ children }) => {
+export const BackgroundEffectsProvider: FC<Props> = ({ children }) => {
   const [effects, setEffects] = useState<BackgroundEffects | null>(null);
   useEffect(() => {
     const scope = new ObservableScope();
@@ -137,5 +137,9 @@ export const ProcessorProvider: FC<Props> = ({ children }) => {
   }, []);
 
   if (effects === null) return null;
-  return <ProcessorContext value={effects}>{children}</ProcessorContext>;
+  return (
+    <BackgroundEffectsContext value={effects}>
+      {children}
+    </BackgroundEffectsContext>
+  );
 };

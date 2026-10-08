@@ -26,9 +26,9 @@ import type { Behavior } from "../../Behavior.ts";
 import type { MediaDevices, SelectedDevice } from "../../MediaDevices.ts";
 import type { MuteStates } from "../../MuteStates.ts";
 import {
-  type ProcessorState,
-  trackProcessorSync,
-} from "../../../livekit/TrackProcessorContext.tsx";
+  type BackgroundEffectsState,
+  syncBackgroundEffects,
+} from "../../../livekit/BackgroundEffectsContext.tsx";
 
 import { observeTrackReference$ } from "../../observeTrackReference";
 import { type Connection } from "../remoteMembers/Connection.ts";
@@ -54,7 +54,7 @@ export class Publisher {
    * @param connection - The connection to use for publishing.
    * @param devices - The media devices to use for audio and video input.
    * @param muteStates - The mute states for audio and video.
-   * @param trackerProcessorState$ - The processor state for the video track processor (e.g. background blur).
+   * @param backgroundEffectsState$ - The processor state for the video track processor (e.g. background blur).
    * @param logger - The logger to use for logging :D.
    * @param controlledAudioDevices - Whether the app hosting Element Call
    *   controls the audio output devices, rather than the browser.
@@ -63,7 +63,7 @@ export class Publisher {
     private connection: Pick<Connection, "livekitRoom" | "state$">, //setE2EEEnabled,
     devices: MediaDevices,
     private readonly muteStates: MuteStates,
-    private readonly trackerProcessorState$: Behavior<ProcessorState>,
+    private readonly backgroundEffectsState$: Behavior<BackgroundEffectsState>,
     private logger: Logger,
     controlledAudioDevices: boolean,
   ) {
@@ -73,8 +73,11 @@ export class Publisher {
       this.logger.error("Failed to set E2EE enabled on room", e);
     });
 
-    // Setup track processor syncing (blur)
-    this.observeTrackProcessors(this.scope, room, this.trackerProcessorState$);
+    this.observeBackgroundEffects(
+      this.scope,
+      room,
+      this.backgroundEffectsState$,
+    );
     // Observe media device changes and update LiveKit active devices accordingly
     this.observeMediaDevices(this.scope, devices, controlledAudioDevices);
 
@@ -412,7 +415,7 @@ export class Publisher {
     this.muteStates.video.setHandler(async (enable) => {
       try {
         this.logger.debug(`handler: Setting LiveKit camera enabled: ${enable}`);
-        const { processor } = this.trackerProcessorState$.value;
+        const { processor } = this.backgroundEffectsState$.value;
         if (enable && processor) await this.dropCameraWithoutEffect(lkRoom);
         await lkRoom.localParticipant.setCameraEnabled(enable);
         // Unmute will restart the track if it was paused upstream,
@@ -441,10 +444,10 @@ export class Publisher {
       await lkRoom.localParticipant.unpublishTrack(track);
   }
 
-  private observeTrackProcessors(
+  private observeBackgroundEffects(
     scope: ObservableScope,
     room: LivekitRoom,
-    trackerProcessorState$: Behavior<ProcessorState>,
+    backgroundEffectsState$: Behavior<BackgroundEffectsState>,
   ): void {
     const track$ = scope.behavior(
       observeTrackReference$(room.localParticipant, Track.Source.Camera).pipe(
@@ -455,11 +458,11 @@ export class Publisher {
       ),
       null,
     );
-    trackProcessorSync(scope, track$, trackerProcessorState$);
+    syncBackgroundEffects(scope, track$, backgroundEffectsState$);
     // Every camera track the SDK makes, on joining or on turning the camera
     // on, then starts with the pipeline on. One attached after publishing lets
     // the room through while it is built.
-    trackerProcessorState$.pipe(scope.bind()).subscribe(({ processor }) => {
+    backgroundEffectsState$.pipe(scope.bind()).subscribe(({ processor }) => {
       room.options.videoCaptureDefaults = {
         ...room.options.videoCaptureDefaults,
         processor,

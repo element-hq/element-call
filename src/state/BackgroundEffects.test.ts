@@ -13,7 +13,7 @@ import {
   BackgroundEffects,
   type BackgroundEffectsOptions,
 } from "./BackgroundEffects";
-import { type ProcessorState } from "../livekit/TrackProcessorContext";
+import { type BackgroundEffectsState } from "../livekit/BackgroundEffectsContext";
 import { flushPromises, testScope, withTestScheduler } from "../utils/test";
 
 /** A pipeline that records what it is switched to. */
@@ -45,7 +45,7 @@ function fakePipeline(): {
 }
 
 /** One letter per state: idle, attached. */
-function letter(state: ProcessorState): string {
+function letter(state: BackgroundEffectsState): string {
   return state.processor === undefined ? "i" : "a";
 }
 

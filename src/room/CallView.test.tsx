@@ -61,7 +61,7 @@ import {
 } from "../HostBridge";
 import { type JoinCallData } from "../widget";
 import { MatrixRTCTransportMissingError } from "../utils/errors";
-import { ProcessorProvider } from "../livekit/TrackProcessorContext";
+import { BackgroundEffectsProvider } from "../livekit/BackgroundEffectsContext";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { constant } from "../state/Behavior";
 
@@ -193,7 +193,7 @@ function createCallView(
       <HostBridgeProvider value={hostBridge}>
         <TooltipProvider>
           <MediaDevicesContext value={mockMediaDevices({})}>
-            <ProcessorProvider>
+            <BackgroundEffectsProvider>
               {options.withErrorBoundary ? (
                 <GroupCallErrorBoundary recoveryActionHandler={vi.fn()}>
                   {callView}
@@ -201,7 +201,7 @@ function createCallView(
               ) : (
                 callView
               )}
-            </ProcessorProvider>
+            </BackgroundEffectsProvider>
           </MediaDevicesContext>
         </TooltipProvider>
       </HostBridgeProvider>
