@@ -15,7 +15,15 @@ import {
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type MatrixEvent } from "matrix-js-sdk/lib/models/event";
 import { RoomStateEvent } from "matrix-js-sdk/lib/models/room-state";
-import { BehaviorSubject, filter, fromEvent, map, of, switchMap } from "rxjs";
+import {
+  BehaviorSubject,
+  filter,
+  fromEvent,
+  map,
+  of,
+  startWith,
+  switchMap,
+} from "rxjs";
 
 import { ObservableScope } from "./reactive/ObservableScope";
 import { generateItems } from "./reactive/observable";
@@ -108,12 +116,14 @@ export function createRTCSlot(
     ),
   );
 
+  // The status is undefined while the room has no slot event, and an explicit
+  // undefined is not an initial value to `behavior`, so it goes in the stream
   const status$ = scope.behavior(
     fromEvent(room, RoomStateEvent.Events, (event: MatrixEvent) => event).pipe(
       filter((event) => event.getType() === EventType.RTCSlot),
       map(() => slotStatus(jsSdkSession)),
+      startWith(slotStatus(jsSdkSession)),
     ),
-    slotStatus(jsSdkSession),
   );
 
   const slot: RTCSlot = {

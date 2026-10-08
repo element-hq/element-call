@@ -273,6 +273,12 @@ export class MockRTCSession extends TypedEventEmitter<
     return this.joined;
   }
 
+  /** The slot event's content; undefined while the room has none. */
+  public rtcSlot: ReturnType<MatrixRTCSession["getRtcSlot"]> = undefined;
+  public getRtcSlot(): ReturnType<MatrixRTCSession["getRtcSlot"]> {
+    return this.rtcSlot;
+  }
+
   public isKeyRotationSuppressed = false;
 
   public withMemberships(
