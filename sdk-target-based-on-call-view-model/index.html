@@ -35,7 +35,7 @@
         div.innerHTML = "<h3>Members:</h3>";
 
         // Create member list
-        const members = memberObjects.map((member) => member.membership.sender);
+        const members = memberObjects.map((member) => member.userId);
         console.info("members changed", members);
         for (const m of members) {
           console.info("member", m);
