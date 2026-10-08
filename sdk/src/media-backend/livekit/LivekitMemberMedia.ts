@@ -54,8 +54,8 @@ export function createLivekitMemberMedia(
     tracks$: memberTracks$(
       scope,
       source$,
-      (trackScope, participant, publication, room) =>
-        createLivekitMediaTrack(trackScope, participant, publication, room),
+      (trackScope, participant, publication) =>
+        createLivekitMediaTrack(trackScope, participant, publication),
     ),
     encryptionError$: encryptionErrors$(source$, encryptionSystem),
   };

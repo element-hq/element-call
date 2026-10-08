@@ -33,21 +33,20 @@ describe("createLivekitMediaTrack", () => {
   afterEach(() => scope.end());
 
   it("describes the publication", () => {
-    const { participant, publication, room } = fakes();
+    const { participant, publication } = fakes();
     const track = createLivekitMediaTrack(
       scope,
       participant,
       publication as unknown as TrackPublication,
-      room,
     );
     expect(track.kind).toBe("video");
     expect(track.source).toBe("camera");
     expect(track.id).toBe("TR_1");
-    expect(track.encrypted$.value).toBe(true);
+    expect(track.encrypted).toBe(true);
   });
 
   it("attaches elements to the track, even one that arrives later", () => {
-    const { participant, publication, room, emitter } = fakes({
+    const { participant, publication, emitter } = fakes({
       track: undefined,
     });
     const element = document.createElement("video");
@@ -55,7 +54,6 @@ describe("createLivekitMediaTrack", () => {
       scope,
       participant,
       publication as unknown as TrackPublication,
-      room,
     );
     track.attach(element);
     track.attach(element);
@@ -71,14 +69,13 @@ describe("createLivekitMediaTrack", () => {
   });
 
   it("detaches everything when its scope ends", () => {
-    const { participant, publication, room } = fakes();
+    const { participant, publication } = fakes();
     const element = document.createElement("video");
     const scope = new ObservableScope();
     const track = createLivekitMediaTrack(
       scope,
       participant,
       publication as unknown as TrackPublication,
-      room,
     );
     track.attach(element);
     scope.end();
@@ -86,12 +83,11 @@ describe("createLivekitMediaTrack", () => {
   });
 
   it("follows the mute state", () => {
-    const { participant, publication, room, emitter } = fakes();
+    const { participant, publication, emitter } = fakes();
     const track = createLivekitMediaTrack(
       scope,
       participant,
       publication as unknown as TrackPublication,
-      room,
     );
     expect(track.muted$.value).toBe(false);
     publication.isMuted = true;
@@ -100,28 +96,26 @@ describe("createLivekitMediaTrack", () => {
   });
 
   it("scales a remote member's volume on the participant", () => {
-    const { participant, publication, room } = fakes({
+    const { participant, publication } = fakes({
       kind: Track.Kind.Audio,
     });
     const track = createLivekitMediaTrack(
       scope,
       participant,
       publication as unknown as TrackPublication,
-      room,
     ) as AudioMediaTrack;
     track.setVolume(0.5);
     expect(publication.track!.setVolume).toHaveBeenCalledWith(0.5);
   });
 
   it("is active while the member speaks and the track is not muted", () => {
-    const { participant, publication, room, emitter } = fakes({
+    const { participant, publication, emitter } = fakes({
       kind: Track.Kind.Audio,
     });
     const track = createLivekitMediaTrack(
       scope,
       participant,
       publication as unknown as TrackPublication,
-      room,
     ) as AudioMediaTrack;
     expect(track.isActive$.value).toBe(false);
     participant.isSpeaking = true;

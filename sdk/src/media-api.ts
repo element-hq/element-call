@@ -11,11 +11,6 @@ Please see LICENSE in the repository root for full details.
  * `api.ts`.
  */
 
-import {
-  type Track,
-  type TrackProcessor,
-  type VideoCodec,
-} from "livekit-client";
 import { type Observable } from "rxjs";
 
 import { type Behavior } from "./reactive/Behavior";
@@ -26,11 +21,33 @@ export interface AudioCaptureSettings {
   autoGainControl?: boolean;
 }
 
+export type VideoCodec = "vp8" | "h264" | "vp9" | "av1" | "h265";
+
 export interface VideoCaptureSettings {
   resolution?: { width: number; height: number; frameRate?: number };
   maxBitrate?: number;
   maxFramerate?: number;
   codec?: VideoCodec;
+}
+
+/** What a processor is given to work on: the captured track and, where a view is attached, its element. */
+export interface VideoProcessorInit {
+  track: MediaStreamTrack;
+  element?: HTMLMediaElement;
+}
+
+/**
+ * Transforms a camera track before it is published: background blur and the
+ * like. `processedTrack` is what gets published once `init` has resolved;
+ * `restart` is called with the new track where the camera changes. The shape
+ * is that of a LiveKit track processor, so one of those can be passed as is.
+ */
+export interface VideoProcessor {
+  name: string;
+  processedTrack?: MediaStreamTrack;
+  init(opts: VideoProcessorInit): Promise<void>;
+  restart(opts: VideoProcessorInit): Promise<void>;
+  destroy(): Promise<void>;
 }
 
 /**
@@ -43,13 +60,8 @@ export type PublishRequest =
   | {
       source: "camera";
       deviceId?: string;
-      /** Background blur and the like. */
-      // REVIEW: this is ugly makes us need to import lk
-      // We need an interface:
-      //  - super high level: blur + background img
-      //  - lower level: rtc stream insertable stream (copy lk TrackProcessor concept)
-      //  - florian: should be independent of webCodec or WebRtc
-      processor?: TrackProcessor<Track.Kind.Video>;
+      /** Background blur and the like, applied before the first frame is published. */
+      processor?: VideoProcessor;
       capture?: VideoCaptureSettings;
     }
   | {
@@ -79,9 +91,11 @@ export interface MediaTrack {
   /** Stable for the life of the track. */
   id: string;
   muted$: Behavior<boolean>;
-  /** False when the SFU reports the track as unencrypted. */
-  // REVIEW: does it need to be a behavior
-  encrypted$: Behavior<boolean>;
+  /**
+   * False when the SFU reports the track as unencrypted. Fixed for the life
+   * of the track: a publisher that changes its encryption publishes anew.
+   */
+  encrypted: boolean;
   /** Polled while subscribed. */
   // REVIEW: we want the perf gain of not having it always run.
   //
@@ -143,9 +157,7 @@ export interface LocalVideoMediaTrack extends VideoMediaTrack, LocalMediaTrack {
    */
   switchFacingMode(): Promise<string | undefined>;
   /** Background blur and the like; undefined removes the processor. */
-  setProcessor(
-    processor: TrackProcessor<Track.Kind.Video> | undefined,
-  ): Promise<void>;
+  setProcessor(processor: VideoProcessor | undefined): Promise<void>;
 }
 
 export type EncryptionError = "MissingKey" | "InvalidKey";

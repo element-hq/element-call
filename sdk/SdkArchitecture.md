@@ -30,7 +30,7 @@ therefore `Element Call → sdk`, never the reverse. The migration from today's
 │                                                                              │
 │   per member    RTCMember   { id userId deviceId membership$ displayName$    │
 │                               avatarUrl$ transport$ tracks$ encryptionError$ }│
-│   per track     MediaTrack  { source kind muted$ encrypted$ stats$ attach() }│
+│   per track     MediaTrack  { source kind muted$ encrypted stats$ attach() } │
 │                                                                              │
 │  ┌───────────────────────────┐  MediaBackend   ┌───────────────────────────┐ │
 │  │ session: MatrixRTC        │ media-backend/  │ media backend             │ │
@@ -232,7 +232,7 @@ export type PublishRequest =
       source: "camera";
       deviceId?: string;
       /** Background blur and the like. */
-      processor?: TrackProcessor<Track.Kind.Video>;
+      processor?: VideoProcessor;
       capture?: VideoCaptureSettings;
     }
   | {
@@ -596,8 +596,8 @@ export interface MediaTrack {
   /** Stable for the life of the track. */
   id: string;
   muted$: Behavior<boolean>;
-  /** False when the SFU reports the track as unencrypted. */
-  encrypted$: Behavior<boolean>;
+  /** False when the SFU reports the track as unencrypted. Fixed for the life of the track. */
+  encrypted: boolean;
   /**
    * Inbound statistics for a remote track, outbound for a local one. Polled
    * once a second, but only while someone is subscribed, so a statistics
@@ -651,9 +651,7 @@ export interface LocalVideoMediaTrack extends VideoMediaTrack, LocalMediaTrack {
   /** Restarts the camera facing the other way; resolves with the device now in use. */
   switchFacingMode(): Promise<string | undefined>;
   /** Background blur and the like; undefined removes the processor. */
-  setProcessor(
-    processor: TrackProcessor<Track.Kind.Video> | undefined,
-  ): Promise<void>;
+  setProcessor(processor: VideoProcessor | undefined): Promise<void>;
 }
 
 export type EncryptionError = "MissingKey" | "InvalidKey";

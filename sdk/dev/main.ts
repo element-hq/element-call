@@ -263,7 +263,7 @@ function render(
   );
   label(
     "encrypted",
-    of$((t) => t.encrypted$),
+    of$((t) => of(t.encrypted)),
   );
   label(
     "active",

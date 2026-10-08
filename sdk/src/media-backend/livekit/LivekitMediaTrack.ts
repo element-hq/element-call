@@ -8,7 +8,6 @@ Please see LICENSE in the repository root for full details.
 import {
   observeParticipantEvents,
   observeParticipantMedia,
-  roomEventSelector,
 } from "@livekit/components-core";
 import {
   facingModeFromLocalTrack,
@@ -20,7 +19,6 @@ import {
   RemoteAudioTrack,
   RemoteTrack,
   type Room as LivekitRoom,
-  RoomEvent,
   Track,
   TrackEvent,
   type TrackPublication,
@@ -81,7 +79,6 @@ export function createLivekitMediaTrack(
   scope: ObservableScope,
   participant: Participant,
   publication: TrackPublication,
-  room: LivekitRoom,
 ): AudioMediaTrack | VideoMediaTrack {
   const mediaChanged$ = observeParticipantMedia(participant);
   const track$ = publicationTrack$(scope, participant, publication);
@@ -118,13 +115,7 @@ export function createLivekitMediaTrack(
     kind: publication.kind === Track.Kind.Audio ? "audio" : "video",
     id: publication.trackSid,
     muted$,
-    encrypted$: scope.behavior(
-      merge(
-        mediaChanged$,
-        roomEventSelector(room, RoomEvent.ParticipantEncryptionStatusChanged),
-      ).pipe(map(() => publication.isEncrypted)),
-      publication.isEncrypted,
-    ),
+    encrypted: publication.isEncrypted,
     stats$: new LazyBehavior<MediaStreamStats>(
       refreshStats$.pipe(
         switchMap(async () => rtpStreamStats(publication, participant.isLocal)),
@@ -189,7 +180,7 @@ export function createLocalLivekitMediaTrack(
   room: LivekitRoom,
   setEnabled: (source: MediaSource, enabled: boolean) => Promise<boolean>,
 ): LocalAudioMediaTrack | LocalVideoMediaTrack {
-  const base = createLivekitMediaTrack(scope, participant, publication, room);
+  const base = createLivekitMediaTrack(scope, participant, publication);
   const local = {
     setEnabled: async (enabled: boolean) => setEnabled(base.source, enabled),
     setDevice: async (deviceId: string): Promise<void> => {
