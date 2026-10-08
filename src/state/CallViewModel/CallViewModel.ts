@@ -1164,6 +1164,16 @@ export function createCallViewModel$(
    * The media to be used to produce a layout.
    */
   const layoutMedia$ = scope.behavior<LayoutMedia>(
+    // We deliberately don't use combineLatest here. Several of the inputs
+    // below derive from the same source. So one upstream change cascades
+    // through them one at a time. combineLatest would see each step of the
+    // cascade and emit layouts built from inputs that never coexisted.
+    // Instead, we treat the emissions as a mere "something changed" signal
+    // and read every input's current value. The derived behaviors were
+    // subscribed before this one and a BehaviorSubject updates its value
+    // before notifying. So by the time the first signal arrives every value
+    // is already consistent. The duplicate signals from the rest of the
+    // cascade are dropped by distinctUntilChanged.
     merge(
       windowMode$,
       layoutSwitchVm.layout$,
