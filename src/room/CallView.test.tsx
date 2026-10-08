@@ -50,6 +50,7 @@ import {
   mockMediaDevices,
   mockRtcMembership,
   MockRTCSession,
+  testScope,
 } from "../utils/test";
 import { CallView } from "./CallView";
 import { GroupCallErrorBoundary } from "./GroupCallErrorBoundary";
@@ -61,7 +62,10 @@ import {
 } from "../HostBridge";
 import { type JoinCallData } from "../widget";
 import { MatrixRTCTransportMissingError } from "../utils/errors";
-import { BackgroundEffectsProvider } from "../livekit/BackgroundEffectsContext";
+import {
+  BackgroundEffectsProvider,
+  createAppBackgroundEffects,
+} from "../livekit/BackgroundEffectsContext";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { constant } from "../state/Behavior";
 
@@ -193,7 +197,9 @@ function createCallView(
       <HostBridgeProvider value={hostBridge}>
         <TooltipProvider>
           <MediaDevicesContext value={mockMediaDevices({})}>
-            <BackgroundEffectsProvider>
+            <BackgroundEffectsProvider
+              effects={createAppBackgroundEffects(testScope())}
+            >
               {options.withErrorBoundary ? (
                 <GroupCallErrorBoundary recoveryActionHandler={vi.fn()}>
                   {callView}

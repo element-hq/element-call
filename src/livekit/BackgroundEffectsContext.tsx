@@ -10,14 +10,7 @@ import {
   type ProcessorWrapper,
   type BackgroundOptions,
 } from "@livekit/track-processors";
-import {
-  createContext,
-  type FC,
-  type JSX,
-  use,
-  useEffect,
-  useState,
-} from "react";
+import { createContext, type FC, type JSX, use, useEffect } from "react";
 import { type LocalVideoTrack } from "livekit-client";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { combineLatest } from "rxjs";
@@ -27,7 +20,7 @@ import { BackgroundEffectTransformer } from "./BackgroundEffectTransformer";
 import { OneStepPipeline } from "./OneStepPipeline";
 import { supportsBackgroundProcessors } from "./backgroundProcessing";
 import { type Behavior } from "../state/Behavior";
-import { ObservableScope } from "../state/ObservableScope";
+import { type ObservableScope } from "../state/ObservableScope";
 import {
   type BackgroundEffects,
   createBackgroundEffects,
@@ -118,31 +111,27 @@ export const useSyncBackgroundEffects = (
   }, [processor, videoTrack]);
 };
 
+/** The app's one pipeline, shared by every camera track it opens. */
+export function createAppBackgroundEffects(
+  scope: ObservableScope,
+): BackgroundEffects {
+  return createBackgroundEffects(scope, {
+    supported: supportsBackgroundProcessors(),
+    blur$: backgroundBlurSettings.value$,
+    pipeline: new OneStepPipeline(
+      new BackgroundEffectTransformer({ backgroundDisabled: true }),
+      "background-effect",
+    ),
+  });
+}
+
 interface Props {
+  effects: BackgroundEffects;
   children: JSX.Element;
 }
 
-export const BackgroundEffectsProvider: FC<Props> = ({ children }) => {
-  const [effects, setEffects] = useState<BackgroundEffects | null>(null);
-  useEffect(() => {
-    const scope = new ObservableScope();
-    setEffects(
-      createBackgroundEffects(scope, {
-        supported: supportsBackgroundProcessors(),
-        blur$: backgroundBlurSettings.value$,
-        pipeline: new OneStepPipeline(
-          new BackgroundEffectTransformer({ backgroundDisabled: true }),
-          "background-effect",
-        ),
-      }),
-    );
-    return (): void => scope.end();
-  }, []);
-
-  if (effects === null) return null;
-  return (
-    <BackgroundEffectsContext value={effects}>
-      {children}
-    </BackgroundEffectsContext>
-  );
-};
+export const BackgroundEffectsProvider: FC<Props> = ({ effects, children }) => (
+  <BackgroundEffectsContext value={effects}>
+    {children}
+  </BackgroundEffectsContext>
+);

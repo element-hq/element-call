@@ -148,7 +148,7 @@ export const App: FC<Props> = ({ vm, widget }) => {
     loaded && clientReady ? (
       <ClientProvider client={widgetClient}>
         <MediaDevicesContext value={vm.mediaDevices}>
-          <BackgroundEffectsProvider>
+          <BackgroundEffectsProvider effects={vm.backgroundEffects}>
             <Sentry.ErrorBoundary
               fallback={(error) => <ErrorPage error={error} />}
             >
