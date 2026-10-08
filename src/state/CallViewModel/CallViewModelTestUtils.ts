@@ -11,7 +11,7 @@ import {
   constant,
   E2eeType,
   type LocalRTCMember,
-  type MatrixRTCClient,
+  type RTCParticipation,
   type MatrixRTCMode,
   type ObservableScope,
   type RemoteRTCMember,
@@ -33,7 +33,7 @@ import {
   mockConfig,
   mockMatrixRoom,
   mockMatrixRoomMember,
-  mockMatrixRTCClient,
+  mockRTCParticipation,
   mockAudioTrack,
   mockMediaDevices,
   mockVideoTrack,
@@ -112,8 +112,8 @@ export function withCallViewModel(mode: MatrixRTCMode) {
       rtcSession: MockRTCSession,
       subjects: {
         raisedHands$: BehaviorSubject<Record<string, RaisedHandInfo>>;
-        /** The client the view model was built on, with spies for its calls. */
-        rtcClient: MatrixRTCClient;
+        /** The participation the view model was built on, with spies for its calls. */
+        rtcParticipation: RTCParticipation;
       },
       setSyncState: (value: SyncState) => void,
     ) => void,
@@ -239,7 +239,7 @@ export function withCallViewModel(mode: MatrixRTCMode) {
         ),
       ),
     );
-    const rtcClient = mockMatrixRTCClient(scope, {
+    const rtcParticipation = mockRTCParticipation(scope, {
       localMember$,
       remoteMembers$,
       connected$,
@@ -258,7 +258,7 @@ export function withCallViewModel(mode: MatrixRTCMode) {
 
     const vm = createCallViewModel$(
       scope,
-      rtcClient,
+      rtcParticipation,
       room,
       mediaDevices,
       muteStates,
@@ -277,6 +277,6 @@ export function withCallViewModel(mode: MatrixRTCMode) {
     );
     void mode;
 
-    continuation(vm, rtcSession, { raisedHands$, rtcClient }, setSyncState);
+    continuation(vm, rtcSession, { raisedHands$, rtcParticipation }, setSyncState);
   };
 }

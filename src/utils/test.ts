@@ -5,6 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 import {
+  BehaviorSubject,
   combineLatest,
   map,
   NEVER,
@@ -67,7 +68,9 @@ import {
   type LocalAudioMediaTrack,
   type LocalRTCMember,
   type LocalVideoMediaTrack,
-  type MatrixRTCClient,
+  type RTCMember,
+  type RTCParticipation,
+  type RTCSlot,
   type MatrixRTCError,
   type PublishRequest,
   type RemoteRTCMember,
@@ -464,13 +467,14 @@ export function mockRTCMember(
           resolved$: constant(undefined),
         };
   const base = {
-    id: membership.rtcBackendIdentity,
+    rtcBackendIdentity: membership.rtcBackendIdentity,
     userId: membership.userId,
     deviceId: membership.deviceId,
-    membership$: constant(membership),
+    memberId: membership.memberId,
     displayName$: constant(member.rawDisplayName ?? membership.userId),
     avatarUrl$: constant(member.getMxcAvatarUrl()),
     transport$: constant(transport),
+    applicationData$: constant(membership.applicationData),
     encryptionError$,
   };
   if (!local) return { ...base, local: false, tracks$ };
@@ -481,18 +485,10 @@ export function mockRTCMember(
     tracks$: tracks$ as Behavior<
       (LocalAudioMediaTrack | LocalVideoMediaTrack)[] | null
     >,
-    publish: vi.fn(async (request: PublishRequest) =>
-      Promise.resolve(
-        request.source === "microphone"
-          ? mockAudioTrack()
-          : mockVideoTrack({ source: request.source }),
-      ),
-    ),
-    unpublish: vi.fn(async () => Promise.resolve()),
   };
 }
 
-export interface MockClientInputs {
+export interface MockParticipationInputs {
   localMember$?: Behavior<LocalRTCMember | null>;
   remoteMembers$?: Behavior<RemoteRTCMember[]>;
   connected$?: Behavior<boolean>;
@@ -503,8 +499,11 @@ export interface MockClientInputs {
   connectedTransports$?: Behavior<TransportMetadata[]>;
 }
 
-/** A client that does nothing but hold the state a test hands it. */
-export function mockMatrixRTCClient(
+/**
+ * A participation that does nothing but hold the state a test hands it, in a
+ * slot whose members are the same ones without their media.
+ */
+export function mockRTCParticipation(
   scope: ObservableScope,
   {
     localMember$ = constant(null),
@@ -515,10 +514,25 @@ export function mockMatrixRTCClient(
     fatalError$ = constant(null),
     keyRotationSuppressed$ = constant(false),
     connectedTransports$ = constant([]),
-  }: MockClientInputs = {},
-): MatrixRTCClient {
-  return {
-    join: vi.fn(),
+  }: MockParticipationInputs = {},
+): RTCParticipation {
+  const members$ = scope.behavior<RTCMember[]>(
+    combineLatest([localMember$, remoteMembers$], (local, remote) =>
+      local === null ? remote : [local, ...remote],
+    ),
+  );
+  const participation$ = new BehaviorSubject<RTCParticipation | null>(null);
+  const slot: RTCSlot = {
+    roomId: "!room:example.org",
+    application: "m.call",
+    id: "ROOM",
+    status$: constant("open"),
+    members$,
+    participation$,
+    join: vi.fn(() => participation$.value!),
+  };
+  const participation: RTCParticipation = {
+    slot,
     leave: vi.fn(),
     status$: scope.behavior(
       connected$.pipe(map((c) => (c ? "connected" : "connecting"))),
@@ -529,18 +543,30 @@ export function mockMatrixRTCClient(
     fatalError$,
     localMember$,
     remoteMembers$,
-    memberCount$: scope.behavior(
-      combineLatest(
-        [localMember$, remoteMembers$],
-        (local, remote) => remote.length + (local === null ? 0 : 1),
+    publish: vi.fn(async (request: PublishRequest) =>
+      Promise.resolve(
+        request.source === "microphone"
+          ? mockAudioTrack()
+          : mockVideoTrack({ source: request.source }),
       ),
     ),
+    unpublish: vi.fn(async () => Promise.resolve()),
     keyRotationSuppressed$,
     connectedTransports$,
     setAudioOutputDeviceId: vi.fn(async () => Promise.resolve()),
     sendData: vi.fn(async () => Promise.resolve()),
     data$: NEVER,
   };
+  participation$.next(participation);
+  return participation;
+}
+
+/** The slot of a `mockRTCParticipation`, whose `join()` returns that participation. */
+export function mockRTCSlot(
+  scope: ObservableScope,
+  inputs: MockParticipationInputs = {},
+): RTCSlot {
+  return mockRTCParticipation(scope, inputs).slot;
 }
 
 export function mockConfig(

@@ -13,6 +13,7 @@ import {
   type EncryptionSystem,
   type MediaTrack,
   type ObservableScope,
+  type MemberMedia,
   type RTCMember,
   trackBySource$,
   type VideoMediaTrack,
@@ -63,10 +64,7 @@ export interface BaseMemberMediaViewModel extends BaseMediaViewModel {
 }
 
 /** The member whose media this is, as far as the media view models read it. */
-export type MediaMember = Pick<
-  RTCMember,
-  "local" | "tracks$" | "encryptionError$"
->;
+export type MediaMember = Pick<RTCMember, "local"> & MemberMedia;
 
 export interface MemberMediaInputs extends BaseMediaViewModel {
   member: MediaMember;

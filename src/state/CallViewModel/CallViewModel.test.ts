@@ -261,16 +261,18 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
 
   test("the selected audio output is handed to the client as it changes", () => {
     const { mediaDevices, selected$ } = withAudioOutput();
-    withCallViewModel({ mediaDevices }, (_vm, _session, { rtcClient }) => {
+    withCallViewModel({ mediaDevices }, (_vm, _session, { rtcParticipation: participation }) => {
       // Nothing selected yet, so the browser's choice stands
-      expect(rtcClient.setAudioOutputDeviceId).not.toHaveBeenCalled();
+      expect(participation.setAudioOutputDeviceId).not.toHaveBeenCalled();
       selected$.next({ id: "speaker", virtualEarpiece: false });
-      expect(rtcClient.setAudioOutputDeviceId).toHaveBeenCalledWith("speaker");
+      expect(participation.setAudioOutputDeviceId).toHaveBeenCalledWith(
+        "speaker",
+      );
       selected$.next({ id: "headphones", virtualEarpiece: false });
-      expect(rtcClient.setAudioOutputDeviceId).toHaveBeenLastCalledWith(
+      expect(participation.setAudioOutputDeviceId).toHaveBeenLastCalledWith(
         "headphones",
       );
-      expect(rtcClient.setAudioOutputDeviceId).toHaveBeenCalledTimes(2);
+      expect(participation.setAudioOutputDeviceId).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -278,9 +280,9 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
     const { mediaDevices, selected$ } = withAudioOutput();
     withCallViewModel(
       { mediaDevices },
-      (_vm, _session, { rtcClient }) => {
+      (_vm, _session, { rtcParticipation: participation }) => {
         selected$.next({ id: "earpiece", virtualEarpiece: true });
-        expect(rtcClient.setAudioOutputDeviceId).not.toHaveBeenCalled();
+        expect(participation.setAudioOutputDeviceId).not.toHaveBeenCalled();
       },
       { controlledAudioDevices: true },
     );

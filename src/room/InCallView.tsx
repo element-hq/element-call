@@ -69,8 +69,9 @@ import { ReactionsAudioRenderer } from "./ReactionAudioRenderer";
 import { ReactionsOverlay } from "./ReactionsOverlay";
 import { CallEventAudioRenderer } from "./CallEventAudioRenderer";
 import {
-  createMatrixRTCClient,
-  type MatrixRTCClientOptions,
+  createRTCSlot,
+  type RTCParticipationOptions,
+  type RTCSlotOptions,
   constant,
 } from "@element-hq/matrixrtc-sdk";
 import { map } from "rxjs";
@@ -161,22 +162,20 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       urlParams;
 
     const capture = captureSettings();
-    const rtcClient = createMatrixRTCClient(
+    const slot = createRTCSlot(
       scope,
       props.client,
       props.matrixRoom,
-      {
-        ...matrixRTCClientOptions(urlParams, props.e2eeSystem),
-        publish: initialPublishRequests(
-          props.muteStates,
-          mediaDevices,
-          capture,
-        ),
-      },
+      rtcSlotOptions(props.e2eeSystem),
     );
+    const rtcParticipation = slot.join({
+      ...rtcParticipationOptions(urlParams),
+      publish: initialPublishRequests(props.muteStates, mediaDevices, capture),
+    });
+
     const vm = createCallViewModel$(
       scope,
-      rtcClient,
+      rtcParticipation,
       props.matrixRoom,
       mediaDevices,
       props.muteStates,
@@ -199,8 +198,6 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       reactionsReader.raisedHands$,
       reactionsReader.reactions$,
     );
-    // TODO move this somewhere else once we use the callViewModel in the lobby as well!
-    vm.join();
     setVm(vm);
 
     vm.leave$.pipe(scope.bind()).subscribe(props.onLeft);
@@ -793,20 +790,26 @@ export function captureSettings(): CaptureSettings {
  * switches and the devices, so the caller adds that. Shared with the legacy
  * SDK bundle so that a widget built from it behaves like the app.
  */
-export function matrixRTCClientOptions(
-  urlParams: ReturnType<typeof useUrlParams>,
+export function rtcSlotOptions(
   encryptionSystem: EncryptionSystem,
-): Omit<MatrixRTCClientOptions, "publish"> {
-  const config = Config.get();
-  const session = config.matrix_rtc_session;
+): RTCSlotOptions {
   return {
     encryptionSystem,
     // matrix_rtc_mode in config.json overrides the user's Developer Settings
     // choice. We merely sample the current mode here, so the user would need
     // to manually rejoin to switch to a different one.
     matrixRTCMode:
-      (config.matrix_rtc_mode as MatrixRTCMode | undefined) ??
+      (Config.get().matrix_rtc_mode as MatrixRTCMode | undefined) ??
       matrixRTCModeSetting.value$.value,
+  };
+}
+
+export function rtcParticipationOptions(
+  urlParams: ReturnType<typeof useUrlParams>,
+): Omit<RTCParticipationOptions, "publish"> {
+  const config = Config.get();
+  const session = config.matrix_rtc_session;
+  return {
     sendNotificationType: urlParams.sendNotificationType,
     applicationData: urlParams.callIntent
       ? { "m.call.intent": urlParams.callIntent }

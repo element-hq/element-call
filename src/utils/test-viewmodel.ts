@@ -26,7 +26,7 @@ import {
 import {
   mockConfig,
   mockMatrixRoom,
-  mockMatrixRTCClient,
+  mockRTCParticipation,
   mockMediaDevices,
   mockMuteStates,
   MockRTCSession,
@@ -160,7 +160,7 @@ export function getBasicCallViewModelEnvironment(
   const muteStates = mockMuteStates();
   const mediaDevices = mediaDevicesOverride ?? mockMediaDevices({});
   // Every membership is a member whose media has arrived
-  const rtcClient = mockMatrixRTCClient(scope, {
+  const rtcParticipation = mockRTCParticipation(scope, {
     localMember$: scope.behavior(
       rtcMemberships$.pipe(
         map((memberships) =>
@@ -196,7 +196,7 @@ export function getBasicCallViewModelEnvironment(
   });
   const vm = createCallViewModel$(
     scope,
-    rtcClient,
+    rtcParticipation,
     matrixRoom,
     mediaDevices,
     muteStates,

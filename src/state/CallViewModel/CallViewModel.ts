@@ -17,7 +17,7 @@ import {
   type LocalMediaTrack,
   type LocalRTCMember,
   type LocalVideoMediaTrack,
-  type MatrixRTCClient,
+  type RTCParticipation,
   type ObservableScope,
   pauseWhen,
   type PublishRequest,
@@ -157,7 +157,7 @@ export function publishRequest(
       };
 }
 
-/** What the client publishes at the join: the sources whose mute switch is on. */
+/** What the participation publishes at the join: the sources whose mute switch is on. */
 export function initialPublishRequests(
   muteStates: MuteStates,
   mediaDevices: MediaDevices,
@@ -294,12 +294,7 @@ export interface CallViewModel {
   /** Call to initiate hangup. Use in conbination with reconnection state track the async hangup process. */
   hangup: () => void;
 
-  // joining
-  join: () => void;
-
-  /**
-   * calls requestDisconnect. The async leave state can than be observed via connected$
-   */
+  /** Leaves the participation. The async leave can then be observed via connected$. */
   leave: () => void;
   // screen sharing
   /**
@@ -456,12 +451,12 @@ export interface CallViewModel {
  * UI (may eventually be expanded to cover the lobby and feedback screens in the
  * future).
  *
- * The session itself — memberships, transports, media — is the client's; this
- * adds everything that makes it a call.
+ * The slot and the participation — memberships, transports, media — are the
+ * SDK's; this adds everything that makes it a call.
  */
 export function createCallViewModel$(
   scope: ObservableScope,
-  rtcClient: MatrixRTCClient,
+  rtcParticipation: RTCParticipation,
   // A call is permanently tied to a single Matrix room
   matrixRoom: MatrixRoom,
   mediaDevices: MediaDevices,
@@ -491,7 +486,7 @@ export function createCallViewModel$(
   const localTracks$ = scope.behavior<
     (LocalAudioMediaTrack | LocalVideoMediaTrack)[]
   >(
-    rtcClient.localMember$.pipe(
+    rtcParticipation.localMember$.pipe(
       switchMap((member) => member?.tracks$ ?? of(null)),
       map((tracks) => tracks ?? []),
     ),
@@ -533,10 +528,10 @@ export function createCallViewModel$(
         return desired;
       }
       if (!enabled) return false;
-      const member = rtcClient.localMember$.value;
-      if (member === null) return false;
       try {
-        await member.publish(publishRequest(source, mediaDevices, capture));
+        await rtcParticipation.publish(
+          publishRequest(source, mediaDevices, capture),
+        );
         return true;
       } catch (e) {
         logger.error(`Failed to publish the ${source}`, e);
@@ -586,7 +581,7 @@ export function createCallViewModel$(
       .pipe(scope.bind())
       .subscribe((selected) => {
         if (selected === undefined) return;
-        rtcClient.setAudioOutputDeviceId(selected.id).catch((e) => {
+        rtcParticipation.setAudioOutputDeviceId(selected.id).catch((e) => {
           logger.error("Failed to switch the audio output device", e);
         });
       });
@@ -603,7 +598,7 @@ export function createCallViewModel$(
 
   const members$ = scope.behavior<(LocalRTCMember | RemoteRTCMember)[]>(
     combineLatest(
-      [rtcClient.localMember$, rtcClient.remoteMembers$],
+      [rtcParticipation.localMember$, rtcParticipation.remoteMembers$],
       (local, remote) => (local === null ? remote : [local, ...remote]),
     ),
   );
@@ -632,7 +627,7 @@ export function createCallViewModel$(
   });
 
   const handsRaised$ = scope.behavior(
-    handsRaisedSubject$.pipe(pauseWhen(rtcClient.reconnecting$)),
+    handsRaisedSubject$.pipe(pauseWhen(rtcParticipation.reconnecting$)),
   );
 
   const reactions$ = scope.behavior(
@@ -645,7 +640,7 @@ export function createCallViewModel$(
           ]),
         ),
       ),
-      pauseWhen(rtcClient.reconnecting$),
+      pauseWhen(rtcParticipation.reconnecting$),
     ),
   );
 
@@ -662,7 +657,10 @@ export function createCallViewModel$(
           for (const member of members) {
             const mediaId = `${member.userId}:${member.deviceId}`;
             for (let dup = 0; dup < 1 + duplicateTiles; dup++) {
-              yield { keys: [dup, mediaId, member.id], data: member };
+              yield {
+                keys: [dup, mediaId, member.rtcBackendIdentity],
+                data: member,
+              };
             }
           }
         },
@@ -671,14 +669,14 @@ export function createCallViewModel$(
           return createWrappedUserMedia(scope, {
             id: `${mediaId}:${dup}`,
             userId: member.userId,
-            rtcBackendIdentity: member.id,
+            rtcBackendIdentity: member.rtcBackendIdentity,
             member,
             encryptionSystem: options.encryptionSystem,
             focusUrl$: scope.behavior(
               member.transport$.pipe(map((transport) => transport?.id)),
             ),
             mediaDevices,
-            pretendToBeDisconnected$: rtcClient.reconnecting$,
+            pretendToBeDisconnected$: rtcParticipation.reconnecting$,
             displayName$: member.displayName$,
             mxcAvatarUrl$: member.avatarUrl$,
             handRaised$: scope.behavior(
@@ -760,9 +758,12 @@ export function createCallViewModel$(
    *  - There can be multiple participants for one Matrix user if they join from
    *    multiple devices.
    */
-  const participantCount$ = rtcClient.memberCount$;
+  // One per membership, so one user may count several times
+  const participantCount$ = scope.behavior(
+    rtcParticipation.slot.members$.pipe(map((members) => members.length)),
+  );
 
-  const keyRotationSuppressed$ = rtcClient.keyRotationSuppressed$;
+  const keyRotationSuppressed$ = rtcParticipation.keyRotationSuppressed$;
 
   const leaveSoundEffect$ = userMedia$.pipe(
     pairwise(),
@@ -1472,15 +1473,13 @@ export function createCallViewModel$(
     (hideScreensharing || !("getDisplayMedia" in (navigator.mediaDevices ?? {}))
       ? null
       : (): void => {
-          const member = rtcClient.localMember$.value;
-          if (member === null) return;
           const track = screenShare$.value;
           (track === undefined
-            ? member.publish({
+            ? rtcParticipation.publish({
                 source: "screenShare",
                 capture: capture.screenShare,
               })
-            : member.unpublish(track.id)
+            : rtcParticipation.unpublish("screenShare")
           ).catch((e: unknown) => {
             logger.error(
               `Screen share ${track === undefined ? "start" : "stop"} failed`,
@@ -1494,24 +1493,22 @@ export function createCallViewModel$(
           });
         });
 
-  // Tell the host and the analytics about the user's joins and leaves
-  const join = (): void => {
-    PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
-    PosthogAnalytics.instance.eventCallStarted.track(matrixRoom.roomId);
-    rtcClient.join();
-    hostBridge.notifyJoined().catch((e) => {
-      logger.error("Failed to notify the host that we joined", e);
-    });
-  };
+  // Tell the host and the analytics about the user's joins and leaves. The
+  // participation is joined by the time the view model is built on it
+  PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
+  PosthogAnalytics.instance.eventCallStarted.track(matrixRoom.roomId);
+  hostBridge.notifyJoined().catch((e) => {
+    logger.error("Failed to notify the host that we joined", e);
+  });
   const leave = (): void => {
-    rtcClient.leave();
+    rtcParticipation.leave();
     hostBridge.notifyHungUp().catch((e) => {
       logger.error("Failed to notify the host that we hung up", e);
     });
   };
 
   let reconnectStart: { time: number; reason: DisconnectReason } | null = null;
-  rtcClient.disconnectReason$
+  rtcParticipation.disconnectReason$
     .pipe(distinctUntilChanged(), pairwise(), scope.bind())
     .subscribe(([prev, reason]) => {
       if (reason !== null) {
@@ -1537,7 +1534,6 @@ export function createCallViewModel$(
     ringingStatusLocation: header === HeaderStyle.AppBar ? "app_bar" : "tile",
     leave$: leave$,
     hangup: (): void => userHangup$.next(),
-    join,
     leave,
     toggleScreenSharing: toggleScreenSharing,
     sharingScreen$: sharingScreen$,
@@ -1548,15 +1544,15 @@ export function createCallViewModel$(
     unhoverScreen: (): void => screenUnhover$.next(),
 
     fatalError$: scope.behavior(
-      rtcClient.fatalError$.pipe(
+      rtcParticipation.fatalError$.pipe(
         map((error) => error && fromMatrixRTCError(error)),
       ),
     ),
     participantCount$: participantCount$,
     keyRotationSuppressed$: keyRotationSuppressed$,
-    localMember$: rtcClient.localMember$,
-    remoteMembers$: rtcClient.remoteMembers$,
-    connectedTransports$: rtcClient.connectedTransports$,
+    localMember$: rtcParticipation.localMember$,
+    remoteMembers$: rtcParticipation.remoteMembers$,
+    connectedTransports$: rtcParticipation.connectedTransports$,
     handsRaised$: handsRaised$,
     reactions$: reactions$,
     joinSoundEffect$: joinSoundEffect$,
@@ -1585,8 +1581,8 @@ export function createCallViewModel$(
     overflowing$,
     earpieceMode$: earpieceMode$,
     audioOutputSwitcher$: audioOutputSwitcher$,
-    reconnecting$: rtcClient.reconnecting$,
-    connected$: rtcClient.connected$,
+    reconnecting$: rtcParticipation.reconnecting$,
+    connected$: rtcParticipation.connected$,
     screenShareError$,
     dismissScreenShareError: (): void => screenShareError$.next(null),
   };
