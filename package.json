@@ -84,7 +84,7 @@
     "@typescript-eslint/utils": "^8.61.0",
     "@use-gesture/react": "^10.2.11",
     "@vector-im/compound-design-tokens": "^11.0.0",
-    "@vector-im/compound-web": "^10.0.0",
+    "@vector-im/compound-web": "github:element-hq/compound-web#abdd1657b4787952b19203c7ce81fda02822ac7f",
     "@vitejs/plugin-react": "^6.0.2",
     "@vitest/browser-playwright": "^4.1.5",
     "@vitest/coverage-v8": "^4.0.18",

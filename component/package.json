@@ -39,7 +39,7 @@
   },
   "peerDependencies": {
     "@vector-im/compound-design-tokens": "^11.0.0",
-    "@vector-im/compound-web": "^10.0.0",
+    "@vector-im/compound-web": "^10.3.1",
     "matrix-js-sdk": "*",
     "react": "^19",
     "react-dom": "^19"

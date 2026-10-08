@@ -121,4 +121,16 @@ export interface ElementCallProps {
    * the most recently set language wins for all of them.
    */
   language?: string;
+  /**
+   * Where the parts of Element Call that float above it — its menus and
+   * tooltips, which Compound portals out of the call — are rendered. Left out,
+   * they go into the host document's body, as they do for any other component
+   * on the host's page.
+   *
+   * A host that moves Element Call's DOM into another document, such as a
+   * Document Picture-in-Picture window, passes that document's body here so
+   * that a menu opens in the window its button is in. Changes take effect at
+   * once.
+   */
+  portalRoot?: HTMLElement | null;
 }

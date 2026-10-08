@@ -11,6 +11,7 @@ import { type ReactNode, useState } from "react";
 import userEvent from "@testing-library/user-event";
 
 import { Modal } from "./Modal";
+import { RootElementProvider } from "./RootElementContext";
 
 const originalMatchMedia = window.matchMedia;
 afterEach(() => {
@@ -69,4 +70,40 @@ test("the modal renders as a drawer in mobile viewports", () => {
     </Modal>,
   );
   expect(queryByRole("dialog")).toMatchSnapshot();
+});
+
+test("the modal can be closed by clicking the backdrop, in another window too", async () => {
+  // The drawer test above leaves a touchscreen matchMedia behind; this is
+  // about the desktop dialog
+  window.matchMedia = (): MediaQueryList =>
+    ({
+      matches: false,
+      addEventListener: (): void => {},
+      removeEventListener: (): void => {},
+    }) as unknown as MediaQueryList;
+  // A dialog moved into another window, as a host does for a Document
+  // Picture-in-Picture window: its nodes are not `Node`s of this window
+  const frame = document.createElement("iframe");
+  document.body.appendChild(frame);
+  const otherBody = frame.contentDocument!.body;
+
+  function ModalFn(): ReactNode {
+    const [isOpen, setOpen] = useState(true);
+    return (
+      <RootElementProvider value={otherBody}>
+        <Modal title="My modal" open={isOpen} onDismiss={() => setOpen(false)}>
+          <p>This is the content.</p>
+        </Modal>
+      </RootElementProvider>
+    );
+  }
+  render(<ModalFn />);
+  const dialog = otherBody.querySelector('[role="dialog"]');
+  expect(dialog).not.toBeNull();
+  const backdrop = dialog!.previousElementSibling as HTMLElement;
+
+  const user = userEvent.setup({ document: frame.contentDocument! });
+  await user.click(backdrop);
+  expect(otherBody.querySelector('[role="dialog"]')).toBeNull();
+  frame.remove();
 });
