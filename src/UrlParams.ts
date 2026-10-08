@@ -350,7 +350,6 @@ export const computeUrlParams = (search = "", hash = ""): UrlParams => {
     showControls: parser.getFlag("showControls"),
     hideScreensharing: parser.getFlag("hideScreensharing"),
     allowIceFallback: parser.getFlag("allowIceFallback"),
-    perParticipantE2EE: parser.getFlag("perParticipantE2EE"),
     controlledAudioDevices: parser.getFlag("controlledAudioDevices"),
     skipLobby: isWidget ? parser.getFlag("skipLobby") : false,
     // In SPA mode the user should always exit to the home screen when hanging
@@ -501,20 +500,14 @@ export function generateUrlSearchParams(
   const params = new URLSearchParams();
   // The password shouldn't need URL encoding here (we generate URL-safe ones) but encode
   // it in case it came from another client that generated a non url-safe one
-  switch (encryptionSystem?.kind) {
-    case E2eeType.SHARED_KEY: {
-      const encodedPassword = encodeURIComponent(encryptionSystem.secret);
-      if (encodedPassword !== encryptionSystem.secret) {
-        logger.info(
-          "Encoded call password used non URL-safe chars: buggy client?",
-        );
-      }
-      params.set("password", encodedPassword);
-      break;
+  if (encryptionSystem?.kind === E2eeType.SHARED_KEY) {
+    const encodedPassword = encodeURIComponent(encryptionSystem.secret);
+    if (encodedPassword !== encryptionSystem.secret) {
+      logger.info(
+        "Encoded call password used non URL-safe chars: buggy client?",
+      );
     }
-    case E2eeType.PER_PARTICIPANT:
-      params.set("perParticipantE2EE", "true");
-      break;
+    params.set("password", encodedPassword);
   }
   params.set("roomId", roomId);
   viaServers?.forEach((s) => params.set("viaServers", s));

@@ -86,11 +86,6 @@ export interface UrlConfiguration {
    * user's homeserver doesn't provide any.
    */
   allowIceFallback: boolean;
-
-  /**
-   * Whether the app should use per participant keys for E2EE.
-   */
-  perParticipantE2EE: boolean;
   /**
    * Whether the global JS controls for audio output devices should be enabled,
    * allowing the list of output devices to be controlled by the app hosting
@@ -174,7 +169,6 @@ export function configurationForIntent(intent: UserIntent): UrlConfiguration {
     showControls: true,
     hideScreensharing: false,
     allowIceFallback: true,
-    perParticipantE2EE: true,
     controlledAudioDevices: platform === "desktop" ? false : true,
     skipLobby: true,
     returnToLobby: false,
@@ -229,7 +223,6 @@ export function configurationForIntent(intent: UserIntent): UrlConfiguration {
         showControls: true,
         hideScreensharing: false,
         allowIceFallback: false,
-        perParticipantE2EE: false,
         controlledAudioDevices: false,
         skipLobby: false,
         returnToLobby: false,
