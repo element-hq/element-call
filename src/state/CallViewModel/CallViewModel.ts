@@ -295,7 +295,7 @@ export interface CallViewModel {
   /** Call to initiate hangup. Use in conbination with reconnection state track the async hangup process. */
   hangup: () => void;
 
-  /** Leaves the participation. The async leave can then be observed via connected$. */
+  /** Leaves the participation. The leave can then be observed via `leave$`. */
   leave: () => void;
   // screen sharing
   /**
@@ -442,9 +442,6 @@ export interface CallViewModel {
 
   /** Connected once, and currently not: to the homeserver, the session or the media transport. */
   reconnecting$: Behavior<boolean>;
-
-  /** Connected to the homeserver, the session and the media transport, all three. */
-  connected$: Behavior<boolean>;
 }
 
 /**
@@ -627,8 +624,12 @@ export function createCallViewModel$(
     localUser: { userId, deviceId },
   });
 
+  const reconnecting$ = scope.behavior(
+    rtcParticipation.state$.pipe(map((state) => state.kind === "reconnecting")),
+  );
+
   const handsRaised$ = scope.behavior(
-    handsRaisedSubject$.pipe(pauseWhen(rtcParticipation.reconnecting$)),
+    handsRaisedSubject$.pipe(pauseWhen(reconnecting$)),
   );
 
   const reactions$ = scope.behavior(
@@ -641,7 +642,7 @@ export function createCallViewModel$(
           ]),
         ),
       ),
-      pauseWhen(rtcParticipation.reconnecting$),
+      pauseWhen(reconnecting$),
     ),
   );
 
@@ -677,7 +678,7 @@ export function createCallViewModel$(
               member.transport$.pipe(map((transport) => transport?.id)),
             ),
             mediaDevices,
-            pretendToBeDisconnected$: rtcParticipation.reconnecting$,
+            pretendToBeDisconnected$: reconnecting$,
             displayName$: member.displayName$,
             mxcAvatarUrl$: member.avatarUrl$,
             handRaised$: scope.behavior(
@@ -1509,25 +1510,21 @@ export function createCallViewModel$(
   };
 
   let reconnectStart: { time: number; reason: DisconnectReason } | null = null;
-  rtcParticipation.disconnectReason$
-    .pipe(distinctUntilChanged(), pairwise(), scope.bind())
-    .subscribe(([prev, reason]) => {
-      if (reason !== null) {
-        // Only the loss of a connection that existed counts as a reconnect,
-        // not the startup phase
-        if (prev === null) reconnectStart ??= { time: Date.now(), reason };
-      } else if (reconnectStart !== null) {
-        const reason =
-          reconnectStart.reason === "media" ? "livekit" : reconnectStart.reason;
-        PosthogAnalytics.instance.eventCallReconnecting.track(
-          matrixRoom.roomId,
-          reason,
-          (Date.now() - reconnectStart.time) / 1000,
-        );
-        PosthogAnalytics.instance.eventCallEnded.cacheReconnecting(reason);
-        reconnectStart = null;
-      }
-    });
+  rtcParticipation.state$.pipe(scope.bind()).subscribe((state) => {
+    if (state.kind === "reconnecting") {
+      reconnectStart ??= { time: Date.now(), reason: state.reason };
+    } else if (state.kind === "connected" && reconnectStart !== null) {
+      const reason =
+        reconnectStart.reason === "media" ? "livekit" : reconnectStart.reason;
+      PosthogAnalytics.instance.eventCallReconnecting.track(
+        matrixRoom.roomId,
+        reason,
+        (Date.now() - reconnectStart.time) / 1000,
+      );
+      PosthogAnalytics.instance.eventCallEnded.cacheReconnecting(reason);
+      reconnectStart = null;
+    }
+  });
 
   return {
     autoLeave$: autoLeave$,
@@ -1545,8 +1542,10 @@ export function createCallViewModel$(
     unhoverScreen: (): void => screenUnhover$.next(),
 
     fatalError$: scope.behavior(
-      rtcParticipation.fatalError$.pipe(
-        map((error) => error && fromMatrixRTCError(error)),
+      rtcParticipation.state$.pipe(
+        map((state) =>
+          state.kind === "failed" ? fromMatrixRTCError(state.error) : null,
+        ),
       ),
     ),
     participantCount$: participantCount$,
@@ -1582,8 +1581,7 @@ export function createCallViewModel$(
     overflowing$,
     earpieceMode$: earpieceMode$,
     audioOutputSwitcher$: audioOutputSwitcher$,
-    reconnecting$: rtcParticipation.reconnecting$,
-    connected$: rtcParticipation.connected$,
+    reconnecting$,
     screenShareError$,
     dismissScreenShareError: (): void => screenShareError$.next(null),
   };

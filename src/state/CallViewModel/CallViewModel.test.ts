@@ -261,19 +261,22 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
 
   test("the selected audio output is handed to the client as it changes", () => {
     const { mediaDevices, selected$ } = withAudioOutput();
-    withCallViewModel({ mediaDevices }, (_vm, _session, { rtcParticipation: participation }) => {
-      // Nothing selected yet, so the browser's choice stands
-      expect(participation.setAudioOutputDeviceId).not.toHaveBeenCalled();
-      selected$.next({ id: "speaker", virtualEarpiece: false });
-      expect(participation.setAudioOutputDeviceId).toHaveBeenCalledWith(
-        "speaker",
-      );
-      selected$.next({ id: "headphones", virtualEarpiece: false });
-      expect(participation.setAudioOutputDeviceId).toHaveBeenLastCalledWith(
-        "headphones",
-      );
-      expect(participation.setAudioOutputDeviceId).toHaveBeenCalledTimes(2);
-    });
+    withCallViewModel(
+      { mediaDevices },
+      (_vm, _session, { rtcParticipation: participation }) => {
+        // Nothing selected yet, so the browser's choice stands
+        expect(participation.setAudioOutputDeviceId).not.toHaveBeenCalled();
+        selected$.next({ id: "speaker", virtualEarpiece: false });
+        expect(participation.setAudioOutputDeviceId).toHaveBeenCalledWith(
+          "speaker",
+        );
+        selected$.next({ id: "headphones", virtualEarpiece: false });
+        expect(participation.setAudioOutputDeviceId).toHaveBeenLastCalledWith(
+          "headphones",
+        );
+        expect(participation.setAudioOutputDeviceId).toHaveBeenCalledTimes(2);
+      },
+    );
   });
 
   test("a host that controls the audio devices keeps the output from the client", () => {
