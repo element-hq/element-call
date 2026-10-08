@@ -11,6 +11,7 @@ import {
   type SwitchBackgroundProcessorOptions,
 } from "@livekit/track-processors";
 import { logger } from "matrix-js-sdk/lib/logger";
+import { deepCompare } from "matrix-js-sdk/lib/utils";
 
 import { type Behavior } from "./Behavior";
 import { type ObservableScope } from "./ObservableScope";
@@ -26,11 +27,7 @@ export interface BackgroundEffectsOptions {
   supported: boolean;
   /** Whether blur is chosen. */
   blur$: Behavior<boolean>;
-  /**
-   * Shared by the pre-join preview and the call. Building or destroying it is
-   * what primes it, and a primed pipeline lets its next frame through
-   * untouched, so it is switched rather than rebuilt.
-   */
+  /** The background processor pipeline to be switched between effects. */
   pipeline: BackgroundProcessorWrapper;
 }
 
@@ -50,9 +47,9 @@ export class BackgroundEffects {
           (previous, wanted) => {
             // Attached the first time an effect is wanted and never detached
             // after, so someone who never turns one on pays for none of it.
-            const attached =
+            const enable =
               previous.processor !== undefined || (supported && wanted);
-            return { supported, processor: attached ? processor : undefined };
+            return { supported, processor: enable ? processor : undefined };
           },
           { supported, processor: undefined },
         ),
@@ -66,7 +63,7 @@ export class BackgroundEffects {
         map(([, blur]): SwitchBackgroundProcessorOptions =>
           blur ? { mode: "background-blur", blurRadius } : { mode: "disabled" },
         ),
-        distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b)),
+        distinctUntilChanged(deepCompare),
         scope.bind(),
       )
       .subscribe((options) => {
