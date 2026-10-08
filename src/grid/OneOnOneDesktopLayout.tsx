@@ -6,13 +6,13 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type ReactNode, useCallback, useMemo } from "react";
+import { type ReactNode, useMemo } from "react";
 import classNames from "classnames";
 
 import { type OneOnOneDesktopLayout as OneOnOneDesktopLayoutModel } from "../state/layout-types.ts";
 import { type CallLayout, arrangeTiles } from "./CallLayout";
 import styles from "./OneOnOneDesktopLayout.module.css";
-import { type DragCallback, useUpdateLayout } from "./Grid";
+import { useUpdateLayout } from "./Grid";
 import { useBehavior } from "../useBehavior";
 
 /**
@@ -37,19 +37,10 @@ export const makeOneOnOneDesktopLayout: CallLayout<
   }): ReactNode {
     useUpdateLayout();
     const { width, height } = useBehavior(minBounds$);
-    const pipAlignment = useBehavior(model.pipAlignment$);
+    const pipAlignment = useBehavior(model.pip.alignment$);
     const { tileWidth, tileHeight } = useMemo(
       () => arrangeTiles(width, height, 1),
       [width, height],
-    );
-
-    const onDragLocalTile: DragCallback = useCallback(
-      ({ xRatio, yRatio }) =>
-        model.pipAlignment$.next({
-          block: yRatio < 0.5 ? "start" : "end",
-          inline: xRatio < 0.5 ? "start" : "end",
-        }),
-      [model.pipAlignment$],
     );
 
     return (
@@ -62,9 +53,9 @@ export const makeOneOnOneDesktopLayout: CallLayout<
         >
           <Slot
             className={classNames(styles.slot, styles.local)}
-            id={model.pip.id}
-            model={model.pip}
-            onDrag={onDragLocalTile}
+            id={model.pip.vm.id}
+            model={model.pip.vm}
+            onDrag={model.pip.onDrag}
             data-block-alignment={pipAlignment.block}
             data-inline-alignment={pipAlignment.inline}
           />
