@@ -131,18 +131,18 @@ participation split in
 [`client-into-slot-session-split-plan.md`](./client-into-slot-session-split-plan.md);
 the sections below still describe `MatrixRTCClient` until that lands.
 
-| Word                        | Meaning here                                                                                                                                                                                                                                   | Elsewhere                                                                                                   |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| slot                        | an `RTCSlot`: the namespace in a room that memberships join into, `application` plus `id`. It exists while the room does, with nobody in it too. Holds `members$`, its open or closed `status$`, and `join()`                  | the js-sdk `MatrixRTCSession` is one per slot; the MSC4143 slot event                                       |
-| participation               | an `RTCParticipation`: the span between our `join()` of a slot and our `leave()`. Holds the connection and its `status$`, `localMember$`, `remoteMembers$`, the connected transports and the data channel. Made by `slot.join()`, never reused | "session" is not used here, because in the js-sdk it means the slot                                         |
-| member                      | an `RTCMember`: one membership in a slot with what the SDK derives from it, `rtcBackendIdentity`, `userId`, `deviceId`, `memberId`, `displayName$`, `avatarUrl$`, `transport$` and `applicationData$`. No media. What the slot hands out in `members$`         | the js-sdk `CallMembership` behind it, which never leaves the SDK; Element Call's old "matrixLivekitMember" |
-| local member, remote member | `LocalRTCMember` and `RemoteRTCMember`: an `RTCMember` plus its `MemberMedia`, which only a participation can carry. The local one's tracks carry the controls. What the participation hands out in `localMember$` and `remoteMembers$`        | LiveKit `LocalParticipant` and `RemoteParticipant`, which never leave the SDK                               |
-| media                       | a `MemberMedia`: what a member sends once it has arrived on its transport, `tracks$`, null while waiting, and `encryptionError$` beside it. The media backend supplies exactly these two fields per member                                     | Element Call's `MediaViewModel` is a view of it                                                             |
-| track                       | a `MediaTrack`: one publication of a member, audio or video, with `source`, `kind`, `id` and the behaviors on it. `LocalAudioMediaTrack` and `LocalVideoMediaTrack` add the controls over our own                                              | LiveKit `TrackPublication` and `Track`, which never leave the SDK                                           |
-| publish request             | a `PublishRequest`: a source, where to capture it from and how to encode it. Given at the join in `publish`, or later to `publish` on the participation                                                                                        |                                                                                                             |
-| attach, detach              | handing a `<video>` or `<audio>` element to a track and taking it back. The SDK owns the stream and the observers on the element                                                                                                               | LiveKit `Track.attach`                                                                                      |
-| transport                   | an `RTCTransport`: where media is exchanged, a LiveKit service url today. Carries the raw js-sdk `Transport` from the membership and, in `resolved$`, what the backend fetched to connect to it                                                | MSC4143 "focus"                                                                                             |
-| media backend               | a `MediaBackend`: what carries the media, behind `sdk/src/media-backend/api.ts`. One per participation, chosen with `backend` in the join options; LiveKit under `sdk/src/media-backend/livekit/` is the one that exists                       | "SFU", a LiveKit room, a peer connection                                                                    |
+| Word                        | Meaning here                                                                                                                                                                                                                                           | Elsewhere                                                                                                   |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| slot                        | an `RTCSlot`: the namespace in a room that memberships join into, `application` plus `id`. It exists while the room does, with nobody in it too. Holds `members$`, its open or closed `status$`, and `join()`                                          | the js-sdk `MatrixRTCSession` is one per slot; the MSC4143 slot event                                       |
+| participation               | an `RTCParticipation`: the span between our `join()` of a slot and our `leave()`. Holds the connection and its `status$`, `localMember$`, `remoteMembers$`, the connected transports and the data channel. Made by `slot.join()`, never reused         | "session" is not used here, because in the js-sdk it means the slot                                         |
+| member                      | an `RTCMember`: one membership in a slot with what the SDK derives from it, `rtcBackendIdentity`, `userId`, `deviceId`, `memberId`, `displayName$`, `avatarUrl$`, `transport$` and `applicationData$`. No media. What the slot hands out in `members$` | the js-sdk `CallMembership` behind it, which never leaves the SDK; Element Call's old "matrixLivekitMember" |
+| local member, remote member | `LocalRTCMember` and `RemoteRTCMember`: an `RTCMember` plus its `MemberMedia`, which only a participation can carry. The local one's tracks carry the controls. What the participation hands out in `localMember$` and `remoteMembers$`                | LiveKit `LocalParticipant` and `RemoteParticipant`, which never leave the SDK                               |
+| media                       | a `MemberMedia`: what a member sends once it has arrived on its transport, `tracks$`, null while waiting, and `encryptionError$` beside it. The media backend supplies exactly these two fields per member                                             | Element Call's `MediaViewModel` is a view of it                                                             |
+| track                       | a `MediaTrack`: one publication of a member, audio or video, with `source`, `kind`, `id` and the behaviors on it. `LocalAudioMediaTrack` and `LocalVideoMediaTrack` add the controls over our own                                                      | LiveKit `TrackPublication` and `Track`, which never leave the SDK                                           |
+| publish request             | a `PublishRequest`: a source, where to capture it from and how to encode it. Given at the join in `publish`, or later to `publish` on the participation                                                                                                |                                                                                                             |
+| attach, detach              | handing a `<video>` or `<audio>` element to a track and taking it back. The SDK owns the stream and the observers on the element                                                                                                                       | LiveKit `Track.attach`                                                                                      |
+| transport                   | an `RTCTransport`: where media is exchanged, a LiveKit service url today. Carries the raw js-sdk `Transport` from the membership and, in `resolved$`, what the backend fetched to connect to it                                                        | MSC4143 "focus"                                                                                             |
+| media backend               | a `MediaBackend`: what carries the media, behind `sdk/src/media-backend/api.ts`. One per participation, chosen with `backend` in the join options; LiveKit under `sdk/src/media-backend/livekit/` is the one that exists                               | "SFU", a LiveKit room, a peer connection                                                                    |
 
 Names use `RTC` in capitals, as the js-sdk does: `RTCSlot`, `RTCParticipation`,
 `RTCMember`, `matrixRTCMode`.
@@ -263,20 +263,26 @@ export function createMatrixRTCClient(
   room: Room,
   options: MatrixRTCClientOptions,
 ): MatrixRTCClient;
-````
+```
 
 ### The client
 
 ```ts
-export type ConnectionStatus =
-  | "waitingForTransport"
-  | "connecting"
-  | "connected"
-  | "reconnecting"
-  | "disconnected";
+/** The homeserver link that is down, in the order they depend on each other. */
+export type MatrixDisconnectReason = "sync" | "membership" | "probablyLeft";
 
-/** Why the client is not connected: the first failing of its three links. */
-export type DisconnectReason = "sync" | "membership" | "probablyLeft" | "media";
+/** Why the participation is not connected: the first failing link, in dependency order. */
+export type DisconnectReason = MatrixDisconnectReason | "media";
+
+export type ParticipationState =
+  | { kind: "waitingForTransport" }
+  | { kind: "connecting" }
+  | { kind: "connected" }
+  | { kind: "reconnecting"; reason: DisconnectReason }
+  /** A failed publication is not fatal: the member can still receive, so it stays on the local member's media. */
+  | { kind: "failed"; error: MatrixRTCError }
+  /** `leave()` was called. Terminal. */
+  | { kind: "left" };
 
 /**
  * An error raised by the client. `code` and `category` say what went wrong in
@@ -290,21 +296,12 @@ export class MatrixRTCError extends Error {
 export interface MatrixRTCClient {
   join(): void;
   leave(): void;
-  /** The local member's state machine, collapsed to what a host shows. */
-  status$: Behavior<ConnectionStatus>;
-  /** Connected to the homeserver, the session and the local transport, all three. */
-  connected$: Behavior<boolean>;
-  /** Connected once, and currently not. */
-  reconnecting$: Behavior<boolean>;
-  /** Null while connected, the first failing link otherwise. */
-  disconnectReason$: Behavior<DisconnectReason | null>;
-
   /**
-   * A transport, Matrix or connection error that stops the session. Null
-   * while fine. A failed publication is not fatal: the member can still
-   * receive, so it stays on the local member's media.
+   * The Matrix membership combined with the local media connection. One
+   * value: a reason exists only while `reconnecting`, an error only once
+   * `failed`.
    */
-  fatalError$: Behavior<MatrixRTCError | null>;
+  state$: Behavior<ParticipationState>;
 
   /** Null until our own membership has been seen in the room. */
   localMember$: Behavior<LocalRTCMember | null>;
@@ -749,9 +746,10 @@ public API only.
   join; creating the tracks earlier, for a lobby preview, is still missing.
 - **`applicationData` after the join.** The option is read once; there is no
   way to update it on a live membership yet.
-- **Raw local state.** The local member's state machine (`LocalMemberState`) stays
-  internal; `status$`, `disconnectReason$` and `fatalError$` are its public view.
-  A developer panel may want it as `LocalRTCMember.state$`.
+- **Raw membership state.** The Matrix side's own state machine
+  (`MembershipState` in `LocalMembership.ts`) stays internal; `state$` on the
+  participation is its public view combined with the media connection. A
+  developer panel may want it as `LocalRTCMember.membershipState$`.
 - **Developer panel.** `resolved$` on each connected transport covers what the
   panel shows today. Anything beyond that (LiveKit room state, connection
   quality) needs an opaque `debug$` per transport.

@@ -14,15 +14,17 @@ import {
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type IMembershipManager } from "matrix-js-sdk/lib/matrixrtc/IMembershipManager";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
+import { deepCompare } from "matrix-js-sdk/lib/utils";
 import { v4 as uuidv4 } from "uuid";
 import {
-  BehaviorSubject,
   combineLatest,
+  distinctUntilChanged,
   filter,
   from,
   fromEvent,
   map,
   Observable,
+  scan,
 } from "rxjs";
 
 import { defaultSessionTimings, MatrixRTCMode } from "./config";
@@ -34,6 +36,7 @@ import { mapScoped } from "./utils/mapScoped";
 import {
   type DataMessage,
   type LocalRTCMember,
+  type ParticipationState,
   type RemoteRTCMember,
   type RTCMember,
   type RTCParticipation,
@@ -59,8 +62,8 @@ import {
   createRemoteRTCMember,
 } from "./matrixrtc/Members";
 import { createKeyRotationSuppressed$ } from "./matrixrtc/JsRtcSessionBehaviors";
-import { fatalError, participationStatus } from "./matrixrtc/status";
 import { type TransportRegistry } from "./matrixrtc/Transports";
+import { participationState } from "./participationState";
 
 /** What the slot lends a participation. */
 export interface ParticipationDeps {
@@ -124,7 +127,7 @@ export function createRTCParticipation(
     mediaKeys$: mediaKeys$(jsSdkSession),
     timings,
     logger,
-    });
+  });
 
   const preparedTransport$ = from(
     discoverLocalTransport(client, backend.transportType, options, logger).then(
@@ -137,7 +140,6 @@ export function createRTCParticipation(
 
   const localMembership = createLocalMembership$({
     scope,
-    local: backend.local,
     delegateDelayedLeave: async (delayId) =>
       backend.delegateDelayedLeave(delayId),
     preparedTransport$,
@@ -228,22 +230,32 @@ export function createRTCParticipation(
     filter((message) => message !== null),
   );
 
-  const left$ = new BehaviorSubject(false);
-  const status$ = scope.behavior(
-    combineLatest(
-      [
-        localMembership.state$,
-        localMembership.connected$,
-        localMembership.reconnecting$,
-        left$,
-      ],
-      participationStatus,
+  // Nothing leaves this device while it may already have been dropped from
+  // the session: the member would show as away while still being heard
+  localMembership.state$
+    .pipe(
+      map((membership) => membership.kind === "joined"),
+      distinctUntilChanged(),
+      scope.bind(),
+    )
+    .subscribe((publish) => backend.local.setPublishing(publish));
+
+  const state$ = scope.behavior<ParticipationState>(
+    combineLatest([
+      localMembership.state$,
+      backend.local.connectionState$,
+    ]).pipe(
+      scan(
+        (previous, [membership, media]) =>
+          participationState(previous, membership, media),
+        { kind: "waitingForTransport" } as ParticipationState,
+      ),
+      distinctUntilChanged(deepCompare),
     ),
   );
 
   const leave = (): void => {
-    if (left$.value) return;
-    left$.next(true);
+    if (state$.value.kind === "left") return;
     localMembership.leave();
     scope.end();
   };
@@ -253,11 +265,7 @@ export function createRTCParticipation(
     participation: {
       slot,
       leave,
-      status$,
-      connected$: localMembership.connected$,
-      reconnecting$: localMembership.reconnecting$,
-      disconnectReason$: localMembership.disconnectReason$,
-      fatalError$: scope.behavior(localMembership.state$.pipe(map(fatalError))),
+      state$,
       localMember$,
       remoteMembers$,
       publish: async (request) => backend.local.publish(request),

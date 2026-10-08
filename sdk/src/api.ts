@@ -121,31 +121,44 @@ export interface RTCParticipationOptions {
   backend?: MediaBackendFactory;
 }
 
-export type ParticipationStatus =
-  | "waitingForTransport"
-  | "connecting"
-  | "connected"
-  | "reconnecting"
-  | "disconnected"
-  /** `leave()` was called; the participation is over and stays so. */
-  | "left";
+/**
+ * The homeserver link that is down, in the order they depend on each other:
+ * without sync the membership is unknowable, and without a confirmed
+ * membership the delayed leave cannot be refreshed.
+ */
+export type MatrixDisconnectReason = "sync" | "membership" | "probablyLeft";
 
-/** Why the participation is not connected: the first failing of its three links. */
-export type DisconnectReason = "sync" | "membership" | "probablyLeft" | "media";
+/**
+ * Why the participation is not connected: the first failing link, in the
+ * order they depend on each other. The media connection comes last because
+ * it is worth little while the Matrix side is down.
+ */
+export type DisconnectReason = MatrixDisconnectReason | "media";
+
+export type ParticipationState =
+  /** Asking the homeserver for a transport, or preparing it. */
+  | { kind: "waitingForTransport" }
+  /** Transport known; joining the session and connecting the media for the first time. */
+  | { kind: "connecting" }
+  /** Membership joined and the local media connection up. */
+  | { kind: "connected" }
+  /** Was connected and one link is down. Back to `connected` or on to `failed`. */
+  | { kind: "reconnecting"; reason: DisconnectReason }
+  /**
+   * The membership or the media connection ended with an error. Terminal
+   * unless `left`. A failed publication is not fatal: the member can still
+   * receive, so it stays on the local member's media.
+   */
+  | { kind: "failed"; error: MatrixRTCError }
+  /** `leave()` was called. Terminal. */
+  | { kind: "left" };
 
 /** The span between our `join()` of a slot and our `leave()`. */
 export interface RTCParticipation {
   readonly slot: RTCSlot;
   /** Sends the leave, tears the connections down and ends the participation. */
   leave(): void;
-  /** Collapsed view of the local member's state machine. */
-  status$: Behavior<ParticipationStatus>;
-  connected$: Behavior<boolean>;
-  reconnecting$: Behavior<boolean>;
-  /** Null while connected, the first failing link otherwise. */
-  disconnectReason$: Behavior<DisconnectReason | null>;
-  /** A transport, Matrix or connection error that stops the participation. */
-  fatalError$: Behavior<MatrixRTCError | null>;
+  state$: Behavior<ParticipationState>;
 
   /** Null until our own membership has been seen in the room. */
   localMember$: Behavior<LocalRTCMember | null>;

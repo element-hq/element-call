@@ -77,11 +77,9 @@ async function start(
     const rtcParticipation = slot.join({
       publish: [{ source: "microphone" }, { source: "camera" }],
     });
-    rtcParticipation.status$.pipe(scope.bind()).subscribe((s) => {
-      status.textContent = s;
-    });
-    rtcParticipation.fatalError$.pipe(scope.bind()).subscribe((error) => {
-      if (error !== null) status.textContent = `Error: ${error.message}`;
+    rtcParticipation.state$.pipe(scope.bind()).subscribe((state) => {
+      status.textContent =
+        state.kind === "failed" ? `Error: ${state.error.message}` : state.kind;
     });
     showMembers(scope, rtcParticipation);
     showMessages(scope, rtcParticipation);
@@ -179,7 +177,10 @@ function showMembers(
   rtcParticipation: RTCParticipation,
 ): void {
   const tiles = new Map<string, HTMLElement>();
-  combineLatest([rtcParticipation.localMember$, rtcParticipation.remoteMembers$])
+  combineLatest([
+    rtcParticipation.localMember$,
+    rtcParticipation.remoteMembers$,
+  ])
     .pipe(scope.bind())
     .subscribe(([local, remote]) => {
       const current = local === null ? remote : [local, ...remote];

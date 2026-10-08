@@ -5,77 +5,57 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { logger } from "matrix-js-sdk/lib/logger";
-import { Status, type Transport } from "matrix-js-sdk/lib/matrixrtc";
-import {
-  BehaviorSubject,
-  EMPTY,
-  type Observable,
-  Subject,
-  throwError,
-} from "rxjs";
 import { describe, expect, it, vi } from "vitest";
+import { type Transport } from "matrix-js-sdk/lib/matrixrtc";
+import { logger } from "matrix-js-sdk/lib/logger";
+import { BehaviorSubject, type Observable, Subject, throwError } from "rxjs";
 
 import { defaultSessionTimings } from "../config";
 import { MatrixRTCError } from "../errors";
-import {
-  type LocalMediaBackend,
-  MediaConnectionState,
-} from "../media-backend/api";
 import { type HomeserverConnected } from "./HomeserverConnected";
 import {
   createLocalMembership$,
   type LocalMembership,
   type PreparedTransport,
-  PublishState,
-  TransportState,
 } from "./LocalMembership";
 import { flushPromises, testScope } from "../utils/test";
 
 const transport: Transport = { type: "livekit", livekit_service_url: "u" };
 
 describe("createLocalMembership$", () => {
-  it("waits for the transport, then reports the media connection and the join", async () => {
-    const { membership, local, prepared$ } = setup();
-    expect(membership.state$.value).toBe(TransportState.Waiting);
+  it("waits for the transport, joins, and leaves on leave()", async () => {
+    const { membership, homeserver, prepared$ } = setup();
+    expect(membership.state$.value).toEqual({ kind: "waitingForTransport" });
 
+    homeserver.disconnectReason$.next("membership");
     prepared$.next({ transport, canDelegateDelayedLeave: false });
-    expect(membership.state$.value).toEqual({
-      media: { connection: MediaConnectionState.Initialized },
-      matrix: Status.Connected,
-    });
+    expect(membership.state$.value).toEqual({ kind: "joining" });
 
-    local.connectionState$.next(MediaConnectionState.Connected);
-    await flushPromises();
-    expect(membership.state$.value).toEqual({
-      media: PublishState.Publishing,
-      matrix: Status.Connected,
-    });
-    expect(membership.connected$.value).toBe(true);
+    homeserver.disconnectReason$.next(null);
+    expect(membership.state$.value).toEqual({ kind: "joined" });
 
     membership.leave();
-    expect(membership.state$.value).toEqual({
-      media: PublishState.WaitingForUser,
-      matrix: Status.Connected,
-    });
+    await flushPromises();
+    expect(membership.state$.value).toEqual({ kind: "left" });
   });
 
-  it("publishes only while joined and the homeserver is reachable", async () => {
-    const { membership, local, homeserver } = setup();
-    expect(local.setPublishing).toHaveBeenLastCalledWith(true);
+  it("reconnects only after it was joined once", () => {
+    const { membership, homeserver, prepared$ } = setup();
+    prepared$.next({ transport, canDelegateDelayedLeave: false });
+    expect(membership.state$.value).toEqual({ kind: "joined" });
 
-    homeserver.combined$.next([false, "sync"]);
-    expect(local.setPublishing).toHaveBeenLastCalledWith(false);
-    homeserver.combined$.next([true, null]);
-    expect(local.setPublishing).toHaveBeenLastCalledWith(true);
-
-    membership.leave();
-    expect(local.setPublishing).toHaveBeenLastCalledWith(false);
-    // A sync outage after leaving must not bring the media back
-    homeserver.combined$.next([false, "sync"]);
-    homeserver.combined$.next([true, null]);
-    expect(local.setPublishing).toHaveBeenLastCalledWith(false);
-    await flushPromises();
+    homeserver.disconnectReason$.next("sync");
+    expect(membership.state$.value).toEqual({
+      kind: "reconnecting",
+      reason: "sync",
+    });
+    homeserver.disconnectReason$.next("probablyLeft");
+    expect(membership.state$.value).toEqual({
+      kind: "reconnecting",
+      reason: "probablyLeft",
+    });
+    homeserver.disconnectReason$.next(null);
+    expect(membership.state$.value).toEqual({ kind: "joined" });
   });
 
   it("joins with the delegated timings and hands over each delay id where the backend can", async () => {
@@ -107,57 +87,54 @@ describe("createLocalMembership$", () => {
     expect(delegate).not.toHaveBeenCalled();
   });
 
-  it("reports a transport that could not be prepared as fatal", () => {
+  it("reports a transport that could not be prepared as failed", () => {
     const error = new MatrixRTCError("no token");
     const { membership } = setup(throwError(() => error));
-    expect(membership.state$.value).toBe(error);
+    expect(membership.state$.value).toEqual({ kind: "failed", error });
   });
 
-  it("reports a connection loss and a publish failure in the media state", () => {
-    const { membership, local, prepared$ } = setup();
+  it("reports the membership manager giving up as failed, and stays failed", () => {
+    const { membership, homeserver, prepared$, membershipManagerError$ } =
+      setup();
     prepared$.next({ transport, canDelegateDelayedLeave: false });
-    local.connectionState$.next(MediaConnectionState.Connected);
-
-    local.connectionState$.next(MediaConnectionState.Reconnecting);
-    expect(membership.state$.value).toEqual({
-      media: { connection: MediaConnectionState.Reconnecting },
-      matrix: Status.Connected,
-    });
-    expect(membership.disconnectReason$.value).toBe("media");
-    expect(membership.reconnecting$.value).toBe(true);
-
-    const failure = new MatrixRTCError("no camera");
-    local.publishError$.next(failure);
+    membershipManagerError$.next(new Error("gave up"));
     const state = membership.state$.value;
-    expect(typeof state === "object" && "media" in state && state.media).toBe(
-      failure,
-    );
+    expect(state.kind).toBe("failed");
+
+    homeserver.disconnectReason$.next("sync");
+    homeserver.disconnectReason$.next(null);
+    expect(membership.state$.value).toBe(state);
+  });
+
+  it("is left after a failure once leave() is called", () => {
+    const { membership } = setup(throwError(() => new MatrixRTCError("x")));
+    membership.leave();
+    expect(membership.state$.value).toEqual({ kind: "left" });
   });
 });
 
 function setup(preparedTransportWithErrors$?: Observable<PreparedTransport>): {
   membership: LocalMembership;
-  local: FakeLocalMediaBackend;
   homeserver: FakeHomeserverConnected;
   prepared$: Subject<PreparedTransport>;
   delayId$: BehaviorSubject<string | null>;
+  membershipManagerError$: Subject<unknown>;
   joinMatrixRTC: ReturnType<typeof vi.fn>;
   delegate: ReturnType<typeof vi.fn>;
 } {
   const prepared$ = new Subject<PreparedTransport>();
-  const local = fakeLocalMediaBackend();
   const homeserver = fakeHomeserverConnected();
   const delayId$ = new BehaviorSubject<string | null>(null);
+  const membershipManagerError$ = new Subject<unknown>();
   const joinMatrixRTC = vi.fn();
   const delegate = vi.fn(async () => Promise.resolve());
   const membership = createLocalMembership$({
     scope: testScope(),
-    local,
     delegateDelayedLeave: delegate,
     preparedTransport$: preparedTransportWithErrors$ ?? prepared$,
     homeserverConnected: homeserver,
     joinMatrixRTC,
-    membershipManagerError$: new Subject(),
+    membershipManagerError$,
     matrixRTCSession: {
       leaveRoomSession: vi.fn(async () => Promise.resolve(true)),
     },
@@ -167,48 +144,25 @@ function setup(preparedTransportWithErrors$?: Observable<PreparedTransport>): {
   });
   return {
     membership,
-    local,
     homeserver,
     prepared$,
     delayId$,
+    membershipManagerError$,
     joinMatrixRTC,
     delegate,
   };
 }
 
-type FakeLocalMediaBackend = Omit<
-  LocalMediaBackend,
-  "connectionState$" | "publishError$" | "setPublishing"
-> & {
-  connectionState$: BehaviorSubject<MediaConnectionState | Error>;
-  publishError$: BehaviorSubject<Error | null>;
-  setPublishing: ReturnType<typeof vi.fn<LocalMediaBackend["setPublishing"]>>;
-};
-
-function fakeLocalMediaBackend(): FakeLocalMediaBackend {
-  return {
-    connectionState$: new BehaviorSubject<MediaConnectionState | Error>(
-      MediaConnectionState.Initialized,
-    ),
-    tracks$: new BehaviorSubject(null),
-    encryptionError$: EMPTY,
-    setPublishing: vi.fn<LocalMediaBackend["setPublishing"]>(),
-    publishError$: new BehaviorSubject<Error | null>(null),
-    publish: vi.fn<LocalMediaBackend["publish"]>(),
-    unpublish: vi.fn<LocalMediaBackend["unpublish"]>(),
-  };
-}
-
-type FakeHomeserverConnected = Omit<HomeserverConnected, "combined$"> & {
-  combined$: BehaviorSubject<HomeserverConnected["combined$"]["value"]>;
+type FakeHomeserverConnected = {
+  disconnectReason$: BehaviorSubject<
+    HomeserverConnected["disconnectReason$"]["value"]
+  >;
 };
 
 function fakeHomeserverConnected(): FakeHomeserverConnected {
   return {
-    combined$: new BehaviorSubject<HomeserverConnected["combined$"]["value"]>([
-      true,
-      null,
-    ]),
-    rtsSession$: new BehaviorSubject(Status.Connected),
+    disconnectReason$: new BehaviorSubject<
+      HomeserverConnected["disconnectReason$"]["value"]
+    >(null),
   };
 }

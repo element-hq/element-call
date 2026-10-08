@@ -8,7 +8,6 @@ Please see LICENSE in the repository root for full details.
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import {
   type MatrixRTCSession as JsSdkRTCSession,
-  type Status as RTCSessionStatus,
   type Transport,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
@@ -16,53 +15,40 @@ import {
   BehaviorSubject,
   catchError,
   combineLatest,
-  concat,
   distinctUntilChanged,
-  map,
   NEVER,
   type Observable,
-  of,
-  pairwise,
-  race,
-  Subject,
-  switchMap,
+  scan,
 } from "rxjs";
 
 import { type Behavior } from "../reactive/Behavior";
 import { type ObservableScope } from "../reactive/ObservableScope";
 import { type DelayedLeaveTimings, type SessionTimings } from "../config";
-import { type DisconnectReason } from "../api";
+import { type MatrixDisconnectReason } from "../api";
 import {
   type MatrixRTCError,
   MembershipManagerError,
   toMatrixRTCError,
 } from "../errors";
 import {
-  type LocalMediaBackend,
   type MediaBackend,
-  MediaConnectionState,
   type TransportCapabilities,
 } from "../media-backend/api";
 import { type HomeserverConnected } from "./HomeserverConnected";
 
-export enum TransportState {
-  Waiting = "transport_waiting",
-}
-
-export enum PublishState {
-  WaitingForUser = "publish_waiting_for_user",
-  Publishing = "publish_publishing",
-}
-
-export type LocalMemberMediaState =
-  | { connection: MediaConnectionState | MatrixRTCError }
-  | PublishState
-  | MatrixRTCError;
-
-export type LocalMemberState =
-  | MatrixRTCError
-  | TransportState.Waiting
-  | { media: LocalMemberMediaState; matrix: MatrixRTCError | RTCSessionStatus };
+export type MembershipState =
+  /** Asking the homeserver for a transport, or preparing it. */
+  | { kind: "waitingForTransport" }
+  /** Transport known; sending the membership for the first time. */
+  | { kind: "joining" }
+  /** Syncing, membership confirmed by the server, delayed leave still being refreshed. */
+  | { kind: "joined" }
+  /** Was joined and one homeserver link is down; the membership manager is retrying. */
+  | { kind: "reconnecting"; reason: MatrixDisconnectReason }
+  /** A transport, join or membership manager error ended the membership. Terminal unless `left`. */
+  | { kind: "failed"; error: MatrixRTCError }
+  /** `leave()` was called. Terminal. */
+  | { kind: "left" };
 
 /** The local transport, found and prepared, with what the join needs to know about it. */
 export interface PreparedTransport extends TransportCapabilities {
@@ -71,7 +57,6 @@ export interface PreparedTransport extends TransportCapabilities {
 
 interface Props {
   scope: ObservableScope;
-  local: LocalMediaBackend;
   delegateDelayedLeave: MediaBackend["delegateDelayedLeave"];
   preparedTransport$: Observable<PreparedTransport>;
   homeserverConnected: HomeserverConnected;
@@ -89,23 +74,18 @@ interface Props {
 }
 
 export interface LocalMembership {
-  /** Sends the leave and stops publishing. Final: there is no joining again. */
+  /** Sends the leave. Final: there is no joining again. */
   leave: () => void;
-  state$: Behavior<LocalMemberState>;
-  /** Fully connected: to the homeserver, the session and the transport. */
-  connected$: Behavior<boolean>;
-  /** Connected once, and currently not. */
-  reconnecting$: Behavior<boolean>;
-  disconnectReason$: Behavior<DisconnectReason | null>;
+  state$: Behavior<MembershipState>;
 }
 
 /**
- * The local member's state machine: waits for the transport, then publishes
- * and enters the MatrixRTC session, and leaves both in step on `leave()`.
+ * The Matrix side of the local member: waits for the transport, enters the
+ * MatrixRTC session, keeps the delayed leave delegated, and leaves on
+ * `leave()`. Knows nothing about the media.
  */
 export function createLocalMembership$({
   scope,
-  local,
   delegateDelayedLeave,
   preparedTransport$: preparedTransportWithErrors$,
   homeserverConnected,
@@ -118,29 +98,19 @@ export function createLocalMembership$({
 }: Props): LocalMembership {
   const logger = parentLogger.getChild("[LocalMembership]");
 
-  const fatalTransportError$ = new Subject<MatrixRTCError>();
-  const preparedTransport$ = preparedTransportWithErrors$.pipe(
-    catchError((e: unknown) => {
-      fatalTransportError$.next(toMatrixRTCError(e));
-      return NEVER;
-    }),
-  );
+  const transportError$ = new BehaviorSubject<MatrixRTCError | null>(null);
   const transport$ = scope.behavior<PreparedTransport | null>(
-    preparedTransport$,
+    preparedTransportWithErrors$.pipe(
+      catchError((e: unknown) => {
+        transportError$.next(toMatrixRTCError(e));
+        return NEVER;
+      }),
+    ),
     null,
   );
 
   const joined$ = new BehaviorSubject(true);
   const matrixError$ = new BehaviorSubject<MatrixRTCError | null>(null);
-
-  // Nothing leaves this device while it may already have been dropped from
-  // the session: the member would show as away while still being heard
-  combineLatest(
-    [joined$, homeserverConnected.combined$],
-    (joined, [connected]) => joined && connected,
-  )
-    .pipe(distinctUntilChanged(), scope.bind())
-    .subscribe((publish) => local.setPublishing(publish));
 
   scope.reconcile(
     scope.behavior(combineLatest([transport$, joined$])),
@@ -189,78 +159,52 @@ export function createLocalMembership$({
       );
   });
 
-  const mediaState$ = scope.behavior<LocalMemberMediaState>(
-    combineLatest([local.connectionState$, joined$]).pipe(
-      map(([connectionState, joined]) => {
-        if (connectionState !== MediaConnectionState.Connected)
-          return {
-            connection:
-              connectionState instanceof Error
-                ? toMatrixRTCError(connectionState)
-                : connectionState,
-          };
-        return joined ? PublishState.Publishing : PublishState.WaitingForUser;
-      }),
+  const state$ = scope.behavior<MembershipState>(
+    combineLatest([
+      joined$,
+      transportError$,
+      matrixError$,
+      transport$,
+      homeserverConnected.disconnectReason$,
+    ]).pipe(
+      scan(
+        (previous, [joined, transportError, matrixError, transport, reason]) =>
+          membershipState(previous, {
+            joined,
+            error: transportError ?? matrixError,
+            hasTransport: transport !== null,
+            reason,
+          }),
+        { kind: "waitingForTransport" } as MembershipState,
+      ),
       distinctUntilChanged(deepCompare),
     ),
-  );
-
-  const state$ = scope.behavior<LocalMemberState>(
-    concat(
-      of(TransportState.Waiting),
-      race(
-        fatalTransportError$,
-        preparedTransport$.pipe(
-          switchMap(() =>
-            combineLatest(
-              [
-                mediaState$,
-                homeserverConnected.rtsSession$,
-                matrixError$,
-                local.publishError$,
-              ],
-              (media, sessionStatus, matrixError, publishError) => ({
-                matrix: matrixError ?? sessionStatus,
-                media: publishError ? toMatrixRTCError(publishError) : media,
-              }),
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
-
-  const disconnectReason$ = scope.behavior(
-    combineLatest(
-      [homeserverConnected.combined$, local.connectionState$],
-      (
-        [homeserverConnected, reason],
-        connectionState,
-      ): DisconnectReason | null => {
-        if (!homeserverConnected) return reason ?? "sync";
-        if (connectionState !== MediaConnectionState.Connected) return "media";
-        return null;
-      },
-    ),
-  );
-
-  const connected$ = scope.behavior(
-    disconnectReason$.pipe(map((reason) => reason === null)),
-  );
-
-  const reconnecting$ = scope.behavior(
-    connected$.pipe(
-      pairwise(),
-      map(([was, is]) => was && !is),
-    ),
-    false,
   );
 
   return {
     leave: () => joined$.next(false),
     state$,
-    connected$,
-    reconnecting$,
-    disconnectReason$,
   };
+}
+
+interface MembershipInputs {
+  joined: boolean;
+  error: MatrixRTCError | null;
+  hasTransport: boolean;
+  reason: MatrixDisconnectReason | null;
+}
+
+/** The next state, in priority order; `left` and `failed` are absorbing. */
+function membershipState(
+  previous: MembershipState,
+  { joined, error, hasTransport, reason }: MembershipInputs,
+): MembershipState {
+  if (!joined) return { kind: "left" };
+  if (previous.kind === "failed") return previous;
+  if (error !== null) return { kind: "failed", error };
+  if (!hasTransport) return { kind: "waitingForTransport" };
+  if (reason === null) return { kind: "joined" };
+  const wasJoined =
+    previous.kind === "joined" || previous.kind === "reconnecting";
+  return wasJoined ? { kind: "reconnecting", reason } : { kind: "joining" };
 }
