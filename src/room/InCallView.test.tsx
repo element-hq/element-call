@@ -26,7 +26,7 @@ import {
   mockMuteStates,
   mockRtcMembership,
   type MockRTCSession,
-  mockMatrixRTCClient,
+  mockRTCSlot,
   mockRTCMember,
 } from "../utils/test";
 import { E2eeType } from "../e2ee/e2eeType";
@@ -69,11 +69,11 @@ vi.mock("../tile/GridTile");
 vi.mock("../tile/SpotlightTile");
 vi.mock("../e2ee/sharedKeyManagement");
 vi.mock("../tracks/MemberAudioRenderer");
-// ActiveCall builds the client itself; the view is what these tests are about
-const createMatrixRTCClientMock = vi.hoisted(() => vi.fn());
+// ActiveCall builds the slot itself; the view is what these tests are about
+const createRTCSlotMock = vi.hoisted(() => vi.fn());
 vi.mock("@element-hq/matrixrtc-sdk", async (importOriginal) => ({
   ...(await importOriginal<typeof MatrixRTCSdk>()),
-  createMatrixRTCClient: createMatrixRTCClientMock,
+  createRTCSlot: createRTCSlotMock,
 }));
 vi.mock("react-use-measure", () => ({
   default: (): [() => void, object] => [(): void => {}, {}],
@@ -97,8 +97,8 @@ let useRoomEncryptionSystemMock: MockedFunction<typeof useRoomEncryptionSystem>;
 beforeEach(() => {
   vi.clearAllMocks();
 
-  createMatrixRTCClientMock.mockImplementation((scope: ObservableScope) =>
-    mockMatrixRTCClient(scope, {
+  createRTCSlotMock.mockImplementation((scope: ObservableScope) =>
+    mockRTCSlot(scope, {
       localMember$: constant(
         mockRTCMember(true, {
           membership: localRtcMember,
