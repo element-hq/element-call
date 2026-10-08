@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import {
   loadEnv,
+  type Plugin,
   type PluginOption,
   searchForWorkspaceRoot,
   type ConfigEnv,
@@ -196,19 +197,13 @@ function exceptMediaPipeWasm(plugins: PluginOption): PluginOption {
     )
       return plugin;
     const transform = plugin.transform;
-    return {
+    const wrapped: Plugin = {
       ...plugin,
-      transform(this: unknown, code: string, id: string, options: unknown) {
+      transform(code, id, options) {
         if (isLoader(id)) return null;
-        return (
-          transform as (
-            this: unknown,
-            c: string,
-            i: string,
-            o: unknown,
-          ) => unknown
-        ).call(this, code, id, options);
+        return transform.call(this, code, id, options);
       },
-    } as PluginOption;
+    };
+    return wrapped;
   });
 }

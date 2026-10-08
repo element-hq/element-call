@@ -76,8 +76,6 @@ export function applyProcessor(
     }
     const track = videoTrack.mediaStreamTrack;
     videoTrack.setProcessor(processor).catch((e) => {
-      // The pipeline builds one track at a time, so a track can end while its
-      // build waits a turn. The camera's next track attaches it again.
       if (track.readyState === "ended")
         logger.debug("Video processor not attached: the track ended first");
       else logger.warn("Failed to attach video processor", e);
