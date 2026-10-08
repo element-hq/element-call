@@ -14,19 +14,19 @@ import { type MatrixClient, type RoomSummary } from "matrix-js-sdk";
 import { KnockLobbyView } from "./KnockLobbyView";
 import { LeaveToHomeProvider } from "../LeaveToHomeContext";
 import { MediaDevicesContext } from "../MediaDevicesContext";
-import { type ProcessorState } from "../tracks/TrackProcessorContext";
+import { type BackgroundEffectsState } from "../tracks/BackgroundEffectsContext";
 import { mockMediaDevices } from "../utils/test";
 
 vi.mock("@livekit/components-react", () => ({
   usePreviewTracks: (): unknown[] => [],
 }));
 
-vi.mock("../tracks/TrackProcessorContext", () => ({
-  useTrackProcessor: (): ProcessorState => ({
+vi.mock("../tracks/BackgroundEffectsContext", () => ({
+  useBackgroundEffects: (): BackgroundEffectsState => ({
     supported: false,
     processor: undefined,
   }),
-  useTrackProcessorSync: (): void => {},
+  useSyncBackgroundEffects: (): void => {},
 }));
 
 vi.mock("react-use-measure", () => ({

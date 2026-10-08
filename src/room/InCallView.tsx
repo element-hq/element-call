@@ -109,7 +109,7 @@ import { useBehavior } from "../useBehavior.ts";
 import { useValueBehavior } from "../useValueBehavior.ts";
 import { Toast } from "../Toast.tsx";
 import overlayStyles from "../Overlay.module.css";
-import { useTrackProcessorState$ } from "../tracks/TrackProcessorContext.tsx";
+import { useBackgroundEffectsState$ } from "../tracks/BackgroundEffectsContext.tsx";
 import { type Layout } from "../state/layout-types.ts";
 import { ObservableScope } from "../state/ObservableScope.ts";
 import { CallFooter, type FooterSnapshot } from "../components/CallFooter.tsx";
@@ -150,7 +150,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
   const urlParams = useUrlParams();
   const hostBridge = useHostBridge();
   const mediaDevices = useMediaDevices();
-  const trackProcessorState$ = useTrackProcessorState$();
+  const backgroundEffectsState$ = useBackgroundEffectsState$();
   // The element we have to draw the call in: the page, or the container a host
   // gave us. Its size, not the window's, decides how the call is laid out.
   const rootElement = useRootElement();
@@ -174,7 +174,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
         props.muteStates,
         mediaDevices,
         capture,
-        trackProcessorState$.value.processor,
+        backgroundEffectsState$.value.processor,
       ),
     });
 
@@ -189,7 +189,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
         encryptionSystem: props.e2eeSystem,
         capture,
         videoProcessor$: scope.behavior(
-          trackProcessorState$.pipe(map((state) => state.processor)),
+          backgroundEffectsState$.pipe(map((state) => state.processor)),
         ),
         hostBridge,
         autoLeaveWhenOthersLeft,
@@ -219,7 +219,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     urlParams,
     hostBridge,
     mediaDevices,
-    trackProcessorState$,
+    backgroundEffectsState$,
     props.client,
     rootElement,
   ]);
@@ -250,7 +250,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     props.onLeft,
     urlParams,
     mediaDevices,
-    trackProcessorState$,
+    backgroundEffectsState$,
     props.client,
     vm,
   ]);

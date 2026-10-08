@@ -74,7 +74,7 @@ import {
 import { MediaDevicesContext } from "../src/MediaDevicesContext";
 import { MediaDevices } from "../src/state/MediaDevices";
 import { ObservableScope } from "../src/state/ObservableScope";
-import { ProcessorProvider } from "../src/tracks/TrackProcessorContext";
+import { BackgroundEffectsProvider } from "../src/tracks/BackgroundEffectsContext";
 import { Config } from "../src/config/Config";
 import { type ConfigOptions } from "../src/config/ConfigOptions";
 import { i18n } from "../src/utils/i18n";
@@ -255,7 +255,7 @@ export const ElementCall: FC<ElementCallProps> = ({
                         <TooltipProvider>
                           <ClientProvider client={client}>
                             <MediaDevicesContext value={mediaDevices}>
-                              <ProcessorProvider>
+                              <BackgroundEffectsProvider>
                                 <CallView
                                   client={client}
                                   rtcSession={rtcSession}
@@ -264,7 +264,7 @@ export const ElementCall: FC<ElementCallProps> = ({
                                   preload={params.preload}
                                   skipLobby={params.skipLobby}
                                 />
-                              </ProcessorProvider>
+                              </BackgroundEffectsProvider>
                             </MediaDevicesContext>
                           </ClientProvider>
                         </TooltipProvider>

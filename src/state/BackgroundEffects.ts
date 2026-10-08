@@ -17,8 +17,8 @@ import { type Behavior } from "./Behavior";
 import { type ObservableScope } from "./ObservableScope";
 import {
   fromLivekitProcessor,
-  type ProcessorState,
-} from "../tracks/TrackProcessorContext";
+  type BackgroundEffectsState,
+} from "../tracks/BackgroundEffectsContext";
 
 const blurRadius = 15;
 
@@ -33,7 +33,7 @@ export interface BackgroundEffectsOptions {
 
 /** The background effect pipeline, as the camera tracks and the menus see it. */
 export class BackgroundEffects {
-  public readonly state$: Behavior<ProcessorState>;
+  public readonly state$: Behavior<BackgroundEffectsState>;
 
   public constructor(
     scope: ObservableScope,
@@ -43,7 +43,7 @@ export class BackgroundEffects {
     const processor = fromLivekitProcessor(pipeline);
     this.state$ = scope.behavior(
       blur$.pipe(
-        scan<boolean, ProcessorState>(
+        scan<boolean, BackgroundEffectsState>(
           (previous, wanted) => {
             // Attached the first time an effect is wanted and never detached
             // after, so someone who never turns one on pays for none of it.
