@@ -465,6 +465,11 @@ export interface CallViewModel {
    * Whether the app is currently reconnecting to the LiveKit server and/or setting the matrix rtc room state.
    */
   reconnecting$: Behavior<boolean>;
+  /**
+   * Whether only LiveKit's signalling connection is being re-established,
+   * with media still flowing.
+   */
+  signalReconnecting$: Behavior<boolean>;
 
   /**
    * Shortcut for not requireing to parse and combine connectionState.matrix and connectionState.livekit
@@ -1751,6 +1756,7 @@ export function createCallViewModel$(
     earpieceMode$: earpieceMode$,
     audioOutputSwitcher$: audioOutputSwitcher$,
     reconnecting$: localMembership.reconnecting$,
+    signalReconnecting$: localMembership.signalReconnecting$,
     livekitRoomItems$,
     connected$: localMembership.connected$,
     screenShareError$: localMembership.screenShareError$,
