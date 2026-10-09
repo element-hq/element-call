@@ -76,7 +76,7 @@ for (const { hostShape, guestShape, hostFlows, guestFlows } of cases) {
     await advertiseTransport(page, shapes[hostShape]);
     const hostRequests = recordAuthRequests(page);
     await page.goto("/");
-    await SpaHelpers.createCall(page, "Androl", "HelloCall", true, "2_0");
+    await SpaHelpers.createCall(page, "Androl", "HelloCall", true);
     const inviteLink = await SpaHelpers.getCallInviteLink(page);
 
     // The guest joins.
@@ -84,12 +84,7 @@ for (const { hostShape, guestShape, hostFlows, guestFlows } of cases) {
     const guestPage = await guestContext.newPage();
     await advertiseTransport(guestPage, shapes[guestShape]);
     const guestRequests = recordAuthRequests(guestPage);
-    await SpaHelpers.joinCallFromInviteLink(
-      guestPage,
-      inviteLink,
-      "Pevara",
-      "2_0",
-    );
+    await SpaHelpers.joinCallFromInviteLink(guestPage, inviteLink, "Pevara");
 
     // Wait for the call to connect and render.
     await SpaHelpers.expectVideoTilesCount(page, 2);
@@ -117,7 +112,7 @@ test("Subscriber falls back to the JWT service when the homeserver lacks MSC4195
   // The host starts the call with both transport shapes.
   await advertiseTransport(page, shapes.both);
   await page.goto("/");
-  await SpaHelpers.createCall(page, "Androl", "HelloCall", true, "2_0");
+  await SpaHelpers.createCall(page, "Androl", "HelloCall", true);
   const inviteLink = await SpaHelpers.getCallInviteLink(page);
 
   // The guest joins but their C-S requests fail.
@@ -125,12 +120,7 @@ test("Subscriber falls back to the JWT service when the homeserver lacks MSC4195
   const guestPage = await guestContext.newPage();
   await rejectCsApiTokens(guestPage);
   const guestRequests = recordAuthRequests(guestPage);
-  await SpaHelpers.joinCallFromInviteLink(
-    guestPage,
-    inviteLink,
-    "Pevara",
-    "2_0",
-  );
+  await SpaHelpers.joinCallFromInviteLink(guestPage, inviteLink, "Pevara");
 
   // Wait for the call to connect and render.
   await SpaHelpers.expectVideoTilesCount(page, 2);
@@ -164,7 +154,7 @@ test("Publisher shows an error when the homeserver lacks MSC4195", async ({
   await advertiseTransport(page, shapes.url);
   await rejectCsApiTokens(page);
   await page.goto("/");
-  await SpaHelpers.createCall(page, "Androl", "HelloCall", true, "2_0");
+  await SpaHelpers.createCall(page, "Androl", "HelloCall", true);
 
   // We land on an error page.
   await expect(
@@ -187,7 +177,7 @@ test("Delegated leave on a url transport ends the membership when the guest drop
   // The host starts the call.
   await advertiseTransport(page, shapes.url);
   await page.goto("/");
-  await SpaHelpers.createCall(page, "Androl", "HelloCall", true, "2_0");
+  await SpaHelpers.createCall(page, "Androl", "HelloCall", true);
   const inviteLink = await SpaHelpers.getCallInviteLink(page);
 
   // The guest joins.
@@ -196,12 +186,7 @@ test("Delegated leave on a url transport ends the membership when the guest drop
   await advertiseTransport(guestPage, shapes.url);
   const delayedLeave = recordDelayedLeave(guestPage);
   const delegations = recordDelegations(guestPage);
-  await SpaHelpers.joinCallFromInviteLink(
-    guestPage,
-    inviteLink,
-    "Pevara",
-    "2_0",
-  );
+  await SpaHelpers.joinCallFromInviteLink(guestPage, inviteLink, "Pevara");
 
   // Wait for the call to connect and render.
   await SpaHelpers.expectVideoTilesCount(page, 2);
@@ -241,7 +226,7 @@ test("Subscribers get tokens for a remote homeserver's SFU over federation", asy
   await advertiseTransport(page, { type: "livekit", url: otherSfuUrl });
   const hostRequests = recordAuthRequests(page);
   await page.goto("/");
-  await SpaHelpers.createCall(page, "Androl", "HelloCall", true, "2_0");
+  await SpaHelpers.createCall(page, "Androl", "HelloCall", true);
   const inviteLink = await SpaHelpers.getCallInviteLink(page);
 
   // The guest lives on the default homeserver and joins over federation.
@@ -253,7 +238,6 @@ test("Subscribers get tokens for a remote homeserver's SFU over federation", asy
     guestPage,
     `${inviteLink}&viaServers=${otherHomeserver.server_name}`,
     "Pevara",
-    "2_0",
   );
 
   // Wait for the call to connect and render.
