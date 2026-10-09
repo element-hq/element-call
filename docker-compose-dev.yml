@@ -3,8 +3,7 @@ networks:
 
 services:
   auth-service:
-    # Need to use rolling main until the `member_id` change has been released.
-    image: ghcr.io/element-hq/lk-jwt-service:latest-ci
+    image: ghcr.io/element-hq/lk-jwt-service:0.8.0
     pull_policy: always
     hostname: auth-server
     environment:
@@ -34,8 +33,7 @@ services:
       - ecbackend
 
   auth-service-1:
-    # Need to use rolling main until the `member_id` change has been released.
-    image: ghcr.io/element-hq/lk-jwt-service:latest-ci
+    image: ghcr.io/element-hq/lk-jwt-service:0.8.0
     pull_policy: always
     hostname: auth-server-1
     environment:
