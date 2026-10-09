@@ -230,7 +230,6 @@ describe("UrlParams", () => {
       showControls: true,
       hideScreensharing: false,
       allowIceFallback: false,
-      perParticipantE2EE: false,
       controlledAudioDevices: false,
       skipLobby: false,
       returnToLobby: false,
@@ -243,7 +242,6 @@ describe("UrlParams", () => {
       showControls: true,
       hideScreensharing: false,
       allowIceFallback: true,
-      perParticipantE2EE: true,
       controlledAudioDevices: platform === "desktop" ? false : true,
       skipLobby: true,
       returnToLobby: false,
@@ -256,7 +254,6 @@ describe("UrlParams", () => {
       showControls: true,
       hideScreensharing: false,
       allowIceFallback: true,
-      perParticipantE2EE: true,
       controlledAudioDevices: platform === "desktop" ? false : true,
       skipLobby: false,
       returnToLobby: false,
@@ -499,7 +496,6 @@ describe("UrlParams", () => {
         // A host owns navigation, so Element Call must not offer a way out of
         // the room
         confineToRoom: true,
-        perParticipantE2EE: true,
         // The lobby first, so that the user picks their devices rather than
         // being thrown into the call by the act of being rendered
         skipLobby: false,
@@ -512,7 +508,6 @@ describe("UrlParams", () => {
       expect(configurationForIntent(UserIntent.Unknown)).toMatchObject({
         confineToRoom: false,
         header: HeaderStyle.Standard,
-        perParticipantE2EE: false,
       });
     });
   });
