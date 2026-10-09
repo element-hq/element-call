@@ -21,6 +21,7 @@ import {
   type Room as MatrixRoom,
   type Room,
   type RoomMember,
+  type RoomState,
   TypedEventEmitter,
 } from "matrix-js-sdk";
 import {
@@ -296,7 +297,13 @@ export function mockMatrixRoomMember(
 }
 
 export function mockMatrixRoom(room: Partial<MatrixRoom>): MatrixRoom {
-  return { ...mockEmitter(), ...room } as Partial<MatrixRoom> as MatrixRoom;
+  return {
+    ...mockEmitter(),
+    currentState: {
+      getStateEvents: () => null,
+    } as unknown as RoomState,
+    ...room,
+  } as Partial<MatrixRoom> as MatrixRoom;
 }
 
 export function mockLivekitRoom(

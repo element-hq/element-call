@@ -17,7 +17,13 @@ import {
 import { SyncState } from "matrix-js-sdk/lib/sync";
 import { BehaviorSubject, combineLatest, map, of } from "rxjs";
 import { onTestFinished, vi } from "vitest";
-import { ClientEvent, type RoomMember, type MatrixClient } from "matrix-js-sdk";
+import {
+  ClientEvent,
+  type MatrixEvent,
+  type RoomMember,
+  type RoomState,
+  type MatrixClient,
+} from "matrix-js-sdk";
 import EventEmitter from "events";
 import * as ComponentsCore from "@livekit/components-core";
 
@@ -70,6 +76,7 @@ export interface CallViewModelInputs {
   remoteParticipants$: Behavior<RemoteParticipant[]>;
   rtcMembers$: Behavior<Partial<CallMembership>[]>;
   roomMembers: RoomMember[];
+  functionalMembers: string[];
   livekitConnectionState$: Behavior<ConnectionState>;
   speaking: Map<Participant, Behavior<boolean>>;
   videoEnabled: Map<Participant, Behavior<boolean>>;
@@ -95,6 +102,7 @@ export function withCallViewModel(mode: MatrixRTCMode) {
         dave,
         daveRTL,
       ],
+      functionalMembers = [],
       livekitConnectionState$: connectionState$ = constant(
         ConnectionState.Connected,
       ),
@@ -141,6 +149,12 @@ export function withCallViewModel(mode: MatrixRTCMode) {
       })() as Partial<MatrixClient> as MatrixClient,
       getMembers: () => roomMembers,
       getMembersWithMembership: () => roomMembers,
+      currentState: {
+        getStateEvents: () =>
+          ({
+            getContent: () => ({ service_members: functionalMembers }),
+          }) as unknown as MatrixEvent,
+      } as unknown as RoomState,
     });
     const rtcSession = new MockRTCSession(room, []).withMemberships(
       rtcMembers$,
