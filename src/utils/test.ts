@@ -128,12 +128,34 @@ export function testScope(): ObservableScope {
 }
 
 /**
- * Run Observables with a scheduler that virtualizes time, for testing purposes.
+ * Runs a test against virtual time, with marble diagrams describing when
+ * things happen. One frame is one millisecond. Timers and Date are faked for
+ * the duration of the run and advance with the marbles, so the code under test
+ * may time things with rxjs or with plain timers alike.
  */
 export function withTestScheduler(
   continuation: (helpers: OurRunHelpers) => void,
 ): void {
-  const scheduler = new TestScheduler((actual, expected) => {
+  const ownsClock = !vi.isFakeTimers();
+  // A date set without fake timers is a mock of its own, to give back after
+  const mockedDate = ownsClock ? vi.getMockedSystemTime() : null;
+  if (ownsClock) vi.useFakeTimers();
+  else if ((Date as { isFake?: boolean }).isFake !== true)
+    throw new Error("withTestScheduler needs Date faked along with the timers");
+  try {
+    runWithTestScheduler(continuation);
+  } finally {
+    if (ownsClock) {
+      vi.useRealTimers();
+      if (mockedDate !== null) vi.setSystemTime(mockedDate);
+    }
+  }
+}
+
+function runWithTestScheduler(
+  continuation: (helpers: OurRunHelpers) => void,
+): void {
+  const scheduler = new FakeClockTestScheduler((actual, expected) => {
     expect(actual).toStrictEqual(expected);
   });
   const scope = new ObservableScope();
@@ -184,6 +206,95 @@ export function withTestScheduler(
     }),
   );
   scope.end();
+}
+
+// A run that keeps rescheduling would otherwise never end
+const maxStepsPerRun = 100_000;
+
+/**
+ * A TestScheduler whose virtual time is vitest's fake clock, so that timers
+ * set outside rxjs, and Date, advance in step with the marble diagrams. Raw
+ * timers due on a frame run before the rxjs actions due on that frame.
+ */
+class FakeClockTestScheduler extends TestScheduler {
+  public constructor(
+    assertDeepEqual: (actual: unknown, expected: unknown) => boolean | void,
+  ) {
+    super(assertDeepEqual);
+    const start = Date.now();
+    // Every read of the frame has to see the fake clock, so that an rxjs
+    // timer started from a raw timer's callback is scheduled relative to when
+    // that callback ran, not to the last rxjs action
+    Object.defineProperty(this, "frame", {
+      get: () => Date.now() - start,
+      set: () => {},
+    });
+  }
+
+  public override flush(): void {
+    // The inherited flush sets up the hot Observables, runs the actions and
+    // then checks the expectations. The actions have to take turns with raw
+    // timers in time order, so they are run here, and the inherited flush is
+    // left with nothing but the expectations to check.
+    while (this.hotObservables.length > 0) this.hotObservables.shift()!.setup();
+    this.runActions();
+    super.flush();
+  }
+
+  private runActions(): void {
+    const { actions, maxFrames } = this;
+    let steps = 0;
+    const step = (): void => {
+      if (++steps > maxStepsPerRun)
+        throw new Error(
+          `Still running after ${maxStepsPerRun} timer steps; a timer that keeps rescheduling has to be cleared before the run ends`,
+        );
+      vi.advanceTimersToNextTimer();
+    };
+    try {
+      for (;;) {
+        const action = actions[0];
+        if (action === undefined) {
+          if (vi.getTimerCount() === 0) break;
+          step();
+          continue;
+        }
+        if (action.delay > maxFrames) break;
+        if (!this.reach(action, step)) continue;
+        actions.shift();
+        const error: unknown = action.execute(action.state, action.delay);
+        if (error) throw error;
+      }
+    } catch (error) {
+      for (const action of actions.splice(0)) action.unsubscribe();
+      throw error;
+    }
+  }
+
+  /**
+   * Brings the clock up to the action's frame, running the raw timers due
+   * before or on it. False if one of them queued an action that is due sooner,
+   * or took this one back.
+   */
+  private reach(
+    action: (typeof this.actions)[number],
+    step: () => void,
+  ): boolean {
+    const wait = action.delay - this.frame;
+    if (vi.getTimerCount() === 0) {
+      if (wait > 0) vi.advanceTimersByTime(wait);
+      return true;
+    }
+    // The sentinel stops the clock from running past the frame
+    const sentinel = setTimeout(() => {}, wait);
+    try {
+      do step();
+      while (this.frame < action.delay && this.actions[0] === action);
+    } finally {
+      clearTimeout(sentinel);
+    }
+    return this.actions[0] === action;
+  }
 }
 
 interface EmitterMock<T> {
