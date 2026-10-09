@@ -40,6 +40,7 @@ import {
   takeUntil,
   from,
   concatWith,
+  catchError,
 } from "rxjs";
 import { type Logger, logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import {
@@ -584,6 +585,7 @@ export function createCallViewModel$(
   const connectionManager: IConnectionManager = {
     connectionManagerData$: scope.behavior(
       localTransport$.pipe(
+        catchError(() => NEVER), // Swallow errors
         concatWith(NEVER), // So the Observable doesn't complete prematurely
         mapScoped("connectionManager$", (scope, localTransport) =>
           createConnectionManager$({
