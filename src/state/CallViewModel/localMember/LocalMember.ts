@@ -485,6 +485,10 @@ export const createLocalMembership$ = ({
     ),
   );
 
+  const authenticated$ = scope.behavior(
+    localConnectionState$.pipe(map(({ state }) => state === "authenticated")),
+  );
+
   const mediaState$: Behavior<LocalMemberMediaState> = scope.behavior(
     combineLatest([
       localConnectionState$,
@@ -670,13 +674,7 @@ export const createLocalMembership$ = ({
   // Join and leave the session as needed
   scope.reconcile(
     scope.behavior(
-      combineLatest([
-        joinParams$,
-        joinAndPublishRequested$,
-        localConnectionState$.pipe(
-          map(({ state }) => state === "authenticated"),
-        ),
-      ]),
+      combineLatest([joinParams$, joinAndPublishRequested$, authenticated$]),
     ),
     async ([joinParams, shouldConnect, authenticated]) => {
       const sessionConfig = Config.get().matrix_rtc_session;
