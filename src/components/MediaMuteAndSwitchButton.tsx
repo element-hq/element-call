@@ -345,6 +345,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
           // Keeps the items the menu's own children for assistive tech.
           role="none"
           className={styles.deviceList}
+          data-testid="device-list"
           style={
             {
               "--device-list-max-height":
