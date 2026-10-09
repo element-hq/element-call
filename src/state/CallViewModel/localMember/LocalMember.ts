@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
+  ConnectionState as LivekitConnectionState,
   type Participant,
   ParticipantEvent,
   type LocalParticipant,
@@ -73,9 +74,8 @@ import {
 } from "../../../config/ConfigOptions.ts";
 import { Config } from "../../../config/Config.ts";
 import {
-  ConnectionState,
+  type ConnectionState,
   type Connection,
-  type FailedToStartError,
 } from "../remoteMembers/Connection.ts";
 import { type HomeserverConnected } from "./HomeserverConnected.ts";
 import {
@@ -116,7 +116,7 @@ export enum TrackState {
 export type LocalMemberMediaState =
   | {
       tracks: TrackState;
-      connection: ConnectionState | FailedToStartError;
+      connection: ConnectionState;
     }
   | PublishState
   | ElementCallError;
@@ -480,7 +480,9 @@ export const createLocalMembership$ = ({
   };
 
   const localConnectionState$ = localConnection$.pipe(
-    switchMap((connection) => (connection ? connection.state$ : of(null))),
+    switchMap((connection) =>
+      connection ? connection.state$ : of({ state: "initializing" as const }),
+    ),
   );
 
   const mediaState$: Behavior<LocalMemberMediaState> = scope.behavior(
@@ -498,7 +500,9 @@ export const createLocalMembership$ = ({
           : TrackState.WaitingForUser;
 
         if (
-          localConnectionState !== ConnectionState.LivekitConnected ||
+          localConnectionState.state !== "authenticated" ||
+          localConnectionState.livekitState !==
+            LivekitConnectionState.Connected ||
           trackState !== TrackState.Ready
         )
           return {
@@ -566,7 +570,11 @@ export const createLocalMembership$ = ({
     combineLatest([
       homeserverConnected.combined$,
       localConnectionState$.pipe(
-        map((state) => state === ConnectionState.LivekitConnected),
+        map(
+          (state) =>
+            state.state === "authenticated" &&
+            state.livekitState === LivekitConnectionState.Connected,
+        ),
       ),
     ]).pipe(
       map(([[hsConnected, hsReason], livekitConnected]) => {
@@ -661,34 +669,44 @@ export const createLocalMembership$ = ({
 
   // Join and leave the session as needed
   scope.reconcile(
-    scope.behavior(combineLatest([joinParams$, joinAndPublishRequested$])),
-    async ([joinParams, shouldConnect]) => {
-      if (!joinParams) return;
-      // if shouldConnect=false we will do the disconnect as the cleanup from the previous reconcile iteration.
-      if (!shouldConnect) return;
+    scope.behavior(
+      combineLatest([
+        joinParams$,
+        joinAndPublishRequested$,
+        localConnectionState$.pipe(
+          map(({ state }) => state === "authenticated"),
+        ),
+      ]),
+    ),
+    async ([joinParams, shouldConnect, authenticated]) => {
       const sessionConfig = Config.get().matrix_rtc_session;
 
-      try {
-        joinMatrixRTC(
-          joinParams.transport,
-          joinParams.delegationSupported
-            ? sessionConfig.delegated_delayed_leave
-            : sessionConfig.delayed_leave,
-        );
-      } catch (error) {
-        logger.error("Error entering RTC session", error);
-        if (error instanceof Error)
-          setMatrixError(new MembershipManagerError(error));
-      }
-
-      return Promise.resolve(async (): Promise<void> => {
+      // Only join once authenticated, to ensure the LiveKit room exists first.
+      // Otherwise, subscribers authenticating with the OpenID flow may fail to
+      // join (they lack permission to create the room) and never retry.
+      if (joinParams && shouldConnect && authenticated) {
         try {
-          // TODO Update matrixRTCSession to allow udpating the transport without leaving the session!
-          await matrixRTCSession.leave(1000);
-        } catch (e) {
-          logger.error("Error leaving RTC session", e);
+          joinMatrixRTC(
+            joinParams.transport,
+            joinParams.delegationSupported
+              ? sessionConfig.delegated_delayed_leave
+              : sessionConfig.delayed_leave,
+          );
+        } catch (error) {
+          logger.error("Error entering RTC session", error);
+          if (error instanceof Error)
+            setMatrixError(new MembershipManagerError(error));
         }
-      });
+
+        // Clean-up callback to leave the session
+        return Promise.resolve(async (): Promise<void> => {
+          try {
+            await matrixRTCSession.leave(1000);
+          } catch (e) {
+            logger.error("Error leaving RTC session", e);
+          }
+        });
+      }
     },
   );
 
