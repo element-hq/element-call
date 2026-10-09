@@ -73,14 +73,6 @@ test("the modal renders as a drawer in mobile viewports", () => {
 });
 
 test("the modal can be closed by clicking the backdrop, in another window too", async () => {
-  // The drawer test above leaves a touchscreen matchMedia behind; this is
-  // about the desktop dialog
-  window.matchMedia = (): MediaQueryList =>
-    ({
-      matches: false,
-      addEventListener: (): void => {},
-      removeEventListener: (): void => {},
-    }) as unknown as MediaQueryList;
   // A dialog moved into another window, as a host does for a Document
   // Picture-in-Picture window: its nodes are not `Node`s of this window
   const frame = document.createElement("iframe");
