@@ -5,12 +5,15 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { describe, expect, it, beforeEach } from "vitest";
+import { describe, expect, it, beforeEach, vi } from "vitest";
+import { logger } from "matrix-js-sdk/lib/logger";
 
+import { MatrixRTCMode } from "../config/ConfigOptions";
 import {
   Setting,
   parseResolution,
   seedSettingsFromConfig,
+  defaultMatrixRTCMode,
   screenShareCodec,
   screenShareResolution,
   screenShareFramerate,
@@ -35,6 +38,28 @@ describe("parseResolution", () => {
 
   it("parses non-standard resolutions", () => {
     expect(parseResolution("640x360")).toEqual({ width: 640, height: 360 });
+  });
+});
+
+describe("defaultMatrixRTCMode", () => {
+  it("is Compatibility when the build sets nothing", () => {
+    expect(defaultMatrixRTCMode(undefined)).toBe(MatrixRTCMode.Compatibility);
+  });
+
+  it.each([MatrixRTCMode.Compatibility, MatrixRTCMode.Matrix_2_0])(
+    "takes a valid build value (%s)",
+    (mode) => {
+      expect(defaultMatrixRTCMode(mode)).toBe(mode);
+    },
+  );
+
+  it("ignores an invalid build value and warns", () => {
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => {});
+    expect(defaultMatrixRTCMode("nonsense")).toBe(MatrixRTCMode.Compatibility);
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("VITE_MATRIX_RTC_MODE"),
+    );
+    warn.mockRestore();
   });
 });
 
