@@ -36,6 +36,9 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
+  // Time out in CI after almost 1 hour, so that we're guaranteed to produce a
+  // report before GitHub cancels the runner
+  globalTimeout: process.env.CI ? 55 * 60 * 1000 : undefined,
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
