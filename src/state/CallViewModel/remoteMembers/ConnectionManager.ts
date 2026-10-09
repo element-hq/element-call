@@ -190,7 +190,7 @@ export function createConnectionManager$({
               )
                 ? ("publisher" as const)
                 : ("subscriber" as const);
-            // In order to maintain a consistent set of map keys, we must
+            // In order to maintain a static set of map keys, we must
             // temporarily downgrade `transport` to a weaker type
             const { url, serviceUrl } = unpackTransport(transport);
             yield {

@@ -12,6 +12,7 @@ import {
   ExternalE2EEKeyProvider,
   type Room as LivekitRoom,
   type RoomOptions,
+  type RemoteParticipant,
 } from "livekit-client";
 import { type Room as MatrixRoom } from "matrix-js-sdk";
 import {
@@ -735,33 +736,44 @@ export function createCallViewModel$(
       map((d) => d.value.getConnections()),
     ),
   );
+
   const livekitRoomItems$ = scope.behavior<LivekitRoomItem[]>(
-    allConnections$.pipe(
-      switchMap((connections) => {
-        if (connections.length === 0) return of([]);
+    remoteMatrixLivekitMembers$.pipe(
+      // Flatten the members to a snapshot of their current connections and
+      // participant objects
+      switchMap(({ value: members }) => {
+        if (members.length === 0) return of([]);
         return combineLatest(
-          connections.map((connection) =>
-            remoteMatrixLivekitMembers$.pipe(
-              switchMap((members) => {
-                if (members.value.length === 0) return of([]);
-                return combineLatest(
-                  members.value.map((m) => m.participant.value$),
-                );
-              }),
-              map((participants) => ({
-                transport: {
-                  transport: connection.transport,
-                  serverName: connection.serverName,
-                },
-                livekitRoom: connection.livekitRoom,
-                participants: participants
-                  .filter((p) => p !== null)
-                  .map((p) => p.identity),
-              })),
+          members.map((m) =>
+            combineLatest(
+              [m.connection$, m.participant.value$],
+              (connection, participant) => ({ connection, participant }),
             ),
           ),
         );
       }),
+      // Keep only those with a defined connection and participant
+      map((members) =>
+        members.filter(
+          (
+            m,
+          ): m is { connection: Connection; participant: RemoteParticipant } =>
+            m.connection !== null && m.participant !== null,
+        ),
+      ),
+      // Group members by connection
+      map((members) =>
+        [...Map.groupBy(members, (m) => m.connection)].map(
+          ([connection, members]) => ({
+            transport: {
+              transport: connection.transport,
+              serverName: connection.serverName,
+            },
+            livekitRoom: connection.livekitRoom,
+            participants: members.map((m) => m.participant.identity),
+          }),
+        ),
+      ),
     ),
   );
 
