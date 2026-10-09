@@ -1649,9 +1649,9 @@ export function createCallViewModel$(
           returnObject.publishError = value.media;
         else if (
           typeof value.media === "object" &&
-          value.media.connection instanceof ElementCallError
+          value.media.connection.state === "error"
         )
-          returnObject.connectionError = value.media.connection;
+          returnObject.connectionError = value.media.connection.error;
         return returnObject;
       }),
     ),
