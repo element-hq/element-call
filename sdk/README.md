@@ -1,59 +1,72 @@
-# SDK mode (EXPERIMENTAL)
+# MatrixRTC SDK (EXPERIMENTAL)
 
-EC can be build in sdk mode. This will result in a compiled js file that can be imported in very simple webapps.
+`@element-hq/matrixrtc-sdk` is the call model under Element Call, on its own:
+MatrixRTC memberships and transports, media connections, publishing, E2EE keys and
+the media of every member, as observables. It has no UI. Element Call's own
+`CallViewModel` is meant to become one consumer of it. The design is in
+[`SdkArchitecture.md`](./SdkArchitecture.md), the migration from the view model
+in [`SdkMigration.md`](./SdkMigration.md). Media goes through one media backend
+behind `MediaBackend`; LiveKit, under `src/media-backend/livekit/`, is the only one
+today and the only place that imports `livekit-client`.
 
-It allows to use matrixRTC in combination with livekit without relying on element call.
+**Status:** first implementation. `createMatrixRTCClient` joins the session, connects to
+the transport, publishes the local media and exposes every member's media; the
+development harness and its e2e tests in `playwright/sdk` drive it, and Element
+Call's own `CallViewModel` is built on it. It depends on nothing in Element Call's
+`src/`.
 
-This is done by instantiating the call view model and exposing some useful behaviors (observables) and methods.
+## Using it
 
-This folder contains an example index.html file that showcases the sdk in use (hosted on localhost:8123 with a webserver allowing cors (for example `npx serve -l 81234 --cors`)) as a godot engine HTML export template.
+```ts
+import {
+  createMatrixRTCClient,
+  E2eeType,
+  MatrixRTCMode,
+  ObservableScope,
+} from "@element-hq/matrixrtc-sdk";
 
-## Getting started
+const scope = new ObservableScope();
+const rtcClient = createMatrixRTCClient(
+  scope,
+  client, // a matrix-js-sdk MatrixClient, logged in and syncing
+  room, // the matrix-js-sdk Room, from client.getRoom() once the join has synced
+  {
+    encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+    matrixRTCMode: MatrixRTCMode.Compatibility,
+    publish: [{ source: "microphone" }, { source: "camera" }],
+  },
+);
+rtcClient.join();
 
-To get started run
+rtcClient.remoteMembers$.subscribe((members) => {
+  // each member has displayName$, tracks$ and more; a media track is rendered
+  // by handing it a <video> or <audio> element: track.attach(element)
+});
 
-```
-pnpm install
-pnpm build:sdk
-```
-
-in the repository root.
-
-It will create a `dist` folder containing the compiled js file.
-
-This file needs to be hosted. Locally (via `npx serve -l 81234 --cors`) or on a remote server.
-
-Now you just need to add the widget to element web via:
-
-```
-/addwidget http://localhost:3000?widgetId=$matrix_widget_id&perParticipantE2EE=true&userId=$matrix_user_id&deviceId=$org.matrix.msc3819.matrix_device_id&baseUrl=$org.matrix.msc4039.matrix_base_url&roomId=$matrix_room_id
-```
-
-## Widgets
-
-The sdk mode is particularly interesting to be used in widgets. In widgets you do not need to pay attention to matrix login/cs api ...
-To create a widget see the example `index.html` file in this folder. And add it to EW via:
-`/addwidget <widgetUrl>` (see **url parameters** for more details on `<widgetUrl>`)
-
-### url parameters
-
-The url parameters are needed to pass initial data to the widget. They will automatically be used
-by the matrixRTCSdk to start the postmessage widget api (communication between the client (e.g. Element Web) and the widget)
-
-```
-widgetId = $matrix_widget_id
-perParticipantE2EE = true
-userId = $matrix_user_id
-deviceId = $org.matrix.msc3819.matrix_device_id
-baseUrl = $org.matrix.msc4039.matrix_base_url
-```
-
-`parentUrl = // will be inserted automatically`
-
-Full template use as `<widgetUrl>`:
-
-```
-http://localhost:3000?widgetId=$matrix_widget_id&perParticipantE2EE=true&userId=$matrix_user_id&deviceId=$org.matrix.msc3819.matrix_device_id&baseUrl=$org.matrix.msc4039.matrix_base_url&roomId=$matrix_room_id
+// later
+rtcClient.leave();
+scope.end();
 ```
 
-the `$` prefixed variables will be replaced by EW on widget instantiation. (e.g. `$matrix_user_id` -> `@user:example.com` (url encoding will also be applied automatically by EW) -> `%40user%3Aexample.com`)
+[`dev/main.ts`](./dev/main.ts) is this example as a working page.
+
+## Development
+
+Everything runs from the repository root. This directory is a pnpm project of its
+own only so that a host can install it as a git dependency (see
+`pnpm-workspace.yaml`).
+
+```sh
+pnpm dev:sdk              # the harness, https://localhost:3002
+pnpm build:sdk            # dist/matrixrtc-sdk.js and dist/types
+pnpm test:playwright playwright/sdk   # needs `pnpm backend`
+```
+
+## Installing
+
+```sh
+pnpm add github:element-hq/element-call#<ref>&path:/sdk
+```
+
+The host supplies `matrix-js-sdk`, `livekit-client` and `rxjs`; the build leaves
+them external.

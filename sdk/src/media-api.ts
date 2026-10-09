@@ -1,0 +1,187 @@
+/*
+Copyright 2026 Element Creations Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
+/**
+ * The public media types of the SDK: what a member publishes, the tracks it
+ * arrives as and how a host renders them. The client and member types are in
+ * `api.ts`.
+ */
+
+import { type Observable } from "rxjs";
+
+import { type Behavior } from "./reactive/Behavior";
+
+export interface AudioCaptureSettings {
+  echoCancellation?: boolean;
+  noiseSuppression?: boolean;
+  autoGainControl?: boolean;
+}
+
+export type VideoCodec = "vp8" | "h264" | "vp9" | "av1" | "h265";
+
+export interface VideoCaptureSettings {
+  resolution?: { width: number; height: number; frameRate?: number };
+  maxBitrate?: number;
+  maxFramerate?: number;
+  codec?: VideoCodec;
+}
+
+/**
+ * Transforms a camera track before it is published: background blur and the
+ * like. `init` resolves with the track to publish in place of the captured
+ * one; `restart` does the same for a new capture, where the camera changes.
+ */
+export interface VideoProcessor {
+  name: string;
+  init(
+    track: MediaStreamTrack,
+    element?: HTMLMediaElement,
+  ): Promise<MediaStreamTrack>;
+  restart(
+    track: MediaStreamTrack,
+    element?: HTMLMediaElement,
+  ): Promise<MediaStreamTrack>;
+  destroy(): Promise<void>;
+}
+
+/**
+ * One thing to publish: a source, where to capture it from and how to encode
+ * it. Where the device and the settings are left out, the browser's and
+ * LiveKit's defaults apply.
+ */
+export type PublishRequest =
+  | { source: "microphone"; deviceId?: string; capture?: AudioCaptureSettings }
+  | {
+      source: "camera";
+      deviceId?: string;
+      /** Background blur and the like, applied before the first frame is published. */
+      processor?: VideoProcessor;
+      capture?: VideoCaptureSettings;
+    }
+  | {
+      source: "screenShare";
+      /** Whether to capture the screen's audio too. Default true. */
+      audio?: boolean;
+      capture?: VideoCaptureSettings;
+    };
+
+export type MediaSource =
+  | "microphone"
+  | "camera"
+  | "screenShare"
+  | "screenShareAudio"
+  /** Published without a source; the application knows what it is. */
+  | "unknown";
+
+export type MediaStreamStats =
+  | RTCInboundRtpStreamStats
+  | RTCOutboundRtpStreamStats
+  | undefined;
+
+/** One published track of a member. */
+export interface MediaTrack {
+  source: MediaSource;
+  kind: "audio" | "video";
+  /** Stable for the life of the track. */
+  id: string;
+  muted$: Behavior<boolean>;
+  /**
+   * False when the SFU reports the track as unencrypted. Fixed for the life
+   * of the track: a publisher that changes its encryption publishes anew.
+   */
+  encrypted: boolean;
+  /**
+   * Inbound statistics for a remote track, outbound for a local one, polled
+   * every `intervalMs` while the observable is subscribed and not at all
+   * otherwise. Each subscription runs its own poll, so a view shares one.
+   */
+  stats$(intervalMs: number): Observable<MediaStreamStats>;
+  /**
+   * Rendering. The view hands its `<video>` or `<audio>` element over; the SDK
+   * sets its stream and, for video, registers the size and on-screen observers
+   * that pick a simulcast layer and pause the subscription while the element is
+   * hidden. `attach` is idempotent per element; `detach` has to be called
+   * before the element leaves the DOM so those observers are released.
+   */
+  attach(element: HTMLMediaElement): void;
+  detach(element: HTMLMediaElement): void;
+}
+
+export interface AudioMediaTrack extends MediaTrack {
+  kind: "audio";
+  /**
+   * Whether the track carries sound right now, as the backend measures it.
+   * False while muted. A call reads this on the microphone track and calls it
+   * "speaking".
+   * This is different to audioLevel = 0. The backend might run some hysteresis on it.
+   */
+  isActive$: Behavior<boolean>;
+  /**
+   * How loud the track is right now, 0 to 1, as the backend measures it. 0
+   * while muted. Not what decides `isActive$`: the backend applies its own
+   * threshold and hysteresis to that, so a level above 0 may not be active and
+   * an active track may briefly sit at 0.
+   */
+  audioLevel$: Behavior<number>;
+  /** Route playback through Web Audio, for earpiece pan and gain. Undefined resets. */
+  setAudioContext(ctx: AudioContext | undefined, plugins?: AudioNode[]): void;
+  setVolume(volume: number): void;
+}
+
+export interface VideoMediaTrack extends MediaTrack {
+  kind: "video";
+}
+
+/** The controls a member has over a track it publishes itself. */
+export interface LocalMediaTrack {
+  /**
+   * Mutes or unmutes. Resolves with the state that resulted, which differs
+   * from the request where the device could not be used.
+   */
+  setEnabled(enabled: boolean): Promise<boolean>;
+  /** Captures from another device. Rejects for a screen share, which has none. */
+  setDevice(deviceId: string): Promise<void>;
+}
+
+export interface LocalAudioMediaTrack
+  extends AudioMediaTrack, LocalMediaTrack {}
+
+export interface LocalVideoMediaTrack extends VideoMediaTrack, LocalMediaTrack {
+  /** For mirroring; undefined where the camera does not say which way it faces. */
+  facingMode$: Behavior<"user" | "environment" | undefined>;
+  /**
+   * Restarts the camera facing the other way, on devices with a front and a
+   * back camera, and resolves with the id of the device now in use. Does
+   * nothing where the facing mode is unknown.
+   */
+  switchFacingMode(): Promise<string | undefined>;
+  /** Background blur and the like; undefined removes the processor. */
+  setProcessor(processor: VideoProcessor | undefined): Promise<void>;
+}
+
+export type EncryptionError = "MissingKey" | "InvalidKey";
+
+/**
+ * What a member sends, once it has arrived on its transport: its tracks, null
+ * while nothing has arrived for it, and the key errors beside them. The media
+ * backend supplies exactly these two fields per member.
+ */
+export interface MemberMedia {
+  /**
+   * The member's tracks, in publication order, once it has shown up on its
+   * transport; null until then ("waiting for media"). An entry stays the same
+   * object for as long as the same publication is behind it. Which track is
+   * which is in its `source`; `trackBySource$` picks one out.
+   */
+  tracks$: Behavior<(AudioMediaTrack | VideoMediaTrack)[] | null>;
+  /** Emits when the SFU reports a key problem for this member. */
+  encryptionError$: Observable<EncryptionError>;
+}
+
+export interface LocalMemberMedia extends MemberMedia {
+  tracks$: Behavior<(LocalAudioMediaTrack | LocalVideoMediaTrack)[] | null>;
+}
