@@ -167,7 +167,7 @@ test("Publisher shows an error when the homeserver lacks MSC4195", async ({
   ).toBeVisible();
 });
 
-test("Delegated leave on a url transport ends the membership when the guest drops", async ({
+test("Delayed leave event delegated to a url transport gets sent on disconnect", async ({
   browser,
   page,
   browserName,
