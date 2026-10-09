@@ -194,7 +194,7 @@ importers:
         specifier: github:matrix-org/matrix-js-sdk#robin/livekit-updates
         version: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/29099d884f08c90a1bc61b31bae0a937b0dc94ff
       matrix-widget-api:
-        specifier: ^1.20.0
+        specifier: ^1.18.0
         version: 1.20.0
       node-stdlib-browser:
         specifier: ^1.3.1

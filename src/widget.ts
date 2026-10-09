@@ -175,8 +175,6 @@ export const initializeWidget = (
           receiveToDevice: sendRecvToDevice,
           turnServers: false,
           rtcTransports: true,
-          rtcLivekitGetToken: true,
-          rtcLivekitDelegateDelayedLeave: true,
           sendDelayedEvents: true,
           updateDelayedEvents: true,
           sendSticky: true,
