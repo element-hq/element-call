@@ -87,18 +87,16 @@ export async function getSFUConfig({
   let sfuConfig: { url: string; jwt: string } | undefined;
 
   let endpoint: "default" | "legacy";
-  switch (role) {
-    case "publisher":
-      // When publishing a legacy transport (one with a `livekit_service_url`),
-      // subscribers will expect our participant identity to use the legacy
-      // `@user_id:device_id` format. Only the legacy JWT service endpoint
-      // assigns identities in this format, so we must use it.
-      endpoint = "legacy";
-      break;
-    case "subscriber":
-      // Use the default endpoint as it's more likely to allow remote access.
-      endpoint = "default";
-      break;
+  if (role === "publisher") {
+    // When publishing a legacy transport (one with a `livekit_service_url`),
+    // subscribers will expect our participant identity to use the legacy
+    // `@user_id:device_id` format. Only the legacy JWT service endpoint assigns
+    // identities in this format, so we must use it.
+    endpoint = "legacy";
+  } else {
+    // Use the default endpoint as it affords us slightly better metadata
+    // protection (pseudonymous participant identities).
+    endpoint = "default";
   }
 
   try {
