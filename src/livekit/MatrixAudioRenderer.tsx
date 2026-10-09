@@ -19,12 +19,10 @@ import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import { useEarpieceAudioConfig } from "../MediaDevicesContext";
 import { useReactiveState } from "../useReactiveState";
 import * as controls from "../controls";
+import { type TransportLocator } from "./auth";
 
 export interface MatrixAudioRendererProps {
-  /**
-   * The service URL of the LiveKit room.
-   */
-  url: string;
+  transport: TransportLocator;
   livekitRoom: LivekitRoom;
   /**
    * The list of participant identities to render audio for.
@@ -54,7 +52,7 @@ export interface MatrixAudioRendererProps {
  * @public
  */
 export function LivekitRoomAudioRenderer({
-  url,
+  transport,
   livekitRoom,
   validIdentities,
   muted,
@@ -88,7 +86,7 @@ export function LivekitRoomAudioRenderer({
         warnedIdentities.current.add(identity);
         // Log that there is an invalid identity, that means that someone is publishing audio that is not expected to be in the call.
         logger.warn(
-          `Audio track ${identity} from ${url} has no matching matrix call member`,
+          `Audio track ${identity} from ${JSON.stringify(transport)} has no matching matrix call member`,
           `current members: ${validIdentities.join()}`,
           `track will not get rendered`,
         );

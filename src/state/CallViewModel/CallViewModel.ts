@@ -277,7 +277,7 @@ interface LayoutScanState {
 export type LivekitRoomItem = {
   livekitRoom: LivekitRoom;
   participants: string[];
-  url: string;
+  transport: TransportLocator;
 };
 
 /**
@@ -749,7 +749,10 @@ export function createCallViewModel$(
                 );
               }),
               map((participants) => ({
-                url: JSON.stringify(connection.transport), // TODO
+                transport: {
+                  transport: connection.transport,
+                  serverName: connection.serverName,
+                },
                 livekitRoom: connection.livekitRoom,
                 participants: participants
                   .filter((p) => p !== null)

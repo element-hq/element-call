@@ -231,7 +231,7 @@ export async function createMatrixRTCSdk(
       complete: () => {
         logger.info("Livekit room items subscription completed");
         for (const item of callViewModel.livekitRoomItems$.value) {
-          logger.info("unregistering room item from room", item.url);
+          logger.info("unregistering room item from room", item.transport);
           item.livekitRoom.unregisterTextStreamHandler(TEXT_LK_TOPIC);
         }
       },
