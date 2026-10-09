@@ -42,7 +42,10 @@ export default defineConfig({
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: "html",
+  // The list reporter is the only progress a hung CI run leaves behind.
+  reporter: process.env.CI ? [["list"], ["html"]] : "html",
+  // Under the job's 60 minute limit, so a hung run still ends with a report.
+  globalTimeout: process.env.CI ? 50 * 60 * 1000 : undefined,
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
