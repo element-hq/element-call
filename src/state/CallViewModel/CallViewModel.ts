@@ -819,8 +819,8 @@ export function createCallViewModel$(
             livekitRoom$: scope.behavior(
               connection$.pipe(map((c) => c?.livekitRoom)),
             ),
-            focusUrl$: scope.behavior(
-              connection$.pipe(map((c) => JSON.stringify(c?.transport))), // TODO
+            transport$: scope.behavior(
+              connection$.pipe(map((c) => c?.transport)),
             ),
             mediaDevices,
             pretendToBeDisconnected$: localMembership.reconnecting$,

@@ -16,30 +16,21 @@ import classNames from "classnames";
 import { Modal } from "./Modal";
 import styles from "./RTCConnectionStats.module.css";
 import mediaViewStyles from "../src/tile/MediaView.module.css";
+import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+
 interface Props {
   audio?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
   video?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
-  focusUrl?: string;
+  transport?: UnstableLivekitTransport;
   rtcBackendIdentity?: string;
 }
-
-const extractDomain = (url: string): string => {
-  try {
-    const parsedUrl = new URL(url);
-    return parsedUrl.hostname; // Returns "kdk.cpm"
-  } catch (error) {
-    console.error("Invalid URL:", error);
-    return url;
-  }
-};
 
 // This is only used in developer mode for debugging purposes, so we don't need full localization
 export const RTCConnectionStats: FC<Props> = ({
   audio,
   video,
-  focusUrl,
+  transport,
   rtcBackendIdentity,
-  ...rest
 }) => {
   const [showModal, setShowModal] = useState(false);
   const [modalContents, setModalContents] = useState<
@@ -76,10 +67,10 @@ export const RTCConnectionStats: FC<Props> = ({
       <Text as="span" size="xs" title="rtcBackendIdentity">
         rtcBackendIdentity:{rtcBackendIdentity}
       </Text>
-      {focusUrl && (
+      {transport && (
         <div>
-          <Text as="span" size="xs" title="focusURL">
-            &nbsp;{extractDomain(focusUrl)}
+          <Text as="span" size="xs" title="transport">
+            &nbsp;{JSON.stringify(transport)}
           </Text>
         </div>
       )}
