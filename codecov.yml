@@ -1,0 +1,20 @@
+# Coverage comes from a single vitest run (see .github/workflows/test.yaml), so
+# the app and the SDK are split by path into codecov components rather than
+# uploaded under separate flags. Each component gets its own coverage figure in
+# the PR comment and on codecov.io.
+#
+# Validate with: curl --data-binary @codecov.yml https://codecov.io/validate
+
+comment:
+  layout: "reach, diff, flags, components, files"
+
+component_management:
+  individual_components:
+    - component_id: app
+      name: app
+      paths:
+        - src/**
+    - component_id: sdk
+      name: sdk
+      paths:
+        - sdk/**

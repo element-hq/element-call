@@ -14,12 +14,10 @@ import { BehaviorSubject } from "rxjs";
 
 import { SpotlightTile } from "./SpotlightTile";
 import {
-  mockLocalParticipant,
   mockMediaDevices,
   mockRtcMembership,
   mockLocalMedia,
   mockRemoteMedia,
-  mockRemoteParticipant,
   mockRemoteScreenShare,
 } from "../utils/test";
 import { SpotlightTileViewModel } from "../state/TileViewModel";
@@ -42,7 +40,7 @@ test("SpotlightTile is accessible", async () => {
       rawDisplayName: "Alice",
       getMxcAvatarUrl: () => "mxc://adfsg",
     },
-    mockRemoteParticipant({}),
+    [],
   );
 
   const vm2 = mockLocalMedia(
@@ -51,7 +49,7 @@ test("SpotlightTile is accessible", async () => {
       rawDisplayName: "Bob",
       getMxcAvatarUrl: () => "mxc://dlskf",
     },
-    mockLocalParticipant({}),
+    [],
     mockMediaDevices({}),
   );
 
@@ -99,7 +97,7 @@ test("Screen share volume UI is shown when screen share has audio", async () => 
   const vm = mockRemoteScreenShare(
     mockRtcMembership("@alice:example.org", "AAAA"),
     {},
-    mockRemoteParticipant({}),
+    [],
   );
 
   vi.spyOn(vm, "audioEnabled$", "get").mockReturnValue(constant(true));
@@ -137,7 +135,7 @@ test("Screen share volume UI is hidden when screen share has no audio", async ()
   const vm = mockRemoteScreenShare(
     mockRtcMembership("@alice:example.org", "AAAA"),
     {},
-    mockRemoteParticipant({}),
+    [],
   );
 
   vi.spyOn(vm, "audioEnabled$", "get").mockReturnValue(constant(false));

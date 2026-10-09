@@ -4,7 +4,15 @@ Copyright 2023, 2024 New Vector Ltd.
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
-import { map, type Observable, of, type SchedulerLike } from "rxjs";
+import {
+  BehaviorSubject,
+  combineLatest,
+  map,
+  NEVER,
+  type Observable,
+  of,
+  type SchedulerLike,
+} from "rxjs";
 import { type RunHelpers, TestScheduler } from "rxjs/testing";
 import {
   expect,
@@ -36,23 +44,13 @@ import {
   type Transport,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type MembershipManagerEventHandlerMap } from "matrix-js-sdk/lib/matrixrtc/IMembershipManager";
-import {
-  type LocalParticipant,
-  type LocalTrackPublication,
-  type Participant,
-  type RemoteParticipant,
-  type RemoteTrackPublication,
-  type Room as LivekitRoom,
-  Track,
-} from "livekit-client";
+import { type RemoteParticipant } from "livekit-client";
 import { randomUUID } from "crypto";
-import { type TrackReference } from "@livekit/components-core";
 import EventEmitter from "events";
 import {
   type KeyTransportEvents,
   type KeyTransportEventsHandlerMap,
 } from "matrix-js-sdk/lib/matrixrtc/IKeyTransport";
-import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
 import { E2eeType } from "../e2ee/e2eeType";
 import {
@@ -61,7 +59,23 @@ import {
 } from "../config/ConfigOptions";
 import { Config } from "../config/Config";
 import { type MediaDevices } from "../state/MediaDevices";
-import { type Behavior, constant } from "../state/Behavior";
+import {
+  type AudioMediaTrack,
+  type Behavior,
+  constant,
+  type EncryptionError,
+  type LocalAudioMediaTrack,
+  type LocalRTCMember,
+  type LocalVideoMediaTrack,
+  type RTCMember,
+  type RTCParticipation,
+  type RTCSlot,
+  type ParticipationState,
+  type PublishRequest,
+  type RemoteRTCMember,
+  type TransportMetadata,
+  type VideoMediaTrack,
+} from "@element-hq/matrixrtc-sdk";
 import { ObservableScope } from "../state/ObservableScope";
 import { MuteStates } from "../state/MuteStates";
 import { nullHostBridge } from "../HostBridge";
@@ -77,8 +91,6 @@ import {
   createRemoteScreenShare,
   type RemoteScreenShareViewModel,
 } from "../state/media/RemoteScreenShareViewModel";
-import { Connection } from "../state/CallViewModel/remoteMembers/Connection";
-import { type SFUConfig } from "../livekit/openIDSFU";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();
@@ -91,13 +103,6 @@ export function withFakeTimers(continuation: () => void): void {
 
 export async function flushPromises(): Promise<void> {
   await new Promise<void>((resolve) => window.setTimeout(resolve));
-}
-
-export type NodeEventHandler = (...args: unknown[]) => void;
-
-export interface NodeStyleEventEmitter {
-  addListener(eventName: string | symbol, handler: NodeEventHandler): this;
-  removeListener(eventName: string | symbol, handler: NodeEventHandler): this;
 }
 
 export interface OurRunHelpers extends RunHelpers {
@@ -214,13 +219,6 @@ export const exampleTransport: LivekitTransport = {
   livekit_service_url: "https://lk.example.org",
 };
 
-export const exampleSfuConfig: SFUConfig = {
-  jwt: "foo",
-  livekitAlias: "bar",
-  livekitIdentity: "baz",
-  url: "bro",
-};
-
 export function mockRtcMembership(
   user: string | RoomMember,
   deviceId: string,
@@ -272,11 +270,6 @@ export function mockRtcMembership(
   return cms;
 }
 
-export const ownMemberMock: CallMembershipIdentityParts = {
-  userId: "@alice:example.org",
-  deviceId: "DEVICE",
-  memberId: "@alice:example.org:DEVICE",
-};
 // Maybe it'd be good to move this to matrix-js-sdk? Our testing needs are
 // rather simple, but if one util to mock a member is good enough for us, maybe
 // it's useful for matrix-js-sdk consumers in general.
@@ -299,54 +292,70 @@ export function mockMatrixRoom(room: Partial<MatrixRoom>): MatrixRoom {
   return { ...mockEmitter(), ...room } as Partial<MatrixRoom> as MatrixRoom;
 }
 
-export function mockLivekitRoom(
-  room: Partial<LivekitRoom>,
-  {
-    remoteParticipants$,
-  }: { remoteParticipants$?: Observable<RemoteParticipant[]> } = {},
-): LivekitRoom {
-  const livekitRoom = {
-    options: {},
-    setE2EEEnabled: vi.fn(),
+/**
+ * A track as the SDK hands it out, with spies where a test may look. It
+ * carries the local controls too, so that one mock serves either side.
+ */
+export type MockMediaTrack = Omit<LocalAudioMediaTrack, "kind"> &
+  Omit<LocalVideoMediaTrack, "kind"> & { kind: "audio" | "video" };
 
-    ...mockEmitter(),
-    ...room,
-  } as Partial<LivekitRoom> as LivekitRoom;
-  if (remoteParticipants$) {
-    livekitRoom.remoteParticipants = new Map();
-    remoteParticipants$.subscribe((newRemoteParticipants) => {
-      livekitRoom.remoteParticipants.clear();
-      newRemoteParticipants.forEach((p) => {
-        livekitRoom.remoteParticipants.set(p.identity, p);
-      });
-    });
-  }
-
-  return livekitRoom;
+export function mockMediaTrack(
+  track: Partial<MockMediaTrack> = {},
+): MockMediaTrack {
+  return {
+    source: "camera",
+    kind: "video",
+    id: "track",
+    muted$: constant(false),
+    encrypted: true,
+    stats$: () => constant(undefined),
+    isActive$: constant(false),
+    audioLevel$: constant(0),
+    attach: vi.fn(),
+    detach: vi.fn(),
+    setAudioContext: vi.fn(),
+    setVolume: vi.fn(),
+    setEnabled: vi.fn(async (enabled: boolean) => Promise.resolve(enabled)),
+    setDevice: vi.fn(async () => Promise.resolve()),
+    facingMode$: constant(undefined),
+    switchFacingMode: vi.fn(async () => Promise.resolve(undefined)),
+    setProcessor: vi.fn(async () => Promise.resolve()),
+    ...track,
+  };
 }
 
-export function mockLocalParticipant(
-  participant: Partial<LocalParticipant>,
-): LocalParticipant {
+export const mockVideoTrack = (
+  track: Partial<MockMediaTrack> = {},
+): LocalVideoMediaTrack =>
+  mockMediaTrack({ kind: "video", ...track }) as LocalVideoMediaTrack;
+
+export const mockAudioTrack = (
+  track: Partial<MockMediaTrack> = {},
+): LocalAudioMediaTrack =>
+  mockMediaTrack({
+    kind: "audio",
+    source: "microphone",
+    ...track,
+  }) as LocalAudioMediaTrack;
+
+/** The tracks a member has, or null while its media has not arrived. */
+export type MockTracks = (AudioMediaTrack | VideoMediaTrack)[] | null;
+
+/** Whoever publishes media, known by identity only. */
+export function mockRemoteParticipant(
+  participant: Partial<RemoteParticipant>,
+): RemoteParticipant {
   return {
-    isLocal: true,
-    trackPublications: new Map(),
-    publishTrack: vi.fn(),
-    unpublishTracks: vi.fn().mockResolvedValue([]),
-    createTracks: vi.fn(),
-    setMicrophoneEnabled: vi.fn(),
-    setCameraEnabled: vi.fn(),
-    getTrackPublication: () =>
-      ({}) as Partial<LocalTrackPublication> as LocalTrackPublication,
+    isLocal: false,
     ...mockEmitter(),
     ...participant,
-  } as Partial<LocalParticipant> as LocalParticipant;
+  } as RemoteParticipant;
 }
 
 export function mockLocalMedia(
   rtcMember: CallMembership,
   roomMember: Partial<RoomMember>,
-  localParticipant: LocalParticipant,
+  tracks: MockTracks,
   mediaDevices: MediaDevices,
 ): LocalUserMediaViewModel {
   const member = mockMatrixRoomMember(rtcMember, roomMember);
@@ -354,9 +363,12 @@ export function mockLocalMedia(
     id: "local",
     userId: member.userId,
     rtcBackendIdentity: rtcMember.rtcBackendIdentity,
-    participant$: constant(localParticipant),
+    member: mockRTCMember(true, {
+      membership: rtcMember,
+      roomMember,
+      tracks$: constant(tracks),
+    }),
     encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
-    livekitRoom$: constant(mockLivekitRoom({ localParticipant })),
     focusUrl$: constant("https://rtc-example.org"),
     mediaDevices,
     displayName$: constant(member.rawDisplayName ?? "nodisplayname"),
@@ -366,41 +378,26 @@ export function mockLocalMedia(
   });
 }
 
-export function mockRemoteParticipant(
-  participant: Partial<RemoteParticipant>,
-): RemoteParticipant {
-  return {
-    isLocal: false,
-    setVolume() {},
-    getTrackPublication: () =>
-      ({}) as Partial<RemoteTrackPublication> as RemoteTrackPublication,
-    // this will only get used for `getTrackPublications().length`
-    getTrackPublications: () => [0],
-    ...mockEmitter(),
-    ...participant,
-  } as RemoteParticipant;
-}
-
 export function mockRemoteMedia(
   rtcMember: CallMembership,
   roomMember: Partial<RoomMember>,
-  participant: RemoteParticipant | null,
-  livekitRoom: LivekitRoom | undefined = mockLivekitRoom(
-    {},
-    {
-      remoteParticipants$: of(participant ? [participant] : []),
-    },
-  ),
+  /** The tracks, or a behavior of them for a test that has them arrive. */
+  tracks: MockTracks | Behavior<MockTracks>,
+  { focusUrl }: { focusUrl?: string } = { focusUrl: "https://rtc-example.org" },
 ): RemoteUserMediaViewModel {
   const member = mockMatrixRoomMember(rtcMember, roomMember);
   return createRemoteUserMedia(testScope(), {
     id: "remote",
     userId: member.userId,
     rtcBackendIdentity: rtcMember.rtcBackendIdentity,
-    participant$: constant(participant),
+    member: mockRTCMember(false, {
+      membership: rtcMember,
+      roomMember,
+      tracks$:
+        tracks === null || Array.isArray(tracks) ? constant(tracks) : tracks,
+    }),
     encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
-    livekitRoom$: constant(livekitRoom),
-    focusUrl$: constant("https://rtc-example.org"),
+    focusUrl$: constant(focusUrl),
     pretendToBeDisconnected$: constant(false),
     displayName$: constant(member.rawDisplayName ?? "nodisplayname"),
     mxcAvatarUrl$: constant(member.getMxcAvatarUrl()),
@@ -412,26 +409,152 @@ export function mockRemoteMedia(
 export function mockRemoteScreenShare(
   rtcMember: CallMembership,
   roomMember: Partial<RoomMember>,
-  participant: RemoteParticipant | null,
-  livekitRoom: LivekitRoom | undefined = mockLivekitRoom(
-    {},
-    {
-      remoteParticipants$: of(participant ? [participant] : []),
-    },
-  ),
+  tracks: MockTracks,
 ): RemoteScreenShareViewModel {
   const member = mockMatrixRoomMember(rtcMember, roomMember);
   return createRemoteScreenShare(testScope(), {
     id: "screenshare",
     userId: member.userId,
-    participant$: constant(participant),
+    member: mockRTCMember(false, {
+      membership: rtcMember,
+      roomMember,
+      tracks$: constant(tracks),
+    }),
     encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
-    livekitRoom$: constant(livekitRoom),
     focusUrl$: constant("https://rtc-example.org"),
     pretendToBeDisconnected$: constant(false),
     displayName$: constant(member.rawDisplayName ?? "nodisplayname"),
     mxcAvatarUrl$: constant(member.getMxcAvatarUrl()),
   });
+}
+
+export interface MockMemberInputs {
+  membership: CallMembership;
+  roomMember?: Partial<RoomMember>;
+  /** Null, the default, is a member whose media has not arrived. */
+  tracks$?: Behavior<MockTracks>;
+  encryptionError$?: Observable<EncryptionError>;
+  transportUrl?: string | undefined;
+}
+
+/** A member as the client hands it out. */
+export function mockRTCMember(
+  local: true,
+  inputs: MockMemberInputs,
+): LocalRTCMember;
+export function mockRTCMember(
+  local: false,
+  inputs: MockMemberInputs,
+): RemoteRTCMember;
+export function mockRTCMember(
+  local: boolean,
+  {
+    membership,
+    roomMember,
+    tracks$ = constant(null),
+    encryptionError$ = NEVER,
+    transportUrl,
+  }: MockMemberInputs,
+): LocalRTCMember | RemoteRTCMember {
+  const member = mockMatrixRoomMember(membership, roomMember);
+  const transport: TransportMetadata | undefined =
+    transportUrl === undefined
+      ? undefined
+      : {
+          type: "livekit",
+          id: transportUrl,
+          raw: { type: "livekit", livekit_service_url: transportUrl },
+          resolved$: constant(undefined),
+        };
+  const base = {
+    rtcBackendIdentity: membership.rtcBackendIdentity,
+    userId: membership.userId,
+    deviceId: membership.deviceId,
+    memberId: membership.memberId,
+    displayName$: constant(member.rawDisplayName ?? membership.userId),
+    avatarUrl$: constant(member.getMxcAvatarUrl()),
+    transport$: constant(transport),
+    applicationData$: constant(membership.applicationData),
+    encryptionError$,
+  };
+  if (!local) return { ...base, local: false, tracks$ };
+  return {
+    ...base,
+    local: true,
+    // The mock tracks carry the local controls, whichever side they stand in for
+    tracks$: tracks$ as Behavior<
+      (LocalAudioMediaTrack | LocalVideoMediaTrack)[] | null
+    >,
+  };
+}
+
+export interface MockParticipationInputs {
+  localMember$?: Behavior<LocalRTCMember | null>;
+  remoteMembers$?: Behavior<RemoteRTCMember[]>;
+  state$?: Behavior<ParticipationState>;
+  keyRotationSuppressed$?: Behavior<boolean>;
+  connectedTransports$?: Behavior<TransportMetadata[]>;
+}
+
+/**
+ * A participation that does nothing but hold the state a test hands it, in a
+ * slot whose members are the same ones without their media.
+ */
+export function mockRTCParticipation(
+  scope: ObservableScope,
+  {
+    localMember$ = constant(null),
+    remoteMembers$ = constant([]),
+    state$ = constant<ParticipationState>({ kind: "connected" }),
+    keyRotationSuppressed$ = constant(false),
+    connectedTransports$ = constant([]),
+  }: MockParticipationInputs = {},
+): RTCParticipation {
+  const members$ = scope.behavior<RTCMember[]>(
+    combineLatest([localMember$, remoteMembers$], (local, remote) =>
+      local === null ? remote : [local, ...remote],
+    ),
+  );
+  const participation$ = new BehaviorSubject<RTCParticipation | null>(null);
+  const slot: RTCSlot = {
+    roomId: "!room:example.org",
+    application: "m.call",
+    id: "ROOM",
+    status$: constant("open"),
+    members$,
+    participation$,
+    join: vi.fn(() => participation$.value!),
+  };
+  const participation: RTCParticipation = {
+    slot,
+    leave: vi.fn(),
+    state$,
+    localMember$,
+    remoteMembers$,
+    publish: vi.fn(async (request: PublishRequest) =>
+      Promise.resolve(
+        request.source === "microphone"
+          ? mockAudioTrack()
+          : mockVideoTrack({ source: request.source }),
+      ),
+    ),
+    unpublish: vi.fn(async () => Promise.resolve()),
+    keyRotationSuppressed$,
+    connectedTransports$,
+    setAudioOutputDeviceId: vi.fn(async () => Promise.resolve()),
+    sendData: vi.fn(async () => Promise.resolve()),
+    data$: NEVER,
+  };
+  participation$.next(participation);
+  return participation;
+}
+
+/** The slot of a `mockRTCParticipation`, whose `join()` returns that participation. */
+export function mockRTCSlot(
+  scope: ObservableScope,
+  inputs: MockParticipationInputs = {},
+): RTCSlot {
+  return mockRTCParticipation(scope, inputs).slot;
 }
 
 export function mockConfig(
@@ -536,29 +659,6 @@ export class MockRTCSession extends TypedEventEmitter<
   }
 }
 
-export const mockTrack = (
-  participant: Participant,
-  kind?: Track.Kind,
-  source?: Track.Source,
-): TrackReference =>
-  ({
-    participant,
-    publication: {
-      kind: kind ?? Track.Kind.Audio,
-      source: source ?? Track.Source.Microphone,
-      trackSid: `123##${participant.identity}`,
-      track: {
-        attach: vi.fn(),
-        detach: vi.fn(),
-        setAudioContext: vi.fn(),
-        setWebAudioPlugins: vi.fn(),
-        setVolume: vi.fn(),
-      },
-    },
-    track: {},
-    source: {},
-  }) as unknown as TrackReference;
-
 export const deviceStub = {
   available$: of(new Map<never, never>()),
   selected$: of(undefined),
@@ -584,11 +684,6 @@ export function mockMuteStates(
     { audioEnabled: false, videoEnabled: false },
     nullHostBridge,
   );
-}
-
-export class MockConnection extends Connection {
-  public async start(): Promise<void> {}
-  public async stop(): Promise<void> {}
 }
 
 export interface StubbedCapture {

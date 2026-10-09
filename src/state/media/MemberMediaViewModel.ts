@@ -7,18 +7,17 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  type Room as LivekitRoom,
-  RoomEvent as LivekitRoomEvent,
-  type Participant,
-  type Track,
-} from "livekit-client";
-import {
-  type AudioSource,
-  roomEventSelector,
-  type TrackReference,
-  type VideoSource,
-} from "@livekit/components-core";
-import { type LocalParticipant, type RemoteParticipant } from "livekit-client";
+  type Behavior,
+  E2eeType,
+  type EncryptionError,
+  type EncryptionSystem,
+  type MediaTrack,
+  type ObservableScope,
+  type MemberMedia,
+  type RTCMember,
+  trackBySource$,
+  type VideoMediaTrack,
+} from "@element-hq/matrixrtc-sdk";
 import {
   combineLatest,
   distinctUntilChanged,
@@ -31,15 +30,12 @@ import {
   throttleTime,
 } from "rxjs";
 
-import { type Behavior } from "../Behavior";
 import { type BaseMediaViewModel, createBaseMedia } from "./MediaViewModel";
-import { type EncryptionSystem } from "../../e2ee/sharedKeyManagement";
-import { type ObservableScope } from "../ObservableScope";
-import { observeTrackReference$ } from "../observeTrackReference";
-import { E2eeType } from "../../e2ee/e2eeType";
-import { observeInboundRtpStreamStats$ } from "./observeRtpStreamStats";
 import { type UserMediaViewModel } from "./UserMediaViewModel";
 import { type ScreenShareViewModel } from "./ScreenShareViewModel";
+
+/** How often a view model reads a track's RTP statistics while it needs them. */
+export const statsIntervalMs = 1000;
 
 // TODO: Encryption status is kinda broken and thus unused right now. Remove?
 export enum EncryptionStatus {
@@ -55,11 +51,11 @@ export enum EncryptionStatus {
  */
 export interface BaseMemberMediaViewModel extends BaseMediaViewModel {
   /**
-   * The LiveKit video track for this media.
+   * The video track for this media.
    */
-  video$: Behavior<TrackReference | undefined>;
+  video$: Behavior<VideoMediaTrack | undefined>;
   /**
-   * The URL of the LiveKit focus on which this member should be publishing.
+   * The URL of the transport on which this member should be publishing.
    * Exposed for debugging.
    */
   focusUrl$: Behavior<string | undefined>;
@@ -70,11 +66,13 @@ export interface BaseMemberMediaViewModel extends BaseMediaViewModel {
   encryptionStatus$: Behavior<EncryptionStatus>;
 }
 
+/** The member whose media this is, as far as the media view models read it. */
+export type MediaMember = Pick<RTCMember, "local"> & MemberMedia;
+
 export interface MemberMediaInputs extends BaseMediaViewModel {
-  participant$: Behavior<LocalParticipant | RemoteParticipant | null>;
-  livekitRoom$: Behavior<LivekitRoom | undefined>;
-  audioSource: AudioSource;
-  videoSource: VideoSource;
+  member: MediaMember;
+  audioSource: "microphone" | "screenShareAudio";
+  videoSource: "camera" | "screenShare";
   focusUrl$: Behavior<string | undefined>;
   encryptionSystem: EncryptionSystem;
 }
@@ -82,8 +80,7 @@ export interface MemberMediaInputs extends BaseMediaViewModel {
 export function createMemberMedia(
   scope: ObservableScope,
   {
-    participant$,
-    livekitRoom$,
+    member,
     audioSource,
     videoSource,
     focusUrl$,
@@ -91,20 +88,12 @@ export function createMemberMedia(
     ...inputs
   }: MemberMediaInputs,
 ): BaseMemberMediaViewModel {
-  const trackBehavior$ = (
-    scope: ObservableScope,
-    source: Track.Source,
-  ): Behavior<TrackReference | undefined> =>
-    scope.behavior(
-      participant$.pipe(
-        switchMap((p) =>
-          !p ? of(undefined) : observeTrackReference$(p, source),
-        ),
-      ),
-    );
-
-  const audio$ = trackBehavior$(scope, audioSource);
-  const video$ = trackBehavior$(scope, videoSource);
+  const audio$ = trackBySource$(scope, member.tracks$, audioSource);
+  const video$ = trackBySource$(scope, member.tracks$, videoSource);
+  const unencrypted$ = (
+    track$: Behavior<MediaTrack | undefined>,
+  ): Observable<boolean> =>
+    track$.pipe(map((track) => track !== undefined && !track.encrypted));
 
   return {
     ...createBaseMedia(inputs),
@@ -112,162 +101,81 @@ export function createMemberMedia(
     focusUrl$,
     unencryptedWarning$: scope.behavior(
       combineLatest(
-        [audio$, video$],
-        (a, v) =>
-          encryptionSystem.kind !== E2eeType.NONE &&
-          (a?.publication.isEncrypted === false ||
-            v?.publication.isEncrypted === false),
+        [unencrypted$(audio$), unencrypted$(video$)],
+        (a, v) => encryptionSystem.kind !== E2eeType.NONE && (a || v),
       ),
     ),
     encryptionStatus$: scope.behavior(
-      participant$.pipe(
-        switchMap((participant): Observable<EncryptionStatus> => {
-          if (!participant) {
-            return of(EncryptionStatus.Connecting);
-          } else if (
-            participant.isLocal ||
-            encryptionSystem.kind === E2eeType.NONE
-          ) {
+      member.tracks$.pipe(
+        switchMap((tracks): Observable<EncryptionStatus> => {
+          if (tracks === null) return of(EncryptionStatus.Connecting);
+          if (member.local || encryptionSystem.kind === E2eeType.NONE)
             return of(EncryptionStatus.Okay);
-          } else if (encryptionSystem.kind === E2eeType.PER_PARTICIPANT) {
-            return combineLatest([
-              encryptionErrorObservable$(
-                livekitRoom$,
-                participant,
-                encryptionSystem,
-                "MissingKey",
-              ),
-              encryptionErrorObservable$(
-                livekitRoom$,
-                participant,
-                encryptionSystem,
-                "InvalidKey",
-              ),
-              observeRemoteTrackReceivingOkay$(participant, audioSource),
-              observeRemoteTrackReceivingOkay$(participant, videoSource),
-            ]).pipe(
-              map(([keyMissing, keyInvalid, audioOkay, videoOkay]) => {
-                if (keyMissing) return EncryptionStatus.KeyMissing;
-                if (keyInvalid) return EncryptionStatus.KeyInvalid;
-                if (audioOkay || videoOkay) return EncryptionStatus.Okay;
-                return undefined; // no change
-              }),
-              filter((x) => !!x),
-              startWith(EncryptionStatus.Connecting),
-            );
-          } else {
-            return combineLatest([
-              encryptionErrorObservable$(
-                livekitRoom$,
-                participant,
-                encryptionSystem,
-                "InvalidKey",
-              ),
-              observeRemoteTrackReceivingOkay$(participant, audioSource),
-              observeRemoteTrackReceivingOkay$(participant, videoSource),
-            ]).pipe(
-              map(
-                ([keyInvalid, audioOkay, videoOkay]):
-                  | EncryptionStatus
-                  | undefined => {
-                  if (keyInvalid) return EncryptionStatus.PasswordInvalid;
-                  if (audioOkay || videoOkay) return EncryptionStatus.Okay;
-                  return undefined; // no change
-                },
-              ),
-              filter((x) => !!x),
-              startWith(EncryptionStatus.Connecting),
-            );
-          }
+          const perParticipant =
+            encryptionSystem.kind === E2eeType.PER_PARTICIPANT;
+          return combineLatest([
+            encryptionError$(member.encryptionError$, "MissingKey"),
+            encryptionError$(member.encryptionError$, "InvalidKey"),
+            receivingOkay$(audio$),
+            receivingOkay$(video$),
+          ]).pipe(
+            map(([keyMissing, keyInvalid, audioOkay, videoOkay]) => {
+              if (perParticipant && keyMissing)
+                return EncryptionStatus.KeyMissing;
+              if (keyInvalid)
+                return perParticipant
+                  ? EncryptionStatus.KeyInvalid
+                  : EncryptionStatus.PasswordInvalid;
+              if (audioOkay || videoOkay) return EncryptionStatus.Okay;
+              return undefined; // no change
+            }),
+            filter((x) => x !== undefined),
+            startWith(EncryptionStatus.Connecting),
+          );
         }),
       ),
     ),
   };
 }
 
-function encryptionErrorObservable$(
-  room$: Behavior<LivekitRoom | undefined>,
-  participant: Participant,
-  encryptionSystem: EncryptionSystem,
-  criteria: string,
+function encryptionError$(
+  errors$: Observable<EncryptionError>,
+  criteria: EncryptionError,
 ): Observable<boolean> {
-  return room$.pipe(
-    switchMap((room) => {
-      if (room === undefined) return of(false);
-      return roomEventSelector(room, LivekitRoomEvent.EncryptionError).pipe(
-        map((e) => {
-          const [err] = e;
-          if (encryptionSystem.kind === E2eeType.PER_PARTICIPANT) {
-            return (
-              // Ideally we would pull the participant identity from the field on the error.
-              // However, it gets lost in the serialization process between workers.
-              // So, instead we do a string match
-              (err?.message.includes(participant.identity) &&
-                err?.message.includes(criteria)) ??
-              false
-            );
-          } else if (encryptionSystem.kind === E2eeType.SHARED_KEY) {
-            return !!err?.message.includes(criteria);
-          }
-
-          return false;
-        }),
-      );
-    }),
+  return errors$.pipe(
+    map((error) => error === criteria),
     distinctUntilChanged(),
     throttleTime(1000), // Throttle to avoid spamming the UI
     startWith(false),
   );
 }
 
-function observeRemoteTrackReceivingOkay$(
-  participant: Participant,
-  source: Track.Source,
+/**
+ * Whether frames arrive and decode, which is the only sign that the key in
+ * use is the right one.
+ */
+function receivingOkay$(
+  track$: Behavior<MediaTrack | undefined>,
 ): Observable<boolean | undefined> {
-  let lastStats: {
-    framesDecoded: number | undefined;
-    framesDropped: number | undefined;
-    framesReceived: number | undefined;
-  } = {
-    framesDecoded: undefined,
-    framesDropped: undefined,
-    framesReceived: undefined,
-  };
-
-  return observeInboundRtpStreamStats$(participant, source).pipe(
-    map((stats) => {
-      if (!stats) return undefined;
-      const { framesDecoded, framesDropped, framesReceived } = stats;
-      return {
-        framesDecoded,
-        framesDropped,
-        framesReceived,
-      };
-    }),
-    filter((newStats) => !!newStats),
-    map((newStats): boolean | undefined => {
-      const oldStats = lastStats;
-      lastStats = newStats;
+  let last: { framesDecoded?: number; framesReceived?: number } = {};
+  return track$.pipe(
+    switchMap((track) => track?.stats$(statsIntervalMs) ?? of(undefined)),
+    map((stats): boolean | undefined => {
+      if (stats === undefined || stats.type !== "inbound-rtp") return undefined;
+      const { framesDecoded, framesReceived } =
+        stats as RTCInboundRtpStreamStats;
+      const previous = last;
+      last = { framesDecoded, framesReceived };
       if (
-        typeof newStats.framesReceived === "number" &&
-        typeof oldStats.framesReceived === "number" &&
-        typeof newStats.framesDecoded === "number" &&
-        typeof oldStats.framesDecoded === "number"
-      ) {
-        const framesReceivedDelta =
-          newStats.framesReceived - oldStats.framesReceived;
-        const framesDecodedDelta =
-          newStats.framesDecoded - oldStats.framesDecoded;
-
-        // if we received >0 frames and managed to decode >0 frames then we treat that as success
-
-        if (framesReceivedDelta > 0) {
-          return framesDecodedDelta > 0;
-        }
-      }
-
-      // no change
-      return undefined;
+        framesReceived === undefined ||
+        previous.framesReceived === undefined ||
+        framesDecoded === undefined ||
+        previous.framesDecoded === undefined
+      )
+        return undefined;
+      const received = framesReceived - previous.framesReceived;
+      if (received > 0) return framesDecoded - previous.framesDecoded > 0;
+      return undefined; // no change
     }),
     filter((x) => typeof x === "boolean"),
     startWith(undefined),

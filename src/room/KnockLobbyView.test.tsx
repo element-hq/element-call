@@ -14,14 +14,14 @@ import { type MatrixClient, type RoomSummary } from "matrix-js-sdk";
 import { KnockLobbyView } from "./KnockLobbyView";
 import { LeaveToHomeProvider } from "../LeaveToHomeContext";
 import { MediaDevicesContext } from "../MediaDevicesContext";
-import { type ProcessorState } from "../livekit/TrackProcessorContext";
+import { type ProcessorState } from "../tracks/TrackProcessorContext";
 import { mockMediaDevices } from "../utils/test";
 
 vi.mock("@livekit/components-react", () => ({
   usePreviewTracks: (): unknown[] => [],
 }));
 
-vi.mock("../livekit/TrackProcessorContext", () => ({
+vi.mock("../tracks/TrackProcessorContext", () => ({
   useTrackProcessor: (): ProcessorState => ({
     supported: false,
     processor: undefined,

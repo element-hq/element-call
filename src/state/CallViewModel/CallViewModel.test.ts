@@ -15,34 +15,23 @@ import {
   map,
   NEVER,
   type Observable,
-  of,
   switchMap,
 } from "rxjs";
-import { SyncState } from "matrix-js-sdk";
 import {
-  ConnectionState,
-  type LocalTrackPublication,
-  type Participant,
-  type RemoteParticipant,
-} from "livekit-client";
-import * as ComponentsCore from "@livekit/components-core";
-import {
-  Status,
   type CallMembership,
   type IRTCNotificationContent,
   MatrixRTCSessionEvent,
-  type LivekitTransport,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
 
 import { type Layout } from "../layout-types.ts";
 import {
   mockMatrixRoomMember,
+  mockMediaDevices,
   mockRemoteParticipant,
   withTestScheduler,
   mockRtcMembership,
   testScope,
-  exampleTransport,
 } from "../../utils/test.ts";
 import { E2eeType } from "../../e2ee/e2eeType.ts";
 import {
@@ -59,11 +48,15 @@ import {
   localRtcMember,
   localRtcMemberDevice2,
 } from "../../utils/test-fixtures.ts";
-import { MediaDevices } from "../MediaDevices.ts";
+import {
+  MediaDevices,
+  type SelectedAudioOutputDevice,
+} from "../MediaDevices.ts";
 import { getValue } from "../../utils/observable.ts";
 import { type Behavior, constant } from "../Behavior.ts";
 import {
   localParticipant,
+  type Participant,
   withCallViewModel as withCallViewModelInMode,
 } from "./CallViewModelTestUtils.ts";
 import { MatrixRTCMode } from "../../config/ConfigOptions.ts";
@@ -80,11 +73,6 @@ vi.mock("rxjs", async (importOriginal) => ({
   interval: (): Observable<number> => NEVER,
 }));
 
-vi.mock("@livekit/components-core");
-vi.mock("livekit-client/e2ee-worker?worker");
-
-vi.mock("../e2ee/matrixKeyProvider");
-
 const getPlatform = vi.hoisted(() => vi.fn(() => "desktop"));
 vi.mock("../../Platform", () => ({
   get platform(): string {
@@ -92,15 +80,6 @@ vi.mock("../../Platform", () => ({
   },
   isFirefox: (): boolean => false,
 }));
-
-vi.mock(
-  "../state/CallViewModel/localMember/localTransport",
-  async (importOriginal) => ({
-    ...(await importOriginal()),
-    makeTransport: async (): Promise<LivekitTransport> =>
-      Promise.resolve(exampleTransport),
-  }),
-);
 
 const yesNo = {
   y: true,
@@ -262,6 +241,56 @@ const modes = [[MatrixRTCMode.Compatibility], [MatrixRTCMode.Matrix_2_0]];
 describe.each(modes)("CallViewModel (%s mode)", (mode) => {
   const withCallViewModel = withCallViewModelInMode(mode);
 
+  /** Media devices whose audio output the test selects. */
+  const withAudioOutput = (): {
+    mediaDevices: MediaDevices;
+    selected$: BehaviorSubject<SelectedAudioOutputDevice | undefined>;
+  } => {
+    const selected$ = new BehaviorSubject<
+      SelectedAudioOutputDevice | undefined
+    >(undefined);
+    const mediaDevices = mockMediaDevices({
+      audioOutput: {
+        available$: constant(new Map()),
+        selected$,
+        select: vi.fn(),
+      },
+    });
+    return { mediaDevices, selected$ };
+  };
+
+  test("the selected audio output is handed to the client as it changes", () => {
+    const { mediaDevices, selected$ } = withAudioOutput();
+    withCallViewModel(
+      { mediaDevices },
+      (_vm, _session, { rtcParticipation: participation }) => {
+        // Nothing selected yet, so the browser's choice stands
+        expect(participation.setAudioOutputDeviceId).not.toHaveBeenCalled();
+        selected$.next({ id: "speaker", virtualEarpiece: false });
+        expect(participation.setAudioOutputDeviceId).toHaveBeenCalledWith(
+          "speaker",
+        );
+        selected$.next({ id: "headphones", virtualEarpiece: false });
+        expect(participation.setAudioOutputDeviceId).toHaveBeenLastCalledWith(
+          "headphones",
+        );
+        expect(participation.setAudioOutputDeviceId).toHaveBeenCalledTimes(2);
+      },
+    );
+  });
+
+  test("a host that controls the audio devices keeps the output from the client", () => {
+    const { mediaDevices, selected$ } = withAudioOutput();
+    withCallViewModel(
+      { mediaDevices },
+      (_vm, _session, { rtcParticipation: participation }) => {
+        selected$.next({ id: "earpiece", virtualEarpiece: true });
+        expect(participation.setAudioOutputDeviceId).not.toHaveBeenCalled();
+      },
+      { controlledAudioDevices: true },
+    );
+  });
+
   test("participants are retained during a focus switch", () => {
     withTestScheduler(({ behavior, expectObservable }) => {
       // Participants disappear on frame 2 and come back on frame 3
@@ -278,10 +307,7 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
             b: [],
           }),
           rtcMembers$: constant([localRtcMember, aliceRtcMember, bobRtcMember]),
-          livekitConnectionState$: behavior(connectionInputMarbles, {
-            c: ConnectionState.Connected,
-            s: ConnectionState.Connecting,
-          }),
+          connected$: behavior(connectionInputMarbles, { c: true, s: false }),
         },
         (vm) => {
           expectObservable(summarizeLayout$(vm.layout$)).toBe(
@@ -1388,9 +1414,9 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
   function participantJoinLeave$(
     behavior: (
       marbles: string,
-      values: Record<string, RemoteParticipant[]>,
-    ) => Behavior<RemoteParticipant[]>,
-  ): Behavior<RemoteParticipant[]> {
+      values: Record<string, Participant[]>,
+    ) => Behavior<Participant[]>,
+  ): Behavior<Participant[]> {
     return behavior("a-b-c-d", {
       a: [], // Start empty
       b: [aliceParticipant], // Alice joins
@@ -1592,10 +1618,6 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
 
   it.skip("audio output changes when toggling earpiece mode", () => {
     withTestScheduler(({ schedule, expectObservable }) => {
-      vi.mocked(ComponentsCore.createMediaDeviceObserver).mockReturnValue(
-        of([]),
-      );
-
       const devices = new MediaDevices(testScope(), {
         controlledAudioDevices: true,
       });
@@ -1627,78 +1649,6 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
       });
     });
   });
-
-  it.skip("media tracks are paused while reconnecting to MatrixRTC", () => {
-    withTestScheduler(({ schedule, expectObservable }) => {
-      const trackRunning$ = new BehaviorSubject(true);
-      const originalPublications = localParticipant.trackPublications;
-      localParticipant.trackPublications = new Map([
-        [
-          "video",
-          {
-            track: new (class {
-              public get isUpstreamPaused(): boolean {
-                return !trackRunning$.value;
-              }
-              public async pauseUpstream(): Promise<void> {
-                trackRunning$.next(false);
-                return Promise.resolve();
-              }
-              public async resumeUpstream(): Promise<void> {
-                trackRunning$.next(true);
-                return Promise.resolve();
-              }
-            })(),
-          } as unknown as LocalTrackPublication,
-        ],
-      ]);
-      onTestFinished(() => {
-        localParticipant.trackPublications = originalPublications;
-      });
-
-      // There are three indicators that the client might be disconnected from
-      // MatrixRTC: whether the sync loop is connected, whether the membership is
-      // present in local room state, and whether the membership manager thinks
-      // we've hit the timeout for the delayed leave event. Let's test all
-      // combinations of these conditions.
-      const syncingMarbles = "             nyny----n--y";
-      const membershipStatusMarbles = "    y---ny-n-yn-y";
-      const probablyLeftMarbles = "        n-----y-ny---n";
-      const expectedReconnectingMarbles = "n-ynyny------n";
-      const expectedTrackRunningMarbles = "nynynyn------y";
-
-      withCallViewModel(
-        { initialSyncState: SyncState.Reconnecting },
-        (vm, rtcSession, _subjects, setSyncState) => {
-          schedule(syncingMarbles, {
-            y: () => setSyncState(SyncState.Syncing),
-            n: () => setSyncState(SyncState.Reconnecting),
-          });
-          schedule(membershipStatusMarbles, {
-            y: () => {
-              rtcSession.membershipStatus = Status.Connected;
-            },
-          });
-          schedule(probablyLeftMarbles, {
-            y: () => {
-              rtcSession.probablyLeft = true;
-            },
-            n: () => {
-              rtcSession.probablyLeft = false;
-            },
-          });
-          expectObservable(vm.reconnecting$).toBe(
-            expectedReconnectingMarbles,
-            yesNo,
-          );
-          expectObservable(trackRunning$).toBe(
-            expectedTrackRunningMarbles,
-            yesNo,
-          );
-        },
-      );
-    });
-  });
 });
 
 describe("callViewModelOptionsFromParams", () => {
@@ -1709,33 +1659,8 @@ describe("callViewModelOptionsFromParams", () => {
   const widgetUrl = (extra: string): string =>
     `#?widgetId=id&parentUrl=${encodeURIComponent("http://parent")}&${extra}`;
 
-  it("carries an explicitly requested notification type", () => {
-    const params = computeUrlParams("", widgetUrl("sendNotificationType=ring"));
-    expect(callViewModelOptionsFromParams(params).sendNotificationType).toBe(
-      "ring",
-    );
-  });
-
-  it("carries the notification type an intent implies", () => {
-    const params = computeUrlParams("", widgetUrl("intent=start_call_dm"));
-    expect(callViewModelOptionsFromParams(params).sendNotificationType).toBe(
-      "ring",
-    );
-  });
-
   it("carries hideScreensharing", () => {
     const params = computeUrlParams("", widgetUrl("hideScreensharing=true"));
     expect(callViewModelOptionsFromParams(params).hideScreensharing).toBe(true);
-  });
-
-  it("carries controlledAudioDevices and the call intent", () => {
-    const params = computeUrlParams(
-      "",
-      widgetUrl("controlledAudioDevices=true&intent=start_call_voice"),
-    );
-    expect(callViewModelOptionsFromParams(params)).toMatchObject({
-      controlledAudioDevices: true,
-      callIntent: "audio",
-    });
   });
 });

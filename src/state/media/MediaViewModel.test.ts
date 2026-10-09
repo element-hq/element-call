@@ -6,35 +6,23 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { expect, onTestFinished, test, vi } from "vitest";
-import {
-  type LocalTrackPublication,
-  LocalVideoTrack,
-  Track,
-  TrackEvent,
-} from "livekit-client";
+import { constant } from "@element-hq/matrixrtc-sdk";
 import { waitFor } from "@testing-library/dom";
+import { BehaviorSubject } from "rxjs";
 
 import {
-  mockLocalParticipant,
-  mockMediaDevices,
-  mockRtcMembership,
+  mockAudioTrack,
   mockLocalMedia,
+  mockMediaDevices,
   mockRemoteMedia,
-  withTestScheduler,
-  mockRemoteParticipant,
   mockRemoteScreenShare,
+  mockRtcMembership,
+  type MockTracks,
+  mockVideoTrack,
+  withTestScheduler,
 } from "../../utils/test";
-import { constant } from "../Behavior";
 import { showConnectionStats } from "../../settings/settings";
-
-global.MediaStreamTrack = class {} as unknown as {
-  new (): MediaStreamTrack;
-  prototype: MediaStreamTrack;
-};
-global.MediaStream = class {} as unknown as {
-  new (): MediaStream;
-  prototype: MediaStream;
-};
+import { EncryptionStatus } from "./MemberMediaViewModel";
 
 const platformMock = vi.hoisted(() => vi.fn(() => "desktop"));
 vi.mock("../../Platform", () => ({
@@ -43,49 +31,41 @@ vi.mock("../../Platform", () => ({
   },
 }));
 
-const observeRtpStreamStatsMock = vi.hoisted(() => vi.fn());
-vi.mock("./observeRtpStreamStats", async (importOriginal) => ({
-  ...(await importOriginal<Record<string, unknown>>()),
-  observeRtpStreamStats$: observeRtpStreamStatsMock,
-}));
-
 const rtcMembership = mockRtcMembership("@alice:example.org", "AAAA");
 
 test("control a participant's volume", () => {
-  const setVolumeSpy = vi.fn();
-  const vm = mockRemoteMedia(
-    rtcMembership,
-    {},
-    mockRemoteParticipant({ setVolume: setVolumeSpy }),
-  );
+  const setVolume = vi.fn();
+  const vm = mockRemoteMedia(rtcMembership, {}, [
+    mockAudioTrack({ setVolume }),
+  ]);
   withTestScheduler(({ expectObservable, schedule }) => {
     schedule("-ab---c---d|", {
       a() {
         // Try muting by toggling
         vm.togglePlaybackMuted();
-        expect(setVolumeSpy).toHaveBeenLastCalledWith(0);
+        expect(setVolume).toHaveBeenLastCalledWith(0);
       },
       b() {
         // Try unmuting by dragging the slider back up
         vm.adjustPlaybackVolume(0.6);
         vm.adjustPlaybackVolume(0.8);
         vm.commitPlaybackVolume();
-        expect(setVolumeSpy).toHaveBeenCalledWith(0.6);
-        expect(setVolumeSpy).toHaveBeenLastCalledWith(0.8);
+        expect(setVolume).toHaveBeenCalledWith(0.6);
+        expect(setVolume).toHaveBeenLastCalledWith(0.8);
       },
       c() {
         // Try muting by dragging the slider back down
         vm.adjustPlaybackVolume(0.2);
         vm.adjustPlaybackVolume(0);
         vm.commitPlaybackVolume();
-        expect(setVolumeSpy).toHaveBeenCalledWith(0.2);
-        expect(setVolumeSpy).toHaveBeenLastCalledWith(0);
+        expect(setVolume).toHaveBeenCalledWith(0.2);
+        expect(setVolume).toHaveBeenLastCalledWith(0);
       },
       d() {
         // Try unmuting by toggling
         vm.togglePlaybackMuted();
         // The volume should return to the last non-zero committed volume
-        expect(setVolumeSpy).toHaveBeenLastCalledWith(0.8);
+        expect(setVolume).toHaveBeenLastCalledWith(0.8);
       },
     });
     expectObservable(vm.playbackVolume$).toBe("ab(cd)(ef)g", {
@@ -101,58 +81,33 @@ test("control a participant's volume", () => {
 });
 
 test("control a participant's screen share volume", () => {
-  const setVolumeSpy = vi.fn();
-  const vm = mockRemoteScreenShare(
-    rtcMembership,
-    {},
-    mockRemoteParticipant({ setVolume: setVolumeSpy }),
-  );
+  const setVolume = vi.fn();
+  const vm = mockRemoteScreenShare(rtcMembership, {}, [
+    mockAudioTrack({ source: "screenShareAudio", setVolume }),
+  ]);
   withTestScheduler(({ expectObservable, schedule }) => {
     schedule("-ab---c---d|", {
       a() {
-        // Try muting by toggling
         vm.togglePlaybackMuted();
-        expect(setVolumeSpy).toHaveBeenLastCalledWith(
-          0,
-          Track.Source.ScreenShareAudio,
-        );
+        expect(setVolume).toHaveBeenLastCalledWith(0);
       },
       b() {
-        // Try unmuting by dragging the slider back up
         vm.adjustPlaybackVolume(0.6);
         vm.adjustPlaybackVolume(0.8);
         vm.commitPlaybackVolume();
-        expect(setVolumeSpy).toHaveBeenCalledWith(
-          0.6,
-          Track.Source.ScreenShareAudio,
-        );
-        expect(setVolumeSpy).toHaveBeenLastCalledWith(
-          0.8,
-          Track.Source.ScreenShareAudio,
-        );
+        expect(setVolume).toHaveBeenCalledWith(0.6);
+        expect(setVolume).toHaveBeenLastCalledWith(0.8);
       },
       c() {
-        // Try muting by dragging the slider back down
         vm.adjustPlaybackVolume(0.2);
         vm.adjustPlaybackVolume(0);
         vm.commitPlaybackVolume();
-        expect(setVolumeSpy).toHaveBeenCalledWith(
-          0.2,
-          Track.Source.ScreenShareAudio,
-        );
-        expect(setVolumeSpy).toHaveBeenLastCalledWith(
-          0,
-          Track.Source.ScreenShareAudio,
-        );
+        expect(setVolume).toHaveBeenCalledWith(0.2);
+        expect(setVolume).toHaveBeenLastCalledWith(0);
       },
       d() {
-        // Try unmuting by toggling
         vm.togglePlaybackMuted();
-        // The volume should return to the last non-zero committed volume
-        expect(setVolumeSpy).toHaveBeenLastCalledWith(
-          0.8,
-          Track.Source.ScreenShareAudio,
-        );
+        expect(setVolume).toHaveBeenLastCalledWith(0.8);
       },
     });
     expectObservable(vm.playbackVolume$).toBe("ab(cd)(ef)g", {
@@ -165,27 +120,17 @@ test("control a participant's screen share volume", () => {
       g: 0.8,
     });
   });
+  expect(vm.audioEnabled$.value).toBe(true);
 });
 
 test("local media remembers whether it should always be shown", () => {
-  const vm1 = mockLocalMedia(
-    rtcMembership,
-    {},
-    mockLocalParticipant({}),
-    mockMediaDevices({}),
-  );
+  const vm1 = mockLocalMedia(rtcMembership, {}, [], mockMediaDevices({}));
   withTestScheduler(({ expectObservable, schedule }) => {
     schedule("-a|", { a: () => vm1.setAlwaysShow(false) });
     expectObservable(vm1.alwaysShow$).toBe("ab", { a: true, b: false });
   });
-
   // Next local media should start out *not* always shown
-  const vm2 = mockLocalMedia(
-    rtcMembership,
-    {},
-    mockLocalParticipant({}),
-    mockMediaDevices({}),
-  );
+  const vm2 = mockLocalMedia(rtcMembership, {}, [], mockMediaDevices({}));
   withTestScheduler(({ expectObservable, schedule }) => {
     schedule("-a|", { a: () => vm2.setAlwaysShow(true) });
     expectObservable(vm2.alwaysShow$).toBe("ab", { a: false, b: true });
@@ -196,44 +141,21 @@ test("switch cameras", async () => {
   // Camera switching is only available on mobile
   platformMock.mockReturnValue("android");
   onTestFinished(() => void platformMock.mockReset());
-
-  // Construct a mock video track which knows how to be restarted
-  const track = new LocalVideoTrack({
-    getConstraints() {},
-    addEventListener() {},
-    removeEventListener() {},
-  } as unknown as MediaStreamTrack);
-
-  let deviceId = "front camera";
-  const restartTrack = vi.fn(async ({ facingMode }) => {
-    deviceId = facingMode === "user" ? "front camera" : "back camera";
-    track.emit(TrackEvent.Restarted);
-    return Promise.resolve();
+  const facingMode$ = new BehaviorSubject<"user" | "environment" | undefined>(
+    "user",
+  );
+  // The SDK restarts the camera the other way round and says which device it
+  // ended up on
+  const switchFacingMode = vi.fn(async (): Promise<string> => {
+    const back = facingMode$.value === "user";
+    facingMode$.next(back ? "environment" : "user");
+    return Promise.resolve(back ? "back camera" : "front camera");
   });
-  track.restartTrack = restartTrack;
-
-  Object.defineProperty(track, "mediaStreamTrack", {
-    get() {
-      return {
-        label: "Video",
-        getSettings: (): object => ({
-          deviceId,
-          facingMode: deviceId === "front camera" ? "user" : "environment",
-        }),
-      };
-    },
-  });
-
   const selectVideoInput = vi.fn();
-
   const vm = mockLocalMedia(
     rtcMembership,
     {},
-    mockLocalParticipant({
-      getTrackPublication() {
-        return { track } as unknown as LocalTrackPublication;
-      },
-    }),
+    [mockVideoTrack({ facingMode$, switchFacingMode })],
     mockMediaDevices({
       videoInput: {
         available$: constant(new Map()),
@@ -242,70 +164,84 @@ test("switch cameras", async () => {
       },
     }),
   );
+  expect(vm.mirror$.value).toBe(true);
 
   // Switch to back camera
   vm.switchCamera$.value!();
-  expect(restartTrack).toHaveBeenCalledExactlyOnceWith({
-    facingMode: "environment",
-  });
+  expect(switchFacingMode).toHaveBeenCalledTimes(1);
   await waitFor(() => {
-    expect(selectVideoInput).toHaveBeenCalledTimes(1);
     expect(selectVideoInput).toHaveBeenCalledWith("back camera");
   });
-  expect(deviceId).toBe("back camera");
+  expect(vm.mirror$.value).toBe(false);
 
   // Switch to front camera
   vm.switchCamera$.value!();
-  expect(restartTrack).toHaveBeenCalledTimes(2);
-  expect(restartTrack).toHaveBeenLastCalledWith({ facingMode: "user" });
+  expect(switchFacingMode).toHaveBeenCalledTimes(2);
   await waitFor(() => {
-    expect(selectVideoInput).toHaveBeenCalledTimes(2);
     expect(selectVideoInput).toHaveBeenLastCalledWith("front camera");
   });
-  expect(deviceId).toBe("front camera");
+  expect(vm.mirror$.value).toBe(true);
 });
 
-test("remote media is in waiting state when participant has not yet connected", () => {
-  const vm = mockRemoteMedia(rtcMembership, {}, null); // null participant
+test("no camera switch where the facing mode is unknown", () => {
+  platformMock.mockReturnValue("android");
+  onTestFinished(() => void platformMock.mockReset());
+  const vm = mockLocalMedia(
+    rtcMembership,
+    {},
+    [mockVideoTrack()],
+    mockMediaDevices({}),
+  );
+  expect(vm.switchCamera$.value).toBeNull();
+});
+
+test("remote media is in waiting state while its media has not arrived", () => {
+  const vm = mockRemoteMedia(rtcMembership, {}, null);
   expect(vm.waitingForMedia$.value).toBe(true);
 });
 
-test("remote media is not in waiting state when participant is connected", () => {
-  const vm = mockRemoteMedia(rtcMembership, {}, mockRemoteParticipant({}));
+test("remote media is not in waiting state once its media is there", () => {
+  const vm = mockRemoteMedia(rtcMembership, {}, []);
   expect(vm.waitingForMedia$.value).toBe(false);
 });
 
-test("remote media is not in waiting state when participant is connected with no publications", () => {
-  const vm = mockRemoteMedia(
-    rtcMembership,
-    {},
-    mockRemoteParticipant({
-      getTrackPublication: () => undefined,
-      getTrackPublications: () => [],
-    }),
-  );
+test("remote media stops waiting once its tracks arrive, however few", () => {
+  const tracks$ = new BehaviorSubject<MockTracks>(null);
+  const vm = mockRemoteMedia(rtcMembership, {}, tracks$);
+  expect(vm.waitingForMedia$.value).toBe(true);
+  expect(vm.encryptionStatus$.value).toBe(EncryptionStatus.Connecting);
+  tracks$.next([]);
   expect(vm.waitingForMedia$.value).toBe(false);
+});
+
+test("local media never reports an encryption problem", () => {
+  const vm = mockLocalMedia(rtcMembership, {}, [], mockMediaDevices({}));
+  expect(vm.encryptionStatus$.value).toBe(EncryptionStatus.Okay);
 });
 
 test("remote media is not in waiting state when user does not intend to publish anywhere", () => {
-  const vm = mockRemoteMedia(
-    rtcMembership,
-    {},
-    mockRemoteParticipant({}),
-    undefined, // No room (no advertised transport)
-  );
+  const vm = mockRemoteMedia(rtcMembership, {}, null, {});
   expect(vm.waitingForMedia$.value).toBe(false);
 });
 
+test("audio and video follow the tracks' mute state", () => {
+  const vm = mockRemoteMedia(rtcMembership, {}, [
+    mockAudioTrack({ muted$: constant(false) }),
+    mockVideoTrack({ muted$: constant(true) }),
+  ]);
+  expect(vm.audioEnabled$.value).toBe(true);
+  expect(vm.videoEnabled$.value).toBe(false);
+});
+
 test("user media polls stream stats only while the setting is on", () => {
-  const participant = mockRemoteParticipant({});
-  const vm = mockRemoteMedia(rtcMembership, {}, participant);
   onTestFinished(() => showConnectionStats.setValue(false));
   withTestScheduler(({ cold, expectObservable, schedule }) => {
     const stats = { type: "inbound-rtp" } as RTCInboundRtpStreamStats;
-    observeRtpStreamStatsMock.mockImplementation(() =>
-      cold("-s", { s: stats }),
-    );
+    const vm = mockRemoteMedia(rtcMembership, {}, [
+      mockAudioTrack({
+        stats$: () => cold("-s", { s: stats }),
+      }),
+    ]);
     schedule("-a-b", {
       a() {
         showConnectionStats.setValue(true);
@@ -319,14 +255,4 @@ test("user media polls stream stats only while the setting is on", () => {
       s: stats,
     });
   });
-  expect(observeRtpStreamStatsMock).toHaveBeenCalledWith(
-    participant,
-    Track.Source.Microphone,
-    "inbound-rtp",
-  );
-  expect(observeRtpStreamStatsMock).toHaveBeenCalledWith(
-    participant,
-    Track.Source.Camera,
-    "inbound-rtp",
-  );
 });
