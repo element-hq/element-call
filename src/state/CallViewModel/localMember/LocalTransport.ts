@@ -37,8 +37,5 @@ export async function getLocalTransport(
 
   if (transport === null) throw new MatrixRTCTransportMissingError(serverName);
 
-  // TODO: Since this module no longer maps auth errors to fatal user-facing
-  // errors (as it doesn't even perform auth), that needs to happen somewhere
-  // else.
   return { transport, serverName };
 }
