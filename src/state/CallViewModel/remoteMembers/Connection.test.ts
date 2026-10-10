@@ -75,7 +75,6 @@ function setupTest(): void {
       matrix_server_name: "example.org",
       expires_in: 3600,
     }),
-    getDeviceId: vi.fn().mockReturnValue("ABCDEF"),
     _unstable_getLivekitToken: vi.fn().mockResolvedValue({ jwt: testJWTToken }),
   });
 

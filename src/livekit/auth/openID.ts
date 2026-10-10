@@ -19,10 +19,7 @@ import { Config } from "../../config/Config";
 import { extractFullConfigFromToken, type SFUConfig } from "./types";
 
 // The bits we need from MatrixClient
-export type ClientOpenIDParts = Pick<
-  MatrixClient,
-  "getOpenIdToken" | "getDeviceId"
->;
+export type ClientOpenIDParts = Pick<MatrixClient, "getOpenIdToken">;
 
 export interface GetSFUConfigParams {
   client: ClientOpenIDParts;

@@ -61,7 +61,6 @@ beforeEach(() => {
   testScope = new ObservableScope();
   mockClient = {
     getOpenIdToken: vi.fn().mockReturnValue(""),
-    getDeviceId: vi.fn().mockReturnValue("DEV000"),
     _unstable_getLivekitToken: vi.fn().mockResolvedValue({ jwt: testJWTToken }),
   };
 });

@@ -39,10 +39,7 @@ describe("getSFUConfig", () => {
   let params: GetSFUConfigParams;
   beforeEach(() => {
     fetchMock.catch(404);
-    matrixClient = {
-      getOpenIdToken: vitest.fn(),
-      getDeviceId: vitest.fn(),
-    };
+    matrixClient = { getOpenIdToken: vitest.fn() };
     params = {
       client: matrixClient,
       membership: ownMemberMock,
