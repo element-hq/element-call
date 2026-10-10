@@ -15,7 +15,7 @@ import { Epoch, mapEpoch, ObservableScope } from "../../ObservableScope.ts";
 import {
   createConnectionManager$,
   ConnectionManagerData,
-  areUnstableLivekitTransportsEqual,
+  keyFor,
 } from "./ConnectionManager.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
 import { type Connection } from "./Connection.ts";
@@ -40,6 +40,14 @@ const TRANSPORT_2: TransportLocator = {
   },
   serverName: "sample.com",
 };
+
+function findConnection(
+  transport: TransportLocator,
+  connections: Connection[],
+): Connection | undefined {
+  const key = keyFor(transport);
+  return connections.find((c) => keyFor(c) === key);
+}
 
 let fakeConnectionFactory: ConnectionFactory;
 let testScope: ObservableScope;
@@ -106,21 +114,11 @@ describe("connections$ stream", () => {
             vi.mocked(fakeConnectionFactory).createConnection,
           ).toHaveBeenCalledTimes(2);
 
-          const conn1 = connections.find((c) =>
-            areUnstableLivekitTransportsEqual(
-              c.transport,
-              TRANSPORT_1.transport,
-            ),
-          );
+          const conn1 = findConnection(TRANSPORT_1, connections);
           expect(conn1).toBeDefined();
           expect(conn1!.start).toHaveBeenCalled();
 
-          const conn2 = connections.find((c) =>
-            areUnstableLivekitTransportsEqual(
-              c.transport,
-              TRANSPORT_2.transport,
-            ),
-          );
+          const conn2 = findConnection(TRANSPORT_2, connections);
           expect(conn2).toBeDefined();
           expect(conn2!.start).toHaveBeenCalled();
           return true;
@@ -159,20 +157,10 @@ describe("connections$ stream", () => {
             vi.mocked(fakeConnectionFactory).createConnection,
           ).toHaveBeenCalledTimes(2);
 
-          const conn2 = connections.find((c) =>
-            areUnstableLivekitTransportsEqual(
-              c.transport,
-              TRANSPORT_2.transport,
-            ),
-          );
+          const conn2 = findConnection(TRANSPORT_2, connections);
           expect(conn2).toBeDefined();
 
-          const conn1 = connections.find((c) =>
-            areUnstableLivekitTransportsEqual(
-              c.transport,
-              TRANSPORT_1.transport,
-            ),
-          );
+          const conn1 = findConnection(TRANSPORT_1, connections);
           expect(conn1).toBeDefined();
           expect(conn1!.start).toHaveBeenCalledOnce();
 
@@ -211,11 +199,9 @@ describe("connections$ stream", () => {
 
           expect(connections.length).toBe(1);
           // The second connection should have been stopped has it is no longer needed.
-          const connection2 = allCreatedConnections.find((c) =>
-            areUnstableLivekitTransportsEqual(
-              c.transport,
-              TRANSPORT_2.transport,
-            ),
+          const connection2 = findConnection(
+            TRANSPORT_2,
+            allCreatedConnections,
           );
           expect(connection2).toBeDefined();
           expect(connection2!.stop).toHaveBeenCalled();
