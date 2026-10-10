@@ -34,12 +34,12 @@ import {
   createRemoteMatrixLivekitMembers$,
   type RemoteMatrixLivekitMember,
 } from "./MatrixLivekitMembers.ts";
-import { createConnectionManager$ } from "./ConnectionManager.ts";
+import { createConnectionMap$ } from "./ConnectionMap.ts";
 import { membershipsAndTransports$ } from "../../SessionBehaviors.ts";
 import { localRtcMember, testJWTToken } from "../../../utils/test-fixtures.ts";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
 
-// Test the integration of ConnectionManager and MatrixLivekitMerger
+// Test the integration of ConnectionMap and MatrixLivekitMembers
 
 let testScope: ObservableScope;
 let ecConnectionFactory: ECConnectionFactory;
@@ -125,7 +125,7 @@ test("bob, carl, then bob joining no tracks yet", () => {
       memberships$,
     );
 
-    const connectionManager = createConnectionManager$({
+    const connectionMap$ = createConnectionMap$({
       scope: testScope,
       connectionFactory: ecConnectionFactory,
       localTransport: exampleTransportLocator,
@@ -138,7 +138,7 @@ test("bob, carl, then bob joining no tracks yet", () => {
       scope: testScope,
       membershipsWithTransport$:
         membershipsAndTransports.membershipsWithTransport$,
-      connectionManager,
+      connectionMap$,
       localUser: localRtcMember,
     });
 

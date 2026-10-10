@@ -41,6 +41,7 @@ import {
   from,
   concatWith,
   catchError,
+  switchAll,
 } from "rxjs";
 import { type Logger, logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import {
@@ -126,10 +127,9 @@ import {
   ECConnectionFactory,
 } from "./remoteMembers/ConnectionFactory.ts";
 import {
-  ConnectionManagerData,
-  createConnectionManager$,
-  type IConnectionManager,
-} from "./remoteMembers/ConnectionManager.ts";
+  ConnectionMap,
+  createConnectionMap$,
+} from "./remoteMembers/ConnectionMap.ts";
 import {
   createRemoteMatrixLivekitMembers$,
   type LocalMatrixLivekitMember,
@@ -582,26 +582,24 @@ export function createCallViewModel$(
       options.livekitRoomFactory,
     );
 
-  const connectionManager: IConnectionManager = {
-    connectionManagerData$: scope.behavior(
-      localTransport$.pipe(
-        catchError(() => NEVER), // Swallow errors
-        concatWith(NEVER), // So the Observable doesn't complete prematurely
-        mapScoped("connectionManager$", (scope, localTransport) =>
-          createConnectionManager$({
-            scope,
-            connectionFactory,
-            localTransport,
-            remoteTransports$: membershipsAndTransports.transports$,
-            logger,
-            ownMembershipIdentity,
-          }),
-        ),
-        switchMap(({ connectionManagerData$ }) => connectionManagerData$),
+  const connectionMap$ = scope.behavior<Epoch<ConnectionMap>>(
+    localTransport$.pipe(
+      catchError(() => NEVER), // Swallow errors
+      concatWith(NEVER), // So the Observable doesn't complete prematurely
+      mapScoped("connectionMap$", (localTransport, scope) =>
+        createConnectionMap$({
+          scope,
+          connectionFactory,
+          localTransport,
+          remoteTransports$: membershipsAndTransports.transports$,
+          logger,
+          ownMembershipIdentity,
+        }),
       ),
-      new Epoch(new ConnectionManagerData()),
+      switchAll(),
     ),
-  };
+    new Epoch(new ConnectionMap()),
+  );
 
   const remoteMatrixLivekitMembers$: Behavior<
     Epoch<RemoteMatrixLivekitMember[]>
@@ -609,7 +607,7 @@ export function createCallViewModel$(
     scope: scope,
     membershipsWithTransport$:
       membershipsAndTransports.membershipsWithTransport$,
-    connectionManager: connectionManager,
+    connectionMap$,
     localUser: { userId, deviceId },
   });
 
@@ -648,7 +646,7 @@ export function createCallViewModel$(
         controlledAudioDevices,
       );
     },
-    connectionManager,
+    connectionMap$,
     client,
     matrixRTCSession,
     localTransport$,
@@ -734,9 +732,7 @@ export function createCallViewModel$(
   });
 
   const allConnections$ = scope.behavior(
-    connectionManager.connectionManagerData$.pipe(
-      map((d) => d.value.getConnections()),
-    ),
+    connectionMap$.pipe(map((d) => d.value.getConnections())),
   );
 
   const livekitRoomItems$ = scope.behavior<LivekitRoomItem[]>(

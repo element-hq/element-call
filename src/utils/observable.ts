@@ -219,12 +219,12 @@ export function filterBehavior<T, S extends T>(
 }
 
 /**
- * Maps a changing input value to an item whose lifetime is tied to a certain
- * computed key. The item may capture some dynamic data from the input.
+ * Applies a given projection to each value emitted by the source Observable.
+ * The `project` function additionally receives an {@link ObservableScope}.
  */
 export function mapScoped<A, B>(
   name: string,
-  project: (scope: ObservableScope, a: A) => B,
+  project: (a: A, scope: ObservableScope) => B,
 ): OperatorFunction<A, B> {
   return (a$) =>
     a$.pipe(
@@ -233,7 +233,7 @@ export function mapScoped<A, B>(
         function* (a) {
           yield { keys: [a], data: undefined };
         },
-        (scope, _data$, a) => project(scope, a),
+        (scope, _data$, a) => project(a, scope),
         (items) => items,
       ),
       map(([item]) => item),

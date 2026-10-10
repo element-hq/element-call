@@ -11,7 +11,7 @@ import { combineLatest, filter, map } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import { type Behavior } from "../../Behavior";
-import { type IConnectionManager } from "./ConnectionManager";
+import { type ConnectionMap } from "./ConnectionMap";
 import { Epoch, type ObservableScope } from "../../ObservableScope";
 import { type Connection } from "./Connection";
 import { generateItemsWithEpoch } from "../../../utils/observable";
@@ -62,7 +62,7 @@ interface Props {
       { membership: CallMembership; transport: TransportLocator | undefined }[]
     >
   >;
-  connectionManager: IConnectionManager;
+  connectionMap$: Behavior<Epoch<ConnectionMap>>;
   localUser: { deviceId: string; userId: string };
 }
 
@@ -72,24 +72,21 @@ interface Props {
  * It has a small public interface:
  *  - in (via constructor):
  *    - an observable of CallMembership[] to track the call members (The matrix side)
- *    - a `ConnectionManager` for the lk rooms (The livekit side)
+ *    - a `ConnectionMap` for the lk rooms (The livekit side)
  *  - out (via public Observable):
  *    - `remoteMatrixLivekitMember` an observable of MatrixLivekitMember[] to track the remote members and associated livekit data.
  */
 export function createRemoteMatrixLivekitMembers$({
   scope,
   membershipsWithTransport$,
-  connectionManager,
+  connectionMap$,
   localUser,
 }: Props): Behavior<Epoch<RemoteMatrixLivekitMember[]>> {
   /**
    * Behavior of all the remote call members and their associated livekit data (if available).
    */
   return scope.behavior(
-    combineLatest([
-      membershipsWithTransport$,
-      connectionManager.connectionManagerData$,
-    ]).pipe(
+    combineLatest([membershipsWithTransport$, connectionMap$]).pipe(
       filter((values) =>
         values.every((value) => value.epoch === values[0].epoch),
       ),

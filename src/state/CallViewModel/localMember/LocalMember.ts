@@ -47,8 +47,8 @@ import { deepCompare } from "matrix-js-sdk/lib/utils";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
 import { type Behavior } from "../../Behavior.ts";
-import { type IConnectionManager } from "../remoteMembers/ConnectionManager.ts";
-import { type ObservableScope } from "../../ObservableScope.ts";
+import { type ConnectionMap } from "../remoteMembers/ConnectionMap.ts";
+import { type Epoch, type ObservableScope } from "../../ObservableScope.ts";
 import { type Publisher } from "./Publisher.ts";
 import { type MuteStates } from "../../MuteStates.ts";
 import {
@@ -143,7 +143,7 @@ interface Props {
   // that the inputs for those createSomething$() functions should NOT contain any js-sdk objectes
   scope: ObservableScope;
   muteStates: MuteStates;
-  connectionManager: IConnectionManager;
+  connectionMap$: Behavior<Epoch<ConnectionMap>>;
   createPublisherFactory: (connection: Connection) => Publisher;
   joinMatrixRTC: (
     transport: UnstableLivekitTransport,
@@ -174,7 +174,7 @@ interface Props {
  *  -
  * @param props The properties required to create the local membership.
  * @param props.scope The observable scope to use.
- * @param props.connectionManager The connection manager to get connections from.
+ * @param props.connectionMap$ The connection map to get connections from.
  * @param props.createPublisherFactory Factory to create a publisher once we have a connection.
  * @param props.joinMatrixRTC Callback to join the matrix RTC session once we have a transport.
  * @param props.homeserverConnected The homeserver connected state.
@@ -196,7 +196,7 @@ interface Props {
  */
 export const createLocalMembership$ = ({
   scope,
-  connectionManager,
+  connectionMap$,
   localTransport$: localTransportWithErrors$,
   homeserverConnected,
   createPublisherFactory,
@@ -330,13 +330,11 @@ export const createLocalMembership$ = ({
 
   // Drop Epoch data here since we will not combine this anymore
   const localConnection$ = scope.behavior(
-    combineLatest([
-      connectionManager.connectionManagerData$,
-      localTransport$,
-    ]).pipe(
-      map(([{ value: connectionData }, transport]) =>
-        connectionData.getConnectionForTransport(transport),
-      ),
+    combineLatest(
+      [connectionMap$, localTransport$],
+      ({ value: connectionMap }, transport) =>
+        connectionMap.getConnectionForTransport(transport),
+    ).pipe(
       tap((connection) => {
         logger.info(
           `Local connection updated: ${JSON.stringify(connection?.transport)}`,

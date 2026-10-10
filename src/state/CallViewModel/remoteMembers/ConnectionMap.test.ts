@@ -13,10 +13,10 @@ import { logger } from "matrix-js-sdk/lib/logger";
 
 import { Epoch, mapEpoch, ObservableScope } from "../../ObservableScope.ts";
 import {
-  createConnectionManager$,
-  ConnectionManagerData,
+  createConnectionMap$,
+  ConnectionMap,
   keyFor,
-} from "./ConnectionManager.ts";
+} from "./ConnectionMap.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
 import { type Connection } from "./Connection.ts";
 import { ownMemberMock, withTestScheduler } from "../../../utils/test.ts";
@@ -92,7 +92,7 @@ afterEach(() => {
 describe("connections$ stream", () => {
   test("Should create and start new connections for each transports", () => {
     withTestScheduler(({ behavior, expectObservable }) => {
-      const { connectionManagerData$ } = createConnectionManager$({
+      const connectionMap$ = createConnectionMap$({
         scope: testScope,
         connectionFactory: fakeConnectionFactory,
         localTransport: TRANSPORT_1,
@@ -104,7 +104,7 @@ describe("connections$ stream", () => {
       });
 
       expectObservable(
-        connectionManagerData$.pipe(mapEpoch((d) => d.getConnections())),
+        connectionMap$.pipe(mapEpoch((d) => d.getConnections())),
       ).toBe("a", {
         a: expect.toSatisfy((e: Epoch<Connection[]>) => {
           const connections = e.value;
@@ -129,7 +129,7 @@ describe("connections$ stream", () => {
 
   test("Should start connection only once", () => {
     withTestScheduler(({ behavior, expectObservable }) => {
-      const { connectionManagerData$ } = createConnectionManager$({
+      const connectionMap$ = createConnectionMap$({
         scope: testScope,
         connectionFactory: fakeConnectionFactory,
         localTransport: TRANSPORT_1,
@@ -146,7 +146,7 @@ describe("connections$ stream", () => {
       });
 
       expectObservable(
-        connectionManagerData$.pipe(mapEpoch((d) => d.getConnections())),
+        connectionMap$.pipe(mapEpoch((d) => d.getConnections())),
       ).toBe("xxxxxa", {
         x: expect.anything(),
         a: expect.toSatisfy((e: Epoch<Connection[]>) => {
@@ -172,7 +172,7 @@ describe("connections$ stream", () => {
 
   test("Should cleanup connections when not needed anymore", () => {
     withTestScheduler(({ behavior, expectObservable }) => {
-      const { connectionManagerData$ } = createConnectionManager$({
+      const connectionMap$ = createConnectionMap$({
         scope: testScope,
         connectionFactory: fakeConnectionFactory,
         localTransport: TRANSPORT_1,
@@ -186,7 +186,7 @@ describe("connections$ stream", () => {
       });
 
       expectObservable(
-        connectionManagerData$.pipe(mapEpoch((d) => d.getConnections())),
+        connectionMap$.pipe(mapEpoch((d) => d.getConnections())),
       ).toBe("xab", {
         x: expect.anything(),
         a: expect.toSatisfy((e: Epoch<Connection[]>) => {
@@ -217,10 +217,10 @@ describe("connections$ stream", () => {
   });
 });
 
-describe("ConnectionManagerData", () => {
+describe("ConnectionMap", () => {
   test("warns when a second connection to the same URL is merged", () => {
     const warn = vi.spyOn(logger, "warn").mockImplementation(() => {});
-    const data = new ConnectionManagerData(logger);
+    const data = new ConnectionMap(logger);
     const connection = TRANSPORT_1 as unknown as Connection;
     const p = (identity: string): RemoteParticipant =>
       ({ identity }) as unknown as RemoteParticipant;
@@ -235,7 +235,7 @@ describe("ConnectionManagerData", () => {
   });
 });
 
-describe("connectionManagerData$ stream", () => {
+describe("connectionMap$", () => {
   // Used in test to control fake connections' remoteParticipants$ streams
   let fakeRemoteParticipantsStreams: Map<string, Behavior<RemoteParticipant[]>>;
 
@@ -324,7 +324,7 @@ describe("connectionManagerData$ stream", () => {
       );
       // ==============================
 
-      const { connectionManagerData$ } = createConnectionManager$({
+      const connectionMap$ = createConnectionMap$({
         scope: testScope,
         connectionFactory: fakeConnectionFactory,
         localTransport: TRANSPORT_1,
@@ -335,16 +335,16 @@ describe("connectionManagerData$ stream", () => {
         ownMembershipIdentity: ownMemberMock,
       });
 
-      expectObservable(connectionManagerData$).toBe("abcd", {
+      expectObservable(connectionMap$).toBe("abcd", {
         a: expect.toSatisfy((e) => {
-          const data: ConnectionManagerData = e.value;
+          const data: ConnectionMap = e.value;
           expect(data.getConnections().length).toBe(2);
           expect(data.getParticipantsForTransport(TRANSPORT_1).length).toBe(0);
           expect(data.getParticipantsForTransport(TRANSPORT_2).length).toBe(0);
           return true;
         }),
         b: expect.toSatisfy((e) => {
-          const data: ConnectionManagerData = e.value;
+          const data: ConnectionMap = e.value;
           expect(data.getConnections().length).toBe(2);
           expect(data.getParticipantsForTransport(TRANSPORT_1).length).toBe(1);
           expect(data.getParticipantsForTransport(TRANSPORT_2).length).toBe(0);
@@ -354,7 +354,7 @@ describe("connectionManagerData$ stream", () => {
           return true;
         }),
         c: expect.toSatisfy((e) => {
-          const data: ConnectionManagerData = e.value;
+          const data: ConnectionMap = e.value;
           expect(data.getConnections().length).toBe(2);
           expect(data.getParticipantsForTransport(TRANSPORT_1).length).toBe(1);
           expect(data.getParticipantsForTransport(TRANSPORT_2).length).toBe(1);
@@ -367,7 +367,7 @@ describe("connectionManagerData$ stream", () => {
           return true;
         }),
         d: expect.toSatisfy((e) => {
-          const data: ConnectionManagerData = e.value;
+          const data: ConnectionMap = e.value;
           expect(data.getConnections().length).toBe(2);
           expect(data.getParticipantsForTransport(TRANSPORT_1).length).toBe(2);
           expect(data.getParticipantsForTransport(TRANSPORT_2).length).toBe(1);

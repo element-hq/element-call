@@ -420,8 +420,8 @@ describe("Start connection states", () => {
     pendingConnect.reject(new Error("Client initiated disconnect"));
     await stopping;
 
-    // start() resolves rather than rejecting (it is not awaited by the
-    // ConnectionManager, so a rejection would be unhandled).
+    // start() resolves rather than rejecting (it is not awaited by the caller,
+    // so a rejection would be unhandled).
     await expect(started).resolves.toBeUndefined();
     expect(capturedStates.at(-1)).toEqual({ state: "stopped" });
     expect(capturedStates.some((st) => st instanceof Error)).toBe(false);

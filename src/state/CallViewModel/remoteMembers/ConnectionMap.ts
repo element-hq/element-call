@@ -66,19 +66,19 @@ function removeDuplicateTransports(
   return [...map.values()];
 }
 
-export class ConnectionManagerData {
-  private readonly store: Map<
+export class ConnectionMap {
+  private readonly map = new Map<
     TransportKey,
     { connection: Connection; participants: RemoteParticipant[] }
-  > = new Map();
+  >();
 
   public constructor(private readonly logger?: Logger) {}
 
   public add(connection: Connection, participants: RemoteParticipant[]): void {
     const key = keyFor(connection);
-    const existing = this.store.get(key);
+    const existing = this.map.get(key);
     if (!existing) {
-      this.store.set(key, { connection, participants });
+      this.map.set(key, { connection, participants });
     } else {
       // Transports are deduplicated by key upstream, so this should never
       // happen; if it does, members may be matched against the wrong room.
@@ -90,19 +90,19 @@ export class ConnectionManagerData {
   }
 
   public getConnections(): Connection[] {
-    return Array.from(this.store.values()).map(({ connection }) => connection);
+    return Array.from(this.map.values()).map(({ connection }) => connection);
   }
 
   public getConnectionForTransport(
     transport: TransportLocator,
   ): Connection | null {
-    return this.store.get(keyFor(transport))?.connection ?? null;
+    return this.map.get(keyFor(transport))?.connection ?? null;
   }
 
   public getParticipantsForTransport(
     transport: TransportLocator,
   ): RemoteParticipant[] {
-    const existing = this.store.get(keyFor(transport));
+    const existing = this.map.get(keyFor(transport));
     if (existing) {
       return existing.participants;
     }
@@ -120,13 +120,8 @@ interface Props {
   ownMembershipIdentity: CallMembershipIdentityParts;
 }
 
-// TODO - write test for scopes (do we really need to bind scope)
-export interface IConnectionManager {
-  connectionManagerData$: Behavior<Epoch<ConnectionManagerData>>;
-}
-
 /**
- * Crete a `ConnectionManager`
+ * Create a dynamic map of connections and their associated backend participants.
  * @param props - Configuration object
  * @param props.scope - The observable scope used by this object
  * @param props.connectionFactory - Used to create new connections
@@ -135,19 +130,19 @@ export interface IConnectionManager {
  * @param props.ownMembershipIdentity - The own membership identity to use.
  * @param props.logger - The logger to use.
  */
-export function createConnectionManager$({
+export function createConnectionMap$({
   scope,
   connectionFactory,
   localTransport,
   remoteTransports$,
   logger: parentLogger,
   ownMembershipIdentity,
-}: Props): IConnectionManager {
-  const logger = parentLogger.getChild("[ConnectionManager]");
+}: Props): Behavior<Epoch<ConnectionMap>> {
+  const logger = parentLogger.getChild("[ConnectionMap]");
   // TODO logger: only construct one logger from the client and make it compatible via a EC specific sing
 
   /**
-   * All transports currently managed by the ConnectionManager. This list does
+   * All transports currently represented in the connection map. This list does
    * not include duplicate transports.
    */
   const localAndRemoteTransports$: Behavior<Epoch<TransportLocator[]>> =
@@ -170,7 +165,7 @@ export function createConnectionManager$({
   const connections$ = scope.behavior(
     localAndRemoteTransports$.pipe(
       generateItemsWithEpoch(
-        "ConnectionManager connections$",
+        "ConnectionMap connections$",
         function* (transports) {
           for (const transport of transports) {
             const role =
@@ -205,46 +200,28 @@ export function createConnectionManager$({
     ),
   );
 
-  const connectionManagerData$ = scope.behavior(
+  return scope.behavior(
     connections$.pipe(
-      switchMap((connections) => {
-        const epoch = connections.epoch;
+      switchMap(({ value: connections, epoch }) => {
+        if (connections.length === 0)
+          return of(new Epoch(new ConnectionMap(), epoch));
 
-        // Map the connections to list of {connection, participants}[]
-        const listOfConnectionsWithRemoteParticipants = connections.value.map(
-          (connection) => {
-            return connection.remoteParticipants$.pipe(
-              map((participants) => ({
-                connection,
-                participants,
-              })),
-            );
-          },
-        );
-
-        // probably not required
-
-        if (listOfConnectionsWithRemoteParticipants.length === 0) {
-          return of(new Epoch(new ConnectionManagerData(), epoch));
-        }
-
-        // combineLatest the several streams into a single stream with the ConnectionManagerData
-        return combineLatest(listOfConnectionsWithRemoteParticipants).pipe(
-          map(
-            (lists) =>
-              new Epoch(
-                lists.reduce((data, { connection, participants }) => {
-                  data.add(connection, participants);
-                  return data;
-                }, new ConnectionManagerData(logger)),
-                epoch,
-              ),
+        return combineLatest(
+          // Map the connections to list of Observable<{connection, participants}>
+          connections.map((connection) =>
+            connection.remoteParticipants$.pipe(
+              map((participants) => ({ connection, participants })),
+            ),
           ),
+          // Collect into a single ConnectionMap
+          (...list) => {
+            const map = new ConnectionMap(logger);
+            for (const item of list)
+              map.add(item.connection, item.participants);
+            return new Epoch(map, epoch);
+          },
         );
       }),
     ),
-    new Epoch(new ConnectionManagerData(), -1),
   );
-
-  return { connectionManagerData$ };
 }

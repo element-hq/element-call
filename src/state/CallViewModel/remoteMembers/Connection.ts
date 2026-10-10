@@ -365,7 +365,7 @@ export class Connection {
         // stop() was called while we were connecting, which makes the pending
         // connect reject. That is the abort we asked for, not a failure, so
         // don't record an error state on a stopped connection or rethrow it
-        // (start() is not awaited by the ConnectionManager, so a throw here
+        // (start() is not necessarily awaited by the caller, so a throw here
         // becomes an unhandled promise rejection).
         this.logger.debug(`Connect aborted because the connection was stopped`);
         return;
