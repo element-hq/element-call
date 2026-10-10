@@ -386,8 +386,6 @@ export class Connection {
   }
 
   protected async getSFUConfig(): Promise<SFUConfig> {
-    // This will only be called for sfu's where we do not publish ourselves.
-    // For the local connection we will use the existingJwtTokenData
     return await getSFUConfig({
       client: this.client,
       membership: this.ownMembershipIdentity,
