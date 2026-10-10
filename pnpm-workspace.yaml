@@ -14,6 +14,9 @@ allowBuilds:
   "core-js": true
   "esbuild": true
   "matrix-js-sdk@git+https://github.com/matrix-org/matrix-js-sdk.git": true
+  # Compound is a git dependency until PortalRoot (element-hq/compound-web#562) is released; its
+  # `prepare` script builds it on install. pnpm matches git-hosted packages by repository URL.
+  "@vector-im/compound-web@git+https://github.com/element-hq/compound-web.git": true
   "protobufjs": true
 overrides:
   # We need compatible versions of RxJS in our dependencies and LiveKit's dependencies, but

@@ -50,7 +50,7 @@ import {
 } from "react";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { I18nextProvider } from "react-i18next";
-import { TooltipProvider } from "@vector-im/compound-web";
+import { PortalRoot, TooltipProvider } from "@vector-im/compound-web";
 import { ErrorBoundary } from "@sentry/react";
 import { shouldPolyfill as shouldPolyfillSegmenter } from "@formatjs/intl-segmenter/should-polyfill";
 import { shouldPolyfill as shouldPolyfillDurationFormat } from "@formatjs/intl-durationformat/should-polyfill.js";
@@ -154,6 +154,7 @@ export const ElementCall: FC<ElementCallProps> = ({
   ref,
   theme,
   language,
+  portalRoot = null,
 }): ReactNode => {
   const hostBridge = useComponentHostBridge(suppliedHostBridge, ref, theme);
 
@@ -240,34 +241,38 @@ export const ElementCall: FC<ElementCallProps> = ({
               // Stands in for the standalone page's `#root`: see `.content`
               // in ElementCall.module.css
               <div className={styles.content}>
-                <RootElementProvider value={container}>
-                  {/* Whatever goes wrong in here is shown in here. Left to
-                  propagate, an error would unmount the host's own tree. */}
-                  <ErrorBoundary
-                    fallback={(error) => <ErrorPage error={error} />}
-                    // A broken call should not hold the host on screen
-                    onError={() => void hostBridge.setAlwaysOnScreen(false)}
-                  >
-                    <Decoration>
-                      <TooltipProvider>
-                        <ClientProvider client={client}>
-                          <MediaDevicesContext value={mediaDevices}>
-                            <ProcessorProvider>
-                              <CallView
-                                client={client}
-                                rtcSession={rtcSession}
-                                isPasswordlessUser={false}
-                                confineToRoom={params.confineToRoom}
-                                preload={params.preload}
-                                skipLobby={params.skipLobby}
-                              />
-                            </ProcessorProvider>
-                          </MediaDevicesContext>
-                        </ClientProvider>
-                      </TooltipProvider>
-                    </Decoration>
-                  </ErrorBoundary>
-                </RootElementProvider>
+                {/* Where Compound floats the call's menus and tooltips: the
+                host's body unless the host says otherwise (see `portalRoot`) */}
+                <PortalRoot root={portalRoot}>
+                  <RootElementProvider value={container}>
+                    {/* Whatever goes wrong in here is shown in here. Left to
+                    propagate, an error would unmount the host's own tree. */}
+                    <ErrorBoundary
+                      fallback={(error) => <ErrorPage error={error} />}
+                      // A broken call should not hold the host on screen
+                      onError={() => void hostBridge.setAlwaysOnScreen(false)}
+                    >
+                      <Decoration>
+                        <TooltipProvider>
+                          <ClientProvider client={client}>
+                            <MediaDevicesContext value={mediaDevices}>
+                              <ProcessorProvider>
+                                <CallView
+                                  client={client}
+                                  rtcSession={rtcSession}
+                                  isPasswordlessUser={false}
+                                  confineToRoom={params.confineToRoom}
+                                  preload={params.preload}
+                                  skipLobby={params.skipLobby}
+                                />
+                              </ProcessorProvider>
+                            </MediaDevicesContext>
+                          </ClientProvider>
+                        </TooltipProvider>
+                      </Decoration>
+                    </ErrorBoundary>
+                  </RootElementProvider>
+                </PortalRoot>
               </div>
             )}
           </div>
