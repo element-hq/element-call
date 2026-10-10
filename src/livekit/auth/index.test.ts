@@ -56,7 +56,7 @@ const membership: CallMembershipIdentityParts = {
 };
 
 const roomId = "!room:example.org";
-const slotId = "m.call#room";
+const slotId = "m.call#ROOM";
 
 const unsupportedError = new MatrixError({ errcode: "M_UNSUPPORTED" }, 404);
 

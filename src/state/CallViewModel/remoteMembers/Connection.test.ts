@@ -59,7 +59,7 @@ let localParticipantEventEmiter: EventEmitter;
 let fakeLocalParticipant: MockedObject<LocalParticipant>;
 
 const ROOM_ID = "!roomID:example.org";
-const SLOT_ID = "m.call#room";
+const SLOT_ID = "m.call#ROOM";
 
 const transport: UnstableLivekitTransport = {
   type: "livekit",
