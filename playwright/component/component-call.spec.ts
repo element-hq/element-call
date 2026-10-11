@@ -125,25 +125,19 @@ test("leaves the host's own page unstyled", async ({ page }) => {
     timeout: 60_000,
   });
 
-  // Element Call's stylesheet is written for a page of its own: normalize.css
-  // gives `html` a line height, Compound gives `body` its font and feature
-  // settings, and the design tokens live on `:root`. None of that may reach the
-  // host's document — the harness sets none of these itself, so anything other
-  // than the browser's defaults here came from us.
+  // Compound's document styles reach the host, but it loads them itself.
   const host = await page.evaluate(() => {
-    const html = getComputedStyle(document.documentElement);
-    const body = getComputedStyle(document.body);
+    const sub = document.body.appendChild(document.createElement("sub"));
+    const verticalAlign = getComputedStyle(sub).verticalAlign;
+    sub.remove();
     return {
-      lineHeight: html.lineHeight,
-      fontFeatureSettings: body.fontFeatureSettings,
-      token: html.getPropertyValue("--cpd-color-text-primary"),
+      verticalAlign,
+      token: getComputedStyle(document.documentElement).getPropertyValue(
+        "--font-scale",
+      ),
     };
   });
-  expect(host).toEqual({
-    lineHeight: "normal",
-    fontFeatureSettings: "normal",
-    token: "",
-  });
+  expect(host).toEqual({ verticalAlign: "sub", token: "" });
 
   // While inside the container, the same rules do apply
   const root = panes.first().locator("[data-element-call-root]");

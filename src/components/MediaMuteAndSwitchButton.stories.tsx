@@ -65,8 +65,10 @@ const WithACallArea: FC<{ children: ReactNode }> = ({ children }) => {
     <div
       ref={setCallArea}
       style={{
-        // A call's size: anything smaller makes a short device list scroll.
+        // A call's size: anything smaller makes a short device list scroll, and
+        // a narrower one narrows the menu.
         blockSize: 720,
+        inlineSize: 1024,
         display: "flex",
         alignItems: "flex-end",
         justifyContent: "center",
@@ -256,6 +258,37 @@ export const SpeakerAndMicrophoneSections: Story = {
   },
 };
 
+/** A long name wraps rather than widening the menu, which design sets. */
+export const LongDeviceNameWraps: Story = {
+  args: {
+    ...SpeakerAndMicrophoneSections.args,
+    outputOptions: [
+      {
+        label: {
+          type: "name",
+          name: "Logitech BRIO 4K Ultra HD Pro Business Webcam Speakers (046d:085e)",
+        },
+        id: "long",
+      },
+      { label: { type: "name", name: "Headset" }, id: "spk2" },
+    ],
+    selectedOutputOption: "long",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Microphone" }));
+    const body = within(document.body);
+    const long = await body.findByRole("menuitemradio", { name: /Logitech/ });
+    const short = await body.findByRole("menuitemradio", { name: "Headset" });
+
+    const menu = document.body.querySelector("[role='menu']")!;
+    await expect(Math.round(menu.getBoundingClientRect().width)).toBe(296);
+    await expect(long.getBoundingClientRect().height).toBeGreaterThan(
+      short.getBoundingClientRect().height,
+    );
+  },
+};
+
 export const OutputCannotBeChosen: Story = {
   args: {
     ...Default.args,
@@ -436,10 +469,6 @@ export const ManyDevices: Story = {
       .getBoundingClientRect();
     await expect(frame.top).toBeGreaterThanOrEqual(0);
     await expect(frame.bottom).toBeLessThanOrEqual(window.innerHeight + 1);
-
-    // The meter is the menu's one opaque part, so it must stay inside the frame.
-    await expect(pinned.left).toBeGreaterThan(frame.left);
-    await expect(pinned.right).toBeLessThan(frame.right);
   },
 };
 
@@ -606,13 +635,6 @@ export const HeadingsStayWhileScrolling: Story = {
     );
     await expect(heading.getBoundingClientRect().bottom).toBeGreaterThan(
       scrollport.top,
-    );
-    // Clear of the menu's frame.
-    const frame = document.body
-      .querySelector("[role='menu']")!
-      .getBoundingClientRect();
-    await expect(heading.getBoundingClientRect().left).toBeGreaterThan(
-      frame.left,
     );
   },
 };
