@@ -131,7 +131,7 @@ importers:
         specifier: ^10.2.11
         version: 10.3.1(react@19.2.8)
       '@vector-im/compound-design-tokens':
-        specifier: ^11.0.0
+        specifier: ^11.1.0
         version: 11.1.0(@types/react@19.2.18)(react@19.2.8)
       '@vector-im/compound-web':
         specifier: ^10.3.0

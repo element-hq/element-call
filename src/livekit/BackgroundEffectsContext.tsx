@@ -15,7 +15,7 @@ import { type LocalVideoTrack } from "livekit-client";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { combineLatest } from "rxjs";
 
-import { backgroundBlur as backgroundBlurSettings } from "../settings/settings";
+import { backgroundEffect as backgroundEffectSetting } from "../settings/settings";
 import { BackgroundEffectTransformer } from "./BackgroundEffectTransformer";
 import { OneStepPipeline } from "./OneStepPipeline";
 import { supportsBackgroundProcessors } from "./backgroundProcessing";
@@ -117,7 +117,7 @@ export function createAppBackgroundEffects(
 ): BackgroundEffects {
   return createBackgroundEffects(scope, {
     supported: supportsBackgroundProcessors(),
-    blur$: backgroundBlurSettings.value$,
+    effect$: backgroundEffectSetting.value$,
     pipeline: new OneStepPipeline(
       new BackgroundEffectTransformer({ backgroundDisabled: true }),
       "background-effect",
