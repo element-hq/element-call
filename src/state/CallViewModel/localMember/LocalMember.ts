@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
+  ConnectionState as LivekitConnectionState,
   type Participant,
   ParticipantEvent,
   type LocalParticipant,
@@ -15,10 +16,9 @@ import {
   MediaDeviceFailure,
 } from "livekit-client";
 import { observeParticipantEvents } from "@livekit/components-core";
-import { type MatrixClient } from "matrix-js-sdk";
 import {
   Status as RTCSessionStatus,
-  type LivekitTransport,
+  type UnstableLivekitTransport,
   type MatrixRTCSession,
   type RTCCallIntent,
   type RTCNotificationType,
@@ -47,8 +47,8 @@ import { deepCompare } from "matrix-js-sdk/lib/utils";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
 import { type Behavior } from "../../Behavior.ts";
-import { type IConnectionManager } from "../remoteMembers/ConnectionManager.ts";
-import { type ObservableScope } from "../../ObservableScope.ts";
+import { type ConnectionMap } from "../remoteMembers/ConnectionMap.ts";
+import { type Epoch, type ObservableScope } from "../../ObservableScope.ts";
 import { type Publisher } from "./Publisher.ts";
 import { type MuteStates } from "../../MuteStates.ts";
 import {
@@ -74,13 +74,16 @@ import {
 } from "../../../config/ConfigOptions.ts";
 import { Config } from "../../../config/Config.ts";
 import {
-  ConnectionState,
+  type ConnectionState,
   type Connection,
-  type FailedToStartError,
 } from "../remoteMembers/Connection.ts";
 import { type HomeserverConnected } from "./HomeserverConnected.ts";
-import { type LocalTransport } from "./LocalTransport.ts";
-import { getSFUConfigWithOpenID } from "../../../livekit/openIDSFU.ts";
+import {
+  type ClientDelegationParts,
+  delegateDelayedLeave,
+  type ClientOpenIDParts,
+  type TransportLocator,
+} from "../../../livekit/auth";
 
 export enum TransportState {
   /** Not even a transport is available to the LocalMembership */
@@ -113,7 +116,7 @@ export enum TrackState {
 export type LocalMemberMediaState =
   | {
       tracks: TrackState;
-      connection: ConnectionState | FailedToStartError;
+      connection: ConnectionState;
     }
   | PublishState
   | ElementCallError;
@@ -140,25 +143,27 @@ interface Props {
   // that the inputs for those createSomething$() functions should NOT contain any js-sdk objectes
   scope: ObservableScope;
   muteStates: MuteStates;
-  connectionManager: IConnectionManager;
+  connectionMap$: Behavior<Epoch<ConnectionMap>>;
   createPublisherFactory: (connection: Connection) => Publisher;
   joinMatrixRTC: (
-    transport: LivekitTransport,
+    transport: UnstableLivekitTransport,
     delayedLeaveTimings: ResolvedDelayedLeaveTimings,
   ) => void;
   homeserverConnected: HomeserverConnected;
   roomId: string;
   ownMembershipIdentity: CallMembershipIdentityParts;
-  localTransport$: Observable<LocalTransport>;
-  client: Pick<MatrixClient, "getDeviceId" | "getOpenIdToken">;
-  matrixRTCSession: Pick<MatrixRTCSession, "updateCallIntent" | "leave">;
+  localTransport$: Observable<TransportLocator>;
+  client: ClientDelegationParts & ClientOpenIDParts;
+  matrixRTCSession: Pick<
+    MatrixRTCSession,
+    "slotId" | "updateCallIntent" | "leave"
+  >;
   /** Whether to hide the screen-sharing button. */
   hideScreensharing: boolean;
   /** The application hosting Element Call, to be kept informed of join/leave. */
   hostBridge: HostBridge;
   baseUrl: string;
   delayId$: Behavior<string | null>;
-  matrixRTCMode: MatrixRTCMode;
   logger: Logger;
 }
 
@@ -169,7 +174,7 @@ interface Props {
  *  -
  * @param props The properties required to create the local membership.
  * @param props.scope The observable scope to use.
- * @param props.connectionManager The connection manager to get connections from.
+ * @param props.connectionMap$ The connection map to get connections from.
  * @param props.createPublisherFactory Factory to create a publisher once we have a connection.
  * @param props.joinMatrixRTC Callback to join the matrix RTC session once we have a transport.
  * @param props.homeserverConnected The homeserver connected state.
@@ -191,7 +196,7 @@ interface Props {
  */
 export const createLocalMembership$ = ({
   scope,
-  connectionManager,
+  connectionMap$,
   localTransport$: localTransportWithErrors$,
   homeserverConnected,
   createPublisherFactory,
@@ -206,7 +211,6 @@ export const createLocalMembership$ = ({
   hostBridge,
   ownMembershipIdentity,
   delayId$,
-  matrixRTCMode,
 }: Props): {
   /**
    * This request to start audio and video tracks.
@@ -308,15 +312,16 @@ export const createLocalMembership$ = ({
   const joinParams$ = scope.behavior(
     localTransport$.pipe(
       switchMap(async ({ transport }) => {
-        const transportSupportsDelegation = checkDelegationSupport(
-          transport.livekit_service_url + "/delegate_delayed_leave",
-          `transport ${transport.livekit_service_url}`,
-        );
+        const transportSupportsDelegation =
+          "livekit_service_url" in transport &&
+          (await checkDelegationSupport(
+            transport.livekit_service_url + "/delegate_delayed_leave",
+            `transport ${transport.livekit_service_url}`,
+          ));
         return {
           transport,
           delegationSupported:
-            (await homeserverSupportsDelegation) ||
-            (await transportSupportsDelegation),
+            transportSupportsDelegation || (await homeserverSupportsDelegation),
         };
       }),
     ),
@@ -325,16 +330,14 @@ export const createLocalMembership$ = ({
 
   // Drop Epoch data here since we will not combine this anymore
   const localConnection$ = scope.behavior(
-    combineLatest([
-      connectionManager.connectionManagerData$,
-      localTransport$,
-    ]).pipe(
-      map(([{ value: connectionData }, { transport }]) =>
-        connectionData.getConnectionForTransport(transport),
-      ),
+    combineLatest(
+      [connectionMap$, localTransport$],
+      ({ value: connectionMap }, transport) =>
+        connectionMap.getConnectionForTransport(transport),
+    ).pipe(
       tap((connection) => {
         logger.info(
-          `Local connection updated: ${connection?.transport?.livekit_service_url}`,
+          `Local connection updated: ${JSON.stringify(connection?.transport)}`,
         );
       }),
     ),
@@ -406,7 +409,7 @@ export const createLocalMembership$ = ({
   scope.reconcile(localConnection$, async (connection) => {
     logger.info(
       "reconcile based on new localConnection:",
-      connection?.transport.livekit_service_url,
+      JSON.stringify(connection?.transport),
     );
     if (connection !== null) {
       const publisher = createPublisherFactory(connection);
@@ -475,7 +478,13 @@ export const createLocalMembership$ = ({
   };
 
   const localConnectionState$ = localConnection$.pipe(
-    switchMap((connection) => (connection ? connection.state$ : of(null))),
+    switchMap((connection) =>
+      connection ? connection.state$ : of({ state: "initializing" as const }),
+    ),
+  );
+
+  const authenticated$ = scope.behavior(
+    localConnectionState$.pipe(map(({ state }) => state === "authenticated")),
   );
 
   const mediaState$: Behavior<LocalMemberMediaState> = scope.behavior(
@@ -493,7 +502,9 @@ export const createLocalMembership$ = ({
           : TrackState.WaitingForUser;
 
         if (
-          localConnectionState !== ConnectionState.LivekitConnected ||
+          localConnectionState.state !== "authenticated" ||
+          localConnectionState.livekitState !==
+            LivekitConnectionState.Connected ||
           trackState !== TrackState.Ready
         )
           return {
@@ -561,7 +572,11 @@ export const createLocalMembership$ = ({
     combineLatest([
       homeserverConnected.combined$,
       localConnectionState$.pipe(
-        map((state) => state === ConnectionState.LivekitConnected),
+        map(
+          (state) =>
+            state.state === "authenticated" &&
+            state.livekitState === LivekitConnectionState.Connected,
+        ),
       ),
     ]).pipe(
       map(([[hsConnected, hsReason], livekitConnected]) => {
@@ -656,34 +671,38 @@ export const createLocalMembership$ = ({
 
   // Join and leave the session as needed
   scope.reconcile(
-    scope.behavior(combineLatest([joinParams$, joinAndPublishRequested$])),
-    async ([joinParams, shouldConnect]) => {
-      if (!joinParams) return;
-      // if shouldConnect=false we will do the disconnect as the cleanup from the previous reconcile iteration.
-      if (!shouldConnect) return;
+    scope.behavior(
+      combineLatest([joinParams$, joinAndPublishRequested$, authenticated$]),
+    ),
+    async ([joinParams, shouldConnect, authenticated]) => {
       const sessionConfig = Config.get().matrix_rtc_session;
 
-      try {
-        joinMatrixRTC(
-          joinParams.transport,
-          joinParams.delegationSupported
-            ? sessionConfig.delegated_delayed_leave
-            : sessionConfig.delayed_leave,
-        );
-      } catch (error) {
-        logger.error("Error entering RTC session", error);
-        if (error instanceof Error)
-          setMatrixError(new MembershipManagerError(error));
-      }
-
-      return Promise.resolve(async (): Promise<void> => {
+      // Only join once authenticated, to ensure the LiveKit room exists first.
+      // Otherwise, subscribers authenticating with the OpenID flow may fail to
+      // join (they lack permission to create the room) and never retry.
+      if (joinParams && shouldConnect && authenticated) {
         try {
-          // TODO Update matrixRTCSession to allow udpating the transport without leaving the session!
-          await matrixRTCSession.leave(1000);
-        } catch (e) {
-          logger.error("Error leaving RTC session", e);
+          joinMatrixRTC(
+            joinParams.transport,
+            joinParams.delegationSupported
+              ? sessionConfig.delegated_delayed_leave
+              : sessionConfig.delayed_leave,
+          );
+        } catch (error) {
+          logger.error("Error entering RTC session", error);
+          if (error instanceof Error)
+            setMatrixError(new MembershipManagerError(error));
         }
-      });
+
+        // Clean-up callback to leave the session
+        return Promise.resolve(async (): Promise<void> => {
+          try {
+            await matrixRTCSession.leave(1000);
+          } catch (e) {
+            logger.error("Error leaving RTC session", e);
+          }
+        });
+      }
     },
   );
 
@@ -702,23 +721,22 @@ export const createLocalMembership$ = ({
     async ([joinParams, delayId]) => {
       if (joinParams?.delegationSupported && delayId !== null) {
         try {
-          // This will technically cause the service to issue a new JWT token,
-          // but it's safe to discard. We're only interested in triggering
-          // delegation.
-          await getSFUConfigWithOpenID(
-            client,
-            ownMembershipIdentity,
-            joinParams.transport.livekit_service_url,
-            roomId,
-            { matrixRTCMode, delayEndpointBaseUrl: baseUrl, delayId },
-            logger,
+          logger.info(
+            `Delegating delayed leave to ${JSON.stringify(joinParams.transport)}…`,
           );
+          await delegateDelayedLeave({
+            client,
+            membership: ownMembershipIdentity,
+            transport: joinParams.transport,
+            slotId: matrixRTCSession.slotId,
+            roomId,
+            delayId,
+            logger,
+          });
+          logger.info("Delayed leave successfully delegated");
         } catch (e) {
           // TODO: Surface this to the user as a service interruption?
-          logger.error(
-            `Failed to delegate leave to ${joinParams.transport.livekit_service_url}`,
-            e,
-          );
+          logger.error(`Failed to delegate leave`, e);
         }
       }
     },
@@ -951,7 +969,7 @@ interface EnterRTCSessionOptions {
  *
  * @param rtcSession - The MatrixRTCSession to join.
  * @param ownMembershipIdentity - Options for entering the RTC session.
- * @param transport - The LivekitTransport to use for this session.
+ * @param transport - The UnstableLivekitTransport to use for this session.
  * @param options - `encryptMedia`: Whether to encrypt media. `matrixRTCMode`: The
  *   Matrix RTC mode to use. `delayedLeaveTimings`: The preferred timings for
  *   delayed leave events. `sendNotificationType`: Whether and what kind of
@@ -962,7 +980,7 @@ interface EnterRTCSessionOptions {
 export function enterRTCSession(
   rtcSession: MatrixRTCSession,
   ownMembershipIdentity: CallMembershipIdentityParts,
-  transport: LivekitTransport,
+  transport: UnstableLivekitTransport,
   {
     encryptMedia,
     matrixRTCMode,

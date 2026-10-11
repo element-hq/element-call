@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 
 import {
   Status as RTCMemberStatus,
-  type LivekitTransport,
+  type UnstableLivekitTransport,
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
 import {
@@ -21,9 +21,13 @@ import {
   beforeEach,
   afterEach,
 } from "vitest";
-import { BehaviorSubject, map, of, Subject } from "rxjs";
+import { BehaviorSubject, of, Subject } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { type LocalParticipant, type LocalTrack } from "livekit-client";
+import {
+  ConnectionState as LivekitConnectionState,
+  type LocalParticipant,
+  type LocalTrack,
+} from "livekit-client";
 import fetchMock from "fetch-mock";
 
 import { PosthogAnalytics } from "../../../analytics/PosthogAnalytics";
@@ -53,13 +57,15 @@ import {
 import { MatrixRTCTransportMissingError } from "../../../utils/errors";
 import { Epoch, ObservableScope } from "../../ObservableScope";
 import { constant } from "../../Behavior";
-import { ConnectionManagerData } from "../remoteMembers/ConnectionManager";
-import { ConnectionState, type Connection } from "../remoteMembers/Connection";
+import { ConnectionMap } from "../remoteMembers/ConnectionMap";
+import {
+  type ConnectionState,
+  type Connection,
+} from "../remoteMembers/Connection";
 import { type Publisher } from "./Publisher";
 import { initializeWidget } from "../../../widget";
 import { nullHostBridge } from "../../../HostBridge";
-import { type LocalTransport } from "./LocalTransport";
-import * as openIDSFU from "../../../livekit/openIDSFU";
+import * as livekitAuth from "../../../livekit/auth";
 
 initializeWidget();
 
@@ -110,6 +116,7 @@ const delegatedTimings: ResolvedDelayedLeaveTimings = {
 };
 
 const mockedClient = {
+  baseUrl: "https://matrix.example.org",
   getDomain: vi.fn().mockReturnValue("example.org"),
   getDeviceId: vi.fn().mockReturnValue("AAAA"),
   getOpenIdToken: vi.fn().mockResolvedValue({
@@ -118,10 +125,11 @@ const mockedClient = {
     matrix_server_name: "localhost",
     expires_in: 10000,
   }),
+  _unstable_delegateDelayedLeave: vi.fn().mockResolvedValue({}),
 };
 
 describe("enterRTCSession", () => {
-  const transport: LivekitTransport = {
+  const transport: UnstableLivekitTransport = {
     livekit_service_url: "http://my-livekit-service-url.com",
     type: "livekit",
   };
@@ -214,7 +222,10 @@ describe("LocalMembership", () => {
       processor: undefined,
     }),
     logger: logger,
-    createPublisherFactory: vi.fn(),
+    createPublisherFactory: vi.fn().mockReturnValue({
+      destroy: vi.fn(),
+      createAndSetupTracks: vi.fn().mockResolvedValue(undefined),
+    }),
     joinMatrixRTC: async (): Promise<void> => {},
     homeserverConnected: {
       combined$: constant<[boolean, HomeserverDisconnectReason | null]>([
@@ -248,29 +259,16 @@ describe("LocalMembership", () => {
   afterEach(async () => {
     void (await fetchMock.flush());
     fetchMock.reset();
+    vi.clearAllMocks();
   });
 
   it("throws error on missing RTC config error", () => {
     withTestScheduler(({ scope, hot, expectObservable }) => {
-      const localTransport$ = scope.behavior<null | LivekitTransport>(
-        hot("1ms #", {}, new MatrixRTCTransportMissingError("domain.com")),
-        null,
-      );
-
-      // we do not need any connection data since we want to fail before reaching that.
-      const mockConnectionManager = {
-        transports$: scope.behavior(
-          localTransport$.pipe(map((t) => new Epoch([t]))),
-        ),
-        connectionManagerData$: constant(
-          new Epoch(new ConnectionManagerData()),
-        ),
-      };
-
       const localMembership = createLocalMembership$({
         scope,
         ...defaultCreateLocalMemberValues,
-        connectionManager: mockConnectionManager,
+        // we do not need any connection data since we want to fail before reaching that.
+        connectionMap$: constant(new Epoch(new ConnectionMap())),
         localTransport$: hot(
           "1ms #",
           {},
@@ -286,24 +284,19 @@ describe("LocalMembership", () => {
   });
 
   it("logs if callIntent cannot be updated", async () => {
-    const scope = new ObservableScope();
-
-    const mockConnectionManager = {
-      transports$: constant(new Epoch([])),
-      connectionManagerData$: constant(new Epoch(new ConnectionManagerData())),
-    };
     async function reject(): Promise<void> {
       return Promise.reject(new Error("Not connected yet"));
     }
     const localMembership = createLocalMembership$({
-      scope,
+      scope: testScope(),
       ...defaultCreateLocalMemberValues,
       matrixRTCSession: {
+        slotId: "m.call#ROOM",
         updateCallIntent: vi.fn().mockImplementation(reject),
         leave: vi.fn(),
       },
-      connectionManager: mockConnectionManager,
-      localTransport$: constant(mockTransport),
+      connectionMap$: constant(new Epoch(new ConnectionMap())),
+      localTransport$: constant(mockTransportLocator),
     });
     const expextedLog =
       "'not connected yet' while updating the call intent (this is expected on startup)";
@@ -312,22 +305,18 @@ describe("LocalMembership", () => {
     await flushPromises();
     defaultCreateLocalMemberValues.muteStates.video.setEnabled$.value?.(true);
     expect(internalLogger).toHaveBeenCalledWith(expextedLog);
-    scope.end();
   });
 
-  const mockTransportConfig = {
-    livekit_service_url: "a",
-  } as LivekitTransport;
+  const mockTransport: UnstableLivekitTransport = {
+    type: "livekit",
+    url: "https://sfu.example.org",
+    livekit_service_url: "https://jwt.example.org",
+  };
 
-  const mockTransport = {
-    transport: mockTransportConfig,
-    sfuConfig: {
-      jwt: "foo",
-      livekitAlias: "bar",
-      livekitIdentity: "baz",
-      url: "bro",
-    },
-  } as LocalTransport;
+  const mockTransportLocator: livekitAuth.TransportLocator = {
+    transport: mockTransport,
+    serverName: "example.org",
+  };
 
   const connectionTransportAConnected = {
     livekitRoom: mockLivekitRoom({
@@ -336,19 +325,26 @@ describe("LocalMembership", () => {
         trackPublications: [],
       } as unknown as LocalParticipant,
     }),
-    state$: constant(ConnectionState.LivekitConnected),
-    transport: mockTransportConfig,
+    state$: constant({
+      state: "authenticated",
+      livekitState: LivekitConnectionState.Connected,
+    }),
+    transport: mockTransport,
+    serverName: "example.org",
   } as Connection;
   const connectionTransportAConnecting = {
     ...connectionTransportAConnected,
-    state$: constant(ConnectionState.LivekitConnecting),
+    state$: constant({
+      state: "authenticated",
+      livekitState: LivekitConnectionState.Connecting,
+    }),
     livekitRoom: mockLivekitRoom({}),
   } as unknown as Connection;
 
-  const authCallSpy = vi
-    .spyOn(openIDSFU, "getSFUConfigWithOpenID")
-    .mockImplementation(() => mockedClient.getOpenIdToken());
-  afterEach(() => authCallSpy.mockClear());
+  const delegationSpy = vi
+    .spyOn(livekitAuth, "delegateDelayedLeave")
+    .mockResolvedValue();
+  afterEach(() => delegationSpy.mockClear());
 
   it.each([
     ["no", null, timings],
@@ -357,7 +353,11 @@ describe("LocalMembership", () => {
       "https://matrix.example.org/_matrix/client/unstable/io.element.msc4195/rtc/livekit/delegate_delayed_leave",
       delegatedTimings,
     ],
-    ["transport", "/a/delegate_delayed_leave", delegatedTimings],
+    [
+      "transport",
+      "https://jwt.example.org/delegate_delayed_leave",
+      delegatedTimings,
+    ],
   ])(
     "joins session with %s delegation support",
     async (_serviceName, delegationUrl, delayedLeaveTimings) => {
@@ -368,16 +368,14 @@ describe("LocalMembership", () => {
       if (delegationUrl !== null)
         fetchMock.post(delegationUrl, () => ({ status: 401, body: {} }));
 
+      const connectionMap = new ConnectionMap();
+      connectionMap.add(connectionTransportAConnected, []);
       const localMembership = createLocalMembership$({
         scope,
         ...defaultCreateLocalMemberValues,
-        connectionManager: {
-          connectionManagerData$: constant(
-            new Epoch(new ConnectionManagerData()),
-          ),
-        },
+        connectionMap$: constant(new Epoch(connectionMap)),
         joinMatrixRTC,
-        localTransport$: constant(mockTransport),
+        localTransport$: constant(mockTransportLocator),
         delayId$,
       });
 
@@ -386,31 +384,27 @@ describe("LocalMembership", () => {
       await flushPromises();
       // Joins with timings appropriate for the level of delegation support
       expect(joinMatrixRTC).toHaveBeenCalledWith(
-        mockTransportConfig,
+        mockTransport,
         delayedLeaveTimings,
       );
 
-      expect(authCallSpy).not.toHaveBeenCalled();
+      expect(delegationSpy).not.toHaveBeenCalled();
       delayId$.next("leave1");
       await flushPromises();
       if (delegationUrl === null) {
-        expect(authCallSpy).not.toHaveBeenCalled();
+        expect(delegationSpy).not.toHaveBeenCalled();
       } else {
         // Delegation is supported in this test case, so go on to check that
         // LocalMember actually performs delegation
         const expectDelegation = (delayId: string) =>
-          expect(authCallSpy).toHaveBeenLastCalledWith(
-            mockedClient,
-            ownMemberMock,
-            "a",
-            "!test-room-id:example.org",
-            {
-              matrixRTCMode: MATRIX_RTC_MODE,
-              delayEndpointBaseUrl: "https://matrix.example.org",
-              delayId,
-            },
-            expect.anything(),
-          );
+          expect(delegationSpy).toHaveBeenLastCalledWith({
+            client: mockedClient,
+            membership: ownMemberMock,
+            transport: mockTransport,
+            roomId: "!test-room-id:example.org",
+            delayId,
+            logger: expect.anything(),
+          });
 
         expectDelegation("leave1");
         delayId$.next("leave2"); // Can change delegated leaves
@@ -449,16 +443,14 @@ describe("LocalMembership", () => {
         typeof vi.fn
       >;
 
-    const connectionManagerData = new ConnectionManagerData();
-    connectionManagerData.add(connectionTransportAConnected, []);
-    // connectionManagerData.add(connectionTransportB, []);
+    const connectionMap = new ConnectionMap();
+    connectionMap.add(connectionTransportAConnected, []);
+    // connectionMap.add(connectionTransportB, []);
     const localMembership = createLocalMembership$({
       scope,
       ...defaultCreateLocalMemberValues,
-      connectionManager: {
-        connectionManagerData$: constant(new Epoch(connectionManagerData)),
-      },
-      localTransport$: constant(mockTransport),
+      connectionMap$: constant(new Epoch(connectionMap)),
+      localTransport$: constant(mockTransportLocator),
     });
     await flushPromises();
     expect(publisherFactory).toHaveBeenCalledOnce();
@@ -479,12 +471,10 @@ describe("LocalMembership", () => {
   //
   it("tracks livekit state correctly", async () => {
     const scope = new ObservableScope();
-    const connectionManagerData = new ConnectionManagerData();
-    const localTransport$ = new Subject<LocalTransport>();
+    const connectionMap = new ConnectionMap();
+    const localTransport$ = new Subject<livekitAuth.TransportLocator>();
 
-    const connectionManagerData$ = new BehaviorSubject(
-      new Epoch(connectionManagerData),
-    );
+    const connectionMap$ = new BehaviorSubject(new Epoch(connectionMap));
     const publishers: Publisher[] = [];
 
     const publishing$ = new BehaviorSubject<boolean>(false);
@@ -518,9 +508,7 @@ describe("LocalMembership", () => {
     const localMembership = createLocalMembership$({
       scope,
       ...defaultCreateLocalMemberValues,
-      connectionManager: {
-        connectionManagerData$,
-      },
+      connectionMap$: connectionMap$,
       localTransport$,
     });
 
@@ -528,38 +516,50 @@ describe("LocalMembership", () => {
     expect(localMembership.localMemberState$.value).toStrictEqual(
       TransportState.Waiting,
     );
-    localTransport$.next(mockTransport);
+    localTransport$.next(mockTransportLocator);
     await flushPromises();
     expect(localMembership.localMemberState$.value).toStrictEqual({
       matrix: RTCMemberStatus.Connected,
-      media: { connection: null, tracks: TrackState.WaitingForUser },
+      media: {
+        connection: { state: "initializing" },
+        tracks: TrackState.WaitingForUser,
+      },
     });
 
-    const connectionManagerData2 = new ConnectionManagerData();
-    connectionManagerData2.add(
+    const connectionMap2 = new ConnectionMap();
+    connectionMap2.add(
       // clone because we will mutate this later.
       { ...connectionTransportAConnecting } as unknown as Connection,
       [],
     );
 
-    connectionManagerData$.next(new Epoch(connectionManagerData2));
+    connectionMap$.next(new Epoch(connectionMap2));
     await flushPromises();
     expect(localMembership.localMemberState$.value).toStrictEqual({
       matrix: RTCMemberStatus.Connected,
       media: {
-        connection: ConnectionState.LivekitConnecting,
+        connection: {
+          state: "authenticated",
+          livekitState: LivekitConnectionState.Connecting,
+        },
         tracks: TrackState.WaitingForUser,
       },
     });
 
     (
-      connectionManagerData2.getConnectionForTransport(mockTransportConfig)!
+      connectionMap2.getConnectionForTransport(mockTransportLocator)!
         .state$ as BehaviorSubject<ConnectionState>
-    ).next(ConnectionState.LivekitConnected);
+    ).next({
+      state: "authenticated",
+      livekitState: LivekitConnectionState.Connected,
+    });
     expect(localMembership.localMemberState$.value).toStrictEqual({
       matrix: RTCMemberStatus.Connected,
       media: {
-        connection: ConnectionState.LivekitConnected,
+        connection: {
+          state: "authenticated",
+          livekitState: LivekitConnectionState.Connected,
+        },
         tracks: TrackState.WaitingForUser,
       },
     });
@@ -643,8 +643,8 @@ describe("LocalMembership", () => {
         [boolean, HomeserverDisconnectReason | null]
       >([false, "membership"]);
 
-      const connectionManagerData = new ConnectionManagerData();
-      connectionManagerData.add(connectionTransportAConnected, []);
+      const connectionMap = new ConnectionMap();
+      connectionMap.add(connectionTransportAConnected, []);
 
       createLocalMembership$({
         scope,
@@ -653,10 +653,8 @@ describe("LocalMembership", () => {
           combined$: hsReason$,
           rtsSession$: constant(RTCMemberStatus.Connected),
         },
-        connectionManager: {
-          connectionManagerData$: constant(new Epoch(connectionManagerData)),
-        },
-        localTransport$: constant(mockTransport),
+        connectionMap$: constant(new Epoch(connectionMap)),
+        localTransport$: constant(mockTransportLocator),
       });
 
       await flushPromises();
@@ -680,8 +678,8 @@ describe("LocalMembership", () => {
         [boolean, HomeserverDisconnectReason | null]
       >([true, null]);
 
-      const connectionManagerData = new ConnectionManagerData();
-      connectionManagerData.add(connectionTransportAConnected, []);
+      const connectionMap = new ConnectionMap();
+      connectionMap.add(connectionTransportAConnected, []);
 
       createLocalMembership$({
         scope,
@@ -690,10 +688,8 @@ describe("LocalMembership", () => {
           combined$: hsReason$,
           rtsSession$: constant(RTCMemberStatus.Connected),
         },
-        connectionManager: {
-          connectionManagerData$: constant(new Epoch(connectionManagerData)),
-        },
-        localTransport$: constant(mockTransport),
+        connectionMap$: constant(new Epoch(connectionMap)),
+        localTransport$: constant(mockTransportLocator),
       });
 
       await flushPromises();
@@ -717,16 +713,17 @@ describe("LocalMembership", () => {
         "track",
       );
 
-      const connectionState$ = new BehaviorSubject<ConnectionState>(
-        ConnectionState.LivekitConnected,
-      );
+      const connectionState$ = new BehaviorSubject<ConnectionState>({
+        state: "authenticated",
+        livekitState: LivekitConnectionState.Connected,
+      });
       const mutableConnection = {
         ...connectionTransportAConnected,
         state$: connectionState$,
       } as unknown as Connection;
 
-      const connectionManagerData = new ConnectionManagerData();
-      connectionManagerData.add(mutableConnection, []);
+      const connectionMap = new ConnectionMap();
+      connectionMap.add(mutableConnection, []);
 
       createLocalMembership$({
         scope,
@@ -738,16 +735,20 @@ describe("LocalMembership", () => {
           ]),
           rtsSession$: constant(RTCMemberStatus.Connected),
         },
-        connectionManager: {
-          connectionManagerData$: constant(new Epoch(connectionManagerData)),
-        },
-        localTransport$: constant(mockTransport),
+        connectionMap$: constant(new Epoch(connectionMap)),
+        localTransport$: constant(mockTransportLocator),
       });
 
       await flushPromises();
 
-      connectionState$.next(ConnectionState.LivekitDisconnected);
-      connectionState$.next(ConnectionState.LivekitConnected);
+      connectionState$.next({
+        state: "authenticated",
+        livekitState: LivekitConnectionState.Disconnected,
+      });
+      connectionState$.next({
+        state: "authenticated",
+        livekitState: LivekitConnectionState.Connected,
+      });
 
       expect(trackSpy).toHaveBeenCalledWith(
         defaultCreateLocalMemberValues.roomId,
@@ -769,8 +770,8 @@ describe("LocalMembership", () => {
         [boolean, HomeserverDisconnectReason | null]
       >([true, null]);
 
-      const connectionManagerData = new ConnectionManagerData();
-      connectionManagerData.add(connectionTransportAConnected, []);
+      const connectionMap = new ConnectionMap();
+      connectionMap.add(connectionTransportAConnected, []);
 
       createLocalMembership$({
         scope,
@@ -779,10 +780,8 @@ describe("LocalMembership", () => {
           combined$: hsReason$,
           rtsSession$: constant(RTCMemberStatus.Connected),
         },
-        connectionManager: {
-          connectionManagerData$: constant(new Epoch(connectionManagerData)),
-        },
-        localTransport$: constant(mockTransport),
+        connectionMap$: constant(new Epoch(connectionMap)),
+        localTransport$: constant(mockTransportLocator),
       });
 
       await flushPromises();
@@ -840,15 +839,13 @@ describe("LocalMembership", () => {
       localMembership: ReturnType<typeof createLocalMembership$>;
     } => {
       const scope = new ObservableScope();
-      const connectionManagerData = new ConnectionManagerData();
-      if (connection) connectionManagerData.add(connection, []);
+      const connectionMap = new ConnectionMap();
+      if (connection) connectionMap.add(connection, []);
       const localMembership = createLocalMembership$({
         scope,
         ...defaultCreateLocalMemberValues,
-        connectionManager: {
-          connectionManagerData$: constant(new Epoch(connectionManagerData)),
-        },
-        localTransport$: constant(mockTransport),
+        connectionMap$: constant(new Epoch(connectionMap)),
+        localTransport$: constant(mockTransportLocator),
       });
       return { scope, localMembership };
     };
@@ -857,8 +854,12 @@ describe("LocalMembership", () => {
       const error = new Error("NotReadableError");
       const setScreenShareEnabled = vi.fn().mockRejectedValue(error);
       const connection = {
-        state$: constant(ConnectionState.LivekitConnected),
-        transport: mockTransportConfig,
+        state$: constant({
+          state: "authenticated",
+          livekitState: LivekitConnectionState.Connected,
+        }),
+        transport: mockTransport,
+        serverName: "example.org",
         livekitRoom: mockLivekitRoom({
           localParticipant: mockLocalParticipant({
             isScreenShareEnabled: false,

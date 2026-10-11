@@ -54,6 +54,7 @@ import { platform } from "../Platform";
 import { type RingingMediaViewModel } from "../state/media/RingingMediaViewModel";
 import { RingingStatus } from "./RingingStatus";
 import { useRootElement } from "../RootElementContext";
+import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 
 interface SpotlightItemBaseProps {
   ref?: Ref<HTMLDivElement>;
@@ -74,7 +75,7 @@ interface SpotlightItemBaseProps {
 interface SpotlightMemberMediaItemBaseProps extends SpotlightItemBaseProps {
   video: TrackReferenceOrPlaceholder | undefined;
   unencryptedWarning: boolean;
-  focusUrl: string | undefined;
+  transport: UnstableLivekitTransport | undefined;
 }
 
 interface SpotlightUserMediaItemBaseProps extends SpotlightMemberMediaItemBaseProps {
@@ -177,13 +178,13 @@ const SpotlightMemberMediaItem: FC<SpotlightMemberMediaItemProps> = ({
 }) => {
   const video = useBehavior(vm.video$);
   const unencryptedWarning = useBehavior(vm.unencryptedWarning$);
-  const focusUrl = useBehavior(vm.focusUrl$);
+  const transport = useBehavior(vm.transport$);
 
   const baseProps: SpotlightMemberMediaItemBaseProps &
     RefAttributes<HTMLDivElement> = {
     video: video ?? undefined,
     unencryptedWarning,
-    focusUrl,
+    transport,
     ...props,
   };
 

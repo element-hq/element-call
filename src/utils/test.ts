@@ -26,7 +26,7 @@ import {
 import {
   CallMembership,
   type LivekitFocusSelection,
-  type LivekitTransport,
+  type UnstableLivekitTransport,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
   type MatrixRTCSessionEventHandlerMap,
@@ -78,7 +78,7 @@ import {
   type RemoteScreenShareViewModel,
 } from "../state/media/RemoteScreenShareViewModel";
 import { Connection } from "../state/CallViewModel/remoteMembers/Connection";
-import { type SFUConfig } from "../livekit/openIDSFU";
+import { type TransportLocator } from "../livekit/auth";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();
@@ -209,16 +209,14 @@ export function mockEmitter<T>(): EmitterMock<T> {
   };
 }
 
-export const exampleTransport: LivekitTransport = {
+export const exampleTransport: UnstableLivekitTransport = {
   type: "livekit",
   livekit_service_url: "https://lk.example.org",
 };
 
-export const exampleSfuConfig: SFUConfig = {
-  jwt: "foo",
-  livekitAlias: "bar",
-  livekitIdentity: "baz",
-  url: "bro",
+export const exampleTransportLocator: TransportLocator = {
+  transport: exampleTransport,
+  serverName: "example.org",
 };
 
 export function mockRtcMembership(
@@ -261,11 +259,12 @@ export function mockRtcMembership(
     content: data,
   });
 
-  const membershipData = CallMembership.membershipDataFromMatrixEvent(event);
+  const backendIdentity = rtcBackendIdentity ?? `${userId}:${deviceId}`;
   const cms = new CallMembership(
     event,
-    membershipData,
-    rtcBackendIdentity ?? `${userId}:${deviceId}`,
+    CallMembership.membershipDataFromMatrixEvent(event),
+    [backendIdentity],
+    backendIdentity,
   );
   vi.mocked(cms).getTransport = vi.fn().mockReturnValue(fociPreferred[0]);
 
@@ -357,7 +356,7 @@ export function mockLocalMedia(
     participant$: constant(localParticipant),
     encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
     livekitRoom$: constant(mockLivekitRoom({ localParticipant })),
-    focusUrl$: constant("https://rtc-example.org"),
+    transport$: constant(exampleTransport),
     mediaDevices,
     displayName$: constant(member.rawDisplayName ?? "nodisplayname"),
     mxcAvatarUrl$: constant(member.getMxcAvatarUrl()),
@@ -400,7 +399,7 @@ export function mockRemoteMedia(
     participant$: constant(participant),
     encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
     livekitRoom$: constant(livekitRoom),
-    focusUrl$: constant("https://rtc-example.org"),
+    transport$: constant(exampleTransport),
     pretendToBeDisconnected$: constant(false),
     displayName$: constant(member.rawDisplayName ?? "nodisplayname"),
     mxcAvatarUrl$: constant(member.getMxcAvatarUrl()),
@@ -427,7 +426,7 @@ export function mockRemoteScreenShare(
     participant$: constant(participant),
     encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
     livekitRoom$: constant(livekitRoom),
-    focusUrl$: constant("https://rtc-example.org"),
+    transport$: constant(exampleTransport),
     pretendToBeDisconnected$: constant(false),
     displayName$: constant(member.rawDisplayName ?? "nodisplayname"),
     mxcAvatarUrl$: constant(member.getMxcAvatarUrl()),

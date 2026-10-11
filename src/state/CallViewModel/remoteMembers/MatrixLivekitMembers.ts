@@ -6,18 +6,16 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type LocalParticipant, type RemoteParticipant } from "livekit-client";
-import {
-  type CallMembership,
-  type LivekitTransport,
-} from "matrix-js-sdk/lib/matrixrtc";
+import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
 import { combineLatest, filter, map } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import { type Behavior } from "../../Behavior";
-import { type IConnectionManager } from "./ConnectionManager";
+import { type ConnectionMap } from "./ConnectionMap";
 import { Epoch, type ObservableScope } from "../../ObservableScope";
 import { type Connection } from "./Connection";
 import { generateItemsWithEpoch } from "../../../utils/observable";
+import { type TransportLocator } from "../../../livekit/auth";
 
 interface LocalTaggedParticipant {
   type: "local";
@@ -60,9 +58,11 @@ export interface RemoteMatrixLivekitMember extends MatrixLivekitMember {
 interface Props {
   scope: ObservableScope;
   membershipsWithTransport$: Behavior<
-    Epoch<{ membership: CallMembership; transport?: LivekitTransport }[]>
+    Epoch<
+      { membership: CallMembership; transport: TransportLocator | undefined }[]
+    >
   >;
-  connectionManager: IConnectionManager;
+  connectionMap$: Behavior<Epoch<ConnectionMap>>;
   localUser: { deviceId: string; userId: string };
 }
 
@@ -72,24 +72,21 @@ interface Props {
  * It has a small public interface:
  *  - in (via constructor):
  *    - an observable of CallMembership[] to track the call members (The matrix side)
- *    - a `ConnectionManager` for the lk rooms (The livekit side)
+ *    - a `ConnectionMap` for the lk rooms (The livekit side)
  *  - out (via public Observable):
  *    - `remoteMatrixLivekitMember` an observable of MatrixLivekitMember[] to track the remote members and associated livekit data.
  */
 export function createRemoteMatrixLivekitMembers$({
   scope,
   membershipsWithTransport$,
-  connectionManager,
+  connectionMap$,
   localUser,
 }: Props): Behavior<Epoch<RemoteMatrixLivekitMember[]>> {
   /**
    * Behavior of all the remote call members and their associated livekit data (if available).
    */
   return scope.behavior(
-    combineLatest([
-      membershipsWithTransport$,
-      connectionManager.connectionManagerData$,
-    ]).pipe(
+    combineLatest([membershipsWithTransport$, connectionMap$]).pipe(
       filter((values) =>
         values.every((value) => value.epoch === values[0].epoch),
       ),
@@ -111,8 +108,8 @@ export function createRemoteMatrixLivekitMembers$({
             const participants = transport
               ? managerData.getParticipantsForTransport(transport)
               : [];
-            const matches = participants.filter(
-              (p) => p.identity == membership.rtcBackendIdentity,
+            const matches = participants.filter((p) =>
+              membership.backendIdentities.includes(p.identity),
             );
             const participant = matches[0] ?? null;
             const connection = transport
@@ -143,9 +140,9 @@ export function createRemoteMatrixLivekitMembers$({
           // Log whether the member could be matched to a LiveKit participant,
           // since a tile shows "waiting for media" for as long as it cannot.
           participant$.pipe(scope.bind()).subscribe((p) => {
-            const url = data$.value.connection?.transport.livekit_service_url;
+            const transport = data$.value.connection?.transport;
             logger.info(
-              `[RemoteMatrixLivekitMembers] ${rtcBackendIdentity}: LiveKit participant ${p ? `matched (${p.sid})` : "missing"} on ${url ?? "no connection"}`,
+              `[RemoteMatrixLivekitMembers] ${rtcBackendIdentity}: LiveKit participant ${p ? `matched (${p.sid})` : "missing"} on ${transport ? JSON.stringify(transport) : "no connection"}`,
             );
           });
           // will only get called once per backend identity.
@@ -163,14 +160,3 @@ export function createRemoteMatrixLivekitMembers$({
 }
 
 // TODO add back in the callviewmodel pauseWhen(this.pretendToBeDisconnected$)
-
-// TODO add this to the JS-SDK
-export function areLivekitTransportsEqual<T extends LivekitTransport>(
-  t1: T | null,
-  t2: T | null,
-): boolean {
-  if (t1 && t2) {
-    return t1.livekit_service_url === t2.livekit_service_url;
-  }
-  return !t1 && !t2;
-}

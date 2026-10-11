@@ -59,10 +59,10 @@
   "developer_mode": {
     "always_show_iphone_earpiece": "Show iPhone earpiece option on all platforms",
     "crypto_version": "Crypto version: {{version}}",
-    "custom_livekit_url": {
-      "current_url": "Currently set to: ",
+    "custom_transport": {
+      "current": "Currently set to: ",
       "from_config": "Currently, no overwrite is set. Url from config is used.",
-      "label": "Custom Livekit-url",
+      "label": "Custom transport JSON",
       "reset": "Reset overwrite",
       "save": "Save",
       "saving": "Saving..."

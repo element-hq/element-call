@@ -239,7 +239,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
         class="_label_1o4d9_60"
         for="radix-_r_7_"
       >
-        Custom Livekit-url
+        Custom transport JSON
       </label>
       <div
         class="_controls_17lij_8"
@@ -250,7 +250,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
           id="radix-_r_7_"
           name="input"
           title=""
-          value=""
+          value="null"
         />
       </div>
       <span

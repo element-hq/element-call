@@ -30,8 +30,7 @@ import {
   type CallViewModelOptions,
 } from "./CallViewModel";
 import {
-  exampleSfuConfig,
-  exampleTransport,
+  exampleTransportLocator,
   mockConfig,
   MockConnection,
   mockLivekitRoom,
@@ -123,6 +122,8 @@ export function withCallViewModel(mode: MatrixRTCMode) {
     };
     const room = mockMatrixRoom({
       client: new (class extends EventEmitter {
+        public readonly baseUrl = "https://matrix.example.com";
+
         public getUserId(): string | undefined {
           return localRtcMember.userId;
         }
@@ -209,26 +210,26 @@ export function withCallViewModel(mode: MatrixRTCMode) {
         livekitRoomFactory,
         connectionState$,
         windowSize$,
-        localTransport: {
-          transport: exampleTransport,
-          sfuConfig: exampleSfuConfig,
-        },
+        localTransport: exampleTransportLocator,
         connectionFactory: {
           createConnection(
             scope,
+            role,
             transport,
+            serverName,
             ownMembershipIdentity,
             logger,
-            sfuConfig,
           ) {
             return new MockConnection(
               {
                 scope,
+                role,
                 transport,
+                serverName,
                 ownMembershipIdentity,
-                existingSFUConfig: sfuConfig,
                 client: room.client,
                 roomId: room.roomId,
+                slotId: "m.call#ROOM",
                 livekitRoomFactory,
               },
               logger,

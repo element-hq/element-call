@@ -7,10 +7,9 @@ Please see LICENSE in the repository root for full details.
 
 import {
   type CallMembership,
-  type LivekitTransport,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
-  isLivekitTransport,
+  isUnstableLivekitTransport,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { fromEvent } from "rxjs";
 
@@ -21,6 +20,7 @@ import {
   type ObservableScope,
 } from "./ObservableScope";
 import { type Behavior } from "./Behavior";
+import { type TransportLocator } from "../livekit/auth";
 
 /**
  * Tracks the transports used by ourselves, plus all other MatrixRTC session
@@ -31,16 +31,15 @@ export const membershipsAndTransports$ = (
   memberships$: Behavior<Epoch<CallMembership[]>>,
 ): {
   membershipsWithTransport$: Behavior<
-    Epoch<{ membership: CallMembership; transport?: LivekitTransport }[]>
+    Epoch<
+      { membership: CallMembership; transport: TransportLocator | undefined }[]
+    >
   >;
-  transports$: Behavior<Epoch<LivekitTransport[]>>;
+  transports$: Behavior<Epoch<TransportLocator[]>>;
 } => {
   const membershipsWithTransport$: Behavior<
     Epoch<
-      {
-        membership: CallMembership;
-        transport: LivekitTransport | undefined;
-      }[]
+      { membership: CallMembership; transport: TransportLocator | undefined }[]
     >
   > = scope.behavior(
     memberships$.pipe(
@@ -49,14 +48,19 @@ export const membershipsAndTransports$ = (
           const transport = membership.getTransport();
           return {
             membership,
-            transport: isLivekitTransport(transport) ? transport : undefined,
+            transport: isUnstableLivekitTransport(transport)
+              ? {
+                  transport,
+                  serverName: membership.userId.replace(/^.*?:/, ""),
+                }
+              : undefined,
           };
         });
       }),
     ),
   );
 
-  const transports$: Behavior<Epoch<LivekitTransport[]>> = scope.behavior(
+  const transports$: Behavior<Epoch<TransportLocator[]>> = scope.behavior(
     membershipsWithTransport$.pipe(
       mapEpoch((mts) => mts.flatMap(({ transport: t }) => (t ? [t] : []))),
     ),
