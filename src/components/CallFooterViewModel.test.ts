@@ -8,7 +8,12 @@ Please see LICENSE in the repository root for full details.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { BehaviorSubject } from "rxjs";
 
-import { testScope, mockMuteStates, mockMediaDevices } from "../utils/test";
+import {
+  flushPromises,
+  testScope,
+  mockMuteStates,
+  mockMediaDevices,
+} from "../utils/test";
 import { constant } from "../state/Behavior";
 import type { CallViewModel } from "../state/CallViewModel/CallViewModel";
 import type { Alignment, Layout } from "../state/layout-types";
@@ -21,6 +26,13 @@ import {
 import { HeaderStyle } from "../UrlParams";
 import { backgroundEffect as backgroundEffectSetting } from "../settings/settings";
 import { shippedBackgrounds } from "../livekit/backgroundEffects";
+import type * as BackgroundImages from "../livekit/backgroundImages";
+import {
+  type AddedBackground,
+  addedBackgrounds,
+  maxAddedBackgrounds,
+  UnusableImage,
+} from "../livekit/backgroundImages";
 
 const platformMock = vi.hoisted(() => vi.fn(() => "desktop"));
 vi.mock("../Platform", () => ({
@@ -36,6 +48,20 @@ vi.mock("@livekit/track-processors", () => ({
   supportsBackgroundProcessors: (): boolean => sdkSupportMock(),
   supportsModernBackgroundProcessors: (): boolean => modernRouteMock(),
 }));
+
+const store = vi.hoisted(() => ({
+  add: vi.fn<(file: Blob) => Promise<string>>(),
+}));
+vi.mock("../livekit/backgroundImages", async (original) => {
+  const { BehaviorSubject } = await import("rxjs");
+  return {
+    ...(await original<typeof BackgroundImages>()),
+    addedBackgrounds: {
+      added$: new BehaviorSubject<AddedBackground[] | undefined>([]),
+      add: store.add,
+    },
+  };
+});
 
 const outputSelectionMock = vi.hoisted(() => vi.fn(() => true));
 vi.mock("livekit-client", () => ({
@@ -267,6 +293,7 @@ describe("createCallFooterViewModel", () => {
     it("offers nothing where the browser itself cannot run them", () => {
       sdkSupportMock.mockReturnValue(false);
       expect(lobbyOn("desktop").selectBackgroundEffect$.value).toBeUndefined();
+      expect(lobbyOn("desktop").addBackgroundImage$.value).toBeUndefined();
     });
 
     it("puts no effect in force where the browser cannot run them", () => {
@@ -299,6 +326,10 @@ describe("createCallFooterViewModel", () => {
 
     it("offers every effect in order", () => {
       sdkSupportMock.mockReturnValue(true);
+      const added$ = addedBackgrounds.added$ as BehaviorSubject<
+        AddedBackground[] | undefined
+      >;
+      added$.next([{ id: "mine", url: "blob:mine" }]);
       expect(lobbyOn("desktop").backgroundEffects$.value).toEqual([
         { id: "none", kind: "none" },
         { id: "blur", kind: "blur" },
@@ -307,7 +338,9 @@ describe("createCallFooterViewModel", () => {
           kind: "image",
           imageUrl: background.imagePath,
         })),
+        { id: "added:mine", kind: "image", imageUrl: "blob:mine" },
       ]);
+      added$.next([]);
     });
 
     it("says they are unavailable where they cannot be chosen", () => {
@@ -332,6 +365,51 @@ describe("createCallFooterViewModel", () => {
       expect(vm.backgroundEffectSettling$.value).toBe(true);
       settling$.next(false);
       expect(vm.backgroundEffectSettling$.value).toBe(false);
+    });
+
+    it("adding is unavailable at the limit", () => {
+      sdkSupportMock.mockReturnValue(true);
+      const added$ = addedBackgrounds.added$ as BehaviorSubject<
+        AddedBackground[] | undefined
+      >;
+      const vm = lobbyOn("desktop");
+      expect(vm.addBackgroundImage$.value).toBeDefined();
+      added$.next(
+        Array.from({ length: maxAddedBackgrounds }, (_, i) => ({
+          id: `${i}`,
+          url: `blob:${i}`,
+        })),
+      );
+      expect(vm.addBackgroundImage$.value).toBeUndefined();
+      added$.next(added$.value!.slice(1));
+      expect(vm.addBackgroundImage$.value).toBeDefined();
+      added$.next([]);
+    });
+
+    it("says why each refused file was refused", async () => {
+      sdkSupportMock.mockReturnValue(true);
+      const vm = lobbyOn("desktop");
+      store.add.mockRejectedValue(new UnusableImage("animated"));
+      vm.addBackgroundImage$.value!(new File(["x"], "a.gif"));
+      await flushPromises();
+      const first = vm.backgroundImageRefusal$.value;
+      expect(first).toEqual({ reason: "animated" });
+
+      // The same again is a refusal of its own, so it is shown again.
+      vm.addBackgroundImage$.value!(new File(["x"], "a.gif"));
+      await flushPromises();
+      expect(vm.backgroundImageRefusal$.value).toEqual({ reason: "animated" });
+      expect(vm.backgroundImageRefusal$.value).not.toBe(first);
+
+      store.add.mockRejectedValue(new Error("quota"));
+      vm.addBackgroundImage$.value!(new File(["x"], "b.png"));
+      await flushPromises();
+      expect(vm.backgroundImageRefusal$.value).toEqual({ reason: "not-kept" });
+
+      store.add.mockResolvedValue("kept");
+      vm.addBackgroundImage$.value!(new File(["x"], "c.png"));
+      await flushPromises();
+      expect(vm.backgroundImageRefusal$.value).toBeUndefined();
     });
 
     it("availability is the same before and during a call", () => {
