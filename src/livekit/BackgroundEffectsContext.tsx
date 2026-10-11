@@ -9,6 +9,7 @@ Please see LICENSE in the repository root for full details.
 import {
   type ProcessorWrapper,
   type BackgroundOptions,
+  supportsBackgroundProcessors,
 } from "@livekit/track-processors";
 import { createContext, type FC, type JSX, use, useEffect } from "react";
 import { type LocalVideoTrack } from "livekit-client";
@@ -18,7 +19,6 @@ import { combineLatest } from "rxjs";
 import { backgroundEffect as backgroundEffectSetting } from "../settings/settings";
 import { BackgroundEffectTransformer } from "./BackgroundEffectTransformer";
 import { OneStepPipeline } from "./OneStepPipeline";
-import { supportsBackgroundProcessors } from "./backgroundProcessing";
 import { type Behavior } from "../state/Behavior";
 import { type ObservableScope } from "../state/ObservableScope";
 import {
@@ -34,6 +34,8 @@ import { useBehavior } from "../useBehavior";
 export type BackgroundEffectsState = {
   supported: boolean | undefined;
   processor: undefined | ProcessorWrapper<BackgroundOptions>;
+  /** From the first effect chosen until a frame carrying it is drawn. */
+  settling?: boolean;
 };
 
 const BackgroundEffectsContext = createContext<BackgroundEffects | undefined>(
@@ -115,13 +117,14 @@ export const useSyncBackgroundEffects = (
 export function createAppBackgroundEffects(
   scope: ObservableScope,
 ): BackgroundEffects {
+  const transformer = new BackgroundEffectTransformer({
+    backgroundDisabled: true,
+  });
   return createBackgroundEffects(scope, {
     supported: supportsBackgroundProcessors(),
     effect$: backgroundEffectSetting.value$,
-    pipeline: new OneStepPipeline(
-      new BackgroundEffectTransformer({ backgroundDisabled: true }),
-      "background-effect",
-    ),
+    pipeline: new OneStepPipeline(transformer, "background-effect"),
+    transformer,
   });
 }
 
