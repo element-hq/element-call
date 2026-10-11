@@ -24,7 +24,6 @@ import {
   type LocalVideoTrack,
   Track,
 } from "livekit-client";
-import { map } from "rxjs";
 
 import inCallStyles from "./InCallView.module.css";
 import styles from "./LobbyView.module.css";
@@ -198,7 +197,7 @@ export const LobbyView: FC<Props> = ({
         footerScope,
         muteStates,
         devices,
-        backgroundEffectsState$.pipe(map(({ settling }) => settling ?? false)),
+        backgroundEffectsState$,
         openSettings,
         hangup,
         // Logo and header are connected: only show the logo in SPA with header.
