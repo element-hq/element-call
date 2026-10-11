@@ -54,7 +54,7 @@ import {
   localRtcMember,
 } from "../../utils/test-fixtures";
 import { type Behavior, constant } from "../Behavior";
-import { type ProcessorState } from "../../livekit/TrackProcessorContext";
+import { type BackgroundEffectsState } from "../../livekit/BackgroundEffectsContext";
 import { type MediaDevices } from "../MediaDevices";
 import { type MatrixRTCMode } from "../../config/ConfigOptions";
 
@@ -240,7 +240,7 @@ export function withCallViewModel(mode: MatrixRTCMode) {
       },
       raisedHands$,
       reactions$,
-      new BehaviorSubject<ProcessorState>({
+      new BehaviorSubject<BackgroundEffectsState>({
         processor: undefined,
         supported: undefined,
       }),

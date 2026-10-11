@@ -26,7 +26,7 @@ import {
   ownMemberMock,
   withTestScheduler,
 } from "../../../utils/test.ts";
-import { type ProcessorState } from "../../../livekit/TrackProcessorContext.tsx";
+import { type BackgroundEffectsState } from "../../../livekit/BackgroundEffectsContext.tsx";
 import {
   areLivekitTransportsEqual,
   createRemoteMatrixLivekitMembers$,
@@ -72,7 +72,7 @@ beforeEach(() => {
     mockClient,
     "!roomid:example.org",
     mockMediaDevices({}),
-    new BehaviorSubject<ProcessorState>({
+    new BehaviorSubject<BackgroundEffectsState>({
       supported: true,
       processor: undefined,
     }),

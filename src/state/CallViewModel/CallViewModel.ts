@@ -89,7 +89,7 @@ import { E2eeType } from "../../e2ee/e2eeType";
 import { MatrixKeyProvider } from "../../e2ee/matrixKeyProvider";
 import { type MuteStates } from "../MuteStates";
 import { HeaderStyle, type UrlParams } from "../../UrlParams";
-import { type ProcessorState } from "../../livekit/TrackProcessorContext";
+import { type BackgroundEffectsState } from "../../livekit/BackgroundEffectsContext";
 import { type HostBridge, nullHostBridge } from "../../HostBridge";
 import {
   type Alignment,
@@ -490,7 +490,7 @@ export function createCallViewModel$(
   options: CallViewModelOptions,
   handsRaisedSubject$: Observable<Record<string, RaisedHandInfo>>,
   reactionsSubject$: Observable<Record<string, ReactionInfo>>,
-  trackProcessorState$: Behavior<ProcessorState>,
+  backgroundEffectsState$: Behavior<BackgroundEffectsState>,
 ): CallViewModel {
   const logger = rootLogger.getChild("[CallViewModel]");
   const client = matrixRoom.client;
@@ -579,7 +579,7 @@ export function createCallViewModel$(
       client,
       matrixRoom.roomId,
       mediaDevices,
-      trackProcessorState$,
+      backgroundEffectsState$,
       livekitKeyProvider,
       controlledAudioDevices,
       options.livekitRoomFactory,
@@ -634,7 +634,7 @@ export function createCallViewModel$(
         connection,
         mediaDevices,
         muteStates,
-        trackProcessorState$,
+        backgroundEffectsState$,
         logger.getChild(
           "[Publisher " + connection.transport.livekit_service_url + "]",
         ),

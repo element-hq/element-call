@@ -20,7 +20,7 @@ import {
   mockMediaDevices,
   ownMemberMock,
 } from "../../../utils/test.ts";
-import type { ProcessorState } from "../../../livekit/TrackProcessorContext.tsx";
+import type { BackgroundEffectsState } from "../../../livekit/BackgroundEffectsContext.tsx";
 import { constant } from "../../Behavior";
 import {
   echoCancellationSetting,
@@ -80,7 +80,7 @@ describe("ECConnectionFactory - Audio inputs options", () => {
         mockClient,
         "!roomid:example.org",
         mockMediaDevices({}),
-        new BehaviorSubject<ProcessorState>({
+        new BehaviorSubject<BackgroundEffectsState>({
           supported: true,
           processor: undefined,
         }),
@@ -128,7 +128,7 @@ describe("ECConnectionFactory - ControlledAudioDevice", () => {
             select: () => {},
           },
         }),
-        new BehaviorSubject<ProcessorState>({
+        new BehaviorSubject<BackgroundEffectsState>({
           supported: true,
           processor: undefined,
         }),
@@ -163,7 +163,7 @@ describe("ECConnectionFactory - Camera quality settings", () => {
       mockClient,
       "!roomid:example.org",
       mockMediaDevices({}),
-      new BehaviorSubject<ProcessorState>({
+      new BehaviorSubject<BackgroundEffectsState>({
         supported: true,
         processor: undefined,
       }),
@@ -200,7 +200,7 @@ describe("ECConnectionFactory - Camera quality settings", () => {
       mockClient,
       "!roomid:example.org",
       mockMediaDevices({}),
-      new BehaviorSubject<ProcessorState>({
+      new BehaviorSubject<BackgroundEffectsState>({
         supported: true,
         processor: undefined,
       }),
@@ -238,7 +238,7 @@ describe("ECConnectionFactory - Camera quality settings", () => {
       mockClient,
       "!roomid:example.org",
       mockMediaDevices({}),
-      new BehaviorSubject<ProcessorState>({
+      new BehaviorSubject<BackgroundEffectsState>({
         supported: true,
         processor: undefined,
       }),

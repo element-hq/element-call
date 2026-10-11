@@ -28,7 +28,7 @@ import {
 } from "../utils/test";
 import { type MediaDevices } from "../state/MediaDevices";
 import { MediaDevicesContext } from "../MediaDevicesContext";
-import { type ProcessorState } from "../livekit/TrackProcessorContext";
+import { type BackgroundEffectsState } from "../livekit/BackgroundEffectsContext";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import lobbyStyles from "./LobbyView.module.css";
 import headerStyles from "../Header.module.css";
@@ -41,12 +41,12 @@ vi.mock("@livekit/components-react", () => ({
   usePreviewTracks: (): unknown[] => [],
 }));
 
-vi.mock("../livekit/TrackProcessorContext", () => ({
-  useTrackProcessor: (): ProcessorState => ({
+vi.mock("../livekit/BackgroundEffectsContext", () => ({
+  useBackgroundEffects: (): BackgroundEffectsState => ({
     supported: false,
     processor: undefined,
   }),
-  useTrackProcessorSync: (): void => {},
+  useSyncBackgroundEffects: (): void => {},
 }));
 
 vi.mock("react-use-measure", () => ({
