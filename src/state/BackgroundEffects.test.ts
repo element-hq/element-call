@@ -69,6 +69,7 @@ describe("the pipeline's state", () => {
       const effects = createBackgroundEffects(testScope(), {
         supported: true,
         effect$: behavior(effect, { n: "none", b: "blur" }),
+        setEffect: vi.fn(),
         pipeline: fakePipeline().pipeline,
         transformer,
       });
@@ -94,6 +95,7 @@ describe("the pipeline's state", () => {
 
 describe("background effects", () => {
   let effect$: BehaviorSubject<string>;
+  let setEffect: (raw: string) => void;
   let fake: ReturnType<typeof fakePipeline>;
 
   function build(
@@ -102,6 +104,7 @@ describe("background effects", () => {
     return createBackgroundEffects(testScope(), {
       supported: true,
       effect$,
+      setEffect,
       pipeline: fake.pipeline,
       transformer: { onFirstFrame: undefined },
       ...options,
@@ -116,6 +119,7 @@ describe("background effects", () => {
 
   beforeEach(() => {
     effect$ = new BehaviorSubject("none");
+    setEffect = vi.fn((raw: string) => effect$.next(raw));
     fake = fakePipeline();
   });
 
@@ -168,5 +172,12 @@ describe("background effects", () => {
       { mode: "background-blur", blurRadius: 15 },
       { mode: "disabled" },
     ]);
+  });
+
+  it("clears a remembered effect when it cannot be honoured", () => {
+    effect$.next(`image:${shippedBackgrounds[0].id}`);
+    const effects = build({ supported: false });
+    expect(effect$.value).toBe("none");
+    expect(effects.state$.value.processor).toBeUndefined();
   });
 });
