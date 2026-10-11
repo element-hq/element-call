@@ -239,17 +239,6 @@ describe("connectionMap$", () => {
   // Used in test to control fake connections' remoteParticipants$ streams
   let fakeRemoteParticipantsStreams: Map<string, Behavior<RemoteParticipant[]>>;
 
-  function keyForTransport({
-    transport,
-    serverName,
-  }: TransportLocator): string {
-    return JSON.stringify([
-      "url" in transport ? transport.url : null,
-      "livekit_service_url" in transport ? transport.livekit_service_url : null,
-      serverName,
-    ]);
-  }
-
   beforeEach(() => {
     fakeRemoteParticipantsStreams = new Map();
 
@@ -257,7 +246,7 @@ describe("connectionMap$", () => {
       transport: TransportLocator,
     ): Behavior<RemoteParticipant[]> {
       return (
-        fakeRemoteParticipantsStreams.get(keyForTransport(transport)) ??
+        fakeRemoteParticipantsStreams.get(keyFor(transport)) ??
         new BehaviorSubject([])
       );
     }
@@ -291,7 +280,7 @@ describe("connectionMap$", () => {
           });
 
           fakeRemoteParticipantsStreams.set(
-            keyForTransport({ transport, serverName }),
+            keyFor({ transport, serverName }),
             fakeRemoteParticipants$,
           );
           return mockConnection;
@@ -304,7 +293,7 @@ describe("connectionMap$", () => {
       // Setup the fake participants streams behavior
       // ==============================
       fakeRemoteParticipantsStreams.set(
-        keyForTransport(TRANSPORT_1),
+        keyFor(TRANSPORT_1),
         behavior("oa-b", {
           o: [],
           a: [{ identity: "user1A" } as RemoteParticipant],
@@ -316,7 +305,7 @@ describe("connectionMap$", () => {
       );
 
       fakeRemoteParticipantsStreams.set(
-        keyForTransport(TRANSPORT_2),
+        keyFor(TRANSPORT_2),
         behavior("o-a", {
           o: [],
           a: [{ identity: "user2A" } as RemoteParticipant],
