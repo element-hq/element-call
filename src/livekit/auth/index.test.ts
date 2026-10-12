@@ -158,6 +158,34 @@ describe("getSFUConfig", () => {
     expect(openID.getSFUConfig).toHaveBeenCalled();
   });
 
+  it("falls back to OpenID when the widget host refuses the CS API", async () => {
+    // In widget mode a host without MSC4533 rejects the request before it
+    // reaches the homeserver, with a plain error rather than a Matrix error
+    client._unstable_getLivekitToken.mockRejectedValueOnce(
+      new Error(
+        "The rtc_livekit_get_token action is not supported by the client.",
+      ),
+    );
+    expect(
+      await getSFUConfig({
+        ...defaultParams,
+        transport: urlAndServiceUrlTransport,
+      }),
+    ).toEqual(expect.objectContaining({ jwt: openIDJWTToken }));
+    expect(openID.getSFUConfig).toHaveBeenCalled();
+  });
+
+  it("surfaces the widget host's refusal with url transport", async () => {
+    const error = new Error(
+      "The rtc_livekit_get_token action is not supported by the client.",
+    );
+    client._unstable_getLivekitToken.mockRejectedValueOnce(error);
+    await expect(
+      getSFUConfig({ ...defaultParams, transport: urlTransport }),
+    ).rejects.toThrow(error);
+    expect(openID.getSFUConfig).not.toHaveBeenCalled();
+  });
+
   it("does not fall back to OpenID when publishing", async () => {
     client._unstable_getLivekitToken.mockRejectedValueOnce(unsupportedError);
     await expect(

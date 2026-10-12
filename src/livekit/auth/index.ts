@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 
-import { MatrixError } from "matrix-js-sdk";
+import { ConnectionError, MatrixError } from "matrix-js-sdk";
 import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import * as openID from "./openID";
 import * as csApi from "./csApi";
@@ -36,6 +36,19 @@ function isEndpointUnsupported(e: unknown): boolean {
       e.errcode === "M_NOT_FOUND" ||
       e.errcode === "M_UNRECOGNIZED")
   );
+}
+
+/**
+ * Checks whether an error means the MSC4195 CS API cannot be used from here:
+ * the homeserver does not implement it, or the request never reached the
+ * homeserver because in widget mode the host does not expose the endpoint
+ * (MSC4533), which the widget API reports as a plain error rather than a
+ * Matrix error. A connection error is neither, as the endpoint may well exist.
+ * @param e The error to check.
+ */
+function isCsApiUnavailable(e: unknown): boolean {
+  if (isEndpointUnsupported(e)) return true;
+  return !(e instanceof MatrixError) && !(e instanceof ConnectionError);
 }
 
 export interface GetSFUConfigParams {
@@ -113,23 +126,25 @@ export async function getSFUConfig({
       slotId,
     });
   } catch (e) {
-    if (!isEndpointUnsupported(e)) throw e;
     // Publishers should never fall back. If a homeserver advertises a `url`
     // but doesn't support MSC4195 itself, that's a misconfiguration which
     // the admin should know about so they can prepare for the future
     // deprecation of `livekit_service_url`.
     const mayFallBack =
       role === "subscriber" && "livekit_service_url" in transport;
-    if (!mayFallBack) {
+    if (mayFallBack && isCsApiUnavailable(e)) {
+      logger.warn(
+        `Cannot use the MSC4195 get_token endpoint (${e}), falling back to the OpenID flow with service ${transport.livekit_service_url}`,
+      );
+      return await viaOpenID(transport.livekit_service_url);
+    }
+    if (isEndpointUnsupported(e)) {
       logger.error(
         `Homeserver does not support the MSC4195 get_token endpoint, cannot get token for transport ${flow.url}`,
       );
       throw new NoMatrix2AuthorizationService(e as Error);
     }
-    logger.warn(
-      `Homeserver does not support the MSC4195 get_token endpoint, falling back to the OpenID flow with service ${transport.livekit_service_url}`,
-    );
-    return await viaOpenID(transport.livekit_service_url);
+    throw e;
   }
 }
 

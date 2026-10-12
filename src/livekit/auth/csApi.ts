@@ -5,11 +5,20 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type MatrixClient } from "matrix-js-sdk";
+import { ConnectionError, HTTPError, type MatrixClient } from "matrix-js-sdk";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
 import { extractFullConfigFromToken, type SFUConfig } from "./types.ts";
 import { doNetworkOperationWithRetry } from "../../utils/matrix.ts";
+
+/**
+ * In widget mode the host may refuse an action before any request is made
+ * which surfaces as a plain error. Asking again cannot change its answer,
+ * so only errors from the network are worth retrying.
+ */
+function isNetworkError(e: unknown): boolean {
+  return e instanceof HTTPError || e instanceof ConnectionError;
+}
 
 export type ClientGetTokenParts = Pick<
   MatrixClient,
@@ -55,14 +64,16 @@ export async function getSFUConfig({
   roomId,
   slotId,
 }: GetSFUConfigParams): Promise<SFUConfig> {
-  const res = await doNetworkOperationWithRetry(async () =>
-    client._unstable_getLivekitToken({
-      url,
-      server_name: serverName,
-      room_id: roomId,
-      slot_id: slotId,
-      member_id: membership.memberId,
-    }),
+  const res = await doNetworkOperationWithRetry(
+    async () =>
+      client._unstable_getLivekitToken({
+        url,
+        server_name: serverName,
+        room_id: roomId,
+        slot_id: slotId,
+        member_id: membership.memberId,
+      }),
+    isNetworkError,
   );
   return extractFullConfigFromToken({ url, jwt: res.jwt });
 }
@@ -112,13 +123,15 @@ export async function delegateDelayedLeave({
   slotId,
   delayId,
 }: DelegateDelayedLeaveParams): Promise<void> {
-  await doNetworkOperationWithRetry(async () =>
-    client._unstable_delegateDelayedLeave({
-      url,
-      room_id: roomId,
-      slot_id: slotId,
-      member_id: membership.memberId,
-      delay_id: delayId,
-    }),
+  await doNetworkOperationWithRetry(
+    async () =>
+      client._unstable_delegateDelayedLeave({
+        url,
+        room_id: roomId,
+        slot_id: slotId,
+        member_id: membership.memberId,
+        delay_id: delayId,
+      }),
+    isNetworkError,
   );
 }
