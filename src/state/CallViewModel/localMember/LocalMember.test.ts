@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 
 import {
   Status as RTCMemberStatus,
-  type LivekitTransport,
+  type UnstableLivekitTransport,
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
 import {
@@ -127,7 +127,7 @@ const mockedClient = {
 };
 
 describe("enterRTCSession", () => {
-  const transport: LivekitTransport = {
+  const transport: UnstableLivekitTransport = {
     livekit_service_url: "http://my-livekit-service-url.com",
     type: "livekit",
   };
@@ -306,7 +306,7 @@ describe("LocalMembership", () => {
 
   const mockTransport = {
     livekit_service_url: "a",
-  } as LivekitTransport;
+  } as UnstableLivekitTransport;
 
   const connectionTransportAConnected = {
     livekitRoom: mockLivekitRoom({
@@ -459,7 +459,7 @@ describe("LocalMembership", () => {
   it("tracks livekit state correctly", async () => {
     const scope = new ObservableScope();
     const connectionMap = new ConnectionMap();
-    const localTransport$ = new Subject<LivekitTransport>();
+    const localTransport$ = new Subject<UnstableLivekitTransport>();
 
     const connectionMap$ = new BehaviorSubject(new Epoch(connectionMap));
     const publishers: Publisher[] = [];

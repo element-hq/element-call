@@ -10,7 +10,7 @@ import { BehaviorSubject } from "rxjs";
 import { type Room as LivekitRoom } from "livekit-client";
 import EventEmitter from "events";
 import fetchMock from "fetch-mock";
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import {
@@ -152,7 +152,7 @@ test("bob, carl, then bob joining no tracks yet", () => {
           a: expect.toSatisfy((co) =>
             areLivekitTransportsEqual(
               co.transport,
-              bobMembership.transports[0]! as LivekitTransport,
+              bobMembership.transports[0]! as UnstableLivekitTransport,
             ),
           ),
         });
@@ -189,7 +189,7 @@ test("bob, carl, then bob joining no tracks yet", () => {
               expect(
                 areLivekitTransportsEqual(
                   connection.transport,
-                  carlMembership.transports[0]! as LivekitTransport,
+                  carlMembership.transports[0]! as UnstableLivekitTransport,
                 ),
               ).toBe(true);
               return true;
@@ -219,7 +219,7 @@ test("bob, carl, then bob joining no tracks yet", () => {
               expect(
                 areLivekitTransportsEqual(
                   connection.transport,
-                  daveMembership.transports[0]! as LivekitTransport,
+                  daveMembership.transports[0]! as UnstableLivekitTransport,
                 ),
               ).toBe(true);
               return true;

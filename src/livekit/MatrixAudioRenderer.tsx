@@ -19,10 +19,10 @@ import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import { useEarpieceAudioConfig } from "../MediaDevicesContext";
 import { useReactiveState } from "../useReactiveState";
 import * as controls from "../controls";
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 
 export interface MatrixAudioRendererProps {
-  transport: LivekitTransport;
+  transport: UnstableLivekitTransport;
   livekitRoom: LivekitRoom;
   /**
    * The list of participant identities to render audio for.

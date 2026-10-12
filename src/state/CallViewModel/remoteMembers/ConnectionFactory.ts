@@ -16,7 +16,7 @@ import { logger, type Logger } from "matrix-js-sdk/lib/logger";
 // imported as inline to support worker when loaded from a cdn (cross domain)
 import E2EEWorker from "livekit-client/e2ee-worker?worker&inline";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 
 import { type ObservableScope } from "../../ObservableScope.ts";
 import { Connection } from "./Connection.ts";
@@ -42,7 +42,7 @@ export interface ConnectionFactory {
   createConnection(
     scope: ObservableScope,
     role: "publisher" | "subscriber",
-    transport: LivekitTransport,
+    transport: UnstableLivekitTransport,
     ownMembershipIdentity: CallMembershipIdentityParts,
     logger: Logger,
   ): Connection;
@@ -103,7 +103,7 @@ export class ECConnectionFactory implements ConnectionFactory {
   public createConnection(
     scope: ObservableScope,
     role: "publisher" | "subscriber",
-    transport: LivekitTransport,
+    transport: UnstableLivekitTransport,
     ownMembershipIdentity: CallMembershipIdentityParts,
     logger: Logger,
   ): Connection {

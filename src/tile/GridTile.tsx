@@ -51,7 +51,7 @@ import { type RemoteUserMediaViewModel } from "../state/media/RemoteUserMediaVie
 import { type UserMediaViewModel } from "../state/media/UserMediaViewModel";
 import { type RingingMediaViewModel } from "../state/media/RingingMediaViewModel";
 import { RingingStatus } from "./RingingStatus";
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 
 interface TileProps {
   ref?: Ref<HTMLDivElement>;
@@ -104,7 +104,7 @@ interface UserMediaTileProps extends TileProps {
   playbackMuted: boolean;
   waitingForMedia?: boolean;
   primaryButton?: ReactNode;
-  transport: LivekitTransport | undefined;
+  transport: UnstableLivekitTransport | undefined;
 }
 
 /**

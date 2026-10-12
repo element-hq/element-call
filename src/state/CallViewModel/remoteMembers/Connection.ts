@@ -23,7 +23,7 @@ import {
   type Track,
   type TrackPublication,
 } from "livekit-client";
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { BehaviorSubject } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
@@ -50,7 +50,7 @@ export interface ConnectionOpts {
   /** Whether we want to publish or only subscribe on this connection. */
   role: "publisher" | "subscriber";
   /** The media transport to connect to. */
-  transport: LivekitTransport;
+  transport: UnstableLivekitTransport;
   /** The Matrix client to use for OpenID and SFU config requests. */
   client: ClientOpenIDParts;
   /** The ID of the Matrix room in which the session takes place. */
@@ -97,7 +97,7 @@ export class Connection {
   /**
    * The media transport to connect to.
    */
-  public readonly transport: LivekitTransport;
+  public readonly transport: UnstableLivekitTransport;
 
   public readonly livekitRoom: LivekitRoom;
 
@@ -377,6 +377,8 @@ export class Connection {
   }
 
   protected async getSFUConfig(): Promise<SFUConfig> {
+    if (!("livekit_service_url" in this.transport))
+      throw new Error("Transport has no livekit_service_url");
     return await getSFUConfig({
       client: this.client,
       membership: this.ownMembershipIdentity,

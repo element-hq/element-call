@@ -699,7 +699,12 @@ export const InCallView: FC<InCallViewProps> = ({
               livekitAlias: connectionItem.livekitAlias,
               // TODO compute is local or tag it in the livekit room items already
               isLocal: undefined,
-              url: connectionItem.transport.livekit_service_url,
+              url:
+                // It should be relatively clear to the user which kind of URL
+                // this is, based on the scheme (ws:// vs. http://)
+                "url" in connectionItem.transport
+                  ? connectionItem.transport.url
+                  : connectionItem.transport.livekit_service_url,
             }))}
           />
         </>

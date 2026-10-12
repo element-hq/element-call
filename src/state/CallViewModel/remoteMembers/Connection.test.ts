@@ -29,7 +29,7 @@ import fetchMock from "fetch-mock";
 import EventEmitter from "events";
 import { type IOpenIDToken } from "matrix-js-sdk";
 import { logger, type Logger } from "matrix-js-sdk/lib/logger";
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 
 import {
   Connection,
@@ -54,8 +54,9 @@ let fakeLocalParticipant: MockedObject<LocalParticipant>;
 const ROOM_ID = "!roomID:example.org";
 const SLOT_ID = "m.call#ROOM";
 
-const livekitFocus: LivekitTransport = {
-  livekit_service_url: "https://matrix-rtc.example.org/livekit/jwt",
+const livekitServiceUrl = "https://matrix-rtc.example.org/livekit/jwt";
+const livekitFocus: UnstableLivekitTransport = {
+  livekit_service_url: livekitServiceUrl,
   type: "livekit",
 };
 
@@ -122,7 +123,7 @@ function setupRemoteConnection(): Connection {
     livekitRoomFactory: () => fakeLivekitRoom,
   };
 
-  fetchMock.post(`${livekitFocus.livekit_service_url}/get_token`, () => {
+  fetchMock.post(`${livekitServiceUrl}/get_token`, () => {
     return {
       status: 200,
       body: {
@@ -250,19 +251,16 @@ describe("Start connection states", () => {
 
     const deferredSFU = Promise.withResolvers<void>();
     // mock the /get_token call
-    fetchMock.post(
-      `${livekitFocus.livekit_service_url}/get_token`,
-      async () => {
-        await deferredSFU.promise;
-        return {
-          status: 500,
-          body: {
-            errcode: "M_LOOKUP_FAILED",
-            error: "Failed to look up user info from homeserver",
-          },
-        };
-      },
-    );
+    fetchMock.post(`${livekitServiceUrl}/get_token`, async () => {
+      await deferredSFU.promise;
+      return {
+        status: 500,
+        body: {
+          errcode: "M_LOOKUP_FAILED",
+          error: "Failed to look up user info from homeserver",
+        },
+      };
+    });
 
     connection.start().catch(() => {
       // expected to throw
@@ -317,7 +315,7 @@ describe("Start connection states", () => {
 
     const deferredSFU = Promise.withResolvers<void>();
     // mock the /get_token call
-    fetchMock.post(`${livekitFocus.livekit_service_url}/get_token`, () => {
+    fetchMock.post(`${livekitServiceUrl}/get_token`, () => {
       return {
         status: 200,
         body: {

@@ -16,12 +16,12 @@ import classNames from "classnames";
 import { Modal } from "./Modal";
 import styles from "./RTCConnectionStats.module.css";
 import mediaViewStyles from "../src/tile/MediaView.module.css";
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 
 interface Props {
   audio?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
   video?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
-  transport?: LivekitTransport;
+  transport?: UnstableLivekitTransport;
   rtcBackendIdentity?: string;
 }
 

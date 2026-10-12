@@ -8,10 +8,11 @@ Please see LICENSE in the repository root for full details.
 import { type LocalParticipant, type RemoteParticipant } from "livekit-client";
 import {
   type CallMembership,
-  type LivekitTransport,
+  type UnstableLivekitTransport,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { combineLatest, filter, map } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
+import { deepCompare } from "matrix-js-sdk/lib/utils";
 
 import { type Behavior } from "../../Behavior";
 import { type ConnectionMap } from "./ConnectionMap";
@@ -60,7 +61,9 @@ export interface RemoteMatrixLivekitMember extends MatrixLivekitMember {
 interface Props {
   scope: ObservableScope;
   membershipsWithTransport$: Behavior<
-    Epoch<{ membership: CallMembership; transport?: LivekitTransport }[]>
+    Epoch<
+      { membership: CallMembership; transport?: UnstableLivekitTransport }[]
+    >
   >;
   connectionMap$: Behavior<Epoch<ConnectionMap>>;
   localUser: { deviceId: string; userId: string };
@@ -162,12 +165,12 @@ export function createRemoteMatrixLivekitMembers$({
 // TODO add back in the callviewmodel pauseWhen(this.pretendToBeDisconnected$)
 
 // TODO add this to the JS-SDK
-export function areLivekitTransportsEqual<T extends LivekitTransport>(
+export function areLivekitTransportsEqual<T extends UnstableLivekitTransport>(
   t1: T | null,
   t2: T | null,
 ): boolean {
   if (t1 && t2) {
-    return t1.livekit_service_url === t2.livekit_service_url;
+    return deepCompare(t1, t2);
   }
   return !t1 && !t2;
 }

@@ -40,7 +40,7 @@ import { E2eeType } from "../../e2ee/e2eeType";
 import { observeInboundRtpStreamStats$ } from "./observeRtpStreamStats";
 import { type UserMediaViewModel } from "./UserMediaViewModel";
 import { type ScreenShareViewModel } from "./ScreenShareViewModel";
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 
 // TODO: Encryption status is kinda broken and thus unused right now. Remove?
 export enum EncryptionStatus {
@@ -63,7 +63,7 @@ export interface BaseMemberMediaViewModel extends BaseMediaViewModel {
    * The LiveKit transport on which this member should be publishing. Exposed
    * for debugging.
    */
-  transport$: Behavior<LivekitTransport | undefined>;
+  transport$: Behavior<UnstableLivekitTransport | undefined>;
   /**
    * Whether there should be a warning that this media is unencrypted.
    */
@@ -76,7 +76,7 @@ export interface MemberMediaInputs extends BaseMediaViewModel {
   livekitRoom$: Behavior<LivekitRoom | undefined>;
   audioSource: AudioSource;
   videoSource: VideoSource;
-  transport$: Behavior<LivekitTransport | undefined>;
+  transport$: Behavior<UnstableLivekitTransport | undefined>;
   encryptionSystem: EncryptionSystem;
 }
 

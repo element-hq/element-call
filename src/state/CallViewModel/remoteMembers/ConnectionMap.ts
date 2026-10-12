@@ -6,7 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { combineLatest, map, of, switchMap, tap } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import { type RemoteParticipant } from "livekit-client";
@@ -23,7 +23,17 @@ import { generateItemsWithEpoch } from "../../../utils/observable.ts";
 import { areLivekitTransportsEqual } from "./MatrixLivekitMembers.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
 
-function removeDuplicateTransports<T extends LivekitTransport>(
+/**
+ * The URL by which a transport is identified: its JWT service URL, or failing
+ * that, its SFU URL.
+ */
+function urlOf(transport: UnstableLivekitTransport): string {
+  return "livekit_service_url" in transport
+    ? transport.livekit_service_url
+    : transport.url;
+}
+
+function removeDuplicateTransports<T extends UnstableLivekitTransport>(
   transports: T[],
 ): T[] {
   return transports.reduce((acc, transport) => {
@@ -56,10 +66,10 @@ export class ConnectionMap {
     }
   }
 
-  private getKey(transport: LivekitTransport): string {
+  private getKey(transport: UnstableLivekitTransport): string {
     // This is enough as a key because the ConnectionMap is already scoped by room.
     // We also do not need to consider the slotId at this point since each `MatrixRTCSession` is already scoped by `slotDescription: {id, application}`.
-    return transport.livekit_service_url;
+    return urlOf(transport);
   }
 
   public getConnections(): Connection[] {
@@ -67,13 +77,13 @@ export class ConnectionMap {
   }
 
   public getConnectionForTransport(
-    transport: LivekitTransport,
+    transport: UnstableLivekitTransport,
   ): Connection | null {
     return this.map.get(this.getKey(transport))?.connection ?? null;
   }
 
   public getParticipantsForTransport(
-    transport: LivekitTransport,
+    transport: UnstableLivekitTransport,
   ): RemoteParticipant[] {
     const existing = this.map.get(this.getKey(transport));
     if (existing) {
@@ -86,8 +96,8 @@ export class ConnectionMap {
 interface Props {
   scope: ObservableScope;
   connectionFactory: ConnectionFactory;
-  localTransport: LivekitTransport;
-  remoteTransports$: Behavior<Epoch<LivekitTransport[]>>;
+  localTransport: UnstableLivekitTransport;
+  remoteTransports$: Behavior<Epoch<UnstableLivekitTransport[]>>;
 
   logger: Logger;
   ownMembershipIdentity: CallMembershipIdentityParts;
@@ -118,7 +128,7 @@ export function createConnectionMap$({
    * All transports currently represented in the connection map. This list does
    * not include duplicate transports.
    */
-  const localAndRemoteTransports$: Behavior<Epoch<LivekitTransport[]>> =
+  const localAndRemoteTransports$: Behavior<Epoch<UnstableLivekitTransport[]>> =
     scope.behavior(
       remoteTransports$.pipe(
         mapEpoch((remoteTransports) =>
@@ -142,17 +152,14 @@ export function createConnectionMap$({
             const role = areLivekitTransportsEqual(transport, localTransport)
               ? ("publisher" as const)
               : ("subscriber" as const);
-            yield {
-              keys: [role, transport.livekit_service_url],
-              data: undefined,
-            };
+            yield { keys: [role, urlOf(transport)], data: transport };
           }
         },
-        (scope, _data$, role, serviceUrl) => {
+        (scope, transport$, role, _url) => {
           const connection = connectionFactory.createConnection(
             scope,
             role,
-            { type: "livekit", livekit_service_url: serviceUrl },
+            transport$.value,
             ownMembershipIdentity,
             logger,
           );

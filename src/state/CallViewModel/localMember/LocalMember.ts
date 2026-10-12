@@ -18,7 +18,7 @@ import {
 import { observeParticipantEvents } from "@livekit/components-core";
 import {
   Status as RTCSessionStatus,
-  type LivekitTransport,
+  type UnstableLivekitTransport,
   type MatrixRTCSession,
   type RTCCallIntent,
   type RTCNotificationType,
@@ -141,13 +141,13 @@ interface Props {
   connectionMap$: Behavior<Epoch<ConnectionMap>>;
   createPublisherFactory: (connection: Connection) => Publisher;
   joinMatrixRTC: (
-    transport: LivekitTransport,
+    transport: UnstableLivekitTransport,
     delayedLeaveTimings: ResolvedDelayedLeaveTimings,
   ) => void;
   homeserverConnected: HomeserverConnected;
   roomId: string;
   ownMembershipIdentity: CallMembershipIdentityParts;
-  localTransport$: Observable<LivekitTransport>;
+  localTransport$: Observable<UnstableLivekitTransport>;
   client: ClientOpenIDParts;
   matrixRTCSession: Pick<
     MatrixRTCSession,
@@ -307,15 +307,16 @@ export const createLocalMembership$ = ({
   const joinParams$ = scope.behavior(
     localTransport$.pipe(
       switchMap(async (transport) => {
-        const transportSupportsDelegation = checkDelegationSupport(
-          transport.livekit_service_url + "/delegate_delayed_leave",
-          `transport ${transport.livekit_service_url}`,
-        );
+        const transportSupportsDelegation =
+          "livekit_service_url" in transport &&
+          (await checkDelegationSupport(
+            transport.livekit_service_url + "/delegate_delayed_leave",
+            `transport ${transport.livekit_service_url}`,
+          ));
         return {
           transport,
           delegationSupported:
-            (await homeserverSupportsDelegation) ||
-            (await transportSupportsDelegation),
+            transportSupportsDelegation || (await homeserverSupportsDelegation),
         };
       }),
     ),
@@ -715,6 +716,8 @@ export const createLocalMembership$ = ({
     async ([joinParams, delayId]) => {
       if (joinParams?.delegationSupported && delayId !== null) {
         try {
+          if (!("livekit_service_url" in joinParams.transport))
+            throw new Error("Transport has no livekit_service_url");
           // This will technically cause the service to issue a new JWT token,
           // but it's safe to discard. We're only interested in triggering
           // delegation.
@@ -731,10 +734,7 @@ export const createLocalMembership$ = ({
           });
         } catch (e) {
           // TODO: Surface this to the user as a service interruption?
-          logger.error(
-            `Failed to delegate leave to ${joinParams.transport.livekit_service_url}`,
-            e,
-          );
+          logger.error(`Failed to delegate leave`, e);
         }
       }
     },
@@ -967,7 +967,7 @@ interface EnterRTCSessionOptions {
  *
  * @param rtcSession - The MatrixRTCSession to join.
  * @param ownMembershipIdentity - Options for entering the RTC session.
- * @param transport - The LivekitTransport to use for this session.
+ * @param transport - The UnstableLivekitTransport to use for this session.
  * @param options - `encryptMedia`: Whether to encrypt media. `matrixRTCMode`: The
  *   Matrix RTC mode to use. `delayedLeaveTimings`: The preferred timings for
  *   delayed leave events. `sendNotificationType`: Whether and what kind of
@@ -978,7 +978,7 @@ interface EnterRTCSessionOptions {
 export function enterRTCSession(
   rtcSession: MatrixRTCSession,
   ownMembershipIdentity: CallMembershipIdentityParts,
-  transport: LivekitTransport,
+  transport: UnstableLivekitTransport,
   {
     encryptMedia,
     matrixRTCMode,

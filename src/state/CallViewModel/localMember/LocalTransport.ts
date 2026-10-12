@@ -5,7 +5,7 @@ SPDX-License-IdFentifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { type MatrixClient } from "matrix-js-sdk";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 
@@ -20,7 +20,7 @@ import { RtcTransportAutoDiscovery } from "./RtcTransportAutoDiscovery.ts";
  */
 export async function getLocalTransport(
   client: Pick<MatrixClient, "getDomain" | "_unstable_getRTCTransports">,
-): Promise<LivekitTransport> {
+): Promise<UnstableLivekitTransport> {
   const discovery = new RtcTransportAutoDiscovery({
     client,
     resolvedConfig: Config.get(),
@@ -29,7 +29,7 @@ export async function getLocalTransport(
   const customUrl = customLivekitUrl.value$.value;
 
   // Respect the user's custom URL, if set
-  const transport: LivekitTransport | null = customUrl
+  const transport: UnstableLivekitTransport | null = customUrl
     ? { type: "livekit", livekit_service_url: customUrl }
     : await discovery.discoverPreferredTransport();
 

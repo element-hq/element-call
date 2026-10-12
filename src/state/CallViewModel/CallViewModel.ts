@@ -46,7 +46,7 @@ import {
 import { type Logger, logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import {
   MembershipManagerEvent,
-  type LivekitTransport,
+  type UnstableLivekitTransport,
   type MatrixRTCSession,
   type RTCCallIntent,
   type RTCNotificationType,
@@ -217,7 +217,7 @@ export interface CallViewModelOptions {
    */
   windowSize$: Behavior<{ width: number; height: number }>;
   /** Optional value overriding the local transport, for testing purposes. */
-  localTransport?: LivekitTransport;
+  localTransport?: UnstableLivekitTransport;
   /** Optional value overriding the connection factory, for testing purposes. */
   connectionFactory?: ConnectionFactory;
   /** The version & compatibility mode of MatrixRTC that we should use. */
@@ -278,7 +278,7 @@ interface LayoutScanState {
 export type LivekitRoomItem = {
   livekitRoom: LivekitRoom;
   participants: string[];
-  transport: LivekitTransport;
+  transport: UnstableLivekitTransport;
 };
 
 /**
@@ -619,7 +619,7 @@ export function createCallViewModel$(
     ),
     muteStates,
     joinMatrixRTC: (
-      transport: LivekitTransport,
+      transport: UnstableLivekitTransport,
       delayedLeaveTimings: ResolvedDelayedLeaveTimings,
     ) => {
       return enterRTCSession(

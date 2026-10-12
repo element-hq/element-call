@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { BehaviorSubject } from "rxjs";
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { type RemoteParticipant } from "livekit-client";
 import { logger } from "matrix-js-sdk/lib/logger";
 
@@ -21,18 +21,18 @@ import { type Behavior } from "../../Behavior.ts";
 
 // Some test constants
 
-const TRANSPORT_1: LivekitTransport = {
+const TRANSPORT_1: UnstableLivekitTransport = {
   type: "livekit",
   livekit_service_url: "https://lk.example.org",
 };
 
-const TRANSPORT_2: LivekitTransport = {
+const TRANSPORT_2: UnstableLivekitTransport = {
   type: "livekit",
   livekit_service_url: "https://lk.sample.com",
 };
 
 function findConnection(
-  transport: LivekitTransport,
+  transport: UnstableLivekitTransport,
   connections: Connection[],
 ): Connection | undefined {
   return connections.find((c) =>
@@ -53,7 +53,11 @@ beforeEach(() => {
   vi.mocked(fakeConnectionFactory).createConnection = vi
     .fn()
     .mockImplementation(
-      (scope: ObservableScope, _role: unknown, transport: LivekitTransport) => {
+      (
+        scope: ObservableScope,
+        _role: unknown,
+        transport: UnstableLivekitTransport,
+      ) => {
         const mockConnection = {
           transport,
           remoteParticipants$: new BehaviorSubject([]),
@@ -224,15 +228,17 @@ describe("connectionMap$", () => {
   // Used in test to control fake connections' remoteParticipants$ streams
   let fakeRemoteParticipantsStreams: Map<string, Behavior<RemoteParticipant[]>>;
 
-  function keyForTransport(transport: LivekitTransport): string {
-    return `${transport.livekit_service_url}`;
+  function keyForTransport(transport: UnstableLivekitTransport): string {
+    return "livekit_service_url" in transport
+      ? transport.livekit_service_url
+      : transport.url;
   }
 
   beforeEach(() => {
     fakeRemoteParticipantsStreams = new Map();
 
     function getRemoteParticipantsFor(
-      transport: LivekitTransport,
+      transport: UnstableLivekitTransport,
     ): Behavior<RemoteParticipant[]> {
       return (
         fakeRemoteParticipantsStreams.get(keyForTransport(transport)) ??
@@ -247,7 +253,7 @@ describe("connectionMap$", () => {
         (
           scope: ObservableScope,
           _role: unknown,
-          transport: LivekitTransport,
+          transport: UnstableLivekitTransport,
         ) => {
           const fakeRemoteParticipants$ = new BehaviorSubject<
             RemoteParticipant[]
