@@ -45,7 +45,7 @@ export class RtcTransportAutoDiscovery {
     const backendTransport = await this.tryBackendTransports();
     if (backendTransport) {
       this.logger.info(
-        `Found backend transport: ${backendTransport.livekit_service_url}`,
+        `Found backend transport: ${JSON.stringify(backendTransport)}`,
       );
       return backendTransport;
     }
@@ -54,7 +54,7 @@ export class RtcTransportAutoDiscovery {
     const configTransport = this.tryConfigTransport();
     if (configTransport) {
       this.logger.info(
-        `Found app config transport: ${configTransport.livekit_service_url}`,
+        `Found app config transport: ${JSON.stringify(configTransport)}`,
       );
       return configTransport;
     }

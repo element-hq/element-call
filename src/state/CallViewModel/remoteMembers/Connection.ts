@@ -140,10 +140,10 @@ export class Connection {
     this.existingSFUConfig = opts.existingSFUConfig;
     this.roomId = opts.roomId;
     this.logger = logger.getChild(
-      "[Connection " + opts.transport.livekit_service_url + "]",
+      `[Connection ${JSON.stringify(opts.transport)}]`,
     );
     this.logger.info(
-      `constructor: ${opts.transport.livekit_service_url} roomId: ${this.roomId} withSfuConfig?: ${opts.existingSFUConfig ? JSON.stringify(opts.existingSFUConfig) : "undefined"}`,
+      `constructor: roomId: ${this.roomId} withSfuConfig?: ${opts.existingSFUConfig ? JSON.stringify(opts.existingSFUConfig) : "undefined"}`,
     );
     const { transport, client, scope } = opts;
 
@@ -297,9 +297,7 @@ export class Connection {
         this.existingSFUConfig ??
         (await this.getSFUConfigForRemoteConnection());
       this.logger.debug(
-        "Starting Connection to: ",
-        this.transport.livekit_service_url,
-        "jwt: ",
+        "Starting Connection - jwt: ",
         jwt,
         "wss: ",
         url,
@@ -400,17 +398,13 @@ export class Connection {
    * If the connection is already stopped, this is a no-op.
    */
   public async stop(): Promise<void> {
-    this.logger.debug(
-      `stop: disconnecing from lk room ${this.transport.livekit_service_url}`,
-    );
+    this.logger.debug("stop: disconnecing from lk room");
     if (this.stopped) return;
     // Mark as stopped before disconnecting so that a connect() aborted by the
     // disconnect sees the flag and does not report the abort as an error.
     this.stopped = true;
     await this.livekitRoom.disconnect();
     this._state$.next({ state: "stopped" });
-    this.logger.debug(
-      `stop: DONE disconnecing from lk room ${this.transport.livekit_service_url}`,
-    );
+    this.logger.debug("stop: DONE disconnecing from lk room");
   }
 }

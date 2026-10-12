@@ -143,9 +143,9 @@ export function createRemoteMatrixLivekitMembers$({
           // Log whether the member could be matched to a LiveKit participant,
           // since a tile shows "waiting for media" for as long as it cannot.
           participant$.pipe(scope.bind()).subscribe((p) => {
-            const url = data$.value.connection?.transport.livekit_service_url;
+            const transport = data$.value.connection?.transport;
             logger.info(
-              `[RemoteMatrixLivekitMembers] ${rtcBackendIdentity}: LiveKit participant ${p ? `matched (${p.sid})` : "missing"} on ${url ?? "no connection"}`,
+              `[RemoteMatrixLivekitMembers] ${rtcBackendIdentity}: LiveKit participant ${p ? `matched (${p.sid})` : "missing"} on ${transport ? JSON.stringify(transport) : "no connection"}`,
             );
           });
           // will only get called once per backend identity.

@@ -635,9 +635,7 @@ export function createCallViewModel$(
         mediaDevices,
         muteStates,
         trackProcessorState$,
-        logger.getChild(
-          "[Publisher " + connection.transport.livekit_service_url + "]",
-        ),
+        logger.getChild(`[Publisher ${JSON.stringify(connection.transport)}]`),
         controlledAudioDevices,
       );
     },
@@ -829,8 +827,8 @@ export function createCallViewModel$(
             livekitRoom$: scope.behavior(
               connection$.pipe(map((c) => c?.livekitRoom)),
             ),
-            focusUrl$: scope.behavior(
-              connection$.pipe(map((c) => c?.transport.livekit_service_url)),
+            transport$: scope.behavior(
+              connection$.pipe(map((c) => c?.transport)),
             ),
             mediaDevices,
             pretendToBeDisconnected$: localMembership.reconnecting$,

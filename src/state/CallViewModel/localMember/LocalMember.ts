@@ -334,7 +334,7 @@ export const createLocalMembership$ = ({
       ),
       tap((connection) => {
         logger.info(
-          `Local connection updated: ${connection?.transport?.livekit_service_url}`,
+          `Local connection updated: ${JSON.stringify(connection?.transport)}`,
         );
       }),
     ),
@@ -406,7 +406,7 @@ export const createLocalMembership$ = ({
   scope.reconcile(localConnection$, async (connection) => {
     logger.info(
       "reconcile based on new localConnection:",
-      connection?.transport.livekit_service_url,
+      JSON.stringify(connection?.transport),
     );
     if (connection !== null) {
       const publisher = createPublisherFactory(connection);
