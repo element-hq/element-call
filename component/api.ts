@@ -130,7 +130,9 @@ export interface ElementCallProps {
    * A host that moves Element Call's DOM into another document, such as a
    * Document Picture-in-Picture window, passes that document's body here so
    * that a menu opens in the window its button is in. Changes take effect at
-   * once.
+   * once. `null` means the root is not available yet, as from a callback ref
+   * that has not fired: menus and tooltips wait for it rather than falling
+   * back to the body.
    */
   portalRoot?: HTMLElement | null;
 }

@@ -50,7 +50,7 @@ import {
 } from "react";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { I18nextProvider } from "react-i18next";
-import { PortalRoot, TooltipProvider } from "@vector-im/compound-web";
+import { TooltipProvider } from "@vector-im/compound-web";
 import { ErrorBoundary } from "@sentry/react";
 import { shouldPolyfill as shouldPolyfillSegmenter } from "@formatjs/intl-segmenter/should-polyfill";
 import { shouldPolyfill as shouldPolyfillDurationFormat } from "@formatjs/intl-durationformat/should-polyfill.js";
@@ -82,6 +82,7 @@ import { useTheme } from "../src/useTheme";
 import { useStableValue } from "../src/useStableValue";
 import styles from "./ElementCall.module.css";
 import { useComponentHostBridge } from "./host";
+import { CallPortalRoot } from "./CallPortalRoot";
 import { type ElementCallProps } from "./api";
 import { supportedLanguages, translationsBackend } from "./localization";
 
@@ -154,7 +155,7 @@ export const ElementCall: FC<ElementCallProps> = ({
   ref,
   theme,
   language,
-  portalRoot = null,
+  portalRoot,
 }): ReactNode => {
   const hostBridge = useComponentHostBridge(suppliedHostBridge, ref, theme);
 
@@ -241,9 +242,7 @@ export const ElementCall: FC<ElementCallProps> = ({
               // Stands in for the standalone page's `#root`: see `.content`
               // in ElementCall.module.css
               <div className={styles.content}>
-                {/* Where Compound floats the call's menus and tooltips: the
-                host's body unless the host says otherwise (see `portalRoot`) */}
-                <PortalRoot root={portalRoot}>
+                <CallPortalRoot root={portalRoot}>
                   <RootElementProvider value={container}>
                     {/* Whatever goes wrong in here is shown in here. Left to
                     propagate, an error would unmount the host's own tree. */}
@@ -272,7 +271,7 @@ export const ElementCall: FC<ElementCallProps> = ({
                       </Decoration>
                     </ErrorBoundary>
                   </RootElementProvider>
-                </PortalRoot>
+                </CallPortalRoot>
               </div>
             )}
           </div>
