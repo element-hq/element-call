@@ -250,7 +250,7 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
           id="radix-_r_7_"
           name="input"
           title=""
-          value="null"
+          value=""
         />
       </div>
       <span

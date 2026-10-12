@@ -70,6 +70,7 @@ import { useUrlParams } from "../UrlParams";
 import { useBehavior } from "../useBehavior";
 import { type ViewModel } from "../state/ViewModel.ts";
 import { getSFUConfig } from "../livekit/auth/index.ts";
+import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 
 /**
  * The state of MatrixRTC's media key rotation.
@@ -174,10 +175,10 @@ export const DeveloperSettingsTab: FC<Props> = ({
     customTransportSetting,
   );
   const [customTransportTextBuffer, setCustomLivekitUrlTextBuffer] = useState(
-    () => JSON.stringify(customTransport),
+    () => transportText(customTransport),
   );
   useEffect(() => {
-    setCustomLivekitUrlTextBuffer(JSON.stringify(customTransport));
+    setCustomLivekitUrlTextBuffer(transportText(customTransport));
   }, [customTransport]);
 
   const [muteAllAudio, setMuteAllAudio] = useSetting(muteAllAudioSetting);
@@ -703,3 +704,10 @@ export const DeveloperSettingsTab: FC<Props> = ({
     </>
   );
 };
+
+/**
+ * The text shown in the custom transport field for a given setting value.
+ */
+function transportText(transport: UnstableLivekitTransport | null): string {
+  return transport === null ? "" : JSON.stringify(transport);
+}
