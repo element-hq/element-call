@@ -169,6 +169,36 @@ describe("getSFUConfig", () => {
     });
   });
 
+  it("should use the default endpoint when subscribing", async () => {
+    fetchMock.post("https://sfu.example.org/get_token", (url, opts) => {
+      const body = JSON.parse(opts.body as string);
+      expect(body).toMatchObject({
+        room_id: "!example_room_id",
+        slot_id: "m.call#ROOM",
+        member: {
+          id: ownMemberMock.memberId,
+          claimed_user_id: ownMemberMock.userId,
+          claimed_device_id: ownMemberMock.deviceId,
+        },
+      });
+      return { status: 200, body: { url: serviceUrl, jwt: testJWTToken } };
+    });
+    const config = await getSFUConfig({ ...params, role: "subscriber" });
+    expect(config.jwt).toBe(testJWTToken);
+    expect(fetchMock.called("https://sfu.example.org/sfu/get")).toBe(false);
+  });
+
+  it("should fail when subscribing if the default endpoint is missing", async () => {
+    // Nothing but the catch-all 404 answers the default endpoint. Subscribers
+    // must not fall back to the legacy endpoint, which would hand them a
+    // legacy identity.
+    await expect(
+      getSFUConfig({ ...params, role: "subscriber" }),
+    ).rejects.toThrow(FailToGetOpenIdToken);
+    expect(fetchMock.called("https://sfu.example.org/get_token")).toBe(true);
+    expect(fetchMock.called("https://sfu.example.org/sfu/get")).toBe(false);
+  });
+
   it("should retry fetching the openid token", async () => {
     let count = 0;
     matrixClient.getOpenIdToken.mockImplementation(async () => {
