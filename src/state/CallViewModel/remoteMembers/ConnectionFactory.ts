@@ -35,7 +35,10 @@ import {
   noiseSuppressionSetting,
   autoGainControlSetting,
 } from "../../../settings/settings.ts";
-import { type ClientOpenIDParts } from "../../../livekit/auth";
+import {
+  type ClientGetTokenParts,
+  type ClientOpenIDParts,
+} from "../../../livekit/auth";
 
 // TODO evaluate if this should be done like the Publisher Factory
 export interface ConnectionFactory {
@@ -65,7 +68,7 @@ export class ECConnectionFactory implements ConnectionFactory {
    * @param livekitRoomFactory - Optional factory function (for testing) to create LivekitRoom instances. If not provided, a default factory is used.
    */
   public constructor(
-    private client: ClientOpenIDParts,
+    private client: ClientGetTokenParts & ClientOpenIDParts,
     private readonly roomId: string,
     private readonly slotId: string,
     private devices: MediaDevices,

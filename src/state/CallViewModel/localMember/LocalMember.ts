@@ -79,8 +79,9 @@ import {
 } from "../remoteMembers/Connection.ts";
 import { type HomeserverConnected } from "./HomeserverConnected.ts";
 import {
+  type ClientDelegationParts,
+  delegateDelayedLeave,
   type ClientOpenIDParts,
-  getSFUConfig,
   type TransportLocator,
 } from "../../../livekit/auth";
 
@@ -152,7 +153,7 @@ interface Props {
   roomId: string;
   ownMembershipIdentity: CallMembershipIdentityParts;
   localTransport$: Observable<TransportLocator>;
-  client: ClientOpenIDParts;
+  client: ClientDelegationParts & ClientOpenIDParts;
   matrixRTCSession: Pick<
     MatrixRTCSession,
     "slotId" | "updateCallIntent" | "leave"
@@ -720,22 +721,19 @@ export const createLocalMembership$ = ({
     async ([joinParams, delayId]) => {
       if (joinParams?.delegationSupported && delayId !== null) {
         try {
-          if (!("livekit_service_url" in joinParams.transport))
-            throw new Error("Transport has no livekit_service_url");
-          // This will technically cause the service to issue a new JWT token,
-          // but it's safe to discard. We're only interested in triggering
-          // delegation.
-          await getSFUConfig({
+          logger.info(
+            `Delegating delayed leave to ${JSON.stringify(joinParams.transport)}…`,
+          );
+          await delegateDelayedLeave({
             client,
             membership: ownMembershipIdentity,
-            serviceUrl: joinParams.transport.livekit_service_url,
-            roomId,
+            transport: joinParams.transport,
             slotId: matrixRTCSession.slotId,
-            role: "publisher",
-            delayEndpointBaseUrl: baseUrl,
+            roomId,
             delayId,
             logger,
           });
+          logger.info("Delayed leave successfully delegated");
         } catch (e) {
           // TODO: Surface this to the user as a service interruption?
           logger.error(`Failed to delegate leave`, e);

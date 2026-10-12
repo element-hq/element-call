@@ -39,6 +39,7 @@ import {
   UnknownCallError,
 } from "../../../utils/errors.ts";
 import {
+  type ClientGetTokenParts,
   getSFUConfig,
   type ClientOpenIDParts,
   type SFUConfig,
@@ -54,7 +55,7 @@ export interface ConnectionOpts {
   /** The name of the homeserver to which the {@link transport} belongs. */
   serverName: string;
   /** The Matrix client to use for OpenID and SFU config requests. */
-  client: ClientOpenIDParts;
+  client: ClientGetTokenParts & ClientOpenIDParts;
   /** The ID of the Matrix room in which the session takes place. */
   roomId: string;
   /** The ID of the MatrixRTC slot in which the session takes place. */
@@ -134,7 +135,7 @@ export class Connection {
   protected stopped = false;
 
   // TODO: can we just keep the ConnectionOpts object instead of spreading?
-  private readonly client: ClientOpenIDParts;
+  private readonly client: ClientGetTokenParts & ClientOpenIDParts;
   private readonly roomId: string;
   private readonly slotId: string;
   private readonly logger: Logger;
@@ -385,13 +386,12 @@ export class Connection {
   }
 
   protected async getSFUConfig(): Promise<SFUConfig> {
-    if (!("livekit_service_url" in this.transport))
-      throw new Error("Transport has no livekit_service_url");
     return await getSFUConfig({
       client: this.client,
       membership: this.ownMembershipIdentity,
       role: this.role,
-      serviceUrl: this.transport.livekit_service_url,
+      transport: this.transport,
+      serverName: this.serverName,
       roomId: this.roomId,
       slotId: this.slotId,
       logger: this.logger,

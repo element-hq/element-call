@@ -521,7 +521,11 @@ export const DeveloperSettingsTab: FC<Props> = ({
               await getSFUConfig({
                 client,
                 membership: { userId, deviceId, memberId: "" },
-                serviceUrl: customLivekitUrlTextBuffer,
+                transport: {
+                  type: "livekit",
+                  livekit_service_url: customLivekitUrlTextBuffer,
+                },
+                serverName: client.getDomain()!,
                 roomId,
                 slotId: "org.example.fake-slot#room",
                 role: "publisher",

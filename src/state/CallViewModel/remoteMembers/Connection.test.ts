@@ -8,6 +8,7 @@ Please see LICENSE in the repository root for full details.
 
 import {
   afterEach,
+  beforeEach,
   describe,
   expect,
   it,
@@ -27,9 +28,12 @@ import {
 } from "livekit-client";
 import fetchMock from "fetch-mock";
 import EventEmitter from "events";
-import { type IOpenIDToken } from "matrix-js-sdk";
+import { MatrixError } from "matrix-js-sdk";
 import { logger, type Logger } from "matrix-js-sdk/lib/logger";
-import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import {
+  type LivekitGetTokenResponse,
+  type UnstableLivekitTransport,
+} from "matrix-js-sdk/lib/matrixrtc";
 
 import {
   Connection,
@@ -40,11 +44,14 @@ import { ObservableScope } from "../../ObservableScope.ts";
 import { FailToGetOpenIdToken } from "../../../utils/errors.ts";
 import { testJWTToken } from "../../../utils/test-fixtures.ts";
 import { mockRemoteParticipant, ownMemberMock } from "../../../utils/test.ts";
-import { type ClientOpenIDParts } from "../../../livekit/auth";
+import {
+  type ClientGetTokenParts,
+  type ClientOpenIDParts,
+} from "../../../livekit/auth";
 
 let testScope: ObservableScope;
 
-let client: MockedObject<ClientOpenIDParts>;
+let client: MockedObject<ClientGetTokenParts & ClientOpenIDParts>;
 
 let fakeLivekitRoom: MockedObject<LivekitRoom>;
 
@@ -54,21 +61,21 @@ let fakeLocalParticipant: MockedObject<LocalParticipant>;
 const ROOM_ID = "!roomID:example.org";
 const SLOT_ID = "m.call#ROOM";
 
-const livekitServiceUrl = "https://matrix-rtc.example.org/livekit/jwt";
-const livekitFocus: UnstableLivekitTransport = {
-  livekit_service_url: livekitServiceUrl,
+const transport: UnstableLivekitTransport = {
   type: "livekit",
+  url: "wss://matrix-rtc.m.localhost/livekit/sfu",
 };
 
 function setupTest(): void {
   testScope = new ObservableScope();
-  client = vi.mocked<ClientOpenIDParts>({
+  client = vi.mocked<ClientGetTokenParts & ClientOpenIDParts>({
     getOpenIdToken: vi.fn().mockResolvedValue({
       access_token: "rYsmGUEwNjKgJYyeNUkZseJN",
       token_type: "Bearer",
       matrix_server_name: "example.org",
       expires_in: 3600,
     }),
+    _unstable_getLivekitToken: vi.fn().mockResolvedValue({ jwt: testJWTToken }),
   });
 
   localParticipantEventEmiter = new EventEmitter();
@@ -117,22 +124,12 @@ function setupRemoteConnection(): Connection {
     roomId: ROOM_ID,
     slotId: SLOT_ID,
     role: "subscriber",
-    transport: livekitFocus,
+    transport,
     serverName: "m.localhost",
     scope: testScope,
     ownMembershipIdentity: ownMemberMock,
     livekitRoomFactory: () => fakeLivekitRoom,
   };
-
-  fetchMock.post(`${livekitServiceUrl}/get_token`, () => {
-    return {
-      status: 200,
-      body: {
-        url: "wss://matrix-rtc.m.localhost/livekit/sfu",
-        jwt: testJWTToken,
-      },
-    };
-  });
 
   fakeLivekitRoom.connect.mockImplementation(async (): Promise<void> => {
     const changeEv = RoomEvent.ConnectionStateChanged;
@@ -155,6 +152,19 @@ afterEach(() => {
 });
 
 describe("Start connection states", () => {
+  beforeEach(() => {
+    fetchMock.post(
+      `https://matrix-rtc.example.org/livekit/jwt/get_token`,
+      () => {
+        return {
+          // Return a non-retryable error, if not, the retry logic will
+          // wait and fail the test with a timeout.
+          status: 404,
+        };
+      },
+    );
+  });
+
   it("start in initialized state", () => {
     setupTest();
 
@@ -163,7 +173,7 @@ describe("Start connection states", () => {
       roomId: ROOM_ID,
       slotId: SLOT_ID,
       role: "subscriber",
-      transport: livekitFocus,
+      transport,
       serverName: "m.localhost",
       scope: testScope,
       ownMembershipIdentity: ownMemberMock,
@@ -174,7 +184,7 @@ describe("Start connection states", () => {
     expect(connection.state$.getValue()).toEqual({ state: "initialized" });
   });
 
-  it("fail to getOpenId token then error state", async () => {
+  it("fail to get SFU token then error state", async () => {
     setupTest();
     vi.useFakeTimers();
 
@@ -183,7 +193,7 @@ describe("Start connection states", () => {
       roomId: ROOM_ID,
       slotId: SLOT_ID,
       role: "subscriber",
-      transport: livekitFocus,
+      transport,
       serverName: "m.localhost",
       scope: testScope,
       ownMembershipIdentity: ownMemberMock,
@@ -198,10 +208,10 @@ describe("Start connection states", () => {
     });
     onTestFinished(() => s.unsubscribe());
 
-    const deferred = Promise.withResolvers<IOpenIDToken>();
+    const deferred = Promise.withResolvers<LivekitGetTokenResponse>();
 
-    client.getOpenIdToken.mockImplementation(
-      async (): Promise<IOpenIDToken> => {
+    client._unstable_getLivekitToken.mockImplementation(
+      async (): Promise<LivekitGetTokenResponse> => {
         return await deferred.promise;
       },
     );
@@ -221,7 +231,7 @@ describe("Start connection states", () => {
     capturedState = capturedStates.pop();
     if (capturedState?.state === "error") {
       expect(capturedState.error.message).toEqual("Something went wrong");
-      expect(connection.transport).toEqual(livekitFocus);
+      expect(connection.transport).toEqual(transport);
     } else {
       expect.fail(
         "Expected FailedToStart state but got " + JSON.stringify(capturedState),
@@ -238,7 +248,7 @@ describe("Start connection states", () => {
       roomId: ROOM_ID,
       slotId: SLOT_ID,
       role: "subscriber",
-      transport: livekitFocus,
+      transport,
       serverName: "m.localhost",
       scope: testScope,
       ownMembershipIdentity: ownMemberMock,
@@ -254,16 +264,15 @@ describe("Start connection states", () => {
     onTestFinished(() => s.unsubscribe());
 
     const deferredSFU = Promise.withResolvers<void>();
-    // mock the /get_token call
-    fetchMock.post(`${livekitServiceUrl}/get_token`, async () => {
+    client._unstable_getLivekitToken.mockImplementation(async () => {
       await deferredSFU.promise;
-      return {
-        status: 500,
-        body: {
+      throw new MatrixError(
+        {
           errcode: "M_LOOKUP_FAILED",
           error: "Failed to look up user info from homeserver",
         },
-      };
+        500,
+      );
     });
 
     connection.start().catch(() => {
@@ -286,7 +295,7 @@ describe("Start connection states", () => {
       expect(capturedState.error.cause.message).toContain(
         "Failed to look up user info from homeserver",
       );
-      expect(connection.transport).toEqual(livekitFocus);
+      expect(connection.transport).toEqual(transport);
     } else {
       expect.fail(
         "Expected FailedToStart state but got " + JSON.stringify(capturedState),
@@ -303,7 +312,7 @@ describe("Start connection states", () => {
       roomId: ROOM_ID,
       slotId: SLOT_ID,
       role: "subscriber",
-      transport: livekitFocus,
+      transport,
       serverName: "m.localhost",
       scope: testScope,
       ownMembershipIdentity: ownMemberMock,
@@ -319,17 +328,6 @@ describe("Start connection states", () => {
     onTestFinished(() => s.unsubscribe());
 
     const deferredSFU = Promise.withResolvers<void>();
-    // mock the /get_token call
-    fetchMock.post(`${livekitServiceUrl}/get_token`, () => {
-      return {
-        status: 200,
-        body: {
-          url: "wss://matrix-rtc.m.localhost/livekit/sfu",
-          jwt: testJWTToken,
-        },
-      };
-    });
-
     fakeLivekitRoom.connect.mockImplementation(async () => {
       await deferredSFU.promise;
       throw new Error("Failed to connect to livekit");
@@ -356,7 +354,7 @@ describe("Start connection states", () => {
       expect(capturedState.error.cause.message).toContain(
         "Failed to connect to livekit",
       );
-      expect(connection.transport).toEqual(livekitFocus);
+      expect(connection.transport).toEqual(transport);
     } else {
       expect.fail(
         "Expected FailedToStart state but got " + JSON.stringify(capturedState),
@@ -564,7 +562,7 @@ describe("remote track logging", () => {
         roomId: ROOM_ID,
         slotId: SLOT_ID,
         role: "subscriber",
-        transport: livekitFocus,
+        transport,
         serverName: "m.localhost",
         scope: testScope,
         ownMembershipIdentity: ownMemberMock,

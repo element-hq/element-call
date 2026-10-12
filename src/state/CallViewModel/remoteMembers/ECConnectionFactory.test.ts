@@ -14,7 +14,10 @@ import EventEmitter from "events";
 
 import { ObservableScope } from "../../ObservableScope.ts";
 import { ECConnectionFactory } from "./ConnectionFactory.ts";
-import { type ClientOpenIDParts } from "../../../livekit/auth";
+import {
+  type ClientGetTokenParts,
+  type ClientOpenIDParts,
+} from "../../../livekit/auth";
 import {
   exampleTransport,
   mockMediaDevices,
@@ -32,6 +35,7 @@ import {
   cameraBitrate,
   cameraCodec,
 } from "../../../settings/settings.ts";
+import { testJWTToken } from "../../../utils/test-fixtures.ts";
 
 // At the top of your test file, after imports
 vi.mock("livekit-client", async (importOriginal) => {
@@ -51,12 +55,13 @@ vi.mock("livekit-client", async (importOriginal) => {
 });
 
 let testScope: ObservableScope;
-let mockClient: ClientOpenIDParts;
+let mockClient: ClientGetTokenParts & ClientOpenIDParts;
 
 beforeEach(() => {
   testScope = new ObservableScope();
   mockClient = {
     getOpenIdToken: vi.fn().mockReturnValue(""),
+    _unstable_getLivekitToken: vi.fn().mockResolvedValue({ jwt: testJWTToken }),
   };
 });
 

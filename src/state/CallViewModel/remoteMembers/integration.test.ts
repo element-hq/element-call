@@ -18,7 +18,10 @@ import {
   trackEpoch,
 } from "../../ObservableScope.ts";
 import { ECConnectionFactory } from "./ConnectionFactory.ts";
-import { type ClientOpenIDParts } from "../../../livekit/auth";
+import {
+  type ClientGetTokenParts,
+  type ClientOpenIDParts,
+} from "../../../livekit/auth";
 import {
   exampleTransportLocator,
   mockMediaDevices,
@@ -40,7 +43,7 @@ import { deepCompare } from "matrix-js-sdk/lib/utils";
 
 let testScope: ObservableScope;
 let ecConnectionFactory: ECConnectionFactory;
-let mockClient: ClientOpenIDParts;
+let mockClient: ClientGetTokenParts & ClientOpenIDParts;
 let lkRoomFactory: () => LivekitRoom;
 
 const createdMockLivekitRooms: Map<string, LivekitRoom> = new Map();
@@ -49,6 +52,7 @@ beforeEach(() => {
   testScope = new ObservableScope();
   mockClient = {
     getOpenIdToken: vi.fn().mockReturnValue(""),
+    _unstable_getLivekitToken: vi.fn().mockResolvedValue({ jwt: testJWTToken }),
   };
 
   lkRoomFactory = vi.fn().mockImplementation(() => {
@@ -82,7 +86,7 @@ beforeEach(() => {
   );
 
   //TODO a bit annoying to have to do a http mock?
-  const sfuConfigResponse = (url: string): { status: number; body: object } => {
+  fetchMock.post(`path:/sfu/get`, (url) => {
     const domain = new URL(url).hostname; // Extract the domain from the URL
     return {
       status: 200,
@@ -91,9 +95,7 @@ beforeEach(() => {
         jwt: testJWTToken,
       },
     };
-  };
-  fetchMock.post(`path:/sfu/get`, sfuConfigResponse);
-  fetchMock.post(`path:/get_token`, sfuConfigResponse);
+  });
 });
 
 afterEach(() => {

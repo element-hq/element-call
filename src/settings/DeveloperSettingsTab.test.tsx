@@ -133,6 +133,7 @@ describe("DeveloperSettingsTab", () => {
       getCrypto: () => ({ getVersion: (): string => "x" }),
       getUserId: () => "@u:hs",
       getDeviceId: () => "DEVICE",
+      getDomain: () => "hs",
     } as unknown as MatrixClient;
     it("will not update custom livekit url without roomId", async () => {
       const user = userEvent.setup();
@@ -228,7 +229,10 @@ describe("DeveloperSettingsTab", () => {
       await user.click(saveButton);
       expect(getSFUConfig).toHaveBeenCalledWith(
         expect.objectContaining({
-          serviceUrl: "wss://example.livekit.valid",
+          transport: {
+            type: "livekit",
+            livekit_service_url: "wss://example.livekit.valid",
+          },
           roomId: "#testRoom",
         }),
       );
