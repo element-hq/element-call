@@ -22,7 +22,6 @@ import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import classNames from "classnames";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import { useTranslation } from "react-i18next";
-import { map } from "rxjs";
 
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import { HeaderStyle, useUrlParams } from "../UrlParams";
@@ -185,7 +184,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       vm,
       props.muteStates,
       mediaDevices,
-      backgroundEffectsState$.pipe(map(({ settling }) => settling ?? false)),
+      backgroundEffectsState$,
       `${props.client.getUserId()}:${props.client.getDeviceId()}`,
       { showControls: urlParams.showControls, header: urlParams.header },
     );

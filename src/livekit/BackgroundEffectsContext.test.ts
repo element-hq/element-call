@@ -9,6 +9,7 @@ import { act, createElement, type FC } from "react";
 import { render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { type LocalVideoTrack } from "livekit-client";
+import { BehaviorSubject } from "rxjs";
 import {
   type BackgroundOptions,
   type ProcessorWrapper,
@@ -25,6 +26,7 @@ import {
 } from "./BackgroundEffectsContext";
 import { type BackgroundEffects } from "../state/BackgroundEffects";
 import { backgroundEffect } from "../settings/settings";
+import { SyncedCameraTrack } from "./cameraTrack";
 import { type AddedBackground } from "./backgroundImages";
 import { constant } from "../state/Behavior";
 import { flushPromises, testScope } from "../utils/test";
@@ -133,6 +135,75 @@ describe("syncBackgroundEffects", () => {
       constant({ supported: true, processor }),
     );
     expect(track.setProcessor).toHaveBeenCalledWith(processor);
+  });
+});
+
+describe("the synced camera", () => {
+  it("is the track last synced, and cleared only while still its own", () => {
+    const camera = new SyncedCameraTrack();
+    const pipeline = constant<BackgroundEffectsState>({
+      supported: false,
+      processor: undefined,
+      cameraTrack: camera,
+    });
+    const lobby = mockTrack("live");
+    const call = mockTrack("live");
+    const lobbyTrack$ = new BehaviorSubject<LocalVideoTrack | null>(lobby);
+    syncBackgroundEffects(testScope(), lobbyTrack$, pipeline);
+    expect(camera.track$.value).toBe(lobby);
+
+    const callScope = testScope();
+    syncBackgroundEffects(callScope, constant(call), pipeline);
+    expect(camera.track$.value).toBe(call);
+
+    lobbyTrack$.next(null);
+    expect(camera.track$.value).toBe(call);
+    callScope.end();
+    expect(camera.track$.value).toBeNull();
+  });
+
+  it("reports the camera once, however often the pipeline's state changes", () => {
+    const camera = new SyncedCameraTrack();
+    const report = vi.spyOn(camera, "report");
+    const state$ = new BehaviorSubject<BackgroundEffectsState>({
+      supported: true,
+      processor: undefined,
+      cameraTrack: camera,
+    });
+    syncBackgroundEffects(testScope(), constant(mockTrack("live")), state$);
+    state$.next({ ...state$.value, settling: true });
+    state$.next({ ...state$.value, settling: false });
+    expect(report).toHaveBeenCalledOnce();
+  });
+
+  it("keeps each call's camera to its own", () => {
+    const seen: (SyncedCameraTrack | undefined)[] = [];
+    const Call: FC<{ track: LocalVideoTrack }> = ({ track }) => {
+      const { cameraTrack } = useBackgroundEffects();
+      seen.push(cameraTrack);
+      useSyncBackgroundEffects(track);
+      return null;
+    };
+    const first = mockTrack("live");
+    const second = mockTrack("live");
+    render(
+      createElement(
+        "div",
+        null,
+        createElement(BackgroundEffectsProvider, {
+          effects: createAppBackgroundEffects(testScope()),
+          children: createElement(Call, { track: first }),
+        }),
+        createElement(BackgroundEffectsProvider, {
+          effects: createAppBackgroundEffects(testScope()),
+          children: createElement(Call, { track: second }),
+        }),
+      ),
+    );
+    const [mine, theirs] = [...new Set(seen)];
+    expect(mine).not.toBe(theirs);
+    expect(mine?.track$.value).toBe(first);
+    expect(theirs?.track$.value).toBe(second);
   });
 });
 

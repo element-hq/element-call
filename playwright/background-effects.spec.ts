@@ -106,6 +106,33 @@ async function drawsPerSecond(page: Page): Promise<number> {
   });
 }
 
+test.describe("the camera menu's preview", () => {
+  test("shows the camera with the effect in force", async ({ page }) => {
+    test.setTimeout(120_000);
+    await page.goto("/");
+    await SpaHelpers.createCall(page, "Preview user", "Preview in the menu");
+    const camera = await cameraColour(page.locator("video").first());
+
+    await page.getByRole("button", { name: "Camera", exact: true }).click();
+    const preview = page.getByRole("menu").locator("video");
+    await expect(preview).toBeVisible();
+    await expect
+      .poll(async () => distance(await averageColour(preview), camera), {
+        timeout: 20_000,
+      })
+      .toBeLessThan(30);
+
+    const tile = page.getByRole("menuitemradio", { name: "Background 1" });
+    await tile.click();
+    const picture = await averageColour(tile.locator("img"));
+    await expect
+      .poll(async () => distance(await averageColour(preview), picture), {
+        timeout: 60_000,
+      })
+      .toBeLessThan(distance(camera, picture) / 2);
+  });
+});
+
 test.describe("background effects section", () => {
   test("section stays within the call area at every size", async ({ page }) => {
     test.setTimeout(120_000);

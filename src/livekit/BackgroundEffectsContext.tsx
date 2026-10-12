@@ -14,10 +14,18 @@ import {
 import { createContext, type FC, type JSX, use, useEffect } from "react";
 import { type LocalVideoTrack } from "livekit-client";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { combineLatest } from "rxjs";
+import {
+  combineLatest,
+  distinctUntilChanged,
+  EMPTY,
+  map,
+  Observable,
+  switchMap,
+} from "rxjs";
 
 import { backgroundEffect as backgroundEffectSetting } from "../settings/settings";
 import { BackgroundEffectTransformer } from "./BackgroundEffectTransformer";
+import { type SyncedCameraTrack } from "./cameraTrack";
 import { OneStepPipeline } from "./OneStepPipeline";
 import { addedBackgrounds } from "./backgroundImages";
 import { type Behavior } from "../state/Behavior";
@@ -37,6 +45,8 @@ export type BackgroundEffectsState = {
   processor: undefined | ProcessorWrapper<BackgroundOptions>;
   /** From the first effect chosen until a frame carrying it is drawn. */
   settling?: boolean;
+  /** The camera this provider's pipeline is synced to. */
+  cameraTrack?: SyncedCameraTrack;
 };
 
 const BackgroundEffectsContext = createContext<BackgroundEffects | undefined>(
@@ -102,16 +112,37 @@ export const syncBackgroundEffects = (
       if (!videoTrack) return;
       applyProcessor(videoTrack, backgroundEffectsState.processor);
     });
+  // Keyed on the camera alone: reporting again for every change of state would
+  // blank the preview each time.
+  combineLatest([
+    videoTrack$,
+    backgroundEffectsState$.pipe(
+      map(({ cameraTrack }) => cameraTrack),
+      distinctUntilChanged(),
+    ),
+  ])
+    .pipe(
+      switchMap(([track, cameraTrack]) =>
+        track === null || cameraTrack === undefined
+          ? EMPTY
+          : new Observable<never>(() => cameraTrack.report(track)),
+      ),
+      scope.bind(),
+    )
+    .subscribe();
 };
 
 export const useSyncBackgroundEffects = (
   videoTrack: LocalVideoTrack | null,
 ): void => {
-  const { processor } = useBackgroundEffects();
+  const { processor, cameraTrack } = useBackgroundEffects();
   useEffect(() => {
     if (!videoTrack) return;
     applyProcessor(videoTrack, processor);
   }, [processor, videoTrack]);
+  useEffect(() => {
+    if (videoTrack && cameraTrack) return cameraTrack.report(videoTrack);
+  }, [cameraTrack, videoTrack]);
 };
 
 /** The app's one pipeline, shared by every camera track it opens. */
