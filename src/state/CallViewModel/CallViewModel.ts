@@ -12,6 +12,7 @@ import {
   ExternalE2EEKeyProvider,
   type Room as LivekitRoom,
   type RoomOptions,
+  type RemoteParticipant,
 } from "livekit-client";
 import { type Room as MatrixRoom } from "matrix-js-sdk";
 import {
@@ -276,7 +277,7 @@ interface LayoutScanState {
 export type LivekitRoomItem = {
   livekitRoom: LivekitRoom;
   participants: string[];
-  url: string;
+  transport: LivekitTransport;
 };
 
 /**
@@ -728,49 +729,42 @@ export function createCallViewModel$(
   const allConnections$ = scope.behavior(
     connectionManager.connectionManagerData$.pipe(map((d) => d.value)),
   );
-  const livekitRoomItems$ = scope.behavior(
-    remoteMatrixLivekitMembers$.pipe(
-      switchMap((members) => {
-        const a$ = combineLatest(
-          members.value.map((member) =>
-            combineLatest([member.connection$, member.participant.value$]).pipe(
-              map(([connection, participant]) => {
-                // do not render audio for local participant
-                if (!connection || !participant || participant.isLocal)
-                  return null;
-                const livekitRoom = connection.livekitRoom;
-                const url = connection.transport.livekit_service_url;
 
-                return {
-                  url,
-                  livekitRoom,
-                  participant: participant.identity,
-                };
-              }),
+  const livekitRoomItems$ = scope.behavior<LivekitRoomItem[]>(
+    remoteMatrixLivekitMembers$.pipe(
+      // Flatten the members to a snapshot of their current connections and
+      // participant objects
+      switchMap(({ value: members }) => {
+        if (members.length === 0) return of([]);
+        return combineLatest(
+          members.map((m) =>
+            combineLatest(
+              [m.connection$, m.participant.value$],
+              (connection, participant) => ({ connection, participant }),
             ),
           ),
         );
-        return a$;
       }),
+      // Keep only those with a defined connection and participant
       map((members) =>
-        members.reduce<LivekitRoomItem[]>((acc, curr) => {
-          if (!curr) return acc;
-
-          const existing = acc.find((item) => item.url === curr.url);
-          if (existing) {
-            existing.participants.push(curr.participant);
-          } else {
-            acc.push({
-              livekitRoom: curr.livekitRoom,
-              participants: [curr.participant],
-              url: curr.url,
-            });
-          }
-          return acc;
-        }, []),
+        members.filter(
+          (
+            m,
+          ): m is { connection: Connection; participant: RemoteParticipant } =>
+            m.connection !== null && m.participant !== null,
+        ),
+      ),
+      // Group members by connection
+      map((members) =>
+        [...Map.groupBy(members, (m) => m.connection)].map(
+          ([connection, members]) => ({
+            transport: connection.transport,
+            livekitRoom: connection.livekitRoom,
+            participants: members.map((m) => m.participant.identity),
+          }),
+        ),
       ),
     ),
-    [],
   );
 
   const handsRaised$ = scope.behavior(
