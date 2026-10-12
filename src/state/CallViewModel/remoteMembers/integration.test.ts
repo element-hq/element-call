@@ -38,6 +38,7 @@ import { createConnectionMap$ } from "./ConnectionMap.ts";
 import { membershipsAndTransports$ } from "../../SessionBehaviors.ts";
 import { localRtcMember, testJWTToken } from "../../../utils/test-fixtures.ts";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
+import { MatrixRTCMode } from "../../../config/ConfigOptions.ts";
 
 // Test the integration of ConnectionMap and MatrixLivekitMembers
 
@@ -75,6 +76,7 @@ beforeEach(() => {
     mockClient,
     "!roomid:example.org",
     "m.call#ROOM",
+    MatrixRTCMode.Matrix_2_0,
     mockMediaDevices({}),
     new BehaviorSubject<ProcessorState>({
       supported: true,

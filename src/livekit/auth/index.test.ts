@@ -21,6 +21,7 @@ import { delegateDelayedLeave, getSFUConfig } from ".";
 import { mocked } from "storybook/test";
 import { ConnectionError, MatrixError } from "matrix-js-sdk";
 import { NoMatrix2AuthorizationService } from "../../utils/errors";
+import { MatrixRTCMode } from "../../config/ConfigOptions";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
 vi.mock("./openID", () => ({ getSFUConfig: vi.fn() }));
@@ -83,6 +84,7 @@ describe("getSFUConfig", () => {
     membership,
     serverName: "example.org",
     role: "subscriber" as const,
+    matrixRTCMode: MatrixRTCMode.Matrix_2_0,
     roomId,
     slotId,
     logger,
@@ -169,6 +171,53 @@ describe("getSFUConfig", () => {
     expect(openID.getSFUConfig).not.toHaveBeenCalled();
   });
 
+  it("uses OpenID when publishing in compatibility mode with url + livekit_service_url transport", async () => {
+    // Subscribers predating MSC4195 expect a legacy participant identity from
+    // anyone advertising a state event, which only the JWT service assigns
+    expect(
+      await getSFUConfig({
+        ...defaultParams,
+        transport: urlAndServiceUrlTransport,
+        role: "publisher",
+        matrixRTCMode: MatrixRTCMode.Compatibility,
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        jwt: openIDJWTToken,
+        livekitAlias: "via OpenID",
+      }),
+    );
+    expect(client._unstable_getLivekitToken).not.toHaveBeenCalled();
+    expect(openID.getSFUConfig).toHaveBeenCalledWith(
+      expect.objectContaining({ role: "publisher" }),
+    );
+  });
+
+  it("uses CS API when publishing in compatibility mode with url transport", async () => {
+    expect(
+      await getSFUConfig({
+        ...defaultParams,
+        transport: urlTransport,
+        role: "publisher",
+        matrixRTCMode: MatrixRTCMode.Compatibility,
+      }),
+    ).toEqual(expect.objectContaining({ jwt: csApiJWTToken }));
+    expect(client._unstable_getLivekitToken).toHaveBeenCalled();
+    expect(openID.getSFUConfig).not.toHaveBeenCalled();
+  });
+
+  it("uses CS API when subscribing in compatibility mode with url + livekit_service_url transport", async () => {
+    expect(
+      await getSFUConfig({
+        ...defaultParams,
+        transport: urlAndServiceUrlTransport,
+        matrixRTCMode: MatrixRTCMode.Compatibility,
+      }),
+    ).toEqual(expect.objectContaining({ jwt: csApiJWTToken }));
+    expect(client._unstable_getLivekitToken).toHaveBeenCalled();
+    expect(openID.getSFUConfig).not.toHaveBeenCalled();
+  });
+
   it("does not fall back to OpenID on connection error", async () => {
     const client_ = {
       ...client,
@@ -198,6 +247,7 @@ describe("delegateDelayedLeave", () => {
     roomId,
     slotId,
     delayId: "delay123",
+    matrixRTCMode: MatrixRTCMode.Matrix_2_0,
     logger,
   };
 
@@ -234,6 +284,23 @@ describe("delegateDelayedLeave", () => {
     });
     expect(client._unstable_delegateDelayedLeave).toHaveBeenCalled();
     expect(openID.getSFUConfig).not.toHaveBeenCalled();
+  });
+
+  it("uses OpenID in compatibility mode with url + livekit_service_url transport", async () => {
+    // Must match the flow that got the token, so the identities line up
+    await delegateDelayedLeave({
+      ...defaultParams,
+      transport: urlAndServiceUrlTransport,
+      matrixRTCMode: MatrixRTCMode.Compatibility,
+    });
+    expect(client._unstable_delegateDelayedLeave).not.toHaveBeenCalled();
+    expect(openID.getSFUConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        role: "publisher",
+        delayId: "delay123",
+        delayEndpointBaseUrl: client.baseUrl,
+      }),
+    );
   });
 
   it("does not fall back to OpenID with url + livekit_service_url transport", async () => {

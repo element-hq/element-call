@@ -8,6 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { expect, type Page, test } from "@playwright/test";
 
 import { SpaHelpers } from "./spa-helpers";
+import { type RtcMode } from "./widget/test-helpers.ts";
 
 const sfuUrl = "wss://matrix-rtc.m.localhost/livekit/sfu";
 const serviceUrl = "https://matrix-rtc.m.localhost/livekit/jwt";
@@ -41,6 +42,8 @@ type Flow = "cs-api" | "service-legacy" | "service-default";
 const cases: {
   hostShape: Shape;
   guestShape: Shape;
+  /** The MatrixRTC mode both sides use; the default is compatibility mode. */
+  mode?: RtcMode;
   hostFlows: Flow[];
   guestFlows: Flow[];
 }[] = [
@@ -51,8 +54,19 @@ const cases: {
     guestFlows: ["cs-api"],
   },
   {
+    // In compatibility mode both publish a membership state event, so both
+    // must keep the legacy participant identity that clients predating MSC4195
+    // expect, which only the JWT service assigns.
     hostShape: "both",
     guestShape: "both",
+    hostFlows: ["service-legacy"],
+    guestFlows: ["service-legacy"],
+  },
+  {
+    // In Matrix 2.0 mode nobody expects a legacy identity, so the CS API wins.
+    hostShape: "both",
+    guestShape: "both",
+    mode: "2_0",
     hostFlows: ["cs-api"],
     guestFlows: ["cs-api"],
   },
@@ -64,8 +78,8 @@ const cases: {
   },
 ];
 
-for (const { hostShape, guestShape, hostFlows, guestFlows } of cases) {
-  test(`One to one call with ${hostShape} host and ${guestShape} guest transport`, async ({
+for (const { hostShape, guestShape, mode, hostFlows, guestFlows } of cases) {
+  test(`One to one call with ${hostShape} host and ${guestShape} guest transport${mode === "2_0" ? " in Matrix 2.0 mode" : ""}`, async ({
     browser,
     page,
     browserName,
@@ -76,7 +90,7 @@ for (const { hostShape, guestShape, hostFlows, guestFlows } of cases) {
     await advertiseTransport(page, shapes[hostShape]);
     const hostRequests = recordAuthRequests(page);
     await page.goto("/");
-    await SpaHelpers.createCall(page, "Androl", "HelloCall", true);
+    await SpaHelpers.createCall(page, "Androl", "HelloCall", true, mode);
     const inviteLink = await SpaHelpers.getCallInviteLink(page);
 
     // The guest joins.
@@ -84,7 +98,12 @@ for (const { hostShape, guestShape, hostFlows, guestFlows } of cases) {
     const guestPage = await guestContext.newPage();
     await advertiseTransport(guestPage, shapes[guestShape]);
     const guestRequests = recordAuthRequests(guestPage);
-    await SpaHelpers.joinCallFromInviteLink(guestPage, inviteLink, "Pevara");
+    await SpaHelpers.joinCallFromInviteLink(
+      guestPage,
+      inviteLink,
+      "Pevara",
+      mode,
+    );
 
     // Wait for the call to connect and render.
     await SpaHelpers.expectVideoTilesCount(page, 2);

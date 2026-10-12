@@ -346,21 +346,27 @@ describe("LocalMembership", () => {
     .mockResolvedValue();
   afterEach(() => delegationSpy.mockClear());
 
+  // The transport has both a `url` and a `livekit_service_url`. In Matrix 2.0
+  // mode we publish through the CS API, so the homeserver delegates; in
+  // compatibility mode we publish through the JWT service, so that delegates.
   it.each([
-    ["no", null, timings],
+    ["no", MatrixRTCMode.Compatibility, null, timings],
+    ["no", MatrixRTCMode.Matrix_2_0, null, timings],
     [
       "homeserver",
+      MatrixRTCMode.Matrix_2_0,
       "https://matrix.example.org/_matrix/client/unstable/io.element.msc4195/rtc/livekit/delegate_delayed_leave",
       delegatedTimings,
     ],
     [
       "transport",
+      MatrixRTCMode.Compatibility,
       "https://jwt.example.org/delegate_delayed_leave",
       delegatedTimings,
     ],
   ])(
-    "joins session with %s delegation support",
-    async (_serviceName, delegationUrl, delayedLeaveTimings) => {
+    "joins session with %s delegation support in %s mode",
+    async (_serviceName, matrixRTCMode, delegationUrl, delayedLeaveTimings) => {
       const scope = testScope();
       const joinMatrixRTC = vi.fn();
       const delayId$ = new BehaviorSubject<string | null>(null);
@@ -377,6 +383,7 @@ describe("LocalMembership", () => {
         joinMatrixRTC,
         localTransport$: constant(mockTransportLocator),
         delayId$,
+        matrixRTCMode,
       });
 
       localMembership.requestJoinAndPublish();
@@ -403,6 +410,7 @@ describe("LocalMembership", () => {
             transport: mockTransport,
             roomId: "!test-room-id:example.org",
             delayId,
+            matrixRTCMode,
             logger: expect.anything(),
           });
 

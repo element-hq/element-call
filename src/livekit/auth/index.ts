@@ -14,6 +14,7 @@ import * as openID from "./openID";
 import * as csApi from "./csApi";
 import { type SFUConfig } from "./types";
 import { NoMatrix2AuthorizationService } from "../../utils/errors";
+import { MatrixRTCMode } from "../../config/ConfigOptions";
 
 export type { ClientOpenIDParts } from "./openID";
 export type { ClientGetTokenParts, ClientDelegationParts } from "./csApi";
@@ -66,6 +67,11 @@ export interface GetSFUConfigParams {
    * Whether we want to publish or only subscribe on the {@link transport}.
    */
   role: "publisher" | "subscriber";
+  /**
+   * The MatrixRTC mode, which decides the format of our membership event and
+   * so the participant identity a publisher must have.
+   */
+  matrixRTCMode: MatrixRTCMode;
   logger: Logger;
 }
 
@@ -80,52 +86,51 @@ export async function getSFUConfig({
   roomId,
   slotId,
   role,
+  matrixRTCMode,
   logger,
 }: GetSFUConfigParams): Promise<SFUConfig> {
-  if ("url" in transport) {
-    try {
-      return await csApi.getSFUConfig({
-        client,
-        membership,
-        url: transport.url,
-        serverName,
-        roomId,
-        slotId,
-      });
-    } catch (e) {
-      if (isEndpointUnsupported(e)) {
-        // Publishers should never fall back. If a homeserver advertises a `url`
-        // but doesn't support MSC4195 itself, that's a misconfiguration which
-        // the admin should know about so they can prepare for the future
-        // deprecation of `livekit_service_url`.
-        const mayFallBack =
-          role === "subscriber" && "livekit_service_url" in transport;
-        if (mayFallBack) {
-          logger.warn(
-            `Homeserver does not support the MSC4195 get_token endpoint, falling back to the OpenID flow with service ${transport.livekit_service_url}`,
-          );
-          // Fall through
-        } else {
-          logger.error(
-            `Homeserver does not support the MSC4195 get_token endpoint, cannot get token for transport ${transport.url}`,
-          );
-          throw new NoMatrix2AuthorizationService(e as Error);
-        }
-      } else {
-        throw e;
-      }
-    }
-  }
+  const viaOpenID = async (serviceUrl: string): Promise<SFUConfig> =>
+    await openID.getSFUConfig({
+      client,
+      membership,
+      serviceUrl,
+      roomId,
+      slotId,
+      role,
+      logger,
+    });
 
-  return await openID.getSFUConfig({
-    client,
-    membership,
-    serviceUrl: transport.livekit_service_url,
-    roomId,
-    slotId,
-    role,
-    logger,
-  });
+  const flow = chooseAuthFlow(transport, role, matrixRTCMode);
+  if (flow.kind === "openID") return await viaOpenID(flow.serviceUrl);
+
+  try {
+    return await csApi.getSFUConfig({
+      client,
+      membership,
+      url: flow.url,
+      serverName,
+      roomId,
+      slotId,
+    });
+  } catch (e) {
+    if (!isEndpointUnsupported(e)) throw e;
+    // Publishers should never fall back. If a homeserver advertises a `url`
+    // but doesn't support MSC4195 itself, that's a misconfiguration which
+    // the admin should know about so they can prepare for the future
+    // deprecation of `livekit_service_url`.
+    const mayFallBack =
+      role === "subscriber" && "livekit_service_url" in transport;
+    if (!mayFallBack) {
+      logger.error(
+        `Homeserver does not support the MSC4195 get_token endpoint, cannot get token for transport ${flow.url}`,
+      );
+      throw new NoMatrix2AuthorizationService(e as Error);
+    }
+    logger.warn(
+      `Homeserver does not support the MSC4195 get_token endpoint, falling back to the OpenID flow with service ${transport.livekit_service_url}`,
+    );
+    return await viaOpenID(transport.livekit_service_url);
+  }
 }
 
 export interface DelegateDelayedLeaveParams {
@@ -154,6 +159,10 @@ export interface DelegateDelayedLeaveParams {
    * The delay ID of the leave event to be delegated.
    */
   delayId: string;
+  /**
+   * The MatrixRTC mode, which decides the format of our membership event.
+   */
+  matrixRTCMode: MatrixRTCMode;
   logger: Logger;
 }
 
@@ -168,17 +177,19 @@ export async function delegateDelayedLeave({
   roomId,
   slotId,
   delayId,
+  matrixRTCMode,
   logger,
 }: DelegateDelayedLeaveParams): Promise<void> {
   // It's important that we use the same flow (CS API or OpenID) as whatever we
   // would've used to get a JWT token for this transport, since the participant
   // identity computed by the service needs to match.
-  if ("url" in transport) {
+  const flow = chooseAuthFlow(transport, "publisher", matrixRTCMode);
+  if (flow.kind === "csApi") {
     try {
       await csApi.delegateDelayedLeave({
         client,
         membership,
-        url: transport.url,
+        url: flow.url,
         roomId,
         slotId,
         delayId,
@@ -196,7 +207,7 @@ export async function delegateDelayedLeave({
     await openID.getSFUConfig({
       client,
       membership,
-      serviceUrl: transport.livekit_service_url,
+      serviceUrl: flow.serviceUrl,
       roomId,
       slotId,
       role: "publisher",
@@ -205,4 +216,41 @@ export async function delegateDelayedLeave({
       logger,
     });
   }
+}
+
+/**
+ * The flow with which the local member authenticates against a transport.
+ */
+export type AuthFlow =
+  | { kind: "csApi"; url: string }
+  | { kind: "openID"; serviceUrl: string };
+
+/**
+ * Chooses between the MSC4195 CS API and the legacy OpenID flow against the
+ * transport's JWT service.
+ *
+ * Only the JWT service's `/sfu/get` endpoint assigns the legacy participant
+ * identity that clients predating MSC4195 expect from anyone advertising a
+ * membership state event, which is what compatibility mode sends. So a
+ * publisher in compatibility mode keeps using the JWT service wherever the
+ * transport still offers one, even if it also has a `url`. Subscribers may use
+ * the CS API regardless, as nobody matches their identity.
+ * @param transport The transport to authenticate against.
+ * @param role Whether we want to publish or only subscribe on the transport.
+ * @param matrixRTCMode The MatrixRTC mode, which decides the format of our
+ *   membership event.
+ */
+export function chooseAuthFlow(
+  transport: UnstableLivekitTransport,
+  role: "publisher" | "subscriber",
+  matrixRTCMode: MatrixRTCMode,
+): AuthFlow {
+  if ("url" in transport) {
+    const useCsApi =
+      !("livekit_service_url" in transport) ||
+      role === "subscriber" ||
+      matrixRTCMode === MatrixRTCMode.Matrix_2_0;
+    if (useCsApi) return { kind: "csApi", url: transport.url };
+  }
+  return { kind: "openID", serviceUrl: transport.livekit_service_url };
 }

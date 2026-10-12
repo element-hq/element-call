@@ -44,12 +44,15 @@ import {
   type ClientOpenIDParts,
   type SFUConfig,
 } from "../../../livekit/auth";
+import { type MatrixRTCMode } from "../../../config/ConfigOptions.ts";
 
 export interface ConnectionOpts {
   /** The identity parts to use on this connection */
   ownMembershipIdentity: CallMembershipIdentityParts;
   /** Whether we want to publish or only subscribe on this connection. */
   role: "publisher" | "subscriber";
+  /** The MatrixRTC mode, which decides the format of our membership event. */
+  matrixRTCMode: MatrixRTCMode;
   /** The media transport to connect to. */
   transport: UnstableLivekitTransport;
   /** The name of the homeserver to which the {@link transport} belongs. */
@@ -138,6 +141,7 @@ export class Connection {
   private readonly client: ClientGetTokenParts & ClientOpenIDParts;
   private readonly roomId: string;
   private readonly slotId: string;
+  private readonly matrixRTCMode: MatrixRTCMode;
   private readonly logger: Logger;
   private readonly ownMembershipIdentity: CallMembershipIdentityParts;
   /**
@@ -151,6 +155,7 @@ export class Connection {
     this.ownMembershipIdentity = opts.ownMembershipIdentity;
     this.roomId = opts.roomId;
     this.slotId = opts.slotId;
+    this.matrixRTCMode = opts.matrixRTCMode;
     this.logger = logger.getChild(
       `[Connection ${JSON.stringify(opts.transport)}]`,
     );
@@ -394,6 +399,7 @@ export class Connection {
       serverName: this.serverName,
       roomId: this.roomId,
       slotId: this.slotId,
+      matrixRTCMode: this.matrixRTCMode,
       logger: this.logger,
     });
   }

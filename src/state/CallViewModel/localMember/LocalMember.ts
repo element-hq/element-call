@@ -82,6 +82,7 @@ import {
   type ClientDelegationParts,
   delegateDelayedLeave,
   type ClientOpenIDParts,
+  chooseAuthFlow,
   type TransportLocator,
 } from "../../../livekit/auth";
 
@@ -164,6 +165,8 @@ interface Props {
   hostBridge: HostBridge;
   baseUrl: string;
   delayId$: Behavior<string | null>;
+  /** The MatrixRTC mode, which decides the format of our membership event. */
+  matrixRTCMode: MatrixRTCMode;
   logger: Logger;
 }
 
@@ -211,6 +214,7 @@ export const createLocalMembership$ = ({
   hostBridge,
   ownMembershipIdentity,
   delayId$,
+  matrixRTCMode,
 }: Props): {
   /**
    * This request to start audio and video tracks.
@@ -312,17 +316,17 @@ export const createLocalMembership$ = ({
   const joinParams$ = scope.behavior(
     localTransport$.pipe(
       switchMap(async ({ transport }) => {
-        const transportSupportsDelegation =
-          "livekit_service_url" in transport &&
-          (await checkDelegationSupport(
-            transport.livekit_service_url + "/delegate_delayed_leave",
-            `transport ${transport.livekit_service_url}`,
-          ));
-        return {
-          transport,
-          delegationSupported:
-            transportSupportsDelegation || (await homeserverSupportsDelegation),
-        };
+        // Delegation goes through whichever service authenticates us as a
+        // publisher, so only that service's support counts
+        const flow = chooseAuthFlow(transport, "publisher", matrixRTCMode);
+        const delegationSupported =
+          flow.kind === "openID"
+            ? await checkDelegationSupport(
+                flow.serviceUrl + "/delegate_delayed_leave",
+                `transport ${flow.serviceUrl}`,
+              )
+            : await homeserverSupportsDelegation;
+        return { transport, delegationSupported };
       }),
     ),
     null,
@@ -731,6 +735,7 @@ export const createLocalMembership$ = ({
             slotId: matrixRTCSession.slotId,
             roomId,
             delayId,
+            matrixRTCMode,
             logger,
           });
           logger.info("Delayed leave successfully delegated");

@@ -575,6 +575,7 @@ export function createCallViewModel$(
       client,
       matrixRoom.roomId,
       matrixRTCSession.slotId,
+      matrixRTCMode,
       mediaDevices,
       trackProcessorState$,
       livekitKeyProvider,
@@ -665,6 +666,7 @@ export function createCallViewModel$(
       ).pipe(map(([delayId]) => delayId ?? null)),
       matrixRTCSession.delayId ?? null,
     ),
+    matrixRTCMode,
     logger: logger.getChild(`[${Date.now()}]`),
   });
 

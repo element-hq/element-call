@@ -42,6 +42,7 @@ import {
 } from "./Connection.ts";
 import { ObservableScope } from "../../ObservableScope.ts";
 import { FailToGetOpenIdToken } from "../../../utils/errors.ts";
+import { MatrixRTCMode } from "../../../config/ConfigOptions.ts";
 import { testJWTToken } from "../../../utils/test-fixtures.ts";
 import { mockRemoteParticipant, ownMemberMock } from "../../../utils/test.ts";
 import {
@@ -123,6 +124,7 @@ function setupRemoteConnection(): Connection {
     client,
     roomId: ROOM_ID,
     slotId: SLOT_ID,
+    matrixRTCMode: MatrixRTCMode.Matrix_2_0,
     role: "subscriber",
     transport,
     serverName: "m.localhost",
@@ -172,6 +174,7 @@ describe("Start connection states", () => {
       client,
       roomId: ROOM_ID,
       slotId: SLOT_ID,
+      matrixRTCMode: MatrixRTCMode.Matrix_2_0,
       role: "subscriber",
       transport,
       serverName: "m.localhost",
@@ -192,6 +195,7 @@ describe("Start connection states", () => {
       client,
       roomId: ROOM_ID,
       slotId: SLOT_ID,
+      matrixRTCMode: MatrixRTCMode.Matrix_2_0,
       role: "subscriber",
       transport,
       serverName: "m.localhost",
@@ -247,6 +251,7 @@ describe("Start connection states", () => {
       client,
       roomId: ROOM_ID,
       slotId: SLOT_ID,
+      matrixRTCMode: MatrixRTCMode.Matrix_2_0,
       role: "subscriber",
       transport,
       serverName: "m.localhost",
@@ -311,6 +316,7 @@ describe("Start connection states", () => {
       client,
       roomId: ROOM_ID,
       slotId: SLOT_ID,
+      matrixRTCMode: MatrixRTCMode.Matrix_2_0,
       role: "subscriber",
       transport,
       serverName: "m.localhost",
@@ -561,6 +567,7 @@ describe("remote track logging", () => {
         client,
         roomId: ROOM_ID,
         slotId: SLOT_ID,
+        matrixRTCMode: MatrixRTCMode.Matrix_2_0,
         role: "subscriber",
         transport,
         serverName: "m.localhost",
