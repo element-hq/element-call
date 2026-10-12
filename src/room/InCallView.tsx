@@ -694,15 +694,13 @@ export const InCallView: FC<InCallViewProps> = ({
             tab={settingsTab}
             onTabChange={setSettingsTab}
             developerSettingsVm={developerSettingsVm}
-            livekitRooms={allConnections
-              .getConnections()
-              .map((connectionItem) => ({
-                room: connectionItem.livekitRoom,
-                livekitAlias: connectionItem.livekitAlias,
-                // TODO compute is local or tag it in the livekit room items already
-                isLocal: undefined,
-                url: connectionItem.transport.livekit_service_url,
-              }))}
+            livekitRooms={allConnections.map((connectionItem) => ({
+              room: connectionItem.livekitRoom,
+              livekitAlias: connectionItem.livekitAlias,
+              // TODO compute is local or tag it in the livekit room items already
+              isLocal: undefined,
+              url: connectionItem.transport.livekit_service_url,
+            }))}
           />
         </>
       )}

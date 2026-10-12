@@ -39,6 +39,9 @@ import {
   timer,
   takeUntil,
   from,
+  concatWith,
+  catchError,
+  switchAll,
 } from "rxjs";
 import { type Logger, logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import {
@@ -56,6 +59,7 @@ import {
   createToggle$,
   filterBehavior,
   generateItems,
+  mapScoped,
   pauseWhen,
 } from "../../utils/observable";
 import {
@@ -105,7 +109,7 @@ import {
   type OneOnOneMedia,
 } from "../layoutMedia.ts";
 import { ElementCallError, UnknownCallError } from "../../utils/errors.ts";
-import { type Epoch, type ObservableScope } from "../ObservableScope.ts";
+import { Epoch, type ObservableScope } from "../ObservableScope.ts";
 import { createHomeserverConnected$ } from "./localMember/HomeserverConnected.ts";
 import {
   createLocalMembership$,
@@ -123,9 +127,9 @@ import {
   ECConnectionFactory,
 } from "./remoteMembers/ConnectionFactory.ts";
 import {
-  type ConnectionManagerData,
-  createConnectionManager$,
-} from "./remoteMembers/ConnectionManager.ts";
+  ConnectionMap,
+  createConnectionMap$,
+} from "./remoteMembers/ConnectionMap.ts";
 import {
   createRemoteMatrixLivekitMembers$,
   type LocalMatrixLivekitMember,
@@ -371,7 +375,7 @@ export interface CallViewModel {
    * key is generated when someone joins or leaves.
    */
   keyRotationSuppressed$: Behavior<boolean>;
-  allConnections$: Behavior<ConnectionManagerData>;
+  allConnections$: Behavior<Connection[]>;
   /** Participants sorted by livekit room so they can be used in the audio rendering */
   livekitRoomItems$: Behavior<LivekitRoomItem[]>;
   /** use the layout instead, this is just for the sdk export. */
@@ -577,14 +581,24 @@ export function createCallViewModel$(
       options.livekitRoomFactory,
     );
 
-  const connectionManager = createConnectionManager$({
-    scope: scope,
-    connectionFactory: connectionFactory,
-    localTransport$,
-    remoteTransports$: membershipsAndTransports.transports$,
-    logger: logger,
-    ownMembershipIdentity,
-  });
+  const connectionMap$ = scope.behavior<Epoch<ConnectionMap>>(
+    localTransport$.pipe(
+      catchError(() => NEVER), // Swallow errors
+      concatWith(NEVER), // So the Observable doesn't complete prematurely
+      mapScoped("connectionMap$", (localTransport, scope) =>
+        createConnectionMap$({
+          scope,
+          connectionFactory,
+          localTransport,
+          remoteTransports$: membershipsAndTransports.transports$,
+          logger,
+          ownMembershipIdentity,
+        }),
+      ),
+      switchAll(),
+    ),
+    new Epoch(new ConnectionMap()),
+  );
 
   const remoteMatrixLivekitMembers$: Behavior<
     Epoch<RemoteMatrixLivekitMember[]>
@@ -592,7 +606,7 @@ export function createCallViewModel$(
     scope: scope,
     membershipsWithTransport$:
       membershipsAndTransports.membershipsWithTransport$,
-    connectionManager: connectionManager,
+    connectionMap$,
     localUser: { userId, deviceId },
   });
 
@@ -631,7 +645,7 @@ export function createCallViewModel$(
         controlledAudioDevices,
       );
     },
-    connectionManager,
+    connectionMap$,
     client,
     matrixRTCSession,
     localTransport$,
@@ -717,7 +731,7 @@ export function createCallViewModel$(
   });
 
   const allConnections$ = scope.behavior(
-    connectionManager.connectionManagerData$.pipe(map((d) => d.value)),
+    connectionMap$.pipe(map((d) => d.value.getConnections())),
   );
 
   const livekitRoomItems$ = scope.behavior<LivekitRoomItem[]>(

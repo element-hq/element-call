@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { test, vi, expect, beforeEach, afterEach } from "vitest";
-import { BehaviorSubject, NEVER } from "rxjs";
+import { BehaviorSubject } from "rxjs";
 import { type Room as LivekitRoom } from "livekit-client";
 import EventEmitter from "events";
 import fetchMock from "fetch-mock";
@@ -21,6 +21,7 @@ import {
 import { ECConnectionFactory } from "./ConnectionFactory.ts";
 import { type ClientOpenIDParts } from "../../../livekit/auth";
 import {
+  exampleTransport,
   mockMediaDevices,
   mockRtcMembership,
   ownMemberMock,
@@ -32,11 +33,11 @@ import {
   createRemoteMatrixLivekitMembers$,
   type RemoteMatrixLivekitMember,
 } from "./MatrixLivekitMembers.ts";
-import { createConnectionManager$ } from "./ConnectionManager.ts";
+import { createConnectionMap$ } from "./ConnectionMap.ts";
 import { membershipsAndTransports$ } from "../../SessionBehaviors.ts";
 import { localRtcMember, testJWTToken } from "../../../utils/test-fixtures.ts";
 
-// Test the integration of ConnectionManager and MatrixLivekitMerger
+// Test the integration of ConnectionMap and MatrixLivekitMembers
 
 let testScope: ObservableScope;
 let ecConnectionFactory: ECConnectionFactory;
@@ -122,10 +123,10 @@ test("bob, carl, then bob joining no tracks yet", () => {
       memberships$,
     );
 
-    const connectionManager = createConnectionManager$({
+    const connectionMap$ = createConnectionMap$({
       scope: testScope,
       connectionFactory: ecConnectionFactory,
-      localTransport$: NEVER,
+      localTransport: exampleTransport,
       remoteTransports$: membershipsAndTransports.transports$,
       logger: logger,
       ownMembershipIdentity: ownMemberMock,
@@ -135,7 +136,7 @@ test("bob, carl, then bob joining no tracks yet", () => {
       scope: testScope,
       membershipsWithTransport$:
         membershipsAndTransports.membershipsWithTransport$,
-      connectionManager,
+      connectionMap$,
       localUser: localRtcMember,
     });
 

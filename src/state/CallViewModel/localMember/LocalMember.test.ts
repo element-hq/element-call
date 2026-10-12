@@ -21,7 +21,7 @@ import {
   beforeEach,
   afterEach,
 } from "vitest";
-import { BehaviorSubject, map, of, Subject } from "rxjs";
+import { BehaviorSubject, of, Subject } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
   ConnectionState as LivekitConnectionState,
@@ -57,7 +57,7 @@ import {
 import { MatrixRTCTransportMissingError } from "../../../utils/errors";
 import { Epoch, ObservableScope } from "../../ObservableScope";
 import { constant } from "../../Behavior";
-import { ConnectionManagerData } from "../remoteMembers/ConnectionManager";
+import { ConnectionMap } from "../remoteMembers/ConnectionMap";
 import {
   type ConnectionState,
   type Connection,
@@ -261,25 +261,11 @@ describe("LocalMembership", () => {
 
   it("throws error on missing RTC config error", () => {
     withTestScheduler(({ scope, hot, expectObservable }) => {
-      const localTransport$ = scope.behavior<null | LivekitTransport>(
-        hot("1ms #", {}, new MatrixRTCTransportMissingError("domain.com")),
-        null,
-      );
-
-      // we do not need any connection data since we want to fail before reaching that.
-      const mockConnectionManager = {
-        transports$: scope.behavior(
-          localTransport$.pipe(map((t) => new Epoch([t]))),
-        ),
-        connectionManagerData$: constant(
-          new Epoch(new ConnectionManagerData()),
-        ),
-      };
-
       const localMembership = createLocalMembership$({
         scope,
         ...defaultCreateLocalMemberValues,
-        connectionManager: mockConnectionManager,
+        // we do not need any connection data since we want to fail before reaching that.
+        connectionMap$: constant(new Epoch(new ConnectionMap())),
         localTransport$: hot(
           "1ms #",
           {},
@@ -295,24 +281,18 @@ describe("LocalMembership", () => {
   });
 
   it("logs if callIntent cannot be updated", async () => {
-    const scope = new ObservableScope();
-
-    const mockConnectionManager = {
-      transports$: constant(new Epoch([])),
-      connectionManagerData$: constant(new Epoch(new ConnectionManagerData())),
-    };
     async function reject(): Promise<void> {
       return Promise.reject(new Error("Not connected yet"));
     }
     const localMembership = createLocalMembership$({
-      scope,
+      scope: testScope(),
       ...defaultCreateLocalMemberValues,
       matrixRTCSession: {
         slotId: "m.call#ROOM",
         updateCallIntent: vi.fn().mockImplementation(reject),
         leave: vi.fn(),
       },
-      connectionManager: mockConnectionManager,
+      connectionMap$: constant(new Epoch(new ConnectionMap())),
       localTransport$: constant(mockTransport),
     });
     const expextedLog =
@@ -322,7 +302,6 @@ describe("LocalMembership", () => {
     await flushPromises();
     defaultCreateLocalMemberValues.muteStates.video.setEnabled$.value?.(true);
     expect(internalLogger).toHaveBeenCalledWith(expextedLog);
-    scope.end();
   });
 
   const mockTransport = {
@@ -374,14 +353,12 @@ describe("LocalMembership", () => {
       if (delegationUrl !== null)
         fetchMock.post(delegationUrl, () => ({ status: 401, body: {} }));
 
-      const connectionManagerData = new ConnectionManagerData();
-      connectionManagerData.add(connectionTransportAConnected, []);
+      const connectionMap = new ConnectionMap();
+      connectionMap.add(connectionTransportAConnected, []);
       const localMembership = createLocalMembership$({
         scope,
         ...defaultCreateLocalMemberValues,
-        connectionManager: {
-          connectionManagerData$: constant(new Epoch(connectionManagerData)),
-        },
+        connectionMap$: constant(new Epoch(connectionMap)),
         joinMatrixRTC,
         localTransport$: constant(mockTransport),
         delayId$,
@@ -453,15 +430,13 @@ describe("LocalMembership", () => {
         typeof vi.fn
       >;
 
-    const connectionManagerData = new ConnectionManagerData();
-    connectionManagerData.add(connectionTransportAConnected, []);
-    // connectionManagerData.add(connectionTransportB, []);
+    const connectionMap = new ConnectionMap();
+    connectionMap.add(connectionTransportAConnected, []);
+    // connectionMap.add(connectionTransportB, []);
     const localMembership = createLocalMembership$({
       scope,
       ...defaultCreateLocalMemberValues,
-      connectionManager: {
-        connectionManagerData$: constant(new Epoch(connectionManagerData)),
-      },
+      connectionMap$: constant(new Epoch(connectionMap)),
       localTransport$: constant(mockTransport),
     });
     await flushPromises();
@@ -483,12 +458,10 @@ describe("LocalMembership", () => {
   //
   it("tracks livekit state correctly", async () => {
     const scope = new ObservableScope();
-    const connectionManagerData = new ConnectionManagerData();
+    const connectionMap = new ConnectionMap();
     const localTransport$ = new Subject<LivekitTransport>();
 
-    const connectionManagerData$ = new BehaviorSubject(
-      new Epoch(connectionManagerData),
-    );
+    const connectionMap$ = new BehaviorSubject(new Epoch(connectionMap));
     const publishers: Publisher[] = [];
 
     const publishing$ = new BehaviorSubject<boolean>(false);
@@ -522,9 +495,7 @@ describe("LocalMembership", () => {
     const localMembership = createLocalMembership$({
       scope,
       ...defaultCreateLocalMemberValues,
-      connectionManager: {
-        connectionManagerData$,
-      },
+      connectionMap$: connectionMap$,
       localTransport$,
     });
 
@@ -542,14 +513,14 @@ describe("LocalMembership", () => {
       },
     });
 
-    const connectionManagerData2 = new ConnectionManagerData();
-    connectionManagerData2.add(
+    const connectionMap2 = new ConnectionMap();
+    connectionMap2.add(
       // clone because we will mutate this later.
       { ...connectionTransportAConnecting } as unknown as Connection,
       [],
     );
 
-    connectionManagerData$.next(new Epoch(connectionManagerData2));
+    connectionMap$.next(new Epoch(connectionMap2));
     await flushPromises();
     expect(localMembership.localMemberState$.value).toStrictEqual({
       matrix: RTCMemberStatus.Connected,
@@ -563,7 +534,7 @@ describe("LocalMembership", () => {
     });
 
     (
-      connectionManagerData2.getConnectionForTransport(mockTransport)!
+      connectionMap2.getConnectionForTransport(mockTransport)!
         .state$ as BehaviorSubject<ConnectionState>
     ).next({
       state: "authenticated",
@@ -659,8 +630,8 @@ describe("LocalMembership", () => {
         [boolean, HomeserverDisconnectReason | null]
       >([false, "membership"]);
 
-      const connectionManagerData = new ConnectionManagerData();
-      connectionManagerData.add(connectionTransportAConnected, []);
+      const connectionMap = new ConnectionMap();
+      connectionMap.add(connectionTransportAConnected, []);
 
       createLocalMembership$({
         scope,
@@ -669,9 +640,7 @@ describe("LocalMembership", () => {
           combined$: hsReason$,
           rtsSession$: constant(RTCMemberStatus.Connected),
         },
-        connectionManager: {
-          connectionManagerData$: constant(new Epoch(connectionManagerData)),
-        },
+        connectionMap$: constant(new Epoch(connectionMap)),
         localTransport$: constant(mockTransport),
       });
 
@@ -696,8 +665,8 @@ describe("LocalMembership", () => {
         [boolean, HomeserverDisconnectReason | null]
       >([true, null]);
 
-      const connectionManagerData = new ConnectionManagerData();
-      connectionManagerData.add(connectionTransportAConnected, []);
+      const connectionMap = new ConnectionMap();
+      connectionMap.add(connectionTransportAConnected, []);
 
       createLocalMembership$({
         scope,
@@ -706,9 +675,7 @@ describe("LocalMembership", () => {
           combined$: hsReason$,
           rtsSession$: constant(RTCMemberStatus.Connected),
         },
-        connectionManager: {
-          connectionManagerData$: constant(new Epoch(connectionManagerData)),
-        },
+        connectionMap$: constant(new Epoch(connectionMap)),
         localTransport$: constant(mockTransport),
       });
 
@@ -742,8 +709,8 @@ describe("LocalMembership", () => {
         state$: connectionState$,
       } as unknown as Connection;
 
-      const connectionManagerData = new ConnectionManagerData();
-      connectionManagerData.add(mutableConnection, []);
+      const connectionMap = new ConnectionMap();
+      connectionMap.add(mutableConnection, []);
 
       createLocalMembership$({
         scope,
@@ -755,9 +722,7 @@ describe("LocalMembership", () => {
           ]),
           rtsSession$: constant(RTCMemberStatus.Connected),
         },
-        connectionManager: {
-          connectionManagerData$: constant(new Epoch(connectionManagerData)),
-        },
+        connectionMap$: constant(new Epoch(connectionMap)),
         localTransport$: constant(mockTransport),
       });
 
@@ -792,8 +757,8 @@ describe("LocalMembership", () => {
         [boolean, HomeserverDisconnectReason | null]
       >([true, null]);
 
-      const connectionManagerData = new ConnectionManagerData();
-      connectionManagerData.add(connectionTransportAConnected, []);
+      const connectionMap = new ConnectionMap();
+      connectionMap.add(connectionTransportAConnected, []);
 
       createLocalMembership$({
         scope,
@@ -802,9 +767,7 @@ describe("LocalMembership", () => {
           combined$: hsReason$,
           rtsSession$: constant(RTCMemberStatus.Connected),
         },
-        connectionManager: {
-          connectionManagerData$: constant(new Epoch(connectionManagerData)),
-        },
+        connectionMap$: constant(new Epoch(connectionMap)),
         localTransport$: constant(mockTransport),
       });
 
@@ -863,14 +826,12 @@ describe("LocalMembership", () => {
       localMembership: ReturnType<typeof createLocalMembership$>;
     } => {
       const scope = new ObservableScope();
-      const connectionManagerData = new ConnectionManagerData();
-      if (connection) connectionManagerData.add(connection, []);
+      const connectionMap = new ConnectionMap();
+      if (connection) connectionMap.add(connection, []);
       const localMembership = createLocalMembership$({
         scope,
         ...defaultCreateLocalMemberValues,
-        connectionManager: {
-          connectionManagerData$: constant(new Epoch(connectionManagerData)),
-        },
+        connectionMap$: constant(new Epoch(connectionMap)),
         localTransport$: constant(mockTransport),
       });
       return { scope, localMembership };

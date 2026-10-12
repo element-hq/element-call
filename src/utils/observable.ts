@@ -218,6 +218,28 @@ export function filterBehavior<T, S extends T>(
     );
 }
 
+/**
+ * Applies a given projection to each value emitted by the source Observable.
+ * The `project` function additionally receives an {@link ObservableScope}.
+ */
+export function mapScoped<A, B>(
+  name: string,
+  project: (a: A, scope: ObservableScope) => B,
+): OperatorFunction<A, B> {
+  return (a$) =>
+    a$.pipe(
+      generateItemsInternal(
+        name,
+        function* (a) {
+          yield { keys: [a], data: undefined };
+        },
+        (scope, _data$, a) => project(a, scope),
+        (items) => items,
+      ),
+      map(([item]) => item),
+    );
+}
+
 function generateItemsInternal<
   Input,
   Keys extends [unknown, ...unknown[]],
