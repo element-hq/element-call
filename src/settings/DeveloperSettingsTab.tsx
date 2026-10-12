@@ -45,7 +45,7 @@ import {
   muteAllAudio as muteAllAudioSetting,
   alwaysShowIphoneEarpiece as alwaysShowIphoneEarpieceSetting,
   matrixRTCMode as matrixRTCModeSetting,
-  customLivekitUrl as customLivekitUrlSetting,
+  customTransport as customTransportSetting,
   advancedScreenShare as advancedScreenShareSetting,
   screenShareResolution as screenShareResolutionSetting,
   screenShareFramerate as screenShareFramerateSetting,
@@ -167,16 +167,18 @@ export const DeveloperSettingsTab: FC<Props> = ({
     enableExtendedLivekitLogsSetting,
   );
 
-  const [customLivekitUrlUpdateError, setCustomLivekitUrlUpdateError] =
-    useState<string | null>(null);
-  const [customLivekitUrl, setCustomLivekitUrl] = useSetting(
-    customLivekitUrlSetting,
+  const [customTransportUpdateError, setCustomLivekitUrlUpdateError] = useState<
+    string | null
+  >(null);
+  const [customTransport, setCustomTransport] = useSetting(
+    customTransportSetting,
   );
-  const [customLivekitUrlTextBuffer, setCustomLivekitUrlTextBuffer] =
-    useState(customLivekitUrl);
+  const [customTransportTextBuffer, setCustomLivekitUrlTextBuffer] = useState(
+    () => JSON.stringify(customTransport),
+  );
   useEffect(() => {
-    setCustomLivekitUrlTextBuffer(customLivekitUrl);
-  }, [customLivekitUrl]);
+    setCustomLivekitUrlTextBuffer(JSON.stringify(customTransport));
+  }, [customTransport]);
 
   const [muteAllAudio, setMuteAllAudio] = useSetting(muteAllAudioSetting);
 
@@ -491,23 +493,23 @@ export const DeveloperSettingsTab: FC<Props> = ({
       <EditInPlace
         onSubmit={(e) => e.preventDefault()}
         helpLabel={
-          customLivekitUrl === null
-            ? t("developer_mode.custom_livekit_url.from_config")
-            : t("developer_mode.custom_livekit_url.current_url") +
-              customLivekitUrl
+          customTransport === null
+            ? t("developer_mode.custom_transport.from_config")
+            : t("developer_mode.custom_transport.current") +
+              JSON.stringify(customTransport)
         }
-        label={t("developer_mode.custom_livekit_url.label")}
-        saveButtonLabel={t("developer_mode.custom_livekit_url.save")}
-        savingLabel={t("developer_mode.custom_livekit_url.saving")}
-        cancelButtonLabel={t("developer_mode.custom_livekit_url.reset")}
+        label={t("developer_mode.custom_transport.label")}
+        saveButtonLabel={t("developer_mode.custom_transport.save")}
+        savingLabel={t("developer_mode.custom_transport.saving")}
+        cancelButtonLabel={t("developer_mode.custom_transport.reset")}
         onSave={useCallback(
           async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
             if (
               roomId === undefined ||
-              customLivekitUrlTextBuffer === "" ||
-              customLivekitUrlTextBuffer === null
+              customTransportTextBuffer === "" ||
+              customTransportTextBuffer === null
             ) {
-              setCustomLivekitUrl(null);
+              setCustomTransport(null);
               return;
             }
 
@@ -518,13 +520,12 @@ export const DeveloperSettingsTab: FC<Props> = ({
               if (userId === null || deviceId === null) {
                 throw new Error("Invalid user or device ID");
               }
+              const transport = JSON.parse(customTransportTextBuffer);
+              // Validate the transport by attempting to get a token for it
               await getSFUConfig({
                 client,
                 membership: { userId, deviceId, memberId: "" },
-                transport: {
-                  type: "livekit",
-                  livekit_service_url: customLivekitUrlTextBuffer,
-                },
+                transport,
                 serverName: client.getDomain()!,
                 roomId,
                 slotId: "org.example.fake-slot#room",
@@ -532,14 +533,16 @@ export const DeveloperSettingsTab: FC<Props> = ({
                 logger,
               });
               setCustomLivekitUrlUpdateError(null);
-              setCustomLivekitUrl(customLivekitUrlTextBuffer);
+              setCustomTransport(transport);
             } catch {
-              setCustomLivekitUrlUpdateError("invalid URL (did not update)");
+              setCustomLivekitUrlUpdateError(
+                "invalid transport (did not update)",
+              );
             }
           },
-          [customLivekitUrlTextBuffer, setCustomLivekitUrl, client, roomId],
+          [customTransportTextBuffer, setCustomTransport, client, roomId],
         )}
-        value={customLivekitUrlTextBuffer ?? ""}
+        value={customTransportTextBuffer ?? ""}
         onChange={useCallback(
           (event: ChangeEvent<HTMLInputElement>): void => {
             setCustomLivekitUrlTextBuffer(event.target.value);
@@ -548,14 +551,14 @@ export const DeveloperSettingsTab: FC<Props> = ({
         )}
         onCancel={useCallback(
           (e: React.FormEvent<HTMLFormElement>) => {
-            setCustomLivekitUrl(null);
+            setCustomTransport(null);
           },
-          [setCustomLivekitUrl],
+          [setCustomTransport],
         )}
-        serverInvalid={customLivekitUrlUpdateError !== null}
+        serverInvalid={customTransportUpdateError !== null}
       >
-        {customLivekitUrlUpdateError !== null && (
-          <ErrorMessage>{customLivekitUrlUpdateError}</ErrorMessage>
+        {customTransportUpdateError !== null && (
+          <ErrorMessage>{customTransportUpdateError}</ErrorMessage>
         )}
       </EditInPlace>
       <Separator />

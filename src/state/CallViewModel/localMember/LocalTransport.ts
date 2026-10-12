@@ -5,13 +5,12 @@ SPDX-License-IdFentifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { type MatrixClient } from "matrix-js-sdk";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 
 import { Config } from "../../../config/Config.ts";
 import { MatrixRTCTransportMissingError } from "../../../utils/errors.ts";
-import { customLivekitUrl } from "../../../settings/settings.ts";
+import { customTransport as customTransportSetting } from "../../../settings/settings.ts";
 import { RtcTransportAutoDiscovery } from "./RtcTransportAutoDiscovery.ts";
 import { type TransportLocator } from "../../../livekit/auth/types.ts";
 
@@ -30,12 +29,11 @@ export async function getLocalTransport(
     resolvedConfig: Config.get(),
     logger: rootLogger.getChild("[LocalTransport]"),
   });
-  const customUrl = customLivekitUrl.value$.value;
 
-  // Respect the user's custom URL, if set
-  const transport: UnstableLivekitTransport | null = customUrl
-    ? { type: "livekit", livekit_service_url: customUrl }
-    : await discovery.discoverPreferredTransport();
+  // Respect the user's custom transport, if set
+  const transport =
+    customTransportSetting.value$.value ??
+    (await discovery.discoverPreferredTransport());
 
   if (transport === null) throw new MatrixRTCTransportMissingError(serverName);
 

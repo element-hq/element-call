@@ -19,7 +19,7 @@ import fetchMock from "fetch-mock";
 import { mockConfig } from "../../../utils/test";
 import { getLocalTransport } from "./LocalTransport";
 import { MatrixRTCTransportMissingError } from "../../../utils/errors";
-import { customLivekitUrl } from "../../../settings/settings";
+import { customTransport } from "../../../settings/settings";
 import { type MatrixClient } from "matrix-js-sdk";
 
 describe("LocalTransport", () => {
@@ -60,7 +60,7 @@ describe("LocalTransport", () => {
     >;
     beforeEach(() => {
       mockConfig({});
-      customLivekitUrl.setValue(customLivekitUrl.defaultValue);
+      customTransport.setValue(customTransport.defaultValue);
       client = {
         getDomain: vi.fn().mockReturnValue("example.org"),
         _unstable_getRTCTransports: vi.fn().mockResolvedValue([]),
@@ -86,7 +86,10 @@ describe("LocalTransport", () => {
     });
 
     it("supports getting transport via user settings", async () => {
-      customLivekitUrl.setValue("https://lk.example.org");
+      customTransport.setValue({
+        type: "livekit",
+        livekit_service_url: "https://lk.example.org",
+      });
 
       expect(await getLocalTransport(client)).toStrictEqual({
         transport: {
