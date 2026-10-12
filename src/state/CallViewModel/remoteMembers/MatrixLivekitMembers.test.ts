@@ -170,6 +170,90 @@ test("should signal participant on a connection that is publishing", async () =>
   );
 });
 
+// A member advertising both a `url` and a `livekit_service_url` may have
+// authenticated through either flow, so it has two candidate identities.
+const bothTransport: UnstableLivekitTransport = {
+  type: "livekit",
+  url: "wss://sfu.example.org",
+  livekit_service_url: "https://lk.example.org",
+};
+const bobLegacyId = fallbackMemberId("@bob:example.org", "DEV000");
+const bobHashedId = "2qkXfWz1S7jQmU0bJ6yN8aVtR3pLcDgHe9oZxKwMiA4";
+const bobWithBothIdentities = mockRtcMembership("@bob:example.org", "DEV000", {
+  fociPreferred: [bothTransport],
+  backendIdentities: [bobHashedId, bobLegacyId],
+});
+
+test.each([
+  ["legacy", bobLegacyId],
+  ["hashed", bobHashedId],
+])(
+  "matches a member with two candidate identities publishing under the %s one",
+  async (_name, identity) => {
+    const { memberships$, membershipsWithTransport$ } =
+      createEpochedMemberships$(constant([bobWithBothIdentities]));
+
+    const connection = {
+      transport: bothTransport,
+      serverName: "example.org",
+    } as unknown as Connection;
+    const dataWithPublisher = new ConnectionMap();
+    dataWithPublisher.add(connection, [mockRemoteParticipant({ identity })]);
+
+    const remoteMatrixLivekitMembers$ = createRemoteMatrixLivekitMembers$({
+      scope: testScope,
+      membershipsWithTransport$: testScope.behavior(membershipsWithTransport$),
+      connectionMap$: testScope.behavior(
+        epochMeWith$(memberships$, constant(dataWithPublisher)),
+      ),
+      localUser: localRtcMember,
+    });
+
+    await flushPromises();
+    expect(remoteMatrixLivekitMembers$.value.value).toSatisfy(
+      (data: RemoteMatrixLivekitMember[]) => {
+        expect(data.length).toEqual(1);
+        expect(data[0].participant.value$.value?.identity).toEqual(identity);
+        expect(data[0].connection$.value).toBe(connection);
+        return true;
+      },
+    );
+  },
+);
+
+test("does not match a member with two candidate identities to anyone else", async () => {
+  const { memberships$, membershipsWithTransport$ } = createEpochedMemberships$(
+    constant([bobWithBothIdentities]),
+  );
+
+  const connection = {
+    transport: bothTransport,
+    serverName: "example.org",
+  } as unknown as Connection;
+  const dataWithStranger = new ConnectionMap();
+  dataWithStranger.add(connection, [
+    mockRemoteParticipant({ identity: "@stranger:example.org:DEV999" }),
+  ]);
+
+  const remoteMatrixLivekitMembers$ = createRemoteMatrixLivekitMembers$({
+    scope: testScope,
+    membershipsWithTransport$: testScope.behavior(membershipsWithTransport$),
+    connectionMap$: testScope.behavior(
+      epochMeWith$(memberships$, constant(dataWithStranger)),
+    ),
+    localUser: localRtcMember,
+  });
+
+  await flushPromises();
+  expect(remoteMatrixLivekitMembers$.value.value).toSatisfy(
+    (data: RemoteMatrixLivekitMember[]) => {
+      expect(data.length).toEqual(1);
+      expect(data[0].participant.value$.value).toBe(null);
+      return true;
+    },
+  );
+});
+
 test("should signal participant on a connection that is not publishing", async () => {
   const { memberships$, membershipsWithTransport$ } = createEpochedMemberships$(
     constant([bobMembership]),

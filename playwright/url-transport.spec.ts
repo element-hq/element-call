@@ -116,6 +116,12 @@ for (const { hostShape, guestShape, mode, hostFlows, guestFlows } of cases) {
     for (const request of [...hostRequests, ...guestRequests]) {
       expect(request.status).toBe(200);
       if (request.flow === "cs-api") expect(request.sfuUrl).toBe(sfuUrl);
+      // Clients predating MSC4195 match a publisher by the legacy identity,
+      // which only the JWT service's legacy endpoint assigns. The other flows
+      // hash it.
+      expect(request.identity).toMatch(
+        request.flow === "service-legacy" ? legacyIdentity : hashedIdentity,
+      );
     }
   });
 }
@@ -185,52 +191,74 @@ test("Publisher shows an error when the homeserver lacks MSC4195", async ({
   ).toBeVisible();
 });
 
-test("Delayed leave event delegated to a url transport gets sent on disconnect", async ({
-  browser,
-  page,
-  browserName,
-}) => {
-  skipOnFirefox(browserName);
+/**
+ * Delegation follows the flow that authenticated the publisher: the homeserver
+ * for a `url`-only transport, the JWT service wherever there is one.
+ */
+const delegationCases: { shape: Shape; via: Delegation["via"] }[] = [
+  { shape: "url", via: "homeserver" },
+  { shape: "legacy", via: "service" },
+  { shape: "both", via: "service" },
+];
 
-  // The host starts the call.
-  await advertiseTransport(page, shapes.url);
-  await page.goto("/");
-  await SpaHelpers.createCall(page, "Androl", "HelloCall", true);
-  const inviteLink = await SpaHelpers.getCallInviteLink(page);
+for (const { shape, via } of delegationCases) {
+  test(`Delayed leave event delegated through the ${via} for a ${shape} transport gets sent on disconnect`, async ({
+    browser,
+    page,
+    browserName,
+  }) => {
+    skipOnFirefox(browserName);
 
-  // The guest joins.
-  const guestContext = await browser.newContext({ reducedMotion: "reduce" });
-  const guestPage = await guestContext.newPage();
-  await advertiseTransport(guestPage, shapes.url);
-  const delayedLeave = recordDelayedLeave(guestPage);
-  const delegations = recordDelegations(guestPage);
-  await SpaHelpers.joinCallFromInviteLink(guestPage, inviteLink, "Pevara");
+    // The host starts the call.
+    await advertiseTransport(page, shapes[shape]);
+    await page.goto("/");
+    await SpaHelpers.createCall(page, "Androl", "HelloCall", true);
+    const inviteLink = await SpaHelpers.getCallInviteLink(page);
 
-  // Wait for the call to connect and render.
-  await SpaHelpers.expectVideoTilesCount(page, 2);
-  await SpaHelpers.expectVideoTilesCount(guestPage, 2);
+    // The guest joins.
+    const guestContext = await browser.newContext({ reducedMotion: "reduce" });
+    const guestPage = await guestContext.newPage();
+    await advertiseTransport(guestPage, shapes[shape]);
+    const delayedLeave = recordDelayedLeave(guestPage);
+    const delegations = recordDelegations(guestPage);
+    await SpaHelpers.joinCallFromInviteLink(guestPage, inviteLink, "Pevara");
 
-  // The guest handed its delayed leave to the homeserver, after probing it for
-  // delegation support with bodiless requests.
-  await expect
-    .poll(() => delegations.at(-1))
-    .toEqual({ status: 200, sfuUrl, delayId: delayedLeave.delayId });
-  const probes = delegations.slice(0, -1);
-  expect(probes.length).toBeGreaterThan(0);
-  for (const probe of probes) expect(probe).toEqual({ status: 401 });
+    // Wait for the call to connect and render.
+    await SpaHelpers.expectVideoTilesCount(page, 2);
+    await SpaHelpers.expectVideoTilesCount(guestPage, 2);
 
-  // The delay is long enough that a leave within the window below cannot come
-  // from the delayed event expiring on its own.
-  expect(delayedLeave.delayMs).toBeGreaterThan(60_000);
+    // The guest handed its delayed leave over, after probing for delegation
+    // support with bodiless requests, which count as supported unless they
+    // 404. The homeserver is always probed; the JWT service only when there
+    // is one.
+    await expect
+      .poll(() => delegations.at(-1))
+      .toEqual({
+        via,
+        status: 200,
+        delayId: delayedLeave.delayId,
+        ...(via === "homeserver" && { sfuUrl }),
+      });
+    const probes = delegations.slice(0, -1);
+    expect(probes.some((probe) => probe.via === via)).toBe(true);
+    for (const probe of probes) {
+      expect(probe.status).toBeGreaterThanOrEqual(400);
+      expect(probe.status).not.toBe(404);
+    }
 
-  // The guest drops without leaving.
-  await guestPage.reload();
+    // The delay is long enough that a leave within the window below cannot
+    // come from the delayed event expiring on its own.
+    expect(delayedLeave.delayMs).toBeGreaterThan(60_000);
 
-  // The host eventually sees the guest go once the delayed event fires.
-  await expect(page.getByTestId("videoTile")).toHaveCount(1, {
-    timeout: 30_000,
+    // The guest drops without leaving.
+    await guestPage.reload();
+
+    // The host eventually sees the guest go once the delayed event fires.
+    await expect(page.getByTestId("videoTile")).toHaveCount(1, {
+      timeout: 30_000,
+    });
   });
-});
+}
 
 test("Subscribers get tokens for a remote homeserver's SFU over federation", async ({
   browser,
@@ -365,29 +393,43 @@ function recordDelayedLeave(page: Page): DelayedLeave {
 
 /** A recorded delegation request for a delayed leave event. */
 interface Delegation {
+  /** Who was asked to send the leave event on the guest's behalf. */
+  via: "homeserver" | "service";
   status: number;
   sfuUrl?: string;
   delayId?: string;
 }
 
-/** Records requests to the MSC4195 `delegate_delayed_leave` endpoint. */
+/**
+ * Records requests that delegate a delayed leave event, or probe for support:
+ * the MSC4195 `delegate_delayed_leave` endpoint of the homeserver, and the JWT
+ * service's `delegate_delayed_leave` probe and `/sfu/get` with delay fields.
+ */
 function recordDelegations(page: Page): Delegation[] {
   const delegations: Delegation[] = [];
   page.on("response", (response) => {
     const request = response.request();
-    if (
-      request.method() !== "POST" ||
-      !request.url().endsWith("/rtc/livekit/delegate_delayed_leave")
-    )
-      return;
+    if (request.method() !== "POST") return;
+    const url = request.url();
     const body = request.postDataJSON() as {
-      url: string;
-      delay_id: string;
+      url?: string;
+      delay_id?: string;
     } | null;
-    delegations.push({
-      status: response.status(),
-      ...(body && { sfuUrl: body.url, delayId: body.delay_id }),
-    });
+    if (url.endsWith("/rtc/livekit/delegate_delayed_leave")) {
+      delegations.push({
+        via: "homeserver",
+        status: response.status(),
+        ...(body && { sfuUrl: body.url, delayId: body.delay_id }),
+      });
+    } else if (url.endsWith("/livekit/jwt/delegate_delayed_leave")) {
+      delegations.push({ via: "service", status: response.status() });
+    } else if (url.endsWith("/livekit/jwt/sfu/get") && body?.delay_id) {
+      delegations.push({
+        via: "service",
+        status: response.status(),
+        delayId: body.delay_id,
+      });
+    }
   });
   return delegations;
 }
@@ -398,26 +440,54 @@ interface AuthRequest {
   status: number;
   /** The SFU a request to the MSC4195 `get_token` endpoint asked for. */
   sfuUrl?: string;
+  /** The participant identity the issued token carries. */
+  identity?: string;
 }
 
-/** Records token requests. */
+/** The legacy `<user_id>:<device_id>` participant identity. */
+const legacyIdentity = /^@[^:]+:[^:]+:[A-Z]+$/;
+/** A hashed participant identity: unpadded base64 of a SHA-256. */
+const hashedIdentity = /^[A-Za-z0-9+/]{43}$/;
+
+/** Reads the subject of a JWT without verifying it. */
+function jwtSubject(jwt: string): string {
+  const [, payload] = jwt.split(".");
+  return (
+    JSON.parse(Buffer.from(payload, "base64url").toString()) as {
+      sub: string;
+    }
+  ).sub;
+}
+
+/** Records token requests, including the identity each token carries. */
 function recordAuthRequests(page: Page): AuthRequest[] {
   const requests: AuthRequest[] = [];
   page.on("response", (response) => {
     const request = response.request();
     if (request.method() !== "POST") return;
     const url = request.url();
+    let entry: AuthRequest;
     if (url.endsWith("/rtc/livekit/get_token")) {
-      requests.push({
+      entry = {
         flow: "cs-api",
         status: response.status(),
         sfuUrl: (request.postDataJSON() as { url: string }).url,
-      });
+      };
     } else if (url.endsWith("/livekit/jwt/sfu/get")) {
-      requests.push({ flow: "service-legacy", status: response.status() });
+      entry = { flow: "service-legacy", status: response.status() };
     } else if (url.endsWith("/livekit/jwt/get_token")) {
-      requests.push({ flow: "service-default", status: response.status() });
+      entry = { flow: "service-default", status: response.status() };
+    } else {
+      return;
     }
+    requests.push(entry);
+    if (entry.status !== 200) return;
+    response
+      .json()
+      .then((body: { jwt: string }) => {
+        entry.identity = jwtSubject(body.jwt);
+      })
+      .catch(() => {});
   });
   return requests;
 }
