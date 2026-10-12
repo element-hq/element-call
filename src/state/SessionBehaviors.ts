@@ -7,7 +7,6 @@ Please see LICENSE in the repository root for full details.
 
 import {
   type CallMembership,
-  type UnstableLivekitTransport,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
   isUnstableLivekitTransport,
@@ -21,6 +20,7 @@ import {
   type ObservableScope,
 } from "./ObservableScope";
 import { type Behavior } from "./Behavior";
+import { type TransportLocator } from "../livekit/auth";
 
 /**
  * Tracks the transports used by ourselves, plus all other MatrixRTC session
@@ -32,17 +32,14 @@ export const membershipsAndTransports$ = (
 ): {
   membershipsWithTransport$: Behavior<
     Epoch<
-      { membership: CallMembership; transport?: UnstableLivekitTransport }[]
+      { membership: CallMembership; transport: TransportLocator | undefined }[]
     >
   >;
-  transports$: Behavior<Epoch<UnstableLivekitTransport[]>>;
+  transports$: Behavior<Epoch<TransportLocator[]>>;
 } => {
   const membershipsWithTransport$: Behavior<
     Epoch<
-      {
-        membership: CallMembership;
-        transport: UnstableLivekitTransport | undefined;
-      }[]
+      { membership: CallMembership; transport: TransportLocator | undefined }[]
     >
   > = scope.behavior(
     memberships$.pipe(
@@ -52,7 +49,10 @@ export const membershipsAndTransports$ = (
           return {
             membership,
             transport: isUnstableLivekitTransport(transport)
-              ? transport
+              ? {
+                  transport,
+                  serverName: membership.userId.replace(/^.*?:/, ""),
+                }
               : undefined,
           };
         });
@@ -60,12 +60,11 @@ export const membershipsAndTransports$ = (
     ),
   );
 
-  const transports$: Behavior<Epoch<UnstableLivekitTransport[]>> =
-    scope.behavior(
-      membershipsWithTransport$.pipe(
-        mapEpoch((mts) => mts.flatMap(({ transport: t }) => (t ? [t] : []))),
-      ),
-    );
+  const transports$: Behavior<Epoch<TransportLocator[]>> = scope.behavior(
+    membershipsWithTransport$.pipe(
+      mapEpoch((mts) => mts.flatMap(({ transport: t }) => (t ? [t] : []))),
+    ),
+  );
 
   return {
     membershipsWithTransport$,

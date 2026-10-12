@@ -51,6 +51,8 @@ export interface ConnectionOpts {
   role: "publisher" | "subscriber";
   /** The media transport to connect to. */
   transport: UnstableLivekitTransport;
+  /** The name of the homeserver to which the {@link transport} belongs. */
+  serverName: string;
   /** The Matrix client to use for OpenID and SFU config requests. */
   client: ClientOpenIDParts;
   /** The ID of the Matrix room in which the session takes place. */
@@ -98,6 +100,11 @@ export class Connection {
    * The media transport to connect to.
    */
   public readonly transport: UnstableLivekitTransport;
+
+  /**
+   * The name of the homeserver to which the {@link transport} belongs.
+   */
+  public readonly serverName: string;
 
   public readonly livekitRoom: LivekitRoom;
 
@@ -147,12 +154,13 @@ export class Connection {
       `[Connection ${JSON.stringify(opts.transport)}]`,
     );
     this.logger.debug(`constructor called`);
-    const { role, transport, client, scope } = opts;
+    const { role, transport, serverName, client, scope } = opts;
 
     this.scope = scope;
     this.livekitRoom = opts.livekitRoomFactory();
     this.role = role;
     this.transport = transport;
+    this.serverName = serverName;
     this.client = client;
 
     this.remoteParticipants$ = scope.behavior(

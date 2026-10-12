@@ -6,19 +6,16 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type LocalParticipant, type RemoteParticipant } from "livekit-client";
-import {
-  type CallMembership,
-  type UnstableLivekitTransport,
-} from "matrix-js-sdk/lib/matrixrtc";
+import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
 import { combineLatest, filter, map } from "rxjs";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { deepCompare } from "matrix-js-sdk/lib/utils";
 
 import { type Behavior } from "../../Behavior";
 import { type ConnectionMap } from "./ConnectionMap";
 import { Epoch, type ObservableScope } from "../../ObservableScope";
 import { type Connection } from "./Connection";
 import { generateItemsWithEpoch } from "../../../utils/observable";
+import { type TransportLocator } from "../../../livekit/auth";
 
 interface LocalTaggedParticipant {
   type: "local";
@@ -62,7 +59,7 @@ interface Props {
   scope: ObservableScope;
   membershipsWithTransport$: Behavior<
     Epoch<
-      { membership: CallMembership; transport?: UnstableLivekitTransport }[]
+      { membership: CallMembership; transport: TransportLocator | undefined }[]
     >
   >;
   connectionMap$: Behavior<Epoch<ConnectionMap>>;
@@ -163,14 +160,3 @@ export function createRemoteMatrixLivekitMembers$({
 }
 
 // TODO add back in the callviewmodel pauseWhen(this.pretendToBeDisconnected$)
-
-// TODO add this to the JS-SDK
-export function areLivekitTransportsEqual<T extends UnstableLivekitTransport>(
-  t1: T | null,
-  t2: T | null,
-): boolean {
-  if (t1 && t2) {
-    return deepCompare(t1, t2);
-  }
-  return !t1 && !t2;
-}

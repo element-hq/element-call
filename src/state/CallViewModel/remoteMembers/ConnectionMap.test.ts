@@ -12,32 +12,41 @@ import { type RemoteParticipant } from "livekit-client";
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import { Epoch, mapEpoch, ObservableScope } from "../../ObservableScope.ts";
-import { createConnectionMap$, ConnectionMap } from "./ConnectionMap.ts";
+import {
+  createConnectionMap$,
+  ConnectionMap,
+  keyFor,
+} from "./ConnectionMap.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
 import { type Connection } from "./Connection.ts";
 import { ownMemberMock, withTestScheduler } from "../../../utils/test.ts";
-import { areLivekitTransportsEqual } from "./MatrixLivekitMembers.ts";
 import { type Behavior } from "../../Behavior.ts";
+import { type TransportLocator } from "../../../livekit/auth";
 
 // Some test constants
 
-const TRANSPORT_1: UnstableLivekitTransport = {
-  type: "livekit",
-  livekit_service_url: "https://lk.example.org",
+const TRANSPORT_1: TransportLocator = {
+  transport: {
+    type: "livekit",
+    livekit_service_url: "https://lk.example.org",
+  },
+  serverName: "example.org",
 };
 
-const TRANSPORT_2: UnstableLivekitTransport = {
-  type: "livekit",
-  livekit_service_url: "https://lk.sample.com",
+const TRANSPORT_2: TransportLocator = {
+  transport: {
+    type: "livekit",
+    livekit_service_url: "https://lk.sample.com",
+  },
+  serverName: "sample.com",
 };
 
 function findConnection(
-  transport: UnstableLivekitTransport,
+  transport: TransportLocator,
   connections: Connection[],
 ): Connection | undefined {
-  return connections.find((c) =>
-    areLivekitTransportsEqual(c.transport, transport),
-  );
+  const key = keyFor(transport);
+  return connections.find((c) => keyFor(c) === key);
 }
 
 let fakeConnectionFactory: ConnectionFactory;
@@ -57,9 +66,11 @@ beforeEach(() => {
         scope: ObservableScope,
         _role: unknown,
         transport: UnstableLivekitTransport,
+        serverName: string,
       ) => {
         const mockConnection = {
           transport,
+          serverName,
           remoteParticipants$: new BehaviorSubject([]),
         } as unknown as Connection;
         vi.mocked(mockConnection).start = vi.fn();
@@ -210,14 +221,14 @@ describe("ConnectionMap", () => {
   test("warns when a second connection to the same URL is merged", () => {
     const warn = vi.spyOn(logger, "warn").mockImplementation(() => {});
     const data = new ConnectionMap(logger);
-    const connection = { transport: TRANSPORT_1 } as unknown as Connection;
+    const connection = TRANSPORT_1 as unknown as Connection;
     const p = (identity: string): RemoteParticipant =>
       ({ identity }) as unknown as RemoteParticipant;
     data.add(connection, [p("a")]);
     data.add({ ...connection } as Connection, [p("b")]);
     expect(warn).toHaveBeenCalledWith(
       expect.stringContaining(
-        "second connection to https://lk.example.org: existing [a], adding [b]",
+        'second connection to [null,"https://lk.example.org","example.org"]: existing [a], adding [b]',
       ),
     );
     expect(data.getParticipantsForTransport(TRANSPORT_1)).toHaveLength(2);
@@ -228,20 +239,14 @@ describe("connectionMap$", () => {
   // Used in test to control fake connections' remoteParticipants$ streams
   let fakeRemoteParticipantsStreams: Map<string, Behavior<RemoteParticipant[]>>;
 
-  function keyForTransport(transport: UnstableLivekitTransport): string {
-    return "livekit_service_url" in transport
-      ? transport.livekit_service_url
-      : transport.url;
-  }
-
   beforeEach(() => {
     fakeRemoteParticipantsStreams = new Map();
 
     function getRemoteParticipantsFor(
-      transport: UnstableLivekitTransport,
+      transport: TransportLocator,
     ): Behavior<RemoteParticipant[]> {
       return (
-        fakeRemoteParticipantsStreams.get(keyForTransport(transport)) ??
+        fakeRemoteParticipantsStreams.get(keyFor(transport)) ??
         new BehaviorSubject([])
       );
     }
@@ -254,13 +259,18 @@ describe("connectionMap$", () => {
           scope: ObservableScope,
           _role: unknown,
           transport: UnstableLivekitTransport,
+          serverName: string,
         ) => {
           const fakeRemoteParticipants$ = new BehaviorSubject<
             RemoteParticipant[]
           >([]);
           const mockConnection = {
             transport,
-            remoteParticipants$: getRemoteParticipantsFor(transport),
+            serverName,
+            remoteParticipants$: getRemoteParticipantsFor({
+              transport,
+              serverName,
+            }),
           } as unknown as Connection;
           vi.mocked(mockConnection).start = vi.fn();
           vi.mocked(mockConnection).stop = vi.fn();
@@ -270,7 +280,7 @@ describe("connectionMap$", () => {
           });
 
           fakeRemoteParticipantsStreams.set(
-            keyForTransport(transport),
+            keyFor({ transport, serverName }),
             fakeRemoteParticipants$,
           );
           return mockConnection;
@@ -283,7 +293,7 @@ describe("connectionMap$", () => {
       // Setup the fake participants streams behavior
       // ==============================
       fakeRemoteParticipantsStreams.set(
-        keyForTransport(TRANSPORT_1),
+        keyFor(TRANSPORT_1),
         behavior("oa-b", {
           o: [],
           a: [{ identity: "user1A" } as RemoteParticipant],
@@ -295,7 +305,7 @@ describe("connectionMap$", () => {
       );
 
       fakeRemoteParticipantsStreams.set(
-        keyForTransport(TRANSPORT_2),
+        keyFor(TRANSPORT_2),
         behavior("o-a", {
           o: [],
           a: [{ identity: "user2A" } as RemoteParticipant],

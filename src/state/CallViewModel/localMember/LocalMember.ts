@@ -78,7 +78,11 @@ import {
   type Connection,
 } from "../remoteMembers/Connection.ts";
 import { type HomeserverConnected } from "./HomeserverConnected.ts";
-import { type ClientOpenIDParts, getSFUConfig } from "../../../livekit/auth";
+import {
+  type ClientOpenIDParts,
+  getSFUConfig,
+  type TransportLocator,
+} from "../../../livekit/auth";
 
 export enum TransportState {
   /** Not even a transport is available to the LocalMembership */
@@ -147,7 +151,7 @@ interface Props {
   homeserverConnected: HomeserverConnected;
   roomId: string;
   ownMembershipIdentity: CallMembershipIdentityParts;
-  localTransport$: Observable<UnstableLivekitTransport>;
+  localTransport$: Observable<TransportLocator>;
   client: ClientOpenIDParts;
   matrixRTCSession: Pick<
     MatrixRTCSession,
@@ -306,7 +310,7 @@ export const createLocalMembership$ = ({
   // to whether delayed event delegation is supported
   const joinParams$ = scope.behavior(
     localTransport$.pipe(
-      switchMap(async (transport) => {
+      switchMap(async ({ transport }) => {
         const transportSupportsDelegation =
           "livekit_service_url" in transport &&
           (await checkDelegationSupport(

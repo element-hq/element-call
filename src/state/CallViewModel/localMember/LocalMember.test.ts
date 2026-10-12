@@ -293,7 +293,7 @@ describe("LocalMembership", () => {
         leave: vi.fn(),
       },
       connectionMap$: constant(new Epoch(new ConnectionMap())),
-      localTransport$: constant(mockTransport),
+      localTransport$: constant(mockTransportLocator),
     });
     const expextedLog =
       "'not connected yet' while updating the call intent (this is expected on startup)";
@@ -308,6 +308,11 @@ describe("LocalMembership", () => {
     livekit_service_url: "a",
   } as UnstableLivekitTransport;
 
+  const mockTransportLocator: livekitAuth.TransportLocator = {
+    transport: mockTransport,
+    serverName: "example.org",
+  };
+
   const connectionTransportAConnected = {
     livekitRoom: mockLivekitRoom({
       localParticipant: {
@@ -320,6 +325,7 @@ describe("LocalMembership", () => {
       livekitState: LivekitConnectionState.Connected,
     }),
     transport: mockTransport,
+    serverName: "example.org",
   } as Connection;
   const connectionTransportAConnecting = {
     ...connectionTransportAConnected,
@@ -360,7 +366,7 @@ describe("LocalMembership", () => {
         ...defaultCreateLocalMemberValues,
         connectionMap$: constant(new Epoch(connectionMap)),
         joinMatrixRTC,
-        localTransport$: constant(mockTransport),
+        localTransport$: constant(mockTransportLocator),
         delayId$,
       });
 
@@ -437,7 +443,7 @@ describe("LocalMembership", () => {
       scope,
       ...defaultCreateLocalMemberValues,
       connectionMap$: constant(new Epoch(connectionMap)),
-      localTransport$: constant(mockTransport),
+      localTransport$: constant(mockTransportLocator),
     });
     await flushPromises();
     expect(publisherFactory).toHaveBeenCalledOnce();
@@ -459,7 +465,7 @@ describe("LocalMembership", () => {
   it("tracks livekit state correctly", async () => {
     const scope = new ObservableScope();
     const connectionMap = new ConnectionMap();
-    const localTransport$ = new Subject<UnstableLivekitTransport>();
+    const localTransport$ = new Subject<livekitAuth.TransportLocator>();
 
     const connectionMap$ = new BehaviorSubject(new Epoch(connectionMap));
     const publishers: Publisher[] = [];
@@ -503,7 +509,7 @@ describe("LocalMembership", () => {
     expect(localMembership.localMemberState$.value).toStrictEqual(
       TransportState.Waiting,
     );
-    localTransport$.next(mockTransport);
+    localTransport$.next(mockTransportLocator);
     await flushPromises();
     expect(localMembership.localMemberState$.value).toStrictEqual({
       matrix: RTCMemberStatus.Connected,
@@ -534,7 +540,7 @@ describe("LocalMembership", () => {
     });
 
     (
-      connectionMap2.getConnectionForTransport(mockTransport)!
+      connectionMap2.getConnectionForTransport(mockTransportLocator)!
         .state$ as BehaviorSubject<ConnectionState>
     ).next({
       state: "authenticated",
@@ -641,7 +647,7 @@ describe("LocalMembership", () => {
           rtsSession$: constant(RTCMemberStatus.Connected),
         },
         connectionMap$: constant(new Epoch(connectionMap)),
-        localTransport$: constant(mockTransport),
+        localTransport$: constant(mockTransportLocator),
       });
 
       await flushPromises();
@@ -676,7 +682,7 @@ describe("LocalMembership", () => {
           rtsSession$: constant(RTCMemberStatus.Connected),
         },
         connectionMap$: constant(new Epoch(connectionMap)),
-        localTransport$: constant(mockTransport),
+        localTransport$: constant(mockTransportLocator),
       });
 
       await flushPromises();
@@ -723,7 +729,7 @@ describe("LocalMembership", () => {
           rtsSession$: constant(RTCMemberStatus.Connected),
         },
         connectionMap$: constant(new Epoch(connectionMap)),
-        localTransport$: constant(mockTransport),
+        localTransport$: constant(mockTransportLocator),
       });
 
       await flushPromises();
@@ -768,7 +774,7 @@ describe("LocalMembership", () => {
           rtsSession$: constant(RTCMemberStatus.Connected),
         },
         connectionMap$: constant(new Epoch(connectionMap)),
-        localTransport$: constant(mockTransport),
+        localTransport$: constant(mockTransportLocator),
       });
 
       await flushPromises();
@@ -832,7 +838,7 @@ describe("LocalMembership", () => {
         scope,
         ...defaultCreateLocalMemberValues,
         connectionMap$: constant(new Epoch(connectionMap)),
-        localTransport$: constant(mockTransport),
+        localTransport$: constant(mockTransportLocator),
       });
       return { scope, localMembership };
     };
@@ -846,6 +852,7 @@ describe("LocalMembership", () => {
           livekitState: LivekitConnectionState.Connected,
         }),
         transport: mockTransport,
+        serverName: "example.org",
         livekitRoom: mockLivekitRoom({
           localParticipant: mockLocalParticipant({
             isScreenShareEnabled: false,

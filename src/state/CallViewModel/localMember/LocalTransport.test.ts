@@ -46,8 +46,11 @@ describe("LocalTransport", () => {
         getDomain: () => "example.org",
       }),
     ).toStrictEqual({
-      livekit_service_url: "https://lk.example.org",
-      type: "livekit",
+      transport: {
+        livekit_service_url: "https://lk.example.org",
+        type: "livekit",
+      },
+      serverName: "example.org",
     });
   });
 
@@ -74,8 +77,11 @@ describe("LocalTransport", () => {
       });
 
       expect(await getLocalTransport(client)).toStrictEqual({
-        livekit_service_url: "https://lk.example.org",
-        type: "livekit",
+        transport: {
+          livekit_service_url: "https://lk.example.org",
+          type: "livekit",
+        },
+        serverName: "example.org",
       });
     });
 
@@ -83,8 +89,11 @@ describe("LocalTransport", () => {
       customLivekitUrl.setValue("https://lk.example.org");
 
       expect(await getLocalTransport(client)).toStrictEqual({
-        livekit_service_url: "https://lk.example.org",
-        type: "livekit",
+        transport: {
+          livekit_service_url: "https://lk.example.org",
+          type: "livekit",
+        },
+        serverName: "example.org",
       });
     });
 
@@ -94,8 +103,11 @@ describe("LocalTransport", () => {
       ]);
 
       expect(await getLocalTransport(client)).toStrictEqual({
-        livekit_service_url: "https://lk.example.org",
-        type: "livekit",
+        transport: {
+          livekit_service_url: "https://lk.example.org",
+          type: "livekit",
+        },
+        serverName: "example.org",
       });
     });
 

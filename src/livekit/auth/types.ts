@@ -5,6 +5,17 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
+import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+
+/**
+ * Data identifying a transport and the homeserver to which it belongs, so
+ * consumers know how to reach it.
+ */
+export interface TransportLocator {
+  transport: UnstableLivekitTransport;
+  serverName: string;
+}
+
 /**
  * Configuration and access tokens provided by the SFU on successful authentication.
  */

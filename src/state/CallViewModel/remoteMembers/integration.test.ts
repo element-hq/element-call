@@ -10,7 +10,6 @@ import { BehaviorSubject } from "rxjs";
 import { type Room as LivekitRoom } from "livekit-client";
 import EventEmitter from "events";
 import fetchMock from "fetch-mock";
-import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import {
@@ -21,7 +20,7 @@ import {
 import { ECConnectionFactory } from "./ConnectionFactory.ts";
 import { type ClientOpenIDParts } from "../../../livekit/auth";
 import {
-  exampleTransport,
+  exampleTransportLocator,
   mockMediaDevices,
   mockRtcMembership,
   ownMemberMock,
@@ -29,13 +28,13 @@ import {
 } from "../../../utils/test.ts";
 import { type ProcessorState } from "../../../livekit/TrackProcessorContext.tsx";
 import {
-  areLivekitTransportsEqual,
   createRemoteMatrixLivekitMembers$,
   type RemoteMatrixLivekitMember,
 } from "./MatrixLivekitMembers.ts";
 import { createConnectionMap$ } from "./ConnectionMap.ts";
 import { membershipsAndTransports$ } from "../../SessionBehaviors.ts";
 import { localRtcMember, testJWTToken } from "../../../utils/test-fixtures.ts";
+import { deepCompare } from "matrix-js-sdk/lib/utils";
 
 // Test the integration of ConnectionMap and MatrixLivekitMembers
 
@@ -126,7 +125,7 @@ test("bob, carl, then bob joining no tracks yet", () => {
     const connectionMap$ = createConnectionMap$({
       scope: testScope,
       connectionFactory: ecConnectionFactory,
-      localTransport: exampleTransport,
+      localTransport: exampleTransportLocator,
       remoteTransports$: membershipsAndTransports.transports$,
       logger: logger,
       ownMembershipIdentity: ownMemberMock,
@@ -150,10 +149,7 @@ test("bob, carl, then bob joining no tracks yet", () => {
         });
         expectObservable(item.connection$).toBe("a", {
           a: expect.toSatisfy((co) =>
-            areLivekitTransportsEqual(
-              co.transport,
-              bobMembership.transports[0]! as UnstableLivekitTransport,
-            ),
+            deepCompare(co.transport, bobMembership.transports[0]),
           ),
         });
         expectObservable(item.participant.value$).toBe("a", {
@@ -185,15 +181,9 @@ test("bob, carl, then bob joining no tracks yet", () => {
             a: null,
           });
           expectObservable(item.connection$).toBe("a", {
-            a: expect.toSatisfy((connection) => {
-              expect(
-                areLivekitTransportsEqual(
-                  connection.transport,
-                  carlMembership.transports[0]! as UnstableLivekitTransport,
-                ),
-              ).toBe(true);
-              return true;
-            }),
+            a: expect.toSatisfy((connection) =>
+              deepCompare(connection.transport, carlMembership.transports[0]),
+            ),
           });
         }
         return true;
@@ -215,15 +205,9 @@ test("bob, carl, then bob joining no tracks yet", () => {
             a: daveMembership,
           });
           expectObservable(item.connection$).toBe("a", {
-            a: expect.toSatisfy((connection) => {
-              expect(
-                areLivekitTransportsEqual(
-                  connection.transport,
-                  daveMembership.transports[0]! as UnstableLivekitTransport,
-                ),
-              ).toBe(true);
-              return true;
-            }),
+            a: expect.toSatisfy((connection) =>
+              deepCompare(connection.transport, daveMembership.transports[0]),
+            ),
           });
           expectObservable(item.participant.value$).toBe("a", {
             a: null,

@@ -91,6 +91,7 @@ describe("ECConnectionFactory - Audio inputs options", () => {
         testScope,
         "subscriber",
         exampleTransport,
+        "example.org",
         ownMemberMock,
         logger,
       );
@@ -141,6 +142,7 @@ describe("ECConnectionFactory - ControlledAudioDevice", () => {
         testScope,
         "subscriber",
         exampleTransport,
+        "example.org",
         ownMemberMock,
         logger,
       );
@@ -178,6 +180,7 @@ describe("ECConnectionFactory - Camera quality settings", () => {
       testScope,
       "subscriber",
       exampleTransport,
+      "example.org",
       ownMemberMock,
       logger,
     );
@@ -217,6 +220,7 @@ describe("ECConnectionFactory - Camera quality settings", () => {
       testScope,
       "subscriber",
       exampleTransport,
+      "example.org",
       ownMemberMock,
       logger,
     );
@@ -257,6 +261,7 @@ describe("ECConnectionFactory - Camera quality settings", () => {
       testScope,
       "subscriber",
       exampleTransport,
+      "example.org",
       ownMemberMock,
       logger,
     );

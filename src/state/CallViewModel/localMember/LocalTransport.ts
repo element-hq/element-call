@@ -13,6 +13,7 @@ import { Config } from "../../../config/Config.ts";
 import { MatrixRTCTransportMissingError } from "../../../utils/errors.ts";
 import { customLivekitUrl } from "../../../settings/settings.ts";
 import { RtcTransportAutoDiscovery } from "./RtcTransportAutoDiscovery.ts";
+import { type TransportLocator } from "../../../livekit/auth/types.ts";
 
 /**
  * Determines the transport to advertise in our MatrixRTC membership and publish
@@ -20,7 +21,10 @@ import { RtcTransportAutoDiscovery } from "./RtcTransportAutoDiscovery.ts";
  */
 export async function getLocalTransport(
   client: Pick<MatrixClient, "getDomain" | "_unstable_getRTCTransports">,
-): Promise<UnstableLivekitTransport> {
+): Promise<TransportLocator> {
+  const serverName = client.getDomain();
+  if (serverName === null) throw new Error("No server name");
+
   const discovery = new RtcTransportAutoDiscovery({
     client,
     resolvedConfig: Config.get(),
@@ -33,8 +37,7 @@ export async function getLocalTransport(
     ? { type: "livekit", livekit_service_url: customUrl }
     : await discovery.discoverPreferredTransport();
 
-  if (transport === null)
-    throw new MatrixRTCTransportMissingError(client.getDomain() ?? "");
+  if (transport === null) throw new MatrixRTCTransportMissingError(serverName);
 
-  return transport;
+  return { transport, serverName };
 }

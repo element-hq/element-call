@@ -24,7 +24,7 @@ import { testAudioContext } from "../useAudioContext.test";
 import * as MediaDevicesContext from "../MediaDevicesContext";
 import { LivekitRoomAudioRenderer } from "./MatrixAudioRenderer";
 import {
-  exampleTransport,
+  exampleTransportLocator,
   mockLocalParticipant,
   mockMediaDevices,
   mockRemoteParticipant,
@@ -119,7 +119,7 @@ function renderTestComponent(
       <LivekitRoomAudioRenderer
         validIdentities={participants.map((p) => p.identity)}
         livekitRoom={livekitRoom}
-        transport={exampleTransport}
+        transport={exampleTransportLocator}
       />
     </MediaDevicesProvider>,
   );
@@ -151,7 +151,7 @@ it("should not render or warn for the local participant", () => {
       <LivekitRoomAudioRenderer
         validIdentities={[]}
         livekitRoom={{ remoteParticipants: new Map() } as unknown as Room}
-        transport={exampleTransport}
+        transport={exampleTransportLocator}
       />
     </MediaDevicesProvider>,
   );
@@ -178,7 +178,7 @@ it("should warn only once per unexpected participant", () => {
       <LivekitRoomAudioRenderer
         validIdentities={[]}
         livekitRoom={{ remoteParticipants: new Map() } as unknown as Room}
-        transport={exampleTransport}
+        transport={exampleTransportLocator}
       />
     </MediaDevicesProvider>,
   );

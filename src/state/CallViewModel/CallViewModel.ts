@@ -165,6 +165,7 @@ import {
   type RingingMediaViewModel,
 } from "../media/RingingMediaViewModel.ts";
 import { type GridTileViewModel } from "../TileViewModel.ts";
+import { type TransportLocator } from "../../livekit/auth";
 
 //TODO
 // Larger rename
@@ -217,7 +218,7 @@ export interface CallViewModelOptions {
    */
   windowSize$: Behavior<{ width: number; height: number }>;
   /** Optional value overriding the local transport, for testing purposes. */
-  localTransport?: UnstableLivekitTransport;
+  localTransport?: TransportLocator;
   /** Optional value overriding the connection factory, for testing purposes. */
   connectionFactory?: ConnectionFactory;
   /** The version & compatibility mode of MatrixRTC that we should use. */
@@ -278,7 +279,7 @@ interface LayoutScanState {
 export type LivekitRoomItem = {
   livekitRoom: LivekitRoom;
   participants: string[];
-  transport: UnstableLivekitTransport;
+  transport: TransportLocator;
 };
 
 /**
@@ -762,7 +763,10 @@ export function createCallViewModel$(
       map((members) =>
         [...Map.groupBy(members, (m) => m.connection)].map(
           ([connection, members]) => ({
-            transport: connection.transport,
+            transport: {
+              transport: connection.transport,
+              serverName: connection.serverName,
+            },
             livekitRoom: connection.livekitRoom,
             participants: members.map((m) => m.participant.identity),
           }),

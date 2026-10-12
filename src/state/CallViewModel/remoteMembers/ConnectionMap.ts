@@ -20,44 +20,67 @@ import {
   type ObservableScope,
 } from "../../ObservableScope.ts";
 import { generateItemsWithEpoch } from "../../../utils/observable.ts";
-import { areLivekitTransportsEqual } from "./MatrixLivekitMembers.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
+import { type TransportLocator } from "../../../livekit/auth/types.ts";
+
+// Branded string type, to enforce that `fromKey` must only be called with
+// values returned by `keyFor`
+export type TransportKey = string & { __transportKey: true };
 
 /**
- * The URL by which a transport is identified: its JWT service URL, or failing
- * that, its SFU URL.
+ * Converts a {@link TransportLocator} to a key suitable for identifying it in a
+ * {@link Map} or {@link Set}.
  */
-function urlOf(transport: UnstableLivekitTransport): string {
-  return "livekit_service_url" in transport
-    ? transport.livekit_service_url
-    : transport.url;
+export function keyFor({
+  transport,
+  serverName,
+}: TransportLocator): TransportKey {
+  // Serialize the fields in a consistent order
+  return JSON.stringify([
+    "url" in transport ? transport.url : null,
+    "livekit_service_url" in transport ? transport.livekit_service_url : null,
+    serverName,
+  ]) as TransportKey;
 }
 
-function removeDuplicateTransports<T extends UnstableLivekitTransport>(
-  transports: T[],
-): T[] {
-  return transports.reduce((acc, transport) => {
-    if (!acc.some((t) => areLivekitTransportsEqual(t, transport)))
-      acc.push(transport);
-    return acc;
-  }, [] as T[]);
+/**
+ * Inverse of {@link keyFor}: turns a key back into a {@link TransportLocator}.
+ */
+export function fromKey(key: TransportKey): TransportLocator {
+  const [url, serviceUrl, serverName] = JSON.parse(key);
+  return {
+    transport: {
+      type: "livekit",
+      ...(url === null ? {} : { url }),
+      ...(serviceUrl === null ? {} : { livekit_service_url: serviceUrl }),
+    } as UnstableLivekitTransport,
+    serverName,
+  };
+}
+
+function removeDuplicateTransports(
+  transports: TransportLocator[],
+): TransportLocator[] {
+  const map = new Map<TransportKey, TransportLocator>();
+  for (const transport of transports) map.set(keyFor(transport), transport);
+  return [...map.values()];
 }
 
 export class ConnectionMap {
   private readonly map = new Map<
-    string,
+    TransportKey,
     { connection: Connection; participants: RemoteParticipant[] }
   >();
 
   public constructor(private readonly logger?: Logger) {}
 
   public add(connection: Connection, participants: RemoteParticipant[]): void {
-    const key = this.getKey(connection.transport);
+    const key = keyFor(connection);
     const existing = this.map.get(key);
     if (!existing) {
       this.map.set(key, { connection, participants });
     } else {
-      // Transports are deduplicated by URL upstream, so this should never
+      // Transports are deduplicated by key upstream, so this should never
       // happen; if it does, members may be matched against the wrong room.
       this.logger?.warn(
         `Merging participants from a second connection to ${key}: existing [${existing.participants.map((p) => p.identity).join(", ")}], adding [${participants.map((p) => p.identity).join(", ")}]`,
@@ -66,26 +89,20 @@ export class ConnectionMap {
     }
   }
 
-  private getKey(transport: UnstableLivekitTransport): string {
-    // This is enough as a key because the ConnectionMap is already scoped by room.
-    // We also do not need to consider the slotId at this point since each `MatrixRTCSession` is already scoped by `slotDescription: {id, application}`.
-    return urlOf(transport);
-  }
-
   public getConnections(): Connection[] {
     return Array.from(this.map.values()).map(({ connection }) => connection);
   }
 
   public getConnectionForTransport(
-    transport: UnstableLivekitTransport,
+    transport: TransportLocator,
   ): Connection | null {
-    return this.map.get(this.getKey(transport))?.connection ?? null;
+    return this.map.get(keyFor(transport))?.connection ?? null;
   }
 
   public getParticipantsForTransport(
-    transport: UnstableLivekitTransport,
+    transport: TransportLocator,
   ): RemoteParticipant[] {
-    const existing = this.map.get(this.getKey(transport));
+    const existing = this.map.get(keyFor(transport));
     if (existing) {
       return existing.participants;
     }
@@ -96,8 +113,8 @@ export class ConnectionMap {
 interface Props {
   scope: ObservableScope;
   connectionFactory: ConnectionFactory;
-  localTransport: UnstableLivekitTransport;
-  remoteTransports$: Behavior<Epoch<UnstableLivekitTransport[]>>;
+  localTransport: TransportLocator;
+  remoteTransports$: Behavior<Epoch<TransportLocator[]>>;
 
   logger: Logger;
   ownMembershipIdentity: CallMembershipIdentityParts;
@@ -128,7 +145,7 @@ export function createConnectionMap$({
    * All transports currently represented in the connection map. This list does
    * not include duplicate transports.
    */
-  const localAndRemoteTransports$: Behavior<Epoch<UnstableLivekitTransport[]>> =
+  const localAndRemoteTransports$: Behavior<Epoch<TransportLocator[]>> =
     scope.behavior(
       remoteTransports$.pipe(
         mapEpoch((remoteTransports) =>
@@ -140,6 +157,8 @@ export function createConnectionMap$({
       ),
     );
 
+  const localTransportKey = keyFor(localTransport);
+
   /**
    * Connections for each transport in use by one or more session members.
    */
@@ -149,17 +168,25 @@ export function createConnectionMap$({
         "ConnectionMap connections$",
         function* (transports) {
           for (const transport of transports) {
-            const role = areLivekitTransportsEqual(transport, localTransport)
-              ? ("publisher" as const)
-              : ("subscriber" as const);
-            yield { keys: [role, urlOf(transport)], data: transport };
+            const role =
+              keyFor(transport) === localTransportKey
+                ? ("publisher" as const)
+                : ("subscriber" as const);
+            yield {
+              // In order to maintain a static set of map keys, we must
+              // temporarily serialize `transport` into a stable key format
+              keys: [role, keyFor(transport)],
+              data: undefined,
+            };
           }
         },
-        (scope, transport$, role, _url) => {
+        (scope, _data$, role, transportKey) => {
+          const { transport, serverName } = fromKey(transportKey);
           const connection = connectionFactory.createConnection(
             scope,
             role,
-            transport$.value,
+            transport,
+            serverName,
             ownMembershipIdentity,
             logger,
           );
