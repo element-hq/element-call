@@ -36,7 +36,6 @@ import {
   cameraCodec,
 } from "../../../settings/settings.ts";
 import { testJWTToken } from "../../../utils/test-fixtures.ts";
-import { MatrixRTCMode } from "../../../config/ConfigOptions.ts";
 
 // At the top of your test file, after imports
 vi.mock("livekit-client", async (importOriginal) => {
@@ -85,7 +84,6 @@ describe("ECConnectionFactory - Audio inputs options", () => {
         mockClient,
         "!roomid:example.org",
         "m.call#ROOM",
-        MatrixRTCMode.Matrix_2_0,
         mockMediaDevices({}),
         new BehaviorSubject<ProcessorState>({
           supported: true,
@@ -131,7 +129,6 @@ describe("ECConnectionFactory - ControlledAudioDevice", () => {
         mockClient,
         "!roomid:example.org",
         "m.call#ROOM",
-        MatrixRTCMode.Matrix_2_0,
         mockMediaDevices({
           audioOutput: {
             available$: constant(new Map<never, never>()),
@@ -176,7 +173,6 @@ describe("ECConnectionFactory - Camera quality settings", () => {
       mockClient,
       "!roomid:example.org",
       "m.call#ROOM",
-      MatrixRTCMode.Matrix_2_0,
       mockMediaDevices({}),
       new BehaviorSubject<ProcessorState>({
         supported: true,
@@ -217,7 +213,6 @@ describe("ECConnectionFactory - Camera quality settings", () => {
       mockClient,
       "!roomid:example.org",
       "m.call#ROOM",
-      MatrixRTCMode.Matrix_2_0,
       mockMediaDevices({}),
       new BehaviorSubject<ProcessorState>({
         supported: true,
@@ -259,7 +254,6 @@ describe("ECConnectionFactory - Camera quality settings", () => {
       mockClient,
       "!roomid:example.org",
       "m.call#ROOM",
-      MatrixRTCMode.Matrix_2_0,
       mockMediaDevices({}),
       new BehaviorSubject<ProcessorState>({
         supported: true,

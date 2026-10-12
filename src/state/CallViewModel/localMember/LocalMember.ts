@@ -165,8 +165,6 @@ interface Props {
   hostBridge: HostBridge;
   baseUrl: string;
   delayId$: Behavior<string | null>;
-  /** The MatrixRTC mode, which decides the format of our membership event. */
-  matrixRTCMode: MatrixRTCMode;
   logger: Logger;
 }
 
@@ -214,7 +212,6 @@ export const createLocalMembership$ = ({
   hostBridge,
   ownMembershipIdentity,
   delayId$,
-  matrixRTCMode,
 }: Props): {
   /**
    * This request to start audio and video tracks.
@@ -318,7 +315,7 @@ export const createLocalMembership$ = ({
       switchMap(async ({ transport }) => {
         // Delegation goes through whichever service authenticates us as a
         // publisher, so only that service's support counts
-        const flow = chooseAuthFlow(transport, "publisher", matrixRTCMode);
+        const flow = chooseAuthFlow(transport, "publisher");
         const delegationSupported =
           flow.kind === "openID"
             ? await checkDelegationSupport(
@@ -735,7 +732,6 @@ export const createLocalMembership$ = ({
             slotId: matrixRTCSession.slotId,
             roomId,
             delayId,
-            matrixRTCMode,
             logger,
           });
           logger.info("Delayed leave successfully delegated");

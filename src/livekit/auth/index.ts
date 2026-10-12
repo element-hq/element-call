@@ -14,7 +14,6 @@ import * as openID from "./openID";
 import * as csApi from "./csApi";
 import { type SFUConfig } from "./types";
 import { NoMatrix2AuthorizationService } from "../../utils/errors";
-import { MatrixRTCMode } from "../../config/ConfigOptions";
 
 export type { ClientOpenIDParts } from "./openID";
 export type { ClientGetTokenParts, ClientDelegationParts } from "./csApi";
@@ -80,11 +79,6 @@ export interface GetSFUConfigParams {
    * Whether we want to publish or only subscribe on the {@link transport}.
    */
   role: "publisher" | "subscriber";
-  /**
-   * The MatrixRTC mode, which decides the format of our membership event and
-   * so the participant identity a publisher must have.
-   */
-  matrixRTCMode: MatrixRTCMode;
   logger: Logger;
 }
 
@@ -99,7 +93,6 @@ export async function getSFUConfig({
   roomId,
   slotId,
   role,
-  matrixRTCMode,
   logger,
 }: GetSFUConfigParams): Promise<SFUConfig> {
   const viaOpenID = async (serviceUrl: string): Promise<SFUConfig> =>
@@ -113,7 +106,7 @@ export async function getSFUConfig({
       logger,
     });
 
-  const flow = chooseAuthFlow(transport, role, matrixRTCMode);
+  const flow = chooseAuthFlow(transport, role);
   if (flow.kind === "openID") return await viaOpenID(flow.serviceUrl);
 
   try {
@@ -174,10 +167,6 @@ export interface DelegateDelayedLeaveParams {
    * The delay ID of the leave event to be delegated.
    */
   delayId: string;
-  /**
-   * The MatrixRTC mode, which decides the format of our membership event.
-   */
-  matrixRTCMode: MatrixRTCMode;
   logger: Logger;
 }
 
@@ -192,13 +181,12 @@ export async function delegateDelayedLeave({
   roomId,
   slotId,
   delayId,
-  matrixRTCMode,
   logger,
 }: DelegateDelayedLeaveParams): Promise<void> {
   // It's important that we use the same flow (CS API or OpenID) as whatever we
   // would've used to get a JWT token for this transport, since the participant
   // identity computed by the service needs to match.
-  const flow = chooseAuthFlow(transport, "publisher", matrixRTCMode);
+  const flow = chooseAuthFlow(transport, "publisher");
   if (flow.kind === "csApi") {
     try {
       await csApi.delegateDelayedLeave({
@@ -246,25 +234,19 @@ export type AuthFlow =
  *
  * Only the JWT service's `/sfu/get` endpoint assigns the legacy participant
  * identity that clients predating MSC4195 expect from anyone advertising a
- * membership state event, which is what compatibility mode sends. So a
- * publisher in compatibility mode keeps using the JWT service wherever the
- * transport still offers one, even if it also has a `url`. Subscribers may use
- * the CS API regardless, as nobody matches their identity.
+ * membership state event. So a publisher keeps using the JWT service wherever
+ * the transport still offers one, even if it also has a `url`. Subscribers may
+ * use the CS API regardless, as nobody matches their identity.
  * @param transport The transport to authenticate against.
  * @param role Whether we want to publish or only subscribe on the transport.
- * @param matrixRTCMode The MatrixRTC mode, which decides the format of our
- *   membership event.
  */
 export function chooseAuthFlow(
   transport: UnstableLivekitTransport,
   role: "publisher" | "subscriber",
-  matrixRTCMode: MatrixRTCMode,
 ): AuthFlow {
   if ("url" in transport) {
     const useCsApi =
-      !("livekit_service_url" in transport) ||
-      role === "subscriber" ||
-      matrixRTCMode === MatrixRTCMode.Matrix_2_0;
+      !("livekit_service_url" in transport) || role === "subscriber";
     if (useCsApi) return { kind: "csApi", url: transport.url };
   }
   return { kind: "openID", serviceUrl: transport.livekit_service_url };

@@ -346,27 +346,31 @@ describe("LocalMembership", () => {
     .mockResolvedValue();
   afterEach(() => delegationSpy.mockClear());
 
-  // The transport has both a `url` and a `livekit_service_url`. In Matrix 2.0
-  // mode we publish through the CS API, so the homeserver delegates; in
-  // compatibility mode we publish through the JWT service, so that delegates.
+  const urlOnlyTransport: UnstableLivekitTransport = {
+    type: "livekit",
+    url: "https://sfu.example.org",
+  };
+
+  // With a `url` only we publish through the CS API, so the homeserver
+  // delegates. With a `livekit_service_url` we publish through the JWT
+  // service, so that delegates.
   it.each([
-    ["no", MatrixRTCMode.Compatibility, null, timings],
-    ["no", MatrixRTCMode.Matrix_2_0, null, timings],
+    ["no", mockTransport, null, timings],
     [
       "homeserver",
-      MatrixRTCMode.Matrix_2_0,
+      urlOnlyTransport,
       "https://matrix.example.org/_matrix/client/unstable/io.element.msc4195/rtc/livekit/delegate_delayed_leave",
       delegatedTimings,
     ],
     [
       "transport",
-      MatrixRTCMode.Compatibility,
+      mockTransport,
       "https://jwt.example.org/delegate_delayed_leave",
       delegatedTimings,
     ],
   ])(
-    "joins session with %s delegation support in %s mode",
-    async (_serviceName, matrixRTCMode, delegationUrl, delayedLeaveTimings) => {
+    "joins session with %s delegation support",
+    async (_serviceName, transport, delegationUrl, delayedLeaveTimings) => {
       const scope = testScope();
       const joinMatrixRTC = vi.fn();
       const delayId$ = new BehaviorSubject<string | null>(null);
@@ -375,15 +379,17 @@ describe("LocalMembership", () => {
         fetchMock.post(delegationUrl, () => ({ status: 401, body: {} }));
 
       const connectionMap = new ConnectionMap();
-      connectionMap.add(connectionTransportAConnected, []);
+      connectionMap.add(
+        { ...connectionTransportAConnected, transport } as Connection,
+        [],
+      );
       const localMembership = createLocalMembership$({
         scope,
         ...defaultCreateLocalMemberValues,
         connectionMap$: constant(new Epoch(connectionMap)),
         joinMatrixRTC,
-        localTransport$: constant(mockTransportLocator),
+        localTransport$: constant({ transport, serverName: "example.org" }),
         delayId$,
-        matrixRTCMode,
       });
 
       localMembership.requestJoinAndPublish();
@@ -391,7 +397,7 @@ describe("LocalMembership", () => {
       await flushPromises();
       // Joins with timings appropriate for the level of delegation support
       expect(joinMatrixRTC).toHaveBeenCalledWith(
-        mockTransport,
+        transport,
         delayedLeaveTimings,
       );
 
@@ -407,10 +413,9 @@ describe("LocalMembership", () => {
           expect(delegationSpy).toHaveBeenLastCalledWith({
             client: mockedClient,
             membership: ownMemberMock,
-            transport: mockTransport,
+            transport,
             roomId: "!test-room-id:example.org",
             delayId,
-            matrixRTCMode,
             logger: expect.anything(),
           });
 

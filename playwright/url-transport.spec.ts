@@ -54,21 +54,20 @@ const cases: {
     guestFlows: ["cs-api"],
   },
   {
-    // In compatibility mode both publish a membership state event, so both
-    // must keep the legacy participant identity that clients predating MSC4195
-    // expect, which only the JWT service assigns.
+    // Publishers keep the legacy participant identity that clients predating
+    // MSC4195 expect, which only the JWT service assigns.
     hostShape: "both",
     guestShape: "both",
     hostFlows: ["service-legacy"],
     guestFlows: ["service-legacy"],
   },
   {
-    // In Matrix 2.0 mode nobody expects a legacy identity, so the CS API wins.
+    // The MatrixRTC mode has no bearing on the choice.
     hostShape: "both",
     guestShape: "both",
     mode: "2_0",
-    hostFlows: ["cs-api"],
-    guestFlows: ["cs-api"],
+    hostFlows: ["service-legacy"],
+    guestFlows: ["service-legacy"],
   },
   {
     hostShape: "url",

@@ -531,7 +531,6 @@ export const DeveloperSettingsTab: FC<Props> = ({
                 roomId,
                 slotId: "org.example.fake-slot#room",
                 role: "publisher",
-                matrixRTCMode: effectiveMatrixRTCMode,
                 logger,
               });
               setCustomLivekitUrlUpdateError(null);
@@ -542,13 +541,7 @@ export const DeveloperSettingsTab: FC<Props> = ({
               );
             }
           },
-          [
-            customTransportTextBuffer,
-            setCustomTransport,
-            client,
-            roomId,
-            effectiveMatrixRTCMode,
-          ],
+          [customTransportTextBuffer, setCustomTransport, client, roomId],
         )}
         value={customTransportTextBuffer ?? ""}
         onChange={useCallback(

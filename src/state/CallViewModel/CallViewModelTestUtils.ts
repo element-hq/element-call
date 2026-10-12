@@ -230,7 +230,6 @@ export function withCallViewModel(mode: MatrixRTCMode) {
                 client: room.client,
                 roomId: room.roomId,
                 slotId: "m.call#ROOM",
-                matrixRTCMode: mode,
                 livekitRoomFactory,
               },
               logger,
