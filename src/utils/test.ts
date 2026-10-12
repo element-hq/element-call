@@ -261,11 +261,12 @@ export function mockRtcMembership(
     content: data,
   });
 
-  const membershipData = CallMembership.membershipDataFromMatrixEvent(event);
+  const backendIdentity = rtcBackendIdentity ?? `${userId}:${deviceId}`;
   const cms = new CallMembership(
     event,
-    membershipData,
-    rtcBackendIdentity ?? `${userId}:${deviceId}`,
+    CallMembership.membershipDataFromMatrixEvent(event),
+    [backendIdentity],
+    backendIdentity,
   );
   vi.mocked(cms).getTransport = vi.fn().mockReturnValue(fociPreferred[0]);
 

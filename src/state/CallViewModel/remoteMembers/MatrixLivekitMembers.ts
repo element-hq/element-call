@@ -111,8 +111,8 @@ export function createRemoteMatrixLivekitMembers$({
             const participants = transport
               ? managerData.getParticipantsForTransport(transport)
               : [];
-            const matches = participants.filter(
-              (p) => p.identity == membership.rtcBackendIdentity,
+            const matches = participants.filter((p) =>
+              membership.backendIdentities.includes(p.identity),
             );
             const participant = matches[0] ?? null;
             const connection = transport
