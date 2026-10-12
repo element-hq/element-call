@@ -44,7 +44,9 @@ jobs:
           node-version-file: ".node-version"
       - name: Install dependencies
         # ignore-pnpmfile should never be commited. Make CI crash if it happened (`pnpmfileChecksum` is present)
-        run: "pnpm install --frozen-lockfile --ignore-pnpmfile"
+        run: "scripts/layered.sh --ignore-pnpmfile"
+        env:
+          PR_HEAD_REPO_OWNER: ${{ github.event.pull_request.head.repo.owner.login }}
       - name: Build Element Call
         run: pnpm run build:"$PACKAGE":"$BUILD_MODE"
         env:

@@ -60,6 +60,21 @@ git config --local core.hooksPath .githooks
 
 This will add the hook path for this repository only to .gihooks. which is a tracked (by git) folder containing the pre-commit hook.
 
+## Testing against a matrix-js-sdk branch in CI
+
+Linking covers local development. In CI, `scripts/layered.sh` plays the same
+role for `matrix-js-sdk`: after the usual frozen install, `scripts/fetchdep.sh`
+looks for a matrix-js-sdk branch with the same name as the pull request's head
+branch (in the fork first, when the pull request comes from one). If there is
+one, it is cloned, packed and installed over the locked version. If there is
+none, the install stays as `pnpm-lock.yaml` pins it.
+
+This means a change that needs a not yet merged matrix-js-sdk change can be tested
+by giving both branches the same name. This mirrors how element-web tests against
+matrix-js-sdk. Once the matrix-js-sdk branch is merged and deleted, the pull
+request falls back to the lockfile and needs a lockfile bump to stay green,
+which is also what keeps `main` consistent after the merge.
+
 ## Background
 
 Information, why this approach is used can be found in the [linking concept reasoning](./linking_concept_reasoning.md) document.

@@ -132,10 +132,10 @@ importers:
         version: 10.3.1(react@19.2.8)
       '@vector-im/compound-design-tokens':
         specifier: ^11.0.0
-        version: 11.0.0(@types/react@19.2.18)(react@19.2.8)
+        version: 11.2.0(@types/react@19.2.18)(react@19.2.8)
       '@vector-im/compound-web':
-        specifier: ^10.0.0
-        version: 10.1.0(@fontsource/inconsolata@5.3.0)(@fontsource/inter@5.3.0)(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(@vector-im/compound-design-tokens@11.0.0(@types/react@19.2.18)(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        specifier: ^10.4.0
+        version: 10.4.0(@fontsource/inconsolata@5.3.0)(@fontsource/inter@5.3.0)(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(@vector-im/compound-design-tokens@11.2.0(@types/react@19.2.18)(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@vitejs/plugin-react':
         specifier: ^6.0.2
         version: 6.1.1(@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7(supports-color@7.2.0))(@babel/runtime@8.0.0)(rolldown@1.2.7)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.103.1)(terser@5.46.1)(yaml@2.9.0)))(babel-plugin-react-compiler@1.0.0)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.103.1)(terser@5.46.1)(yaml@2.9.0))
@@ -222,7 +222,7 @@ importers:
         version: 10.6.1(postcss@8.5.26)
       postcss-selector-parser:
         specifier: ^7.1.1
-        version: 7.1.3
+        version: 7.1.6
       posthog-js:
         specifier: 1.408.2
         version: 1.408.2
@@ -268,9 +268,6 @@ importers:
       vite:
         specifier: ^8.0.0
         version: 8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.103.1)(terser@5.46.1)(yaml@2.9.0)
-      vite-plugin-generate-file:
-        specifier: ^0.3.0
-        version: 0.3.1
       vite-plugin-html:
         specifier: ^3.2.2
         version: 3.2.2(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.103.1)(terser@5.46.1)(yaml@2.9.0))
@@ -3226,8 +3223,8 @@ packages:
     peerDependencies:
       react: '>= 16.8.0'
 
-  '@vector-im/compound-design-tokens@11.0.0':
-    resolution: {integrity: sha512-pWz0Q67Xbo8gwzaTeFbTTcM6i29ju6PR7SqyuExr2nIV3j9K785cOInft8FA2CM7PEapkr6TRtJKR/4xtWh2RA==}
+  '@vector-im/compound-design-tokens@11.2.0':
+    resolution: {integrity: sha512-XGwO63ZqFVXdkhCVLm3wa/tpx2Lw8pyaQYskObrLZIUkjs3aUmgq8CNhGcjkqRJXYGsLNJE2azov4DaM74h2PQ==}
     peerDependencies:
       '@adobe/leonardo-contrast-colors': ^1.0.0
       '@types/react': '*'
@@ -3243,13 +3240,13 @@ packages:
       react:
         optional: true
 
-  '@vector-im/compound-web@10.1.0':
-    resolution: {integrity: sha512-Lhw9Q+RZo1GtDYjF5PXWTD0zdfbrz/vnSVBYFHC8Hq+YeDule2QfGbTRo8IVHeV7jK6ZzsLc8zb6553eeIRLYg==}
+  '@vector-im/compound-web@10.4.0':
+    resolution: {integrity: sha512-Tt5hsNK7ulhGdRuy9lzSm5C+T8M/4O4kLDFLkaU+Hi1kVWj6tj/5awW+U+GvtpWRh5llbHN2HRCh79+gQhek+A==}
     peerDependencies:
       '@fontsource/inconsolata': ^5
       '@fontsource/inter': ^5
       '@types/react': '*'
-      '@vector-im/compound-design-tokens': '>=1.6.1 <11.0.0'
+      '@vector-im/compound-design-tokens': '>=1.6.1 <12.0.0'
       react: ^18 || ^19.0.0
     peerDependenciesMeta:
       '@types/react':
@@ -4465,10 +4462,6 @@ packages:
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
 
-  js-yaml@4.3.0:
-    resolution: {integrity: sha512-1td788aAnnZ5qs7V2QIRl1owjtYpbKt749Y3xauqQgwIIGF/xXWz1wMTEBx5O3LK3lXLVuqXPdPxj2BoFHaW9Q==}
-    hasBin: true
-
   js-yaml@4.3.1:
     resolution: {integrity: sha512-CY6crGq313MX8GkwvB7tzgp99vjQxY1++5y10/BKN/GUfHqWaOGQMNZkBvqSzsZKWk/ijwHlWzzkLulsGHhjWQ==}
     hasBin: true
@@ -4702,14 +4695,6 @@ packages:
   miller-rabin@4.0.1:
     resolution: {integrity: sha512-115fLhvZVqWwHPbClyntxEVfVDfl9DLLTuJvq3g2O/Oxi8AiNouAHvDSzHS0viUJc+V5vm3eq91Xwqn9dp4jRA==}
     hasBin: true
-
-  mime-db@1.52.0:
-    resolution: {integrity: sha512-sPU4uV7dYlvtWJxwwxHD0PuihVNiE7TyAbQ5SWxDCB9mUYvOgroQOwYQQOKPJ8CIbE+1ETVlOoK1UC2nU3gYvg==}
-    engines: {node: '>= 0.6'}
-
-  mime-types@2.1.35:
-    resolution: {integrity: sha512-ZDY+bPm5zTTF+YpCrAU9nK0UgICYPT0QtT1NZWFv4s++TNkcgVaT0g6+4R2uI4MjQjzysHB1zxuWL50hzaeXiw==}
-    engines: {node: '>= 0.6'}
 
   mimic-function@5.0.1:
     resolution: {integrity: sha512-VP79XUPxV2CigYP3jWwAUFSku2aKqBH7uTAapFWCBqutsbmDo96KY5o8uh6U+/YSIn5OxJnXp73beVkpqMIGhA==}
@@ -5175,8 +5160,8 @@ packages:
     peerDependencies:
       postcss: ^8.4
 
-  postcss-selector-parser@7.1.3:
-    resolution: {integrity: sha512-ajnd7iZnqjJDkyHNfznl/ZVO0lWqvBmQXfKKENx9/p/bEiF/L3eHwdydNUg9RXZx6xfZWOCmXmBa5oeB+YrAPQ==}
+  postcss-selector-parser@7.1.6:
+    resolution: {integrity: sha512-7qASPzhKF2l2KLboRZux8CCTRMdGiV08vWmyKzPz22qZ7ZjQBOeY7rNzNoCLSUiftJ7HUq0GERHmxw/t0dCdMw==}
     engines: {node: '>=4'}
 
   postcss-value-parser@4.2.0:
@@ -5904,9 +5889,6 @@ packages:
       react: ^16.8 || ^17.0 || ^18.0 || ^19.0.0 || ^19.0.0-rc
       react-dom: ^16.8 || ^17.0 || ^18.0 || ^19.0.0 || ^19.0.0-rc
 
-  vite-plugin-generate-file@0.3.1:
-    resolution: {integrity: sha512-tiA3gkPM21MS2+RyqsBMT33GSlM9LM1TJjf6vGvV/e/ml3e3vTKfuH3l2N0NpUgcayvj1fXnmlo5YBuahA6bsg==}
-
   vite-plugin-html@3.2.2:
     resolution: {integrity: sha512-vb9C9kcdzcIo/Oc3CLZVS03dL5pDlOFuhGlZYDCJ840BhWl/0nGeZWf3Qy7NlOayscY4Cm/QRgULCQkEZige5Q==}
     peerDependencies:
@@ -6415,9 +6397,9 @@ snapshots:
 
   '@csstools/postcss-cascade-layers@5.0.2(postcss@8.5.26)':
     dependencies:
-      '@csstools/selector-specificity': 5.0.0(postcss-selector-parser@7.1.3)
+      '@csstools/selector-specificity': 5.0.0(postcss-selector-parser@7.1.6)
       postcss: 8.5.26
-      postcss-selector-parser: 7.1.3
+      postcss-selector-parser: 7.1.6
 
   '@csstools/postcss-color-function-display-p3-linear@1.0.1(postcss@8.5.26)':
     dependencies:
@@ -6523,9 +6505,9 @@ snapshots:
 
   '@csstools/postcss-is-pseudo-class@5.0.3(postcss@8.5.26)':
     dependencies:
-      '@csstools/selector-specificity': 5.0.0(postcss-selector-parser@7.1.3)
+      '@csstools/selector-specificity': 5.0.0(postcss-selector-parser@7.1.6)
       postcss: 8.5.26
-      postcss-selector-parser: 7.1.3
+      postcss-selector-parser: 7.1.6
 
   '@csstools/postcss-light-dark-function@2.0.11(postcss@8.5.26)':
     dependencies:
@@ -6627,7 +6609,7 @@ snapshots:
   '@csstools/postcss-scope-pseudo-class@4.0.1(postcss@8.5.26)':
     dependencies:
       postcss: 8.5.26
-      postcss-selector-parser: 7.1.3
+      postcss-selector-parser: 7.1.6
 
   '@csstools/postcss-sign-functions@1.1.4(postcss@8.5.26)':
     dependencies:
@@ -6671,13 +6653,13 @@ snapshots:
     dependencies:
       postcss: 8.5.26
 
-  '@csstools/selector-resolve-nested@3.1.0(postcss-selector-parser@7.1.3)':
+  '@csstools/selector-resolve-nested@3.1.0(postcss-selector-parser@7.1.6)':
     dependencies:
-      postcss-selector-parser: 7.1.3
+      postcss-selector-parser: 7.1.6
 
-  '@csstools/selector-specificity@5.0.0(postcss-selector-parser@7.1.3)':
+  '@csstools/selector-specificity@5.0.0(postcss-selector-parser@7.1.6)':
     dependencies:
-      postcss-selector-parser: 7.1.3
+      postcss-selector-parser: 7.1.6
 
   '@csstools/utilities@2.0.0(postcss@8.5.26)':
     dependencies:
@@ -8685,12 +8667,12 @@ snapshots:
       '@use-gesture/core': 10.3.1
       react: 19.2.8
 
-  '@vector-im/compound-design-tokens@11.0.0(@types/react@19.2.18)(react@19.2.8)':
+  '@vector-im/compound-design-tokens@11.2.0(@types/react@19.2.18)(react@19.2.8)':
     optionalDependencies:
       '@types/react': 19.2.18
       react: 19.2.8
 
-  '@vector-im/compound-web@10.1.0(@fontsource/inconsolata@5.3.0)(@fontsource/inter@5.3.0)(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(@vector-im/compound-design-tokens@11.0.0(@types/react@19.2.18)(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@vector-im/compound-web@10.4.0(@fontsource/inconsolata@5.3.0)(@fontsource/inter@5.3.0)(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(@vector-im/compound-design-tokens@11.2.0(@types/react@19.2.18)(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
       '@floating-ui/react': 0.27.20(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@floating-ui/react-dom': 2.1.9(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -8702,7 +8684,7 @@ snapshots:
       '@radix-ui/react-progress': 1.1.16(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@radix-ui/react-separator': 1.1.15(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@radix-ui/react-slot': 1.3.3(@types/react@19.2.18)(react@19.2.8)
-      '@vector-im/compound-design-tokens': 11.0.0(@types/react@19.2.18)(react@19.2.8)
+      '@vector-im/compound-design-tokens': 11.2.0(@types/react@19.2.18)(react@19.2.8)
       classnames: 2.5.1
       react: 19.2.8
       vaul: 1.1.2(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -9234,13 +9216,13 @@ snapshots:
   css-blank-pseudo@7.0.1(postcss@8.5.26):
     dependencies:
       postcss: 8.5.26
-      postcss-selector-parser: 7.1.3
+      postcss-selector-parser: 7.1.6
 
   css-has-pseudo@7.0.3(postcss@8.5.26):
     dependencies:
-      '@csstools/selector-specificity': 5.0.0(postcss-selector-parser@7.1.3)
+      '@csstools/selector-specificity': 5.0.0(postcss-selector-parser@7.1.6)
       postcss: 8.5.26
-      postcss-selector-parser: 7.1.3
+      postcss-selector-parser: 7.1.6
       postcss-value-parser: 4.2.0
 
   css-prefers-color-scheme@10.0.0(postcss@8.5.26):
@@ -10034,10 +10016,6 @@ snapshots:
 
   js-tokens@4.0.0: {}
 
-  js-yaml@4.3.0:
-    dependencies:
-      argparse: 2.0.1
-
   js-yaml@4.3.1:
     dependencies:
       argparse: 2.0.1
@@ -10285,12 +10263,6 @@ snapshots:
     dependencies:
       bn.js: 4.12.3
       brorand: 1.1.0
-
-  mime-db@1.52.0: {}
-
-  mime-types@2.1.35:
-    dependencies:
-      mime-db: 1.52.0
 
   mimic-function@5.0.1: {}
 
@@ -10694,7 +10666,7 @@ snapshots:
   postcss-attribute-case-insensitive@7.0.1(postcss@8.5.26):
     dependencies:
       postcss: 8.5.26
-      postcss-selector-parser: 7.1.3
+      postcss-selector-parser: 7.1.6
 
   postcss-clamp@4.1.0(postcss@8.5.26):
     dependencies:
@@ -10745,12 +10717,12 @@ snapshots:
       '@csstools/css-parser-algorithms': 3.0.5(@csstools/css-tokenizer@3.0.4)
       '@csstools/css-tokenizer': 3.0.4
       postcss: 8.5.26
-      postcss-selector-parser: 7.1.3
+      postcss-selector-parser: 7.1.6
 
   postcss-dir-pseudo-class@9.0.1(postcss@8.5.26):
     dependencies:
       postcss: 8.5.26
-      postcss-selector-parser: 7.1.3
+      postcss-selector-parser: 7.1.6
 
   postcss-double-position-gradients@6.0.4(postcss@8.5.26):
     dependencies:
@@ -10762,12 +10734,12 @@ snapshots:
   postcss-focus-visible@10.0.1(postcss@8.5.26):
     dependencies:
       postcss: 8.5.26
-      postcss-selector-parser: 7.1.3
+      postcss-selector-parser: 7.1.6
 
   postcss-focus-within@9.0.1(postcss@8.5.26):
     dependencies:
       postcss: 8.5.26
-      postcss-selector-parser: 7.1.3
+      postcss-selector-parser: 7.1.6
 
   postcss-font-variant@5.0.0(postcss@8.5.26):
     dependencies:
@@ -10799,10 +10771,10 @@ snapshots:
 
   postcss-nesting@13.0.2(postcss@8.5.26):
     dependencies:
-      '@csstools/selector-resolve-nested': 3.1.0(postcss-selector-parser@7.1.3)
-      '@csstools/selector-specificity': 5.0.0(postcss-selector-parser@7.1.3)
+      '@csstools/selector-resolve-nested': 3.1.0(postcss-selector-parser@7.1.6)
+      '@csstools/selector-specificity': 5.0.0(postcss-selector-parser@7.1.6)
       postcss: 8.5.26
-      postcss-selector-parser: 7.1.3
+      postcss-selector-parser: 7.1.6
 
   postcss-opacity-percentage@3.0.0(postcss@8.5.26):
     dependencies:
@@ -10900,7 +10872,7 @@ snapshots:
   postcss-pseudo-class-any-link@10.0.1(postcss@8.5.26):
     dependencies:
       postcss: 8.5.26
-      postcss-selector-parser: 7.1.3
+      postcss-selector-parser: 7.1.6
 
   postcss-replace-overflow-wrap@4.0.0(postcss@8.5.26):
     dependencies:
@@ -10909,9 +10881,9 @@ snapshots:
   postcss-selector-not@8.0.1(postcss@8.5.26):
     dependencies:
       postcss: 8.5.26
-      postcss-selector-parser: 7.1.3
+      postcss-selector-parser: 7.1.6
 
-  postcss-selector-parser@7.1.3:
+  postcss-selector-parser@7.1.6:
     dependencies:
       cssesc: 3.0.0
       util-deprecate: 1.0.2
@@ -11651,13 +11623,6 @@ snapshots:
     transitivePeerDependencies:
       - '@types/react'
       - '@types/react-dom'
-
-  vite-plugin-generate-file@0.3.1:
-    dependencies:
-      ejs: 3.1.10
-      js-yaml: 4.3.0
-      mime-types: 2.1.35
-      picocolors: 1.1.1
 
   vite-plugin-html@3.2.2(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.103.1)(terser@5.46.1)(yaml@2.9.0)):
     dependencies:
