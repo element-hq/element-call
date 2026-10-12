@@ -14,7 +14,7 @@ import EventEmitter from "events";
 
 import { ObservableScope } from "../../ObservableScope.ts";
 import { ECConnectionFactory } from "./ConnectionFactory.ts";
-import type { OpenIDClientParts } from "../../../livekit/openIDSFU.ts";
+import { type ClientOpenIDParts } from "../../../livekit/auth";
 import {
   exampleTransport,
   mockMediaDevices,
@@ -51,13 +51,12 @@ vi.mock("livekit-client", async (importOriginal) => {
 });
 
 let testScope: ObservableScope;
-let mockClient: OpenIDClientParts;
+let mockClient: ClientOpenIDParts;
 
 beforeEach(() => {
   testScope = new ObservableScope();
   mockClient = {
     getOpenIdToken: vi.fn().mockReturnValue(""),
-    getDeviceId: vi.fn().mockReturnValue("DEV000"),
   };
 });
 
@@ -79,6 +78,7 @@ describe("ECConnectionFactory - Audio inputs options", () => {
       const ecConnectionFactory = new ECConnectionFactory(
         mockClient,
         "!roomid:example.org",
+        "m.call#ROOM",
         mockMediaDevices({}),
         new BehaviorSubject<ProcessorState>({
           supported: true,
@@ -121,6 +121,7 @@ describe("ECConnectionFactory - ControlledAudioDevice", () => {
       const ecConnectionFactory = new ECConnectionFactory(
         mockClient,
         "!roomid:example.org",
+        "m.call#ROOM",
         mockMediaDevices({
           audioOutput: {
             available$: constant(new Map<never, never>()),
@@ -162,6 +163,7 @@ describe("ECConnectionFactory - Camera quality settings", () => {
     const ecConnectionFactory = new ECConnectionFactory(
       mockClient,
       "!roomid:example.org",
+      "m.call#ROOM",
       mockMediaDevices({}),
       new BehaviorSubject<ProcessorState>({
         supported: true,
@@ -199,6 +201,7 @@ describe("ECConnectionFactory - Camera quality settings", () => {
     const ecConnectionFactory = new ECConnectionFactory(
       mockClient,
       "!roomid:example.org",
+      "m.call#ROOM",
       mockMediaDevices({}),
       new BehaviorSubject<ProcessorState>({
         supported: true,
@@ -237,6 +240,7 @@ describe("ECConnectionFactory - Camera quality settings", () => {
     const ecConnectionFactory = new ECConnectionFactory(
       mockClient,
       "!roomid:example.org",
+      "m.call#ROOM",
       mockMediaDevices({}),
       new BehaviorSubject<ProcessorState>({
         supported: true,

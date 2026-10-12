@@ -18,7 +18,6 @@ import {
 } from "./DeveloperSettingsTab";
 import { outOfCallDeveloperSettingsTabViewModel } from "./DeveloperSettingsTabViewModel";
 import { createStaticViewModel } from "../state/ViewModel";
-import { getSFUConfigWithOpenID } from "../livekit/openIDSFU";
 import {
   customLivekitUrl as customLivekitUrlSetting,
   enableExtendedLivekitLogs as enableExtendedLivekitLogsSetting,
@@ -26,6 +25,7 @@ import {
 } from "./settings";
 import { MatrixRTCMode } from "../config/ConfigOptions";
 import { mockConfig } from "../utils/test";
+import { getSFUConfig } from "../livekit/auth";
 
 // Mock url params hook to avoid environment-dependent snapshot churn.
 vi.mock("../UrlParams", () => ({
@@ -36,8 +36,8 @@ vi.mock("../UrlParams", () => ({
 }));
 
 // IMPORTANT: mock the same specifier used by DeveloperSettingsTab
-vi.mock("../livekit/openIDSFU", () => ({
-  getSFUConfigWithOpenID: vi.fn().mockResolvedValue({
+vi.mock("../livekit/auth", () => ({
+  getSFUConfig: vi.fn().mockResolvedValue({
     url: "mock-url",
     jwt: "mock-jwt",
   }),
@@ -153,7 +153,7 @@ describe("DeveloperSettingsTab", () => {
 
       const saveButton = screen.getByRole("button", { name: "Save" });
       await user.click(saveButton);
-      expect(getSFUConfigWithOpenID).not.toHaveBeenCalled();
+      expect(getSFUConfig).not.toHaveBeenCalled();
 
       expect(customLivekitUrlSetting.getValue()).toBe(null);
     });
@@ -176,7 +176,7 @@ describe("DeveloperSettingsTab", () => {
 
       const saveButton = screen.getByRole("button", { name: "Save" });
       await user.click(saveButton);
-      expect(getSFUConfigWithOpenID).not.toHaveBeenCalled();
+      expect(getSFUConfig).not.toHaveBeenCalled();
 
       expect(customLivekitUrlSetting.getValue()).toBe(null);
     });
@@ -202,7 +202,7 @@ describe("DeveloperSettingsTab", () => {
         name: "Reset overwrite",
       });
       await user.click(cancelButton);
-      expect(getSFUConfigWithOpenID).not.toHaveBeenCalled();
+      expect(getSFUConfig).not.toHaveBeenCalled();
 
       expect(customLivekitUrlSetting.getValue()).toBe(null);
     });
@@ -226,11 +226,11 @@ describe("DeveloperSettingsTab", () => {
 
       const saveButton = screen.getByRole("button", { name: "Save" });
       await user.click(saveButton);
-      expect(getSFUConfigWithOpenID).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.anything(),
-        "wss://example.livekit.valid",
-        "#testRoom",
+      expect(getSFUConfig).toHaveBeenCalledWith(
+        expect.objectContaining({
+          serviceUrl: "wss://example.livekit.valid",
+          roomId: "#testRoom",
+        }),
       );
 
       expect(customLivekitUrlSetting.getValue()).toBe(
@@ -256,7 +256,7 @@ describe("DeveloperSettingsTab", () => {
       await user.type(input, "wss://example.livekit.valid");
 
       const saveButton = screen.getByRole("button", { name: "Save" });
-      (getSFUConfigWithOpenID as Mock).mockImplementation(() => {
+      (getSFUConfig as Mock).mockImplementation(() => {
         throw new Error("Invalid URL");
       });
       await user.click(saveButton);

@@ -67,9 +67,9 @@ import styles from "./DeveloperSettingsTab.module.css";
 import settingsStyles from "./SettingsModal.module.css";
 import { Slider } from "../Slider";
 import { useUrlParams } from "../UrlParams";
-import { getSFUConfigWithOpenID } from "../livekit/openIDSFU";
 import { useBehavior } from "../useBehavior";
 import { type ViewModel } from "../state/ViewModel.ts";
+import { getSFUConfig } from "../livekit/auth/index.ts";
 
 /**
  * The state of MatrixRTC's media key rotation.
@@ -518,12 +518,15 @@ export const DeveloperSettingsTab: FC<Props> = ({
               if (userId === null || deviceId === null) {
                 throw new Error("Invalid user or device ID");
               }
-              await getSFUConfigWithOpenID(
+              await getSFUConfig({
                 client,
-                { userId, deviceId, memberId: "" },
-                customLivekitUrlTextBuffer,
+                membership: { userId, deviceId, memberId: "" },
+                serviceUrl: customLivekitUrlTextBuffer,
                 roomId,
-              );
+                slotId: "org.example.fake-slot#room",
+                role: "publisher",
+                logger,
+              });
               setCustomLivekitUrlUpdateError(null);
               setCustomLivekitUrl(customLivekitUrlTextBuffer);
             } catch {

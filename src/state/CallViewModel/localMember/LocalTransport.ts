@@ -17,21 +17,20 @@ import {
   NoMatrix2AuthorizationService,
 } from "../../../utils/errors.ts";
 import {
-  getSFUConfigWithOpenID,
+  getSFUConfig,
   type SFUConfig,
-  type OpenIDClientParts,
-} from "../../../livekit/openIDSFU.ts";
+  type ClientOpenIDParts,
+} from "../../../livekit/auth";
 import { customLivekitUrl } from "../../../settings/settings.ts";
 import { RtcTransportAutoDiscovery } from "./RtcTransportAutoDiscovery.ts";
-import { type MatrixRTCMode } from "../../../config/ConfigOptions.ts";
 
 interface Props {
   ownMembershipIdentity: CallMembershipIdentityParts;
   client: Pick<MatrixClient, "getDomain" | "_unstable_getRTCTransports"> &
-    OpenIDClientParts;
+    ClientOpenIDParts;
   // Used by the jwt service to create the livekit room and compute the livekit alias.
   roomId: string;
-  matrixRTCMode: MatrixRTCMode;
+  slotId: string;
 }
 
 export interface LocalTransport {
@@ -58,7 +57,7 @@ export async function getLocalTransport({
   ownMembershipIdentity,
   client,
   roomId,
-  matrixRTCMode,
+  slotId,
 }: Props): Promise<LocalTransport> {
   const logger = rootLogger.getChild("[LocalTransport]");
   const discovery = new RtcTransportAutoDiscovery({
@@ -79,9 +78,9 @@ export async function getLocalTransport({
   try {
     return await doOpenIdAndJWTFromUrl(
       transport,
-      matrixRTCMode,
       ownMembershipIdentity,
       roomId,
+      slotId,
       client,
       logger,
     );
@@ -96,35 +95,36 @@ export async function getLocalTransport({
 
 /**
  *  Utility to ensure the user can authenticate with the SFU.
- *  We will call `getSFUConfigWithOpenID` once per transport here as it's our
+ *  We will call `getSFUConfig` once per transport here as it's our
  *  only mechanism of validation. This means we will also ask the
  *  homeserver for a OpenID token a few times. Since OpenID tokens are single
  *  use we don't want to risk any issues by re-using a token.
  *
  *  @param transport The transport to authenticate with.
- *  @param matrixRTCMode Whether to force the JWT endpoint to be used.
  *  @param membership The identity of the local member.
  *  @param roomId The room ID to use for the JWT.
+ *  @param slotId The slot ID to use for the JWT.
  *  @param client The client to use for the OpenID token.
  *
  *  @throws FailToGetOpenIdToken, NoMatrix2AuthorizationService
  */
 async function doOpenIdAndJWTFromUrl(
   transport: LivekitTransport,
-  matrixRTCMode: MatrixRTCMode,
   membership: CallMembershipIdentityParts,
   roomId: string,
-  client: Pick<MatrixClient, "_unstable_getRTCTransports"> & OpenIDClientParts,
-  logger?: Logger,
+  slotId: string,
+  client: Pick<MatrixClient, "_unstable_getRTCTransports"> & ClientOpenIDParts,
+  logger: Logger,
 ): Promise<LocalTransport> {
-  const sfuConfig = await getSFUConfigWithOpenID(
+  const sfuConfig = await getSFUConfig({
     client,
     membership,
-    transport.livekit_service_url,
+    serviceUrl: transport.livekit_service_url,
     roomId,
-    { matrixRTCMode },
+    slotId,
+    role: "publisher",
     logger,
-  );
+  });
   return {
     transport,
     sfuConfig,

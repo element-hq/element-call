@@ -16,7 +16,6 @@ import {
   MediaDeviceFailure,
 } from "livekit-client";
 import { observeParticipantEvents } from "@livekit/components-core";
-import { type MatrixClient } from "matrix-js-sdk";
 import {
   Status as RTCSessionStatus,
   type LivekitTransport,
@@ -80,7 +79,7 @@ import {
 } from "../remoteMembers/Connection.ts";
 import { type HomeserverConnected } from "./HomeserverConnected.ts";
 import { type LocalTransport } from "./LocalTransport.ts";
-import { getSFUConfigWithOpenID } from "../../../livekit/openIDSFU.ts";
+import { type ClientOpenIDParts, getSFUConfig } from "../../../livekit/auth";
 
 export enum TransportState {
   /** Not even a transport is available to the LocalMembership */
@@ -150,15 +149,17 @@ interface Props {
   roomId: string;
   ownMembershipIdentity: CallMembershipIdentityParts;
   localTransport$: Observable<LocalTransport>;
-  client: Pick<MatrixClient, "getDeviceId" | "getOpenIdToken">;
-  matrixRTCSession: Pick<MatrixRTCSession, "updateCallIntent" | "leave">;
+  client: ClientOpenIDParts;
+  matrixRTCSession: Pick<
+    MatrixRTCSession,
+    "slotId" | "updateCallIntent" | "leave"
+  >;
   /** Whether to hide the screen-sharing button. */
   hideScreensharing: boolean;
   /** The application hosting Element Call, to be kept informed of join/leave. */
   hostBridge: HostBridge;
   baseUrl: string;
   delayId$: Behavior<string | null>;
-  matrixRTCMode: MatrixRTCMode;
   logger: Logger;
 }
 
@@ -206,7 +207,6 @@ export const createLocalMembership$ = ({
   hostBridge,
   ownMembershipIdentity,
   delayId$,
-  matrixRTCMode,
 }: Props): {
   /**
    * This request to start audio and video tracks.
@@ -713,14 +713,17 @@ export const createLocalMembership$ = ({
           // This will technically cause the service to issue a new JWT token,
           // but it's safe to discard. We're only interested in triggering
           // delegation.
-          await getSFUConfigWithOpenID(
+          await getSFUConfig({
             client,
-            ownMembershipIdentity,
-            joinParams.transport.livekit_service_url,
+            membership: ownMembershipIdentity,
+            serviceUrl: joinParams.transport.livekit_service_url,
             roomId,
-            { matrixRTCMode, delayEndpointBaseUrl: baseUrl, delayId },
+            slotId: matrixRTCSession.slotId,
+            role: "publisher",
+            delayEndpointBaseUrl: baseUrl,
+            delayId,
             logger,
-          );
+          });
         } catch (e) {
           // TODO: Surface this to the user as a service interruption?
           logger.error(

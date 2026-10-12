@@ -20,10 +20,6 @@ import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 
 import { type ObservableScope } from "../../ObservableScope.ts";
 import { Connection } from "./Connection.ts";
-import type {
-  OpenIDClientParts,
-  SFUConfig,
-} from "../../../livekit/openIDSFU.ts";
 import type { MediaDevices } from "../../MediaDevices.ts";
 import type { Behavior } from "../../Behavior.ts";
 import type { ProcessorState } from "../../../livekit/TrackProcessorContext.tsx";
@@ -39,6 +35,7 @@ import {
   noiseSuppressionSetting,
   autoGainControlSetting,
 } from "../../../settings/settings.ts";
+import { type ClientOpenIDParts, type SFUConfig } from "../../../livekit/auth";
 
 // TODO evaluate if this should be done like the Publisher Factory
 export interface ConnectionFactory {
@@ -58,7 +55,8 @@ export class ECConnectionFactory implements ConnectionFactory {
    * Creates a ConnectionFactory for LiveKit connections.
    *
    * @param client - The OpenID client parts for authentication, needed to get openID and JWT tokens.
-   * @param roomId - The current room ID.
+   * @param roomId - The ID of the Matrix room in which the session takes place.
+   * @param slotId - The ID of the MatrixRTC slot in which the session takes place.
    * @param devices - Used for video/audio out/in capture options.
    * @param processorState$ - Effects like background blur (only for publishing connection?)
    * @param livekitKeyProvider - Optional key provider for end-to-end encryption.
@@ -66,8 +64,9 @@ export class ECConnectionFactory implements ConnectionFactory {
    * @param livekitRoomFactory - Optional factory function (for testing) to create LivekitRoom instances. If not provided, a default factory is used.
    */
   public constructor(
-    private client: OpenIDClientParts,
+    private client: ClientOpenIDParts,
     private readonly roomId: string,
+    private readonly slotId: string,
     private devices: MediaDevices,
     private processorState$: Behavior<ProcessorState>,
     livekitKeyProvider: BaseKeyProvider | undefined,
@@ -112,6 +111,7 @@ export class ECConnectionFactory implements ConnectionFactory {
       {
         existingSFUConfig: sfuConfig,
         roomId: this.roomId,
+        slotId: this.slotId,
         transport,
         client: this.client,
         scope: scope,

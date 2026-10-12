@@ -66,7 +66,7 @@ import { type Publisher } from "./Publisher";
 import { initializeWidget } from "../../../widget";
 import { nullHostBridge } from "../../../HostBridge";
 import { type LocalTransport } from "./LocalTransport";
-import * as openIDSFU from "../../../livekit/openIDSFU";
+import * as livekitAuth from "../../../livekit/auth";
 
 initializeWidget();
 
@@ -237,7 +237,6 @@ describe("LocalMembership", () => {
     ownMembershipIdentity: ownMemberMock,
     client: mockedClient,
     delayId$: constant(null),
-    matrixRTCMode: MATRIX_RTC_MODE,
   };
 
   beforeEach(() => {
@@ -306,6 +305,7 @@ describe("LocalMembership", () => {
       scope,
       ...defaultCreateLocalMemberValues,
       matrixRTCSession: {
+        slotId: "m.call#ROOM",
         updateCallIntent: vi.fn().mockImplementation(reject),
         leave: vi.fn(),
       },
@@ -359,7 +359,7 @@ describe("LocalMembership", () => {
   } as unknown as Connection;
 
   const authCallSpy = vi
-    .spyOn(openIDSFU, "getSFUConfigWithOpenID")
+    .spyOn(livekitAuth, "getSFUConfig")
     .mockImplementation(() => mockedClient.getOpenIdToken());
   afterEach(() => authCallSpy.mockClear());
 
@@ -412,18 +412,16 @@ describe("LocalMembership", () => {
         // Delegation is supported in this test case, so go on to check that
         // LocalMember actually performs delegation
         const expectDelegation = (delayId: string) =>
-          expect(authCallSpy).toHaveBeenLastCalledWith(
-            mockedClient,
-            ownMemberMock,
-            "a",
-            "!test-room-id:example.org",
-            {
-              matrixRTCMode: MATRIX_RTC_MODE,
-              delayEndpointBaseUrl: "https://matrix.example.org",
-              delayId,
-            },
-            expect.anything(),
-          );
+          expect(authCallSpy).toHaveBeenLastCalledWith({
+            client: mockedClient,
+            membership: ownMemberMock,
+            serviceUrl: "a",
+            roomId: "!test-room-id:example.org",
+            role: "publisher",
+            delayEndpointBaseUrl: "https://matrix.example.org",
+            delayId,
+            logger: expect.anything(),
+          });
 
         expectDelegation("leave1");
         delayId$.next("leave2"); // Can change delegated leaves

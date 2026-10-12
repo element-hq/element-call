@@ -22,13 +22,12 @@ import {
   MatrixRTCTransportMissingError,
   FailToGetOpenIdToken,
 } from "../../../utils/errors";
-import * as openIDSFU from "../../../livekit/openIDSFU";
+import * as livekitAuth from "../../../livekit/auth";
 import { customLivekitUrl } from "../../../settings/settings";
 import { testJWTToken } from "../../../utils/test-fixtures";
-import { MatrixRTCMode } from "../../../config/ConfigOptions";
 
 describe("LocalTransport", () => {
-  const openIdResponse: openIDSFU.SFUConfig = {
+  const openIdResponse: livekitAuth.SFUConfig = {
     url: "https://lk.example.org",
     jwt: testJWTToken,
     livekitAlias: "Akph4alDMhen",
@@ -47,10 +46,9 @@ describe("LocalTransport", () => {
           getDomain: () => "example.org",
           // These won't be called in this error path but satisfy the type
           getOpenIdToken: vi.fn(),
-          getDeviceId: vi.fn(),
         },
         ownMembershipIdentity: ownMemberMock,
-        matrixRTCMode: MatrixRTCMode.Compatibility,
+        slotId: "m.call#ROOM",
       }),
     ).rejects.toThrow(new MatrixRTCTransportMissingError("example.org"));
   });
@@ -60,7 +58,7 @@ describe("LocalTransport", () => {
     mockConfig({
       livekit: { livekit_service_url: "https://lk.example.org" },
     });
-    vi.spyOn(openIDSFU, "getSFUConfigWithOpenID").mockRejectedValue(
+    vi.spyOn(livekitAuth, "getSFUConfig").mockRejectedValue(
       new FailToGetOpenIdToken(new Error("no openid")),
     );
 
@@ -72,10 +70,9 @@ describe("LocalTransport", () => {
           // eslint-disable-next-line @typescript-eslint/naming-convention
           _unstable_getRTCTransports: async () => Promise.resolve([]),
           getOpenIdToken: vi.fn(),
-          getDeviceId: vi.fn(),
         },
         ownMembershipIdentity: ownMemberMock,
-        matrixRTCMode: MatrixRTCMode.Compatibility,
+        slotId: "m.call#ROOM",
       }),
     ).rejects.toThrow(new FailToGetOpenIdToken(new Error("no openid")));
   });
@@ -86,7 +83,7 @@ describe("LocalTransport", () => {
       livekit: { livekit_service_url: "https://lk.example.org" },
     });
 
-    vi.spyOn(openIDSFU, "getSFUConfigWithOpenID").mockResolvedValue({
+    vi.spyOn(livekitAuth, "getSFUConfig").mockResolvedValue({
       url: "https://lk.example.org",
       jwt: "jwt",
       livekitAlias: "Akph4alDMhen",
@@ -101,10 +98,9 @@ describe("LocalTransport", () => {
           _unstable_getRTCTransports: async () => Promise.resolve([]),
           getDomain: () => "example.org",
           getOpenIdToken: vi.fn(),
-          getDeviceId: vi.fn(),
         },
         ownMembershipIdentity: ownMemberMock,
-        matrixRTCMode: MatrixRTCMode.Compatibility,
+        slotId: "m.call#ROOM",
       }),
     ).toStrictEqual({
       transport: {
@@ -132,13 +128,12 @@ describe("LocalTransport", () => {
       localTransportOpts = {
         ownMembershipIdentity: ownMemberMock,
         roomId: "!example_room_id",
-        matrixRTCMode: MatrixRTCMode.Compatibility,
+        slotId: "m.call#ROOM",
         client: {
           getDomain: vi.fn().mockReturnValue("example.org"),
           // eslint-disable-next-line @typescript-eslint/naming-convention
           _unstable_getRTCTransports: vi.fn().mockResolvedValue([]),
           getOpenIdToken: vi.fn(),
-          getDeviceId: vi.fn(),
         },
       };
     });
@@ -151,9 +146,7 @@ describe("LocalTransport", () => {
       mockConfig({
         livekit: { livekit_service_url: "https://lk.example.org" },
       });
-      vi.spyOn(openIDSFU, "getSFUConfigWithOpenID").mockResolvedValue(
-        openIdResponse,
-      );
+      vi.spyOn(livekitAuth, "getSFUConfig").mockResolvedValue(openIdResponse);
 
       expect(await getLocalTransport(localTransportOpts)).toStrictEqual({
         transport: {
@@ -171,9 +164,7 @@ describe("LocalTransport", () => {
 
     it("supports getting transport via user settings", async () => {
       customLivekitUrl.setValue("https://lk.example.org");
-      vi.spyOn(openIDSFU, "getSFUConfigWithOpenID").mockResolvedValue(
-        openIdResponse,
-      );
+      vi.spyOn(livekitAuth, "getSFUConfig").mockResolvedValue(openIdResponse);
 
       expect(await getLocalTransport(localTransportOpts)).toStrictEqual({
         transport: {
@@ -193,9 +184,7 @@ describe("LocalTransport", () => {
       localTransportOpts.client._unstable_getRTCTransports.mockResolvedValue([
         { type: "livekit", livekit_service_url: "https://lk.example.org" },
       ]);
-      vi.spyOn(openIDSFU, "getSFUConfigWithOpenID").mockResolvedValue(
-        openIdResponse,
-      );
+      vi.spyOn(livekitAuth, "getSFUConfig").mockResolvedValue(openIdResponse);
 
       expect(await getLocalTransport(localTransportOpts)).toStrictEqual({
         transport: {
@@ -215,7 +204,7 @@ describe("LocalTransport", () => {
       localTransportOpts.client._unstable_getRTCTransports.mockResolvedValue([
         { type: "livekit", livekit_service_url: "https://lk.example.org" },
       ]);
-      vi.spyOn(openIDSFU, "getSFUConfigWithOpenID").mockRejectedValue(
+      vi.spyOn(livekitAuth, "getSFUConfig").mockRejectedValue(
         new FailToGetOpenIdToken(new Error("Test driven error")),
       );
 
@@ -229,14 +218,13 @@ describe("LocalTransport", () => {
         getLocalTransport({
           ownMembershipIdentity: ownMemberMock,
           roomId: "!example_room_id",
-          matrixRTCMode: MatrixRTCMode.Compatibility,
+          slotId: "m.call#ROOM",
           client: {
             getDomain: () => "example.org",
             // eslint-disable-next-line @typescript-eslint/naming-convention
             _unstable_getRTCTransports: async () => Promise.resolve([]),
             // These won't be called in this error path but satisfy the type
             getOpenIdToken: vi.fn(),
-            getDeviceId: vi.fn(),
           },
         }),
       ).rejects.toThrow(new MatrixRTCTransportMissingError("example.org"));

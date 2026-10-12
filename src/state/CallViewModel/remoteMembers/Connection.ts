@@ -28,11 +28,6 @@ import { BehaviorSubject } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
-import {
-  getSFUConfigWithOpenID,
-  type OpenIDClientParts,
-  type SFUConfig,
-} from "../../../livekit/openIDSFU.ts";
 import { type Behavior } from "../../Behavior.ts";
 import { type ObservableScope } from "../../ObservableScope.ts";
 import {
@@ -43,6 +38,11 @@ import {
   SFURoomCreationRestrictedError,
   UnknownCallError,
 } from "../../../utils/errors.ts";
+import {
+  getSFUConfig,
+  type ClientOpenIDParts,
+  type SFUConfig,
+} from "../../../livekit/auth";
 
 export interface ConnectionOpts {
   /**
@@ -55,9 +55,11 @@ export interface ConnectionOpts {
   /** The media transport to connect to. */
   transport: LivekitTransport;
   /** The Matrix client to use for OpenID and SFU config requests. */
-  client: OpenIDClientParts;
-  /** The room ID this connection is associated with. */
+  client: ClientOpenIDParts;
+  /** The ID of the Matrix room in which the session takes place. */
   roomId: string;
+  /** The ID of the MatrixRTC slot in which the session takes place. */
+  slotId: string;
   /** The observable scope to use for this connection. */
   scope: ObservableScope;
 
@@ -123,8 +125,9 @@ export class Connection {
   protected stopped = false;
 
   // TODO: can we just keep the ConnectionOpts object instead of spreading?
-  private readonly client: OpenIDClientParts;
+  private readonly client: ClientOpenIDParts;
   private readonly roomId: string;
+  private readonly slotId: string;
   private readonly logger: Logger;
   private readonly ownMembershipIdentity: CallMembershipIdentityParts;
   private readonly existingSFUConfig?: SFUConfig;
@@ -139,6 +142,7 @@ export class Connection {
     this.ownMembershipIdentity = opts.ownMembershipIdentity;
     this.existingSFUConfig = opts.existingSFUConfig;
     this.roomId = opts.roomId;
+    this.slotId = opts.slotId;
     this.logger = logger.getChild(
       `[Connection ${JSON.stringify(opts.transport)}]`,
     );
@@ -292,7 +296,7 @@ export class Connection {
     try {
       this._state$.next({ state: "authenticating" });
       // We should already have this information after creating the localTransport.
-      // only call getSFUConfigWithOpenID for connections where we do not have a token yet. (existingJwtTokenData === undefined)
+      // only call getSFUConfig for connections where we do not have a token yet. (existingJwtTokenData === undefined)
       const { url, jwt, livekitAlias } =
         this.existingSFUConfig ??
         (await this.getSFUConfigForRemoteConnection());
@@ -308,7 +312,7 @@ export class Connection {
       // If we were stopped while fetching the config, don't proceed to connect
       if (this.stopped) return;
 
-      // Setup observer once we are done with getSFUConfigWithOpenID
+      // Setup observer once we are done with getSFUConfig
       connectionStateObserver(this.livekitRoom)
         .pipe(this.scope.bind())
         .subscribe((livekitState) =>
@@ -380,15 +384,15 @@ export class Connection {
   protected async getSFUConfigForRemoteConnection(): Promise<SFUConfig> {
     // This will only be called for sfu's where we do not publish ourselves.
     // For the local connection we will use the existingJwtTokenData
-    return await getSFUConfigWithOpenID(
-      this.client,
-      this.ownMembershipIdentity,
-      this.transport.livekit_service_url,
-      this.roomId,
-      // dont pass any custom opts for the subscribe only connections
-      {},
-      this.logger,
-    );
+    return await getSFUConfig({
+      client: this.client,
+      membership: this.ownMembershipIdentity,
+      serviceUrl: this.transport.livekit_service_url,
+      roomId: this.roomId,
+      slotId: this.slotId,
+      role: "subscriber",
+      logger: this.logger,
+    });
   }
 
   /**

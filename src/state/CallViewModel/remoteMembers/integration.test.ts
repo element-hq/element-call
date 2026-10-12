@@ -19,7 +19,7 @@ import {
   trackEpoch,
 } from "../../ObservableScope.ts";
 import { ECConnectionFactory } from "./ConnectionFactory.ts";
-import { type OpenIDClientParts } from "../../../livekit/openIDSFU.ts";
+import { type ClientOpenIDParts } from "../../../livekit/auth";
 import {
   mockMediaDevices,
   mockRtcMembership,
@@ -40,7 +40,7 @@ import { localRtcMember, testJWTToken } from "../../../utils/test-fixtures.ts";
 
 let testScope: ObservableScope;
 let ecConnectionFactory: ECConnectionFactory;
-let mockClient: OpenIDClientParts;
+let mockClient: ClientOpenIDParts;
 let lkRoomFactory: () => LivekitRoom;
 
 const createdMockLivekitRooms: Map<string, LivekitRoom> = new Map();
@@ -49,7 +49,6 @@ beforeEach(() => {
   testScope = new ObservableScope();
   mockClient = {
     getOpenIdToken: vi.fn().mockReturnValue(""),
-    getDeviceId: vi.fn().mockReturnValue("DEV000"),
   };
 
   lkRoomFactory = vi.fn().mockImplementation(() => {
@@ -71,6 +70,7 @@ beforeEach(() => {
   ecConnectionFactory = new ECConnectionFactory(
     mockClient,
     "!roomid:example.org",
+    "m.call#ROOM",
     mockMediaDevices({}),
     new BehaviorSubject<ProcessorState>({
       supported: true,
@@ -82,7 +82,7 @@ beforeEach(() => {
   );
 
   //TODO a bit annoying to have to do a http mock?
-  fetchMock.post(`path:/sfu/get`, (url) => {
+  const sfuConfigResponse = (url: string): { status: number; body: object } => {
     const domain = new URL(url).hostname; // Extract the domain from the URL
     return {
       status: 200,
@@ -91,7 +91,9 @@ beforeEach(() => {
         jwt: testJWTToken,
       },
     };
-  });
+  };
+  fetchMock.post(`path:/sfu/get`, sfuConfigResponse);
+  fetchMock.post(`path:/get_token`, sfuConfigResponse);
 });
 
 afterEach(() => {

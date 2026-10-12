@@ -31,7 +31,7 @@ import {
   isLocalTransport,
   type LocalTransport,
 } from "../localMember/LocalTransport.ts";
-import { type SFUConfig } from "../../../livekit/openIDSFU.ts";
+import { type SFUConfig } from "../../../livekit/auth";
 
 export class ConnectionManagerData {
   private readonly store: Map<

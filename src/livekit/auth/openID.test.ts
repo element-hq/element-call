@@ -1,0 +1,200 @@
+/*
+Copyright 2025 Element Creations Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
+import {
+  beforeEach,
+  afterEach,
+  describe,
+  expect,
+  it,
+  type MockedObject,
+  vitest,
+} from "vitest";
+import fetchMock from "fetch-mock";
+import { MatrixError } from "matrix-js-sdk";
+
+import {
+  getSFUConfig,
+  type GetSFUConfigParams,
+  type ClientOpenIDParts,
+} from "./openID";
+import { testJWTToken } from "../../utils/test-fixtures";
+import { ownMemberMock } from "../../utils/test";
+import { FailToGetOpenIdToken } from "../../utils/errors";
+import { logger } from "matrix-js-sdk/lib/logger";
+
+const serviceUrl = "https://sfu.example.org";
+
+const delayParams = {
+  delayEndpointBaseUrl: "https://matrix.homeserverserver.org",
+  delayId: "mock_delay_id",
+};
+
+describe("getSFUConfig", () => {
+  let matrixClient: MockedObject<ClientOpenIDParts>;
+  let params: GetSFUConfigParams;
+  beforeEach(() => {
+    fetchMock.catch(404);
+    matrixClient = { getOpenIdToken: vitest.fn() };
+    params = {
+      client: matrixClient,
+      membership: ownMemberMock,
+      serviceUrl: "https://sfu.example.org",
+      roomId: "!example_room_id",
+      slotId: "m.call#ROOM",
+      role: "publisher",
+      logger,
+    };
+  });
+  afterEach(async () => {
+    void (await fetchMock.flush());
+    vitest.clearAllMocks();
+    fetchMock.reset();
+  });
+
+  it("should handle fetching a token", async () => {
+    fetchMock.post("https://sfu.example.org/sfu/get", () => {
+      return {
+        status: 200,
+        body: { url: serviceUrl, jwt: testJWTToken },
+      };
+    });
+    const config = await getSFUConfig(params);
+    expect(config).toEqual({
+      jwt: testJWTToken,
+      url: serviceUrl,
+      livekitIdentity: "@me:example.org:ABCDEF",
+      livekitAlias: "!example_room_id",
+    });
+  });
+
+  it("should fail if the SFU errors", async () => {
+    fetchMock.post("https://sfu.example.org/sfu/get", () => {
+      return {
+        status: 500,
+        body: {
+          errcode: "M_LOOKUP_FAILED",
+          error: "Failed to look up user info from homeserver",
+        },
+      };
+    });
+    try {
+      await getSFUConfig(params);
+    } catch (ex: unknown) {
+      expect(ex).toBeInstanceOf(FailToGetOpenIdToken);
+      expect((ex as FailToGetOpenIdToken).cause).toBeInstanceOf(MatrixError);
+      const mxError = (ex as Error).cause as MatrixError;
+      expect(mxError.message).toEqual(
+        "MatrixError: [500] Failed to look up user info from homeserver",
+      );
+
+      return;
+    }
+    expect.fail("Expected test to throw;");
+  });
+
+  it("should retry without delay params if the JWT service legacy endpoint returns M_BAD_JSON 400", async () => {
+    let callCount = 0;
+
+    fetchMock.post(
+      "https://sfu.example.org/sfu/get",
+      (url, opts) => {
+        callCount++;
+        const body = JSON.parse(opts.body as string);
+
+        // First call: check if it has delay parts and return 400
+        if (callCount === 1) {
+          expect(body).toHaveProperty("delay_id", "mock_delay_id");
+          return {
+            status: 400,
+            body: { errcode: "M_BAD_JSON", error: "Unsupported parameters" },
+          };
+        }
+
+        // Second call: check if delay parts were stripped and return success
+        expect(body).not.toHaveProperty("delay_id");
+        expect(body).not.toHaveProperty("delay_timeout");
+        expect(body).not.toHaveProperty("delay_cs_api_url");
+
+        return {
+          status: 200,
+          body: { url: serviceUrl, jwt: testJWTToken },
+        };
+      },
+      { overwriteRoutes: true },
+    );
+
+    // Note: Assuming getSFUConfig eventually calls getLiveKitJWT
+    const config = await getSFUConfig({ ...params, ...delayParams });
+
+    expect(config.jwt).toBe(testJWTToken);
+    expect(callCount).toBe(2);
+  });
+
+  it("should successfully send delay parameters to the JWT service legacy endpoint", async () => {
+    fetchMock.post(
+      "https://sfu.example.org/sfu/get",
+      (url, opts) => {
+        const body = JSON.parse(opts.body as string);
+
+        // Verify, that the request contains the expected delay parameters
+        if (
+          body.delay_id === "mock_delay_id" &&
+          body.delay_timeout === 3600000 &&
+          body.delay_cs_api_url === "https://matrix.homeserverserver.org"
+        ) {
+          return {
+            status: 200,
+            body: { url: serviceUrl, jwt: testJWTToken },
+          };
+        }
+        return {
+          status: 400,
+          body: { error: "Missing expected delay params" },
+        };
+      },
+      { overwriteRoutes: true },
+    );
+
+    const config = await getSFUConfig({ ...params, ...delayParams });
+
+    // Prüfe das Ergebnis
+    expect(config).toMatchObject({
+      jwt: testJWTToken,
+      url: serviceUrl,
+    });
+  });
+
+  it("should retry fetching the openid token", async () => {
+    let count = 0;
+    matrixClient.getOpenIdToken.mockImplementation(async () => {
+      count++;
+      if (count < 2) {
+        throw Error("Test failure");
+      }
+      return Promise.resolve({
+        token_type: "Bearer",
+        access_token: "foobar",
+        matrix_server_name: "example.org",
+        expires_in: 30,
+      });
+    });
+    fetchMock.post("https://sfu.example.org/sfu/get", () => {
+      return {
+        status: 200,
+        body: { url: serviceUrl, jwt: testJWTToken },
+      };
+    });
+    const config = await getSFUConfig({ ...params, ...delayParams });
+    expect(config).toEqual({
+      jwt: testJWTToken,
+      url: serviceUrl,
+      livekitIdentity: "@me:example.org:ABCDEF",
+      livekitAlias: "!example_room_id",
+    });
+  });
+});

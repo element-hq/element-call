@@ -570,7 +570,7 @@ export function createCallViewModel$(
           ownMembershipIdentity,
           client,
           roomId: matrixRoom.roomId,
-          matrixRTCMode,
+          slotId: matrixRTCSession.slotId,
         }),
       );
 
@@ -579,6 +579,7 @@ export function createCallViewModel$(
     new ECConnectionFactory(
       client,
       matrixRoom.roomId,
+      matrixRTCSession.slotId,
       mediaDevices,
       trackProcessorState$,
       livekitKeyProvider,
@@ -659,7 +660,6 @@ export function createCallViewModel$(
       ).pipe(map(([delayId]) => delayId ?? null)),
       matrixRTCSession.delayId ?? null,
     ),
-    matrixRTCMode,
     logger: logger.getChild(`[${Date.now()}]`),
   });
 

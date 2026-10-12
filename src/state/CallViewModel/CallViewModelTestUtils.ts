@@ -229,6 +229,7 @@ export function withCallViewModel(mode: MatrixRTCMode) {
                 existingSFUConfig: sfuConfig,
                 client: room.client,
                 roomId: room.roomId,
+                slotId: "m.call#ROOM",
                 livekitRoomFactory,
               },
               logger,

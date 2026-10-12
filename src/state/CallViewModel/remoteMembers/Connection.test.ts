@@ -8,7 +8,6 @@ Please see LICENSE in the repository root for full details.
 
 import {
   afterEach,
-  beforeEach,
   describe,
   expect,
   it,
@@ -38,14 +37,14 @@ import {
   type ConnectionOpts,
 } from "./Connection.ts";
 import { ObservableScope } from "../../ObservableScope.ts";
-import { type OpenIDClientParts } from "../../../livekit/openIDSFU.ts";
 import { FailToGetOpenIdToken } from "../../../utils/errors.ts";
 import { testJWTToken } from "../../../utils/test-fixtures.ts";
 import { mockRemoteParticipant, ownMemberMock } from "../../../utils/test.ts";
+import { type ClientOpenIDParts } from "../../../livekit/auth";
 
 let testScope: ObservableScope;
 
-let client: MockedObject<OpenIDClientParts>;
+let client: MockedObject<ClientOpenIDParts>;
 
 let fakeLivekitRoom: MockedObject<LivekitRoom>;
 
@@ -53,6 +52,7 @@ let localParticipantEventEmiter: EventEmitter;
 let fakeLocalParticipant: MockedObject<LocalParticipant>;
 
 const ROOM_ID = "!roomID:example.org";
+const SLOT_ID = "m.call#ROOM";
 
 const livekitFocus: LivekitTransport = {
   livekit_service_url: "https://matrix-rtc.example.org/livekit/jwt",
@@ -61,15 +61,14 @@ const livekitFocus: LivekitTransport = {
 
 function setupTest(): void {
   testScope = new ObservableScope();
-  client = vi.mocked<OpenIDClientParts>({
+  client = vi.mocked<ClientOpenIDParts>({
     getOpenIdToken: vi.fn().mockResolvedValue({
       access_token: "rYsmGUEwNjKgJYyeNUkZseJN",
       token_type: "Bearer",
       matrix_server_name: "example.org",
       expires_in: 3600,
     }),
-    getDeviceId: vi.fn().mockReturnValue("ABCDEF"),
-  } as unknown as OpenIDClientParts);
+  });
 
   localParticipantEventEmiter = new EventEmitter();
 
@@ -113,15 +112,16 @@ function setupTest(): void {
 
 function setupRemoteConnection(): Connection {
   const opts: ConnectionOpts = {
-    client: client,
+    client,
     roomId: ROOM_ID,
+    slotId: SLOT_ID,
     transport: livekitFocus,
     scope: testScope,
     ownMembershipIdentity: ownMemberMock,
     livekitRoomFactory: () => fakeLivekitRoom,
   };
 
-  fetchMock.post(`${livekitFocus.livekit_service_url}/sfu/get`, () => {
+  fetchMock.post(`${livekitFocus.livekit_service_url}/get_token`, () => {
     return {
       status: 200,
       body: {
@@ -152,25 +152,13 @@ afterEach(() => {
 });
 
 describe("Start connection states", () => {
-  beforeEach(() => {
-    fetchMock.post(
-      `https://matrix-rtc.example.org/livekit/jwt/get_token`,
-      () => {
-        return {
-          // Return a non-retryable error, if not, the retry logic will
-          // wait and fail the test with a timeout.
-          status: 404,
-        };
-      },
-    );
-  });
-
   it("start in initialized state", () => {
     setupTest();
 
     const opts: ConnectionOpts = {
-      client: client,
+      client,
       roomId: ROOM_ID,
+      slotId: SLOT_ID,
       transport: livekitFocus,
       scope: testScope,
       ownMembershipIdentity: ownMemberMock,
@@ -186,8 +174,9 @@ describe("Start connection states", () => {
     vi.useFakeTimers();
 
     const opts: ConnectionOpts = {
-      client: client,
+      client,
       roomId: ROOM_ID,
+      slotId: SLOT_ID,
       transport: livekitFocus,
       scope: testScope,
       ownMembershipIdentity: ownMemberMock,
@@ -238,8 +227,9 @@ describe("Start connection states", () => {
     vi.useFakeTimers();
 
     const opts: ConnectionOpts = {
-      client: client,
+      client,
       roomId: ROOM_ID,
+      slotId: SLOT_ID,
       transport: livekitFocus,
       scope: testScope,
       ownMembershipIdentity: ownMemberMock,
@@ -255,17 +245,20 @@ describe("Start connection states", () => {
     onTestFinished(() => s.unsubscribe());
 
     const deferredSFU = Promise.withResolvers<void>();
-    // mock the /sfu/get call
-    fetchMock.post(`${livekitFocus.livekit_service_url}/sfu/get`, async () => {
-      await deferredSFU.promise;
-      return {
-        status: 500,
-        body: {
-          errcode: "M_LOOKUP_FAILED",
-          error: "Failed to look up user info from homeserver",
-        },
-      };
-    });
+    // mock the /get_token call
+    fetchMock.post(
+      `${livekitFocus.livekit_service_url}/get_token`,
+      async () => {
+        await deferredSFU.promise;
+        return {
+          status: 500,
+          body: {
+            errcode: "M_LOOKUP_FAILED",
+            error: "Failed to look up user info from homeserver",
+          },
+        };
+      },
+    );
 
     connection.start().catch(() => {
       // expected to throw
@@ -300,8 +293,9 @@ describe("Start connection states", () => {
     vi.useFakeTimers();
 
     const opts: ConnectionOpts = {
-      client: client,
+      client,
       roomId: ROOM_ID,
+      slotId: SLOT_ID,
       transport: livekitFocus,
       scope: testScope,
       ownMembershipIdentity: ownMemberMock,
@@ -317,8 +311,8 @@ describe("Start connection states", () => {
     onTestFinished(() => s.unsubscribe());
 
     const deferredSFU = Promise.withResolvers<void>();
-    // mock the /sfu/get call
-    fetchMock.post(`${livekitFocus.livekit_service_url}/sfu/get`, () => {
+    // mock the /get_token call
+    fetchMock.post(`${livekitFocus.livekit_service_url}/get_token`, () => {
       return {
         status: 200,
         body: {
@@ -560,6 +554,7 @@ describe("remote track logging", () => {
       {
         client,
         roomId: ROOM_ID,
+        slotId: SLOT_ID,
         transport: livekitFocus,
         scope: testScope,
         ownMembershipIdentity: ownMemberMock,
