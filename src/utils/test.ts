@@ -78,7 +78,6 @@ import {
   type RemoteScreenShareViewModel,
 } from "../state/media/RemoteScreenShareViewModel";
 import { Connection } from "../state/CallViewModel/remoteMembers/Connection";
-import { type SFUConfig } from "../livekit/auth";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();
@@ -212,13 +211,6 @@ export function mockEmitter<T>(): EmitterMock<T> {
 export const exampleTransport: LivekitTransport = {
   type: "livekit",
   livekit_service_url: "https://lk.example.org",
-};
-
-export const exampleSfuConfig: SFUConfig = {
-  jwt: "foo",
-  livekitAlias: "bar",
-  livekitIdentity: "baz",
-  url: "bro",
 };
 
 export function mockRtcMembership(

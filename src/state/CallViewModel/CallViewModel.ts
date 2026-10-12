@@ -112,10 +112,7 @@ import {
   enterRTCSession,
   TransportState,
 } from "./localMember/LocalMember.ts";
-import {
-  getLocalTransport,
-  type LocalTransport,
-} from "./localMember/LocalTransport.ts";
+import { getLocalTransport } from "./localMember/LocalTransport.ts";
 import {
   createKeyRotationSuppressed$,
   createMemberships$,
@@ -216,7 +213,7 @@ export interface CallViewModelOptions {
    */
   windowSize$: Behavior<{ width: number; height: number }>;
   /** Optional value overriding the local transport, for testing purposes. */
-  localTransport?: LocalTransport;
+  localTransport?: LivekitTransport;
   /** Optional value overriding the connection factory, for testing purposes. */
   connectionFactory?: ConnectionFactory;
   /** The version & compatibility mode of MatrixRTC that we should use. */
@@ -565,14 +562,7 @@ export function createCallViewModel$(
 
   const localTransport$ = options.localTransport
     ? constant(options.localTransport)
-    : from(
-        getLocalTransport({
-          ownMembershipIdentity,
-          client,
-          roomId: matrixRoom.roomId,
-          slotId: matrixRTCSession.slotId,
-        }),
-      );
+    : from(getLocalTransport(client));
 
   const connectionFactory =
     options.connectionFactory ??

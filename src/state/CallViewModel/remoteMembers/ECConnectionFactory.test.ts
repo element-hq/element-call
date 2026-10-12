@@ -89,6 +89,7 @@ describe("ECConnectionFactory - Audio inputs options", () => {
       );
       ecConnectionFactory.createConnection(
         testScope,
+        "subscriber",
         exampleTransport,
         ownMemberMock,
         logger,
@@ -138,6 +139,7 @@ describe("ECConnectionFactory - ControlledAudioDevice", () => {
       );
       ecConnectionFactory.createConnection(
         testScope,
+        "subscriber",
         exampleTransport,
         ownMemberMock,
         logger,
@@ -174,6 +176,7 @@ describe("ECConnectionFactory - Camera quality settings", () => {
     );
     ecConnectionFactory.createConnection(
       testScope,
+      "subscriber",
       exampleTransport,
       ownMemberMock,
       logger,
@@ -212,6 +215,7 @@ describe("ECConnectionFactory - Camera quality settings", () => {
     );
     ecConnectionFactory.createConnection(
       testScope,
+      "subscriber",
       exampleTransport,
       ownMemberMock,
       logger,
@@ -251,6 +255,7 @@ describe("ECConnectionFactory - Camera quality settings", () => {
     );
     ecConnectionFactory.createConnection(
       testScope,
+      "subscriber",
       exampleTransport,
       ownMemberMock,
       logger,

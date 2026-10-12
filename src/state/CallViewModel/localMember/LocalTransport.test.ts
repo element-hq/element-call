@@ -16,125 +16,51 @@ import {
 } from "vitest";
 import fetchMock from "fetch-mock";
 
-import { mockConfig, ownMemberMock } from "../../../utils/test";
+import { mockConfig } from "../../../utils/test";
 import { getLocalTransport } from "./LocalTransport";
-import {
-  MatrixRTCTransportMissingError,
-  FailToGetOpenIdToken,
-} from "../../../utils/errors";
-import * as livekitAuth from "../../../livekit/auth";
+import { MatrixRTCTransportMissingError } from "../../../utils/errors";
 import { customLivekitUrl } from "../../../settings/settings";
-import { testJWTToken } from "../../../utils/test-fixtures";
+import { type MatrixClient } from "matrix-js-sdk";
 
 describe("LocalTransport", () => {
-  const openIdResponse: livekitAuth.SFUConfig = {
-    url: "https://lk.example.org",
-    jwt: testJWTToken,
-    livekitAlias: "Akph4alDMhen",
-    livekitIdentity: "@lk_user:ABCDEF",
-  };
-
   beforeEach(() => vi.clearAllMocks());
 
   it("throws if config is missing", async () => {
     await expect(
       getLocalTransport({
-        roomId: "!room:example.org",
-        client: {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          _unstable_getRTCTransports: async () => Promise.resolve([]),
-          getDomain: () => "example.org",
-          // These won't be called in this error path but satisfy the type
-          getOpenIdToken: vi.fn(),
-        },
-        ownMembershipIdentity: ownMemberMock,
-        slotId: "m.call#ROOM",
+        _unstable_getRTCTransports: async () => Promise.resolve([]),
+        getDomain: () => "example.org",
       }),
     ).rejects.toThrow(new MatrixRTCTransportMissingError("example.org"));
   });
 
-  it("throws FailToGetOpenIdToken when OpenID fetch fails", async () => {
-    // Provide a valid config so makeTransportInternal resolves a transport
-    mockConfig({
-      livekit: { livekit_service_url: "https://lk.example.org" },
-    });
-    vi.spyOn(livekitAuth, "getSFUConfig").mockRejectedValue(
-      new FailToGetOpenIdToken(new Error("no openid")),
-    );
-
-    await expect(
-      getLocalTransport({
-        roomId: "!example_room_id",
-        client: {
-          getDomain: () => "example.org",
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          _unstable_getRTCTransports: async () => Promise.resolve([]),
-          getOpenIdToken: vi.fn(),
-        },
-        ownMembershipIdentity: ownMemberMock,
-        slotId: "m.call#ROOM",
-      }),
-    ).rejects.toThrow(new FailToGetOpenIdToken(new Error("no openid")));
-  });
-
   it("returns preferred transport", async () => {
-    // Use config so transport discovery succeeds, but delay OpenID JWT fetch
+    // Use config so transport discovery succeeds
     mockConfig({
       livekit: { livekit_service_url: "https://lk.example.org" },
-    });
-
-    vi.spyOn(livekitAuth, "getSFUConfig").mockResolvedValue({
-      url: "https://lk.example.org",
-      jwt: "jwt",
-      livekitAlias: "Akph4alDMhen",
-      livekitIdentity: ownMemberMock.userId + ":" + ownMemberMock.deviceId,
     });
 
     expect(
       await getLocalTransport({
-        roomId: "!room:example.org",
-        client: {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          _unstable_getRTCTransports: async () => Promise.resolve([]),
-          getDomain: () => "example.org",
-          getOpenIdToken: vi.fn(),
-        },
-        ownMembershipIdentity: ownMemberMock,
-        slotId: "m.call#ROOM",
+        _unstable_getRTCTransports: async () => Promise.resolve([]),
+        getDomain: () => "example.org",
       }),
     ).toStrictEqual({
-      transport: {
-        livekit_service_url: "https://lk.example.org",
-        type: "livekit",
-      },
-      sfuConfig: {
-        jwt: "jwt",
-        livekitAlias: "Akph4alDMhen",
-        livekitIdentity: "@alice:example.org:DEVICE",
-        url: "https://lk.example.org",
-      },
+      livekit_service_url: "https://lk.example.org",
+      type: "livekit",
     });
   });
 
-  type LocalTransportProps = Parameters<typeof getLocalTransport>[0];
-
   describe("transport configuration mechanisms", () => {
-    let localTransportOpts: LocalTransportProps & {
-      client: MockedObject<LocalTransportProps["client"]>;
-    };
+    let client: MockedObject<
+      Pick<MatrixClient, "getDomain" | "_unstable_getRTCTransports">
+    >;
     beforeEach(() => {
       mockConfig({});
       customLivekitUrl.setValue(customLivekitUrl.defaultValue);
-      localTransportOpts = {
-        ownMembershipIdentity: ownMemberMock,
-        roomId: "!example_room_id",
-        slotId: "m.call#ROOM",
-        client: {
-          getDomain: vi.fn().mockReturnValue("example.org"),
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          _unstable_getRTCTransports: vi.fn().mockResolvedValue([]),
-          getOpenIdToken: vi.fn(),
-        },
+      client = {
+        getDomain: vi.fn().mockReturnValue("example.org"),
+        _unstable_getRTCTransports: vi.fn().mockResolvedValue([]),
       };
     });
 
@@ -146,86 +72,38 @@ describe("LocalTransport", () => {
       mockConfig({
         livekit: { livekit_service_url: "https://lk.example.org" },
       });
-      vi.spyOn(livekitAuth, "getSFUConfig").mockResolvedValue(openIdResponse);
 
-      expect(await getLocalTransport(localTransportOpts)).toStrictEqual({
-        transport: {
-          livekit_service_url: "https://lk.example.org",
-          type: "livekit",
-        },
-        sfuConfig: {
-          jwt: "e30=.eyJzdWIiOiJAbWU6ZXhhbXBsZS5vcmc6QUJDREVGIiwidmlkZW8iOnsicm9vbSI6IiFleGFtcGxlX3Jvb21faWQifX0=.e30=",
-          livekitAlias: "Akph4alDMhen",
-          livekitIdentity: "@lk_user:ABCDEF",
-          url: "https://lk.example.org",
-        },
+      expect(await getLocalTransport(client)).toStrictEqual({
+        livekit_service_url: "https://lk.example.org",
+        type: "livekit",
       });
     });
 
     it("supports getting transport via user settings", async () => {
       customLivekitUrl.setValue("https://lk.example.org");
-      vi.spyOn(livekitAuth, "getSFUConfig").mockResolvedValue(openIdResponse);
 
-      expect(await getLocalTransport(localTransportOpts)).toStrictEqual({
-        transport: {
-          livekit_service_url: "https://lk.example.org",
-          type: "livekit",
-        },
-        sfuConfig: {
-          jwt: "e30=.eyJzdWIiOiJAbWU6ZXhhbXBsZS5vcmc6QUJDREVGIiwidmlkZW8iOnsicm9vbSI6IiFleGFtcGxlX3Jvb21faWQifX0=.e30=",
-          livekitAlias: "Akph4alDMhen",
-          livekitIdentity: "@lk_user:ABCDEF",
-          url: "https://lk.example.org",
-        },
+      expect(await getLocalTransport(client)).toStrictEqual({
+        livekit_service_url: "https://lk.example.org",
+        type: "livekit",
       });
     });
 
     it("supports getting transport via backend", async () => {
-      localTransportOpts.client._unstable_getRTCTransports.mockResolvedValue([
+      client._unstable_getRTCTransports.mockResolvedValue([
         { type: "livekit", livekit_service_url: "https://lk.example.org" },
       ]);
-      vi.spyOn(livekitAuth, "getSFUConfig").mockResolvedValue(openIdResponse);
 
-      expect(await getLocalTransport(localTransportOpts)).toStrictEqual({
-        transport: {
-          livekit_service_url: "https://lk.example.org",
-          type: "livekit",
-        },
-        sfuConfig: {
-          jwt: "e30=.eyJzdWIiOiJAbWU6ZXhhbXBsZS5vcmc6QUJDREVGIiwidmlkZW8iOnsicm9vbSI6IiFleGFtcGxlX3Jvb21faWQifX0=.e30=",
-          livekitAlias: "Akph4alDMhen",
-          livekitIdentity: "@lk_user:ABCDEF",
-          url: "https://lk.example.org",
-        },
+      expect(await getLocalTransport(client)).toStrictEqual({
+        livekit_service_url: "https://lk.example.org",
+        type: "livekit",
       });
-    });
-
-    it("fails fast if the openID request fails for backend config", async () => {
-      localTransportOpts.client._unstable_getRTCTransports.mockResolvedValue([
-        { type: "livekit", livekit_service_url: "https://lk.example.org" },
-      ]);
-      vi.spyOn(livekitAuth, "getSFUConfig").mockRejectedValue(
-        new FailToGetOpenIdToken(new Error("Test driven error")),
-      );
-
-      await expect(getLocalTransport(localTransportOpts)).rejects.toThrow(
-        expect.any(FailToGetOpenIdToken),
-      );
     });
 
     it("throws if no options are available", async () => {
       await expect(
         getLocalTransport({
-          ownMembershipIdentity: ownMemberMock,
-          roomId: "!example_room_id",
-          slotId: "m.call#ROOM",
-          client: {
-            getDomain: () => "example.org",
-            // eslint-disable-next-line @typescript-eslint/naming-convention
-            _unstable_getRTCTransports: async () => Promise.resolve([]),
-            // These won't be called in this error path but satisfy the type
-            getOpenIdToken: vi.fn(),
-          },
+          getDomain: () => "example.org",
+          _unstable_getRTCTransports: async () => Promise.resolve([]),
         }),
       ).rejects.toThrow(new MatrixRTCTransportMissingError("example.org"));
     });

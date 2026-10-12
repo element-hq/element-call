@@ -47,7 +47,7 @@ beforeEach(() => {
   vi.mocked(fakeConnectionFactory).createConnection = vi
     .fn()
     .mockImplementation(
-      (scope: ObservableScope, transport: LivekitTransport) => {
+      (scope: ObservableScope, _role: unknown, transport: LivekitTransport) => {
         const mockConnection = {
           transport,
           remoteParticipants$: new BehaviorSubject([]),
@@ -245,7 +245,11 @@ describe("connectionManagerData$ stream", () => {
     vi.mocked(fakeConnectionFactory).createConnection = vi
       .fn()
       .mockImplementation(
-        (scope: ObservableScope, transport: LivekitTransport) => {
+        (
+          scope: ObservableScope,
+          _role: unknown,
+          transport: LivekitTransport,
+        ) => {
           const fakeRemoteParticipants$ = new BehaviorSubject<
             RemoteParticipant[]
           >([]);

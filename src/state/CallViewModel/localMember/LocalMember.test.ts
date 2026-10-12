@@ -65,7 +65,6 @@ import {
 import { type Publisher } from "./Publisher";
 import { initializeWidget } from "../../../widget";
 import { nullHostBridge } from "../../../HostBridge";
-import { type LocalTransport } from "./LocalTransport";
 import * as livekitAuth from "../../../livekit/auth";
 
 initializeWidget();
@@ -221,7 +220,10 @@ describe("LocalMembership", () => {
       processor: undefined,
     }),
     logger: logger,
-    createPublisherFactory: vi.fn(),
+    createPublisherFactory: vi.fn().mockReturnValue({
+      destroy: vi.fn(),
+      createAndSetupTracks: vi.fn().mockResolvedValue(undefined),
+    }),
     joinMatrixRTC: async (): Promise<void> => {},
     homeserverConnected: {
       combined$: constant<[boolean, HomeserverDisconnectReason | null]>([
@@ -254,6 +256,7 @@ describe("LocalMembership", () => {
   afterEach(async () => {
     void (await fetchMock.flush());
     fetchMock.reset();
+    vi.clearAllMocks();
   });
 
   it("throws error on missing RTC config error", () => {
@@ -322,19 +325,9 @@ describe("LocalMembership", () => {
     scope.end();
   });
 
-  const mockTransportConfig = {
+  const mockTransport = {
     livekit_service_url: "a",
   } as LivekitTransport;
-
-  const mockTransport = {
-    transport: mockTransportConfig,
-    sfuConfig: {
-      jwt: "foo",
-      livekitAlias: "bar",
-      livekitIdentity: "baz",
-      url: "bro",
-    },
-  } as LocalTransport;
 
   const connectionTransportAConnected = {
     livekitRoom: mockLivekitRoom({
@@ -347,7 +340,7 @@ describe("LocalMembership", () => {
       state: "authenticated",
       livekitState: LivekitConnectionState.Connected,
     }),
-    transport: mockTransportConfig,
+    transport: mockTransport,
   } as Connection;
   const connectionTransportAConnecting = {
     ...connectionTransportAConnected,
@@ -381,13 +374,13 @@ describe("LocalMembership", () => {
       if (delegationUrl !== null)
         fetchMock.post(delegationUrl, () => ({ status: 401, body: {} }));
 
+      const connectionManagerData = new ConnectionManagerData();
+      connectionManagerData.add(connectionTransportAConnected, []);
       const localMembership = createLocalMembership$({
         scope,
         ...defaultCreateLocalMemberValues,
         connectionManager: {
-          connectionManagerData$: constant(
-            new Epoch(new ConnectionManagerData()),
-          ),
+          connectionManagerData$: constant(new Epoch(connectionManagerData)),
         },
         joinMatrixRTC,
         localTransport$: constant(mockTransport),
@@ -399,7 +392,7 @@ describe("LocalMembership", () => {
       await flushPromises();
       // Joins with timings appropriate for the level of delegation support
       expect(joinMatrixRTC).toHaveBeenCalledWith(
-        mockTransportConfig,
+        mockTransport,
         delayedLeaveTimings,
       );
 
@@ -491,7 +484,7 @@ describe("LocalMembership", () => {
   it("tracks livekit state correctly", async () => {
     const scope = new ObservableScope();
     const connectionManagerData = new ConnectionManagerData();
-    const localTransport$ = new Subject<LocalTransport>();
+    const localTransport$ = new Subject<LivekitTransport>();
 
     const connectionManagerData$ = new BehaviorSubject(
       new Epoch(connectionManagerData),
@@ -570,7 +563,7 @@ describe("LocalMembership", () => {
     });
 
     (
-      connectionManagerData2.getConnectionForTransport(mockTransportConfig)!
+      connectionManagerData2.getConnectionForTransport(mockTransport)!
         .state$ as BehaviorSubject<ConnectionState>
     ).next({
       state: "authenticated",
@@ -891,7 +884,7 @@ describe("LocalMembership", () => {
           state: "authenticated",
           livekitState: LivekitConnectionState.Connected,
         }),
-        transport: mockTransportConfig,
+        transport: mockTransport,
         livekitRoom: mockLivekitRoom({
           localParticipant: mockLocalParticipant({
             isScreenShareEnabled: false,

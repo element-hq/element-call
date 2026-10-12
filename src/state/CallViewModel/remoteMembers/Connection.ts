@@ -45,13 +45,10 @@ import {
 } from "../../../livekit/auth";
 
 export interface ConnectionOpts {
-  /**
-   * For the local transport we already do know the jwt token and url. We can reuse it.
-   * On top the local transport will send additional data to the jwt server to use delayed event delegation.
-   */
-  existingSFUConfig?: SFUConfig;
   /** The identity parts to use on this connection */
   ownMembershipIdentity: CallMembershipIdentityParts;
+  /** Whether we want to publish or only subscribe on this connection. */
+  role: "publisher" | "subscriber";
   /** The media transport to connect to. */
   transport: LivekitTransport;
   /** The Matrix client to use for OpenID and SFU config requests. */
@@ -93,6 +90,11 @@ export class Connection {
   public readonly state$: Behavior<ConnectionState> = this._state$;
 
   /**
+   * Whether we want to publish or only subscribe on this connection.
+   */
+  public readonly role: "publisher" | "subscriber";
+
+  /**
    * The media transport to connect to.
    */
   public readonly transport: LivekitTransport;
@@ -130,7 +132,6 @@ export class Connection {
   private readonly slotId: string;
   private readonly logger: Logger;
   private readonly ownMembershipIdentity: CallMembershipIdentityParts;
-  private readonly existingSFUConfig?: SFUConfig;
   /**
    * Creates a new connection to a matrix RTC LiveKit backend.
    *
@@ -140,19 +141,17 @@ export class Connection {
    */
   public constructor(opts: ConnectionOpts, logger: Logger) {
     this.ownMembershipIdentity = opts.ownMembershipIdentity;
-    this.existingSFUConfig = opts.existingSFUConfig;
     this.roomId = opts.roomId;
     this.slotId = opts.slotId;
     this.logger = logger.getChild(
       `[Connection ${JSON.stringify(opts.transport)}]`,
     );
-    this.logger.info(
-      `constructor: roomId: ${this.roomId} withSfuConfig?: ${opts.existingSFUConfig ? JSON.stringify(opts.existingSFUConfig) : "undefined"}`,
-    );
-    const { transport, client, scope } = opts;
+    this.logger.debug(`constructor called`);
+    const { role, transport, client, scope } = opts;
 
     this.scope = scope;
     this.livekitRoom = opts.livekitRoomFactory();
+    this.role = role;
     this.transport = transport;
     this.client = client;
 
@@ -295,11 +294,7 @@ export class Connection {
     this.stopped = false;
     try {
       this._state$.next({ state: "authenticating" });
-      // We should already have this information after creating the localTransport.
-      // only call getSFUConfig for connections where we do not have a token yet. (existingJwtTokenData === undefined)
-      const { url, jwt, livekitAlias } =
-        this.existingSFUConfig ??
-        (await this.getSFUConfigForRemoteConnection());
+      const { url, jwt, livekitAlias } = await this.getSFUConfig();
       this.logger.debug(
         "Starting Connection - jwt: ",
         jwt,
@@ -381,16 +376,14 @@ export class Connection {
     }
   }
 
-  protected async getSFUConfigForRemoteConnection(): Promise<SFUConfig> {
-    // This will only be called for sfu's where we do not publish ourselves.
-    // For the local connection we will use the existingJwtTokenData
+  protected async getSFUConfig(): Promise<SFUConfig> {
     return await getSFUConfig({
       client: this.client,
       membership: this.ownMembershipIdentity,
+      role: this.role,
       serviceUrl: this.transport.livekit_service_url,
       roomId: this.roomId,
       slotId: this.slotId,
-      role: "subscriber",
       logger: this.logger,
     });
   }

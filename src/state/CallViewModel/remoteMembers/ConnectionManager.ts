@@ -27,11 +27,6 @@ import { Epoch, type ObservableScope } from "../../ObservableScope.ts";
 import { generateItemsWithEpoch } from "../../../utils/observable.ts";
 import { areLivekitTransportsEqual } from "./MatrixLivekitMembers.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
-import {
-  isLocalTransport,
-  type LocalTransport,
-} from "../localMember/LocalTransport.ts";
-import { type SFUConfig } from "../../../livekit/auth";
 
 export class ConnectionManagerData {
   private readonly store: Map<
@@ -87,7 +82,7 @@ export class ConnectionManagerData {
 interface Props {
   scope: ObservableScope;
   connectionFactory: ConnectionFactory;
-  localTransport$: Observable<LocalTransport>;
+  localTransport$: Observable<LivekitTransport>;
   remoteTransports$: Behavior<Epoch<LivekitTransport[]>>;
 
   logger: Logger;
@@ -147,17 +142,17 @@ export function createConnectionManager$({
    * externally this is modified via `registerTransports()`.
    */
   const localAndRemoteTransports$: Behavior<
-    Epoch<(LivekitTransport | LocalTransport)[]>
+    Epoch<{ transport: LivekitTransport; role: "publisher" | "subscriber" }[]>
   > = scope.behavior(
     combineLatest([localTransportAsArray$, remoteTransports$]).pipe(
-      // Combine local and remote transports into one transport array
-      // and set the forceOldJwtEndpoint property on the local transport
+      // Combine local and remote transports into one transport array, tagged
+      // with the role we take on each of them
       map(([localTransportAsArray, remoteTransports]) => {
         const dedupedRemote = removeDuplicateTransports(remoteTransports.value);
         const remoteWithoutLocal = dedupedRemote.filter(
           (transport) =>
             !localTransportAsArray.find((l) =>
-              areLivekitTransportsEqual(l.transport, transport),
+              areLivekitTransportsEqual(l, transport),
             ),
         );
         logger.debug(
@@ -167,7 +162,16 @@ export function createConnectionManager$({
           localTransportAsArray,
         );
         return new Epoch(
-          [...localTransportAsArray, ...remoteWithoutLocal],
+          [
+            ...localTransportAsArray.map((transport) => ({
+              transport,
+              role: "publisher" as const,
+            })),
+            ...remoteWithoutLocal.map((transport) => ({
+              transport,
+              role: "subscriber" as const,
+            })),
+          ],
           remoteTransports.epoch,
         );
       }),
@@ -182,40 +186,23 @@ export function createConnectionManager$({
       generateItemsWithEpoch(
         "ConnectionManager connections$",
         function* (transports) {
-          for (const transport of transports) {
-            if (isLocalTransport(transport)) {
-              // This is the local transport; only the `LocalTransport`
-              // interface has a `sfuConfig` field.
-              yield {
-                keys: [
-                  transport.transport.livekit_service_url,
-                  transport.sfuConfig,
-                ],
-                data: undefined,
-              };
-            } else {
-              yield {
-                keys: [
-                  transport.livekit_service_url,
-                  undefined as SFUConfig | undefined,
-                ],
-                data: undefined,
-              };
-            }
+          for (const { transport, role } of transports) {
+            yield {
+              keys: [role, transport.livekit_service_url],
+              data: undefined,
+            };
           }
         },
-        (scope, _data$, serviceUrl, sfuConfig) => {
+        (scope, _data$, role, serviceUrl) => {
           const connection = connectionFactory.createConnection(
             scope,
+            role,
             {
               type: "livekit",
               livekit_service_url: serviceUrl,
             },
             ownMembershipIdentity,
             logger,
-            // TODO: This whole optional SFUConfig parameter is not particularly elegant.
-            // I would like it if connections always fetched the SFUConfig by themselves.
-            sfuConfig,
           );
           // Start the connection immediately
           // Use connection state to track connection progress

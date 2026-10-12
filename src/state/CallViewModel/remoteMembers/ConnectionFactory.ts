@@ -35,16 +35,16 @@ import {
   noiseSuppressionSetting,
   autoGainControlSetting,
 } from "../../../settings/settings.ts";
-import { type ClientOpenIDParts, type SFUConfig } from "../../../livekit/auth";
+import { type ClientOpenIDParts } from "../../../livekit/auth";
 
 // TODO evaluate if this should be done like the Publisher Factory
 export interface ConnectionFactory {
   createConnection(
     scope: ObservableScope,
+    role: "publisher" | "subscriber",
     transport: LivekitTransport,
     ownMembershipIdentity: CallMembershipIdentityParts,
     logger: Logger,
-    sfuConfig?: SFUConfig,
   ): Connection;
 }
 
@@ -102,16 +102,16 @@ export class ECConnectionFactory implements ConnectionFactory {
    */
   public createConnection(
     scope: ObservableScope,
+    role: "publisher" | "subscriber",
     transport: LivekitTransport,
     ownMembershipIdentity: CallMembershipIdentityParts,
     logger: Logger,
-    sfuConfig?: SFUConfig,
   ): Connection {
     return new Connection(
       {
-        existingSFUConfig: sfuConfig,
         roomId: this.roomId,
         slotId: this.slotId,
+        role,
         transport,
         client: this.client,
         scope: scope,
