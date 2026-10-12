@@ -127,6 +127,82 @@ describe("connections$ stream", () => {
     });
   });
 
+  test("Shares one connection between homeservers advertising the same JWT service", () => {
+    withTestScheduler(({ behavior, expectObservable }) => {
+      const sameServiceElsewhere: TransportLocator = {
+        transport: TRANSPORT_1.transport,
+        serverName: "elsewhere.org",
+      };
+      const connectionMap$ = createConnectionMap$({
+        scope: testScope,
+        connectionFactory: fakeConnectionFactory,
+        localTransport: TRANSPORT_1,
+        remoteTransports$: behavior("a", {
+          a: new Epoch([sameServiceElsewhere], 0),
+        }),
+        logger: logger,
+        ownMembershipIdentity: ownMemberMock,
+      });
+
+      expectObservable(
+        connectionMap$.pipe(mapEpoch((d) => d.getConnections())),
+      ).toBe("a", {
+        a: expect.toSatisfy((e: Epoch<Connection[]>) => {
+          expect(e.value.length).toBe(1);
+          // The JWT service is reached directly, so the server name plays no
+          // part and the local locator, which came first, is the one used
+          expect(
+            vi.mocked(fakeConnectionFactory).createConnection,
+          ).toHaveBeenCalledExactlyOnceWith(
+            expect.anything(),
+            "publisher",
+            TRANSPORT_1.transport,
+            "example.org",
+            expect.anything(),
+            expect.anything(),
+          );
+          return true;
+        }),
+      });
+    });
+  });
+
+  test("Keeps one connection per homeserver for transports with a url", () => {
+    withTestScheduler(({ behavior, expectObservable }) => {
+      const urlTransport: TransportLocator = {
+        transport: { type: "livekit", url: "wss://sfu.example.org" },
+        serverName: "example.org",
+      };
+      const sameUrlElsewhere: TransportLocator = {
+        transport: urlTransport.transport,
+        serverName: "elsewhere.org",
+      };
+      const connectionMap$ = createConnectionMap$({
+        scope: testScope,
+        connectionFactory: fakeConnectionFactory,
+        localTransport: urlTransport,
+        remoteTransports$: behavior("a", {
+          a: new Epoch([sameUrlElsewhere], 0),
+        }),
+        logger: logger,
+        ownMembershipIdentity: ownMemberMock,
+      });
+
+      expectObservable(
+        connectionMap$.pipe(mapEpoch((d) => d.getConnections())),
+      ).toBe("a", {
+        a: expect.toSatisfy((e: Epoch<Connection[]>) => {
+          // Our homeserver asks the named server for the token, so each
+          // server name needs its own connection
+          expect(e.value.length).toBe(2);
+          expect(findConnection(urlTransport, e.value)).toBeDefined();
+          expect(findConnection(sameUrlElsewhere, e.value)).toBeDefined();
+          return true;
+        }),
+      });
+    });
+  });
+
   test("Should start connection only once", () => {
     withTestScheduler(({ behavior, expectObservable }) => {
       const connectionMap$ = createConnectionMap$({
@@ -228,7 +304,7 @@ describe("ConnectionMap", () => {
     data.add({ ...connection } as Connection, [p("b")]);
     expect(warn).toHaveBeenCalledWith(
       expect.stringContaining(
-        'second connection to [null,"https://lk.example.org","example.org"]: existing [a], adding [b]',
+        'second connection to [null,"https://lk.example.org",null]: existing [a], adding [b]',
       ),
     );
     expect(data.getParticipantsForTransport(TRANSPORT_1)).toHaveLength(2);

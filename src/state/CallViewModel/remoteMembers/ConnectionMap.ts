@@ -6,7 +6,6 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { combineLatest, map, of, switchMap, tap } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import { type RemoteParticipant } from "livekit-client";
@@ -23,46 +22,40 @@ import { generateItemsWithEpoch } from "../../../utils/observable.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
 import { type TransportLocator } from "../../../livekit/auth/types.ts";
 
-// Branded string type, to enforce that `fromKey` must only be called with
-// values returned by `keyFor`
+// Branded string type, so that only values returned by `keyFor` can be used
+// as keys
 export type TransportKey = string & { __transportKey: true };
 
 /**
  * Converts a {@link TransportLocator} to a key suitable for identifying it in a
- * {@link Map} or {@link Set}.
+ * {@link Map} or {@link Set}. Locators with the same key share a connection.
  */
 export function keyFor({
   transport,
   serverName,
 }: TransportLocator): TransportKey {
+  // The server name only takes part in authentication for a transport with a
+  // `url`, where our homeserver asks that server for the token. A JWT service
+  // is reached directly, so members of several homeservers advertising the
+  // same one must share a connection rather than each get their own.
+  const hasUrl = "url" in transport;
   // Serialize the fields in a consistent order
   return JSON.stringify([
-    "url" in transport ? transport.url : null,
+    hasUrl ? transport.url : null,
     "livekit_service_url" in transport ? transport.livekit_service_url : null,
-    serverName,
+    hasUrl ? serverName : null,
   ]) as TransportKey;
-}
-
-/**
- * Inverse of {@link keyFor}: turns a key back into a {@link TransportLocator}.
- */
-export function fromKey(key: TransportKey): TransportLocator {
-  const [url, serviceUrl, serverName] = JSON.parse(key);
-  return {
-    transport: {
-      type: "livekit",
-      ...(url === null ? {} : { url }),
-      ...(serviceUrl === null ? {} : { livekit_service_url: serviceUrl }),
-    } as UnstableLivekitTransport,
-    serverName,
-  };
 }
 
 function removeDuplicateTransports(
   transports: TransportLocator[],
 ): TransportLocator[] {
+  // The first locator wins, so the local one stays first in the list
   const map = new Map<TransportKey, TransportLocator>();
-  for (const transport of transports) map.set(keyFor(transport), transport);
+  for (const transport of transports) {
+    const key = keyFor(transport);
+    if (!map.has(key)) map.set(key, transport);
+  }
   return [...map.values()];
 }
 
@@ -173,15 +166,14 @@ export function createConnectionMap$({
                 ? ("publisher" as const)
                 : ("subscriber" as const);
             yield {
-              // In order to maintain a static set of map keys, we must
-              // temporarily serialize `transport` into a stable key format
+              // The locator is an object, so a stable key stands in for it
               keys: [role, keyFor(transport)],
-              data: undefined,
+              data: transport,
             };
           }
         },
-        (scope, _data$, role, transportKey) => {
-          const { transport, serverName } = fromKey(transportKey);
+        (scope, locator$, role, _key) => {
+          const { transport, serverName } = locator$.value;
           const connection = connectionFactory.createConnection(
             scope,
             role,
