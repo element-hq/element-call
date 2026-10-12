@@ -209,7 +209,7 @@ describe("LocalMembership", () => {
       leave: vi.fn(),
     } as unknown as MatrixRTCSession,
     muteStates: mockMuteStates(),
-    trackProcessorState$: constant({
+    backgroundEffectsState$: constant({
       supported: false,
       processor: undefined,
     }),

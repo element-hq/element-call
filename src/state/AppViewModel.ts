@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type AudioOutputOptions, MediaDevices } from "./MediaDevices";
+import { createAppBackgroundEffects } from "../livekit/BackgroundEffectsContext";
 import { type ObservableScope } from "./ObservableScope";
 
 /**
@@ -16,6 +17,7 @@ export class AppViewModel {
     this.scope,
     this.audioOutputOptions,
   );
+  public readonly backgroundEffects = createAppBackgroundEffects(this.scope);
 
   // TODO: Move more application logic here. The CallViewModel, at the very
   // least, ought to be accessible from this object.

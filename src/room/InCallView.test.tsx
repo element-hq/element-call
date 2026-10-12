@@ -31,6 +31,7 @@ import {
   mockRemoteParticipant,
   mockRtcMembership,
   type MockRTCSession,
+  testScope,
 } from "../utils/test";
 import { E2eeType } from "../e2ee/e2eeType";
 import {
@@ -49,7 +50,10 @@ import { MediaDevicesContext } from "../MediaDevicesContext";
 import { type MediaDevices as ECMediaDevices } from "../state/MediaDevices";
 import { AppBar } from "../AppBar";
 import { type MatrixInfo } from "./VideoPreview";
-import { ProcessorProvider } from "../livekit/TrackProcessorContext";
+import {
+  BackgroundEffectsProvider,
+  createAppBackgroundEffects,
+} from "../livekit/BackgroundEffectsContext";
 import { initializeWidget } from "../widget";
 import { RootElementProvider } from "../RootElementContext";
 
@@ -242,7 +246,9 @@ describe("ActiveCall", () => {
     const { findByTestId } = render(
       <BrowserRouter>
         <MediaDevicesContext value={mediaDevices}>
-          <ProcessorProvider>
+          <BackgroundEffectsProvider
+            effects={createAppBackgroundEffects(testScope())}
+          >
             <TooltipProvider>
               <RoomContext value={mockLivekitRoom({ localParticipant })}>
                 <ActiveCall
@@ -257,7 +263,7 @@ describe("ActiveCall", () => {
                 />
               </RoomContext>
             </TooltipProvider>
-          </ProcessorProvider>
+          </BackgroundEffectsProvider>
         </MediaDevicesContext>
       </BrowserRouter>,
     );
@@ -292,7 +298,9 @@ describe("ActiveCall", () => {
         <BrowserRouter>
           <RootElementProvider value={root}>
             <MediaDevicesContext value={mediaDevices}>
-              <ProcessorProvider>
+              <BackgroundEffectsProvider
+                effects={createAppBackgroundEffects(testScope())}
+              >
                 <TooltipProvider>
                   <RoomContext value={mockLivekitRoom({ localParticipant })}>
                     <ActiveCall
@@ -307,7 +315,7 @@ describe("ActiveCall", () => {
                     />
                   </RoomContext>
                 </TooltipProvider>
-              </ProcessorProvider>
+              </BackgroundEffectsProvider>
             </MediaDevicesContext>
           </RootElementProvider>
         </BrowserRouter>,

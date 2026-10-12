@@ -26,7 +26,7 @@ import type {
 } from "../../../livekit/openIDSFU.ts";
 import type { MediaDevices } from "../../MediaDevices.ts";
 import type { Behavior } from "../../Behavior.ts";
-import type { ProcessorState } from "../../../livekit/TrackProcessorContext.tsx";
+import type { BackgroundEffectsState } from "../../../livekit/BackgroundEffectsContext.tsx";
 import { getLiveKitOptions } from "../../../livekit/options.ts";
 import {
   advancedCamera,
@@ -60,7 +60,7 @@ export class ECConnectionFactory implements ConnectionFactory {
    * @param client - The OpenID client parts for authentication, needed to get openID and JWT tokens.
    * @param roomId - The current room ID.
    * @param devices - Used for video/audio out/in capture options.
-   * @param processorState$ - Effects like background blur (only for publishing connection?)
+   * @param backgroundEffectsState$ - Effects like background blur (only for publishing connection?)
    * @param livekitKeyProvider - Optional key provider for end-to-end encryption.
    * @param controlledAudioDevices - Option to indicate whether audio output device is controlled externally (native mobile app).
    * @param livekitRoomFactory - Optional factory function (for testing) to create LivekitRoom instances. If not provided, a default factory is used.
@@ -69,7 +69,7 @@ export class ECConnectionFactory implements ConnectionFactory {
     private client: OpenIDClientParts,
     private readonly roomId: string,
     private devices: MediaDevices,
-    private processorState$: Behavior<ProcessorState>,
+    private backgroundEffectsState$: Behavior<BackgroundEffectsState>,
     livekitKeyProvider: BaseKeyProvider | undefined,
     private controlledAudioDevices: boolean,
     livekitRoomFactory?: () => LivekitRoom,
@@ -77,7 +77,7 @@ export class ECConnectionFactory implements ConnectionFactory {
     const defaultFactory = (): LivekitRoom => {
       const roomOptions = generateRoomOption({
         devices: this.devices,
-        processorState: this.processorState$.value,
+        backgroundEffectsState: this.backgroundEffectsState$.value,
         e2eeLivekitOptions: livekitKeyProvider && {
           keyProvider: livekitKeyProvider,
           // It's important that every room use a separate E2EE worker.
@@ -129,12 +129,12 @@ export class ECConnectionFactory implements ConnectionFactory {
  */
 function generateRoomOption({
   devices,
-  processorState,
+  backgroundEffectsState,
   e2eeLivekitOptions,
   controlledAudioDevices,
 }: {
   devices: MediaDevices;
-  processorState: ProcessorState;
+  backgroundEffectsState: BackgroundEffectsState;
   e2eeLivekitOptions:
     | E2EEManagerOptions
     | { e2eeManager: BaseE2EEManager }
@@ -147,7 +147,7 @@ function generateRoomOption({
   let videoCaptureDefaults = {
     ...liveKitOptions.videoCaptureDefaults,
     deviceId: devices.videoInput.selected$.value?.id,
-    processor: processorState.processor,
+    processor: backgroundEffectsState.processor,
   };
   let publishDefaults = liveKitOptions.publishDefaults;
 

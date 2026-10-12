@@ -35,7 +35,7 @@ import { ErrorPage, LoadingPage } from "./FullScreenView";
 import { Initializer } from "./initializer";
 import { type WidgetHelpers } from "./widget";
 import { useTheme } from "./useTheme";
-import { ProcessorProvider } from "./livekit/TrackProcessorContext";
+import { BackgroundEffectsProvider } from "./livekit/BackgroundEffectsContext";
 import { type AppViewModel } from "./state/AppViewModel";
 import { MediaDevicesContext } from "./MediaDevicesContext";
 import {
@@ -148,7 +148,7 @@ export const App: FC<Props> = ({ vm, widget }) => {
     loaded && clientReady ? (
       <ClientProvider client={widgetClient}>
         <MediaDevicesContext value={vm.mediaDevices}>
-          <ProcessorProvider>
+          <BackgroundEffectsProvider effects={vm.backgroundEffects}>
             <Sentry.ErrorBoundary
               fallback={(error) => <ErrorPage error={error} />}
             >
@@ -159,7 +159,7 @@ export const App: FC<Props> = ({ vm, widget }) => {
                 <SentryRoute path="*" element={<RoomPage />} />
               </Routes>
             </Sentry.ErrorBoundary>
-          </ProcessorProvider>
+          </BackgroundEffectsProvider>
         </MediaDevicesContext>
       </ClientProvider>
     ) : (

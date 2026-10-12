@@ -655,7 +655,7 @@ describe("remote track logging", () => {
 //   function createSetup(): void {
 //     setUpPublishConnection();
 
-//     const fakeTrackProcessorSubject$ = new BehaviorSubject<ProcessorState>({
+//     const fakeTrackProcessorSubject$ = new BehaviorSubject<BackgroundEffectsState>({
 //       supported: true,
 //       processor: undefined,
 //     });

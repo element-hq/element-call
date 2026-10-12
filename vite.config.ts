@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import {
   loadEnv,
+  type Plugin,
   type PluginOption,
   searchForWorkspaceRoot,
   type ConfigEnv,
@@ -42,10 +43,12 @@ export const vitePluginsConfig = ({
     }),
     react(),
     wasm(),
-    nodePolyfills({
-      // Enables the 'events' module, which is required by the matrix-js-sdk
-      include: ["events"],
-    }),
+    exceptMediaPipeWasm(
+      nodePolyfills({
+        // Enables the 'events' module, which is required by the matrix-js-sdk
+        include: ["events"],
+      }),
+    ),
     svgrPlugin({
       svgrOptions: {
         // This enables ref forwarding on SVGR components, which is needed, for
@@ -176,3 +179,31 @@ export default ({
     },
   };
 };
+
+/**
+ * Keeps a plugin's transform off MediaPipe's WASM loader. The loader is a
+ * classic script that sets `self.ModuleFactory`; transformed into a module it
+ * sets nothing, and the segmenter fails with "ModuleFactory not set".
+ */
+function exceptMediaPipeWasm(plugins: PluginOption): PluginOption {
+  const isLoader = (id: string): boolean =>
+    id.includes("tasks-vision") && id.includes("wasm");
+  return (Array.isArray(plugins) ? plugins : [plugins]).map((plugin) => {
+    if (
+      !plugin ||
+      typeof plugin !== "object" ||
+      !("transform" in plugin) ||
+      typeof plugin.transform !== "function"
+    )
+      return plugin;
+    const transform = plugin.transform;
+    const wrapped: Plugin = {
+      ...plugin,
+      transform(code, id, options) {
+        if (isLoader(id)) return null;
+        return transform.call(this, code, id, options);
+      },
+    };
+    return wrapped;
+  });
+}
