@@ -15,7 +15,7 @@ exports[`AppBar > renders 1`] = `
         tabindex="0"
       >
         <div
-          class="_indicator-icon_147l5_17"
+          class="_indicator-icon_j097f_17"
           style="--cpd-icon-button-size: 100%;"
         >
           <svg
@@ -58,7 +58,7 @@ exports[`AppBar > renders with title and subtitle 1`] = `
         tabindex="0"
       >
         <div
-          class="_indicator-icon_147l5_17"
+          class="_indicator-icon_j097f_17"
           style="--cpd-icon-button-size: 100%;"
         >
           <svg

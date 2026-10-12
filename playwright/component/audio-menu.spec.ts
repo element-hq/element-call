@@ -129,7 +129,10 @@ async function openDeviceList(page: Page, pane: Locator): Promise<Locator> {
     .getByRole("button", { name: "Microphone" })
     .click({ timeout: 60_000 });
   await expect(page.getByRole("menu")).toBeVisible();
-  const list = page.locator("[role='menu'] div[role='none']").first();
+  // The area of the menu holding the device groups, not the menu's own.
+  const list = page.locator(
+    "[role='menu'] div[role='none']:has(> [role='group'])",
+  );
   await expect(list).toBeVisible();
   return list;
 }

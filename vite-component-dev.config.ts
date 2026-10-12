@@ -37,8 +37,21 @@ export default defineConfig(({ mode }) => {
     ...vitePluginsConfig({ mode, html: false }),
     root: "component/dev",
     // The same scoping the library build applies, so the harness shows what a
-    // host will get — including whether its own page is left alone
-    css: { postcss: { plugins: [scopeStylesToRoot()] } },
+    // host will get — including whether its own page is left alone. The host's
+    // own stylesheets, Compound's among them, stay unscoped, as on a real host.
+    css: {
+      postcss: {
+        plugins: [
+          scopeStylesToRoot({
+            exclude: [
+              /component[\\/]dev[\\/]/,
+              /@vector-im[\\/]compound-/,
+              /@fontsource[\\/]/,
+            ],
+          }),
+        ],
+      },
+    },
     // So that the harness can read the same config.json the standalone app
     // does, if the developer has written one
     publicDir: "../../public",

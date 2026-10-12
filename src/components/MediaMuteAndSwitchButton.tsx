@@ -17,6 +17,7 @@ import {
   Button,
   Menu,
   MenuItem,
+  MenuScrollArea,
   MenuTitle,
   RadioInput,
   ToggleMenuItem,
@@ -83,6 +84,9 @@ const LIST_SHARE_OF_CALL = 0.6;
 
 /** Smallest device list height in px, so a short call still shows more than one device. */
 const MIN_LIST_HEIGHT = 160;
+
+/** Space kept between the menu and the call area's sides. */
+const MENU_MARGIN = 16;
 
 export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   enabled,
@@ -326,6 +330,8 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
         open={menuOpen}
         onOpenChange={onOpenChange}
         side="top"
+        collisionBoundary={rootElement}
+        collisionPadding={MENU_MARGIN}
         trigger={
           <Button
             iconOnly
@@ -340,17 +346,21 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
           />
         }
       >
-        <div
+        <MenuScrollArea
           ref={trackFocusSource}
-          // Keeps the items the menu's own children for assistive tech.
-          role="none"
-          className={styles.deviceList}
+          className={classNames(styles.deviceList, {
+            [styles.deviceListWithMeter]: iconsAndLabels === "audio",
+          })}
           style={
             {
               "--device-list-max-height":
                 listMaxHeight === undefined ? undefined : `${listMaxHeight}px`,
-              "--device-list-scroll-padding-end":
-                meterHeight === undefined ? undefined : `${meterHeight}px`,
+              // A row reached by keyboard stays above the meter and the band its
+              // ground fills.
+              scrollPaddingBlockEnd:
+                meterHeight === undefined
+                  ? undefined
+                  : `calc(${meterHeight}px + var(--cpd-menu-padding-block-end, 0px))`,
               "--device-list-scroll-padding-start":
                 headingHeight === undefined ? undefined : `${headingHeight}px`,
             } as CSSProperties
@@ -398,7 +408,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
               )}
             </div>
           </div>
-        </div>
+        </MenuScrollArea>
         {toggles.length > 0 && <hr />}
         {toggles.map((toggle) => (
           <ToggleMenuItem
