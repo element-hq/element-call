@@ -51,6 +51,7 @@ vi.mock("@livekit/track-processors", () => ({
 
 const store = vi.hoisted(() => ({
   add: vi.fn<(file: Blob) => Promise<string>>(),
+  remove: vi.fn<(id: string) => Promise<void>>(),
 }));
 vi.mock("../livekit/backgroundImages", async (original) => {
   const { BehaviorSubject } = await import("rxjs");
@@ -59,6 +60,7 @@ vi.mock("../livekit/backgroundImages", async (original) => {
     addedBackgrounds: {
       added$: new BehaviorSubject<AddedBackground[] | undefined>([]),
       add: store.add,
+      remove: store.remove,
     },
   };
 });
@@ -324,21 +326,27 @@ describe("createCallFooterViewModel", () => {
       expect(lobbyOn("desktop").backgroundEffectNotice$.value).toBeUndefined();
     });
 
-    it("offers every effect in order", () => {
+    it("offers every effect in order, the added ones removable", () => {
       sdkSupportMock.mockReturnValue(true);
       const added$ = addedBackgrounds.added$ as BehaviorSubject<
         AddedBackground[] | undefined
       >;
       added$.next([{ id: "mine", url: "blob:mine" }]);
       expect(lobbyOn("desktop").backgroundEffects$.value).toEqual([
-        { id: "none", kind: "none" },
-        { id: "blur", kind: "blur" },
+        { id: "none", kind: "none", removable: false },
+        { id: "blur", kind: "blur", removable: false },
         ...shippedBackgrounds.map((background) => ({
           id: `image:${background.id}`,
           kind: "image",
           imageUrl: background.imagePath,
+          removable: false,
         })),
-        { id: "added:mine", kind: "image", imageUrl: "blob:mine" },
+        {
+          id: "added:mine",
+          kind: "image",
+          imageUrl: "blob:mine",
+          removable: true,
+        },
       ]);
       added$.next([]);
     });
@@ -410,6 +418,17 @@ describe("createCallFooterViewModel", () => {
       vm.addBackgroundImage$.value!(new File(["x"], "c.png"));
       await flushPromises();
       expect(vm.backgroundImageRefusal$.value).toBeUndefined();
+    });
+
+    it("never removes the background in force", () => {
+      sdkSupportMock.mockReturnValue(true);
+      store.remove.mockResolvedValue();
+      const vm = lobbyOn("desktop");
+      backgroundEffectSetting.setValue("added:worn");
+      vm.removeBackgroundEffect$.value!("added:worn");
+      expect(store.remove).not.toHaveBeenCalled();
+      vm.removeBackgroundEffect$.value!("added:spare");
+      expect(store.remove).toHaveBeenCalledWith("spare");
     });
 
     it("availability is the same before and during a call", () => {

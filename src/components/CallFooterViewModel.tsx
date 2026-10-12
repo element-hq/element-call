@@ -109,6 +109,7 @@ function buildDeviceBehaviors(
   | "backgroundEffectSettling$"
   | "addBackgroundImage$"
   | "backgroundImageRefusal$"
+  | "removeBackgroundEffect$"
 > {
   const options$ = (
     available$: Behavior<Map<string, MenuOptions["label"]>>,
@@ -210,6 +211,25 @@ function buildDeviceBehaviors(
       ),
     ),
     backgroundImageRefusal$: refusal$,
+    // Never the one in force: taking it away would leave nothing chosen.
+    removeBackgroundEffect$: scope.behavior(
+      offered$.pipe(
+        map((offered) =>
+          offered
+            ? (optionId: string): void => {
+                const effect = parseEffect(optionId);
+                if (effect.kind !== "added") return;
+                if (backgroundEffectSetting.getValue() === optionId) return;
+                addedBackgrounds
+                  .remove(effect.id)
+                  .catch((e) =>
+                    logger.warn("Could not remove that background", e),
+                  );
+              }
+            : undefined,
+        ),
+      ),
+    ),
   };
 }
 
@@ -381,17 +401,19 @@ function backgroundEffectChoices(
   added: AddedBackground[],
 ): BackgroundEffectChoice[] {
   return [
-    { id: serializeEffect({ kind: "none" }), kind: "none" },
-    { id: serializeEffect({ kind: "blur" }), kind: "blur" },
+    { id: serializeEffect({ kind: "none" }), kind: "none", removable: false },
+    { id: serializeEffect({ kind: "blur" }), kind: "blur", removable: false },
     ...shippedBackgrounds.map((background) => ({
       id: serializeEffect({ kind: "shipped", id: background.id }),
       kind: "image" as const,
       imageUrl: background.imagePath,
+      removable: false,
     })),
     ...added.map((background) => ({
       id: serializeEffect({ kind: "added", id: background.id }),
       kind: "image" as const,
       imageUrl: background.url,
+      removable: true,
     })),
   ];
 }

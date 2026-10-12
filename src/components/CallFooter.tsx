@@ -45,6 +45,8 @@ export interface BackgroundEffectChoice {
   id: string;
   kind: "none" | "blur" | "image";
   imageUrl?: string;
+  /** One the user added, which they can take away again. */
+  removable: boolean;
 }
 
 export interface AudioOutputSwitcher {
@@ -75,6 +77,8 @@ export interface FooterActions {
   selectBackgroundEffect: ((id: string) => void) | undefined;
   /** Undefined where no background can be added. */
   addBackgroundImage: ((file: File) => void) | undefined;
+  /** Removes an added background by its option id; never the one in force. */
+  removeBackgroundEffect: ((id: string) => void) | undefined;
   toggleScreenSharing: (() => void) | undefined;
   /** Also controls if the settings button is visible */
   openSettings: (() => void) | undefined;
@@ -186,6 +190,7 @@ export const CallFooter: FC<FooterProps> = ({
   const backgroundEffectNotice = useBehavior(vm.backgroundEffectNotice$);
   const backgroundEffectSettling = useBehavior(vm.backgroundEffectSettling$);
   const addBackgroundImage = useBehavior(vm.addBackgroundImage$);
+  const removeBackgroundEffect = useBehavior(vm.removeBackgroundEffect$);
   const refusal = useBehavior(vm.backgroundImageRefusal$);
   const refusalMessage = useMemo(() => {
     switch (refusal?.reason) {
@@ -270,6 +275,7 @@ export const CallFooter: FC<FooterProps> = ({
         onSelectBackgroundEffect={selectBackgroundEffect}
         backgroundEffectSettling={backgroundEffectSettling}
         onAddBackgroundImage={addBackgroundImage}
+        onRemoveBackgroundEffect={removeBackgroundEffect}
         backgroundImageRefusal={refusalMessage}
         backgroundEffectNotice={
           backgroundEffectNotice === "unavailable"
