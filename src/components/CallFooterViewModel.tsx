@@ -9,7 +9,11 @@ import { combineLatest, map, type Observable, switchMap } from "rxjs";
 import { supportsAudioOutputSelection } from "livekit-client";
 
 import { supportsBackgroundProcessors } from "../livekit/backgroundProcessing";
-import { parseEffect } from "../livekit/backgroundEffects";
+import {
+  parseEffect,
+  serializeEffect,
+  shippedBackgrounds,
+} from "../livekit/backgroundEffects";
 
 import { type CallViewModel } from "../state/CallViewModel/CallViewModel";
 import { type MenuOptions } from "./MediaMuteAndSwitchButton";
@@ -24,7 +28,7 @@ import { type MuteStates } from "../state/MuteStates";
 import { createStaticViewModel, type ViewModel } from "../state/ViewModel";
 import { HeaderStyle } from "../UrlParams";
 import { platform } from "../Platform";
-import { type FooterSnapshot } from "./CallFooter";
+import { type BackgroundEffectChoice, type FooterSnapshot } from "./CallFooter";
 
 /**
  * Shared helper: maps MuteStates into the audio/video enabled + toggle behaviors
@@ -58,7 +62,7 @@ function buildMuteBehaviors(
 
 /**
  * Shared helper: maps MediaDevices into the audio/video device-list behaviors
- * needed by FooterSnapshot (options, selection, callbacks, blur toggle).
+ * needed by FooterSnapshot (options, selection, callbacks, background effect).
  */
 function buildDeviceBehaviors(
   scope: ObservableScope,
@@ -76,8 +80,10 @@ function buildDeviceBehaviors(
   | "videoOptions$"
   | "selectedVideo$"
   | "selectVideoButtonOption$"
-  | "toggleBlur$"
-  | "videoBlurEnabled$"
+  | "backgroundEffect$"
+  | "selectBackgroundEffect$"
+  | "backgroundEffects$"
+  | "backgroundEffectNotice$"
 > {
   const options$ = (
     available$: Behavior<Map<string, MenuOptions["label"]>>,
@@ -94,10 +100,9 @@ function buildDeviceBehaviors(
       ),
     );
 
-  const blurOn$ = scope.behavior(
-    backgroundEffectSetting.value$.pipe(
-      map((raw) => parseEffect(raw).kind === "blur"),
-    ),
+  const supported = supportsBackgroundProcessors();
+  const offered$ = disableSwitcher$.pipe(
+    map((switcherDisabled) => !switcherDisabled && supported),
   );
   return {
     audioOptions$: scope.behavior(options$(mediaDevices.audioInput.available$)),
@@ -123,18 +128,27 @@ function buildDeviceBehaviors(
       mediaDevices.videoInput.selected$.pipe(map((s) => s?.id)),
     ),
     selectVideoButtonOption$: constant(mediaDevices.videoInput.select),
-    toggleBlur$: scope.behavior(
-      combineLatest([blurOn$, disableSwitcher$]).pipe(
-        map(([current, switcherDisabled]) => {
-          return !switcherDisabled && supportsBackgroundProcessors()
-            ? (): void => {
-                backgroundEffectSetting.setValue(current ? "none" : "blur");
-              }
-            : undefined;
-        }),
+    backgroundEffect$: scope.behavior(
+      backgroundEffectSetting.value$.pipe(
+        map((raw) => (supported ? serializeEffect(parseEffect(raw)) : "none")),
       ),
     ),
-    videoBlurEnabled$: blurOn$,
+    selectBackgroundEffect$: scope.behavior(
+      offered$.pipe(
+        map((offered) =>
+          offered
+            ? (id: string): void =>
+                backgroundEffectSetting.setValue(
+                  serializeEffect(parseEffect(id)),
+                )
+            : undefined,
+        ),
+      ),
+    ),
+    backgroundEffects$: constant(backgroundEffectChoices()),
+    backgroundEffectNotice$: scope.behavior(
+      offered$.pipe(map((offered) => (offered ? undefined : "unavailable"))),
+    ),
   };
 }
 
@@ -284,4 +298,16 @@ export function createLobbyFooterViewModel(
     ...buildMuteBehaviors(scope, muteStates),
     ...buildDeviceBehaviors(scope, mediaDevices, constant(false)),
   };
+}
+
+function backgroundEffectChoices(): BackgroundEffectChoice[] {
+  return [
+    { id: serializeEffect({ kind: "none" }), kind: "none" },
+    { id: serializeEffect({ kind: "blur" }), kind: "blur" },
+    ...shippedBackgrounds.map((background) => ({
+      id: serializeEffect({ kind: "shipped", id: background.id }),
+      kind: "image" as const,
+      imageUrl: background.imagePath,
+    })),
+  ];
 }
