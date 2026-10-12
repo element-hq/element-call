@@ -254,9 +254,6 @@ export async function createRoom(
         "m.sticker": 50,
         "org.matrix.msc3401.call.member": 0,
       },
-      users: {
-        [client.getUserId()!]: 100,
-      },
     },
   });
 
