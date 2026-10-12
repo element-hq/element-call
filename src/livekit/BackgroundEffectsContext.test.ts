@@ -24,7 +24,7 @@ import {
   createAppBackgroundEffects,
 } from "./BackgroundEffectsContext";
 import { type BackgroundEffects } from "../state/BackgroundEffects";
-import { backgroundBlur } from "../settings/settings";
+import { backgroundEffect } from "../settings/settings";
 import { constant } from "../state/Behavior";
 import { flushPromises, testScope } from "../utils/test";
 
@@ -168,7 +168,7 @@ describe("BackgroundEffectsProvider", () => {
   ): ReturnType<typeof createElement> => createElement(Surfaces, { tracks });
   const blur = async (on: boolean): Promise<void> => {
     await act(async () => {
-      backgroundBlur.setValue(on);
+      backgroundEffect.setValue(on ? "blur" : "none");
       await flushPromises();
     });
   };
@@ -181,9 +181,9 @@ describe("BackgroundEffectsProvider", () => {
     pipelines.destroyed = 0;
     pipelines.switches = [];
     platformMock.platform = "desktop";
-    backgroundBlur.setValue(false);
+    backgroundEffect.setValue("none");
   });
-  afterEach(() => backgroundBlur.setValue(false));
+  afterEach(() => backgroundEffect.setValue("none"));
 
   // A pipeline primes itself when it is built and when it is destroyed, and a
   // primed pipeline lets one frame through untouched: so the frame is spent

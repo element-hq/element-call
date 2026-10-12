@@ -12,6 +12,7 @@ import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { type Behavior } from "../state/Behavior";
 import { useBehavior } from "../useBehavior";
 import { MatrixRTCMode } from "../config/ConfigOptions";
+import { type EffectId } from "../livekit/backgroundEffects";
 
 export class Setting<T> {
   public constructor(
@@ -115,7 +116,14 @@ export const videoInput = new Setting<string | undefined>(
   undefined,
 );
 
-export const backgroundBlur = new Setting<boolean>("background-blur", false);
+// Only read, to carry blur over for anyone who had it on.
+const backgroundBlur = new Setting<boolean>("background-blur", false);
+
+/** The chosen background effect, in the form `parseEffect` reads. */
+export const backgroundEffect = new Setting<EffectId>(
+  "background-effect",
+  backgroundBlur.getValue() ? "blur" : "none",
+);
 
 export const showHandRaisedTimer = new Setting<boolean>(
   "hand-raised-show-timer",

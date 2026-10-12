@@ -16,14 +16,18 @@ import { deepCompare } from "matrix-js-sdk/lib/utils";
 import { type Behavior } from "./Behavior";
 import { type ObservableScope } from "./ObservableScope";
 import { type BackgroundEffectsState } from "../livekit/BackgroundEffectsContext";
-
-const blurRadius = 15;
+import {
+  type BackgroundEffect,
+  blurRadius,
+  imagePathFor,
+  parseEffect,
+} from "../livekit/backgroundEffects";
 
 export interface BackgroundEffectsOptions {
   /** Whether this browser can run a pipeline at all. */
   supported: boolean;
-  /** Whether blur is chosen. */
-  blur$: Behavior<boolean>;
+  /** The effect chosen, as the setting stores it. */
+  effect$: Behavior<string>;
   /** The background processor pipeline to be switched between effects. */
   pipeline: BackgroundProcessorWrapper;
 }
@@ -36,10 +40,16 @@ export interface BackgroundEffects {
 /** Switches the pipeline as the choice changes, for as long as the scope lasts. */
 export function createBackgroundEffects(
   scope: ObservableScope,
-  { supported, blur$, pipeline }: BackgroundEffectsOptions,
+  { supported, effect$, pipeline }: BackgroundEffectsOptions,
 ): BackgroundEffects {
+  const choice$ = effect$.pipe(map(parseEffect));
+  const wanted$ = choice$.pipe(
+    map((effect) => effect.kind !== "none"),
+    distinctUntilChanged(),
+  );
+
   const state$ = scope.behavior(
-    blur$.pipe(
+    wanted$.pipe(
       scan<boolean, BackgroundEffectsState>(
         (previous, wanted) => {
           // Attached the first time an effect is wanted and never detached
@@ -56,13 +66,9 @@ export function createBackgroundEffects(
   const switchOptions$ = scope.behavior<
     SwitchBackgroundProcessorOptions | undefined
   >(
-    combineLatest([state$, blur$]).pipe(
-      map(([{ processor }, blur]) =>
-        processor === undefined
-          ? undefined
-          : blur
-            ? { mode: "background-blur", blurRadius }
-            : { mode: "disabled" },
+    combineLatest([state$, choice$]).pipe(
+      map(([{ processor }, effect]) =>
+        processor === undefined ? undefined : switchOptionsFor(effect),
       ),
       distinctUntilChanged(deepCompare),
     ),
@@ -78,4 +84,21 @@ export function createBackgroundEffects(
   });
 
   return { state$ };
+}
+
+function switchOptionsFor(
+  effect: BackgroundEffect,
+): SwitchBackgroundProcessorOptions {
+  switch (effect.kind) {
+    case "blur":
+      return { mode: "background-blur", blurRadius };
+    case "shipped": {
+      const imagePath = imagePathFor(effect.id);
+      return imagePath
+        ? { mode: "virtual-background", imagePath }
+        : { mode: "disabled" };
+    }
+    default:
+      return { mode: "disabled" };
+  }
 }
