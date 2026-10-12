@@ -13,6 +13,7 @@ import {
 import {
   ConnectionError,
   ConnectionErrorReason,
+  type ConnectionState as LivekitConnectionState,
   type Participant,
   type RemoteParticipant,
   type RemoteTrackPublication,
@@ -23,7 +24,7 @@ import {
   type TrackPublication,
 } from "livekit-client";
 import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
-import { BehaviorSubject, map } from "rxjs";
+import { BehaviorSubject } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
@@ -63,30 +64,15 @@ export interface ConnectionOpts {
   /** Optional factory to create the LiveKit room, mainly for testing purposes. */
   livekitRoomFactory: () => LivekitRoom;
 }
-export class FailedToStartError extends Error {
-  public constructor(message: string) {
-    super(message);
-    this.name = "FailedToStartError";
-  }
-}
 
-export enum ConnectionState {
-  /** The start state of a connection. It has been created but nothing has loaded yet. */
-  Initialized = "Initialized",
-  /** `start` has been called on the connection. It aquires the jwt info to conenct to the LK Room  */
-  FetchingConfig = "FetchingConfig",
-  Stopped = "Stopped",
-  /** The same as ConnectionState.Disconnected from `livekit-client` */
-  LivekitDisconnected = "disconnected",
-  /** The same as ConnectionState.Connecting from `livekit-client` */
-  LivekitConnecting = "connecting",
-  /** The same as ConnectionState.Connected from `livekit-client` */
-  LivekitConnected = "connected",
-  /** The same as ConnectionState.Reconnecting from `livekit-client` */
-  LivekitReconnecting = "reconnecting",
-  /** The same as ConnectionState.SignalReconnecting from `livekit-client` */
-  LivekitSignalReconnecting = "signalReconnecting",
-}
+export type ConnectionState =
+  // The start state of a connection. It has been created but nothing has loaded yet.
+  | { state: "initialized" }
+  // `start` has been called on the connection. It acquires the JWT token to connect to the LK room.
+  | { state: "authenticating" }
+  | { state: "authenticated"; livekitState: LivekitConnectionState }
+  | { state: "error"; error: ElementCallError }
+  | { state: "stopped" };
 
 /**
  * A connection to a Matrix RTC LiveKit backend.
@@ -95,14 +81,14 @@ export enum ConnectionState {
  */
 export class Connection {
   // Private Behavior
-  private readonly _state$ = new BehaviorSubject<
-    ConnectionState | ElementCallError
-  >(ConnectionState.Initialized);
+  private readonly _state$ = new BehaviorSubject<ConnectionState>({
+    state: "initialized",
+  });
 
   /**
    * The current state of the connection to the media transport.
    */
-  public readonly state$: Behavior<ConnectionState | Error> = this._state$;
+  public readonly state$: Behavior<ConnectionState> = this._state$;
 
   /**
    * The media transport to connect to.
@@ -304,7 +290,7 @@ export class Connection {
     this.logger.debug("Starting Connection");
     this.stopped = false;
     try {
-      this._state$.next(ConnectionState.FetchingConfig);
+      this._state$.next({ state: "authenticating" });
       // We should already have this information after creating the localTransport.
       // only call getSFUConfigWithOpenID for connections where we do not have a token yet. (existingJwtTokenData === undefined)
       const { url, jwt, livekitAlias } =
@@ -326,14 +312,10 @@ export class Connection {
 
       // Setup observer once we are done with getSFUConfigWithOpenID
       connectionStateObserver(this.livekitRoom)
-        .pipe(
-          this.scope.bind(),
-          map((s) => s as unknown as ConnectionState),
-        )
-        .subscribe((lkState) => {
-          // It is save to cast lkState to ConnectionState as they are fully overlapping.
-          this._state$.next(lkState);
-        });
+        .pipe(this.scope.bind())
+        .subscribe((livekitState) =>
+          this._state$.next({ state: "authenticated", livekitState }),
+        );
 
       try {
         this.logger.info(`livekitRoom.connect ${url}`);
@@ -383,13 +365,15 @@ export class Connection {
         return;
       }
       this.logger.debug(`Failed to connect to LiveKit room: ${error}`);
-      this._state$.next(
-        error instanceof ElementCallError
-          ? error
-          : error instanceof Error
-            ? new UnknownCallError(error)
-            : new UnknownCallError(new Error(`${error}`)),
-      );
+      this._state$.next({
+        state: "error",
+        error:
+          error instanceof ElementCallError
+            ? error
+            : error instanceof Error
+              ? new UnknownCallError(error)
+              : new UnknownCallError(new Error(`${error}`)),
+      });
       // Its okay to ignore the throw. The error is part of the state.
       throw error;
     }
@@ -424,7 +408,7 @@ export class Connection {
     // disconnect sees the flag and does not report the abort as an error.
     this.stopped = true;
     await this.livekitRoom.disconnect();
-    this._state$.next(ConnectionState.Stopped);
+    this._state$.next({ state: "stopped" });
     this.logger.debug(
       `stop: DONE disconnecing from lk room ${this.transport.livekit_service_url}`,
     );

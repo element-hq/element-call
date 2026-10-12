@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
+  ConnectionState as LivekitConnectionState,
   type Participant,
   ParticipantEvent,
   type LocalParticipant,
@@ -74,9 +75,8 @@ import {
 } from "../../../config/ConfigOptions.ts";
 import { Config } from "../../../config/Config.ts";
 import {
-  ConnectionState,
+  type ConnectionState,
   type Connection,
-  type FailedToStartError,
 } from "../remoteMembers/Connection.ts";
 import { type HomeserverConnected } from "./HomeserverConnected.ts";
 import { type LocalTransport } from "./LocalTransport.ts";
@@ -113,7 +113,7 @@ export enum TrackState {
 export type LocalMemberMediaState =
   | {
       tracks: TrackState;
-      connection: ConnectionState | FailedToStartError;
+      connection: ConnectionState;
     }
   | PublishState
   | ElementCallError;
@@ -475,7 +475,9 @@ export const createLocalMembership$ = ({
   };
 
   const localConnectionState$ = localConnection$.pipe(
-    switchMap((connection) => (connection ? connection.state$ : of(null))),
+    switchMap((connection) =>
+      connection ? connection.state$ : of({ state: "initializing" as const }),
+    ),
   );
 
   const mediaState$: Behavior<LocalMemberMediaState> = scope.behavior(
@@ -493,7 +495,9 @@ export const createLocalMembership$ = ({
           : TrackState.WaitingForUser;
 
         if (
-          localConnectionState !== ConnectionState.LivekitConnected ||
+          localConnectionState.state !== "authenticated" ||
+          localConnectionState.livekitState !==
+            LivekitConnectionState.Connected ||
           trackState !== TrackState.Ready
         )
           return {
@@ -561,7 +565,11 @@ export const createLocalMembership$ = ({
     combineLatest([
       homeserverConnected.combined$,
       localConnectionState$.pipe(
-        map((state) => state === ConnectionState.LivekitConnected),
+        map(
+          (state) =>
+            state.state === "authenticated" &&
+            state.livekitState === LivekitConnectionState.Connected,
+        ),
       ),
     ]).pipe(
       map(([[hsConnected, hsReason], livekitConnected]) => {

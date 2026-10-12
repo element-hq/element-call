@@ -34,15 +34,12 @@ import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 
 import {
   Connection,
-  ConnectionState,
+  type ConnectionState,
   type ConnectionOpts,
 } from "./Connection.ts";
 import { ObservableScope } from "../../ObservableScope.ts";
 import { type OpenIDClientParts } from "../../../livekit/openIDSFU.ts";
-import {
-  ElementCallError,
-  FailToGetOpenIdToken,
-} from "../../../utils/errors.ts";
+import { FailToGetOpenIdToken } from "../../../utils/errors.ts";
 import { testJWTToken } from "../../../utils/test-fixtures.ts";
 import { mockRemoteParticipant, ownMemberMock } from "../../../utils/test.ts";
 
@@ -181,7 +178,7 @@ describe("Start connection states", () => {
     };
     const connection = new Connection(opts, logger);
 
-    expect(connection.state$.getValue()).toEqual("Initialized");
+    expect(connection.state$.getValue()).toEqual({ state: "initialized" });
   });
 
   it("fail to getOpenId token then error state", async () => {
@@ -199,7 +196,7 @@ describe("Start connection states", () => {
 
     const connection = new Connection(opts, logger);
 
-    const capturedStates: (ConnectionState | Error)[] = [];
+    const capturedStates: ConnectionState[] = [];
     const s = connection.state$.subscribe((value) => {
       capturedStates.push(value);
     });
@@ -219,18 +216,20 @@ describe("Start connection states", () => {
 
     let capturedState = capturedStates.pop();
     expect(capturedState).toBeDefined();
-    expect(capturedState!).toEqual("FetchingConfig");
+    expect(capturedState).toEqual({ state: "authenticating" });
 
     deferred.reject(new FailToGetOpenIdToken(new Error("Failed to get token")));
 
     await vi.runAllTimersAsync();
 
     capturedState = capturedStates.pop();
-    if (capturedState instanceof Error) {
-      expect(capturedState.message).toEqual("Something went wrong");
+    if (capturedState?.state === "error") {
+      expect(capturedState.error.message).toEqual("Something went wrong");
       expect(connection.transport).toEqual(livekitFocus);
     } else {
-      expect.fail("Expected FailedToStart state but got " + capturedState);
+      expect.fail(
+        "Expected FailedToStart state but got " + JSON.stringify(capturedState),
+      );
     }
   });
 
@@ -249,7 +248,7 @@ describe("Start connection states", () => {
 
     const connection = new Connection(opts, logger);
 
-    const capturedStates: (ConnectionState | Error)[] = [];
+    const capturedStates: ConnectionState[] = [];
     const s = connection.state$.subscribe((value) => {
       capturedStates.push(value);
     });
@@ -274,7 +273,7 @@ describe("Start connection states", () => {
 
     let capturedState = capturedStates.pop();
     expect(capturedState).toBeDefined();
-    expect(capturedState).toEqual(ConnectionState.FetchingConfig);
+    expect(capturedState).toEqual({ state: "authenticating" });
 
     deferredSFU.resolve();
     await vi.runAllTimersAsync();
@@ -282,15 +281,17 @@ describe("Start connection states", () => {
     capturedState = capturedStates.pop();
 
     if (
-      capturedState instanceof ElementCallError &&
-      capturedState.cause instanceof Error
+      capturedState?.state === "error" &&
+      capturedState.error.cause instanceof Error
     ) {
-      expect(capturedState.cause.message).toContain(
+      expect(capturedState.error.cause.message).toContain(
         "Failed to look up user info from homeserver",
       );
       expect(connection.transport).toEqual(livekitFocus);
     } else {
-      expect.fail("Expected FailedToStart state but got " + capturedState);
+      expect.fail(
+        "Expected FailedToStart state but got " + JSON.stringify(capturedState),
+      );
     }
   });
 
@@ -309,7 +310,7 @@ describe("Start connection states", () => {
 
     const connection = new Connection(opts, logger);
 
-    const capturedStates: (ConnectionState | Error)[] = [];
+    const capturedStates: ConnectionState[] = [];
     const s = connection.state$.subscribe((value) => {
       capturedStates.push(value);
     });
@@ -339,7 +340,7 @@ describe("Start connection states", () => {
     let capturedState = capturedStates.pop();
     expect(capturedState).toBeDefined();
 
-    expect(capturedState).toEqual(ConnectionState.FetchingConfig);
+    expect(capturedState).toEqual({ state: "authenticating" });
 
     deferredSFU.resolve();
     await vi.runAllTimersAsync();
@@ -347,10 +348,10 @@ describe("Start connection states", () => {
     capturedState = capturedStates.pop();
 
     if (
-      capturedState instanceof ElementCallError &&
-      capturedState.cause instanceof Error
+      capturedState?.state === "error" &&
+      capturedState.error.cause instanceof Error
     ) {
-      expect(capturedState.cause.message).toContain(
+      expect(capturedState.error.cause.message).toContain(
         "Failed to connect to livekit",
       );
       expect(connection.transport).toEqual(livekitFocus);
@@ -367,7 +368,7 @@ describe("Start connection states", () => {
 
     const connection = setupRemoteConnection();
 
-    const capturedStates: (ConnectionState | Error)[] = [];
+    const capturedStates: ConnectionState[] = [];
     const s = connection.state$.subscribe((value) => {
       capturedStates.push(value);
     });
@@ -377,22 +378,31 @@ describe("Start connection states", () => {
     await vi.runAllTimersAsync();
 
     const initialState = capturedStates.shift();
-    expect(initialState).toEqual(ConnectionState.Initialized);
+    expect(initialState).toEqual({ state: "initialized" });
     const fetchingState = capturedStates.shift();
-    expect(fetchingState).toEqual(ConnectionState.FetchingConfig);
+    expect(fetchingState).toEqual({ state: "authenticating" });
     const disconnectedState = capturedStates.shift();
-    expect(disconnectedState).toEqual(ConnectionState.LivekitDisconnected);
+    expect(disconnectedState).toEqual({
+      state: "authenticated",
+      livekitState: LivekitConnectionState.Disconnected,
+    });
     const connectingState = capturedStates.shift();
-    expect(connectingState).toEqual(ConnectionState.LivekitConnecting);
+    expect(connectingState).toEqual({
+      state: "authenticated",
+      livekitState: LivekitConnectionState.Connecting,
+    });
     const connectedState = capturedStates.shift();
-    expect(connectedState).toEqual(ConnectionState.LivekitConnected);
+    expect(connectedState).toEqual({
+      state: "authenticated",
+      livekitState: LivekitConnectionState.Connected,
+    });
   });
 
   it("stopping while connecting does not report an error", async () => {
     setupTest();
     const connection = setupRemoteConnection();
 
-    const capturedStates: (ConnectionState | Error)[] = [];
+    const capturedStates: ConnectionState[] = [];
     const s = connection.state$.subscribe((value) => {
       capturedStates.push(value);
     });
@@ -412,7 +422,7 @@ describe("Start connection states", () => {
     // start() resolves rather than rejecting (it is not awaited by the
     // ConnectionManager, so a rejection would be unhandled).
     await expect(started).resolves.toBeUndefined();
-    expect(capturedStates.at(-1)).toEqual(ConnectionState.Stopped);
+    expect(capturedStates.at(-1)).toEqual({ state: "stopped" });
     expect(capturedStates.some((st) => st instanceof Error)).toBe(false);
   });
 
