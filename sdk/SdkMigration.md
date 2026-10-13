@@ -33,7 +33,7 @@ Element Call still imports the LiveKit packages in a few places. Each is a gap i
 the SDK's API rather than something to rename: the import goes away when the SDK
 grows the piece. The names Element Call owes to the outside stay as they are: the
 `livekit.livekit_service_url` key in `config.json`, the persisted setting keys
-`extended-livekit-logs` and `custom-livekit-url`, the Posthog fields
+`extended-livekit-logs` and `custom-transport`, the Posthog fields
 `callBackend` and `callReconnectingCountLivekit`, the rageshake field
 `call_backend`, and the translated error strings.
 

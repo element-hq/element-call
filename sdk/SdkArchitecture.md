@@ -37,14 +37,14 @@ therefore `Element Call → sdk`, never the reverse. The migration from today's
 │  │                           │   api.ts        │ media-backend/livekit/    │ │
 │  │ js-sdk MatrixRTCSession,  │                 │ today, or options.backend │ │
 │  │   later the rust-rtc      │ prepareLocal    │                           │ │
-│  │   crate behind a bridge   │   Transport ───▶│ token service:            │ │
-│  │ memberships from room     │ delegateDelayed │   OpenID → JWT,           │ │
-│  │   state and sticky events │   Leave ───────▶│   delegation probe        │ │
-│  │ own membership, delayed   │                 │ ConnectionManager:        │ │
-│  │   leave, retries          │ mediaKeys$ ────▶│   one LiveKit room per    │ │
-│  │ discovery of the local    │ mediaFor$ ─────▶│   transport url, local    │ │
-│  │   transport (homeserver)  │ ◀─ tracks$,     │   published, remote       │ │
-│  │ membership state machine  │ encryptionError$│   subscribed              │ │
+│  │   crate behind a bridge   │   Transport ───▶│ auth: MSC4195 CS API or   │ │
+│  │ memberships from room     │ delegateDelayed │   JWT service, by shape   │ │
+│  │   state and sticky events │   Leave ───────▶│   and role; delegation    │ │
+│  │ own membership, delayed   │                 │ ConnectionMap: one        │ │
+│  │   leave, retries          │ mediaKeys$ ────▶│   LiveKit room per        │ │
+│  │ discovery of the local    │ mediaFor$ ─────▶│   transport locator,      │ │
+│  │   transport (homeserver)  │ ◀─ tracks$,     │   local published,        │ │
+│  │ membership state machine  │ encryptionError$│   remote subscribed       │ │
 │  │   (LocalMembership)       │ local.publish,  │ Publisher: local tracks,  │ │
 │  │ transport registry        │   setPublishing▶│   upstream paused until   │ │
 │  │   (TransportMetadata)     │ ◀─ connections$ │   joined                  │ │
@@ -53,7 +53,7 @@ therefore `Element Call → sdk`, never the reverse. The migration from today's
 │  └───────────────────────────┘                 └───────────────────────────┘ │
 │                                                                              │
 │   RTCMember = membership + mediaFor$(membership): the backend matches the    │
-│   member's rtcBackendIdentity to the identity it sees on the transport       │
+│   member's backendIdentities to the identity it sees on the transport        │
 └──────────────────────────────────────────────────────────────────────────────┘
    │                                                            │
    ▼                                                            ▼
@@ -102,11 +102,12 @@ LiveKit participants.
   │             │ GET rtc/transports (session) ────────▶│                         │
   │             │◀── first transport of the backend's type                        │
   │             │ prepareLocalTransport (backend):      │                         │
-  │             │   OpenID token, then /sfu/get ───────▶│                         │
+  │             │   publisher token: CS API get_token,  │                         │
+  │             │   or OpenID token then /sfu/get ─────▶│                         │
   │             │◀── sfu url, jwt, alias, identity ─────│   = resolved$ of the     │
   │             │   probe delegate_delayed_leave ──────▶│     local transport      │
   │             │ connect(url, jwt) ───────────────────────────────────────────▶│
-  │  join() ───▶│                                       │                         │
+  │  join() ───▶│   (once the publisher holds its token)│                         │
   │             │ membership state event + delayed leave ──▶│                     │
   │             │ delegateDelayedLeave(delayId) (backend) ─▶│                     │
   │             │ create tracks, resume upstream ──────────────────────────────▶│
@@ -118,9 +119,12 @@ LiveKit participants.
 The session discovers the transport from the homeserver and the backend prepares
 it, both before `join()`, so that the membership can name it and the first frames
 go out as soon as the state event is sent. Preparing is the backend's own
-business: for LiveKit the token exchange, and the probe that decides whether the
-SFU can take over the delayed leave, which picks the delayed leave timings the
-join uses. Until `join()` the tracks exist but their upstream is paused: a host
+business: for LiveKit the token exchange for the publisher connection, and the
+probe that decides whether the service that issued the token can take over the
+delayed leave, which picks the delayed leave timings the join uses. The join
+waits for the publisher to hold its token, so that the LiveKit room exists
+before a subscriber, who lacks the permission to create it, asks for a token
+of its own. Until `join()` the tracks exist but their upstream is paused: a host
 can show a preview without anyone hearing it. The upstream flows exactly while the
 membership is `joined`: a sync outage pauses it, and `leave()` pauses it for good
 and sends the leave.
@@ -216,9 +220,9 @@ export interface MatrixRTCClientOptions {
   /** Limits on what is published; LiveKit's defaults otherwise. */
   mediaQuality?: MediaQuality;
   /** Use this transport instead of asking the homeserver. */
-  transportUrl?: string;
-  /** Use this transport when the homeserver advertises none. */
-  fallbackTransportUrl?: string;
+  transport?: Transport;
+  /** Use this transport when the homeserver advertises none of the backend's type. */
+  fallbackTransport?: Transport;
 }
 
 /**
@@ -392,12 +396,16 @@ export type RTCMembership = Pick<
 
 export interface RTCMember {
   local: boolean;
+  /** The membership's `rtcBackendIdentity`, `${userId}:${deviceId}`: a key and a debug label. */
+  rtcBackendIdentity: string;
   /**
-   * The identity the media backend knows this member by: the membership's
-   * `rtcBackendIdentity`, which is `${userId}:${deviceId}` before sticky
-   * events and a hash of the member id in Matrix 2.0 mode.
+   * Every identity the member may publish under on its transport, one per
+   * authentication flow the transport allows: the hashed identity the
+   * MSC4195 client-server API assigns, the legacy one the JWT service's
+   * `/sfu/get` assigns, or both for a transport carrying both a `url` and a
+   * `livekit_service_url`. The backend matches whichever shows up.
    */
-  id: string;
+  backendIdentities: readonly string[];
   userId: string;
   deviceId: string;
   membership$: Behavior<RTCMembership>;
@@ -557,7 +565,7 @@ transport serialised with sorted keys and derives `connectedTransports$` and eac
 
 The backend's context carries no Matrix client and no membership list. A backend
 that needs the client takes a `Pick` of exactly what it calls in its own options
-(`createLivekitBackend(scope, context, { client, mediaQuality, tokenEndpoint })`),
+(`createLivekitBackend(scope, context, { client, mediaQuality })`),
 and learns of remote members only through `mediaFor$`, registering each
 membership's transport for as long as the member's scope lives. Media keys reach
 it as a stream, `mediaKeys$`, replayed on subscribe; the js-sdk session never
@@ -565,6 +573,37 @@ does. A host supplies its own backend through `MatrixRTCClientOptions.backend`;
 without one, LiveKit is built from the LiveKit-flavoured client options. The
 reasoning behind each of these choices is in
 [`MediaBackendPlan.md`](./MediaBackendPlan.md).
+
+### Authenticating with a LiveKit transport
+
+A LiveKit transport comes in three shapes while MSC4195 settles: an SFU `url`,
+a JWT service `livekit_service_url`, or both. `media-backend/livekit/auth/`
+fronts the two flows and chooses between them per connection, from the shape
+and from the role we take on the transport:
+
+| Transport                  | Publisher                                  | Subscriber                                                                                                             |
+| -------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| `url` only                 | client-server API `get_token`, no fallback | client-server API `get_token`, no fallback                                                                             |
+| `livekit_service_url` only | JWT service `/sfu/get` (legacy identity)   | JWT service `/get_token` (hashed identity)                                                                             |
+| both                       | JWT service `/sfu/get` (legacy identity)   | client-server API, falling back to the JWT service `/get_token` where the homeserver, or a widget host, has no MSC4195 |
+
+A publisher on a transport with a service URL keeps the legacy
+`<user_id>:<device_id>` identity, because clients predating MSC4195 match a
+membership against that and nothing else; a subscriber is matched by nobody and
+takes the more private hashed identity. A publisher never falls back: a
+homeserver that advertises a `url` without implementing MSC4195 is misconfigured
+and fails with `NoMatrix2AuthorizationService`, so the admin hears about it.
+The MatrixRTC mode plays no part in the choice. The delayed leave is delegated
+through the same flow that issued the publisher's token, so that the identity
+the service watches for on the SFU is the one we publish under, and the
+delegation probe before the join asks only that service.
+
+The client-server API needs the name of the homeserver the transport belongs to:
+our own homeserver asks that server for the token, over federation where it is
+not ours. The backend derives it from the member's user id, and from our own for
+the local transport, and keys its connections on the transport plus the server
+name where the transport has a `url`. A JWT service is reached directly, so
+members of several homeservers advertising the same one share a connection.
 
 ## Media: `tracks$` and `MediaTrack`
 
