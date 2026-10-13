@@ -1,54 +1,94 @@
 # MatrixRTC SDK (EXPERIMENTAL)
 
 `@element-hq/matrixrtc-sdk` is the call model under Element Call, on its own:
-MatrixRTC memberships and transports, media connections, publishing, E2EE keys and
-the media of every member, as observables. It has no UI. Element Call's own
-`CallViewModel` is meant to become one consumer of it. The design is in
-[`SdkArchitecture.md`](./SdkArchitecture.md), the migration from the view model
-in [`SdkMigration.md`](./SdkMigration.md). Media goes through one media backend
-behind `MediaBackend`; LiveKit, under `src/media-backend/livekit/`, is the only one
-today and the only place that imports `livekit-client`.
+it joins a MatrixRTC slot in a Matrix room, writes and watches the memberships,
+connects to the media transport (LiveKit today), publishes the local media and
+exposes every member and their tracks as observables. It has no UI. Element
+Call's own `CallViewModel` is one consumer of it; any host can build a different
+view on top. The design is in [`SdkArchitecture.md`](./SdkArchitecture.md), what
+moved out of Element Call's `src/` in [`SdkMigration.md`](./SdkMigration.md).
 
-**Status:** first implementation. `createMatrixRTCClient` joins the session, connects to
-the transport, publishes the local media and exposes every member's media; the
-development harness and its e2e tests in `playwright/sdk` drive it, and Element
-Call's own `CallViewModel` is built on it. It depends on nothing in Element Call's
-`src/`.
+**Status:** first implementation. `createRTCSlot` and `slot.join()` join the
+session, connect to the transport, publish the local media and expose every
+member's media; the development harness and its e2e tests in `playwright/sdk`
+drive it, and Element Call's own `CallViewModel` is built on it. It depends on
+nothing in Element Call's `src/`.
 
 ## Using it
 
 ```ts
 import {
-  createMatrixRTCClient,
+  createRTCSlot,
   E2eeType,
   MatrixRTCMode,
   ObservableScope,
+  trackBySource$,
 } from "@element-hq/matrixrtc-sdk";
 
 const scope = new ObservableScope();
-const rtcClient = createMatrixRTCClient(
+const slot = createRTCSlot(
   scope,
   client, // a matrix-js-sdk MatrixClient, logged in and syncing
   room, // the matrix-js-sdk Room, from client.getRoom() once the join has synced
   {
     encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
     matrixRTCMode: MatrixRTCMode.Compatibility,
-    publish: [{ source: "microphone" }, { source: "camera" }],
   },
 );
-rtcClient.join();
+const participation = slot.join({
+  publish: [{ source: "microphone" }, { source: "camera" }],
+});
 
-rtcClient.remoteMembers$.subscribe((members) => {
-  // each member has displayName$, tracks$ and more; a media track is rendered
-  // by handing it a <video> or <audio> element: track.attach(element)
+// A <video> for each remote member's camera and an <audio> for its microphone.
+// A track plays on an element once attached to it; detach before the element
+// leaves the DOM. (`tileFor`, `setName` and `removeTilesExcept` are the host's.)
+participation.remoteMembers$.subscribe((members) => {
+  for (const member of members) {
+    const { video, audio } = tileFor(member.memberId);
+    member.displayName$.subscribe((name) => setName(member.memberId, name));
+    trackBySource$(scope, member.tracks$, "camera").subscribe((track) =>
+      track?.attach(video),
+    );
+    trackBySource$(scope, member.tracks$, "microphone").subscribe((track) =>
+      track?.attach(audio),
+    );
+  }
+  removeTilesExcept(members.map((m) => m.memberId));
 });
 
 // later
-rtcClient.leave();
+participation.leave();
 scope.end();
 ```
 
+`participation.localMember$` is one member of the same shape, null until our own
+membership is in the room; its microphone would only echo.
+
 [`dev/main.ts`](./dev/main.ts) is this example as a working page.
+
+## Reading the code
+
+Three files define the surface. Read them in this order.
+
+- [`src/api.ts`](./src/api.ts): the MatrixRTC side. An `RTCSlot` is the
+  namespace in a room that memberships join into; `join()` returns an
+  `RTCParticipation`, which lasts until its `leave()` and exposes `state$`,
+  `localMember$` and `remoteMembers$`. Members, transports and the participation
+  state machine live here. `createRTCSlot` in `RTCSlot.ts` is the only way to get
+  an implementation.
+- [`src/media-api.ts`](./src/media-api.ts): media as a host sees it, on
+  `remoteMembers$` and `localMember$`. `PublishRequest` says what to publish
+  (microphone, camera, screen share); `MediaTrack` is how it arrives. The
+  underlying tracks stay hidden: the host hands an element to `attach` and the
+  SDK plays into it. The local variants carry the controls (`setEnabled`,
+  `setDevice`, `setProcessor`).
+- [`src/media-backend/api.ts`](./src/media-backend/api.ts): internal, the seam
+  between the session and whatever carries the media. The session speaks
+  MatrixRTC; a `MediaBackend` speaks one media protocol and hands back the
+  `MemberMedia` of each member through `mediaFor()`. A host rarely touches it;
+  it matters when working on the LiveKit backend under
+  `src/media-backend/livekit/`, the only place that imports `livekit-client`, or
+  when writing a new backend.
 
 ## Development
 
