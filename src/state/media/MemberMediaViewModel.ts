@@ -40,6 +40,7 @@ import { E2eeType } from "../../e2ee/e2eeType";
 import { observeInboundRtpStreamStats$ } from "./observeRtpStreamStats";
 import { type UserMediaViewModel } from "./UserMediaViewModel";
 import { type ScreenShareViewModel } from "./ScreenShareViewModel";
+import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 
 // TODO: Encryption status is kinda broken and thus unused right now. Remove?
 export enum EncryptionStatus {
@@ -59,10 +60,10 @@ export interface BaseMemberMediaViewModel extends BaseMediaViewModel {
    */
   video$: Behavior<TrackReference | undefined>;
   /**
-   * The URL of the LiveKit focus on which this member should be publishing.
-   * Exposed for debugging.
+   * The LiveKit transport on which this member should be publishing. Exposed
+   * for debugging.
    */
-  focusUrl$: Behavior<string | undefined>;
+  transport$: Behavior<UnstableLivekitTransport | undefined>;
   /**
    * Whether there should be a warning that this media is unencrypted.
    */
@@ -75,7 +76,7 @@ export interface MemberMediaInputs extends BaseMediaViewModel {
   livekitRoom$: Behavior<LivekitRoom | undefined>;
   audioSource: AudioSource;
   videoSource: VideoSource;
-  focusUrl$: Behavior<string | undefined>;
+  transport$: Behavior<UnstableLivekitTransport | undefined>;
   encryptionSystem: EncryptionSystem;
 }
 
@@ -86,7 +87,7 @@ export function createMemberMedia(
     livekitRoom$,
     audioSource,
     videoSource,
-    focusUrl$,
+    transport$,
     encryptionSystem,
     ...inputs
   }: MemberMediaInputs,
@@ -109,7 +110,7 @@ export function createMemberMedia(
   return {
     ...createBaseMedia(inputs),
     video$,
-    focusUrl$,
+    transport$,
     unencryptedWarning$: scope.behavior(
       combineLatest(
         [audio$, video$],

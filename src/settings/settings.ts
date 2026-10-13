@@ -12,6 +12,7 @@ import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { type Behavior } from "../state/Behavior";
 import { useBehavior } from "../useBehavior";
 import { MatrixRTCMode } from "../config/ConfigOptions";
+import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 
 export class Setting<T> {
   public constructor(
@@ -164,8 +165,8 @@ export const matrixRTCMode = new Setting<MatrixRTCMode>(
   defaultMatrixRTCMode(),
 );
 
-export const customLivekitUrl = new Setting<string | null>(
-  "custom-livekit-url",
+export const customTransport = new Setting<UnstableLivekitTransport | null>(
+  "custom-transport",
   null,
 );
 

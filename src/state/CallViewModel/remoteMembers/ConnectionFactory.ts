@@ -16,14 +16,10 @@ import { logger, type Logger } from "matrix-js-sdk/lib/logger";
 // imported as inline to support worker when loaded from a cdn (cross domain)
 import E2EEWorker from "livekit-client/e2ee-worker?worker&inline";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 
 import { type ObservableScope } from "../../ObservableScope.ts";
 import { Connection } from "./Connection.ts";
-import type {
-  OpenIDClientParts,
-  SFUConfig,
-} from "../../../livekit/openIDSFU.ts";
 import type { MediaDevices } from "../../MediaDevices.ts";
 import type { Behavior } from "../../Behavior.ts";
 import type { ProcessorState } from "../../../livekit/TrackProcessorContext.tsx";
@@ -39,15 +35,20 @@ import {
   noiseSuppressionSetting,
   autoGainControlSetting,
 } from "../../../settings/settings.ts";
+import {
+  type ClientGetTokenParts,
+  type ClientOpenIDParts,
+} from "../../../livekit/auth";
 
 // TODO evaluate if this should be done like the Publisher Factory
 export interface ConnectionFactory {
   createConnection(
     scope: ObservableScope,
-    transport: LivekitTransport,
+    role: "publisher" | "subscriber",
+    transport: UnstableLivekitTransport,
+    serverName: string,
     ownMembershipIdentity: CallMembershipIdentityParts,
     logger: Logger,
-    sfuConfig?: SFUConfig,
   ): Connection;
 }
 
@@ -58,7 +59,8 @@ export class ECConnectionFactory implements ConnectionFactory {
    * Creates a ConnectionFactory for LiveKit connections.
    *
    * @param client - The OpenID client parts for authentication, needed to get openID and JWT tokens.
-   * @param roomId - The current room ID.
+   * @param roomId - The ID of the Matrix room in which the session takes place.
+   * @param slotId - The ID of the MatrixRTC slot in which the session takes place.
    * @param devices - Used for video/audio out/in capture options.
    * @param processorState$ - Effects like background blur (only for publishing connection?)
    * @param livekitKeyProvider - Optional key provider for end-to-end encryption.
@@ -66,8 +68,9 @@ export class ECConnectionFactory implements ConnectionFactory {
    * @param livekitRoomFactory - Optional factory function (for testing) to create LivekitRoom instances. If not provided, a default factory is used.
    */
   public constructor(
-    private client: OpenIDClientParts,
+    private client: ClientGetTokenParts & ClientOpenIDParts,
     private readonly roomId: string,
+    private readonly slotId: string,
     private devices: MediaDevices,
     private processorState$: Behavior<ProcessorState>,
     livekitKeyProvider: BaseKeyProvider | undefined,
@@ -96,6 +99,7 @@ export class ECConnectionFactory implements ConnectionFactory {
    *
    * @param scope The observable scope (used for clean-up)
    * @param transport The transport to use for this connection.
+   * @param serverName The name of the homeserver to which the {@link transport} belongs.
    * @param ownMembershipIdentity required to connect (using the jwt service) with the SFU.
    * @param logger The logger instance to use for this connection.
    * @param sfuConfig optional config in case we already have a token for this connection.
@@ -103,16 +107,19 @@ export class ECConnectionFactory implements ConnectionFactory {
    */
   public createConnection(
     scope: ObservableScope,
-    transport: LivekitTransport,
+    role: "publisher" | "subscriber",
+    transport: UnstableLivekitTransport,
+    serverName: string,
     ownMembershipIdentity: CallMembershipIdentityParts,
     logger: Logger,
-    sfuConfig?: SFUConfig,
   ): Connection {
     return new Connection(
       {
-        existingSFUConfig: sfuConfig,
         roomId: this.roomId,
+        slotId: this.slotId,
+        role,
         transport,
+        serverName,
         client: this.client,
         scope: scope,
         livekitRoomFactory: this.livekitRoomFactory,

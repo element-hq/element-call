@@ -254,9 +254,6 @@ export async function createRoom(
         "m.sticker": 50,
         "org.matrix.msc3401.call.member": 0,
       },
-      users: {
-        [client.getUserId()!]: 100,
-      },
     },
   });
 
@@ -341,9 +338,13 @@ export function getRelativeRoomUrl(
  * Perform a network operation with retries on ConnectionError.
  * If the error is not retryable, or the max number of retries is reached, the error is rethrown.
  * Supports handling of matrix quotas.
+ * @param operation The operation to perform.
+ * @param shouldRetry Rules out errors that retrying cannot fix, on top of the
+ *   standard backoff rule. Retries everything by default.
  */
 export async function doNetworkOperationWithRetry<T>(
   operation: () => Promise<T>,
+  shouldRetry: (e: unknown) => boolean = () => true,
 ): Promise<T> {
   let currentRetryCount = 0;
 
@@ -353,7 +354,9 @@ export async function doNetworkOperationWithRetry<T>(
       return await operation();
     } catch (e) {
       currentRetryCount++;
-      const backoff = calculateRetryBackoff(e, currentRetryCount, true);
+      const backoff = shouldRetry(e)
+        ? calculateRetryBackoff(e, currentRetryCount, true)
+        : -1;
       if (backoff < 0) {
         // Max number of retries reached, or error is not retryable. rethrow the error
         throw e;

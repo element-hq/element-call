@@ -129,7 +129,7 @@ async function openDeviceList(page: Page, pane: Locator): Promise<Locator> {
     .getByRole("button", { name: "Microphone" })
     .click({ timeout: 60_000 });
   await expect(page.getByRole("menu")).toBeVisible();
-  const list = page.locator("[role='menu'] div[role='none']").first();
+  const list = page.getByRole("menu").getByTestId("device-list");
   await expect(list).toBeVisible();
   return list;
 }
