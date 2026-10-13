@@ -153,8 +153,19 @@ services:
       - ecbackend
 
   element-web:
-    image: ghcr.io/element-hq/element-web:develop
-    pull_policy: always
+    # image: ghcr.io/element-hq/element-web:develop
+    # pull_policy: always
+    # Built from https://github.com/element-hq/element-web/pull/35446 while it
+    # is unmerged.
+    image: element-web:pr-35446
+    pull_policy: build
+    build:
+      context: https://github.com/element-hq/element-web.git#johannes/rtc-cs-widget
+      dockerfile: apps/web/Dockerfile
+      target: element_web
+      args:
+        # The Dockerfile reads the version from .git, which a git context drops by default
+        BUILDKIT_CONTEXT_KEEP_GIT_DIR: 1
     volumes:
       - ./backend/ew.test.config.json:/app/config.json:Z
       # Replaces the Element Call widget bundled in the image with the embedded
@@ -168,8 +179,11 @@ services:
       - ecbackend
 
   element-web-1:
-    image: ghcr.io/element-hq/element-web:develop
-    pull_policy: always
+    # image: ghcr.io/element-hq/element-web:develop
+    # pull_policy: always
+    # The image the element-web service builds
+    image: element-web:pr-35446
+    pull_policy: never
     volumes:
       - ./backend/ew.test.othersite.config.json:/app/config.json:Z
       # Replaces the Element Call widget bundled in the image with the embedded
