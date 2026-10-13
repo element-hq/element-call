@@ -658,9 +658,13 @@ export function createCallViewModel$(
         function* ([members, duplicateTiles]) {
           for (const member of members) {
             const mediaId = `${member.userId}:${member.deviceId}`;
+            // A device that rejoins after an improper leave has two
+            // memberships until the stale one expires, so the key is the
+            // membership's own id, which the backend identity no longer
+            // tells apart
             for (let dup = 0; dup < 1 + duplicateTiles; dup++) {
               yield {
-                keys: [dup, mediaId, member.rtcBackendIdentity],
+                keys: [dup, mediaId, member.memberId],
                 data: member,
               };
             }

@@ -100,7 +100,7 @@ export const MemberAudioRenderer: FC<MemberAudioRendererProps> = ({
     <div style={{ display: "none" }}>
       {members.map((member) => (
         <MemberAudio
-          key={member.rtcBackendIdentity}
+          key={member.memberId}
           tracks$={member.tracks$}
           muted={muted}
           plugins={plugins}
