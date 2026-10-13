@@ -224,7 +224,7 @@ export function mockRtcMembership(
   deviceId: string,
   customOverwrites?: {
     rtcBackendIdentity?: string;
-    /** Every identity the member may have in LiveKit, when more than one. */
+    /** Every identity the member may have on its transport, where more than one. */
     backendIdentities?: string[];
     callId?: string;
     fociPreferred?: Transport[];
@@ -471,6 +471,7 @@ export function mockRTCMember(
         };
   const base = {
     rtcBackendIdentity: membership.rtcBackendIdentity,
+    backendIdentities: membership.backendIdentities,
     userId: membership.userId,
     deviceId: membership.deviceId,
     memberId: membership.memberId,
