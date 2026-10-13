@@ -276,6 +276,10 @@ export class MockRTCSession extends TypedEventEmitter<
     return this.joined;
   }
 
+  public slotId = "m.call#ROOM";
+  /** The id of the delayed leave event; undefined until the manager has sent one. */
+  public delayId: string | undefined = undefined;
+
   /** The slot event's content; undefined while the room has none. */
   public rtcSlot: ReturnType<MatrixRTCSession["getRtcSlot"]> = undefined;
   public getRtcSlot(): ReturnType<MatrixRTCSession["getRtcSlot"]> {
