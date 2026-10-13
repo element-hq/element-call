@@ -18,7 +18,6 @@ export default defineConfig(() => ({
   // Otherwise the developer's own config.json in `public` is copied into the output
   publicDir: false,
   build: {
-    outDir: "sdk-target-based-on-call-view-model/dist",
     sourcemap: true,
     manifest: true,
     lib: {

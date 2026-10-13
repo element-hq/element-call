@@ -78,7 +78,9 @@ Code that builds in only one is a bug.
   `pnpm lint:externals`). Interface only so far; the design is `sdk-plan.md`.
 - `build:sdk-target-based-on-call-view-model` — the SDK demo that predates the
   package, one bundle of the `CallViewModel`; entry
-  `sdk-target-based-on-call-view-model/main.ts`.
+  `sdk-target-based-on-call-view-model/main.ts`. CI's `sdk` package
+  (`build:sdk:production` / `build:sdk:development`, the Netlify `-sdk` preview)
+  is still this bundle, not `build:sdk`.
 - `build:component` — `@element-hq/element-call-component`, sources in `component/`
   (its own pnpm project; run pnpm from the repo root). Host API is in the README;
   `pnpm lint:externals` rejects an import of a `react` / `react-dom` /

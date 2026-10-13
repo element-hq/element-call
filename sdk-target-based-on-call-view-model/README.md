@@ -23,8 +23,11 @@ pnpm build:sdk-target-based-on-call-view-model
 
 in the repository root. (`pnpm build:sdk` builds the `sdk/` package instead.)
 
-It will create `sdk-target-based-on-call-view-model/dist` containing the compiled js
-file, `matrixrtc-sdk.js`.
+CI's `sdk` package (`build:sdk:production`, `build:sdk:development`, the
+`build-output-sdk` artifact and the `pr<N>-sdk` Netlify preview) is still this
+bundle, not the `sdk/` package, until its consumers have moved over.
+
+It will create `dist` containing the compiled js file, `matrixrtc-sdk.js`.
 
 This file needs to be hosted. Locally (via `npx serve -l 81234 --cors`) or on a remote server.
 
