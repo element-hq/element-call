@@ -192,6 +192,27 @@ describe("Reconcile", () => {
     expect(setup).not.toHaveBeenCalledWith(3);
   });
 
+  // The loop ends a few microtasks before its promise settles; a value
+  // arriving in that window used to be dropped
+  it.each([0, 1, 2, 3, 4, 5, 6])(
+    "picks up a value that arrives %i microtasks after the previous loop ended",
+    async (ticks) => {
+      const scope = testScope();
+      const behavior$ = new BehaviorSubject<number>(0);
+      const setup = vi.fn();
+      scope.reconcile(behavior$, async (value) => {
+        setup(value);
+        return Promise.resolve();
+      });
+
+      for (let i = 0; i < ticks; i++) await Promise.resolve();
+      behavior$.next(1);
+      await vi.advanceTimersByTimeAsync(10);
+
+      expect(setup).toHaveBeenCalledWith(1);
+    },
+  );
+
   it("should wait for setup to complete before starting cleanup", async () => {
     vi.useFakeTimers();
     const scope = testScope();
