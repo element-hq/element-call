@@ -34,7 +34,6 @@ import {
 import { type BaseMediaViewModel, createBaseMedia } from "./MediaViewModel";
 import { type UserMediaViewModel } from "./UserMediaViewModel";
 import { type ScreenShareViewModel } from "./ScreenShareViewModel";
-import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 
 /** How often a view model reads a track's RTP statistics while it needs them. */
 export const statsIntervalMs = 1000;

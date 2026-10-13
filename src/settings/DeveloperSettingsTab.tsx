@@ -72,8 +72,6 @@ import {
 } from "@element-hq/matrixrtc-sdk";
 import { useBehavior } from "../useBehavior";
 import { type ViewModel } from "../state/ViewModel.ts";
-import { getSFUConfig } from "../livekit/auth/index.ts";
-import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 
 /**
  * The state of MatrixRTC's media key rotation.

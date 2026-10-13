@@ -126,7 +126,6 @@ import {
   type RingingMediaViewModel,
 } from "../media/RingingMediaViewModel.ts";
 import { type GridTileViewModel } from "../TileViewModel.ts";
-import { type TransportLocator } from "../../livekit/auth";
 
 /** How a call captures and encodes the tracks it publishes. */
 export interface CaptureSettings {
