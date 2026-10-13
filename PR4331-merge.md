@@ -176,10 +176,39 @@ membership's own `memberId`, and `MemberAudioRenderer` and the SDK harness key
 by it too. The PR on `main` keyed by the participant object as well and did not
 hit this.
 
+## Coverage added on the package branch, and one bug it found
+
+The PR's tests mostly covered the auth layer; the SDK modules under them had
+little or none. Added on the package branch, which this branch is rebased onto:
+
+| Module                                       | Test                                                                                                                                                                                  |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `media-backend/livekit/Publisher.ts`         | `Publisher.test.ts`: the cases from `main`'s `localMember/Publisher.test.ts` on a real `LocalParticipant` with faked device and signalling calls, plus publish, unpublish and destroy |
+| `media-backend/livekit/LocalMedia.ts`        | `LocalMedia.test.ts`: on a fake connection map; publish before and after the connection, republish on a new connection, mutes remembered, first publish error, output device          |
+| `RTCParticipation.ts`                        | `RTCParticipation.test.ts`: on a fake media backend; join options, state machine, publishing only while joined, delegation, member ids per mode, key replay, data sender check        |
+| `matrixrtc/LocalTransport.ts`                | `LocalTransport.test.ts`: override, homeserver, fallback, none                                                                                                                        |
+| `matrixrtc/joinJsSdkSession.ts`              | `joinJsSdkSession.test.ts`: the js-sdk join options, the retry budget, the intent and sticky events                                                                                   |
+| `media-backend/livekit/publishOptions.ts`    | `publishOptions.test.ts`                                                                                                                                                              |
+| `media-backend/livekit/ConnectionFactory.ts` | `ConnectionFactory.test.ts`: the room options from the requests and media quality (the cases from `main`'s `ECConnectionFactory.test.ts`), `resolved$`                                |
+| `LivekitBackend.ts` › `mediaFor`             | A member on another transport, a member changing transport, a member without one (from `main`'s `MatrixLivekitMembers.test.ts`)                                                       |
+
+`ConnectionFactory.test.ts` reads the options off the real LiveKit room the
+factory builds instead of mocking `livekit-client`: a `vi.mock` of the package
+reached the factory's import on the package branch but not on this one.
+
+The `LocalMedia` tests found a race in `ObservableScope.reconcile`: the loop was
+marked as running until the promise of its last run had settled, a few
+microtasks after it had last checked for new values, so a value arriving in
+that window (a connection appearing at just that moment) was never processed.
+Fixed in `[SDK] Keep a value that reaches reconcile as its loop winds down`,
+with a test that drives the window microtask by microtask. Element Call's
+`src/state/ObservableScope.ts` re-exports the SDK's class, so the fix applies
+to the app as well.
+
 ## Checked
 
 - `pnpm lint` (tsc, oxlint, knip, externals), `pnpm format:check`, `pnpm i18n:check`.
-- `pnpm test`: 112 unit files, 863 tests; 4 storybook files, 45 tests.
+- `pnpm test`: 119 unit files, 950 tests; 4 storybook files, 45 tests (after the coverage above).
 - Playwright on Chromium against the local Playwright backend, one worker:
   - `playwright/url-transport.spec.ts`: 10 of 10 pass, including delegation
     through the homeserver and the JWT service, the subscriber fallback, the
