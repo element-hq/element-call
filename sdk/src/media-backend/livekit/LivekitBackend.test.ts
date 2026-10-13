@@ -390,6 +390,86 @@ describe("createLivekitBackend", () => {
       expect(media.tracks$.value).toBeNull();
     });
 
+    it("has no media for a member on another transport until it shows up there", async () => {
+      const b = await prepared();
+      const media = b.mediaFor(testScope(), bob(otherTransport, [legacyId]));
+      await flushPromises();
+      const remote = connections.find(
+        (c) => c.connection.role === "subscriber",
+      );
+      expect(remote?.connection.transport).toEqual(otherTransport);
+
+      // The same identity on our own transport is someone else's room
+      connections[0].participants$.next([
+        mockRemoteParticipant({
+          identity: legacyId,
+          trackPublications: new Map(),
+        }),
+      ]);
+      await flushPromises();
+      expect(media.tracks$.value).toBeNull();
+
+      remote!.participants$.next([
+        mockRemoteParticipant({
+          identity: legacyId,
+          trackPublications: new Map(),
+        }),
+      ]);
+      await flushPromises();
+      expect(media.tracks$.value).toEqual([]);
+    });
+
+    it("follows a member to a new transport, and drops the old connection with it", async () => {
+      const b = await prepared();
+      const transport$ = new BehaviorSubject(
+        bob(bothTransport, [legacyId]).transport$.value,
+      );
+      const media = b.mediaFor(testScope(), {
+        ...bob(bothTransport, [legacyId]),
+        transport$,
+      });
+      connections[0].participants$.next([
+        mockRemoteParticipant({
+          identity: legacyId,
+          trackPublications: new Map(),
+        }),
+      ]);
+      await flushPromises();
+      expect(media.tracks$.value).toEqual([]);
+
+      transport$.next(bob(otherTransport, [legacyId]).transport$.value);
+      await flushPromises();
+
+      expect(media.tracks$.value).toBeNull();
+      const remote = connections.find(
+        (c) => c.connection.role === "subscriber",
+      );
+      expect(remote?.connection.transport).toEqual(otherTransport);
+      expect(b.connections$.value.map(({ transport }) => transport)).toEqual([
+        bothTransport,
+        otherTransport,
+      ]);
+
+      transport$.next(bob(bothTransport, [legacyId]).transport$.value);
+      await flushPromises();
+      expect(media.tracks$.value).toEqual([]);
+      expect(b.connections$.value.map(({ transport }) => transport)).toEqual([
+        bothTransport,
+      ]);
+    });
+
+    it("has no media for a member without a transport, and opens no connection", async () => {
+      const b = await prepared();
+      const media = b.mediaFor(testScope(), {
+        ...bob(bothTransport, [legacyId]),
+        transport$: constant(undefined),
+      });
+      await flushPromises();
+
+      expect(media.tracks$.value).toBeNull();
+      expect(connections).toHaveLength(1);
+    });
+
     it("connects to a remote member's transport on the member's homeserver", async () => {
       const b = await prepared();
       const carlsTransport: UnstableLivekitTransport = {
