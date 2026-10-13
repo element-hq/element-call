@@ -82,6 +82,7 @@ import { useTheme } from "../src/useTheme";
 import { useStableValue } from "../src/useStableValue";
 import styles from "./ElementCall.module.css";
 import { useComponentHostBridge } from "./host";
+import { CallPortalRoot } from "./CallPortalRoot";
 import { type ElementCallProps } from "./api";
 import { supportedLanguages, translationsBackend } from "./localization";
 
@@ -154,6 +155,7 @@ export const ElementCall: FC<ElementCallProps> = ({
   ref,
   theme,
   language,
+  portalRoot,
 }): ReactNode => {
   const hostBridge = useComponentHostBridge(suppliedHostBridge, ref, theme);
 
@@ -240,34 +242,36 @@ export const ElementCall: FC<ElementCallProps> = ({
               // Stands in for the standalone page's `#root`: see `.content`
               // in ElementCall.module.css
               <div className={styles.content}>
-                <RootElementProvider value={container}>
-                  {/* Whatever goes wrong in here is shown in here. Left to
-                  propagate, an error would unmount the host's own tree. */}
-                  <ErrorBoundary
-                    fallback={(error) => <ErrorPage error={error} />}
-                    // A broken call should not hold the host on screen
-                    onError={() => void hostBridge.setAlwaysOnScreen(false)}
-                  >
-                    <Decoration>
-                      <TooltipProvider>
-                        <ClientProvider client={client}>
-                          <MediaDevicesContext value={mediaDevices}>
-                            <ProcessorProvider>
-                              <CallView
-                                client={client}
-                                rtcSession={rtcSession}
-                                isPasswordlessUser={false}
-                                confineToRoom={params.confineToRoom}
-                                preload={params.preload}
-                                skipLobby={params.skipLobby}
-                              />
-                            </ProcessorProvider>
-                          </MediaDevicesContext>
-                        </ClientProvider>
-                      </TooltipProvider>
-                    </Decoration>
-                  </ErrorBoundary>
-                </RootElementProvider>
+                <CallPortalRoot root={portalRoot}>
+                  <RootElementProvider value={container}>
+                    {/* Whatever goes wrong in here is shown in here. Left to
+                    propagate, an error would unmount the host's own tree. */}
+                    <ErrorBoundary
+                      fallback={(error) => <ErrorPage error={error} />}
+                      // A broken call should not hold the host on screen
+                      onError={() => void hostBridge.setAlwaysOnScreen(false)}
+                    >
+                      <Decoration>
+                        <TooltipProvider>
+                          <ClientProvider client={client}>
+                            <MediaDevicesContext value={mediaDevices}>
+                              <ProcessorProvider>
+                                <CallView
+                                  client={client}
+                                  rtcSession={rtcSession}
+                                  isPasswordlessUser={false}
+                                  confineToRoom={params.confineToRoom}
+                                  preload={params.preload}
+                                  skipLobby={params.skipLobby}
+                                />
+                              </ProcessorProvider>
+                            </MediaDevicesContext>
+                          </ClientProvider>
+                        </TooltipProvider>
+                      </Decoration>
+                    </ErrorBoundary>
+                  </RootElementProvider>
+                </CallPortalRoot>
               </div>
             )}
           </div>

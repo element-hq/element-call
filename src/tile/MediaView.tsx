@@ -33,6 +33,7 @@ import { ReactionIndicator } from "../reactions/ReactionIndicator";
 import { RTCConnectionStats } from "../RTCConnectionStats";
 import videoPlaceholder from "../graphics/video-placeholder.gif";
 import { autoVideoFit } from "../utils/videoFit";
+import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 
 interface Props extends ComponentProps<typeof animated.div> {
   className?: string;
@@ -67,9 +68,9 @@ interface Props extends ComponentProps<typeof animated.div> {
   videoStreamStats?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
   rtcBackendIdentity?: string;
   /**
-   * The focus url, mainly for debugging purposes.
+   * The LiveKit transport, mainly for debugging purposes.
    */
-  focusUrl?: string;
+  transport?: UnstableLivekitTransport;
   /**
    * Called whenever the aspect ratio of the video content becomes known or
    * otherwise changes.
@@ -106,7 +107,7 @@ export const MediaView: FC<Props> = ({
   audioStreamStats,
   videoStreamStats,
   rtcBackendIdentity,
-  focusUrl,
+  transport,
   setVideoAspectRatio: setTheirVideoAspectRatio,
   ...props
 }) => {
@@ -227,7 +228,7 @@ export const MediaView: FC<Props> = ({
             <RTCConnectionStats
               audio={audioStreamStats}
               video={videoStreamStats}
-              focusUrl={focusUrl}
+              transport={transport}
               rtcBackendIdentity={rtcBackendIdentity}
             />
           </>
