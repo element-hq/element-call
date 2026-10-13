@@ -136,7 +136,7 @@ function setup(preparedTransportWithErrors$?: Observable<PreparedTransport>): {
     joinMatrixRTC,
     membershipManagerError$,
     matrixRTCSession: {
-      leaveRoomSession: vi.fn(async () => Promise.resolve(true)),
+      leave: vi.fn(async () => Promise.resolve(true)),
     },
     delayId$,
     timings: defaultSessionTimings,

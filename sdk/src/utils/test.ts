@@ -257,7 +257,7 @@ export class MockRTCSession extends TypedEventEmitter<
     counters: {},
   };
 
-  public leaveRoomSession: ReturnType<typeof vitest.fn> = vitest
+  public leave: ReturnType<typeof vitest.fn> = vitest
     .fn()
     .mockResolvedValue(undefined);
 

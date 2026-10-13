@@ -66,7 +66,7 @@ interface Props {
   ) => void;
   /** The membership manager giving up on keeping the membership alive. */
   membershipManagerError$: Observable<unknown>;
-  matrixRTCSession: Pick<JsSdkRTCSession, "leaveRoomSession">;
+  matrixRTCSession: Pick<JsSdkRTCSession, "leave">;
   /** The id of the delayed leave event, for the backend to take over. */
   delayId$: Behavior<string | null>;
   timings: SessionTimings;
@@ -129,7 +129,7 @@ export function createLocalMembership$({
       }
       return Promise.resolve(async (): Promise<void> => {
         try {
-          await matrixRTCSession.leaveRoomSession(1000);
+          await matrixRTCSession.leave(1000);
         } catch (e) {
           logger.error("Failed to leave the session", e);
         }
