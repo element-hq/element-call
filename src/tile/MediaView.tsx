@@ -205,6 +205,7 @@ export const MediaView: FC<Props> = ({
             tabIndex={-1}
             disablePictureInPicture
             data-testid="video"
+            data-source={video.source}
             // Set the placeholder to a small transparent image. (On Android web
             // views the default poster image is particularly ugly.)
             poster={videoPlaceholder}

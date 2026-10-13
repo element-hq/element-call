@@ -46,6 +46,21 @@ describe("MediaView", () => {
     });
   });
 
+  describe("with video", () => {
+    it("labels the video element with the track source", () => {
+      render(
+        <MediaView
+          {...baseProps}
+          video={mockVideoTrack({ source: "screenShare" })}
+        />,
+      );
+      expect(screen.getByTestId("video")).toHaveAttribute(
+        "data-source",
+        "screenShare",
+      );
+    });
+  });
+
   describe("name tag", () => {
     test("is shown with name", () => {
       render(<MediaView {...baseProps} displayName="Bob" />);
