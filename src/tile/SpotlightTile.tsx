@@ -29,7 +29,7 @@ import { animated } from "@react-spring/web";
 import { BehaviorSubject, type Observable, map } from "rxjs";
 import { useTranslation } from "react-i18next";
 import classNames from "classnames";
-import { type TrackReferenceOrPlaceholder } from "@livekit/components-core";
+import { type VideoMediaTrack } from "@element-hq/matrixrtc-sdk";
 import { Menu, MenuItem, Text } from "@vector-im/compound-web";
 
 import FullScreenMaximiseIcon from "../icons/FullScreenMaximise.svg?react";
@@ -73,7 +73,7 @@ interface SpotlightItemBaseProps {
 }
 
 interface SpotlightMemberMediaItemBaseProps extends SpotlightItemBaseProps {
-  video: TrackReferenceOrPlaceholder | undefined;
+  video: VideoMediaTrack | undefined;
   unencryptedWarning: boolean;
   transport: UnstableLivekitTransport | undefined;
 }

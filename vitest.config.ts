@@ -38,6 +38,8 @@ export default defineConfig((configEnv) =>
               }),
               ...vitePluginsConfig(configEnv).plugins!,
             ],
+            // The stories import the SDK by its package name like the app does
+            resolve: vitePluginsConfig(configEnv).resolve,
             test: {
               name: "storybook",
               browser: {

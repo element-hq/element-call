@@ -63,24 +63,3 @@ export const daveRTLRtcMember = mockRtcMembership("@dave2:example.org", "DDDD");
 export const daveRTL = mockMatrixRoomMember(daveRTLRtcMember, {
   rawDisplayName: "\u202eevaD",
 });
-
-export function createJWTToken(sub: string, room: string): string {
-  return [
-    {}, // header
-    {
-      // payload
-      sub,
-      video: {
-        room,
-      },
-    },
-    {}, // signature
-  ]
-    .map((d) => global.btoa(JSON.stringify(d)))
-    .join(".");
-}
-
-export const testJWTToken = createJWTToken(
-  "@me:example.org:ABCDEF",
-  "!example_room_id",
-);

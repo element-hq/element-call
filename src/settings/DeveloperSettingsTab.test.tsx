@@ -11,10 +11,10 @@ import userEvent, { type UserEvent } from "@testing-library/user-event";
 import { TooltipProvider } from "@vector-im/compound-web";
 
 import type { MatrixClient } from "matrix-js-sdk";
-import type { Room as LivekitRoom } from "livekit-client";
 import {
   DeveloperSettingsTab,
   type DeveloperSettingsSnapshot,
+  type TransportInfo,
 } from "./DeveloperSettingsTab";
 import { outOfCallDeveloperSettingsTabViewModel } from "./DeveloperSettingsTabViewModel";
 import { createStaticViewModel } from "../state/ViewModel";
@@ -23,9 +23,13 @@ import {
   enableExtendedLivekitLogs as enableExtendedLivekitLogsSetting,
   matrixRTCMode as matrixRTCModeSetting,
 } from "./settings";
-import { MatrixRTCMode } from "../config/ConfigOptions";
-import { exampleTransport, mockConfig } from "../utils/test";
-import { getSFUConfig } from "../livekit/auth";
+import {
+  authenticateWithTransport,
+  constant,
+  MatrixRTCMode,
+} from "@element-hq/matrixrtc-sdk";
+import type * as MatrixRTCSdk from "@element-hq/matrixrtc-sdk";
+import { mockConfig } from "../utils/test";
 
 // Mock url params hook to avoid environment-dependent snapshot churn.
 vi.mock("../UrlParams", () => ({
@@ -36,32 +40,30 @@ vi.mock("../UrlParams", () => ({
 }));
 
 // IMPORTANT: mock the same specifier used by DeveloperSettingsTab
-vi.mock("../livekit/auth", () => ({
-  getSFUConfig: vi.fn().mockResolvedValue({
+vi.mock("@element-hq/matrixrtc-sdk", async (importOriginal) => ({
+  ...(await importOriginal<typeof MatrixRTCSdk>()),
+  authenticateWithTransport: vi.fn().mockResolvedValue({
     url: "mock-url",
     jwt: "mock-jwt",
   }),
 }));
 
-// Provide a minimal mock of a Livekit Room structure used by the component.
-function createMockLivekitRoom(
-  wsUrl: string,
-  serverInfo: object,
-  metadata: string,
-): { isLocal: boolean; url: string; room: LivekitRoom; livekitAlias: string } {
-  const mockRoom = {
-    serverInfo,
-    metadata,
-    engine: { client: { ws: { url: wsUrl } } },
-    localParticipant: { identity: "localParticipantIdentity" },
-    remoteParticipants: new Map(),
-  } as unknown as LivekitRoom;
-
+/** A transport the panel shows, as the client would hand it out. */
+function mockTransport(
+  url: string,
+  local: boolean,
+  resolved?: { url: string; roomAlias: string; identity: string },
+): TransportInfo {
   return {
-    isLocal: true,
-    url: wsUrl,
-    room: mockRoom,
-    livekitAlias: "TestAlias",
+    local,
+    transport: {
+      type: "livekit",
+      id: url,
+      raw: { type: "livekit", livekit_service_url: url },
+      resolved$: constant(
+        resolved && { type: "livekit", token: "secret", ...resolved },
+      ),
+    },
   };
 }
 
@@ -96,36 +98,20 @@ describe("DeveloperSettingsTab", () => {
   it("renders and matches snapshot", async () => {
     const client = createMockMatrixClient();
 
-    const livekitRooms: {
-      room: LivekitRoom;
-      url: string;
-      isLocal?: boolean;
-      livekitAlias: string;
-    }[] = [
-      createMockLivekitRoom(
-        "wss://local-sfu.example.org",
-        { region: "local", version: "1.2.3" },
-        "local-metadata",
-      ),
-      {
-        isLocal: false,
-        livekitAlias: "TestAlias2",
-        url: "wss://remote-sfu.example.org",
-        room: {
-          localParticipant: { identity: "localParticipantIdentity" },
-          remoteParticipants: new Map(),
-          serverInfo: { region: "remote", version: "4.5.6" },
-          metadata: "remote-metadata",
-          engine: { client: { ws: { url: "wss://remote-sfu.example.org" } } },
-        } as unknown as LivekitRoom,
-      },
+    const transports = [
+      mockTransport("https://local-sfu.example.org/jwt", true, {
+        url: "wss://local-sfu.example.org",
+        roomAlias: "TestAlias",
+        identity: "localParticipantIdentity",
+      }),
+      mockTransport("https://remote-sfu.example.org/jwt", false),
     ];
 
     const { container } = render(
       <DeveloperSettingsTab
         client={client}
         roomId={"#room:example.org"}
-        livekitRooms={livekitRooms}
+        transports={transports}
         env={{ MY_MOCK_ENV: 10, ENV: "test" } as unknown as ImportMetaEnv}
         vm={outOfCallDeveloperSettingsTabViewModel}
       />,
@@ -169,7 +155,7 @@ describe("DeveloperSettingsTab", () => {
 
       const saveButton = screen.getByRole("button", { name: "Save" });
       await user.click(saveButton);
-      expect(getSFUConfig).not.toHaveBeenCalled();
+      expect(authenticateWithTransport).not.toHaveBeenCalled();
 
       expect(customTransportSetting.getValue()).toBe(null);
     });
@@ -192,7 +178,7 @@ describe("DeveloperSettingsTab", () => {
 
       const saveButton = screen.getByRole("button", { name: "Save" });
       await user.click(saveButton);
-      expect(getSFUConfig).not.toHaveBeenCalled();
+      expect(authenticateWithTransport).not.toHaveBeenCalled();
 
       expect(customTransportSetting.getValue()).toBe(null);
     });
@@ -218,7 +204,7 @@ describe("DeveloperSettingsTab", () => {
         name: "Reset overwrite",
       });
       await user.click(cancelButton);
-      expect(getSFUConfig).not.toHaveBeenCalled();
+      expect(authenticateWithTransport).not.toHaveBeenCalled();
 
       expect(customTransportSetting.getValue()).toBe(null);
     });
@@ -245,11 +231,11 @@ describe("DeveloperSettingsTab", () => {
 
       const saveButton = screen.getByRole("button", { name: "Save" });
       await user.click(saveButton);
-      expect(getSFUConfig).toHaveBeenCalledWith(
-        expect.objectContaining({
-          transport: { type: "livekit", url: "wss://example.livekit.valid" },
-          roomId: "#testRoom",
-        }),
+      expect(authenticateWithTransport).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        "wss://example.livekit.valid",
+        "#testRoom",
       );
 
       expect(customTransportSetting.getValue()).toEqual({
@@ -279,8 +265,8 @@ describe("DeveloperSettingsTab", () => {
       });
 
       const saveButton = screen.getByRole("button", { name: "Save" });
-      (getSFUConfig as Mock).mockImplementation(() => {
-        throw new Error("Failed to get SFU config");
+      (authenticateWithTransport as Mock).mockImplementation(() => {
+        throw new Error("Invalid URL");
       });
       await user.click(saveButton);
       expect(

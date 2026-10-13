@@ -361,19 +361,8 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
     class="_livekit_room_box_2ddec4"
   >
     <h4>
-      LiveKit SFU: wss://local-sfu.example.org
+      LiveKit SFU: https://local-sfu.example.org/jwt
     </h4>
-    <p>
-      LivekitAlias: 
-      TestAlias
-    </p>
-    <p>
-      connectionState (wont hot reload): 
-    </p>
-    <p>
-      ws-url: 
-      wss://local-sfu.example.org/
-    </p>
     <p>
       LiveKit Server Info
       (
@@ -384,37 +373,20 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
       class="_pre_2ddec4"
     >
       {
-  "region": "local",
-  "version": "1.2.3"
+  "type": "livekit",
+  "token": "&lt;redacted&gt;",
+  "url": "wss://local-sfu.example.org",
+  "roomAlias": "TestAlias",
+  "identity": "localParticipantIdentity"
 }
-      local-metadata
     </pre>
-    <p>
-      Local Participant
-    </p>
-    <pre
-      class="_pre_2ddec4"
-    >
-      localParticipantIdentity
-    </pre>
-    <p>
-      Remote Participants
-    </p>
-    <ul />
   </div>
   <div
     class="_livekit_room_box_2ddec4"
   >
     <h4>
-      LiveKit SFU: wss://remote-sfu.example.org
+      LiveKit SFU: https://remote-sfu.example.org/jwt
     </h4>
-    <p>
-      LivekitAlias: 
-      TestAlias2
-    </p>
-    <p>
-      connectionState (wont hot reload): 
-    </p>
     <p>
       LiveKit Server Info
       (
@@ -424,24 +396,8 @@ exports[`DeveloperSettingsTab > renders and matches snapshot 1`] = `
     <pre
       class="_pre_2ddec4"
     >
-      {
-  "region": "remote",
-  "version": "4.5.6"
-}
-      remote-metadata
+      not connected
     </pre>
-    <p>
-      Local Participant
-    </p>
-    <pre
-      class="_pre_2ddec4"
-    >
-      localParticipantIdentity
-    </pre>
-    <p>
-      Remote Participants
-    </p>
-    <ul />
   </div>
   <div
     class="_separator_13qwf_8"
