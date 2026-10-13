@@ -110,10 +110,13 @@ export interface RTCParticipationOptions {
   timings?: Partial<SessionTimings>;
   /** Limits on what is published; LiveKit's defaults otherwise. */
   mediaQuality?: MediaQuality;
-  /** Use this transport instead of asking the homeserver. */
-  transportUrl?: string;
-  /** Use this transport when the homeserver advertises none. */
-  fallbackTransportUrl?: string;
+  /**
+   * Use this transport instead of asking the homeserver. Any shape the
+   * backend serves: for LiveKit a `url`, a `livekit_service_url` or both.
+   */
+  transport?: Transport;
+  /** Use this transport when the homeserver advertises none of the backend's type. */
+  fallbackTransport?: Transport;
   /**
    * What carries the media. LiveKit, configured from the options above, when
    * left out; see `createLivekitBackend` for building one with other options.
@@ -265,9 +268,6 @@ export interface RTCMember {
    * against `backendIdentities`, not this.
    */
   rtcBackendIdentity: string;
-  userId: string;
-  deviceId: string;
-  /** The membership's own id; what the Matrix 2.0 identity is derived from. */
   /**
    * Every identity this member may publish under on its transport: the
    * participant identity the SFU sees, and the sender of its data packets.
@@ -277,6 +277,9 @@ export interface RTCMember {
    * Opaque to a host.
    */
   backendIdentities: readonly string[];
+  userId: string;
+  deviceId: string;
+  /** The membership's own id; what the Matrix 2.0 identity is derived from. */
   memberId: string;
   /** Which transport this member is on; undefined when the membership has none. */
   transport$: Behavior<TransportMetadata | undefined>;

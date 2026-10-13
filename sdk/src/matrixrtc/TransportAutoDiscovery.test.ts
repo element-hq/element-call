@@ -15,10 +15,7 @@ import {
 } from "vitest";
 import { MatrixError } from "matrix-js-sdk";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
-import {
-  type LivekitTransport,
-  type Transport,
-} from "matrix-js-sdk/lib/matrixrtc";
+import { type Transport } from "matrix-js-sdk/lib/matrixrtc";
 
 import {
   TransportAutoDiscovery,
@@ -27,12 +24,12 @@ import {
 
 type DiscoveryClient = TransportAutoDiscoveryProps["client"];
 
-const backendTransport: LivekitTransport = {
+const backendTransport: Transport = {
   type: "livekit",
   livekit_service_url: "https://backend.example.org",
 };
 
-const configTransport: LivekitTransport = {
+const configTransport: Transport = {
   type: "livekit",
   livekit_service_url: "https://config.example.org",
 };
@@ -65,7 +62,7 @@ describe("TransportAutoDiscovery", () => {
       const discovery = new TransportAutoDiscovery({
         client,
         transportType: "livekit",
-        fallbackTransportUrl: configTransport.livekit_service_url,
+        fallbackTransport: configTransport,
         logger: rootLogger,
       });
 
@@ -96,7 +93,7 @@ describe("TransportAutoDiscovery", () => {
     const discovery = new TransportAutoDiscovery({
       client,
       transportType: "livekit",
-      fallbackTransportUrl: "https://config.example.org",
+      fallbackTransport: configTransport,
       logger: rootLogger,
     });
 
@@ -120,7 +117,7 @@ describe("TransportAutoDiscovery", () => {
       const discovery = new TransportAutoDiscovery({
         client,
         transportType: "livekit",
-        fallbackTransportUrl: configTransport.livekit_service_url,
+        fallbackTransport: configTransport,
         logger: rootLogger,
       });
 
@@ -137,7 +134,7 @@ describe("TransportAutoDiscovery", () => {
     const discovery = new TransportAutoDiscovery({
       client,
       transportType: "livekit",
-      fallbackTransportUrl: undefined,
+      fallbackTransport: undefined,
       logger: rootLogger,
     });
 

@@ -19,26 +19,26 @@ export interface TransportAutoDiscoveryProps {
   client: TransportDiscoveryClient;
   /** The transport type the media backend serves. */
   transportType: string;
-  /** A LiveKit service URL to use when the homeserver advertises none. */
-  fallbackTransportUrl?: string;
+  /** A transport to use when the homeserver advertises none of the type. */
+  fallbackTransport?: Transport;
   logger: Logger;
 }
 
 export class TransportAutoDiscovery {
   private readonly client: TransportDiscoveryClient;
   private readonly transportType: string;
-  private readonly fallbackTransportUrl: string | undefined;
+  private readonly fallbackTransport: Transport | undefined;
   private readonly logger: Logger;
 
   public constructor({
     client,
     transportType,
-    fallbackTransportUrl,
+    fallbackTransport,
     logger,
   }: TransportAutoDiscoveryProps) {
     this.client = client;
     this.transportType = transportType;
-    this.fallbackTransportUrl = fallbackTransportUrl;
+    this.fallbackTransport = fallbackTransport;
     this.logger = logger.getChild("[TransportAutoDiscovery]");
   }
 
@@ -46,15 +46,18 @@ export class TransportAutoDiscovery {
     // 1) backend transports
     const backendTransport = await this.tryBackendTransports();
     if (backendTransport) {
-      this.logger.info("Found backend transport:", backendTransport);
+      this.logger.info(
+        `Found backend transport: ${JSON.stringify(backendTransport)}`,
+      );
       return backendTransport;
     }
 
-    // 2) app config URL
-    const configTransport = this.tryConfigTransport();
-    if (configTransport) {
-      this.logger.info("Found app config transport:", configTransport);
-      return configTransport;
+    // 2) the host's fallback
+    if (this.fallbackTransport) {
+      this.logger.info(
+        `Found fallback transport: ${JSON.stringify(this.fallbackTransport)}`,
+      );
+      return this.fallbackTransport;
     }
 
     return null;
@@ -86,17 +89,6 @@ export class TransportAutoDiscovery {
       }
     } catch (ex) {
       this.logger.info(`Failed to use getRTCTransports end point: ${ex}`);
-    }
-    return null;
-  }
-
-  private tryConfigTransport(): Transport | null {
-    const url = this.fallbackTransportUrl;
-    if (url) {
-      return {
-        type: "livekit",
-        livekit_service_url: url,
-      };
     }
     return null;
   }

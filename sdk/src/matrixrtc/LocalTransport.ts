@@ -16,28 +16,24 @@ import { TransportAutoDiscovery } from "./TransportAutoDiscovery";
 /**
  * The transport the local member advertises: the one the host names, else the
  * homeserver's first of the type the backend serves, else the host's fallback.
- * The two URL options are LiveKit service URLs, and turning one into a
- * membership transport is the one piece of LiveKit knowledge outside the
- * backend. It stays here, for hosts that configure a URL rather than a
- * transport, and goes once the options take a `Transport`.
  */
 export async function discoverLocalTransport(
   client: Pick<MatrixClient, "getDomain" | "_unstable_getRTCTransports">,
   transportType: string,
   {
-    transportUrl,
-    fallbackTransportUrl,
-  }: Pick<RTCParticipationOptions, "transportUrl" | "fallbackTransportUrl">,
+    transport: override,
+    fallbackTransport,
+  }: Pick<RTCParticipationOptions, "transport" | "fallbackTransport">,
   logger: Logger,
 ): Promise<Transport> {
-  const transport = transportUrl
-    ? { type: "livekit", livekit_service_url: transportUrl }
-    : await new TransportAutoDiscovery({
-        client,
-        transportType,
-        fallbackTransportUrl,
-        logger,
-      }).discoverPreferredTransport();
+  const transport =
+    override ??
+    (await new TransportAutoDiscovery({
+      client,
+      transportType,
+      fallbackTransport,
+      logger,
+    }).discoverPreferredTransport());
   if (transport === null)
     throw new MatrixRTCTransportMissingError(client.getDomain() ?? "");
   return transport;
