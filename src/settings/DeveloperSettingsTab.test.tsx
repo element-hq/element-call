@@ -29,7 +29,7 @@ import {
   MatrixRTCMode,
 } from "@element-hq/matrixrtc-sdk";
 import type * as MatrixRTCSdk from "@element-hq/matrixrtc-sdk";
-import { mockConfig } from "../utils/test";
+import { exampleTransport, mockConfig } from "../utils/test";
 
 // Mock url params hook to avoid environment-dependent snapshot churn.
 vi.mock("../UrlParams", () => ({
@@ -232,10 +232,12 @@ describe("DeveloperSettingsTab", () => {
       const saveButton = screen.getByRole("button", { name: "Save" });
       await user.click(saveButton);
       expect(authenticateWithTransport).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.anything(),
-        "wss://example.livekit.valid",
-        "#testRoom",
+        expect.objectContaining({
+          transport: { type: "livekit", url: "wss://example.livekit.valid" },
+          serverName: "hs",
+          roomId: "#testRoom",
+          role: "publisher",
+        }),
       );
 
       expect(customTransportSetting.getValue()).toEqual({
@@ -266,7 +268,7 @@ describe("DeveloperSettingsTab", () => {
 
       const saveButton = screen.getByRole("button", { name: "Save" });
       (authenticateWithTransport as Mock).mockImplementation(() => {
-        throw new Error("Invalid URL");
+        throw new Error("Failed to get SFU config");
       });
       await user.click(saveButton);
       expect(
@@ -275,9 +277,6 @@ describe("DeveloperSettingsTab", () => {
       expect(customTransportSetting.getValue()).toBe(null);
     });
   });
-
-  // Add this test inside the describe("DeveloperSettingsTab", () => { block,
-  // after the custom transport tests:
 
   describe("enable extended livekit logs", () => {
     afterEach(() => {

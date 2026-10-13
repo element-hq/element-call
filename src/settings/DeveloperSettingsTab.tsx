@@ -20,6 +20,7 @@ import {
   type MatrixClient,
 } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
+import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import {
   EditInPlace,
   ErrorMessage,
@@ -173,17 +174,17 @@ export const DeveloperSettingsTab: FC<Props> = ({
     enableExtendedLivekitLogsSetting,
   );
 
-  const [customTransportUpdateError, setCustomLivekitUrlUpdateError] = useState<
+  const [customTransportUpdateError, setCustomTransportUpdateError] = useState<
     string | null
   >(null);
   const [customTransport, setCustomTransport] = useSetting(
     customTransportSetting,
   );
-  const [customTransportTextBuffer, setCustomLivekitUrlTextBuffer] = useState(
+  const [customTransportTextBuffer, setCustomTransportTextBuffer] = useState(
     () => transportText(customTransport),
   );
   useEffect(() => {
-    setCustomLivekitUrlTextBuffer(transportText(customTransport));
+    setCustomTransportTextBuffer(transportText(customTransport));
   }, [customTransport]);
 
   const [muteAllAudio, setMuteAllAudio] = useSetting(muteAllAudioSetting);
@@ -499,11 +500,7 @@ export const DeveloperSettingsTab: FC<Props> = ({
         cancelButtonLabel={t("developer_mode.custom_transport.reset")}
         onSave={useCallback(
           async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
-            if (
-              roomId === undefined ||
-              customTransportTextBuffer === "" ||
-              customTransportTextBuffer === null
-            ) {
+            if (roomId === undefined || customTransportTextBuffer === "") {
               setCustomTransport(null);
               return;
             }
@@ -511,36 +508,39 @@ export const DeveloperSettingsTab: FC<Props> = ({
             try {
               const userId = client.getUserId();
               const deviceId = client.getDeviceId();
+              const serverName = client.getDomain();
 
-              if (userId === null || deviceId === null) {
-                throw new Error("Invalid user or device ID");
+              if (userId === null || deviceId === null || serverName === null) {
+                throw new Error("Invalid user, device ID or server name");
               }
-              await authenticateWithTransport(
+              const transport = JSON.parse(customTransportTextBuffer);
+              // Validate the transport by attempting to get a token for it
+              await authenticateWithTransport({
                 client,
                 membership: { userId, deviceId, memberId: "" },
                 transport,
-                serverName: client.getDomain()!,
+                serverName,
                 roomId,
                 slotId: "org.example.fake-slot#room",
                 role: "publisher",
                 logger,
               });
-              setCustomLivekitUrlUpdateError(null);
+              setCustomTransportUpdateError(null);
               setCustomTransport(transport);
             } catch {
-              setCustomLivekitUrlUpdateError(
+              setCustomTransportUpdateError(
                 "invalid transport (did not update)",
               );
             }
           },
           [customTransportTextBuffer, setCustomTransport, client, roomId],
         )}
-        value={customTransportTextBuffer ?? ""}
+        value={customTransportTextBuffer}
         onChange={useCallback(
           (event: ChangeEvent<HTMLInputElement>): void => {
-            setCustomLivekitUrlTextBuffer(event.target.value);
+            setCustomTransportTextBuffer(event.target.value);
           },
-          [setCustomLivekitUrlTextBuffer],
+          [setCustomTransportTextBuffer],
         )}
         onCancel={useCallback(
           (e: React.FormEvent<HTMLFormElement>) => {
@@ -658,6 +658,11 @@ export const DeveloperSettingsTab: FC<Props> = ({
     </>
   );
 };
+
+/** The text shown in the custom transport field for a given setting value. */
+function transportText(transport: UnstableLivekitTransport | null): string {
+  return transport === null ? "" : JSON.stringify(transport);
+}
 
 const TransportBox: FC<TransportInfo> = ({ transport, local }) => {
   const { t } = useTranslation();

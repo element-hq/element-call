@@ -83,7 +83,7 @@ import {
   cameraCodec,
   cameraFramerate,
   cameraResolution,
-  customLivekitUrl,
+  customTransport,
   echoCancellationSetting,
   matrixRTCMode as matrixRTCModeSetting,
   noiseSuppressionSetting,
@@ -823,7 +823,10 @@ export function rtcParticipationOptions(
       delegatedDelayedLeave: session.delegated_delayed_leave,
     },
     mediaQuality: config.media_quality,
-    transportUrl: customLivekitUrl.value$.value ?? undefined,
-    fallbackTransportUrl: config.livekit?.livekit_service_url,
+    transport: customTransport.value$.value ?? undefined,
+    fallbackTransport: config.livekit && {
+      type: "livekit",
+      livekit_service_url: config.livekit.livekit_service_url,
+    },
   };
 }
