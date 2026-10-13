@@ -10,12 +10,13 @@ Please see LICENSE in the repository root for full details.
  * backend and other participants. Resolved by the host.
  */
 export enum MatrixRTCMode {
-  /** Multi-SFU transport, legacy JWT endpoint, state events. */
+  /** Multi-SFU transport, membership state events. */
   Compatibility = "compatibility",
   /**
-   * Multi-SFU transport with sticky events, a hashed RTC backend identity and
-   * the new JWT endpoint for the local membership. Remote memberships always
-   * try the new endpoint first, then the legacy one.
+   * Multi-SFU transport with sticky membership events and a uuid member id.
+   * The mode decides how the membership is written, not how the media
+   * transport is authenticated with: that follows the transport's shape and
+   * our role on it.
    */
   Matrix_2_0 = "matrix_2_0",
 }

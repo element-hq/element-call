@@ -63,8 +63,8 @@ export {
 } from "./src/media-backend/livekit/LivekitBackend";
 // For a host that creates LiveKit tracks itself, such as a preview before joining
 export { convertToLivekitProcessor } from "./src/media-backend/livekit/videoProcessor";
-// For a developer panel to check a transport url before using it
+// For a developer panel to check a transport before using it
 export {
-  getSFUConfigWithOpenID as authenticateWithTransport,
-  type TokenEndpoint,
-} from "./src/media-backend/livekit/openIDSFU";
+  getSFUConfig as authenticateWithTransport,
+  type GetSFUConfigParams as AuthenticateWithTransportParams,
+} from "./src/media-backend/livekit/auth";

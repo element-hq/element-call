@@ -5,24 +5,34 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { MediaConnectionState } from "../api";
-import { ConnectionState } from "./Connection";
+import { ConnectionState as LivekitConnectionState } from "livekit-client";
 
-const states: Record<ConnectionState, MediaConnectionState> = {
-  [ConnectionState.Initialized]: MediaConnectionState.Initialized,
-  [ConnectionState.FetchingConfig]: MediaConnectionState.Preparing,
-  [ConnectionState.Stopped]: MediaConnectionState.Stopped,
-  [ConnectionState.LivekitDisconnected]: MediaConnectionState.Disconnected,
-  [ConnectionState.LivekitConnecting]: MediaConnectionState.Connecting,
-  [ConnectionState.LivekitConnected]: MediaConnectionState.Connected,
-  [ConnectionState.LivekitReconnecting]: MediaConnectionState.Reconnecting,
-  [ConnectionState.LivekitSignalReconnecting]:
+import { MediaConnectionState } from "../api";
+import { type ConnectionState } from "./Connection";
+
+const livekitStates: Record<LivekitConnectionState, MediaConnectionState> = {
+  [LivekitConnectionState.Disconnected]: MediaConnectionState.Disconnected,
+  [LivekitConnectionState.Connecting]: MediaConnectionState.Connecting,
+  [LivekitConnectionState.Connected]: MediaConnectionState.Connected,
+  [LivekitConnectionState.Reconnecting]: MediaConnectionState.Reconnecting,
+  [LivekitConnectionState.SignalReconnecting]:
     MediaConnectionState.Reconnecting,
 };
 
 /** A connection's state as the session sees it; an error passes through. */
 export function toMediaConnectionState(
-  state: ConnectionState | Error,
+  state: ConnectionState,
 ): MediaConnectionState | Error {
-  return state instanceof Error ? state : states[state];
+  switch (state.state) {
+    case "initialized":
+      return MediaConnectionState.Initialized;
+    case "authenticating":
+      return MediaConnectionState.Preparing;
+    case "authenticated":
+      return livekitStates[state.livekitState];
+    case "error":
+      return state.error;
+    case "stopped":
+      return MediaConnectionState.Stopped;
+  }
 }

@@ -36,13 +36,17 @@ export function createTransportRegistry(
     return transport;
   };
 
+  // Deduplicated: a backend may hold more than one connection to a transport,
+  // one per homeserver it has to authenticate through
   const connected$ = scope.behavior(
     connections$.pipe(
-      map((connections) =>
-        connections
-          .filter(({ state }) => state === MediaConnectionState.Connected)
-          .map(({ transport }) => get(transport)),
-      ),
+      map((connections) => [
+        ...new Set(
+          connections
+            .filter(({ state }) => state === MediaConnectionState.Connected)
+            .map(({ transport }) => get(transport)),
+        ),
+      ]),
     ),
   );
 

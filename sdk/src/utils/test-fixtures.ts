@@ -48,16 +48,24 @@ export const daveRTL = mockMatrixRoomMember(daveRTLRtcMember, {
   rawDisplayName: "\u202eevaD",
 });
 
-export const testJWTToken = [
-  {}, // header
-  {
-    // payload
-    sub: "@me:example.org:ABCDEF",
-    video: {
-      room: "!example_room_id",
+/** An unsigned JWT with the given subject and LiveKit room, as a token service would issue it. */
+export function createJWTToken(sub: string, room: string): string {
+  return [
+    {}, // header
+    {
+      // payload
+      sub,
+      video: {
+        room,
+      },
     },
-  },
-  {}, // signature
-]
-  .map((d) => global.btoa(JSON.stringify(d)))
-  .join(".");
+    {}, // signature
+  ]
+    .map((d) => global.btoa(JSON.stringify(d)))
+    .join(".");
+}
+
+export const testJWTToken = createJWTToken(
+  "@me:example.org:ABCDEF",
+  "!example_room_id",
+);

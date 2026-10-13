@@ -119,8 +119,9 @@ export function createRTCParticipation(
         : `${userId}:${deviceId}`,
   };
 
-  const backend = createBackend(scope, client, options, matrixRTCMode, {
+  const backend = createBackend(scope, client, options, {
     roomId: room.roomId,
+    slotId: jsSdkSession.slotId,
     ownMembershipIdentity,
     publish: options.publish,
     encryptionSystem,
@@ -285,16 +286,10 @@ function createBackend(
   scope: ObservableScope,
   client: MatrixClient,
   { backend, mediaQuality }: RTCParticipationOptions,
-  matrixRTCMode: MatrixRTCMode,
   context: MediaBackendContext,
 ): MediaBackend {
   if (backend) return backend(scope, context);
-  return createLivekitBackend(scope, context, {
-    client,
-    mediaQuality,
-    tokenEndpoint:
-      matrixRTCMode === MatrixRTCMode.Matrix_2_0 ? "msc4195" : "legacy",
-  });
+  return createLivekitBackend(scope, context, { client, mediaQuality });
 }
 
 /** The slot's per-participant keys: the ones it already holds on subscribe, then each new one. */

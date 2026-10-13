@@ -11,13 +11,15 @@ import {
   type RemoteParticipant,
   type RemoteTrackPublication,
 } from "livekit-client";
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 
 import { mockEmitter } from "../../utils/test";
 
-export const exampleTransport: LivekitTransport = {
+export const exampleServiceUrl = "https://lk.example.org";
+
+export const exampleTransport: UnstableLivekitTransport = {
   type: "livekit",
-  livekit_service_url: "https://lk.example.org",
+  livekit_service_url: exampleServiceUrl,
 };
 
 export function mockRemoteParticipant(

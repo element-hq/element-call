@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
+  ConnectionState as LivekitConnectionState,
   type RemoteParticipant,
   type Room as LivekitRoom,
   RoomEvent,
@@ -22,14 +23,17 @@ import {
 } from "rxjs";
 
 import { type Behavior } from "../../reactive/Behavior";
-import { type ObservableScope } from "../../reactive/ObservableScope";
+import {
+  type Epoch,
+  type ObservableScope,
+} from "../../reactive/ObservableScope";
 import { type DataPacket } from "../api";
-import { type Connection, ConnectionState } from "./Connection";
-import { type IConnectionManager } from "./ConnectionManager";
+import { type Connection } from "./Connection";
+import { type ConnectionMap } from "./ConnectionMap";
 
 interface Props {
   scope: ObservableScope;
-  connectionManager: IConnectionManager;
+  connectionMap$: Behavior<Epoch<ConnectionMap>>;
   /** The local member's connection, which carries what we send. */
   connection$: Behavior<Connection | null>;
 }
@@ -47,13 +51,13 @@ export interface DataChannel {
  */
 export function createDataChannel$({
   scope,
-  connectionManager,
+  connectionMap$,
   connection$,
 }: Props): DataChannel {
   const decoder = new TextDecoder();
   const encoder = new TextEncoder();
 
-  const rooms$ = connectionManager.connectionManagerData$.pipe(
+  const rooms$ = connectionMap$.pipe(
     map(({ value }) => value.getConnections().map((c) => c.livekitRoom)),
     distinctUntilChanged(
       (a, b) => a.length === b.length && a.every((room, i) => room === b[i]),
@@ -79,7 +83,12 @@ export function createDataChannel$({
 
   const sendData = async (topic: string, text: string): Promise<void> => {
     const connection = connection$.value;
-    if (connection?.state$.value !== ConnectionState.LivekitConnected)
+    const state = connection?.state$.value;
+    if (
+      connection === null ||
+      state?.state !== "authenticated" ||
+      state.livekitState !== LivekitConnectionState.Connected
+    )
       throw new Error("Cannot send data: the local transport is not connected");
     await connection.livekitRoom.localParticipant.publishData(
       encoder.encode(text),

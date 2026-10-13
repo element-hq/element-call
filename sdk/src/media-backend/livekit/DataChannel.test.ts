@@ -6,24 +6,33 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { EventEmitter } from "events";
-import { type RemoteParticipant, RoomEvent } from "livekit-client";
+import {
+  ConnectionState as LivekitConnectionState,
+  type RemoteParticipant,
+  RoomEvent,
+} from "livekit-client";
 import { BehaviorSubject } from "rxjs";
 import { describe, expect, it, vi } from "vitest";
 
 import { Epoch } from "../../reactive/ObservableScope";
 import { constant } from "../../reactive/Behavior";
 import { type DataPacket } from "../api";
-import { type Connection, ConnectionState } from "./Connection";
-import { ConnectionManagerData } from "./ConnectionManager";
+import { type Connection, type ConnectionState } from "./Connection";
+import { ConnectionMap } from "./ConnectionMap";
 import { createDataChannel$ } from "./DataChannel";
 import { testScope } from "../../utils/test";
 import { exampleTransport } from "./test";
 
 const encode = (text: string): Uint8Array => new TextEncoder().encode(text);
 
+const connected: ConnectionState = {
+  state: "authenticated",
+  livekitState: LivekitConnectionState.Connected,
+};
+
 function fakeConnection(
   url: string,
-  state = ConnectionState.LivekitConnected,
+  state: ConnectionState = connected,
 ): {
   connection: Connection;
   room: EventEmitter;
@@ -33,6 +42,7 @@ function fakeConnection(
   const publishData = vi.fn(async () => Promise.resolve());
   const connection = {
     transport: { ...exampleTransport, livekit_service_url: url },
+    serverName: "example.org",
     state$: constant(state),
     livekitRoom: Object.assign(room, { localParticipant: { publishData } }),
   } as unknown as Connection;
@@ -41,15 +51,15 @@ function fakeConnection(
 
 function setup(connections: Connection[]): {
   received: DataPacket[];
-  connections$: BehaviorSubject<Epoch<ConnectionManagerData>>;
+  connections$: BehaviorSubject<Epoch<ConnectionMap>>;
   sendData: (topic: string, text: string) => Promise<void>;
 } {
-  const data = new ConnectionManagerData();
+  const data = new ConnectionMap();
   for (const connection of connections) data.add(connection, []);
   const connections$ = new BehaviorSubject(new Epoch(data));
   const { data$, sendData } = createDataChannel$({
     scope: testScope(),
-    connectionManager: { connectionManagerData$: connections$ },
+    connectionMap$: connections$,
     connection$: constant(connections[0] ?? null),
   });
   const received: DataPacket[] = [];
@@ -89,7 +99,7 @@ describe("data$", () => {
     const second = fakeConnection("https://sfu-2");
     const { received, connections$ } = setup([first.connection]);
 
-    const data = new ConnectionManagerData();
+    const data = new ConnectionMap();
     data.add(first.connection, []);
     data.add(second.connection, []);
     connections$.next(new Epoch(data, 1));
@@ -122,10 +132,9 @@ describe("sendData", () => {
   });
 
   it("rejects while the local transport is not connected", async () => {
-    const { connection, publishData } = fakeConnection(
-      "https://sfu",
-      ConnectionState.Initialized,
-    );
+    const { connection, publishData } = fakeConnection("https://sfu", {
+      state: "initialized",
+    });
     const { sendData } = setup([connection]);
 
     await expect(sendData("chat", "hello")).rejects.toThrow("not connected");

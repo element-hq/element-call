@@ -14,18 +14,23 @@ import {
 // origin than the page
 import E2EEWorker from "livekit-client/e2ee-worker?worker&inline";
 import { type Logger } from "matrix-js-sdk/lib/logger";
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 import { BehaviorSubject, combineLatest, map } from "rxjs";
 
-import { buildLiveKitOptions } from "./livekitOptions";
-import { type OpenIDClientParts, type SFUConfig } from "./openIDSFU";
-import { type Behavior } from "../../reactive/Behavior";
-import { Connection, type ConnectionOpts, ConnectionState } from "./Connection";
-import { type ObservableScope } from "../../reactive/ObservableScope";
 import { type ResolvedTransport } from "../../api";
-import { type PublishRequest } from "../../media-api";
 import { type MediaQuality } from "../../config";
+import { type PublishRequest } from "../../media-api";
+import { type Behavior } from "../../reactive/Behavior";
+import { type ObservableScope } from "../../reactive/ObservableScope";
+import {
+  type ClientGetTokenParts,
+  type ClientOpenIDParts,
+  type ConnectionRole,
+  type SFUConfig,
+} from "./auth";
+import { Connection, type ConnectionOpts } from "./Connection";
+import { buildLiveKitOptions } from "./livekitOptions";
 import {
   audioCaptureOptions,
   type PublishRequestFor,
@@ -36,25 +41,27 @@ import {
 export interface ConnectionFactory {
   createConnection(
     scope: ObservableScope,
-    transport: LivekitTransport,
+    role: ConnectionRole,
+    transport: UnstableLivekitTransport,
+    serverName: string,
     ownMembershipIdentity: CallMembershipIdentityParts,
     logger: Logger,
-    sfuConfig?: SFUConfig,
   ): Connection;
 }
 
 /**
- * A connection that keeps what it fetched from the JWT service, so that the
- * transport can report it as `resolved$`. Nothing while the config is still
+ * A connection that keeps what it fetched when authenticating, so that the
+ * transport can report it as `resolved$`. Nothing while the token is still
  * being fetched, and nothing again once the connection has stopped or failed.
  */
 export class ResolvedConnection extends Connection {
-  private readonly sfuConfig$: BehaviorSubject<SFUConfig | undefined>;
+  private readonly sfuConfig$ = new BehaviorSubject<SFUConfig | undefined>(
+    undefined,
+  );
   public readonly resolved$: Behavior<ResolvedTransport | undefined>;
 
   public constructor(opts: ConnectionOpts, logger: Logger) {
     super(opts, logger);
-    this.sfuConfig$ = new BehaviorSubject(opts.existingSFUConfig);
     // One object per fetch, so that a change of state does not read as a
     // change of what was fetched
     const resolved$ = this.sfuConfig$.pipe(
@@ -63,7 +70,7 @@ export class ResolvedConnection extends Connection {
     this.resolved$ = opts.scope.behavior(
       combineLatest([resolved$, this.state$]).pipe(
         map(([resolved, state]) =>
-          state === ConnectionState.Stopped || state instanceof Error
+          state.state === "stopped" || state.state === "error"
             ? undefined
             : resolved,
         ),
@@ -71,8 +78,8 @@ export class ResolvedConnection extends Connection {
     );
   }
 
-  protected override async getSFUConfigForRemoteConnection(): Promise<SFUConfig> {
-    const config = await super.getSFUConfigForRemoteConnection();
+  protected override async getSFUConfig(): Promise<SFUConfig> {
+    const config = await super.getSFUConfig();
     this.sfuConfig$.next(config);
     return config;
   }
@@ -94,8 +101,9 @@ function resolvedTransport(config: SFUConfig): ResolvedTransport {
  */
 export class LivekitConnectionFactory implements ConnectionFactory {
   public constructor(
-    private readonly client: OpenIDClientParts,
+    private readonly client: ClientGetTokenParts & ClientOpenIDParts,
     private readonly roomId: string,
+    private readonly slotId: string,
     private readonly publish: PublishRequest[],
     private readonly audioOutputDeviceId$: Behavior<string | undefined>,
     private readonly keyProvider: BaseKeyProvider | undefined,
@@ -104,16 +112,19 @@ export class LivekitConnectionFactory implements ConnectionFactory {
 
   public createConnection(
     scope: ObservableScope,
-    transport: LivekitTransport,
+    role: ConnectionRole,
+    transport: UnstableLivekitTransport,
+    serverName: string,
     ownMembershipIdentity: CallMembershipIdentityParts,
     logger: Logger,
-    sfuConfig?: SFUConfig,
   ): Connection {
     return new ResolvedConnection(
       {
-        existingSFUConfig: sfuConfig,
         roomId: this.roomId,
+        slotId: this.slotId,
+        role,
         transport,
+        serverName,
         client: this.client,
         scope,
         livekitRoomFactory: () =>

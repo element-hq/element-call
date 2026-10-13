@@ -53,6 +53,8 @@ export interface MediaKey {
 
 export interface MediaBackendContext {
   roomId: string;
+  /** The slot the session is in, `application#id`; a token is issued for it. */
+  slotId: string;
   ownMembershipIdentity: CallMembershipIdentityParts;
   /** What the local member publishes at the join. */
   publish: PublishRequest[];

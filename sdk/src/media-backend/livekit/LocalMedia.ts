@@ -35,13 +35,14 @@ import {
 import { type EncryptionSystem } from "../../encryption";
 import { FailToStartLivekitConnection, toMatrixRTCError } from "../../errors";
 import { type Behavior } from "../../reactive/Behavior";
-import { type ObservableScope } from "../../reactive/ObservableScope";
-import { type LocalMediaBackend, MediaConnectionState } from "../api";
-import { type Connection } from "./Connection";
 import {
-  type IConnectionManager,
-  type LocalTransport,
-} from "./ConnectionManager";
+  type Epoch,
+  type ObservableScope,
+} from "../../reactive/ObservableScope";
+import { type LocalMediaBackend, MediaConnectionState } from "../api";
+import { type TransportLocator } from "./auth";
+import { type Connection } from "./Connection";
+import { type ConnectionMap } from "./ConnectionMap";
 import { createLocalLivekitMemberMedia } from "./LivekitMemberMedia";
 import { livekitSources } from "./LivekitMediaTrack";
 import { type DesiredMedia, Publisher } from "./Publisher";
@@ -49,8 +50,9 @@ import { toMediaConnectionState } from "./connectionState";
 
 interface Props {
   scope: ObservableScope;
-  connectionManager: IConnectionManager;
-  localTransport$: Observable<LocalTransport>;
+  connectionMap$: Behavior<Epoch<ConnectionMap>>;
+  /** The transport we publish on; null until the session has found it. */
+  localTransport$: Behavior<TransportLocator | null>;
   publish: PublishRequest[];
   /** Read by the connection factory for the rooms it creates from now on. */
   audioOutputDeviceId$: BehaviorSubject<string | undefined>;
@@ -71,7 +73,7 @@ export interface LivekitLocalMedia extends LocalMediaBackend {
  */
 export function createLivekitLocalMedia({
   scope,
-  connectionManager,
+  connectionMap$,
   localTransport$,
   publish: initialRequests,
   audioOutputDeviceId$,
@@ -81,15 +83,11 @@ export function createLivekitLocalMedia({
   const logger = parentLogger.getChild("[LocalMedia]");
 
   const connection$ = scope.behavior(
-    combineLatest([
-      connectionManager.connectionManagerData$,
-      localTransport$,
-    ]).pipe(
-      map(([{ value: connections }, { transport }]) =>
-        connections.getConnectionForTransport(transport),
-      ),
+    combineLatest(
+      [connectionMap$, localTransport$],
+      ({ value: connections }, transport) =>
+        transport && connections.getConnectionForTransport(transport),
     ),
-    null,
   );
 
   const connectionState$ = scope.behavior<MediaConnectionState | Error>(
@@ -117,9 +115,7 @@ export function createLivekitLocalMedia({
     const publisher = new Publisher(
       connection.livekitRoom,
       desired,
-      logger.getChild(
-        `[Publisher ${connection.transport.livekit_service_url}]`,
-      ),
+      logger.getChild(`[Publisher ${JSON.stringify(connection.transport)}]`),
     );
     publisher$.next(publisher);
     return Promise.resolve(async (): Promise<void> => {
