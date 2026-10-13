@@ -51,6 +51,7 @@ import { type RemoteUserMediaViewModel } from "../state/media/RemoteUserMediaVie
 import { type UserMediaViewModel } from "../state/media/UserMediaViewModel";
 import { type RingingMediaViewModel } from "../state/media/RingingMediaViewModel";
 import { RingingStatus } from "./RingingStatus";
+import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 
 interface TileProps {
   ref?: Ref<HTMLDivElement>;
@@ -103,7 +104,7 @@ interface UserMediaTileProps extends TileProps {
   playbackMuted: boolean;
   waitingForMedia?: boolean;
   primaryButton?: ReactNode;
-  focusUrl: string | undefined;
+  transport: UnstableLivekitTransport | undefined;
 }
 
 /**
@@ -120,7 +121,7 @@ const UserMediaTileInner: FC<UserMediaTileProps & { menu: ReactNode }> = ({
   primaryButton,
   menu,
   className,
-  focusUrl,
+  transport,
   displayName,
   mxcAvatarUrl,
   focusable,
@@ -214,7 +215,7 @@ const UserMediaTileInner: FC<UserMediaTileProps & { menu: ReactNode }> = ({
       currentReaction={reaction ?? undefined}
       raisedHandOnClick={raisedHandOnClick}
       waitingForMedia={waitingForMedia}
-      focusUrl={focusUrl}
+      transport={transport}
       setVideoAspectRatio={vm.setVideoAspectRatio}
       audioStreamStats={audioStreamStats}
       videoStreamStats={videoStreamStats}
@@ -279,7 +280,7 @@ const LocalUserMediaTile: FC<LocalUserMediaTileProps> = ({
   const mirror = useBehavior(vm.mirror$);
   const alwaysShow = useBehavior(vm.alwaysShow$);
   const switchCamera = useBehavior(vm.switchCamera$);
-  const focusUrl = useBehavior(vm.focusUrl$);
+  const transport = useBehavior(vm.transport$);
 
   const latestAlwaysShow = useLatest(alwaysShow);
   const onSelectAlwaysShow = useCallback(
@@ -334,7 +335,7 @@ const LocalUserMediaTile: FC<LocalUserMediaTileProps> = ({
       menuStart={menuStart}
       menuEnd={menuEnd}
       focusable={focusable}
-      focusUrl={focusUrl}
+      transport={transport}
       {...props}
     />
   );
@@ -356,7 +357,7 @@ const RemoteUserMediaTile: FC<RemoteUserMediaTileProps> = ({
   const waitingForMedia = useBehavior(vm.waitingForMedia$);
   const playbackMuted = useBehavior(vm.playbackMuted$);
   const playbackVolume = useBehavior(vm.playbackVolume$);
-  const focusUrl = useBehavior(vm.focusUrl$);
+  const transport = useBehavior(vm.transport$);
 
   const onSelectMute = useCallback(
     (e: Event) => {
@@ -398,7 +399,7 @@ const RemoteUserMediaTile: FC<RemoteUserMediaTileProps> = ({
           </MenuItem>
         </>
       }
-      focusUrl={focusUrl}
+      transport={transport}
       {...props}
     />
   );

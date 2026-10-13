@@ -38,15 +38,20 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
-  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  // On CI, `list` prints a line per test as it finishes, which keeps the job
-  // log moving; `github` annotates failures on the PR; `html` is uploaded as
-  // an artifact and must never try to open a browser there.
+  /**
+   * Reporter to use. See https://playwright.dev/docs/test-reporters
+   *
+   * On CI, `list` prints a line per test as it finishes, which keeps the job
+   * log moving; `github` annotates failures on the PR; `html` is uploaded as
+   * an artifact and must never try to open a browser there.
+   */
   reporter: process.env.CI
     ? [["list"], ["github"], ["html", { open: "never" }]]
     : [["list"], ["html"]],
   /* Stop a broken run early on CI instead of waiting out every retry. */
   maxFailures: process.env.CI ? 5 : undefined,
+  /* Under the job's 60 minute limit, so a hung run still ends with a report. */
+  globalTimeout: process.env.CI ? 50 * 60 * 1000 : undefined,
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */

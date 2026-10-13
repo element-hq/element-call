@@ -5,7 +5,7 @@ sender_localpart: "_lk_jwt_service"
 namespaces:
   users:
     - exclusive: false
-      regex: "@.*:homeserver" # Cover all local users
+      regex: "@.*:synapse\\.m\\.localhost" # Cover all local users
 # Required for Synapse to call POST /_matrix/app/v1/ping on this service.
 url: "http://auth-server:6080"
 # Enable membership look-ups via /is_joined.

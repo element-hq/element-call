@@ -6,11 +6,10 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { test, vi, expect, beforeEach, afterEach } from "vitest";
-import { BehaviorSubject, NEVER } from "rxjs";
+import { BehaviorSubject } from "rxjs";
 import { type Room as LivekitRoom } from "livekit-client";
 import EventEmitter from "events";
 import fetchMock from "fetch-mock";
-import { type LivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import {
@@ -19,8 +18,12 @@ import {
   trackEpoch,
 } from "../../ObservableScope.ts";
 import { ECConnectionFactory } from "./ConnectionFactory.ts";
-import { type OpenIDClientParts } from "../../../livekit/openIDSFU.ts";
 import {
+  type ClientGetTokenParts,
+  type ClientOpenIDParts,
+} from "../../../livekit/auth";
+import {
+  exampleTransportLocator,
   mockMediaDevices,
   mockRtcMembership,
   ownMemberMock,
@@ -28,19 +31,19 @@ import {
 } from "../../../utils/test.ts";
 import { type ProcessorState } from "../../../livekit/TrackProcessorContext.tsx";
 import {
-  areLivekitTransportsEqual,
   createRemoteMatrixLivekitMembers$,
   type RemoteMatrixLivekitMember,
 } from "./MatrixLivekitMembers.ts";
-import { createConnectionManager$ } from "./ConnectionManager.ts";
+import { createConnectionMap$ } from "./ConnectionMap.ts";
 import { membershipsAndTransports$ } from "../../SessionBehaviors.ts";
 import { localRtcMember, testJWTToken } from "../../../utils/test-fixtures.ts";
+import { deepCompare } from "matrix-js-sdk/lib/utils";
 
-// Test the integration of ConnectionManager and MatrixLivekitMerger
+// Test the integration of ConnectionMap and MatrixLivekitMembers
 
 let testScope: ObservableScope;
 let ecConnectionFactory: ECConnectionFactory;
-let mockClient: OpenIDClientParts;
+let mockClient: ClientGetTokenParts & ClientOpenIDParts;
 let lkRoomFactory: () => LivekitRoom;
 
 const createdMockLivekitRooms: Map<string, LivekitRoom> = new Map();
@@ -49,7 +52,7 @@ beforeEach(() => {
   testScope = new ObservableScope();
   mockClient = {
     getOpenIdToken: vi.fn().mockReturnValue(""),
-    getDeviceId: vi.fn().mockReturnValue("DEV000"),
+    _unstable_getLivekitToken: vi.fn().mockResolvedValue({ jwt: testJWTToken }),
   };
 
   lkRoomFactory = vi.fn().mockImplementation(() => {
@@ -71,6 +74,7 @@ beforeEach(() => {
   ecConnectionFactory = new ECConnectionFactory(
     mockClient,
     "!roomid:example.org",
+    "m.call#ROOM",
     mockMediaDevices({}),
     new BehaviorSubject<ProcessorState>({
       supported: true,
@@ -120,10 +124,10 @@ test("bob, carl, then bob joining no tracks yet", () => {
       memberships$,
     );
 
-    const connectionManager = createConnectionManager$({
+    const connectionMap$ = createConnectionMap$({
       scope: testScope,
       connectionFactory: ecConnectionFactory,
-      localTransport$: NEVER,
+      localTransport: exampleTransportLocator,
       remoteTransports$: membershipsAndTransports.transports$,
       logger: logger,
       ownMembershipIdentity: ownMemberMock,
@@ -133,7 +137,7 @@ test("bob, carl, then bob joining no tracks yet", () => {
       scope: testScope,
       membershipsWithTransport$:
         membershipsAndTransports.membershipsWithTransport$,
-      connectionManager,
+      connectionMap$,
       localUser: localRtcMember,
     });
 
@@ -147,10 +151,7 @@ test("bob, carl, then bob joining no tracks yet", () => {
         });
         expectObservable(item.connection$).toBe("a", {
           a: expect.toSatisfy((co) =>
-            areLivekitTransportsEqual(
-              co.transport,
-              bobMembership.transports[0]! as LivekitTransport,
-            ),
+            deepCompare(co.transport, bobMembership.transports[0]),
           ),
         });
         expectObservable(item.participant.value$).toBe("a", {
@@ -182,15 +183,9 @@ test("bob, carl, then bob joining no tracks yet", () => {
             a: null,
           });
           expectObservable(item.connection$).toBe("a", {
-            a: expect.toSatisfy((connection) => {
-              expect(
-                areLivekitTransportsEqual(
-                  connection.transport,
-                  carlMembership.transports[0]! as LivekitTransport,
-                ),
-              ).toBe(true);
-              return true;
-            }),
+            a: expect.toSatisfy((connection) =>
+              deepCompare(connection.transport, carlMembership.transports[0]),
+            ),
           });
         }
         return true;
@@ -212,15 +207,9 @@ test("bob, carl, then bob joining no tracks yet", () => {
             a: daveMembership,
           });
           expectObservable(item.connection$).toBe("a", {
-            a: expect.toSatisfy((connection) => {
-              expect(
-                areLivekitTransportsEqual(
-                  connection.transport,
-                  daveMembership.transports[0]! as LivekitTransport,
-                ),
-              ).toBe(true);
-              return true;
-            }),
+            a: expect.toSatisfy((connection) =>
+              deepCompare(connection.transport, daveMembership.transports[0]),
+            ),
           });
           expectObservable(item.participant.value$).toBe("a", {
             a: null,

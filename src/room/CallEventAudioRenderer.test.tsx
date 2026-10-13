@@ -17,7 +17,7 @@ import {
 import { act } from "react";
 import { type RoomMember } from "matrix-js-sdk";
 import {
-  type LivekitTransport,
+  type UnstableLivekitTransport,
   type CallMembership,
 } from "matrix-js-sdk/lib/matrixrtc";
 
@@ -46,7 +46,7 @@ vitest.mock("../useAudioContext");
 vitest.mock("../soundUtils");
 vitest.mock("../rtcSessionHelpers", async (importOriginal) => ({
   ...(await importOriginal()),
-  makeTransport: (): [LivekitTransport] => [exampleTransport],
+  makeTransport: (): [UnstableLivekitTransport] => [exampleTransport],
 }));
 
 afterEach(() => {
