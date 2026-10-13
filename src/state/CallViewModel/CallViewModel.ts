@@ -674,8 +674,8 @@ export function createCallViewModel$(
             rtcBackendIdentity: member.rtcBackendIdentity,
             member,
             encryptionSystem: options.encryptionSystem,
-            focusUrl$: scope.behavior(
-              member.transport$.pipe(map((transport) => transport?.id)),
+            transport$: scope.behavior(
+              member.transport$.pipe(map((transport) => transport?.raw)),
             ),
             mediaDevices,
             pretendToBeDisconnected$: reconnecting$,

@@ -34,7 +34,7 @@ import { ReactionIndicator } from "../reactions/ReactionIndicator";
 import { RTCConnectionStats } from "../RTCConnectionStats";
 import videoPlaceholder from "../graphics/video-placeholder.gif";
 import { autoVideoFit } from "../utils/videoFit";
-import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import { type Transport } from "matrix-js-sdk/lib/matrixrtc";
 
 interface Props extends ComponentProps<typeof animated.div> {
   className?: string;
@@ -69,9 +69,9 @@ interface Props extends ComponentProps<typeof animated.div> {
   videoStreamStats?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
   rtcBackendIdentity?: string;
   /**
-   * The LiveKit transport, mainly for debugging purposes.
+   * The member's transport, mainly for debugging purposes.
    */
-  transport?: UnstableLivekitTransport;
+  transport?: Transport;
   /**
    * Called whenever the aspect ratio of the video content becomes known or
    * otherwise changes.

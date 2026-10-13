@@ -18,6 +18,7 @@ import {
   trackBySource$,
   type VideoMediaTrack,
 } from "@element-hq/matrixrtc-sdk";
+import { type Transport } from "matrix-js-sdk/lib/matrixrtc";
 import {
   combineLatest,
   distinctUntilChanged,
@@ -56,10 +57,10 @@ export interface BaseMemberMediaViewModel extends BaseMediaViewModel {
    */
   video$: Behavior<VideoMediaTrack | undefined>;
   /**
-   * The URL of the transport on which this member should be publishing.
-   * Exposed for debugging.
+   * The transport on which this member should be publishing, as it appears
+   * in the membership. Exposed for debugging.
    */
-  transport$: Behavior<UnstableLivekitTransport | undefined>;
+  transport$: Behavior<Transport | undefined>;
   /**
    * Whether there should be a warning that this media is unencrypted.
    */
@@ -74,7 +75,7 @@ export interface MemberMediaInputs extends BaseMediaViewModel {
   member: MediaMember;
   audioSource: "microphone" | "screenShareAudio";
   videoSource: "camera" | "screenShare";
-  focusUrl$: Behavior<string | undefined>;
+  transport$: Behavior<Transport | undefined>;
   encryptionSystem: EncryptionSystem;
 }
 

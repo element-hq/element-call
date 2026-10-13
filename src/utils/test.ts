@@ -372,7 +372,7 @@ export function mockLocalMedia(
       tracks$: constant(tracks),
     }),
     encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
-    focusUrl$: constant("https://rtc-example.org"),
+    transport$: constant(exampleTransport),
     mediaDevices,
     displayName$: constant(member.rawDisplayName ?? "nodisplayname"),
     mxcAvatarUrl$: constant(member.getMxcAvatarUrl()),
@@ -386,7 +386,7 @@ export function mockRemoteMedia(
   roomMember: Partial<RoomMember>,
   /** The tracks, or a behavior of them for a test that has them arrive. */
   tracks: MockTracks | Behavior<MockTracks>,
-  { focusUrl }: { focusUrl?: string } = { focusUrl: "https://rtc-example.org" },
+  { transport }: { transport?: Transport } = { transport: exampleTransport },
 ): RemoteUserMediaViewModel {
   const member = mockMatrixRoomMember(rtcMember, roomMember);
   return createRemoteUserMedia(testScope(), {
@@ -400,7 +400,7 @@ export function mockRemoteMedia(
         tracks === null || Array.isArray(tracks) ? constant(tracks) : tracks,
     }),
     encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
-    focusUrl$: constant(focusUrl),
+    transport$: constant(transport),
     pretendToBeDisconnected$: constant(false),
     displayName$: constant(member.rawDisplayName ?? "nodisplayname"),
     mxcAvatarUrl$: constant(member.getMxcAvatarUrl()),
@@ -424,7 +424,7 @@ export function mockRemoteScreenShare(
       tracks$: constant(tracks),
     }),
     encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
-    focusUrl$: constant("https://rtc-example.org"),
+    transport$: constant(exampleTransport),
     pretendToBeDisconnected$: constant(false),
     displayName$: constant(member.rawDisplayName ?? "nodisplayname"),
     mxcAvatarUrl$: constant(member.getMxcAvatarUrl()),

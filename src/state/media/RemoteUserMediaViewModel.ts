@@ -43,11 +43,11 @@ export function createRemoteUserMedia(
 
   const waitingForMedia$ = scope.behavior(
     combineLatest(
-      [inputs.focusUrl$, inputs.member.tracks$],
+      [inputs.transport$, inputs.member.tracks$],
       // Without a transport the user is not attempting to publish anywhere
       // and so we shouldn't expect media. (They might be a subscribe-only bot
       // for example.)
-      (focusUrl, tracks) => focusUrl !== undefined && tracks === null,
+      (transport, tracks) => transport !== undefined && tracks === null,
     ),
   );
   waitingForMedia$.pipe(scope.bind()).subscribe((waiting) => {
