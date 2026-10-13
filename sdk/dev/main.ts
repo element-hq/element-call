@@ -185,14 +185,14 @@ function showMembers(
     .subscribe(([local, remote]) => {
       const current = local === null ? remote : [local, ...remote];
       for (const [id, tile] of tiles)
-        if (!current.some((m) => m.rtcBackendIdentity === id)) {
+        if (!current.some((m) => m.memberId === id)) {
           tile.remove();
           tiles.delete(id);
         }
       for (const member of current)
-        if (!tiles.has(member.rtcBackendIdentity)) {
+        if (!tiles.has(member.memberId)) {
           const tile = memberTile(scope, member);
-          tiles.set(member.rtcBackendIdentity, tile);
+          tiles.set(member.memberId, tile);
           members.append(tile);
         }
     });

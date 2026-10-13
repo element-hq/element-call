@@ -218,8 +218,8 @@ export function createRTCParticipation(
   // ever hears from attested members
   const data$ = backend.data$.pipe(
     map(({ senderId, topic, text }): DataMessage | null => {
-      const member = remoteMembers$.value.find(
-        (m) => m.rtcBackendIdentity === senderId,
+      const member = remoteMembers$.value.find((m) =>
+        m.backendIdentities.includes(senderId),
       );
       if (member === undefined) {
         logger.warn(`Dropping data from ${senderId}: not a member`);

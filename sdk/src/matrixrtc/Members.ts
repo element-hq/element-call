@@ -46,12 +46,14 @@ export function createRTCMember(
   membership$: Behavior<CallMembership>,
   { metadata, transports, own }: MemberContext,
 ): RTCMember {
-  const { userId, deviceId, memberId, rtcBackendIdentity } = membership$.value;
+  const { userId, deviceId, memberId, rtcBackendIdentity, backendIdentities } =
+    membership$.value;
   return {
     local: userId === own.userId && deviceId === own.deviceId,
-    // Read off the membership for now; the backend will derive it once the
+    // Read off the membership for now; the backend will derive them once the
     // identity scheme is its own and not the js-sdk's
     rtcBackendIdentity,
+    backendIdentities,
     userId,
     deviceId,
     memberId,

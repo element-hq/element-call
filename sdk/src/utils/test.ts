@@ -164,6 +164,8 @@ export function mockRtcMembership(
   deviceId: string,
   customOverwrites?: {
     rtcBackendIdentity?: string;
+    /** Every identity the member may have on its transport, where more than one. */
+    backendIdentities?: string[];
     callId?: string;
     fociPreferred?: Transport[];
     focusActive?: LivekitFocusSelection;
@@ -199,11 +201,12 @@ export function mockRtcMembership(
     content: data,
   });
 
-  const membershipData = CallMembership.membershipDataFromMatrixEvent(event);
+  const backendIdentity = rtcBackendIdentity ?? `${userId}:${deviceId}`;
   const cms = new CallMembership(
     event,
-    membershipData,
-    rtcBackendIdentity ?? `${userId}:${deviceId}`,
+    CallMembership.membershipDataFromMatrixEvent(event),
+    customOverwrites?.backendIdentities ?? [backendIdentity],
+    backendIdentity,
   );
   vi.mocked(cms).getTransport = vi.fn().mockReturnValue(fociPreferred[0]);
 

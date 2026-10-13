@@ -259,20 +259,24 @@ export type ResolvedTransport =
 export interface RTCMember {
   local: boolean;
   /**
-   * The identity this member has on the media backend's transport: the
-   * participant identity the SFU sees, and the sender of its data packets. The
-   * SDK uses it to match what arrives on the transport back to the member; a
-   * host needs it only as a stable key per membership or as a debug label.
-   *
-   * Today it is read off the membership, where the js-sdk computes it:
-   * `${userId}:${deviceId}` before sticky events, a hash of `memberId` in
-   * Matrix 2.0 mode. Eventually the backend will derive it itself, so treat it
-   * as opaque.
+   * The identity this member is known by on its transport for matching
+   * purposes, read off the membership: `${userId}:${deviceId}`. A stable key
+   * per membership and a debug label for a host; the SDK matches media
+   * against `backendIdentities`, not this.
    */
   rtcBackendIdentity: string;
   userId: string;
   deviceId: string;
   /** The membership's own id; what the Matrix 2.0 identity is derived from. */
+  /**
+   * Every identity this member may publish under on its transport: the
+   * participant identity the SFU sees, and the sender of its data packets.
+   * One per authentication flow the member's transport allows, so a
+   * transport with both a `url` and a `livekit_service_url` lists the hashed
+   * and the legacy identity, and the backend matches whichever shows up.
+   * Opaque to a host.
+   */
+  backendIdentities: readonly string[];
   memberId: string;
   /** Which transport this member is on; undefined when the membership has none. */
   transport$: Behavior<TransportMetadata | undefined>;
