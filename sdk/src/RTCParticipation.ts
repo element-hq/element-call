@@ -132,9 +132,9 @@ export function createRTCParticipation(
     logger,
   });
 
-  // If the backend is a LiveKit: We check it for transports as well. (as a fallbacke)
-  // The livekit backend is a source of transports too.
-  // (MSC4195). LiveKit only, so it stays out of the backend interface
+  // If the backend is LiveKit, we check it for transports as well, as a
+  // fallback: another member's SFU may let us publish (MSC4195). LiveKit only,
+  // so it stays out of the backend interface
   const transportsFromBackends = async (): Promise<Transport[]> =>
     backend.transportType === "livekit"
       ? findRemotePublishLivekitTransport({
@@ -146,7 +146,7 @@ export function createRTCParticipation(
           roomId: room.roomId,
           slotId: jsSdkSession.slotId,
           logger,
-        })
+        }).then((transport) => (transport === null ? [] : [transport]))
       : [];
 
   const preparedTransport$ = from(
