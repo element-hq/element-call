@@ -33,6 +33,7 @@ jobs:
           github_token: ${{ secrets.CLAUDE_GH_TOKEN }}
           use_sticky_comment: true
           track_progress: true
+          show_full_output: true # TODO: REMOVE
           prompt: |
             Review this pull request under the following (and no further) angles:
 
