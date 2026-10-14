@@ -106,7 +106,7 @@
     "insufficient_capacity_description": "The server has reached its maximum capacity and you cannot join the call at this time. Try again later, or contact your server admin if the problem persists.",
     "livekit_connection_error": "Failed to connect to Livekit server",
     "livekit_connection_error_description": "An error occurred while connecting to the Livekit server (<1>Reason:</1> <2>{{ reason }}</2>).",
-    "matrix_rtc_transport_missing": "The server is not configured to work with {{brand}}. Please contact your server admin (Domain: {{domain}}, Error Code: {{ errorCode }}).",
+    "matrix_rtc_transport_missing": "The server is not configured to work with {{brand}} and no other call participant provides a usable transport. Please contact your server admin (Domain: {{domain}}, Error Code: {{ errorCode }}).",
     "membership_manager": "Membership Manager Error",
     "membership_manager_description": "The Membership Manager had to shut down. This is caused by many consecutive failed network requests.",
     "no_matrix_2_authorization_service": "The authorization service for your media server (SFU) is out of date.",

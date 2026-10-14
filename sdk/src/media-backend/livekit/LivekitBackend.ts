@@ -8,6 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { type MatrixClient } from "matrix-js-sdk";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import {
+  type CallMembership,
   isUnstableLivekitTransport,
   type Transport,
 } from "matrix-js-sdk/lib/matrixrtc";
@@ -34,7 +35,7 @@ import {
   trackEpoch,
 } from "../../reactive/ObservableScope";
 import { mapScoped } from "../../utils/mapScoped";
-import { serverNameOf } from "../../utils/serverName";
+import { serverNameOf, serverNameOfTransport } from "../../utils/serverName";
 import {
   type BackendConnection,
   type MediaBackend,
@@ -62,6 +63,7 @@ import { createDataChannel$ } from "./DataChannel";
 import { createKeyProvider } from "./KeyProvider";
 import { createLivekitMemberMedia } from "./LivekitMemberMedia";
 import { createLivekitLocalMedia } from "./LocalMedia";
+import { findRemotePublishTransport } from "./RemotePublishTransport";
 
 export interface LivekitBackendOptions {
   /**
@@ -146,26 +148,50 @@ export function createLivekitBackend(
     logger,
   );
 
+  const ownServerName = serverNameOf(ownMembershipIdentity.userId);
+
+  const remotePublishTransport = async (
+    memberships: CallMembership[],
+  ): Promise<Transport | null> =>
+    findRemotePublishTransport({
+      client,
+      memberships,
+      ownMembershipIdentity,
+      roomId,
+      slotId,
+      logger,
+    });
+
   const prepareLocalTransport = async (
     transport: Transport,
   ): Promise<TransportCapabilities> => {
     if (!isUnstableLivekitTransport(transport))
       throw new MatrixRTCError(`Not a LiveKit transport: ${transport.type}`);
-    const locator: TransportLocator = {
+    const serverName = serverNameOfTransport(
       transport,
-      serverName: serverNameOf(ownMembershipIdentity.userId),
-    };
-    // Delegation goes through whichever service authenticates us as a
-    // publisher, so only that service's support counts
-    const flow = chooseAuthFlow(transport, "publisher");
-    const canDelegate =
-      flow.kind === "openID"
-        ? supportsDelegation(
-            `${flow.serviceUrl}/delegate_delayed_leave`,
-            `transport ${flow.serviceUrl}`,
-            logger,
-          )
-        : homeserverSupportsDelegation;
+      ownMembershipIdentity.userId,
+    );
+    const locator: TransportLocator = { transport, serverName };
+    let canDelegate: Promise<boolean>;
+    if (serverName !== ownServerName) {
+      // Our homeserver only takes over leaves for its own SFUs
+      logger.info(
+        `Publishing on a remote SFU of ${serverName}, delegation is not possible`,
+      );
+      canDelegate = Promise.resolve(false);
+    } else {
+      // Delegation goes through whichever service authenticates us as a
+      // publisher, so only that service's support counts
+      const flow = chooseAuthFlow(transport, "publisher");
+      canDelegate =
+        flow.kind === "openID"
+          ? supportsDelegation(
+              `${flow.serviceUrl}/delegate_delayed_leave`,
+              `transport ${flow.serviceUrl}`,
+              logger,
+            )
+          : homeserverSupportsDelegation;
+    }
     localTransport$.next(locator);
     // The membership is only sent once the publisher connection holds its
     // token, so that the LiveKit room exists before anyone subscribes to it:
@@ -204,7 +230,10 @@ export function createLivekitBackend(
         map((transport): TransportLocator | undefined => {
           const raw = transport?.raw;
           return isUnstableLivekitTransport(raw)
-            ? { transport: raw, serverName: serverNameOf(member.userId) }
+            ? {
+                transport: raw,
+                serverName: serverNameOfTransport(raw, member.userId),
+              }
             : undefined;
         }),
         distinctUntilChanged((a, b) => (a && keyFor(a)) === (b && keyFor(b))),
@@ -257,6 +286,7 @@ export function createLivekitBackend(
 
   return {
     transportType: "livekit",
+    findRemotePublishTransport: remotePublishTransport,
     prepareLocalTransport,
     delegateDelayedLeave: delegateLeave,
     local: localMedia_,

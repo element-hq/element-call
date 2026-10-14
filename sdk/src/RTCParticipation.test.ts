@@ -84,6 +84,7 @@ interface FakeBackend {
   connectionState$: BehaviorSubject<MediaConnectionState | Error>;
   data$: Subject<DataPacket>;
   setPublishing: Mock<(publish: boolean) => void>;
+  findRemotePublishTransport: Mock<() => Promise<Transport | null>>;
   delegateDelayedLeave: Mock<(delayId: string) => Promise<void>>;
   mediaFor: Mock<(scope: ObservableScope, member: RTCMember) => MemberMedia>;
 }
@@ -91,6 +92,7 @@ interface FakeBackend {
 function setup(
   options: Partial<RTCParticipationOptions> = {},
   slotOptions: { matrixRTCMode?: MatrixRTCMode } = {},
+  homeserverTransports: Transport[] = [transport],
 ): {
   scope: ObservableScope;
   participation: ReturnType<typeof createRTCParticipation>["participation"];
@@ -112,7 +114,7 @@ function setup(
     getDeviceId: () => deviceId,
     getDomain: () => "example.org",
     getSyncState: () => SyncState.Syncing,
-    _unstable_getRTCTransports: vi.fn().mockResolvedValue([transport]),
+    _unstable_getRTCTransports: vi.fn().mockResolvedValue(homeserverTransports),
   } as unknown as MatrixClient;
   const members$ = new BehaviorSubject<RTCMember[]>([]);
 
@@ -124,6 +126,7 @@ function setup(
     ),
     data$: new Subject<DataPacket>(),
     setPublishing: vi.fn(),
+    findRemotePublishTransport: vi.fn(async () => Promise.resolve(null)),
     delegateDelayedLeave: vi.fn(async () => Promise.resolve()),
     mediaFor: vi.fn(() => ({
       tracks$: constant(null),
@@ -136,6 +139,7 @@ function setup(
   ): MediaBackend => {
     const backend: MediaBackend = {
       transportType: "livekit",
+      findRemotePublishTransport: fake.findRemotePublishTransport,
       prepareLocalTransport: async () => fake.prepared.promise,
       delegateDelayedLeave: fake.delegateDelayedLeave,
       local: {
@@ -218,6 +222,27 @@ describe("createRTCParticipation", () => {
       kind: "reconnecting",
       reason: "media",
     });
+  });
+
+  it("publishes on another member's SFU where the homeserver advertises none", async () => {
+    const bobsTransport: Transport = {
+      type: "livekit",
+      url: "wss://sfu.bob.com",
+      server_name: "bob.com",
+    };
+    const { session, join, fake } = setup({}, {}, []);
+    fake.findRemotePublishTransport.mockResolvedValue(bobsTransport);
+    fake.prepared.resolve({ canDelegateDelayedLeave: false });
+    await flushPromises();
+
+    expect(fake.findRemotePublishTransport).toHaveBeenCalledWith(
+      session.memberships,
+    );
+    expect(join).toHaveBeenCalledWith(
+      expect.anything(),
+      [bobsTransport],
+      expect.anything(),
+    );
   });
 
   it("publishes only while joined", async () => {

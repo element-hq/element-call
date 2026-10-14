@@ -10,6 +10,7 @@ import { type Transport } from "matrix-js-sdk/lib/matrixrtc";
 import { describe, expect, it, vi } from "vitest";
 
 import { MatrixRTCTransportMissingError } from "../errors";
+import { mockRtcMembership } from "../utils/test";
 import { discoverLocalTransport } from "./LocalTransport";
 
 const homeserverTransport: Transport = {
@@ -20,6 +21,12 @@ const hostTransport: Transport = {
   type: "livekit",
   livekit_service_url: "https://host.example.org",
 };
+const bobsTransport: Transport = {
+  type: "livekit",
+  url: "wss://sfu.bob.com",
+  server_name: "bob.com",
+};
+const bob = mockRtcMembership("@bob:bob.com", "BOB");
 
 function client(
   advertised: Transport[],
@@ -30,6 +37,15 @@ function client(
   };
 }
 
+function backend(
+  remote: Transport | null = null,
+): Parameters<typeof discoverLocalTransport>[1] {
+  return {
+    transportType: "livekit",
+    findRemotePublishTransport: vi.fn().mockResolvedValue(remote),
+  };
+}
+
 describe("discoverLocalTransport", () => {
   it("takes the transport the host names without asking the homeserver", async () => {
     const c = client([homeserverTransport]);
@@ -37,7 +53,8 @@ describe("discoverLocalTransport", () => {
     await expect(
       discoverLocalTransport(
         c,
-        "livekit",
+        backend(),
+        [],
         { transport: hostTransport },
         logger,
       ),
@@ -49,7 +66,8 @@ describe("discoverLocalTransport", () => {
     await expect(
       discoverLocalTransport(
         client([homeserverTransport]),
-        "livekit",
+        backend(),
+        [],
         { fallbackTransport: hostTransport },
         logger,
       ),
@@ -60,15 +78,46 @@ describe("discoverLocalTransport", () => {
     await expect(
       discoverLocalTransport(
         client([{ type: "not_livekit" }]),
-        "livekit",
+        backend(),
+        [],
         { fallbackTransport: hostTransport },
         logger,
       ),
     ).resolves.toEqual(hostTransport);
   });
 
+  it("prefers a local transport over other members' SFUs", async () => {
+    const b = backend(bobsTransport);
+
+    await expect(
+      discoverLocalTransport(
+        client([homeserverTransport]),
+        b,
+        [bob],
+        {},
+        logger,
+      ),
+    ).resolves.toEqual(homeserverTransport);
+    expect(b.findRemotePublishTransport).not.toHaveBeenCalled();
+  });
+
+  it("publishes on another member's SFU where there is no local transport", async () => {
+    const b = backend(bobsTransport);
+
+    await expect(
+      discoverLocalTransport(client([]), b, [bob], {}, logger),
+    ).resolves.toEqual(bobsTransport);
+    expect(b.findRemotePublishTransport).toHaveBeenCalledWith([bob]);
+  });
+
   it("fails naming the homeserver where there is no transport at all", async () => {
-    const promise = discoverLocalTransport(client([]), "livekit", {}, logger);
+    const promise = discoverLocalTransport(
+      client([]),
+      backend(),
+      [bob],
+      {},
+      logger,
+    );
 
     await expect(promise).rejects.toBeInstanceOf(
       MatrixRTCTransportMissingError,

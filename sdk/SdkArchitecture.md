@@ -101,6 +101,8 @@ LiveKit participants.
   │  create ───▶│                                       │                         │
   │             │ GET rtc/transports (session) ────────▶│                         │
   │             │◀── first transport of the backend's type                        │
+  │             │   (none: findRemotePublishTransport,  │                         │
+  │             │    a member's SFU we may publish on) ─▶│                         │
   │             │ prepareLocalTransport (backend):      │                         │
   │             │   publisher token: CS API get_token,  │                         │
   │             │   or OpenID token then /sfu/get ─────▶│                         │
@@ -537,6 +539,10 @@ type MemberMediaFields = Pick<RTCMember, "tracks$" | "encryptionError$">;
 
 export interface MediaBackend {
   readonly transportType: string; // "livekit"
+  /** Another member's transport we may publish on, where the client found none. */
+  findRemotePublishTransport(
+    memberships: CallMembership[],
+  ): Promise<Transport | null>;
   /** Authenticate with the transport the client found; the probe for delegation runs here. */
   prepareLocalTransport(
     transport: Transport,
@@ -556,7 +562,9 @@ export interface MediaBackend {
 ```
 
 What stays on the client's side: discovery of the local transport from the
-homeserver's list (a homeserver endpoint, so not a backend's), the membership
+homeserver's list (a homeserver endpoint, so not a backend's), asking the
+backend for another member's transport only where that list and the host's
+fallback are empty, the membership
 state machine in `LocalMembership.ts` and its combination with
 `local.connectionState$` into `state$`, the choice of delayed leave timings,
 mapping a data packet's sender to a member, and the transport registry, which keys on the raw
@@ -566,7 +574,8 @@ transport serialised with sorted keys and derives `connectedTransports$` and eac
 The backend's context carries no Matrix client and no membership list. A backend
 that needs the client takes a `Pick` of exactly what it calls in its own options
 (`createLivekitBackend(scope, context, { client, mediaQuality })`),
-and learns of remote members only through `mediaFor$`, registering each
+and learns of remote members only through `mediaFor$` and the one membership
+snapshot `findRemotePublishTransport` is handed, registering each
 membership's transport for as long as the member's scope lives. Media keys reach
 it as a stream, `mediaKeys$`, replayed on subscribe; the js-sdk session never
 does. A host supplies its own backend through `MatrixRTCClientOptions.backend`;

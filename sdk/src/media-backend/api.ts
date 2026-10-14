@@ -13,7 +13,10 @@ Please see LICENSE in the repository root for full details.
  */
 
 import { type Logger } from "matrix-js-sdk/lib/logger";
-import { type Transport } from "matrix-js-sdk/lib/matrixrtc";
+import {
+  type CallMembership,
+  type Transport,
+} from "matrix-js-sdk/lib/matrixrtc";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 import { type Observable } from "rxjs";
 
@@ -115,6 +118,17 @@ export interface DataPacket {
 export interface MediaBackend {
   /** The membership transport type this backend serves: "livekit". */
   readonly transportType: string;
+
+  /**
+   * A transport to publish on where neither the homeserver nor the host
+   * provides one of the backend's type: for LiveKit, the SFU of another
+   * member whose homeserver lets us publish on it (MSC4195). Resolves null
+   * where no member's transport will do. Called at most once per session,
+   * with the memberships at that moment, before `prepareLocalTransport`.
+   */
+  findRemotePublishTransport(
+    memberships: CallMembership[],
+  ): Promise<Transport | null>;
 
   /**
    * Makes `transport` usable as the one the local member publishes on. The

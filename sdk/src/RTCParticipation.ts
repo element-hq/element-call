@@ -131,12 +131,18 @@ export function createRTCParticipation(
   });
 
   const preparedTransport$ = from(
-    discoverLocalTransport(client, backend.transportType, options, logger).then(
-      async (transport): Promise<PreparedTransport> => ({
-        transport,
-        ...(await backend.prepareLocalTransport(transport)),
-      }),
-    ),
+    discoverLocalTransport(
+      client,
+      backend,
+      // A snapshot: if nobody with a usable SFU is here yet, the user has to
+      // come back later rather than wait in a half-working lobby
+      jsSdkSession.memberships,
+      options,
+      logger,
+    ).then(async (transport): Promise<PreparedTransport> => ({
+      transport,
+      ...(await backend.prepareLocalTransport(transport)),
+    })),
   );
 
   const localMembership = createLocalMembership$({
