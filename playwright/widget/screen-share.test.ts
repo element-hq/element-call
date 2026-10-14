@@ -76,9 +76,9 @@ widgetTest("Sharing screen in group call", async ({ addUser, browserName }) => {
       timeout: 5000,
     });
 
-    await expect(
-      frame.locator('video[data-lk-source="screen_share"]'),
-    ).toHaveCount(1);
+    await expect(frame.locator('video[data-source="screenShare"]')).toHaveCount(
+      1,
+    );
   }
 
   // Alice should be in grid mode as she is local sharing
@@ -117,9 +117,9 @@ widgetTest("Sharing screen in group call", async ({ addUser, browserName }) => {
       timeout: 5000,
     });
 
-    await expect(
-      frame.locator('video[data-lk-source="screen_share"]'),
-    ).toHaveCount(2);
+    await expect(frame.locator('video[data-source="screenShare"]')).toHaveCount(
+      2,
+    );
 
     // Expect 2 indicators at the bottom
     await expect(frame.getByTestId("screenshare-indicator")).toHaveCount(2);
