@@ -11,8 +11,10 @@ import {
   type RoomMember,
   type RoomState,
   RoomStateEvent,
+  UNSTABLE_ELEMENT_FUNCTIONAL_USERS,
 } from "matrix-js-sdk";
 import EventEmitter from "events";
+import { map } from "rxjs";
 import { it } from "vitest";
 
 import { ObservableScope } from "../../ObservableScope.ts";
@@ -23,6 +25,8 @@ import {
   withTestScheduler,
 } from "../../../utils/test.ts";
 import {
+  createFunctionalMembers$,
+  createHumanRoomMembers$,
   createMatrixMemberMetadata$,
   createRoomMembers$,
 } from "./MatrixMemberMetadata.ts";
@@ -35,10 +39,12 @@ describe("MatrixMemberMetadata", () => {
    * Maps userId to a partial/mock RoomMember object.
    */
   let fakeMembersMap: Map<string, Partial<RoomMember>>;
+  let fakeFunctionalMembers: string[] | undefined;
 
   beforeEach(() => {
     testScope = new ObservableScope();
     fakeMembersMap = new Map<string, Partial<RoomMember>>();
+    fakeFunctionalMembers = undefined;
 
     const roomEmitter = new EventEmitter();
     mockMatrixRoom = {
@@ -62,6 +68,15 @@ describe("MatrixMemberMetadata", () => {
         const members = Array.from(fakeMembersMap.values());
         return members;
       }),
+      currentState: {
+        getStateEvents: vi.fn().mockImplementation(() =>
+          fakeFunctionalMembers === undefined
+            ? null
+            : ({
+                getContent: () => ({ service_members: fakeFunctionalMembers }),
+              } as unknown as MatrixEvent),
+        ),
+      } as unknown as RoomState,
     } as unknown as MatrixRoom;
   });
 
@@ -82,6 +97,79 @@ describe("MatrixMemberMetadata", () => {
 
   afterEach(() => {
     fakeMembersMap.clear();
+  });
+
+  describe("functional members", () => {
+    function updateFunctionalMembers(userIds: string[]): void {
+      fakeFunctionalMembers = userIds;
+      mockMatrixRoom.emit(
+        RoomStateEvent.Events,
+        {
+          getType: () => UNSTABLE_ELEMENT_FUNCTIONAL_USERS.name,
+        } as unknown as MatrixEvent,
+        {} as unknown as RoomState,
+        null,
+      );
+    }
+
+    it("is empty without a functional members event", () => {
+      withTestScheduler(({ expectObservable }) => {
+        expectObservable(
+          createFunctionalMembers$(testScope, mockMatrixRoom),
+        ).toBe("a", { a: new Set() });
+      });
+    });
+
+    it("tracks the functional members event", () => {
+      withTestScheduler(({ expectObservable, schedule }) => {
+        fakeFunctionalMembers = ["@bot:example.com"];
+        const functional$ = createFunctionalMembers$(testScope, mockMatrixRoom);
+        schedule("-a", {
+          a: () =>
+            updateFunctionalMembers(["@bot:example.com", "@bot2:example.com"]),
+        });
+        expectObservable(functional$).toBe("ab", {
+          a: new Set(["@bot:example.com"]),
+          b: new Set(["@bot:example.com", "@bot2:example.com"]),
+        });
+      });
+    });
+
+    it("ignores unrelated state events", () => {
+      withTestScheduler(({ expectObservable, schedule }) => {
+        const functional$ = createFunctionalMembers$(testScope, mockMatrixRoom);
+        schedule("-a", {
+          a: (): void => {
+            mockMatrixRoom.emit(
+              RoomStateEvent.Events,
+              { getType: () => "m.room.topic" } as unknown as MatrixEvent,
+              {} as unknown as RoomState,
+              null,
+            );
+          },
+        });
+        expectObservable(functional$).toBe("a", { a: new Set() });
+      });
+    });
+
+    it("excludes functional members from the human member map", () => {
+      withTestScheduler(({ expectObservable, schedule }) => {
+        fakeMemberWith({ userId: "@alice:example.com" });
+        fakeMemberWith({ userId: "@bot:example.com" });
+        const human$ = createHumanRoomMembers$(
+          testScope,
+          createRoomMembers$(testScope, mockMatrixRoom),
+          createFunctionalMembers$(testScope, mockMatrixRoom),
+        );
+        schedule("-a", {
+          a: () => updateFunctionalMembers(["@bot:example.com"]),
+        });
+        expectObservable(human$.pipe(map((m) => [...m.keys()]))).toBe("ab", {
+          a: ["@alice:example.com", "@bot:example.com"],
+          b: ["@alice:example.com"],
+        });
+      });
+    });
   });
 
   describe("displayname", () => {

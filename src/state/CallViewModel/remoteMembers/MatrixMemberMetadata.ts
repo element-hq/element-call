@@ -5,8 +5,13 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type RoomMember, RoomStateEvent } from "matrix-js-sdk";
-import { combineLatest, fromEvent, map } from "rxjs";
+import {
+  type MatrixEvent,
+  type RoomMember,
+  RoomStateEvent,
+  UNSTABLE_ELEMENT_FUNCTIONAL_USERS,
+} from "matrix-js-sdk";
+import { combineLatest, filter, fromEvent, map, type Observable } from "rxjs";
 import { type CallMembership } from "matrix-js-sdk/lib/matrixrtc";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import {
@@ -49,6 +54,57 @@ export function createRoomMembers$(
       map(() => roomToMembersMap(matrixRoom)),
     ),
     roomToMembersMap(matrixRoom),
+  );
+}
+
+/**
+ * The user IDs that the room marks as functional members (bots and other
+ * service accounts). They are not treated as participants when deciding who
+ * to ring or whether the room is a DM.
+ */
+export function createFunctionalMembers$(
+  scope: ObservableScope,
+  matrixRoom: MatrixRoom,
+): Behavior<Set<string>> {
+  return scope.behavior(
+    (
+      fromEvent(matrixRoom, RoomStateEvent.Events) as Observable<[MatrixEvent]>
+    ).pipe(
+      filter(([event]) =>
+        UNSTABLE_ELEMENT_FUNCTIONAL_USERS.matches(event.getType()),
+      ),
+      map(() => functionalMembers(matrixRoom)),
+    ),
+    functionalMembers(matrixRoom),
+  );
+}
+
+function functionalMembers(matrixRoom: MatrixRoom): Set<string> {
+  const serviceMembers: unknown = matrixRoom.currentState
+    .getStateEvents(UNSTABLE_ELEMENT_FUNCTIONAL_USERS.name, "")
+    ?.getContent().service_members;
+  return new Set(
+    Array.isArray(serviceMembers)
+      ? serviceMembers.filter((id): id is string => typeof id === "string")
+      : [],
+  );
+}
+
+/**
+ * The room members that are not functional members.
+ */
+export function createHumanRoomMembers$(
+  scope: ObservableScope,
+  roomMembers$: Behavior<RoomMemberMap>,
+  functionalMembers$: Behavior<Set<string>>,
+): Behavior<RoomMemberMap> {
+  return scope.behavior(
+    combineLatest([roomMembers$, functionalMembers$]).pipe(
+      map(
+        ([members, functional]) =>
+          new Map([...members].filter(([userId]) => !functional.has(userId))),
+      ),
+    ),
   );
 }
 

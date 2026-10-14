@@ -126,7 +126,6 @@ export function createCallNotificationLifecycle$({
       ),
       switchMap((notificationEvent) => {
         // We assume that there is only one other user in the room when ringing
-        // TODO: Respect io.element.functional_members
         const recipient = [...matrixRoomMembers$.value.keys()].find(
           (userId) => userId !== localUser.userId,
         );

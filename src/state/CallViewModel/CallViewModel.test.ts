@@ -529,6 +529,58 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
     });
   });
 
+  test("one-on-one mobile layout hides name tags in room with 2 members and a bot", () => {
+    withTestScheduler(({ expectObservable }) => {
+      withCallViewModel(
+        {
+          remoteParticipants$: constant([aliceParticipant]),
+          roomMembers: [local, alice, bob],
+          functionalMembers: [bob.userId],
+          rtcMembers$: constant([localRtcMember, aliceRtcMember]),
+          windowSize$: constant({ width: 380, height: 700 }), // Mobile phone
+        },
+        (vm) => {
+          expectObservable(summarizeLayout$(vm.layout$)).toBe("a", {
+            a: {
+              type: "one-on-one-mobile",
+              spotlight: [`${aliceId}:0`],
+              pip: undefined,
+              pipSize: "lg",
+            },
+          });
+          // Bob is a bot, so the room is still a DM with Alice
+          expectObservable(vm.showNameTags$).toBe("n", yesNo);
+        },
+      );
+    });
+  });
+
+  test("one-on-one mobile layout shows name tags when a bot is in the call", () => {
+    withTestScheduler(({ expectObservable }) => {
+      withCallViewModel(
+        {
+          remoteParticipants$: constant([bobParticipant]),
+          roomMembers: [local, alice, bob],
+          functionalMembers: [bob.userId],
+          rtcMembers$: constant([localRtcMember, bobRtcMember]),
+          windowSize$: constant({ width: 380, height: 700 }), // Mobile phone
+        },
+        (vm) => {
+          expectObservable(summarizeLayout$(vm.layout$)).toBe("a", {
+            a: {
+              type: "one-on-one-mobile",
+              spotlight: [`${bobId}:0`],
+              pip: undefined,
+              pipSize: "lg",
+            },
+          });
+          // The remote tile is the bot's media, which must never go unlabelled
+          expectObservable(vm.showNameTags$).toBe("y", yesNo);
+        },
+      );
+    });
+  });
+
   test("landscape mobile layouts show screen shares and group call participants", () => {
     withTestScheduler(({ behavior, expectObservable }) => {
       // Starts as a one-on-one call, then Alice shares her screen, then Bob
