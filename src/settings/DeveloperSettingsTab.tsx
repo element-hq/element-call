@@ -22,6 +22,7 @@ import {
 import { logger } from "matrix-js-sdk/lib/logger";
 import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import {
+  Button,
   EditInPlace,
   ErrorMessage,
   Root as Form,
@@ -72,6 +73,7 @@ import {
 } from "@element-hq/matrixrtc-sdk";
 import { useBehavior } from "../useBehavior";
 import { type ViewModel } from "../state/ViewModel.ts";
+import { type ElementCallError, UnknownCallError } from "../utils/errors.ts";
 
 /**
  * The state of MatrixRTC's media key rotation.
@@ -188,6 +190,22 @@ export const DeveloperSettingsTab: FC<Props> = ({
   const [muteAllAudio, setMuteAllAudio] = useSetting(muteAllAudioSetting);
 
   const urlParams = useUrlParams();
+
+  // An error thrown from a click handler never reaches an error boundary, so
+  // the button only records it and the next render throws it instead.
+  const [errorToThrow, setErrorToThrow] = useState<ElementCallError | null>(
+    null,
+  );
+  const throwTestError = useCallback(
+    () =>
+      setErrorToThrow(
+        new UnknownCallError(
+          new Error("Test error thrown from the developer settings"),
+        ),
+      ),
+    [],
+  );
+  if (errorToThrow !== null) throw errorToThrow;
 
   const MediaQualitySettings: React.FC<{
     id: string;
@@ -648,6 +666,10 @@ export const DeveloperSettingsTab: FC<Props> = ({
       />
       <Separator />
       <AudioProcessingSettings />
+      <Separator />
+      <Button kind="secondary" destructive onClick={throwTestError}>
+        {t("developer_mode.throw_error_button")}
+      </Button>
       <Separator />
       <p>{t("developer_mode.environment_variables")}</p>
       <pre className={styles.pre}>{JSON.stringify(env, null, 2)}</pre>
