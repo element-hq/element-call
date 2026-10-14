@@ -39,6 +39,9 @@ translations. The browser is Playwright's, so a fresh clone needs
 - `playwright/component/` — the component in a host page, via the harness on port
   3001 that Playwright starts as a second web server. Catches container-relative
   layout, styles escaping the root, two instances on a page, host-bridge reports.
+- `playwright/sdk/` — the MatrixRTC SDK through its harness on port 3002, a page
+  with none of Element Call on it. The smoke test is what the implementation is
+  built against.
 - `playwright/mobile/` — Pixel 7, `mobile` project only.
 
 Test what a user observes: the peer sees the change, it survives a reconnect, it is
@@ -50,4 +53,5 @@ pnpm test                   # unit + storybook
 pnpm backend                # Synapse + LiveKit, required for e2e
 pnpm test:playwright        # or :open
 pnpm dev:component          # component harness, port 3001
+pnpm dev:sdk                # SDK harness, port 3002
 ```

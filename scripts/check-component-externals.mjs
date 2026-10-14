@@ -6,57 +6,72 @@ Please see LICENSE in the repository root for full details.
 */
 
 /**
- * Checks that the component build leaves the packages a host must supply to
- * the host.
+ * Checks that the library builds leave the packages a host must supply to the
+ * host.
  *
  * A host application already has React, the Matrix SDK and Compound,
  * and a second copy of any of them is worse than dead weight: React would hold
  * two sets of hooks, the Matrix client would run two sync loops, and a second
  * Compound would style the tooltips it floats into the host's body with class
- * names the host's stylesheet does not know. So the
- * component build lists them as external — but that list has to name every
- * subpath, since the bundler silently ignores the pattern and callback forms
- * of the option, and an import it does not cover is bundled with no warning at
- * all. That is the failure this guards against.
+ * names the host's stylesheet does not know. So each library build lists them
+ * as external — but that list has to name every subpath, since the bundler
+ * silently ignores the pattern and callback forms of the option, and an import
+ * it does not cover is bundled with no warning at all. That is the failure
+ * this guards against.
  *
- * It reads the list from the build config itself, so there is one copy of it,
- * and compares it against every import of those packages in the source.
+ * It reads each list from the build config itself, so there is one copy of it
+ * per build, and compares it against every import of those packages in the
+ * source.
  *
  * The comparison is deliberately over-approximate: it looks at all of `src`
- * rather than only the modules the component actually pulls in, so it will
- * sometimes ask for a subpath that only the standalone app imports. Listing
- * one the component never imports costs nothing — the bundler ignores it —
- * whereas missing one costs a duplicate package.
+ * rather than only the modules a build actually pulls in, so it will sometimes
+ * ask for a subpath that only the standalone app imports. Listing one a build
+ * never imports costs nothing — the bundler ignores it — whereas missing one
+ * costs a duplicate package.
  */
 
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { loadConfigFromFile } from "vite";
 
-const CONFIG = "vite-component.config.ts";
-const SOURCES = ["src", "component"];
-// The development harness is a host, not part of the component: it is the
-// one that imports what a host supplies (Compound's stylesheets, say).
-const EXCLUDED = ["component/dev"];
-
-/** The packages whose duplication would break a host, rather than merely enlarge it. */
-const MUST_BE_EXTERNAL = [
-  "react",
-  "react-dom",
-  "matrix-js-sdk",
-  "@vector-im/compound-web",
-  "@vector-im/compound-design-tokens",
+/**
+ * The library builds, each with the directories it is built from and the
+ * packages whose duplication would break a host rather than merely enlarge it.
+ * A development harness is a host, not part of the library: it is the one that
+ * imports what a host supplies (Compound's stylesheets, say).
+ */
+const TARGETS = [
+  {
+    config: "vite-component.config.ts",
+    what: "the component build",
+    sources: ["src", "component"],
+    excluded: ["component/dev"],
+    mustBeExternal: [
+      "react",
+      "react-dom",
+      "matrix-js-sdk",
+      "@vector-im/compound-web",
+      "@vector-im/compound-design-tokens",
+    ],
+  },
+  {
+    config: "vite-sdk.config.ts",
+    what: "the SDK build",
+    sources: ["src", "sdk"],
+    excluded: ["sdk/dev"],
+    mustBeExternal: ["matrix-js-sdk", "livekit-client", "rxjs"],
+  },
 ];
 
 const isTestFile = (name) =>
   name.includes(".test.") || name.includes(".stories.");
 
 /** Every source file under the given directories, recursively. */
-async function* sourceFiles(dir) {
+async function* sourceFiles(dir, excluded) {
   for (const entry of await readdir(dir, { withFileTypes: true })) {
     const path = join(dir, entry.name);
-    if (EXCLUDED.includes(path)) continue;
-    if (entry.isDirectory()) yield* sourceFiles(path);
+    if (excluded.includes(path)) continue;
+    if (entry.isDirectory()) yield* sourceFiles(path, excluded);
     else if (/\.(ts|tsx)$/.test(entry.name) && !isTestFile(entry.name))
       yield path;
   }
@@ -88,60 +103,60 @@ function imports(source) {
  * with the host's copy of anything. Worker sub-builds do not inherit this
  * option anyway.
  */
-const mustBeExternal = (specifier) =>
+const mustBeExternal = (specifier, packages) =>
   !specifier.includes("?") &&
-  MUST_BE_EXTERNAL.some(
-    (pkg) => specifier === pkg || specifier.startsWith(`${pkg}/`),
-  );
+  packages.some((pkg) => specifier === pkg || specifier.startsWith(`${pkg}/`));
 
-const loaded = await loadConfigFromFile(
-  { command: "build", mode: "production" },
-  CONFIG,
-);
-if (loaded === null) {
-  console.error(`Could not load ${CONFIG}`);
-  process.exit(1);
-}
-const declared = new Set(loaded.config.build?.rollupOptions?.external ?? []);
-if (declared.size === 0) {
-  console.error(
-    `${CONFIG} declares nothing external. Either the option moved, or the ` +
-      `list is empty; either way this check is not looking at what it thinks.`,
+/** @returns Whether the target's externals list covers its imports. */
+async function check({
+  config,
+  what,
+  sources,
+  excluded,
+  mustBeExternal: packages,
+}) {
+  const loaded = await loadConfigFromFile(
+    { command: "build", mode: "production" },
+    config,
   );
-  process.exit(1);
-}
-
-// Where each missing specifier is imported, so the message can point at it
-const missing = new Map();
-const seen = new Set();
-for (const dir of SOURCES)
-  for await (const file of sourceFiles(dir)) {
-    const source = await readFile(file, "utf8");
-    for (const specifier of imports(source)) {
-      if (!mustBeExternal(specifier)) continue;
-      seen.add(specifier);
-      if (declared.has(specifier)) continue;
-      const files = missing.get(specifier) ?? [];
-      files.push(file);
-      missing.set(specifier, files);
-    }
+  if (loaded === null) {
+    console.error(`Could not load ${config}`);
+    return false;
+  }
+  const declared = new Set(loaded.config.build?.rollupOptions?.external ?? []);
+  if (declared.size === 0) {
+    console.error(
+      `${config} declares nothing external. Either the option moved, or the ` +
+        `list is empty; either way this check is not looking at what it thinks.`,
+    );
+    return false;
   }
 
-if (missing.size > 0) {
+  // Where each missing specifier is imported, so the message can point at it
+  const missing = new Map();
+  for (const dir of sources)
+    for await (const file of sourceFiles(dir, excluded)) {
+      const source = await readFile(file, "utf8");
+      for (const specifier of imports(source)) {
+        if (!mustBeExternal(specifier, packages)) continue;
+        if (declared.has(specifier)) continue;
+        const files = missing.get(specifier) ?? [];
+        files.push(file);
+        missing.set(specifier, files);
+      }
+    }
+
+  if (missing.size === 0) return true;
   console.error(
-    `${CONFIG} does not declare these imports external, so the component ` +
-      `build would bundle its own copy of them:\n`,
+    `${config} does not declare these imports external, so ${what} ` +
+      `would bundle its own copy of them:\n`,
   );
   for (const [specifier, files] of [...missing].sort())
     console.error(`  ${specifier}\n    imported by ${files.join(", ")}`);
-  console.error(`\nAdd each one to the \`external\` list in ${CONFIG}.`);
-  process.exit(1);
+  console.error(`\nAdd each one to the \`external\` list in ${config}.\n`);
+  return false;
 }
 
-// Deliberately no complaint about declarations nothing imports. Some of them
-// cannot be seen from the source at all — `react/jsx-runtime` is injected by
-// the JSX transform — and an extra declaration is inert, so there is nothing
-// to warn about.
-console.log(
-  `${declared.size} external declarations cover all ${seen.size} imports of ${MUST_BE_EXTERNAL.join(", ")}.`,
-);
+let ok = true;
+for (const target of TARGETS) ok = (await check(target)) && ok;
+if (!ok) process.exit(1);
