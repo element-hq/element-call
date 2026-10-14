@@ -11,6 +11,7 @@ import {
   type MatrixRTCSession as JsSdkRTCSession,
   MatrixRTCSessionEvent,
   MembershipManagerEvent,
+  type Transport,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type IMembershipManager } from "matrix-js-sdk/lib/matrixrtc/IMembershipManager";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
@@ -50,6 +51,7 @@ import {
   type MediaKey,
 } from "./media-backend/api";
 import { createLivekitBackend } from "./media-backend/livekit/LivekitBackend";
+import { findRemotePublishLivekitTransport } from "./media-backend/livekit/RemotePublishTransport";
 import { createHomeserverConnected$ } from "./matrixrtc/HomeserverConnected";
 import { joinJsSdkSession } from "./matrixrtc/joinJsSdkSession";
 import {
@@ -130,14 +132,29 @@ export function createRTCParticipation(
     logger,
   });
 
+  // If the backend is a LiveKit: We check it for transports as well. (as a fallbacke)
+  // The livekit backend is a source of transports too.
+  // (MSC4195). LiveKit only, so it stays out of the backend interface
+  const transportsFromBackends = async (): Promise<Transport[]> =>
+    backend.transportType === "livekit"
+      ? findRemotePublishLivekitTransport({
+          client,
+          // A snapshot: if nobody with a usable SFU is here yet, the user has
+          // to come back later rather than wait in a half-working lobby
+          memberships: jsSdkSession.memberships,
+          ownMembershipIdentity,
+          roomId: room.roomId,
+          slotId: jsSdkSession.slotId,
+          logger,
+        })
+      : [];
+
   const preparedTransport$ = from(
     discoverLocalTransport(
       client,
-      backend,
-      // A snapshot: if nobody with a usable SFU is here yet, the user has to
-      // come back later rather than wait in a half-working lobby
-      jsSdkSession.memberships,
+      backend.transportType,
       options,
+      transportsFromBackends,
       logger,
     ).then(async (transport): Promise<PreparedTransport> => ({
       transport,

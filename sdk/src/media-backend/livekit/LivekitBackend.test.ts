@@ -25,7 +25,6 @@ import { defaultSessionTimings } from "../../config";
 import {
   flushPromises,
   mockEmitter,
-  mockRtcMembership,
   ownMemberMock,
   testScope,
 } from "../../utils/test";
@@ -274,35 +273,6 @@ describe("createLivekitBackend", () => {
     expect(capabilities).toEqual({ canDelegateDelayedLeave: false });
     expect(connections[0].connection.role).toBe("publisher");
     expect(connections[0].connection.serverName).toBe("sample.com");
-  });
-
-  it("finds another member's SFU to publish on through the homeserver", async () => {
-    client._unstable_getLivekitToken.mockResolvedValue({
-      jwt: [
-        {},
-        { sub: "identity", video: { room: "room", canPublish: true } },
-        {},
-      ]
-        .map((d) => global.btoa(JSON.stringify(d)))
-        .join("."),
-    });
-    const carl = mockRtcMembership("@carl:sample.com", "CARL", {
-      fociPreferred: [{ type: "livekit", url: "wss://sfu.sample.com" }],
-    });
-
-    await expect(backend().findRemotePublishTransport([carl])).resolves.toEqual(
-      {
-        type: "livekit",
-        url: "wss://sfu.sample.com",
-        server_name: "sample.com",
-      },
-    );
-    expect(client._unstable_getLivekitToken).toHaveBeenCalledWith(
-      expect.objectContaining({
-        url: "wss://sfu.sample.com",
-        server_name: "sample.com",
-      }),
-    );
   });
 
   it("waits for the publisher connection to hold its token before the join", async () => {

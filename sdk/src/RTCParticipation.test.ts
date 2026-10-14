@@ -8,6 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { type MatrixClient, type Room, SyncState } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
+  type CallMembership,
   MatrixRTCSessionEvent,
   MembershipManagerEvent,
   type Transport,
@@ -38,13 +39,26 @@ import { constant } from "./reactive/Behavior";
 import { ObservableScope } from "./reactive/ObservableScope";
 import { createRTCParticipation } from "./RTCParticipation";
 import { transportId } from "./matrixrtc/Transports";
-import { flushPromises, mockEmitter, MockRTCSession } from "./utils/test";
+import {
+  flushPromises,
+  mockEmitter,
+  mockRtcMembership,
+  MockRTCSession,
+} from "./utils/test";
 
 const transport: Transport = {
   type: "livekit",
   livekit_service_url: "https://lk.example.org",
 };
 const userId = "@alice:example.org";
+/** A token with the publish grant, as a homeserver issues it for its own SFU. */
+const publisherJWT = [
+  {},
+  { sub: "identity", video: { room: "room", canPublish: true } },
+  {},
+]
+  .map((d) => global.btoa(JSON.stringify(d)))
+  .join(".");
 const deviceId = "AAAA";
 const legacyMemberId = `${userId}:${deviceId}`;
 
@@ -84,7 +98,6 @@ interface FakeBackend {
   connectionState$: BehaviorSubject<MediaConnectionState | Error>;
   data$: Subject<DataPacket>;
   setPublishing: Mock<(publish: boolean) => void>;
-  findRemotePublishTransport: Mock<() => Promise<Transport | null>>;
   delegateDelayedLeave: Mock<(delayId: string) => Promise<void>>;
   mediaFor: Mock<(scope: ObservableScope, member: RTCMember) => MemberMedia>;
 }
@@ -92,7 +105,13 @@ interface FakeBackend {
 function setup(
   options: Partial<RTCParticipationOptions> = {},
   slotOptions: { matrixRTCMode?: MatrixRTCMode } = {},
-  homeserverTransports: Transport[] = [transport],
+  {
+    homeserverTransports = [transport],
+    memberships = [],
+  }: {
+    homeserverTransports?: Transport[];
+    memberships?: CallMembership[];
+  } = {},
 ): {
   scope: ObservableScope;
   participation: ReturnType<typeof createRTCParticipation>["participation"];
@@ -105,7 +124,7 @@ function setup(
 } {
   const scope = new ObservableScope();
   const room = { roomId: "!room:example.org" } as Room;
-  const session = new MockRTCSession(room);
+  const session = new MockRTCSession(room, memberships);
   const mockedSession = session.asMockedSession();
   const join = vi.spyOn(session, "join");
   const client = {
@@ -115,6 +134,7 @@ function setup(
     getDomain: () => "example.org",
     getSyncState: () => SyncState.Syncing,
     _unstable_getRTCTransports: vi.fn().mockResolvedValue(homeserverTransports),
+    _unstable_getLivekitToken: vi.fn().mockResolvedValue({ jwt: publisherJWT }),
   } as unknown as MatrixClient;
   const members$ = new BehaviorSubject<RTCMember[]>([]);
 
@@ -126,7 +146,6 @@ function setup(
     ),
     data$: new Subject<DataPacket>(),
     setPublishing: vi.fn(),
-    findRemotePublishTransport: vi.fn(async () => Promise.resolve(null)),
     delegateDelayedLeave: vi.fn(async () => Promise.resolve()),
     mediaFor: vi.fn(() => ({
       tracks$: constant(null),
@@ -139,7 +158,6 @@ function setup(
   ): MediaBackend => {
     const backend: MediaBackend = {
       transportType: "livekit",
-      findRemotePublishTransport: fake.findRemotePublishTransport,
       prepareLocalTransport: async () => fake.prepared.promise,
       delegateDelayedLeave: fake.delegateDelayedLeave,
       local: {
@@ -225,22 +243,27 @@ describe("createRTCParticipation", () => {
   });
 
   it("publishes on another member's SFU where the homeserver advertises none", async () => {
-    const bobsTransport: Transport = {
-      type: "livekit",
-      url: "wss://sfu.bob.com",
-      server_name: "bob.com",
-    };
-    const { session, join, fake } = setup({}, {}, []);
-    fake.findRemotePublishTransport.mockResolvedValue(bobsTransport);
+    const bobOnSfu = mockRtcMembership("@bob:example.org", "BOB", {
+      fociPreferred: [{ type: "livekit", url: "wss://sfu.example.org" }],
+    });
+    const { join, fake } = setup(
+      {},
+      {},
+      { homeserverTransports: [], memberships: [bobOnSfu] },
+    );
     fake.prepared.resolve({ canDelegateDelayedLeave: false });
     await flushPromises();
+    await flushPromises();
 
-    expect(fake.findRemotePublishTransport).toHaveBeenCalledWith(
-      session.memberships,
-    );
     expect(join).toHaveBeenCalledWith(
       expect.anything(),
-      [bobsTransport],
+      [
+        {
+          type: "livekit",
+          url: "wss://sfu.example.org",
+          server_name: "example.org",
+        },
+      ],
       expect.anything(),
     );
   });

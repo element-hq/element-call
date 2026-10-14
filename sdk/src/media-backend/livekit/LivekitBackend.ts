@@ -8,7 +8,6 @@ Please see LICENSE in the repository root for full details.
 import { type MatrixClient } from "matrix-js-sdk";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import {
-  type CallMembership,
   isUnstableLivekitTransport,
   type Transport,
 } from "matrix-js-sdk/lib/matrixrtc";
@@ -63,7 +62,6 @@ import { createDataChannel$ } from "./DataChannel";
 import { createKeyProvider } from "./KeyProvider";
 import { createLivekitMemberMedia } from "./LivekitMemberMedia";
 import { createLivekitLocalMedia } from "./LocalMedia";
-import { findRemotePublishTransport } from "./RemotePublishTransport";
 
 export interface LivekitBackendOptions {
   /**
@@ -149,18 +147,6 @@ export function createLivekitBackend(
   );
 
   const ownServerName = serverNameOf(ownMembershipIdentity.userId);
-
-  const remotePublishTransport = async (
-    memberships: CallMembership[],
-  ): Promise<Transport | null> =>
-    findRemotePublishTransport({
-      client,
-      memberships,
-      ownMembershipIdentity,
-      roomId,
-      slotId,
-      logger,
-    });
 
   const prepareLocalTransport = async (
     transport: Transport,
@@ -286,7 +272,6 @@ export function createLivekitBackend(
 
   return {
     transportType: "livekit",
-    findRemotePublishTransport: remotePublishTransport,
     prepareLocalTransport,
     delegateDelayedLeave: delegateLeave,
     local: localMedia_,

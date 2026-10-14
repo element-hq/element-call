@@ -12,7 +12,7 @@ import { beforeEach, describe, expect, it, type Mocked, vi } from "vitest";
 
 import { mockRtcMembership, ownMemberMock } from "../../utils/test";
 import { type ClientGetTokenParts } from "./auth/csApi";
-import { findRemotePublishTransport } from "./RemotePublishTransport";
+import { findRemotePublishLivekitTransport } from "./RemotePublishTransport";
 
 /** A JWT whose payload states whether the issuing server lets us publish. */
 function jwtWithPublishGrant(canPublish: boolean): string {
@@ -27,6 +27,8 @@ function jwtWithPublishGrant(canPublish: boolean): string {
 
 const bobSfu = { type: "livekit", url: "wss://sfu.bob.com" };
 const carolSfu = { type: "livekit", url: "wss://sfu.carol.com" };
+const bobsTransport = { ...bobSfu, server_name: "bob.com" };
+const carolsTransport = { ...carolSfu, server_name: "carol.com" };
 
 // Bob is the oldest member, Carol joined after him
 const bob = mockRtcMembership("@bob:bob.com", "BOB", {
@@ -37,24 +39,41 @@ const carol = mockRtcMembership("@carol:carol.com", "CAROL", {
   fociPreferred: [carolSfu],
   membership: { created_ts: 200 },
 });
-const legacyDave = mockRtcMembership("@dave:dave.com", "DAVE", {
+// Bob's other device, and Dave who publishes on Bob's SFU remotely
+const bobsLaptop = mockRtcMembership("@bob:bob.com", "LAPTOP", {
+  fociPreferred: [bobSfu],
+  membership: { created_ts: 150 },
+});
+const dave = mockRtcMembership("@dave:dave.com", "DAVE", {
+  fociPreferred: [bobsTransport],
+  membership: { created_ts: 160 },
+});
+const legacyErin = mockRtcMembership("@erin:erin.com", "ERIN", {
   fociPreferred: [
-    { type: "livekit", livekit_service_url: "https://jwt.dave.com" },
+    { type: "livekit", livekit_service_url: "https://jwt.erin.com" },
   ],
   membership: { created_ts: 50 },
 });
+const ourselves = mockRtcMembership(
+  ownMemberMock.userId,
+  ownMemberMock.deviceId,
+  {
+    fociPreferred: [{ type: "livekit", url: "wss://sfu.example.org" }],
+    membership: { created_ts: 10 },
+  },
+);
 
 const csApiMissing = new MatrixError(
   { errcode: "M_UNRECOGNIZED", error: "" },
   404,
 );
 
-describe("findRemotePublishTransport", () => {
+describe("findRemotePublishLivekitTransport", () => {
   let client: Mocked<ClientGetTokenParts>;
   const find = async (
     memberships: CallMembership[],
-  ): ReturnType<typeof findRemotePublishTransport> =>
-    findRemotePublishTransport({
+  ): ReturnType<typeof findRemotePublishLivekitTransport> =>
+    findRemotePublishLivekitTransport({
       client,
       memberships,
       ownMembershipIdentity: ownMemberMock,
@@ -72,11 +91,7 @@ describe("findRemotePublishTransport", () => {
   });
 
   it("publishes on the oldest member's SFU with its server_name", async () => {
-    await expect(find([carol, bob])).resolves.toEqual({
-      type: "livekit",
-      url: "wss://sfu.bob.com",
-      server_name: "bob.com",
-    });
+    await expect(find([carol, bob])).resolves.toEqual(bobsTransport);
     expect(client._unstable_getLivekitToken).toHaveBeenCalledTimes(1);
     expect(client._unstable_getLivekitToken).toHaveBeenCalledWith({
       url: "wss://sfu.bob.com",
@@ -87,10 +102,22 @@ describe("findRemotePublishTransport", () => {
     });
   });
 
-  it("ignores members publishing through a legacy JWT service", async () => {
-    await expect(find([legacyDave, bob])).resolves.toMatchObject({
-      server_name: "bob.com",
+  it("asks about an SFU once however many members are on it", async () => {
+    client._unstable_getLivekitToken.mockResolvedValue({
+      jwt: jwtWithPublishGrant(false),
     });
+
+    await expect(find([dave, bobsLaptop, bob])).resolves.toBeNull();
+    expect(client._unstable_getLivekitToken).toHaveBeenCalledTimes(1);
+  });
+
+  it("skips our own membership", async () => {
+    await expect(find([ourselves, bob])).resolves.toEqual(bobsTransport);
+    expect(client._unstable_getLivekitToken).toHaveBeenCalledTimes(1);
+  });
+
+  it("ignores members publishing through a legacy JWT service", async () => {
+    await expect(find([legacyErin, bob])).resolves.toEqual(bobsTransport);
     expect(client._unstable_getLivekitToken).toHaveBeenCalledTimes(1);
   });
 
@@ -102,9 +129,7 @@ describe("findRemotePublishTransport", () => {
         }),
     );
 
-    await expect(find([bob, carol])).resolves.toMatchObject({
-      server_name: "carol.com",
-    });
+    await expect(find([bob, carol])).resolves.toEqual(carolsTransport);
     expect(client._unstable_getLivekitToken).toHaveBeenCalledTimes(2);
   });
 
@@ -121,9 +146,7 @@ describe("findRemotePublishTransport", () => {
           : Promise.resolve({ jwt: jwtWithPublishGrant(true) }),
     );
 
-    await expect(find([bob, carol])).resolves.toMatchObject({
-      server_name: "carol.com",
-    });
+    await expect(find([bob, carol])).resolves.toEqual(carolsTransport);
   });
 
   it("finds nothing once all candidates are exhausted", async () => {
@@ -143,7 +166,7 @@ describe("findRemotePublishTransport", () => {
   });
 
   it("finds nothing where there are no other members", async () => {
-    await expect(find([])).resolves.toBeNull();
+    await expect(find([ourselves])).resolves.toBeNull();
     expect(client._unstable_getLivekitToken).not.toHaveBeenCalled();
   });
 });
