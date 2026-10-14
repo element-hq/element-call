@@ -36,8 +36,8 @@ function client(
 }
 
 function fromBackends(
-  transport: Transport|null = null,
-): ReturnType<typeof vi.fn<() => Promise<Transport|null>>> {
+  transport: Transport | null = null,
+): ReturnType<typeof vi.fn<() => Promise<Transport | null>>> {
   return vi.fn(async () => Promise.resolve(transport));
 }
 

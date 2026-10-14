@@ -156,12 +156,10 @@ export function createRTCParticipation(
       options,
       transportFromBackends,
       logger,
-    ).then(
-      async (transport): Promise<PreparedTransport> => ({
-        transport,
-        ...(await backend.prepareLocalTransport(transport)),
-      }),
-    ),
+    ).then(async (transport): Promise<PreparedTransport> => ({
+      transport,
+      ...(await backend.prepareLocalTransport(transport)),
+    })),
   );
 
   const localMembership = createLocalMembership$({
