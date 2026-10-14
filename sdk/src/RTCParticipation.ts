@@ -135,7 +135,7 @@ export function createRTCParticipation(
   // If the backend is LiveKit, we check it for transports as well, as a
   // fallback: another member's SFU may let us publish (MSC4195). LiveKit only,
   // so it stays out of the backend interface
-  const transportsFromBackends = async (): Promise<Transport[]> =>
+  const transportFromBackends = async (): Promise<Transport | null> =>
     backend.transportType === "livekit"
       ? findRemotePublishLivekitTransport({
           client,
@@ -146,20 +146,22 @@ export function createRTCParticipation(
           roomId: room.roomId,
           slotId: jsSdkSession.slotId,
           logger,
-        }).then((transport) => (transport === null ? [] : [transport]))
-      : [];
+        })
+      : null;
 
   const preparedTransport$ = from(
     discoverLocalTransport(
       client,
       backend.transportType,
       options,
-      transportsFromBackends,
+      transportFromBackends,
       logger,
-    ).then(async (transport): Promise<PreparedTransport> => ({
-      transport,
-      ...(await backend.prepareLocalTransport(transport)),
-    })),
+    ).then(
+      async (transport): Promise<PreparedTransport> => ({
+        transport,
+        ...(await backend.prepareLocalTransport(transport)),
+      }),
+    ),
   );
 
   const localMembership = createLocalMembership$({

@@ -27,7 +27,7 @@ export async function discoverLocalTransport(
     transport: override,
     fallbackTransport,
   }: Pick<RTCParticipationOptions, "transport" | "fallbackTransport">,
-  transportsFromBackends: () => Promise<Transport[]>,
+  transportFromBackends: () => Promise<Transport | null>,
   logger: Logger,
 ): Promise<Transport> {
   const transport =
@@ -38,7 +38,7 @@ export async function discoverLocalTransport(
       fallbackTransport,
       logger,
     }).discoverPreferredTransport()) ??
-    (await transportsFromBackends()).at(0) ??
+    (await transportFromBackends()) ??
     null;
   if (transport === null)
     throw new MatrixRTCTransportMissingError(client.getDomain() ?? "");

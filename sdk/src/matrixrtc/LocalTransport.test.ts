@@ -25,11 +25,6 @@ const bobsTransport: Transport = {
   url: "wss://sfu.bob.com",
   server_name: "bob.com",
 };
-const carolsTransport: Transport = {
-  type: "livekit",
-  url: "wss://sfu.carol.com",
-  server_name: "carol.com",
-};
 
 function client(
   advertised: Transport[],
@@ -41,9 +36,9 @@ function client(
 }
 
 function fromBackends(
-  transports: Transport[] = [],
-): ReturnType<typeof vi.fn<() => Promise<Transport[]>>> {
-  return vi.fn(async () => Promise.resolve(transports));
+  transport: Transport|null = null,
+): ReturnType<typeof vi.fn<() => Promise<Transport|null>>> {
+  return vi.fn(async () => Promise.resolve(transport));
 }
 
 describe("discoverLocalTransport", () => {
@@ -87,7 +82,7 @@ describe("discoverLocalTransport", () => {
   });
 
   it("prefers a local transport over the backends' without asking them", async () => {
-    const backends = fromBackends([bobsTransport]);
+    const backends = fromBackends(bobsTransport);
 
     await expect(
       discoverLocalTransport(
@@ -99,18 +94,6 @@ describe("discoverLocalTransport", () => {
       ),
     ).resolves.toEqual(homeserverTransport);
     expect(backends).not.toHaveBeenCalled();
-  });
-
-  it("takes the first transport the backends provide where there is no local one", async () => {
-    await expect(
-      discoverLocalTransport(
-        client([]),
-        "livekit",
-        {},
-        fromBackends([bobsTransport, carolsTransport]),
-        logger,
-      ),
-    ).resolves.toEqual(bobsTransport);
   });
 
   it("fails naming the homeserver where there is no transport at all", async () => {
