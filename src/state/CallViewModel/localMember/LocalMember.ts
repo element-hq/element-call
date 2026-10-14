@@ -43,6 +43,7 @@ import {
   Subject,
 } from "rxjs";
 import { type Logger } from "matrix-js-sdk/lib/logger";
+import { type MatrixClient } from "matrix-js-sdk";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
@@ -154,7 +155,9 @@ interface Props {
   roomId: string;
   ownMembershipIdentity: CallMembershipIdentityParts;
   localTransport$: Observable<TransportLocator>;
-  client: ClientDelegationParts & ClientOpenIDParts;
+  client: ClientDelegationParts &
+    ClientOpenIDParts &
+    Pick<MatrixClient, "getDomain">;
   matrixRTCSession: Pick<
     MatrixRTCSession,
     "slotId" | "updateCallIntent" | "leave"
@@ -312,17 +315,26 @@ export const createLocalMembership$ = ({
   // to whether delayed event delegation is supported
   const joinParams$ = scope.behavior(
     localTransport$.pipe(
-      switchMap(async ({ transport }) => {
-        // Delegation goes through whichever service authenticates us as a
-        // publisher, so only that service's support counts
-        const flow = chooseAuthFlow(transport, "publisher");
-        const delegationSupported =
-          flow.kind === "openID"
-            ? await checkDelegationSupport(
-                flow.serviceUrl + "/delegate_delayed_leave",
-                `transport ${flow.serviceUrl}`,
-              )
-            : await homeserverSupportsDelegation;
+      switchMap(async ({ transport, serverName }) => {
+        let delegationSupported: boolean;
+        if (serverName !== client.getDomain()) {
+          // Delegation is only possible when publishing on a local SFU.
+          logger.info(
+            `Publishing on a remote SFU of ${serverName}, delegation is not possible`,
+          );
+          delegationSupported = false;
+        } else {
+          // Delegation goes through whichever service authenticates us as a
+          // publisher, so only that service's support counts
+          const flow = chooseAuthFlow(transport, "publisher");
+          delegationSupported =
+            flow.kind === "openID"
+              ? await checkDelegationSupport(
+                  flow.serviceUrl + "/delegate_delayed_leave",
+                  `transport ${flow.serviceUrl}`,
+                )
+              : await homeserverSupportsDelegation;
+        }
         return { transport, delegationSupported };
       }),
     ),

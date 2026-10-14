@@ -51,7 +51,9 @@ export const membershipsAndTransports$ = (
             transport: isUnstableLivekitTransport(transport)
               ? {
                   transport,
-                  serverName: membership.userId.replace(/^.*?:/, ""),
+                  // The SFU's own homeserver, which is not necessarily the
+                  // member's if they publish on a remote SFU (MSC4195)
+                  serverName: membership.getTransportServerName(transport),
                 }
               : undefined,
           };

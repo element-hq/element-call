@@ -83,6 +83,26 @@ describe("SessionBehaviors", () => {
       ).toEqual(["example.org", "sample.com"]);
     });
 
+    it("locates a remote publisher's transport on the SFU's homeserver", () => {
+      // Dave has no SFU of his own and publishes on sample.com's
+      const remoteTransport: UnstableLivekitTransport = {
+        ...urlTransport,
+        server_name: "sample.com",
+      };
+      const dave = mockRtcMembership("@dave:example.org", "DEV222", {
+        fociPreferred: [remoteTransport],
+      });
+
+      const { transports$ } = membershipsAndTransports$(
+        testScope(),
+        constant(new Epoch([dave])),
+      );
+
+      expect(transports$.value.value).toEqual([
+        { transport: remoteTransport, serverName: "sample.com" },
+      ]);
+    });
+
     it("leaves out members without a LiveKit transport", () => {
       const dave = mockRtcMembership("@dave:example.org", "DEV222", {
         fociPreferred: [{ type: "something-else" } as Transport],

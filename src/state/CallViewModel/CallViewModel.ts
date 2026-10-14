@@ -567,7 +567,18 @@ export function createCallViewModel$(
 
   const localTransport$ = options.localTransport
     ? constant(options.localTransport)
-    : from(getLocalTransport(client));
+    : from(
+        getLocalTransport({
+          client,
+          // A snapshot: if nobody with a usable SFU is here yet, the user has
+          // to come back later rather than wait in a half-working lobby.
+          memberships: matrixRTCSession.memberships,
+          ownMembershipIdentity,
+          roomId: matrixRoom.roomId,
+          slotId: matrixRTCSession.slotId,
+          logger,
+        }),
+      );
 
   const connectionFactory =
     options.connectionFactory ??

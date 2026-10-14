@@ -36,7 +36,7 @@ export interface SFUConfig {
 /**
  * Decoded details from the JWT.
  */
-interface SFUJWTPayload {
+export interface SFUJWTPayload {
   /**
    * Expiration time for the JWT.
    * Note: This value is in seconds since Unix epoch.
@@ -76,8 +76,7 @@ export function extractFullConfigFromToken(sfuConfig: {
   url: string;
   jwt: string;
 }): SFUConfig {
-  const [, payloadStr] = sfuConfig.jwt.split(".");
-  const payload = JSON.parse(global.atob(payloadStr)) as SFUJWTPayload;
+  const payload = decodeSFUJWTPayload(sfuConfig.jwt);
   return {
     jwt: sfuConfig.jwt,
     url: sfuConfig.url,
@@ -87,4 +86,12 @@ export function extractFullConfigFromToken(sfuConfig: {
     // The only reason for us to know it locally is to connect the right users with the lk world. (and to set our own keys)
     livekitIdentity: payload.sub,
   };
+}
+
+/**
+ * Decodes the payload of an SFU JWT, without verifying its signature.
+ */
+export function decodeSFUJWTPayload(jwt: string): SFUJWTPayload {
+  const [, payloadStr] = jwt.split(".");
+  return JSON.parse(global.atob(payloadStr)) as SFUJWTPayload;
 }

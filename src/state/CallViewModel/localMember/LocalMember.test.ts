@@ -427,6 +427,56 @@ describe("LocalMembership", () => {
     },
   );
 
+  it("joins without delegation when publishing on a remote SFU", async () => {
+    // Our homeserver only delegates to its own SFUs (MSC4195), so publishing
+    // on another homeserver's SFU means restarting the delayed leave ourselves.
+    const scope = testScope();
+    const joinMatrixRTC = vi.fn();
+    const delayId$ = new BehaviorSubject<string | null>(null);
+    const remoteTransport: UnstableLivekitTransport = {
+      type: "livekit",
+      url: "https://sfu.sample.com",
+      server_name: "sample.com",
+    };
+
+    const connectionMap = new ConnectionMap();
+    connectionMap.add(
+      {
+        ...connectionTransportAConnected,
+        transport: remoteTransport,
+        serverName: "sample.com",
+      } as Connection,
+      [],
+    );
+    // Our own homeserver does support delegation, so only the SFU being
+    // remote can explain delegation being skipped
+    fetchMock.post(
+      "https://matrix.example.org/_matrix/client/unstable/io.element.msc4195/rtc/livekit/delegate_delayed_leave",
+      () => ({ status: 401, body: {} }),
+    );
+
+    const localMembership = createLocalMembership$({
+      scope,
+      ...defaultCreateLocalMemberValues,
+      connectionMap$: constant(new Epoch(connectionMap)),
+      joinMatrixRTC,
+      localTransport$: constant({
+        transport: remoteTransport,
+        serverName: "sample.com",
+      }),
+      delayId$,
+    });
+
+    localMembership.requestJoinAndPublish();
+    void (await fetchMock.flush());
+    await flushPromises();
+    expect(joinMatrixRTC).toHaveBeenCalledWith(remoteTransport, timings);
+
+    delayId$.next("leave1");
+    await flushPromises();
+    expect(delegationSpy).not.toHaveBeenCalled();
+  });
+
   it("only starts tracks if requested", async () => {
     const scope = new ObservableScope();
 

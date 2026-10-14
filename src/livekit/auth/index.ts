@@ -45,7 +45,7 @@ function isEndpointUnsupported(e: unknown): boolean {
  * Matrix error. A connection error is neither, as the endpoint may well exist.
  * @param e The error to check.
  */
-function isCsApiUnavailable(e: unknown): boolean {
+export function isCsApiUnavailable(e: unknown): boolean {
   if (isEndpointUnsupported(e)) return true;
   return !(e instanceof MatrixError) && !(e instanceof ConnectionError);
 }
