@@ -72,7 +72,8 @@ export async function findRemotePublishLivekitTransport({
           roomId,
           slotId,
         });
-        if (decodeSFUJWTPayload(jwt).video.canPublish) {
+        // The SFU treats an absent canPublish grant as publishing allowed.
+        if (decodeSFUJWTPayload(jwt).video.canPublish !== false) {
           logger.info(`Publishing on remote SFU ${url} of ${serverName}`);
           return { type: "livekit", url, server_name: serverName };
         }
