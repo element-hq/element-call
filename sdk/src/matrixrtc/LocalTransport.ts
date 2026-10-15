@@ -15,7 +15,10 @@ import { TransportAutoDiscovery } from "./TransportAutoDiscovery";
 
 /**
  * The transport the local member advertises: the one the host names, else the
- * homeserver's first of the type the backend serves, else the host's fallback.
+ * homeserver's first of the type the backend serves, else the host's fallback,
+ * else the first the backends can provide, which are asked only then.
+ *
+ * @throws {MatrixRTCTransportMissingError} where none of these exists.
  */
 export async function discoverLocalTransport(
   client: Pick<MatrixClient, "getDomain" | "_unstable_getRTCTransports">,
@@ -24,6 +27,7 @@ export async function discoverLocalTransport(
     transport: override,
     fallbackTransport,
   }: Pick<RTCParticipationOptions, "transport" | "fallbackTransport">,
+  transportFromBackends: () => Promise<Transport | null>,
   logger: Logger,
 ): Promise<Transport> {
   const transport =
@@ -33,7 +37,9 @@ export async function discoverLocalTransport(
       transportType,
       fallbackTransport,
       logger,
-    }).discoverPreferredTransport());
+    }).discoverPreferredTransport()) ??
+    (await transportFromBackends()) ??
+    null;
   if (transport === null)
     throw new MatrixRTCTransportMissingError(client.getDomain() ?? "");
   return transport;

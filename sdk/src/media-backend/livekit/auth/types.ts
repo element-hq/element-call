@@ -34,11 +34,13 @@ export interface SFUConfig {
 }
 
 /** The parts of the JWT payload the backend reads. */
-interface SFUJWTPayload {
+export interface SFUJWTPayload {
   /** The subject: the participant identity the token carries. */
   sub: string;
   video: {
     room: string;
+    /** Whether the token lets us publish; a homeserver may deny this to remote publishers. */
+    canPublish?: boolean;
   };
 }
 
@@ -47,12 +49,17 @@ export function extractFullConfigFromToken(sfuConfig: {
   url: string;
   jwt: string;
 }): SFUConfig {
-  const [, payloadStr] = sfuConfig.jwt.split(".");
-  const payload = JSON.parse(global.atob(payloadStr)) as SFUJWTPayload;
+  const payload = decodeSFUJWTPayload(sfuConfig.jwt);
   return {
     jwt: sfuConfig.jwt,
     url: sfuConfig.url,
     livekitAlias: payload.video.room,
     livekitIdentity: payload.sub,
   };
+}
+
+/** Decodes the payload of an SFU JWT, without verifying its signature. */
+export function decodeSFUJWTPayload(jwt: string): SFUJWTPayload {
+  const [, payloadStr] = jwt.split(".");
+  return JSON.parse(global.atob(payloadStr)) as SFUJWTPayload;
 }

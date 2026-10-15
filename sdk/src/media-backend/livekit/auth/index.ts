@@ -48,7 +48,7 @@ function isEndpointUnsupported(e: unknown): boolean {
  * (MSC4533), which the widget API reports as a plain error. A connection
  * error is neither: the endpoint may well exist.
  */
-function isCsApiUnavailable(e: unknown): boolean {
+export function isCsApiUnavailable(e: unknown): boolean {
   if (isEndpointUnsupported(e)) return true;
   return !(e instanceof MatrixError) && !(e instanceof ConnectionError);
 }

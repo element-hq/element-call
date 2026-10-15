@@ -20,6 +20,11 @@ const hostTransport: Transport = {
   type: "livekit",
   livekit_service_url: "https://host.example.org",
 };
+const bobsTransport: Transport = {
+  type: "livekit",
+  url: "wss://sfu.bob.com",
+  server_name: "bob.com",
+};
 
 function client(
   advertised: Transport[],
@@ -28,6 +33,12 @@ function client(
     getDomain: () => "example.org",
     _unstable_getRTCTransports: vi.fn().mockResolvedValue(advertised),
   };
+}
+
+function fromBackends(
+  transport: Transport | null = null,
+): ReturnType<typeof vi.fn<() => Promise<Transport | null>>> {
+  return vi.fn(async () => Promise.resolve(transport));
 }
 
 describe("discoverLocalTransport", () => {
@@ -39,6 +50,7 @@ describe("discoverLocalTransport", () => {
         c,
         "livekit",
         { transport: hostTransport },
+        fromBackends(),
         logger,
       ),
     ).resolves.toBe(hostTransport);
@@ -51,6 +63,7 @@ describe("discoverLocalTransport", () => {
         client([homeserverTransport]),
         "livekit",
         { fallbackTransport: hostTransport },
+        fromBackends(),
         logger,
       ),
     ).resolves.toEqual(homeserverTransport);
@@ -62,13 +75,35 @@ describe("discoverLocalTransport", () => {
         client([{ type: "not_livekit" }]),
         "livekit",
         { fallbackTransport: hostTransport },
+        fromBackends(),
         logger,
       ),
     ).resolves.toEqual(hostTransport);
   });
 
+  it("prefers a local transport over the backends' without asking them", async () => {
+    const backends = fromBackends(bobsTransport);
+
+    await expect(
+      discoverLocalTransport(
+        client([homeserverTransport]),
+        "livekit",
+        {},
+        backends,
+        logger,
+      ),
+    ).resolves.toEqual(homeserverTransport);
+    expect(backends).not.toHaveBeenCalled();
+  });
+
   it("fails naming the homeserver where there is no transport at all", async () => {
-    const promise = discoverLocalTransport(client([]), "livekit", {}, logger);
+    const promise = discoverLocalTransport(
+      client([]),
+      "livekit",
+      {},
+      fromBackends(),
+      logger,
+    );
 
     await expect(promise).rejects.toBeInstanceOf(
       MatrixRTCTransportMissingError,

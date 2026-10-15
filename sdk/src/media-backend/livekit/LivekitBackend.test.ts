@@ -258,6 +258,23 @@ describe("createLivekitBackend", () => {
     },
   );
 
+  it("prepares a remote SFU's transport on its homeserver, where delegation is not possible", async () => {
+    // Our own homeserver would delegate, so only the SFU being remote can
+    // explain delegation being skipped
+    fetchMock.post(homeserverEndpoint, 401);
+    const remoteTransport: UnstableLivekitTransport = {
+      type: "livekit",
+      url: "wss://sfu.sample.com",
+      server_name: "sample.com",
+    };
+
+    const capabilities = await backend().prepareLocalTransport(remoteTransport);
+
+    expect(capabilities).toEqual({ canDelegateDelayedLeave: false });
+    expect(connections[0].connection.role).toBe("publisher");
+    expect(connections[0].connection.serverName).toBe("sample.com");
+  });
+
   it("waits for the publisher connection to hold its token before the join", async () => {
     fetchMock.post(homeserverEndpoint, 404);
     fetchMock.post(`${exampleServiceUrl}/delegate_delayed_leave`, 404);
@@ -486,6 +503,27 @@ describe("createLivekitBackend", () => {
         (c) => c.connection.role === "subscriber",
       );
       expect(remote?.connection.transport).toEqual(carlsTransport);
+      expect(remote?.connection.serverName).toBe("sample.com");
+    });
+
+    it("connects to a remote publisher's transport on the SFU's homeserver", async () => {
+      const b = await prepared();
+      // Dave has no SFU of his own and publishes on sample.com's
+      const remoteTransport: UnstableLivekitTransport = {
+        type: "livekit",
+        url: "wss://sfu.sample.com",
+        server_name: "sample.com",
+      };
+      b.mediaFor(testScope(), {
+        ...bob(remoteTransport, ["dave-hashed"]),
+        userId: "@dave:example.org",
+      });
+      await flushPromises();
+
+      const remote = connections.find(
+        (c) => c.connection.role === "subscriber",
+      );
+      expect(remote?.connection.transport).toEqual(remoteTransport);
       expect(remote?.connection.serverName).toBe("sample.com");
     });
   });

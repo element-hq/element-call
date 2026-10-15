@@ -11,6 +11,7 @@ import {
   type MatrixRTCSession as JsSdkRTCSession,
   MatrixRTCSessionEvent,
   MembershipManagerEvent,
+  type Transport,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type IMembershipManager } from "matrix-js-sdk/lib/matrixrtc/IMembershipManager";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
@@ -50,6 +51,7 @@ import {
   type MediaKey,
 } from "./media-backend/api";
 import { createLivekitBackend } from "./media-backend/livekit/LivekitBackend";
+import { findRemotePublishLivekitTransport } from "./media-backend/livekit/RemotePublishTransport";
 import { createHomeserverConnected$ } from "./matrixrtc/HomeserverConnected";
 import { joinJsSdkSession } from "./matrixrtc/joinJsSdkSession";
 import {
@@ -130,13 +132,34 @@ export function createRTCParticipation(
     logger,
   });
 
+  // If the backend is LiveKit, we check it for transports as well, as a
+  // fallback: another member's SFU may let us publish (MSC4195). LiveKit only,
+  // so it stays out of the backend interface
+  const transportFromBackends = async (): Promise<Transport | null> =>
+    backend.transportType === "livekit"
+      ? findRemotePublishLivekitTransport({
+          client,
+          // A snapshot: if nobody with a usable SFU is here yet, the user has
+          // to come back later rather than wait in a half-working lobby
+          memberships: jsSdkSession.memberships,
+          ownMembershipIdentity,
+          roomId: room.roomId,
+          slotId: jsSdkSession.slotId,
+          logger,
+        })
+      : null;
+
   const preparedTransport$ = from(
-    discoverLocalTransport(client, backend.transportType, options, logger).then(
-      async (transport): Promise<PreparedTransport> => ({
-        transport,
-        ...(await backend.prepareLocalTransport(transport)),
-      }),
-    ),
+    discoverLocalTransport(
+      client,
+      backend.transportType,
+      options,
+      transportFromBackends,
+      logger,
+    ).then(async (transport): Promise<PreparedTransport> => ({
+      transport,
+      ...(await backend.prepareLocalTransport(transport)),
+    })),
   );
 
   const localMembership = createLocalMembership$({

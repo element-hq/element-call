@@ -101,6 +101,8 @@ LiveKit participants.
   │  create ───▶│                                       │                         │
   │             │ GET rtc/transports (session) ────────▶│                         │
   │             │◀── first transport of the backend's type                        │
+  │             │   (none, LiveKit only: a member's SFU │                         │
+  │             │    that lets us publish, get_token) ─▶│                         │
   │             │ prepareLocalTransport (backend):      │                         │
   │             │   publisher token: CS API get_token,  │                         │
   │             │   or OpenID token then /sfu/get ─────▶│                         │
@@ -556,7 +558,10 @@ export interface MediaBackend {
 ```
 
 What stays on the client's side: discovery of the local transport from the
-homeserver's list (a homeserver endpoint, so not a backend's), the membership
+homeserver's list (a homeserver endpoint, so not a backend's) with, for the
+LiveKit backend only, a last resort of another member's SFU that lets us
+publish (`findRemotePublishLivekitTransport`, wired in by `RTCParticipation` rather
+than by the backend interface, since it is an MSC4195 matter), the membership
 state machine in `LocalMembership.ts` and its combination with
 `local.connectionState$` into `state$`, the choice of delayed leave timings,
 mapping a data packet's sender to a member, and the transport registry, which keys on the raw
