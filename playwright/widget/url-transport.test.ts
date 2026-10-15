@@ -66,13 +66,9 @@ widgetTest(
       await TestHelpers.expectVisibleVideoCount(frame, 2);
     }
 
-    // Element Web does not expose the MSC4195 endpoints to widgets yet, so
-    // neither side reached the CS API. The host published through the JWT
-    // service's legacy endpoint and subscribed to the guest through its
-    // default one; the guest published the same way and fell back to the
-    // default endpoint for the host's transport.
-    expect(hostFlows).toEqual(new Set(["service-legacy", "service-default"]));
-    expect(guestFlows).toEqual(new Set(["service-legacy", "service-default"]));
+    // Element Web used for Playwright does support MSC4195 for widgets.
+    expect(hostFlows).toEqual(new Set(["service-legacy", "cs-api"]));
+    expect(guestFlows).toEqual(new Set(["service-legacy", "cs-api"]));
   },
 );
 
