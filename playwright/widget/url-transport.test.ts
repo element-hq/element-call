@@ -67,7 +67,7 @@ widgetTest(
     }
 
     // Element Web used for Playwright does support MSC4195 for widgets.
-    expect(hostFlows).toEqual(new Set(["service-legacy", "cs-api"]));
+    expect(hostFlows).toEqual(new Set(["service-legacy", "service-default"]));
     expect(guestFlows).toEqual(new Set(["service-legacy", "cs-api"]));
   },
 );
