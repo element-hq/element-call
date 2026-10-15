@@ -72,14 +72,22 @@ export async function findRemotePublishLivekitTransport({
           roomId,
           slotId,
         });
-        // The SFU treats an absent canPublish grant as publishing allowed.
-        if (decodeSFUJWTPayload(jwt).video.canPublish !== false) {
-          logger.info(`Publishing on remote SFU ${url} of ${serverName}`);
-          return { type: "livekit", url, server_name: serverName };
+        try {
+          // The SFU treats an absent canPublish grant as publishing allowed.
+          if (decodeSFUJWTPayload(jwt).video.canPublish !== false) {
+            logger.info(`Publishing on remote SFU ${url} of ${serverName}`);
+            return { type: "livekit", url, server_name: serverName };
+          }
+          logger.info(
+            `${serverName} does not let us publish on ${url}, skipping`,
+          );
+          continue;
+        } catch (e) {
+          logger.info(
+            `${serverName}: failed to decode SFUJWT payload: ${e}, skipping`,
+          );
+          continue;
         }
-        logger.info(
-          `${serverName} does not let us publish on ${url}, skipping`,
-        );
       } catch (e) {
         if (isCsApiUnavailable(e)) {
           // Without the endpoint no further candidate can work
@@ -89,6 +97,7 @@ export async function findRemotePublishLivekitTransport({
           return null;
         }
         logger.warn(`Failed to get a token for ${url} of ${serverName}:`, e);
+        continue;
       }
     }
   }
