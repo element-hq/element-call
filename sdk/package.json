@@ -1,0 +1,37 @@
+{
+  "name": "@element-hq/matrixrtc-sdk",
+  "version": "0.0.0",
+  "description": "MatrixRTC sessions with LiveKit media, without Element Call's UI. Consumed straight from the repository as a git dependency (github:element-hq/element-call#<ref>&path:/sdk): the host's package manager runs `prepare`, which builds `dist/`.",
+  "license": "SEE LICENSE IN ../README.md",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/element-hq/element-call",
+    "directory": "sdk"
+  },
+  "type": "module",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/matrixrtc-sdk.js",
+  "module": "./dist/matrixrtc-sdk.js",
+  "types": "./dist/types/sdk/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/sdk/index.d.ts",
+      "default": "./dist/matrixrtc-sdk.js"
+    }
+  },
+  "scripts": {
+    "prepare": "cd .. && pnpm install --frozen-lockfile && pnpm build:sdk"
+  },
+  "peerDependencies": {
+    "livekit-client": "^2.18.1",
+    "matrix-js-sdk": "*",
+    "rxjs": "^7.8.1"
+  }
+}

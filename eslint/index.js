@@ -4,5 +4,6 @@ module.exports = {
     "no-observablescope-leak": require("./NoObservableScopeLeak").default,
     "no-top-level-logger-get-child": require("./NoTopLevelLoggerGetChild")
       .default,
+    "sdk-import-boundary": require("./SdkImportBoundary").default,
   },
 };

@@ -73,7 +73,10 @@ jobs:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   build_sdk_element_call:
-    # Use the embedded package vite build
+    # The 'sdk' package is the CallViewModel bundle that predates the sdk/
+    # package (build:sdk:production, sdk-target-based-on-call-view-model/), not
+    # the package itself. The name is shared with pr-deploy.yaml, which always
+    # runs from main, so it stays until the bundle's consumers have moved over.
     uses: ./.github/workflows/build-element-call.yaml
     with:
       package: sdk

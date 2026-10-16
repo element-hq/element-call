@@ -13,7 +13,7 @@ import {
   useLocalStorage,
 } from "../useLocalStorage";
 import { getUrlParams, useUrlParams } from "../UrlParams";
-import { E2eeType } from "./e2eeType";
+import { E2eeType, type EncryptionSystem } from "@element-hq/matrixrtc-sdk";
 import { useClient } from "../ClientContext";
 
 /**
@@ -82,10 +82,7 @@ export function getKeyForRoom(roomId: string): string | null {
   return keyForRoom(roomId, paramsRoomId, password);
 }
 
-export type Unencrypted = { kind: E2eeType.NONE };
-export type SharedSecret = { kind: E2eeType.SHARED_KEY; secret: string };
-export type PerParticipantE2EE = { kind: E2eeType.PER_PARTICIPANT };
-export type EncryptionSystem = Unencrypted | SharedSecret | PerParticipantE2EE;
+export { type EncryptionSystem } from "@element-hq/matrixrtc-sdk";
 
 export function useRoomEncryptionSystem(roomId: string): EncryptionSystem {
   const { client } = useClient();

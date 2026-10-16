@@ -5,18 +5,19 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type TrackReferenceOrPlaceholder } from "@livekit/components-core";
+import { type VideoMediaTrack } from "@element-hq/matrixrtc-sdk";
 import { animated } from "@react-spring/web";
 import {
-  type FC,
   type ComponentProps,
+  type FC,
   type ReactNode,
   type SyntheticEvent,
+  useEffect,
+  useRef,
   useState,
 } from "react";
 import { useTranslation } from "react-i18next";
 import classNames from "classnames";
-import { VideoTrack } from "@livekit/components-react";
 import { Text, Tooltip } from "@vector-im/compound-web";
 import { ErrorSolidIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 
@@ -33,14 +34,14 @@ import { ReactionIndicator } from "../reactions/ReactionIndicator";
 import { RTCConnectionStats } from "../RTCConnectionStats";
 import videoPlaceholder from "../graphics/video-placeholder.gif";
 import { autoVideoFit } from "../utils/videoFit";
-import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
+import { type Transport } from "matrix-js-sdk/lib/matrixrtc";
 
 interface Props extends ComponentProps<typeof animated.div> {
   className?: string;
   style?: ComponentProps<typeof animated.div>["style"];
   targetWidth: number;
   targetHeight: number;
-  video: TrackReferenceOrPlaceholder | undefined;
+  video: VideoMediaTrack | undefined;
   /**
    * How to fit the video content inside the tile. When undefined, MediaView
    * chooses a smart default based on the aspect ratios of the tile and video.
@@ -68,9 +69,9 @@ interface Props extends ComponentProps<typeof animated.div> {
   videoStreamStats?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
   rtcBackendIdentity?: string;
   /**
-   * The LiveKit transport, mainly for debugging purposes.
+   * The member's transport, mainly for debugging purposes.
    */
-  transport?: UnstableLivekitTransport;
+  transport?: Transport;
   /**
    * Called whenever the aspect ratio of the video content becomes known or
    * otherwise changes.
@@ -128,13 +129,23 @@ export const MediaView: FC<Props> = ({
     setOurVideoAspectRatio(ratio);
     setTheirVideoAspectRatio?.(ratio);
   };
+  const videoElement = useRef<HTMLVideoElement | null>(null);
   const videoRef = (el: HTMLVideoElement | null) => {
+    videoElement.current = el;
     if (el !== null) setVideoAspectRatio(el.videoWidth / el.videoHeight);
   };
   const onResize = (ev: SyntheticEvent<HTMLVideoElement>) =>
     setVideoAspectRatio(
       ev.currentTarget.videoWidth / ev.currentTarget.videoHeight,
     );
+  // The SDK plays the track on the element and watches its size, so the
+  // element has to be handed back before it leaves the DOM
+  useEffect(() => {
+    const el = videoElement.current;
+    if (video === undefined || el === null) return;
+    video.attach(el);
+    return (): void => video.detach(el);
+  }, [video]);
 
   const warnings = unencryptedWarning && (
     <Tooltip
@@ -186,13 +197,15 @@ export const MediaView: FC<Props> = ({
           className={styles.avatar}
           style={{ display: video && videoEnabled ? "none" : "initial" }}
         />
-        {video?.publication !== undefined && (
-          <VideoTrack
-            trackRef={video}
+        {video !== undefined && (
+          // A live camera has no captions to offer
+          // eslint-disable-next-line jsx-a11y/media-has-caption
+          <video
             // There's no reason for this to be focusable
             tabIndex={-1}
             disablePictureInPicture
             data-testid="video"
+            data-source={video.source}
             // Set the placeholder to a small transparent image. (On Android web
             // views the default poster image is particularly ugly.)
             poster={videoPlaceholder}
