@@ -11,6 +11,7 @@ import {
   describe,
   expect,
   it,
+  type Mock,
   type MockedObject,
   onTestFinished,
   vi,
@@ -145,6 +146,39 @@ function setupRemoteConnection(): Connection {
   });
 
   return new Connection(opts, logger);
+}
+
+interface FakeWebSocket {
+  url: string;
+  close: Mock<() => void>;
+  onopen: ((ev: Event) => void) | null;
+  onerror: ((ev: Event) => void) | null;
+}
+
+function stubWebSocket(): FakeWebSocket[] {
+  const sockets: FakeWebSocket[] = [];
+  vi.stubGlobal(
+    "WebSocket",
+    class implements FakeWebSocket {
+      public close = vi.fn();
+      public onopen: ((ev: Event) => void) | null = null;
+      public onerror: ((ev: Event) => void) | null = null;
+      public constructor(public url: string) {
+        sockets.push(this);
+      }
+    },
+  );
+  onTestFinished(() => {
+    vi.unstubAllGlobals();
+  });
+  return sockets;
+}
+
+function mockUserAgent(userAgent: string): void {
+  const spy = vi
+    .spyOn(navigator, "userAgent", "get")
+    .mockReturnValue(userAgent);
+  onTestFinished(() => spy.mockRestore());
 }
 
 afterEach(() => {
@@ -373,6 +407,42 @@ describe("Start connection states", () => {
       testJWTToken,
     );
     expect(connection.livekitAlias).toBe("!example_room_id");
+  });
+
+  it("primes a WebSocket to the SFU before connecting in Firefox", async () => {
+    setupTest();
+    const sockets = stubWebSocket();
+    mockUserAgent(
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0",
+    );
+    const connection = setupRemoteConnection();
+    let socketsBeforeConnect = 0;
+    fakeLivekitRoom.connect.mockImplementation(async (): Promise<void> => {
+      socketsBeforeConnect = sockets.length;
+      return Promise.resolve();
+    });
+
+    await connection.start();
+
+    expect(socketsBeforeConnect).toBe(1);
+    expect(sockets[0].url).toBe(transport.url);
+    sockets[0].onerror?.(new Event("error"));
+    sockets[0].onopen?.(new Event("open"));
+    expect(sockets[0].close).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not prime a WebSocket in other browsers", async () => {
+    setupTest();
+    const sockets = stubWebSocket();
+    mockUserAgent(
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+    );
+    const connection = setupRemoteConnection();
+
+    await connection.start();
+
+    expect(fakeLivekitRoom.connect).toHaveBeenCalled();
+    expect(sockets).toHaveLength(0);
   });
 
   it("stopping while connecting does not report an error", async () => {

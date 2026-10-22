@@ -14,6 +14,7 @@ import {
   ConnectionError,
   ConnectionErrorReason,
   type ConnectionState as LivekitConnectionState,
+  getBrowser,
   type Participant,
   type RemoteParticipant,
   type RemoteTrackPublication,
@@ -322,6 +323,7 @@ export class Connection {
 
       try {
         this.logger.info(`livekitRoom.connect ${url}`);
+        if (getBrowser()?.name === "Firefox") this.primeWebSocket(url);
         await this.livekitRoom.connect(url, jwt);
         this.logger.info(`livekitRoom.connect SUCCESS ${url}`);
       } catch (e) {
@@ -379,6 +381,22 @@ export class Connection {
       });
       // Its okay to ignore the throw. The error is part of the state.
       throw error;
+    }
+  }
+
+  /**
+   * Behind a proxy, Firefox fails the first WebSocket to a host after trying
+   * it over HTTP/2, so a throwaway socket goes first and takes that failure.
+   * https://bugzilla.mozilla.org/show_bug.cgi?id=2015411
+   */
+  private primeWebSocket(url: string): void {
+    try {
+      const ws = new WebSocket(url);
+      const close = (): void => ws.close();
+      ws.onopen = close;
+      ws.onerror = close;
+    } catch (e) {
+      this.logger.debug("Failed to prime the WebSocket connection", e);
     }
   }
 
