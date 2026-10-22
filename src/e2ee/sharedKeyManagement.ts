@@ -89,11 +89,7 @@ export function useRoomEncryptionSystem(roomId: string): EncryptionSystem {
   const { roomId: paramsRoomId, password } = useUrlParams();
 
   const [storedPassword] = useRoomSharedKey(
-    // TODO: this passes an already-prefixed key where a room ID is expected, so
-    // the local storage key ends up prefixed twice and never matches what
-    // saveKeyForRoom writes. Preserved as-is here to keep this commit a pure
-    // refactor; the reactive read is effectively dead until it is fixed.
-    getRoomSharedKeyLocalStorageKey(roomId),
+    roomId,
     keyForRoom(roomId, paramsRoomId, password) ?? undefined,
   );
 
