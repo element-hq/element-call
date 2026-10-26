@@ -116,4 +116,27 @@ describe("joinJsSdkSession", () => {
       }),
     );
   });
+
+  it("does not add livekit_alias to newer transport format", () => {
+    const s = session();
+    const transport = { type: "livekit", url: "wss://lk.example.org" };
+
+    joinJsSdkSession("!room:example.org", s, ownMemberMock, transport, {
+      encryptMedia: true,
+      matrixRTCMode: MatrixRTCMode.Matrix_2_0,
+      applicationData: { "m.call.intent": "audio", custom: 1 },
+      timings: defaultSessionTimings,
+      delayedLeave: defaultSessionTimings.delayedLeave,
+    });
+
+    expect(s.join).toHaveBeenCalledWith(
+      ownMemberMock,
+      [transport],
+      expect.objectContaining({
+        callIntent: "audio",
+        applicationData: { custom: 1 },
+        unstableSendStickyEvents: true,
+      }),
+    );
+  });
 });

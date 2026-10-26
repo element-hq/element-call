@@ -67,7 +67,14 @@ export function joinJsSdkSession(
     // as soon as https://github.com/ruma/ruma/pull/2642 and
     // https://github.com/matrix-org/matrix-rust-sdk/pull/7335 are widely
     // deployed.
-    [{ livekit_alias: roomId, ...transport }],
+    [
+      {
+        ...("livekit_service_url" in transport
+          ? { livekit_alias: roomId }
+          : {}),
+        ...transport,
+      },
+    ],
     {
       notificationType: sendNotificationType,
       callIntent,

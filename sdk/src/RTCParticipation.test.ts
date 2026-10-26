@@ -269,7 +269,6 @@ describe("createRTCParticipation", () => {
           type: "livekit",
           url: "wss://sfu.example.org",
           server_name: "example.org",
-          livekit_alias: "!room:example.org",
         },
       ],
       expect.anything(),
