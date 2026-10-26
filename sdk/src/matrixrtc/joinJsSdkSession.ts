@@ -64,7 +64,9 @@ export function joinJsSdkSession(
     ownMembershipIdentity,
     // TODO: `livekit_alias` should be unused these days, but some Ruma-based
     // clients still expect it to be present. Remove from `publishedTransports`
-    // as soon as https://github.com/ruma/ruma/pull/2642 is widely deployed.
+    // as soon as https://github.com/ruma/ruma/pull/2642 and
+    // https://github.com/matrix-org/matrix-rust-sdk/pull/7335 are widely
+    // deployed.
     [{ livekit_alias: roomId, ...transport }],
     {
       notificationType: sendNotificationType,
