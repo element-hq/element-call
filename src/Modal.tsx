@@ -160,6 +160,12 @@ export const Modal: FC<Props> = ({
         <DialogPortal container={rootElement}>
           <DialogOverlay
             className={classNames(overlayStyles.bg, overlayStyles.animate)}
+            // Radix dismisses on a pointer down outside the dialog, but only
+            // for event targets that are a `Node` of the window it was loaded
+            // in. A host can move the dialog into another window (a Document
+            // Picture-in-Picture window), whose nodes fail that check, so the
+            // backdrop closes the dialog itself.
+            onClick={() => onDismiss?.()}
           />
           <DialogContent
             asChild

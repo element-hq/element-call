@@ -6,23 +6,9 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-/**
- * The MatrixRTC mode determines how Element Call interacts with the
- * MatrixRTC backend and other participants. Selectable via the Developer
- * Settings, or pinned for a deployment via `matrix_rtc_mode` in config.json.
- */
-export enum MatrixRTCMode {
-  /** Multi-SFU transport, legacy JWT endpoint, state events. */
-  Compatibility = "compatibility",
-  /**
-   * Multi-SFU transport with:
-   *  - sticky events
-   *  - hashed RTC backend identity
-   *  - the new endpoint for the jwt token on the local membership (remote memberships will always try the new jwt endpoint first -> then the legacy one)
-   *  - use the hashed identity for the local membership
-   */
-  Matrix_2_0 = "matrix_2_0",
-}
+import { MatrixRTCMode } from "@element-hq/matrixrtc-sdk";
+
+export { MatrixRTCMode };
 
 export interface DelayedLeaveTimings {
   /**
@@ -97,11 +83,19 @@ export interface ConfigOptions {
     };
   };
 
-  // Describes the LiveKit configuration to be used.
+  /**
+   * Describes the LiveKit configuration to be used.
+   */
   livekit?: {
-    // The link to the service that returns a livekit url and token to use it.
-    // This is a fallback link in case the homeserver in use does not advertise
-    // a livekit service url over the transports endpoint.
+    /**
+     * The link to the service that returns a livekit url and token to use it.
+     * This is a fallback link in case the homeserver in use does not advertise
+     * a livekit service url over the transports endpoint.
+     *
+     * @deprecated Homeservers should advertise available transports over the
+     *   /_matrix/client/unstable/org.matrix.msc4143/rtc/transports endpoint
+     *   instead.
+     */
     livekit_service_url: string;
   };
 
@@ -207,12 +201,6 @@ export interface ConfigOptions {
    * Take care when changing these options.
    */
   matrix_rtc_session?: {
-    /**
-     * How long (in milliseconds) to wait before rotating end-to-end media encryption keys
-     * when someone leaves a call.
-     */
-    wait_for_key_rotation_ms?: number;
-
     /**
      * How long we wait before retrying after a network error on any of the requests.
      */

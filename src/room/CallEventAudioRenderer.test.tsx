@@ -17,7 +17,7 @@ import {
 import { act } from "react";
 import { type RoomMember } from "matrix-js-sdk";
 import {
-  type LivekitTransport,
+  type UnstableLivekitTransport,
   type CallMembership,
 } from "matrix-js-sdk/lib/matrixrtc";
 
@@ -41,12 +41,11 @@ import {
 import { MAX_PARTICIPANT_COUNT_FOR_SOUND } from "../state/CallViewModel/CallViewModel";
 import { initializeWidget } from "../widget";
 initializeWidget();
-vitest.mock("livekit-client/e2ee-worker?worker");
 vitest.mock("../useAudioContext");
 vitest.mock("../soundUtils");
 vitest.mock("../rtcSessionHelpers", async (importOriginal) => ({
   ...(await importOriginal()),
-  makeTransport: (): [LivekitTransport] => [exampleTransport],
+  makeTransport: (): [UnstableLivekitTransport] => [exampleTransport],
 }));
 
 afterEach(() => {

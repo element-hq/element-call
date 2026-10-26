@@ -9,6 +9,16 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { logger } from "matrix-js-sdk/lib/logger";
 
+// What a host provides along with its copy of Compound: its stylesheet, the
+// design tokens and the fonts they name. The component does not bundle them.
+import "@fontsource/inter/400.css";
+import "@fontsource/inter/500.css";
+import "@fontsource/inter/600.css";
+import "@fontsource/inter/700.css";
+import "@fontsource/inconsolata/400.css";
+import "@fontsource/inconsolata/700.css";
+import "@vector-im/compound-design-tokens/assets/web/css/compound-design-tokens.css";
+import "@vector-im/compound-web/dist/style.css";
 import { type ConfigOptions, initializeElementCall } from "../index";
 import { Harness } from "./Harness";
 // After Element Call's, so that the host has the last word on its own page

@@ -6,9 +6,8 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { Track } from "livekit-client";
+import { type ObservableScope } from "@element-hq/matrixrtc-sdk";
 
-import { type ObservableScope } from "../ObservableScope";
 import { type LocalScreenShareViewModel } from "./LocalScreenShareViewModel";
 import {
   createMemberMedia,
@@ -43,8 +42,8 @@ export function createBaseScreenShare(
   return {
     ...createMemberMedia(scope, {
       ...inputs,
-      audioSource: Track.Source.ScreenShareAudio,
-      videoSource: Track.Source.ScreenShare,
+      audioSource: "screenShareAudio",
+      videoSource: "screenShare",
     }),
     type: "screen share",
   };

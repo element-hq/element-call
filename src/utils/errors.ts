@@ -6,6 +6,19 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type ConnectionError } from "livekit-client";
+import {
+  ErrorCode as RTCErrorCode,
+  FailToGetOpenIdToken as RTCFailToGetOpenIdToken,
+  FailToStartLivekitConnection as RTCFailToStartLivekitConnection,
+  InsufficientCapacityError as RTCInsufficientCapacityError,
+  LivekitConnectionError as RTCLivekitConnectionError,
+  type MatrixRTCError,
+  MatrixRTCTransportMissingError as RTCTransportMissingError,
+  MembershipManagerError as RTCMembershipManagerError,
+  NoMatrix2AuthorizationService as RTCNoMatrix2AuthorizationService,
+  PeerConnectionTimeoutError as RTCPeerConnectionTimeoutError,
+  SFURoomCreationRestrictedError as RTCSFURoomCreationRestrictedError,
+} from "@element-hq/matrixrtc-sdk";
 
 import { i18n, i18nKey } from "./i18n";
 
@@ -291,4 +304,36 @@ export class LivekitConnectionError extends ElementCallError {
     );
     this.localisedMessageValues = { reason: cause.reasonName };
   }
+}
+
+/**
+ * The SDK's error as the one Element Call shows, with its translation. The
+ * SDK speaks in codes and classes; the title and description come from here.
+ */
+export function fromMatrixRTCError(error: MatrixRTCError): ElementCallError {
+  if (error instanceof RTCTransportMissingError)
+    return new MatrixRTCTransportMissingError(error.domain);
+  if (error instanceof RTCMembershipManagerError)
+    return new MembershipManagerError(causeOf(error));
+  if (error instanceof RTCFailToGetOpenIdToken)
+    return new FailToGetOpenIdToken(causeOf(error));
+  if (error instanceof RTCNoMatrix2AuthorizationService)
+    return new NoMatrix2AuthorizationService(causeOf(error));
+  if (error instanceof RTCFailToStartLivekitConnection)
+    return new FailToStartLivekitConnection(error.message);
+  if (error instanceof RTCInsufficientCapacityError)
+    return new InsufficientCapacityError();
+  if (error instanceof RTCSFURoomCreationRestrictedError)
+    return new SFURoomCreationRestrictedError();
+  if (error instanceof RTCPeerConnectionTimeoutError)
+    return new PeerConnectionTimeoutError();
+  if (error instanceof RTCLivekitConnectionError)
+    return new LivekitConnectionError(error.cause as ConnectionError);
+  if (error.code === RTCErrorCode.CONNECTION_LOST_ERROR)
+    return new ConnectionLostError();
+  return new UnknownCallError(causeOf(error));
+}
+
+function causeOf(error: MatrixRTCError): Error {
+  return error.cause instanceof Error ? error.cause : error;
 }

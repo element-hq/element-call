@@ -25,6 +25,10 @@
       "types": "./dist/types/component/index.d.ts",
       "default": "./dist/element-call.js"
     },
+    "./api": {
+      "types": "./dist/types/component/api.d.ts",
+      "default": "./dist/api.js"
+    },
     "./style.css": "./dist/element-call.css"
   },
   "sideEffects": [
@@ -34,7 +38,8 @@
     "prepare": "cd .. && pnpm install --frozen-lockfile && pnpm build:component"
   },
   "peerDependencies": {
-    "livekit-client": "^2.18.1",
+    "@vector-im/compound-design-tokens": "^11.0.0",
+    "@vector-im/compound-web": "^10.3.1",
     "matrix-js-sdk": "*",
     "react": "^19",
     "react-dom": "^19"

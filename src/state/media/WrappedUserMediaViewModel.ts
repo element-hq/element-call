@@ -5,20 +5,17 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { combineLatest, map, of, switchMap } from "rxjs";
 import {
-  type LocalParticipant,
-  ParticipantEvent,
-  type RemoteParticipant,
-} from "livekit-client";
-import { observeParticipantEvents } from "@livekit/components-core";
+  type Behavior,
+  generateItems,
+  type LocalRTCMember,
+  type ObservableScope,
+  type RemoteRTCMember,
+  trackBySource$,
+} from "@element-hq/matrixrtc-sdk";
+import { combineLatest, distinctUntilChanged, map, of } from "rxjs";
 
-import { type ObservableScope } from "../ObservableScope.ts";
-import type { Behavior } from "../Behavior.ts";
-import type { MediaDevices } from "../MediaDevices.ts";
 import { observeSpeaker$ } from "./observeSpeaker.ts";
-import { generateItems } from "../../utils/observable.ts";
-import { type TaggedParticipant } from "../CallViewModel/remoteMembers/MatrixLivekitMembers.ts";
 import { type UserMediaViewModel } from "./UserMediaViewModel.ts";
 import { type ScreenShareViewModel } from "./ScreenShareViewModel.ts";
 import {
@@ -82,82 +79,51 @@ export type WrappedUserMediaViewModel = UserMediaViewModel & {
   bin$: Behavior<SortingBin>;
 };
 
-interface WrappedUserMediaInputs extends Omit<
+type WrappedUserMediaInputs = Omit<
   LocalUserMediaInputs & RemoteUserMediaInputs,
-  "participant$"
-> {
-  participant: TaggedParticipant;
-  mediaDevices: MediaDevices;
-  pretendToBeDisconnected$: Behavior<boolean>;
-}
+  "member"
+> & { member: LocalRTCMember | RemoteRTCMember };
 
 export function createWrappedUserMedia(
   scope: ObservableScope,
   {
-    participant,
+    member,
     mediaDevices,
     pretendToBeDisconnected$,
     ...inputs
   }: WrappedUserMediaInputs,
 ): WrappedUserMediaViewModel {
-  const userMedia =
-    participant.type === "local"
-      ? createLocalUserMedia(scope, {
-          participant$: participant.value$,
-          mediaDevices,
-          ...inputs,
-        })
-      : createRemoteUserMedia(scope, {
-          participant$: participant.value$,
-          pretendToBeDisconnected$,
-          ...inputs,
-        });
-
-  // TypeScript needs this widening of the type to happen in a separate statement
-  const participant$: Behavior<LocalParticipant | RemoteParticipant | null> =
-    participant.value$;
+  const userMedia = member.local
+    ? createLocalUserMedia(scope, { member, mediaDevices, ...inputs })
+    : createRemoteUserMedia(scope, {
+        member,
+        pretendToBeDisconnected$,
+        ...inputs,
+      });
 
   const screenShares$ = scope.behavior(
-    participant$.pipe(
-      switchMap((p) =>
-        p === null
-          ? of([])
-          : observeParticipantEvents(
-              p,
-              ParticipantEvent.TrackPublished,
-              ParticipantEvent.TrackUnpublished,
-              ParticipantEvent.LocalTrackPublished,
-              ParticipantEvent.LocalTrackUnpublished,
-            ).pipe(
-              // Technically more than one screen share might be possible... our
-              // MediaViewModels don't support it though since they look for a unique
-              // track for the given source. So generateItems here is a bit overkill.
-              generateItems(
-                `${inputs.id} screenShares$`,
-                function* (p) {
-                  if (p.isScreenShareEnabled)
-                    yield {
-                      keys: ["screen-share"],
-                      data: undefined,
-                    };
-                },
-                (scope, _data$, key) => {
-                  const id = `${inputs.id}:${key}`;
-                  return participant.type === "local"
-                    ? createLocalScreenShare(scope, {
-                        ...inputs,
-                        id,
-                        participant$: participant.value$,
-                      })
-                    : createRemoteScreenShare(scope, {
-                        ...inputs,
-                        id,
-                        participant$: participant.value$,
-                        pretendToBeDisconnected$,
-                      });
-                },
-              ),
-            ),
+    trackBySource$(scope, member.tracks$, "screenShare").pipe(
+      map((track) => track !== undefined),
+      distinctUntilChanged(),
+      // Technically more than one screen share might be possible... our
+      // MediaViewModels don't support it though since they look for a unique
+      // track for the given source. So generateItems here is a bit overkill.
+      generateItems(
+        `${inputs.id} screenShares$`,
+        function* (enabled) {
+          if (enabled) yield { keys: ["screen-share"], data: undefined };
+        },
+        (scope, _data$, key) => {
+          const id = `${inputs.id}:${key}`;
+          return member.local
+            ? createLocalScreenShare(scope, { ...inputs, id, member })
+            : createRemoteScreenShare(scope, {
+                ...inputs,
+                id,
+                member,
+                pretendToBeDisconnected$,
+              });
+        },
       ),
     ),
   );

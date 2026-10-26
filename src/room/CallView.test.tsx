@@ -61,7 +61,7 @@ import {
 } from "../HostBridge";
 import { type JoinCallData } from "../widget";
 import { MatrixRTCTransportMissingError } from "../utils/errors";
-import { ProcessorProvider } from "../livekit/TrackProcessorContext";
+import { ProcessorProvider } from "../tracks/TrackProcessorContext";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { constant } from "../state/Behavior";
 
