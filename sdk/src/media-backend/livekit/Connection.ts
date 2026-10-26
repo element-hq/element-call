@@ -47,6 +47,8 @@ import {
   UnknownRTCError,
 } from "../../errors";
 
+const PRIME_WEBSOCKET_TIMEOUT_MS = 3000;
+
 export interface ConnectionOpts {
   /** The identity parts to use on this connection */
   ownMembershipIdentity: CallMembershipIdentityParts;
@@ -311,7 +313,8 @@ export class Connection {
         livekitAlias,
       );
       this._livekitAlias = livekitAlias;
-      // If we were stopped while fetching the config, don't proceed to connect
+      if (getBrowser()?.name === "Firefox") await this.primeWebSocket(url);
+      // If we were stopped in the meantime, don't proceed to connect
       if (this.stopped) return;
 
       // Setup observer once we are done with getSFUConfig
@@ -323,7 +326,6 @@ export class Connection {
 
       try {
         this.logger.info(`livekitRoom.connect ${url}`);
-        if (getBrowser()?.name === "Firefox") this.primeWebSocket(url);
         await this.livekitRoom.connect(url, jwt);
         this.logger.info(`livekitRoom.connect SUCCESS ${url}`);
       } catch (e) {
@@ -387,17 +389,26 @@ export class Connection {
   /**
    * Behind a proxy, Firefox fails the first WebSocket to a host after trying
    * it over HTTP/2, so a throwaway socket goes first and takes that failure.
+   * A socket opened while it is still in flight may fail the same way, so
+   * this resolves once it has closed.
    * https://bugzilla.mozilla.org/show_bug.cgi?id=2015411
    */
-  private primeWebSocket(url: string): void {
+  private async primeWebSocket(url: string): Promise<void> {
+    let ws: WebSocket;
     try {
-      const ws = new WebSocket(url);
-      const close = (): void => ws.close();
-      ws.onopen = close;
-      ws.onerror = close;
+      ws = new WebSocket(url);
     } catch (e) {
       this.logger.debug("Failed to prime the WebSocket connection", e);
+      return;
     }
+    await new Promise<void>((resolve) => {
+      const timeout = setTimeout(resolve, PRIME_WEBSOCKET_TIMEOUT_MS);
+      ws.onopen = (): void => ws.close();
+      ws.onclose = (): void => {
+        clearTimeout(timeout);
+        resolve();
+      };
+    });
   }
 
   protected async getSFUConfig(): Promise<SFUConfig> {

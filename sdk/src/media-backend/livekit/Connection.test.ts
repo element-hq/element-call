@@ -58,6 +58,8 @@ let fakeLocalParticipant: MockedObject<LocalParticipant>;
 
 const ROOM_ID = "!roomID:example.org";
 const SLOT_ID = "m.call#ROOM";
+const FIREFOX_USER_AGENT =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0";
 
 const transport: UnstableLivekitTransport = {
   type: "livekit",
@@ -152,7 +154,7 @@ interface FakeWebSocket {
   url: string;
   close: Mock<() => void>;
   onopen: ((ev: Event) => void) | null;
-  onerror: ((ev: Event) => void) | null;
+  onclose: ((ev: CloseEvent) => void) | null;
 }
 
 function stubWebSocket(): FakeWebSocket[] {
@@ -162,7 +164,7 @@ function stubWebSocket(): FakeWebSocket[] {
     class implements FakeWebSocket {
       public close = vi.fn();
       public onopen: ((ev: Event) => void) | null = null;
-      public onerror: ((ev: Event) => void) | null = null;
+      public onclose: ((ev: CloseEvent) => void) | null = null;
       public constructor(public url: string) {
         sockets.push(this);
       }
@@ -409,26 +411,54 @@ describe("Start connection states", () => {
     expect(connection.livekitAlias).toBe("!example_room_id");
   });
 
-  it("primes a WebSocket to the SFU before connecting in Firefox", async () => {
+  it("connects in Firefox once a primed WebSocket to the SFU has closed", async () => {
     setupTest();
     const sockets = stubWebSocket();
-    mockUserAgent(
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0",
-    );
+    mockUserAgent(FIREFOX_USER_AGENT);
     const connection = setupRemoteConnection();
-    let socketsBeforeConnect = 0;
-    fakeLivekitRoom.connect.mockImplementation(async (): Promise<void> => {
-      socketsBeforeConnect = sockets.length;
-      return Promise.resolve();
-    });
 
-    await connection.start();
-
-    expect(socketsBeforeConnect).toBe(1);
+    const started = connection.start();
+    await vi.waitFor(() => expect(sockets).toHaveLength(1));
     expect(sockets[0].url).toBe(transport.url);
-    sockets[0].onerror?.(new Event("error"));
     sockets[0].onopen?.(new Event("open"));
-    expect(sockets[0].close).toHaveBeenCalledTimes(2);
+    expect(sockets[0].close).toHaveBeenCalled();
+    expect(fakeLivekitRoom.connect).not.toHaveBeenCalled();
+
+    sockets[0].onclose?.(new CloseEvent("close"));
+    await started;
+
+    expect(fakeLivekitRoom.connect).toHaveBeenCalled();
+  });
+
+  it("connects in Firefox if a primed WebSocket does not close in time", async () => {
+    setupTest();
+    vi.useFakeTimers();
+    const sockets = stubWebSocket();
+    mockUserAgent(FIREFOX_USER_AGENT);
+    const connection = setupRemoteConnection();
+
+    const started = connection.start();
+    await vi.waitFor(() => expect(sockets).toHaveLength(1));
+    expect(fakeLivekitRoom.connect).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(3000);
+    await started;
+
+    expect(fakeLivekitRoom.connect).toHaveBeenCalled();
+  });
+
+  it("does not connect if stopped while priming the WebSocket", async () => {
+    setupTest();
+    const sockets = stubWebSocket();
+    mockUserAgent(FIREFOX_USER_AGENT);
+    const connection = setupRemoteConnection();
+
+    const started = connection.start();
+    await vi.waitFor(() => expect(sockets).toHaveLength(1));
+    await connection.stop();
+    sockets[0].onclose?.(new CloseEvent("close"));
+    await started;
+
+    expect(fakeLivekitRoom.connect).not.toHaveBeenCalled();
   });
 
   it("does not prime a WebSocket in other browsers", async () => {
