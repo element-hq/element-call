@@ -59,22 +59,27 @@ const useRoomSharedKey = (
 
 /**
  * The shared key for a room, preferring one supplied in the parameters Element
- * Call was started with over whatever is in local storage.
+ * Call was started with over whatever is in local storage. If the parameters
+ * are for another room, the stored key wins, so that the password for that
+ * room doesn't replace the one saved for this room.
  */
 function keyForRoom(
   roomId: string,
   paramsRoomId: string | null,
   password: string | null,
 ): string | null {
-  if (roomId !== paramsRoomId)
+  const storedKey = localStorage.getItem(
+    getRoomSharedKeyLocalStorageKey(roomId),
+  );
+  if (roomId !== paramsRoomId) {
     logger.warn(
       "requested key for a roomId which is not the current call room id (from the URL)",
       roomId,
       paramsRoomId,
     );
-  return (
-    password ?? localStorage.getItem(getRoomSharedKeyLocalStorageKey(roomId))
-  );
+    return storedKey ?? password;
+  }
+  return password ?? storedKey;
 }
 
 export function getKeyForRoom(roomId: string): string | null {

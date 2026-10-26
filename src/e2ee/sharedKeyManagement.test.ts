@@ -22,6 +22,7 @@ vi.mock("../ClientContext", () => {
 });
 
 const roomId = "!room:example.org";
+const otherRoomId = "!other:example.org";
 
 describe("getKeyForRoom", () => {
   afterEach(() => {
@@ -44,6 +45,13 @@ describe("getKeyForRoom", () => {
 
   test("has no key to offer for a room it has never seen", () => {
     expect(getKeyForRoom(roomId)).toBeNull();
+  });
+
+  test("prefers the stored key when the parameters are for another room", () => {
+    saveKeyForRoom(roomId, "stored");
+    window.location.hash = `#?roomId=${encodeURIComponent(otherRoomId)}&password=other-room`;
+
+    expect(getKeyForRoom(roomId)).toBe("stored");
   });
 });
 
@@ -72,5 +80,18 @@ describe("useRoomEncryptionSystem", () => {
 
     expect(Object.keys(localStorage)).toEqual([`room-shared-key-${roomId}`]);
     expect(getKeyForRoom(roomId)).toBe("from-the-link");
+  });
+
+  test("keeps the stored key when the parameters are for another room", () => {
+    saveKeyForRoom(roomId, "stored");
+    window.location.hash = `#?roomId=${encodeURIComponent(otherRoomId)}&password=other-room`;
+
+    const { result } = renderHook(() => useRoomEncryptionSystem(roomId));
+
+    expect(result.current).toEqual({
+      kind: E2eeType.SHARED_KEY,
+      secret: "stored",
+    });
+    expect(localStorage.getItem(`room-shared-key-${roomId}`)).toBe("stored");
   });
 });
