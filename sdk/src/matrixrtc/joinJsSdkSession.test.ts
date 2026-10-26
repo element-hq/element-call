@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
+  type UnstableLivekitTransport,
   type MatrixRTCSession,
   type Transport,
 } from "matrix-js-sdk/lib/matrixrtc";
@@ -15,9 +16,14 @@ import { defaultSessionTimings, MatrixRTCMode } from "../config";
 import { ownMemberMock } from "../utils/test";
 import { joinJsSdkSession } from "./joinJsSdkSession";
 
-const transport: Transport = {
+const transport: UnstableLivekitTransport = {
   type: "livekit",
   livekit_service_url: "https://lk.example.org",
+};
+
+const transportWithAlias: Transport = {
+  livekit_alias: "!room:example.org",
+  ...transport,
 };
 
 /** A session that only records the join; nothing else of it is touched. */
@@ -39,7 +45,7 @@ describe("joinJsSdkSession", () => {
       keyRotationParticipantLimit: 20,
     };
 
-    joinJsSdkSession(s, ownMemberMock, transport, {
+    joinJsSdkSession("!room:example.org", s, ownMemberMock, transport, {
       encryptMedia: true,
       matrixRTCMode: MatrixRTCMode.Compatibility,
       sendNotificationType: "ring",
@@ -51,7 +57,7 @@ describe("joinJsSdkSession", () => {
       },
     });
 
-    expect(s.join).toHaveBeenCalledWith(ownMemberMock, [transport], {
+    expect(s.join).toHaveBeenCalledWith(ownMemberMock, [transportWithAlias], {
       notificationType: "ring",
       callIntent: undefined,
       applicationData: {},
@@ -72,7 +78,7 @@ describe("joinJsSdkSession", () => {
   it("gives up on the network once the delayed leave has probably been sent", () => {
     const s = session();
 
-    joinJsSdkSession(s, ownMemberMock, transport, {
+    joinJsSdkSession("!room:example.org", s, ownMemberMock, transport, {
       encryptMedia: false,
       matrixRTCMode: MatrixRTCMode.Compatibility,
       timings: { ...defaultSessionTimings, networkErrorRetryMs: 4_000 },
@@ -81,7 +87,7 @@ describe("joinJsSdkSession", () => {
 
     expect(s.join).toHaveBeenCalledWith(
       ownMemberMock,
-      [transport],
+      [transportWithAlias],
       expect.objectContaining({
         manageMediaKeys: false,
         maximumNetworkErrorRetryCount: 4,
@@ -92,7 +98,7 @@ describe("joinJsSdkSession", () => {
   it("lifts the call intent out of the application data and sends sticky events in Matrix 2.0 mode", () => {
     const s = session();
 
-    joinJsSdkSession(s, ownMemberMock, transport, {
+    joinJsSdkSession("!room:example.org", s, ownMemberMock, transport, {
       encryptMedia: true,
       matrixRTCMode: MatrixRTCMode.Matrix_2_0,
       applicationData: { "m.call.intent": "audio", custom: 1 },
@@ -102,7 +108,7 @@ describe("joinJsSdkSession", () => {
 
     expect(s.join).toHaveBeenCalledWith(
       ownMemberMock,
-      [transport],
+      [transportWithAlias],
       expect.objectContaining({
         callIntent: "audio",
         applicationData: { custom: 1 },

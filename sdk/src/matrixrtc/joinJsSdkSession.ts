@@ -35,6 +35,7 @@ interface Options {
  * @throws If the join could not be started.
  */
 export function joinJsSdkSession(
+  roomId: string,
   session: JsSdkRTCSession,
   ownMembershipIdentity: CallMembershipIdentityParts,
   transport: Transport,
@@ -58,20 +59,28 @@ export function joinJsSdkSession(
     timings.syncDisconnectGracePeriodMs,
     delayedLeave.delay_ms,
   );
-  session.join(ownMembershipIdentity, [transport], {
-    notificationType: sendNotificationType,
-    callIntent,
-    applicationData: rest,
-    manageMediaKeys: encryptMedia,
-    delayedLeaveEventRestartMs: delayedLeave.restart_ms,
-    delayedLeaveEventDelayMs: delayedLeave.delay_ms,
-    delayedLeaveEventRestartLocalTimeoutMs: delayedLeave.restart_timeout_ms,
-    networkErrorRetryMs: timings.networkErrorRetryMs,
-    makeKeyDelay: timings.waitForKeyRotationMs,
-    membershipEventExpiryMs: timings.membershipEventExpiryMs,
-    keyRotationParticipantLimit: timings.keyRotationParticipantLimit,
-    unstableSendStickyEvents: matrixRTCMode === MatrixRTCMode.Matrix_2_0,
-    maximumNetworkErrorRetryCount:
-      Math.ceil(maxWaitMs / timings.networkErrorRetryMs) + 1,
-  });
+
+  session.join(
+    ownMembershipIdentity,
+    // TODO: `livekit_alias` should be unused these days, but some Ruma-based
+    // clients still expect it to be present. Remove from `publishedTransports`
+    // as soon as https://github.com/ruma/ruma/pull/2642 is widely deployed.
+    [{ livekit_alias: roomId, ...transport }],
+    {
+      notificationType: sendNotificationType,
+      callIntent,
+      applicationData: rest,
+      manageMediaKeys: encryptMedia,
+      delayedLeaveEventRestartMs: delayedLeave.restart_ms,
+      delayedLeaveEventDelayMs: delayedLeave.delay_ms,
+      delayedLeaveEventRestartLocalTimeoutMs: delayedLeave.restart_timeout_ms,
+      networkErrorRetryMs: timings.networkErrorRetryMs,
+      makeKeyDelay: timings.waitForKeyRotationMs,
+      membershipEventExpiryMs: timings.membershipEventExpiryMs,
+      keyRotationParticipantLimit: timings.keyRotationParticipantLimit,
+      unstableSendStickyEvents: matrixRTCMode === MatrixRTCMode.Matrix_2_0,
+      maximumNetworkErrorRetryCount:
+        Math.ceil(maxWaitMs / timings.networkErrorRetryMs) + 1,
+    },
+  );
 }

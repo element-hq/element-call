@@ -174,14 +174,20 @@ export function createRTCParticipation(
       timings.syncDisconnectGracePeriodMs,
     ),
     joinMatrixRTC: (transport, delayedLeave) =>
-      joinJsSdkSession(jsSdkSession, ownMembershipIdentity, transport, {
-        encryptMedia: encryptionSystem.kind !== E2eeType.NONE,
-        matrixRTCMode,
-        sendNotificationType: options.sendNotificationType,
-        applicationData: options.applicationData,
-        timings,
-        delayedLeave,
-      }),
+      joinJsSdkSession(
+        room.roomId,
+        jsSdkSession,
+        ownMembershipIdentity,
+        transport,
+        {
+          encryptMedia: encryptionSystem.kind !== E2eeType.NONE,
+          matrixRTCMode,
+          sendNotificationType: options.sendNotificationType,
+          applicationData: options.applicationData,
+          timings,
+          delayedLeave,
+        },
+      ),
     membershipManagerError$: fromEvent(
       jsSdkSession,
       MatrixRTCSessionEvent.MembershipManagerError,
