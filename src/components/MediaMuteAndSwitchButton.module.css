@@ -45,6 +45,8 @@ Please see LICENSE in the repository root for full details.
    so CSS can't size it against the call. */
 .deviceList {
   max-block-size: var(--device-list-max-height);
+  /* The raised headings stay raised within the list, under the menu's frame. */
+  isolation: isolate;
   /* Keeps a row reached by keyboard clear of the sticky heading. */
   scroll-padding-block-start: var(--device-list-scroll-padding-start, 0);
 }
@@ -59,9 +61,11 @@ Please see LICENSE in the repository root for full details.
   margin-block-start: var(--cpd-space-7x);
 }
 
-/* Sticky within its own section, and opaque so rows scroll under it. */
+/* Sticky within its own section: opaque, so rows scroll under it, and raised,
+   or the positioned tiles scroll over it. */
 .sectionHeading {
   position: sticky;
+  z-index: 1;
   inset-block-start: 0;
   background: var(--cpd-color-bg-canvas-default);
 }
@@ -103,4 +107,21 @@ Please see LICENSE in the repository root for full details.
 .menu[data-focus-source="keyboard"] [role^="menuitem"]:focus {
   outline: var(--cpd-border-width-2) solid var(--cpd-color-border-focused);
   outline-offset: calc(-1 * var(--cpd-border-width-2));
+}
+
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--cpd-space-3x);
+  margin: var(--cpd-space-2x) var(--cpd-space-4x) 0;
+  padding: var(--cpd-space-3x);
+  border-radius: var(--cpd-space-2x);
+  background: var(--cpd-color-bg-subtle-secondary);
+  color: var(--cpd-color-text-primary);
+  font: var(--cpd-font-body-md-regular);
+}
+
+.notice > svg {
+  flex-shrink: 0;
+  color: var(--cpd-color-icon-secondary);
 }
