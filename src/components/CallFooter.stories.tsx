@@ -136,6 +136,7 @@ export const Default: Story = {
       })),
     ],
     backgroundEffectNotice: undefined,
+    backgroundEffectSettling: false,
     hangup: fn(),
     buttonSize: "lg",
     showFooter: true,

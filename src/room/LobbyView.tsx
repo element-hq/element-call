@@ -25,6 +25,7 @@ import {
   Track,
 } from "livekit-client";
 import { convertToLivekitProcessor } from "@element-hq/matrixrtc-sdk";
+import { map } from "rxjs";
 
 import inCallStyles from "./InCallView.module.css";
 import styles from "./LobbyView.module.css";
@@ -42,6 +43,7 @@ import { ObservableScope } from "../state/ObservableScope";
 import { useInitial } from "../useInitial";
 import {
   useBackgroundEffects,
+  useBackgroundEffectsState$,
   useSyncBackgroundEffects,
 } from "../tracks/BackgroundEffectsContext";
 import { getValue } from "../utils/observable";
@@ -138,6 +140,7 @@ export const LobbyView: FC<Props> = ({
   );
 
   const { processor } = useBackgroundEffects();
+  const backgroundEffectsState$ = useBackgroundEffectsState$();
 
   const initialProcessor = useInitial(() => processor);
   const localTrackOptions = useMemo<CreateLocalTracksOptions>(
@@ -197,6 +200,7 @@ export const LobbyView: FC<Props> = ({
         footerScope,
         muteStates,
         devices,
+        backgroundEffectsState$.pipe(map(({ settling }) => settling ?? false)),
         openSettings,
         hangup,
         // Logo and header are connected: only show the logo in SPA with header.
@@ -206,7 +210,14 @@ export const LobbyView: FC<Props> = ({
     return (): void => {
       footerScope.end();
     };
-  }, [devices, hangup, hideHeader, muteStates, openSettings]);
+  }, [
+    devices,
+    backgroundEffectsState$,
+    hangup,
+    hideHeader,
+    muteStates,
+    openSettings,
+  ]);
 
   // TODO: Unify this component with InCallView, so we can get slick joining
   // animations and don't have to feel bad about reusing its CSS
