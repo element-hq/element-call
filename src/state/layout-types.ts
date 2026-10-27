@@ -162,10 +162,17 @@ export type Layout =
   | PipLayout;
 
 /**
- * Tests whether the top-level properties and array elements of layout `a` are
- * equal to those of layout `b`. Useful for deduping redundant layout updates.
+ * Tests whether the top-level properties of object `a` are equal to those of
+ * object `b` by the given comparator.
  */
-export function layoutShallowEquals(a: Layout, b: Layout): boolean {
+function equals(
+  a: object,
+  b: object,
+  comparator: (aValue: unknown, bValue: unknown) => boolean = (
+    aValue,
+    bValue,
+  ) => aValue === bValue,
+): boolean {
   // If a and b have the same number of keys and every key in a is also in b,
   // then they have the same keys.
   const aKeys = Object.keys(a);
@@ -176,14 +183,38 @@ export function layoutShallowEquals(a: Layout, b: Layout): boolean {
     if (!(key in b)) return false;
 
     // Now check that they have the same values.
-    const aValue = (a as any)[key];
-    const bValue = (b as any)[key];
-    if (Array.isArray(aValue) && Array.isArray(bValue)) {
-      // Special case for arrays so we can detect when the grid tiles arrays are
-      // essentially the same.
-      if (!arrayShallowEquals(aValue, bValue)) return false;
-    } else if (aValue !== bValue) return false;
+    const aValue: unknown = (a as any)[key];
+    const bValue: unknown = (b as any)[key];
+    if (!comparator(aValue, bValue)) return false;
   }
 
   return true;
+}
+
+/**
+ * Tests whether the top-level properties, tile wrapper properties, and array
+ * elements of layout `a` are equal to those of layout `b`. Useful for deduping
+ * redundant layout updates.
+ */
+export function layoutShallowEquals(a: Layout, b: Layout): boolean {
+  return equals(a, b, (aValue, bValue) => {
+    // Special case for tile wrapper objects so we can detect when the
+    // spotlight or PiP tile is essentially the same
+    if (
+      typeof aValue === "object" &&
+      aValue !== null &&
+      "vm" in aValue &&
+      typeof bValue === "object" &&
+      bValue !== null &&
+      "vm" in bValue
+    )
+      return equals(aValue, bValue);
+
+    // Special case for arrays so we can detect when the grid tile arrays are
+    // essentially the same
+    if (Array.isArray(aValue) && Array.isArray(bValue))
+      return arrayShallowEquals(aValue, bValue);
+
+    return aValue === bValue;
+  });
 }

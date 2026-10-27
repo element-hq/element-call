@@ -49,6 +49,22 @@ test("layoutShallowEquals detects a missing key", () => {
   ).toBe(false);
 });
 
+test("layoutShallowEquals considers tile wrappers with equal contents to be equal", () =>
+  expect(
+    layoutShallowEquals(spotlightPortrait, {
+      ...spotlightPortrait,
+      spotlight: { vm: spotlightTile },
+    }),
+  ).toBe(true));
+
+test("layoutShallowEquals detects tile wrappers with different contents", () =>
+  expect(
+    layoutShallowEquals(spotlightPortrait, {
+      ...spotlightPortrait,
+      spotlight: { vm: {} as unknown as SpotlightTileViewModel },
+    }),
+  ).toBe(false));
+
 test("layoutShallowEquals considers grid arrays with equal contents to be equal", () =>
   expect(
     layoutShallowEquals(spotlightPortrait, {
