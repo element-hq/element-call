@@ -12,6 +12,7 @@ import {
   type VideoTransformerInitOptions,
   type BackgroundOptions,
 } from "@livekit/track-processors";
+import { logger } from "matrix-js-sdk/lib/logger";
 import { ImageSegmenter } from "@mediapipe/tasks-vision";
 
 import modelAssetPath from "../mediapipe/imageSegmenter/selfie_segmenter.tflite?url";
@@ -87,6 +88,11 @@ export class BackgroundEffectTransformer extends BackgroundTransformer {
     });
 
     // BackgroundTransformer's own init applies these, and this one replaces it.
+    if (this.options.imagePath) {
+      await this.loadAndSetBackground(this.options.imagePath).catch((e) =>
+        logger.warn("Failed to load the background image", e),
+      );
+    }
     if (this.options.blurRadius) {
       this.gl?.setBlurRadius(this.options.blurRadius);
     }
