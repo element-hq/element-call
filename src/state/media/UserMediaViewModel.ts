@@ -16,7 +16,9 @@ import {
   BehaviorSubject,
   combineLatest,
   map,
+  NEVER,
   of,
+  startWith,
   Subject,
   switchMap,
 } from "rxjs";
@@ -105,10 +107,9 @@ export function createBaseUserMedia(
         showConnectionStats.value$,
       ]).pipe(
         switchMap(([track, show]) =>
-          track !== undefined && show
-            ? track.stats$(statsIntervalMs)
-            : of(undefined),
+          track !== undefined && show ? track.stats$(statsIntervalMs) : NEVER,
         ),
+        startWith<MediaStreamStats>(undefined),
       ),
     );
 
