@@ -78,13 +78,13 @@ import {
   type ReactionInfo,
   type ReactionOption,
 } from "../../reactions";
-import { shallowEquals as shallowArrayEquals } from "../../utils/array";
-import { shallowEquals as shallowObjectEquals } from "../../utils/object";
+import { shallowEquals as arrayShallowEquals } from "../../utils/array";
 import { type MediaDevice, type MediaDevices } from "../MediaDevices";
 import { type Handler, type MuteStates } from "../MuteStates";
 import { HeaderStyle, type UrlParams } from "../../UrlParams";
 import { type HostBridge, nullHostBridge } from "../../HostBridge";
 import {
+  layoutShallowEquals,
   type Layout,
   type LayoutMedia,
   type WindowMode,
@@ -830,7 +830,7 @@ export function createCallViewModel$(
               bins.sort(([, bin1], [, bin2]) => bin1 - bin2).map(([m]) => m),
             );
       }),
-      distinctUntilChanged(shallowArrayEquals),
+      distinctUntilChanged(arrayShallowEquals),
     ),
   );
 
@@ -862,13 +862,18 @@ export function createCallViewModel$(
       [ringingMedia$, screenShares$, spotlightSpeaker$, localUserMediaForPip$],
       (ringing, screenShares, speaker, localPip) =>
         computeSpotlight({ ringing, screenShares, speaker, localPip }),
-    ).pipe(distinctUntilChanged(shallowObjectEquals)),
+    ).pipe(
+      distinctUntilChanged(
+        (a, b) =>
+          arrayShallowEquals(a.spotlight, b.spotlight) && a.pip === b.pip,
+      ),
+    ),
   );
 
   const spotlight$ = scope.behavior<MediaViewModel[]>(
     spotlightAndPip$.pipe(
       map(({ spotlight }) => spotlight),
-      distinctUntilChanged<MediaViewModel[]>(shallowArrayEquals),
+      distinctUntilChanged<MediaViewModel[]>(arrayShallowEquals),
     ),
   );
 
@@ -1029,7 +1034,7 @@ export function createCallViewModel$(
           desktop: platform === "desktop",
         }),
       ),
-      distinctUntilChanged(shallowObjectEquals<LayoutMedia>),
+      distinctUntilChanged(layoutShallowEquals),
     ),
   );
 
@@ -1325,7 +1330,7 @@ export function createCallViewModel$(
     layoutInternals$.pipe(
       map(({ layout }) => layout),
       // Drop redundant layout updates before they would hit React.
-      distinctUntilChanged(shallowObjectEquals<Layout>),
+      distinctUntilChanged(layoutShallowEquals),
     ),
   );
 

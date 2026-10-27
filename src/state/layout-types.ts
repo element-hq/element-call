@@ -174,8 +174,11 @@ export type Layout =
  * elements of layout `a` are equal to those of layout `b`. Useful for deduping
  * redundant layout updates.
  */
-export function layoutShallowEquals(a: Layout, b: Layout): boolean {
-  return shallowEquals<Layout>(a, b, (aValue, bValue) => {
+export function layoutShallowEquals<T extends Layout | LayoutMedia>(
+  a: T,
+  b: T,
+): boolean {
+  return shallowEquals<T>(a, b, (aValue, bValue) => {
     // Special case for tile wrapper objects so we can detect when the
     // spotlight or PiP tile is essentially the same
     if (
