@@ -139,12 +139,19 @@ test("Subscriber falls back to the JWT service when the homeserver lacks MSC4195
   await SpaHelpers.createCall(page, "Androl", "HelloCall", true);
   const inviteLink = await SpaHelpers.getCallInviteLink(page);
 
-  // The guest joins but their C-S requests fail.
+  // The guest joins from the other homeserver, whose SFU it publishes on, but
+  // their C-S requests fail. On the host's homeserver the guest would publish
+  // on the host's JWT service and need no subscriber connection.
   const guestContext = await browser.newContext({ reducedMotion: "reduce" });
   const guestPage = await guestContext.newPage();
+  await useHomeserver(guestPage, otherHomeserver);
   await rejectCsApiTokens(guestPage);
   const guestRequests = recordAuthRequests(guestPage);
-  await SpaHelpers.joinCallFromInviteLink(guestPage, inviteLink, "Pevara");
+  await SpaHelpers.joinCallFromInviteLink(
+    guestPage,
+    `${inviteLink}&viaServers=synapse.m.localhost`,
+    "Pevara",
+  );
 
   // Wait for the call to connect and render.
   await SpaHelpers.expectVideoTilesCount(page, 2);
