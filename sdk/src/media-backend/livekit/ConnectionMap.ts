@@ -27,22 +27,23 @@ export type TransportKey = string & { __transportKey: true };
 
 /**
  * The key a locator is identified by in a map or set. Locators with the same
- * key share a connection: the server name only takes part in authentication
- * for a transport with a `url`, where our homeserver asks that server for the
- * token. A JWT service is reached directly, so members of several homeservers
- * advertising the same one share a connection rather than each get their own.
+ * key share a connection. A JWT service names one SFU room under one
+ * identity, so a transport naming a service is keyed by that alone, whether
+ * or not it also carries the SFU's `url`: a second connection to the same
+ * room would only get the first one dropped by the SFU. Only a transport
+ * with no service is keyed by its `url` and server name, as our homeserver
+ * asks that server for the token.
  */
 export function keyFor({
   transport,
   serverName,
 }: TransportLocator): TransportKey {
-  const hasUrl = "url" in transport;
   // Serialize the fields in a consistent order
-  return JSON.stringify([
-    hasUrl ? transport.url : null,
-    "livekit_service_url" in transport ? transport.livekit_service_url : null,
-    hasUrl ? serverName : null,
-  ]) as TransportKey;
+  return JSON.stringify(
+    "livekit_service_url" in transport
+      ? [null, transport.livekit_service_url, null]
+      : [transport.url, null, serverName],
+  ) as TransportKey;
 }
 
 function removeDuplicateTransports(

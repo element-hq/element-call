@@ -207,7 +207,7 @@ describe("connections$ stream", () => {
     });
   });
 
-  test("Keeps one connection per homeserver for transports with a url", () => {
+  test("Keeps one connection per homeserver for transports with a url and no JWT service", () => {
     withTestScheduler(({ behavior, expectObservable }) => {
       const urlTransport: TransportLocator = {
         transport: { type: "livekit", url: "wss://sfu.example.org" },
@@ -237,6 +237,86 @@ describe("connections$ stream", () => {
           expect(e.value.length).toBe(2);
           expect(findConnection(urlTransport, e.value)).toBeDefined();
           expect(findConnection(sameUrlElsewhere, e.value)).toBeDefined();
+          return true;
+        }),
+      });
+    });
+  });
+
+  test("Shares one connection between a JWT service named with and without its SFU's url", () => {
+    withTestScheduler(({ behavior, expectObservable }) => {
+      const withUrl: TransportLocator = {
+        transport: {
+          type: "livekit",
+          url: "wss://sfu.example.org",
+          livekit_service_url: "https://lk.example.org",
+        },
+        serverName: "example.org",
+      };
+      const connectionMap$ = createConnectionMap$({
+        scope: testScope,
+        connectionFactory: fakeConnectionFactory,
+        localTransport: withUrl,
+        remoteTransports$: behavior("a", {
+          a: new Epoch([TRANSPORT_1], 0),
+        }),
+        logger: logger,
+        ownMembershipIdentity: ownMemberMock,
+      });
+
+      expectObservable(
+        connectionMap$.pipe(mapEpoch((d) => d.getConnections())),
+      ).toBe("a", {
+        a: expect.toSatisfy((e: Epoch<Connection[]>) => {
+          // Both name one service, so one room under one identity: a second
+          // connection would only get the first dropped by the SFU
+          expect(e.value.length).toBe(1);
+          expect(
+            vi.mocked(fakeConnectionFactory).createConnection,
+          ).toHaveBeenCalledExactlyOnceWith(
+            expect.anything(),
+            "publisher",
+            withUrl.transport,
+            "example.org",
+            expect.anything(),
+            expect.anything(),
+          );
+          expect(e.value[0]).toBe(findConnection(TRANSPORT_1, e.value));
+          return true;
+        }),
+      });
+    });
+  });
+
+  test("Subscribes once to a JWT service two members name with and without its SFU's url", () => {
+    withTestScheduler(({ behavior, expectObservable }) => {
+      const withUrl: TransportLocator = {
+        transport: {
+          type: "livekit",
+          url: "wss://sfu.example.org",
+          livekit_service_url: "https://lk.example.org",
+        },
+        serverName: "example.org",
+      };
+      const connectionMap$ = createConnectionMap$({
+        scope: testScope,
+        connectionFactory: fakeConnectionFactory,
+        localTransport: TRANSPORT_2,
+        remoteTransports$: behavior("a", {
+          a: new Epoch([withUrl, TRANSPORT_1], 0),
+        }),
+        logger: logger,
+        ownMembershipIdentity: ownMemberMock,
+      });
+
+      expectObservable(connectionMap$).toBe("a", {
+        a: expect.toSatisfy((e: Epoch<ConnectionMap>) => {
+          const map = e.value;
+          expect(map.getConnections().length).toBe(2);
+          const shared = map.getConnectionForTransport(withUrl);
+          expect(shared).not.toBeNull();
+          expect(shared).not.toBe(map.getConnectionForTransport(TRANSPORT_2));
+          expect(map.getConnectionForTransport(TRANSPORT_1)).toBe(shared);
           return true;
         }),
       });

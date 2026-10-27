@@ -487,6 +487,22 @@ describe("createLivekitBackend", () => {
       expect(connections).toHaveLength(1);
     });
 
+    it("reads a member naming our JWT service without its url off our own connection", async () => {
+      const b = await prepared();
+      const media = b.mediaFor(testScope(), bob(exampleTransport, [legacyId]));
+      await flushPromises();
+      expect(connections).toHaveLength(1);
+
+      connections[0].participants$.next([
+        mockRemoteParticipant({
+          identity: legacyId,
+          trackPublications: new Map(),
+        }),
+      ]);
+      await flushPromises();
+      expect(media.tracks$.value).toEqual([]);
+    });
+
     it("connects to a remote member's transport on the member's homeserver", async () => {
       const b = await prepared();
       const carlsTransport: UnstableLivekitTransport = {
