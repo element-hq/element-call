@@ -38,6 +38,7 @@ import {
   combineLatest,
   distinctUntilChanged,
   filter,
+  firstValueFrom,
   fromEvent,
   map,
   merge,
@@ -166,11 +167,13 @@ export function initialPublishRequests(
   mediaDevices: MediaDevices,
   capture: CaptureSettings,
   processor?: VideoProcessor,
+  processorPreparing = false,
 ): PublishRequest[] {
   const requests: PublishRequest[] = [];
   if (muteStates.audio.enabled$.value)
     requests.push(publishRequest("microphone", mediaDevices, capture));
-  if (muteStates.video.enabled$.value)
+  // Left out while the processor is prepared; the call publishes it after
+  if (muteStates.video.enabled$.value && !processorPreparing)
     requests.push(publishRequest("camera", mediaDevices, capture, processor));
   return requests;
 }
@@ -184,6 +187,11 @@ export interface CallViewModelOptions {
   capture?: CaptureSettings;
   /** Background blur and the like, applied to the camera as it changes. */
   videoProcessor$?: Behavior<VideoProcessor | undefined>;
+  /**
+   * Whether it is not yet known if the video processor can be built. No
+   * camera track is made meanwhile, as it would start without the processor.
+   */
+  videoProcessorPreparing$?: Behavior<boolean>;
   /**
    * The application hosting Element Call, which can ask it to hang up and wants
    * to know when the user joins or leaves. Defaults to no host.
@@ -485,7 +493,14 @@ export function createCallViewModel$(
     sentCallNotification$ = of(null),
   } = options;
 
-  const { capture = {}, videoProcessor$ = constant(undefined) } = options;
+  const {
+    capture = {},
+    videoProcessor$ = constant(undefined),
+    videoProcessorPreparing$ = constant(false),
+  } = options;
+  // Resolves once it is known whether the processor builds
+  const processorKnown = async (): Promise<unknown> =>
+    firstValueFrom(videoProcessorPreparing$.pipe(filter((p) => !p)));
   const localTracks$ = scope.behavior<
     (LocalAudioMediaTrack | LocalVideoMediaTrack)[]
   >(
@@ -536,6 +551,7 @@ export function createCallViewModel$(
     let desired = muteState.enabled$.value;
     muteState.setHandler(async (enabled) => {
       desired = enabled;
+      if (enabled && source === "camera") await processorKnown();
       const track = track$.value;
       // A camera turned off before the processor was chosen is replaced, so
       // that the new one starts with it.
@@ -572,6 +588,25 @@ export function createCallViewModel$(
   };
   followMuteState(muteStates.audio, microphone$, "microphone");
   followMuteState(muteStates.video, camera$, "camera");
+  // A camera wanted at the join was left out of it while the processor was
+  // prepared (see initialPublishRequests), and is published once that is known
+  if (videoProcessorPreparing$.value && muteStates.video.enabled$.value)
+    processorKnown()
+      .then(async () => {
+        if (camera$.value !== undefined || !muteStates.video.enabled$.value)
+          return;
+        await rtcParticipation.publish(
+          publishRequest(
+            "camera",
+            mediaDevices,
+            capture,
+            videoProcessor$.value,
+          ),
+        );
+      })
+      .catch((e) => {
+        logger.error("Failed to publish the camera", e);
+      });
   scope.onEnd(() => {
     muteStates.audio.unsetHandler();
     muteStates.video.unsetHandler();

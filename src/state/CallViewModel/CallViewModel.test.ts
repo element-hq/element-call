@@ -1697,6 +1697,48 @@ describe("a camera with a video processor", () => {
     ).toMatchObject({ processor });
   });
 
+  it("leaves the camera out of the join while the processor is prepared", () => {
+    const muteStates = mockMuteStates();
+    vi.spyOn(muteStates.video.enabled$, "value", "get").mockReturnValue(true);
+    const sources = (preparing: boolean): string[] =>
+      initialPublishRequests(
+        muteStates,
+        mockMediaDevices({}),
+        {},
+        undefined,
+        preparing,
+      ).map((request) => request.source);
+    expect(sources(true)).not.toContain("camera");
+    expect(sources(false)).toContain("camera");
+  });
+
+  it("waits to make a camera track until it is known the processor builds", async () => {
+    const setHandler = vi.spyOn(MuteState.prototype, "setHandler");
+    onTestFinished(() => setHandler.mockRestore());
+    const videoProcessor$ = new BehaviorSubject<VideoProcessor | undefined>(
+      undefined,
+    );
+    const preparing$ = new BehaviorSubject(true);
+    let participation: RTCParticipation | undefined;
+    withCallViewModel(
+      {},
+      (_vm, _session, { rtcParticipation }) => {
+        participation = rtcParticipation;
+      },
+      { videoProcessor$, videoProcessorPreparing$: preparing$ },
+    );
+    const turnedOn = cameraHandler(setHandler)(true);
+    await flushPromises();
+    expect(participation!.publish).not.toHaveBeenCalled();
+
+    videoProcessor$.next(processor);
+    preparing$.next(false);
+    await turnedOn;
+    expect(participation!.publish).toHaveBeenCalledWith(
+      expect.objectContaining({ source: "camera", processor }),
+    );
+  });
+
   it("replaces a camera turned off before the processor was chosen", async () => {
     const setHandler = vi.spyOn(MuteState.prototype, "setHandler");
     onTestFinished(() => setHandler.mockRestore());
