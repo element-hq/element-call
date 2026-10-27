@@ -207,6 +207,44 @@ describe("connections$ stream", () => {
     });
   });
 
+  test("Shares one connection between transports with and without a url for the same JWT service", () => {
+    withTestScheduler(({ behavior, expectObservable }) => {
+      const service = "https://lk.elsewhere.org";
+      const withUrl: TransportLocator = {
+        transport: {
+          type: "livekit",
+          url: "wss://sfu.elsewhere.org",
+          livekit_service_url: service,
+        },
+        serverName: "elsewhere.org",
+      };
+      const withoutUrl: TransportLocator = {
+        transport: { type: "livekit", livekit_service_url: service },
+        serverName: "elsewhere.org",
+      };
+      const connectionMap$ = createConnectionMap$({
+        scope: testScope,
+        connectionFactory: fakeConnectionFactory,
+        localTransport: TRANSPORT_1,
+        remoteTransports$: behavior("a", {
+          a: new Epoch([withUrl, withoutUrl], 0),
+        }),
+        logger: logger,
+        ownMembershipIdentity: ownMemberMock,
+      });
+
+      expectObservable(connectionMap$).toBe("a", {
+        a: expect.toSatisfy((e: Epoch<ConnectionMap>) => {
+          expect(e.value.getConnections().length).toBe(2);
+          expect(e.value.getConnectionForTransport(withoutUrl)).toBe(
+            e.value.getConnectionForTransport(withUrl),
+          );
+          return true;
+        }),
+      });
+    });
+  });
+
   test("Keeps one connection per homeserver for transports with a url", () => {
     withTestScheduler(({ behavior, expectObservable }) => {
       const urlTransport: TransportLocator = {

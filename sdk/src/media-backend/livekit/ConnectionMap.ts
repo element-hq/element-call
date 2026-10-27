@@ -31,18 +31,21 @@ export type TransportKey = string & { __transportKey: true };
  * for a transport with a `url`, where our homeserver asks that server for the
  * token. A JWT service is reached directly, so members of several homeservers
  * advertising the same one share a connection rather than each get their own.
+ *
+ * A `url` or a `livekit_server_url` are not part of the key: the service decides the
+ * LiveKit room either way, and the SFU disconnects the first of two
+ * connections joining it under one identity. -> we have to achive: same SFU with the same key.
+ *
+ * We assume one SFU per homeserver. So we just use the serverName as the key.
  */
 export function keyFor({
   transport,
   serverName,
 }: TransportLocator): TransportKey {
-  const hasUrl = "url" in transport;
   // Serialize the fields in a consistent order
-  return JSON.stringify([
-    hasUrl ? transport.url : null,
-    "livekit_service_url" in transport ? transport.livekit_service_url : null,
-    hasUrl ? serverName : null,
-  ]) as TransportKey;
+    // Right now we can assume one SFU per server. even if the server advertises multiple,
+    // we will end up with just the first one on all participants.
+  return serverName as TransportKey;
 }
 
 function removeDuplicateTransports(
