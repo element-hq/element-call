@@ -39,6 +39,7 @@ import {
   createTransportRegistry,
   supportsDelegation,
 } from "./LivekitBackend";
+import { LivekitRooms, livekitRoomKey } from "./LivekitRooms";
 import {
   exampleServiceUrl,
   exampleTransport,
@@ -173,11 +174,14 @@ describe("createLivekitBackend", () => {
     state: "authenticated",
     livekitState: LivekitConnectionState.Connected,
   };
+  /** The registry the backend handed its factory, for the test to resolve rooms in. */
+  let rooms: LivekitRooms;
 
   /** Stands in for the factory: connections whose state and participants the test drives. */
   function stubFactory(initialState: ConnectionState): void {
     vi.spyOn(connectionFactory, "LivekitConnectionFactory").mockImplementation(
-      function (this: unknown) {
+      function (this: unknown, ...args: unknown[]) {
+        rooms = args.find((arg) => arg instanceof LivekitRooms) as LivekitRooms;
         return {
           createConnection: (
             scope: ObservableScope,
@@ -504,6 +508,64 @@ describe("createLivekitBackend", () => {
       );
       expect(remote?.connection.transport).toEqual(carlsTransport);
       expect(remote?.connection.serverName).toBe("sample.com");
+    });
+
+    it("shares one connection between transports that resolve to the same room", async () => {
+      // Two members of one homeserver, one of them advertising the SFU's url:
+      // two transports, one JWT service, one room, and the same subscriber
+      // identity on both tokens, which the SFU would not admit twice
+      const b = await prepared();
+      const withUrl: UnstableLivekitTransport = {
+        type: "livekit",
+        url: "wss://sfu.sample.com",
+        livekit_service_url: "https://lk.sample.com",
+      };
+      const withoutUrl: UnstableLivekitTransport = {
+        type: "livekit",
+        livekit_service_url: "https://lk.sample.com",
+      };
+      const bobMedia = b.mediaFor(testScope(), {
+        ...bob(withUrl, ["@bob:sample.com:DEV1"]),
+        userId: "@bob:sample.com",
+        deviceId: "DEV1",
+      });
+      const carolMedia = b.mediaFor(testScope(), {
+        ...bob(withoutUrl, ["@carol:sample.com:DEV2"]),
+        userId: "@carol:sample.com",
+        deviceId: "DEV2",
+      });
+      await flushPromises();
+      const [, first, second] = connections;
+      expect(first.connection.transport).toEqual(withUrl);
+      expect(second.connection.transport).toEqual(withoutUrl);
+
+      const room = livekitRoomKey("wss://sfu.sample.com", "alias");
+      await rooms.claim(first.connection, room);
+      void rooms.claim(second.connection, room);
+      first.participants$.next([
+        mockRemoteParticipant({
+          identity: "@bob:sample.com:DEV1",
+          trackPublications: new Map(),
+        }),
+        mockRemoteParticipant({
+          identity: "@carol:sample.com:DEV2",
+          trackPublications: new Map(),
+        }),
+      ]);
+      await flushPromises();
+
+      expect(bobMedia.tracks$.value).toEqual([]);
+      expect(carolMedia.tracks$.value).toEqual([]);
+      // The waiting transport reports the state of the connection carrying it
+      second.state$.next({ state: "authenticating" });
+      await flushPromises();
+      expect(
+        b.connections$.value.map(({ transport, state }) => [transport, state]),
+      ).toEqual([
+        [bothTransport, MediaConnectionState.Connected],
+        [withUrl, MediaConnectionState.Connected],
+        [withoutUrl, MediaConnectionState.Connected],
+      ]);
     });
 
     it("connects to a remote publisher's transport on the SFU's homeserver", async () => {

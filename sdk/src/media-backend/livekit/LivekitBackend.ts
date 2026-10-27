@@ -61,6 +61,7 @@ import { toMediaConnectionState } from "./connectionState";
 import { createDataChannel$ } from "./DataChannel";
 import { createKeyProvider } from "./KeyProvider";
 import { createLivekitMemberMedia } from "./LivekitMemberMedia";
+import { LivekitRooms } from "./LivekitRooms";
 import { createLivekitLocalMedia } from "./LocalMedia";
 
 export interface LivekitBackendOptions {
@@ -104,6 +105,7 @@ export function createLivekitBackend(
   const audioOutputDeviceId$ = new BehaviorSubject<string | undefined>(
     undefined,
   );
+  const rooms = new LivekitRooms(logger);
   const connectionFactory = new LivekitConnectionFactory(
     client,
     roomId,
@@ -112,6 +114,7 @@ export function createLivekitBackend(
     audioOutputDeviceId$,
     keyProvider,
     mediaQuality,
+    rooms,
   );
 
   // A new map, in a scope of its own, whenever the local transport changes:
@@ -123,6 +126,7 @@ export function createLivekitBackend(
         connectionFactory,
         localTransport,
         remoteTransports$: transports.transports$,
+        rooms,
         logger,
         ownMembershipIdentity,
       }),
@@ -259,7 +263,14 @@ export function createLivekitBackend(
       switchMap(({ value }) => {
         const connections = value.getConnections();
         if (connections.length === 0) return of([]);
-        return combineLatest(connections.map(backendConnection$));
+        return combineLatest(
+          connections.map((connection) =>
+            backendConnection$(
+              connection,
+              value.getConnectionForTransport(connection) ?? connection,
+            ),
+          ),
+        );
       }),
     ),
   );
@@ -306,14 +317,16 @@ async function authenticated(
     );
 }
 
+/** A transport's connection with the state of the connection holding its room. */
 function backendConnection$(
   connection: Connection,
+  holder: Connection,
 ): Observable<BackendConnection> {
   const resolved$: Observable<ResolvedTransport | undefined> =
     connection instanceof ResolvedConnection
       ? connection.resolved$
       : of(undefined);
-  return combineLatest([connection.state$, resolved$]).pipe(
+  return combineLatest([holder.state$, resolved$]).pipe(
     map(([state, resolved]): BackendConnection => ({
       transport: connection.transport,
       state: toMediaConnectionState(state),

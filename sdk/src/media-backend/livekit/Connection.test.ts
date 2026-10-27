@@ -44,6 +44,7 @@ import { type ClientGetTokenParts, type ClientOpenIDParts } from "./auth";
 import { MatrixRTCError } from "../../errors";
 import { testJWTToken } from "../../utils/test-fixtures";
 import { ownMemberMock } from "../../utils/test";
+import { LivekitRooms, livekitRoomKey } from "./LivekitRooms";
 import { mockRemoteParticipant } from "./test";
 
 let testScope: ObservableScope;
@@ -74,6 +75,7 @@ function connectionOpts(): ConnectionOpts {
     serverName: "m.localhost",
     scope: testScope,
     ownMembershipIdentity: ownMemberMock,
+    rooms: new LivekitRooms(logger),
     livekitRoomFactory: () => fakeLivekitRoom,
   };
 }
@@ -711,3 +713,161 @@ describe("remote track logging", () => {
 //   });
 // });
 // });
+
+describe("LiveKit rooms", () => {
+  const roomKey = livekitRoomKey(transport.url!, "!example_room_id");
+  const otherConnection = (): Connection =>
+    ({ role: "subscriber", stop: vi.fn() }) as unknown as Connection;
+
+  it("waits for the room its token is for, and connects with a fresh token once it holds it", async () => {
+    setupTest();
+    const rooms = new LivekitRooms(logger);
+    const holder = otherConnection();
+    await rooms.claim(holder, roomKey);
+    fakeLivekitRoom.connect.mockResolvedValue(undefined);
+    const connection = new Connection({ ...connectionOpts(), rooms }, logger);
+
+    const started = connection.start();
+    await vi.waitFor(() =>
+      expect(rooms.holders$.value.get(connection)).toBe(holder),
+    );
+    expect(fakeLivekitRoom.connect).not.toHaveBeenCalled();
+    expect(client._unstable_getLivekitToken).toHaveBeenCalledTimes(1);
+
+    rooms.release(holder);
+    await started;
+    expect(client._unstable_getLivekitToken).toHaveBeenCalledTimes(2);
+    expect(fakeLivekitRoom.connect).toHaveBeenCalledWith(
+      transport.url,
+      testJWTToken,
+    );
+    expect(rooms.holders$.value.get(connection)).toBe(connection);
+  });
+
+  it("connects at once with the token it has where the room is free", async () => {
+    setupTest();
+    const rooms = new LivekitRooms(logger);
+    fakeLivekitRoom.connect.mockResolvedValue(undefined);
+    const connection = new Connection({ ...connectionOpts(), rooms }, logger);
+
+    await connection.start();
+    expect(client._unstable_getLivekitToken).toHaveBeenCalledTimes(1);
+    expect(fakeLivekitRoom.connect).toHaveBeenCalled();
+  });
+
+  it("gives the room up when stopped, without connecting", async () => {
+    setupTest();
+    const rooms = new LivekitRooms(logger);
+    const holder = otherConnection();
+    await rooms.claim(holder, roomKey);
+    fakeLivekitRoom.disconnect.mockResolvedValue(undefined);
+    const connection = new Connection({ ...connectionOpts(), rooms }, logger);
+
+    const started = connection.start();
+    await vi.waitFor(() =>
+      expect(rooms.holders$.value.get(connection)).toBe(holder),
+    );
+    await connection.stop();
+    await started;
+
+    expect(fakeLivekitRoom.connect).not.toHaveBeenCalled();
+    expect(connection.state$.value).toEqual({ state: "stopped" });
+    rooms.release(holder);
+    expect(rooms.holders$.value.get(connection)).toBeUndefined();
+  });
+
+  it("hands the room on only once it has left the SFU", async () => {
+    setupTest();
+    const rooms = new LivekitRooms(logger);
+    fakeLivekitRoom.connect.mockResolvedValue(undefined);
+    const disconnected = Promise.withResolvers<void>();
+    fakeLivekitRoom.disconnect.mockReturnValue(disconnected.promise);
+    const connection = new Connection({ ...connectionOpts(), rooms }, logger);
+    await connection.start();
+    const waiter = otherConnection();
+    const claim = rooms.claim(waiter, roomKey);
+
+    const stopping = connection.stop();
+    await Promise.resolve();
+    expect(rooms.holderOf(roomKey)).toBe(connection);
+
+    disconnected.resolve();
+    await stopping;
+    await claim;
+    expect(rooms.holderOf(roomKey)).toBe(waiter);
+  });
+
+  it("gives the room up when the connection fails", async () => {
+    setupTest();
+    const rooms = new LivekitRooms(logger);
+    fakeLivekitRoom.connect.mockRejectedValue(new Error("no"));
+    const connection = new Connection({ ...connectionOpts(), rooms }, logger);
+
+    await expect(connection.start()).rejects.toThrow();
+    expect(rooms.holders$.value.size).toBe(0);
+  });
+
+  it("connects once the connection holding its room stops", async () => {
+    const rooms = new LivekitRooms(logger);
+    setupTest();
+    const holderRoom = fakeLivekitRoom;
+    holderRoom.connect.mockResolvedValue(undefined);
+    holderRoom.disconnect.mockResolvedValue(undefined);
+    const holder = new Connection(
+      { ...connectionOpts(), rooms, livekitRoomFactory: () => holderRoom },
+      logger,
+    );
+    await holder.start();
+    setupTest();
+    const waiterRoom = fakeLivekitRoom;
+    waiterRoom.connect.mockResolvedValue(undefined);
+    const waiter = new Connection(
+      { ...connectionOpts(), rooms, livekitRoomFactory: () => waiterRoom },
+      logger,
+    );
+    const started = waiter.start();
+    await vi.waitFor(() =>
+      expect(rooms.holders$.value.get(waiter)).toBe(holder),
+    );
+    expect(waiterRoom.connect).not.toHaveBeenCalled();
+
+    await holder.stop();
+    await started;
+    expect(waiterRoom.connect).toHaveBeenCalled();
+    expect(rooms.holderOf(roomKey)).toBe(waiter);
+  });
+
+  it("lets a publisher take the room over, stopping the subscriber on it", async () => {
+    const rooms = new LivekitRooms(logger);
+    setupTest();
+    const subscriberRoom = fakeLivekitRoom;
+    subscriberRoom.connect.mockResolvedValue(undefined);
+    subscriberRoom.disconnect.mockResolvedValue(undefined);
+    const subscriber = new Connection(
+      { ...connectionOpts(), rooms, livekitRoomFactory: () => subscriberRoom },
+      logger,
+    );
+    await subscriber.start();
+    setupTest();
+    const publisherRoom = fakeLivekitRoom;
+    publisherRoom.connect.mockResolvedValue(undefined);
+    const publisher = new Connection(
+      {
+        ...connectionOpts(),
+        role: "publisher",
+        rooms,
+        livekitRoomFactory: () => publisherRoom,
+      },
+      logger,
+    );
+
+    await publisher.start();
+    expect(publisherRoom.connect).toHaveBeenCalled();
+    expect(subscriberRoom.disconnect).toHaveBeenCalled();
+    await vi.waitFor(() =>
+      expect(subscriber.state$.value).toEqual({ state: "stopped" }),
+    );
+    expect(rooms.holders$.value.get(subscriber)).toBe(publisher);
+    expect(rooms.holders$.value.get(publisher)).toBe(publisher);
+  });
+});
