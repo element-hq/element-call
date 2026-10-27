@@ -18,9 +18,10 @@ import {
 import { logger } from "matrix-js-sdk/lib/logger";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { type PublishRequest } from "../../media-api";
+import { type PublishRequest, type VideoProcessor } from "../../media-api";
 import { flushPromises } from "../../utils/test";
 import { type DesiredMedia, Publisher } from "./Publisher";
+import { convertToLivekitProcessor } from "./videoProcessor";
 
 describe("Publisher", () => {
   describe("setAudioOutputDevice", () => {
@@ -116,6 +117,24 @@ describe("Publisher", () => {
       expect(participant.createTracks).toHaveBeenCalledWith({
         audio: true,
         video: true,
+      });
+    });
+
+    it("creates both with the options of requests made since the join", async () => {
+      const processor: VideoProcessor = {
+        name: "effect",
+        init: vi.fn(),
+        restart: vi.fn(),
+        destroy: vi.fn(),
+      };
+      want(microphone, { source: "camera", deviceId: "front", processor });
+
+      publisher.start();
+      await flushPromises();
+
+      expect(room.options.videoCaptureDefaults).toMatchObject({
+        deviceId: "front",
+        processor: convertToLivekitProcessor(processor),
       });
     });
 
