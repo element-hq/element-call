@@ -78,14 +78,13 @@ import {
   type ReactionInfo,
   type ReactionOption,
 } from "../../reactions";
-import { shallowEquals as shallowArrayEquals } from "../../utils/array";
-import { shallowEquals as shallowObjectEquals } from "../../utils/object";
+import { shallowEquals as arrayShallowEquals } from "../../utils/array";
 import { type MediaDevice, type MediaDevices } from "../MediaDevices";
 import { type Handler, type MuteStates } from "../MuteStates";
 import { HeaderStyle, type UrlParams } from "../../UrlParams";
 import { type HostBridge, nullHostBridge } from "../../HostBridge";
 import {
-  type Alignment,
+  layoutShallowEquals,
   type Layout,
   type LayoutMedia,
   type WindowMode,
@@ -126,6 +125,7 @@ import {
   type RingingMediaViewModel,
 } from "../media/RingingMediaViewModel.ts";
 import { type GridTileViewModel } from "../TileViewModel.ts";
+import { createFloatingTile } from "../FloatingTile.ts";
 
 /** How a call captures and encodes the tracks it publishes. */
 export interface CaptureSettings {
@@ -830,7 +830,7 @@ export function createCallViewModel$(
               bins.sort(([, bin1], [, bin2]) => bin1 - bin2).map(([m]) => m),
             );
       }),
-      distinctUntilChanged(shallowArrayEquals),
+      distinctUntilChanged(arrayShallowEquals),
     ),
   );
 
@@ -862,13 +862,18 @@ export function createCallViewModel$(
       [ringingMedia$, screenShares$, spotlightSpeaker$, localUserMediaForPip$],
       (ringing, screenShares, speaker, localPip) =>
         computeSpotlight({ ringing, screenShares, speaker, localPip }),
-    ).pipe(distinctUntilChanged(shallowObjectEquals)),
+    ).pipe(
+      distinctUntilChanged(
+        (a, b) =>
+          arrayShallowEquals(a.spotlight, b.spotlight) && a.pip === b.pip,
+      ),
+    ),
   );
 
   const spotlight$ = scope.behavior<MediaViewModel[]>(
     spotlightAndPip$.pipe(
       map(({ spotlight }) => spotlight),
-      distinctUntilChanged<MediaViewModel[]>(shallowArrayEquals),
+      distinctUntilChanged<MediaViewModel[]>(arrayShallowEquals),
     ),
   );
 
@@ -1029,7 +1034,7 @@ export function createCallViewModel$(
           desktop: platform === "desktop",
         }),
       ),
-      distinctUntilChanged(shallowObjectEquals<LayoutMedia>),
+      distinctUntilChanged(layoutShallowEquals),
     ),
   );
 
@@ -1221,32 +1226,28 @@ export function createCallViewModel$(
   );
 
   /**
-   * The alignment of the floating spotlight tile, if present.
+   * State of the floating spotlight tile, if present.
    */
-  const spotlightAlignment$ = new BehaviorSubject<Alignment>({
+  const floatingSpotlightTile = createFloatingTile(scope, {
     inline: "end",
     block: "end",
   });
   /**
-   * The size of the small picture-in-picture tile, if present, when in portrait.
+   * State of the small picture-in-picture tile, if present, when in landscape.
    */
-  const portraitPipSize$ = scope.behavior(
-    showFooter$.pipe(map((showFooter) => (showFooter ? "lg" : "sm"))),
-  );
-  /**
-   * The alignment of the small picture-in-picture tile, if present, when in portrait.
-   */
-  const portraitPipAlignment$ = new BehaviorSubject<Alignment>({
-    inline: "end",
-    block: "end",
-  });
-  /**
-   * The alignment of the small picture-in-picture tile, if present, when in landscape.
-   */
-  const landscapePipAlignment$ = new BehaviorSubject<Alignment>({
+  const landscapePipTile = createFloatingTile(scope, {
     inline: "end",
     block: "start",
   });
+  /**
+   * State of the small picture-in-picture tile, if present, when in portrait.
+   */
+  const portraitPipTile = {
+    ...createFloatingTile(scope, { inline: "end", block: "end" }),
+    size$: scope.behavior(
+      showFooter$.pipe(map((showFooter) => (showFooter ? "lg" : "sm"))),
+    ),
+  };
 
   // There is a cyclical dependency here: the layout algorithms want to know
   // which tiles are on screen, but to know which tiles are on screen we have to
@@ -1276,7 +1277,7 @@ export function createCallViewModel$(
             case "spotlight-portrait":
               [layout, newTiles] = gridLikeLayout(
                 media,
-                spotlightAlignment$,
+                floatingSpotlightTile,
                 visibleTiles,
                 setVisibleTiles,
                 prevTiles,
@@ -1286,26 +1287,25 @@ export function createCallViewModel$(
             case "spotlight-expanded":
               [layout, newTiles] = spotlightExpandedLayout(
                 media,
-                landscapePipAlignment$,
+                landscapePipTile,
                 prevTiles,
               );
               break;
             case "one-on-one-desktop":
               [layout, newTiles] = oneOnOneDesktopLayout(
                 media,
-                landscapePipAlignment$,
+                landscapePipTile,
                 prevTiles,
               );
-              pip = layout.pip;
+              pip = layout.pip.vm;
               break;
             case "one-on-one-mobile":
               [layout, newTiles] = oneOnOneMobileLayout(
                 media,
-                portraitPipSize$,
-                portraitPipAlignment$,
+                portraitPipTile,
                 prevTiles,
               );
-              pip = layout.pip;
+              pip = layout.pip?.vm;
               break;
             case "pip":
               [layout, newTiles] = pipLayout(media, prevTiles);
@@ -1330,7 +1330,7 @@ export function createCallViewModel$(
     layoutInternals$.pipe(
       map(({ layout }) => layout),
       // Drop redundant layout updates before they would hit React.
-      distinctUntilChanged(shallowObjectEquals<Layout>),
+      distinctUntilChanged(layoutShallowEquals),
     ),
   );
 

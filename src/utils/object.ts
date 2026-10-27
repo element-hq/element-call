@@ -5,17 +5,17 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { shallowEquals as arrayShallowEquals } from "./array.ts";
-
 /**
  * Determine whether two objects are equal by shallow comparison of their
- * top-level properties. Array-valued properties are themselves compared
- * shallowly, so two objects holding distinct arrays with the same elements are
- * considered equal.
+ * top-level properties, using the given `comparator`.
  */
 export function shallowEquals<T extends object>(
   a: Readonly<T>,
   b: Readonly<T>,
+  comparator: (aValue: unknown, bValue: unknown) => boolean = (
+    aValue,
+    bValue,
+  ) => aValue === bValue,
 ): boolean {
   // If a and b have the same number of keys and every key in a is also in b,
   // then they have the same keys.
@@ -29,9 +29,7 @@ export function shallowEquals<T extends object>(
     // Now check that they have the same values.
     const aValue = (a as any)[key];
     const bValue = (b as any)[key];
-    if (Array.isArray(aValue) && Array.isArray(bValue)) {
-      if (!arrayShallowEquals(aValue, bValue)) return false;
-    } else if (aValue !== bValue) return false;
+    if (!comparator(aValue, bValue)) return false;
   }
 
   return true;

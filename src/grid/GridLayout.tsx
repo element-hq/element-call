@@ -8,21 +8,48 @@ Please see LICENSE in the repository root for full details.
 import {
   type CSSProperties,
   type ReactNode,
-  useCallback,
   useMemo,
+  type FC,
+  type ComponentType,
 } from "react";
 
 import { type GridLayout as GridLayoutModel } from "../state/layout-types.ts";
 import styles from "./GridLayout.module.css";
 import { type CallLayout, arrangeTiles } from "./CallLayout";
-import { type DragCallback, useUpdateLayout, useVisibleTiles } from "./Grid";
+import { type SlotProps, useUpdateLayout, useVisibleTiles } from "./Grid";
 import { useBehavior } from "../useBehavior";
+import {
+  type SpotlightTileViewModel,
+  type TileViewModel,
+} from "../state/TileViewModel.ts";
+import { type FloatingTile } from "../state/FloatingTile.ts";
 
 interface GridCSSProperties extends CSSProperties {
   "--gap": string;
   "--width": string;
   "--height": string;
 }
+
+interface SpotlightSlotProps {
+  model: FloatingTile & { vm: SpotlightTileViewModel };
+  Slot: ComponentType<SlotProps<TileViewModel>>;
+}
+
+const SpotlightSlot: FC<SpotlightSlotProps> = ({ model, Slot }) => {
+  useUpdateLayout();
+  const alignment = useBehavior(model.alignment$);
+
+  return (
+    <Slot
+      className={styles.slot}
+      id="spotlight"
+      model={model.vm}
+      onDrag={model.onDrag}
+      data-block-alignment={alignment.block}
+      data-inline-alignment={alignment.inline}
+    />
+  );
+};
 
 /**
  * An implementation of the "grid" layout, in which all participants are shown
@@ -37,32 +64,10 @@ export const makeGridLayout: CallLayout<GridLayoutModel> = ({
   // lives
   fixed: function GridLayoutFixed({ ref, model, Slot }): ReactNode {
     useUpdateLayout();
-    const alignment = useBehavior(model.spotlightAlignment$);
-
-    const onDragSpotlight: DragCallback = useCallback(
-      ({ xRatio, yRatio }) => {
-        const block = yRatio < 0.5 ? "start" : "end";
-        const inline = xRatio < 0.5 ? "start" : "end";
-        // A drag reports the same alignment on every move; only a change is
-        // worth a re-render
-        const current = model.spotlightAlignment$.value;
-        if (current.block !== block || current.inline !== inline)
-          model.spotlightAlignment$.next({ block, inline });
-      },
-      [model.spotlightAlignment$],
-    );
-
     return (
       <div ref={ref} className={styles.fixed}>
         {model.spotlight && (
-          <Slot
-            className={styles.slot}
-            id="spotlight"
-            model={model.spotlight}
-            onDrag={onDragSpotlight}
-            data-block-alignment={alignment.block}
-            data-inline-alignment={alignment.inline}
-          />
+          <SpotlightSlot model={model.spotlight} Slot={Slot} />
         )}
       </div>
     );

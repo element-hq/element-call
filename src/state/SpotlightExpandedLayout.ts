@@ -5,21 +5,19 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type BehaviorSubject } from "rxjs";
-
 import {
-  type Alignment,
   type SpotlightExpandedLayout,
   type SpotlightExpandedLayoutMedia,
 } from "./layout-types";
 import { type TileStore } from "./TileStore";
+import { type FloatingTile } from "./FloatingTile";
 
 /**
  * Produces an expanded spotlight layout with the given media.
  */
 export function spotlightExpandedLayout(
   media: SpotlightExpandedLayoutMedia,
-  pipAlignment$: BehaviorSubject<Alignment>,
+  pipTile: FloatingTile,
   prevTiles: TileStore,
 ): [SpotlightExpandedLayout, TileStore] {
   const update = prevTiles.from(1);
@@ -27,12 +25,12 @@ export function spotlightExpandedLayout(
   if (media.pip !== undefined) update.registerPipTile(media.pip);
   const tiles = update.build();
 
+  const pipVm = tiles.gridTiles.at(0);
   return [
     {
       type: media.type,
       spotlight: tiles.spotlightTile!,
-      pip: tiles.gridTiles.at(0),
-      pipAlignment$,
+      pip: pipVm && { vm: pipVm, ...pipTile },
     },
     tiles,
   ];
