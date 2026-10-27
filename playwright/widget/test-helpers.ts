@@ -223,7 +223,7 @@ export class TestHelpers {
 
     await page
       .getByRole("navigation", { name: "Room list" })
-      .getByRole("button", { name: "New conversation" })
+      .getByRole("button", { name: "New", exact: true })
       .click();
 
     await page.getByRole("menuitem", { name: "New Room" }).click({

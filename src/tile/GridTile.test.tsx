@@ -5,10 +5,6 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import {
-  type LocalTrackPublication,
-  type RemoteTrackPublication,
-} from "livekit-client";
 import { test, expect } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import { axe } from "vitest-axe";
@@ -19,9 +15,7 @@ import { GridTile } from "./GridTile";
 import {
   mockRtcMembership,
   mockRemoteMedia,
-  mockRemoteParticipant,
   mockLocalMedia,
-  mockLocalParticipant,
   mockMediaDevices,
 } from "../utils/test";
 import { GridTileViewModel } from "../state/TileViewModel";
@@ -67,11 +61,7 @@ test("GridTile displays remote media", async () => {
       rawDisplayName: "Alice",
       getMxcAvatarUrl: () => "mxc://adfsg",
     },
-    mockRemoteParticipant({
-      setVolume() {},
-      getTrackPublication: () =>
-        ({}) as Partial<RemoteTrackPublication> as RemoteTrackPublication,
-    }),
+    [],
   );
 
   const { container } = render(
@@ -101,10 +91,7 @@ test("GridTile displays local media", async () => {
       rawDisplayName: "Alice",
       getMxcAvatarUrl: () => "mxc://adfsg",
     },
-    mockLocalParticipant({
-      getTrackPublication: () =>
-        ({}) as Partial<LocalTrackPublication> as LocalTrackPublication,
-    }),
+    [],
     mockMediaDevices({}),
   );
 

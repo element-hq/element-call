@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { defineConfig } from "vite";
 
 import { vitePluginsConfig } from "./vite.config.ts";
-import { scopeStylesToRoot } from "./component/build/scopeStylesToRoot";
+import { scopeStylesToRoot } from "./component/build/scopeStylesToRoot.ts";
 
 // Config for Element Call as a React component, to be imported by an
 // application embedding it rather than served as a page of its own.
@@ -49,13 +49,28 @@ export default defineConfig(({ mode }) => {
       cssCodeSplit: false,
       lib: {
         formats: ["es" as const],
-        entry: "./component/index.tsx",
-        fileName: "element-call",
+        entry: {
+          // The component
+          "element-call": "./component/index.tsx",
+          // What a host needs to talk about it, without it (see component/api.ts).
+          // Built as an entry point of its own so that importing it does not
+          // load the component: the bundler gives it a chunk that reaches only
+          // what it imports.
+          api: "./component/api.ts",
+        },
+        fileName: (_format, entryName) => `${entryName}.js`,
+        // The one stylesheet (see cssCodeSplit) keeps the name it had when the
+        // component was the only entry
+        cssFileName: "element-call",
       },
       rollupOptions: {
         // The host already has these, and a second copy of any of them does not
-        // merely bloat the bundle: React would hold two sets of hooks, and the
-        // Matrix client would run two sync loops.
+        // merely bloat the bundle: React would hold two sets of hooks, the
+        // Matrix client would run two sync loops, and a second Compound would
+        // bring a second stylesheet with class names of its own — so that what
+        // it floats into the host's body, tooltips and menus, would match the
+        // host's Compound stylesheet only when the two happened to be the same
+        // version.
         //
         // Every subpath has to be named. Element Call reaches most of the Matrix
         // SDK as `matrix-js-sdk/lib/…`, and a bare "matrix-js-sdk" would not
@@ -73,7 +88,6 @@ export default defineConfig(({ mode }) => {
           "react/compiler-runtime",
           "react-dom",
           "react-dom/client",
-          "livekit-client",
           "matrix-js-sdk",
           "matrix-js-sdk/lib/browser-index",
           "matrix-js-sdk/lib/client",
@@ -92,6 +106,8 @@ export default defineConfig(({ mode }) => {
           "matrix-js-sdk/lib/sync",
           "matrix-js-sdk/lib/types",
           "matrix-js-sdk/lib/utils",
+          "@vector-im/compound-web",
+          "@vector-im/compound-design-tokens/assets/web/icons",
         ],
       },
     },

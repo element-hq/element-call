@@ -14,8 +14,16 @@ import {
   type SpotlightTileViewModel,
 } from "./TileViewModel.ts";
 import { type Behavior } from "./Behavior.ts";
-import { shallowEquals as arrayShallowEquals } from "../utils/array.ts";
 import { type FloatingTile } from "./FloatingTile.ts";
+import { shallowEquals } from "../utils/object.ts";
+import { shallowEquals as arrayShallowEquals } from "../utils/array.ts";
+
+/**
+ * The general shape of the space the call is drawn in. Called a window because
+ * that is what it is in the standalone app; for a component it is the container
+ * the host gave us, which may be a small corner of a large window.
+ */
+export type WindowMode = "normal" | "narrow" | "flat" | "pip";
 
 export interface GridLayoutMedia {
   type: "grid";
@@ -162,42 +170,12 @@ export type Layout =
   | PipLayout;
 
 /**
- * Tests whether the top-level properties of object `a` are equal to those of
- * object `b` by the given comparator.
- */
-function equals(
-  a: object,
-  b: object,
-  comparator: (aValue: unknown, bValue: unknown) => boolean = (
-    aValue,
-    bValue,
-  ) => aValue === bValue,
-): boolean {
-  // If a and b have the same number of keys and every key in a is also in b,
-  // then they have the same keys.
-  const aKeys = Object.keys(a);
-  const bKeys = Object.keys(b);
-  if (aKeys.length !== bKeys.length) return false;
-
-  for (const key of aKeys) {
-    if (!(key in b)) return false;
-
-    // Now check that they have the same values.
-    const aValue: unknown = (a as any)[key];
-    const bValue: unknown = (b as any)[key];
-    if (!comparator(aValue, bValue)) return false;
-  }
-
-  return true;
-}
-
-/**
  * Tests whether the top-level properties, tile wrapper properties, and array
  * elements of layout `a` are equal to those of layout `b`. Useful for deduping
  * redundant layout updates.
  */
 export function layoutShallowEquals(a: Layout, b: Layout): boolean {
-  return equals(a, b, (aValue, bValue) => {
+  return shallowEquals<Layout>(a, b, (aValue, bValue) => {
     // Special case for tile wrapper objects so we can detect when the
     // spotlight or PiP tile is essentially the same
     if (
@@ -208,7 +186,7 @@ export function layoutShallowEquals(a: Layout, b: Layout): boolean {
       bValue !== null &&
       "vm" in bValue
     )
-      return equals(aValue, bValue);
+      return shallowEquals(aValue, bValue);
 
     // Special case for arrays so we can detect when the grid tile arrays are
     // essentially the same

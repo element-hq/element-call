@@ -35,6 +35,7 @@
     ],
     "element-call/no-observablescope-leak": "error",
     "element-call/no-top-level-logger-get-child": "error",
+    "element-call/sdk-import-boundary": "error",
     "jsdoc/empty-tags": "error",
     "jsdoc/check-property-names": "error",
     "jsdoc/require-param-description": "warn",

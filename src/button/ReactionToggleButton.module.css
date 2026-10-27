@@ -83,7 +83,7 @@ div.reactionPopupMenuRoot.reactionPopupMenuModal > div > div {
   flex: 0 0 auto;
 }
 
-.reactionButton {
+.reactionPopupMenu .reactionsMenu .reactionButton {
   padding: var(--reaction-button-padding);
   border-radius: var(--cpd-radius-pill-effect);
   font-size: var(--reaction-button-fontsize);

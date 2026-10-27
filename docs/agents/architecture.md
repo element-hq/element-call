@@ -72,8 +72,24 @@ Code that builds in only one is a bug.
 
 - `build:full` — standalone app, also widget mode.
 - `build:embedded` — `@element-hq/element-call-embedded`.
-- `build:sdk` — SDK library, entry `sdk/main.ts`.
+- `build:sdk` — `@element-hq/matrixrtc-sdk`, sources in `sdk/`, entry `sdk/index.ts`.
+  Packaged exactly like the component (own pnpm project, run pnpm from the repo
+  root, types from `sdk/tsconfig.build.json`, externals checked by
+  `pnpm lint:externals`). Interface only so far; the design is `sdk-plan.md`.
+- `build:sdk-target-based-on-call-view-model` — the SDK demo that predates the
+  package, one bundle of the `CallViewModel`; entry
+  `sdk-target-based-on-call-view-model/main.ts`. CI's `sdk` package
+  (`build:sdk:production` / `build:sdk:development`, the Netlify `-sdk` preview)
+  is still this bundle, not `build:sdk`.
 - `build:component` — `@element-hq/element-call-component`, sources in `component/`
   (its own pnpm project; run pnpm from the repo root). Host API is in the README;
   `pnpm lint:externals` rejects an import of a `react` / `react-dom` /
-  `matrix-js-sdk` / `livekit-client` subpath the externals list omits.
+  `matrix-js-sdk` / `@vector-im/compound-web` /
+  `@vector-im/compound-design-tokens` subpath the externals list omits.
+  `livekit-client` is bundled on purpose: no host imports it, and the pinned
+  version travels with the component.
+  Compound's stylesheets are loaded by `src/index.css` for the page and by the
+  host for the component, never by `src/base.css`. Two entry
+  points: `index.tsx` (the component) and `api.ts` (types, enums and
+  `configurationForIntent`, for a host that must not load the component). `api.ts`
+  may only reach types and constants — `src/UrlConfiguration.ts`, not `UrlParams`.

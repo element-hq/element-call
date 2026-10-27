@@ -92,6 +92,12 @@ export async function expectWithin(
   outer: Locator,
 ): Promise<void> {
   await expect(inner).toBeVisible();
+  // Wait for animations to settle.
+  await inner.evaluate(async (element) => {
+    for (const animation of element.getAnimations({ subtree: true }))
+      await animation.finished;
+  });
+
   const innerBox = await inner.boundingBox();
   const outerBox = await outer.boundingBox();
   if (innerBox === null || outerBox === null)

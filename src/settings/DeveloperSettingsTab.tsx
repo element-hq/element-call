@@ -11,7 +11,6 @@ import {
   type ReactNode,
   useCallback,
   useEffect,
-  useMemo,
   useId,
   useState,
 } from "react";
@@ -21,6 +20,7 @@ import {
   type MatrixClient,
 } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
+import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import {
   EditInPlace,
   ErrorMessage,
@@ -32,7 +32,6 @@ import {
   RadioControl,
   Separator,
 } from "@vector-im/compound-web";
-import { type Room as LivekitRoom } from "livekit-client";
 
 import { FieldRow, InputField } from "../input/Input";
 import { Config } from "../config/Config";
@@ -45,7 +44,7 @@ import {
   muteAllAudio as muteAllAudioSetting,
   alwaysShowIphoneEarpiece as alwaysShowIphoneEarpieceSetting,
   matrixRTCMode as matrixRTCModeSetting,
-  customLivekitUrl as customLivekitUrlSetting,
+  customTransport as customTransportSetting,
   advancedScreenShare as advancedScreenShareSetting,
   screenShareResolution as screenShareResolutionSetting,
   screenShareFramerate as screenShareFramerateSetting,
@@ -67,13 +66,23 @@ import styles from "./DeveloperSettingsTab.module.css";
 import settingsStyles from "./SettingsModal.module.css";
 import { Slider } from "../Slider";
 import { useUrlParams } from "../UrlParams";
-import { getSFUConfigWithOpenID } from "../livekit/openIDSFU";
+import {
+  authenticateWithTransport,
+  type TransportMetadata,
+} from "@element-hq/matrixrtc-sdk";
 import { useBehavior } from "../useBehavior";
 import { type ViewModel } from "../state/ViewModel.ts";
 
 /**
  * The state of MatrixRTC's media key rotation.
  */
+/** One connected transport, as the panel shows it. */
+export interface TransportInfo {
+  transport: TransportMetadata;
+  /** Whether this is the transport the local member publishes on. */
+  local: boolean;
+}
+
 export interface KeyRotationInfo {
   /** Whether the call is large enough that MatrixRTC has stopped rotating the media key. */
   suppressed: boolean;
@@ -105,19 +114,15 @@ const KeyRotationStatus: FC<{ info: KeyRotationInfo }> = ({ info }) => (
 interface Props {
   client: MatrixClient;
   roomId?: string;
-  livekitRooms?: {
-    room: LivekitRoom;
-    url: string;
-    isLocal?: boolean;
-    livekitAlias?: string;
-  }[];
+  /** The transports the client is connected to, while in a call. */
+  transports?: TransportInfo[];
   env: ImportMetaEnv;
   vm: ViewModel<DeveloperSettingsSnapshot>;
 }
 
 export const DeveloperSettingsTab: FC<Props> = ({
   client,
-  livekitRooms,
+  transports,
   roomId,
   env,
   vm,
@@ -167,31 +172,22 @@ export const DeveloperSettingsTab: FC<Props> = ({
     enableExtendedLivekitLogsSetting,
   );
 
-  const [customLivekitUrlUpdateError, setCustomLivekitUrlUpdateError] =
-    useState<string | null>(null);
-  const [customLivekitUrl, setCustomLivekitUrl] = useSetting(
-    customLivekitUrlSetting,
+  const [customTransportUpdateError, setCustomTransportUpdateError] = useState<
+    string | null
+  >(null);
+  const [customTransport, setCustomTransport] = useSetting(
+    customTransportSetting,
   );
-  const [customLivekitUrlTextBuffer, setCustomLivekitUrlTextBuffer] =
-    useState(customLivekitUrl);
+  const [customTransportTextBuffer, setCustomTransportTextBuffer] = useState(
+    () => transportText(customTransport),
+  );
   useEffect(() => {
-    setCustomLivekitUrlTextBuffer(customLivekitUrl);
-  }, [customLivekitUrl]);
+    setCustomTransportTextBuffer(transportText(customTransport));
+  }, [customTransport]);
 
   const [muteAllAudio, setMuteAllAudio] = useSetting(muteAllAudioSetting);
 
   const urlParams = useUrlParams();
-
-  const localSfuUrl = useMemo((): URL | null => {
-    const localRoom = livekitRooms?.find((r) => r.isLocal)?.room;
-    if (localRoom?.engine.client.ws?.url) {
-      // strip the URL params
-      const url = new URL(localRoom.engine.client.ws.url);
-      url.search = "";
-      return url;
-    }
-    return null;
-  }, [livekitRooms]);
 
   const MediaQualitySettings: React.FC<{
     id: string;
@@ -491,64 +487,69 @@ export const DeveloperSettingsTab: FC<Props> = ({
       <EditInPlace
         onSubmit={(e) => e.preventDefault()}
         helpLabel={
-          customLivekitUrl === null
-            ? t("developer_mode.custom_livekit_url.from_config")
-            : t("developer_mode.custom_livekit_url.current_url") +
-              customLivekitUrl
+          customTransport === null
+            ? t("developer_mode.custom_transport.from_config")
+            : t("developer_mode.custom_transport.current") +
+              JSON.stringify(customTransport)
         }
-        label={t("developer_mode.custom_livekit_url.label")}
-        saveButtonLabel={t("developer_mode.custom_livekit_url.save")}
-        savingLabel={t("developer_mode.custom_livekit_url.saving")}
-        cancelButtonLabel={t("developer_mode.custom_livekit_url.reset")}
+        label={t("developer_mode.custom_transport.label")}
+        saveButtonLabel={t("developer_mode.custom_transport.save")}
+        savingLabel={t("developer_mode.custom_transport.saving")}
+        cancelButtonLabel={t("developer_mode.custom_transport.reset")}
         onSave={useCallback(
           async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
-            if (
-              roomId === undefined ||
-              customLivekitUrlTextBuffer === "" ||
-              customLivekitUrlTextBuffer === null
-            ) {
-              setCustomLivekitUrl(null);
+            if (roomId === undefined || customTransportTextBuffer === "") {
+              setCustomTransport(null);
               return;
             }
 
             try {
               const userId = client.getUserId();
               const deviceId = client.getDeviceId();
+              const serverName = client.getDomain();
 
-              if (userId === null || deviceId === null) {
-                throw new Error("Invalid user or device ID");
+              if (userId === null || deviceId === null || serverName === null) {
+                throw new Error("Invalid user, device ID or server name");
               }
-              await getSFUConfigWithOpenID(
+              const transport = JSON.parse(customTransportTextBuffer);
+              // Validate the transport by attempting to get a token for it
+              await authenticateWithTransport({
                 client,
-                { userId, deviceId, memberId: "" },
-                customLivekitUrlTextBuffer,
+                membership: { userId, deviceId, memberId: "" },
+                transport,
+                serverName: transport.server_name ?? serverName,
                 roomId,
-              );
-              setCustomLivekitUrlUpdateError(null);
-              setCustomLivekitUrl(customLivekitUrlTextBuffer);
+                slotId: "org.example.fake-slot#room",
+                role: "publisher",
+                logger,
+              });
+              setCustomTransportUpdateError(null);
+              setCustomTransport(transport);
             } catch {
-              setCustomLivekitUrlUpdateError("invalid URL (did not update)");
+              setCustomTransportUpdateError(
+                "invalid transport (did not update)",
+              );
             }
           },
-          [customLivekitUrlTextBuffer, setCustomLivekitUrl, client, roomId],
+          [customTransportTextBuffer, setCustomTransport, client, roomId],
         )}
-        value={customLivekitUrlTextBuffer ?? ""}
+        value={customTransportTextBuffer}
         onChange={useCallback(
           (event: ChangeEvent<HTMLInputElement>): void => {
-            setCustomLivekitUrlTextBuffer(event.target.value);
+            setCustomTransportTextBuffer(event.target.value);
           },
-          [setCustomLivekitUrlTextBuffer],
+          [setCustomTransportTextBuffer],
         )}
         onCancel={useCallback(
           (e: React.FormEvent<HTMLFormElement>) => {
-            setCustomLivekitUrl(null);
+            setCustomTransport(null);
           },
-          [setCustomLivekitUrl],
+          [setCustomTransport],
         )}
-        serverInvalid={customLivekitUrlUpdateError !== null}
+        serverInvalid={customTransportUpdateError !== null}
       >
-        {customLivekitUrlUpdateError !== null && (
-          <ErrorMessage>{customLivekitUrlUpdateError}</ErrorMessage>
+        {customTransportUpdateError !== null && (
+          <ErrorMessage>{customTransportUpdateError}</ErrorMessage>
         )}
       </EditInPlace>
       <Separator />
@@ -590,39 +591,8 @@ export const DeveloperSettingsTab: FC<Props> = ({
           </HelpMessage>
         </InlineField>
       </Form>
-      {livekitRooms?.map((livekitRoom) => (
-        <div className={styles.livekit_room_box}>
-          <h4>
-            {t("developer_mode.livekit_sfu", {
-              url: livekitRoom.url || "unknown",
-            })}
-          </h4>
-          <p>LivekitAlias: {livekitRoom.livekitAlias}</p>
-          <p>connectionState (wont hot reload): {livekitRoom.room.state}</p>
-          {livekitRoom.isLocal && <p>ws-url: {localSfuUrl?.href}</p>}
-          <p>
-            {t("developer_mode.livekit_server_info")}(
-            {livekitRoom.isLocal ? "local" : "remote"})
-          </p>
-          <pre className={styles.pre}>
-            {livekitRoom.room.serverInfo
-              ? JSON.stringify(livekitRoom.room.serverInfo, null, 2)
-              : "undefined"}
-            {livekitRoom.room.metadata}
-          </pre>
-          <p>Local Participant</p>
-          <pre className={styles.pre}>
-            {livekitRoom.room.localParticipant.identity}
-          </pre>
-          <p>Remote Participants</p>
-          <ul>
-            {Array.from(livekitRoom.room.remoteParticipants.keys()).map(
-              (id) => (
-                <li key={id}>{id}</li>
-              ),
-            )}
-          </ul>
-        </div>
+      {transports?.map(({ transport, local }) => (
+        <TransportBox key={transport.id} transport={transport} local={local} />
       ))}
       <Separator />
       <MediaQualitySettings
@@ -684,5 +654,32 @@ export const DeveloperSettingsTab: FC<Props> = ({
       <p>{t("developer_mode.url_params")}</p>
       <pre className={styles.pre}>{JSON.stringify(urlParams, null, 2)}</pre>
     </>
+  );
+};
+
+/** The text shown in the custom transport field for a given setting value. */
+function transportText(transport: UnstableLivekitTransport | null): string {
+  return transport === null ? "" : JSON.stringify(transport);
+}
+
+const TransportBox: FC<TransportInfo> = ({ transport, local }) => {
+  const { t } = useTranslation();
+  const resolved = useBehavior(transport.resolved$);
+  return (
+    <div className={styles.livekit_room_box}>
+      <h4>{t("developer_mode.livekit_sfu", { url: transport.id })}</h4>
+      <p>
+        {t("developer_mode.livekit_server_info")}({local ? "local" : "remote"})
+      </p>
+      <pre className={styles.pre}>
+        {resolved === undefined
+          ? "not connected"
+          : JSON.stringify(
+              { ...resolved, token: resolved.token && "<redacted>" },
+              null,
+              2,
+            )}
+      </pre>
+    </div>
   );
 };

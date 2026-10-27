@@ -1,0 +1,90 @@
+name: Claude
+on:
+  pull_request:
+    types: [labeled]
+
+permissions:
+  # The action exchanges the GitHub OIDC token for a short-lived Anthropic
+  # access token. GitHub API access goes through CLAUDE_GH_TOKEN instead.
+  id-token: write
+
+jobs:
+  review:
+    name: Review
+    # Only run on labelling and skip forks.
+    if: github.event.label.name == 'Claude-Review' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          # The review looks at the individual commits, not just the combined diff
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Review
+        uses: anthropics/claude-code-action@6fed3ca145920b639991cb756090506e1bcaf515 # v1.0.245
+        with:
+          anthropic_federation_rule_id: fdrl_01XQmWo4nka1ZTqZdsdeScyr
+          anthropic_organization_id: dfbc9a23-d636-4653-8970-035204ef60fa
+          anthropic_service_account_id: svac_018Ay5qaA7ZW8X7XsbdekqUM
+          anthropic_workspace_id: wrkspc_01Aw8LHjBS6fZysu9yqzYifW
+          # The token used here must grant read access to code, issues, and metadata as well as
+          # read and write access to pull requests.
+          github_token: ${{ secrets.CLAUDE_GH_TOKEN }}
+          use_sticky_comment: true
+          track_progress: true
+          prompt: |
+            Review this pull request under the following (and no further) angles:
+
+            1. Scope:
+
+               - Does the PR do one thing?
+               - Is the PR free of unrelated fixes and drive-by refactorings?
+               - If the PR is large, could it reasonably be split into smaller PRs
+                 that still deliver value?
+
+            2. Commits:
+               
+               - Is the work split into self-contained commits of reasonable size?
+               - Are the commits arranged in a sensible order?
+               - Have required refactorings been split out into separate commits?
+               - Is the history free of "wip", checkpoint and fixup-style commits
+                 which only correct an earlier commit in the same PR?
+
+            3. Code:
+
+               - Are the code changes functionally correct?
+               - Do the changes introduce new security vulnerabilities or metadata
+                 leaks?
+               - Is the new code performant enough?
+               - Don't check anything that is already validated via other GitHub
+                 workflows like linting, formatting or tests passing.
+
+            Read the commits themselves with `git log` and `git diff` against
+            the base branch of the PR.
+
+            Drop any findings that are outside the above review angles or that don't
+            require resolution. Grade the severity of each finding as either "🟡 low",
+            "🟠 medium" or "🔴 high". Devise at least one possible resolution for each
+            finding.
+
+            Report the graded findings and resolutions from the "Code" angle as inline
+            comments. Add a footer "_-- Finding from automated review_" to each inline
+            comment.
+
+            Finally, report your overall result as PR comment. Start your message with
+            "# Automated review". Then add one section per review angle with:
+
+            - A verdict of "✅ PASS" or "❌ NEEDS WORK"
+            - A bullet list summarizing the remaining non-inlined graded findings and
+              resolutions (as nested bullets).
+
+            Be brief and concise in all your communication. Do not mention what you have
+            not covered and don't bring up issues that have already been fixed.
+
+            Use Markdown links for anything that can be navigated to on GitHub such
+            as files, commits, issues, pull requests, workflow runs, etc.
+          claude_args: |
+            --model claude-fable-5-1
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(git log:*),Bash(git diff:*),Bash(git show:*)"
+            --max-turns 50

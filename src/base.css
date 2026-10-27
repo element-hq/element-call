@@ -5,19 +5,24 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-/* The styles Element Call needs wherever it is shown: the design tokens, fonts
-and element defaults its own stylesheets build on top of.
+/* The styles Element Call needs wherever it is shown: the element defaults and
+custom properties its own stylesheets build on top of.
 
 Split out from index.css so that Element Call as a component can have these
 without also being given the standalone page's layout, which would style the
-host's own document. What remains here still speaks of the
-document — normalize.css and the typography below use bare element selectors,
-and the custom properties are declared on `:root` — which is right for the
-page, and is why the component build rewrites it: there every selector is
-confined to Element Call's root element (see component/build/scopeStylesToRoot.ts),
-with `html`, `body` and `:root` becoming that element. Nothing needs to be
-written differently here for that to work, but nothing here may rely on
-reaching the host's document either.
+host's own document. Compound's stylesheets — the design tokens, the component
+styles and the fonts they use — are not here either: as a component, Element
+Call shares the host's copy of Compound (it is a peer dependency, so that what
+Compound floats into the host's body, tooltips and menus, is styled by the
+host's stylesheet), and index.css loads it for the page.
+
+What remains here still speaks of the document — normalize.css and the
+typography below use bare element selectors, and the custom properties are
+declared on `:root` — which is right for the page, and is why the component
+build rewrites it: there every selector is confined to Element Call's root
+element (see component/build/scopeStylesToRoot.ts), with `html`, `body` and
+`:root` becoming that element. Nothing needs to be written differently here for
+that to work, but nothing here may rely on reaching the host's document either.
 
 Nothing here should depend on where it lands relative to Element Call's
 component stylesheets: the bundler decides that, and it decides differently for
@@ -25,16 +30,7 @@ the app and for the component build. */
 
 @layer normalize, compound-legacy, compound;
 
-@import url("@fontsource/inter/400.css");
-@import url("@fontsource/inter/500.css");
-@import url("@fontsource/inter/600.css");
-@import url("@fontsource/inter/700.css");
-@import url("@fontsource/inconsolata/400.css");
-@import url("@fontsource/inconsolata/700.css");
-
 @import url("normalize.css/normalize.css") layer(normalize);
-@import url("@vector-im/compound-design-tokens/assets/web/css/compound-design-tokens.css") layer(compound);
-@import url("@vector-im/compound-web/dist/style.css") layer(compound.components);
 
 :root {
   --font-scale: 1;
