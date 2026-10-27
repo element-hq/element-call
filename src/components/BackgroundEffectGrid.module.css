@@ -90,3 +90,42 @@ Please see LICENSE in the repository root for full details.
   text-align: center;
   overflow-wrap: anywhere;
 }
+
+.removable {
+  position: relative;
+  display: flex;
+  min-inline-size: 0;
+}
+
+.removable > .tile {
+  flex: 1;
+}
+
+/* Clear of the target for choosing the tile. */
+.remove {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-end: 0;
+  translate: 20% -20%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  inline-size: 28px;
+  block-size: 28px;
+  border-radius: 50%;
+  background: var(--cpd-color-bg-canvas-default);
+  color: var(--cpd-color-icon-critical-primary);
+  box-shadow: 0 1.2px 2.4px 0 rgb(0 0 0 / 15%);
+  cursor: pointer;
+}
+
+.remove:hover {
+  background: var(--cpd-color-bg-critical-subtle-hovered);
+  box-shadow: 0 0 0 var(--cpd-border-width-1)
+    var(--cpd-color-border-critical-subtle);
+}
+
+.removable:hover .remove,
+.removable:focus-within .remove {
+  display: flex;
+}
