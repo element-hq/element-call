@@ -129,3 +129,35 @@ Please see LICENSE in the repository root for full details.
 .refusal {
   margin: var(--cpd-space-2x) var(--cpd-space-4x) 0;
 }
+
+.selfPreview {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  aspect-ratio: 16 / 9;
+  margin-block-end: var(--cpd-space-2x);
+  overflow: clip;
+  border-start-start-radius: var(--cpd-space-3x);
+  border-start-end-radius: var(--cpd-space-3x);
+  background: var(--cpd-color-bg-subtle-secondary);
+  color: var(--cpd-color-icon-secondary);
+}
+
+.selfPreview > video {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  /* Rounded itself too: a video can be drawn on a layer of its own, which the
+     frame's rounded clip doesn't always reach. */
+  border-radius: inherit;
+}
+
+/* Up to the menu's frame, over the padding at its top. */
+.selfPreviewPinned,
+.deviceListLeadsWithPreview {
+  margin-block-start: calc(-1 * var(--cpd-space-5x));
+}

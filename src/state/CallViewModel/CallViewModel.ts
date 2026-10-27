@@ -358,6 +358,8 @@ export interface CallViewModel {
   keyRotationSuppressed$: Behavior<boolean>;
   /** The local member, once our membership has been seen in the room. */
   localMember$: Behavior<LocalRTCMember | null>;
+  /** Our own camera track, while one is published. */
+  camera$: Behavior<LocalVideoMediaTrack | undefined>;
   remoteMembers$: Behavior<RemoteRTCMember[]>;
   /** The transports the client holds a connection to, for the developer panel. */
   connectedTransports$: Behavior<TransportMetadata[]>;
@@ -1565,6 +1567,7 @@ export function createCallViewModel$(
     leave,
     toggleScreenSharing: toggleScreenSharing,
     sharingScreen$: sharingScreen$,
+    camera$,
 
     tapScreen: (): void => screenTap$.next(),
     tapControls: (): void => controlsTap$.next(),

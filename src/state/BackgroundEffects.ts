@@ -33,6 +33,7 @@ import {
   parseEffect,
 } from "../tracks/backgroundEffects";
 import { type AddedBackground } from "../tracks/backgroundImages";
+import { SyncedCameraTrack } from "../tracks/cameraTrack";
 
 export interface BackgroundEffectsOptions {
   /** Whether this browser can run a pipeline at all. */
@@ -68,6 +69,8 @@ export function createBackgroundEffects(
 ): BackgroundEffects {
   // Wrapped once, so the call and the preview see one processor throughout.
   const processor = fromLivekitProcessor(pipeline);
+  // The camera the pipeline is synced to.
+  const cameraTrack = new SyncedCameraTrack();
   const choice$ = effect$.pipe(map(parseEffect));
   const wanted$ = choice$.pipe(
     map((effect) => effect.kind !== "none"),
@@ -109,6 +112,7 @@ export function createBackgroundEffects(
             supported,
             processor: enable ? processor : undefined,
             settling: enable && !drewAFrame,
+            cameraTrack,
           };
         },
         { supported, processor: undefined },

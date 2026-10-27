@@ -109,7 +109,11 @@ import { useBehavior } from "../useBehavior.ts";
 import { useValueBehavior } from "../useValueBehavior.ts";
 import { Toast } from "../Toast.tsx";
 import overlayStyles from "../Overlay.module.css";
-import { useBackgroundEffectsState$ } from "../tracks/BackgroundEffectsContext.tsx";
+import {
+  reportCamera,
+  useBackgroundEffectsState$,
+} from "../tracks/BackgroundEffectsContext.tsx";
+import { sdkCamera } from "../tracks/cameraTrack.ts";
 import { type Layout } from "../state/layout-types.ts";
 import { ObservableScope } from "../state/ObservableScope.ts";
 import { CallFooter, type FooterSnapshot } from "../components/CallFooter.tsx";
@@ -204,6 +208,12 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       reactionsReader.reactions$,
     );
     setVm(vm);
+    // The call's camera is the one the camera menu shows from here on.
+    reportCamera(
+      scope,
+      vm.camera$.pipe(map((camera) => (camera ? sdkCamera(camera) : null))),
+      backgroundEffectsState$,
+    );
 
     vm.leave$.pipe(scope.bind()).subscribe(props.onLeft);
 
@@ -233,7 +243,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       vm,
       props.muteStates,
       mediaDevices,
-      backgroundEffectsState$.pipe(map(({ settling }) => settling ?? false)),
+      backgroundEffectsState$,
       `${props.client.getUserId()}:${props.client.getDeviceId()}`,
       { showControls: urlParams.showControls, header: urlParams.header },
     );
