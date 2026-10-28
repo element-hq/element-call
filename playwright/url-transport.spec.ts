@@ -79,6 +79,12 @@ const cases: {
     hostFlows: ["cs-api", "service-default"],
     guestFlows: ["service-legacy", "cs-api"],
   },
+  {
+    hostShape: "url",
+    guestShape: "url+legacy",
+    hostFlows: ["cs-api", "service-default"],
+    guestFlows: ["service-legacy", "cs-api"],
+  },
 ];
 
 for (const { hostShape, guestShape, mode, hostFlows, guestFlows } of cases) {
@@ -129,47 +135,6 @@ for (const { hostShape, guestShape, mode, hostFlows, guestFlows } of cases) {
     }
   });
 }
-
-test("Subscriber falls back to the JWT service when the homeserver lacks MSC4195", async ({
-  browser,
-  page,
-  browserName,
-}) => {
-  skipOnFirefox(browserName);
-
-  // The host starts the call with both transport shapes.
-  await advertiseTransport(page, shapes["url+legacy"]);
-  await page.goto("/");
-  await SpaHelpers.createCall(page, "Androl", "HelloCall", true);
-  const inviteLink = await SpaHelpers.getCallInviteLink(page);
-
-  // The guest joins but their C-S requests fail.
-  const guestContext = await browser.newContext({ reducedMotion: "reduce" });
-  const guestPage = await guestContext.newPage();
-  await rejectCsApiTokens(guestPage);
-  const guestRequests = recordAuthRequests(guestPage);
-  await SpaHelpers.joinCallFromInviteLink(guestPage, inviteLink, "Pevara");
-
-  // Wait for the call to connect and render.
-  await SpaHelpers.expectVideoTilesCount(page, 2);
-  await SpaHelpers.expectVideoTilesCount(guestPage, 2);
-
-  // The guest ran through all flows.
-  expect(flowsOf(guestRequests)).toEqual(
-    new Set<Flow>(["cs-api", "service-legacy", "service-default"]),
-  );
-
-  // The C-S token requests failed.
-  for (const request of guestRequests) {
-    expect(request.status).toBe(request.flow === "cs-api" ? 404 : 200);
-  }
-
-  // The C-S token requests preceeded the fallback request.
-  const flows = guestRequests.map((r) => r.flow);
-  expect(flows.indexOf("service-default")).toBeGreaterThan(
-    flows.indexOf("cs-api"),
-  );
-});
 
 test("Publisher shows an error when the homeserver lacks MSC4195", async ({
   page,
