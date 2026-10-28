@@ -17,6 +17,7 @@ import {
   Button,
   Menu,
   MenuItem,
+  MenuScrollArea,
   MenuTitle,
   RadioInput,
   ToggleMenuItem,
@@ -83,6 +84,9 @@ const LIST_SHARE_OF_CALL = 0.6;
 
 /** Smallest device list height in px, so a short call still shows more than one device. */
 const MIN_LIST_HEIGHT = 160;
+
+/** Space kept between the menu and the call area's sides. */
+const MENU_MARGIN = 16;
 
 export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   enabled,
@@ -159,7 +163,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
 
   // Kept clear at the list's foot, so a row reached by keyboard isn't under
   // the meter.
-  const [meterHeight, meter] = useMeasuredHeight();
+  const [meterHeight, meterRef] = useMeasuredHeight();
 
   // Likewise at its head, for the sticky headings.
   const [headingHeight, heading] = useMeasuredHeight();
@@ -168,7 +172,16 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
     if (menuOpen) devices.requestDeviceNames(); // No-op after the first call
   }, [menuOpen, devices]);
 
-  const MuteButton = iconsAndLabels === "audio" ? MicButton : VideoButton;
+  const audioMeter = iconsAndLabels === "audio" && (
+    <LiveMicrophoneLevelMeter
+      ref={meterRef}
+      deviceId={selectedOption}
+      // Only while open, so the microphone isn't held all call.
+      active={menuOpen}
+      className={styles.stickyMeter}
+    />
+  );
+  const MuteButton = audioMeter ? MicButton : VideoButton;
   const button = (
     <MuteButton
       enabled={enabled ?? false}
@@ -179,9 +192,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
         e.stopPropagation();
       }}
       disabled={isBusy || onMuteClick === undefined}
-      data-testid={
-        iconsAndLabels === "audio" ? "incall_mute" : "incall_videomute"
-      }
+      data-testid={audioMeter ? "incall_mute" : "incall_videomute"}
     />
   );
 
@@ -326,6 +337,8 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
         open={menuOpen}
         onOpenChange={onOpenChange}
         side="top"
+        collisionBoundary={rootElement}
+        collisionPadding={MENU_MARGIN}
         trigger={
           <Button
             iconOnly
@@ -340,24 +353,24 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
           />
         }
       >
-        <div
+        <MenuScrollArea
           ref={trackFocusSource}
-          // Keeps the items the menu's own children for assistive tech.
-          role="none"
-          className={styles.deviceList}
+          className={classNames(styles.deviceList, {
+            [styles.deviceListWithMeter]: audioMeter,
+          })}
           data-testid="device-list"
           style={
             {
               "--device-list-max-height":
                 listMaxHeight === undefined ? undefined : `${listMaxHeight}px`,
-              "--device-list-scroll-padding-end":
-                meterHeight === undefined ? undefined : `${meterHeight}px`,
-              "--device-list-scroll-padding-start":
+              "--device-list-heading-height":
                 headingHeight === undefined ? undefined : `${headingHeight}px`,
+              "--device-list-meter-height":
+                meterHeight === undefined ? undefined : `${meterHeight}px`,
             } as CSSProperties
           }
         >
-          {iconsAndLabels === "audio" && speakerOptions && (
+          {audioMeter && speakerOptions && (
             <>
               {/* A menu may only contain items, separators and groups, so each
                   heading is a hidden part of a named group. */}
@@ -388,18 +401,10 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
                 onSelect,
                 numberedLabel,
               )}
-              {iconsAndLabels === "audio" && (
-                <LiveMicrophoneLevelMeter
-                  ref={meter}
-                  deviceId={selectedOption}
-                  // Only while open, so the microphone isn't held all call.
-                  active={menuOpen}
-                  className={styles.stickyMeter}
-                />
-              )}
+              {audioMeter}
             </div>
           </div>
-        </div>
+        </MenuScrollArea>
         {toggles.length > 0 && <hr />}
         {toggles.map((toggle) => (
           <ToggleMenuItem
