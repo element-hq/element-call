@@ -23,6 +23,10 @@ import {
   MatrixRTCSessionEvent,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
+import {
+  type RTCParticipation,
+  type VideoProcessor,
+} from "@element-hq/matrixrtc-sdk";
 
 import { type Layout } from "../layout-types.ts";
 import {
@@ -31,7 +35,9 @@ import {
   mockRemoteParticipant,
   withTestScheduler,
   mockRtcMembership,
+  mockMuteStates,
   testScope,
+  flushPromises,
 } from "../../utils/test.ts";
 import { E2eeType } from "../../e2ee/e2eeType.ts";
 import {
@@ -62,7 +68,11 @@ import {
 import { MatrixRTCMode } from "../../config/ConfigOptions.ts";
 import { initializeWidget } from "../../widget.ts";
 import { computeUrlParams } from "../../UrlParams.ts";
-import { callViewModelOptionsFromParams } from "./CallViewModel.ts";
+import {
+  callViewModelOptionsFromParams,
+  initialPublishRequests,
+} from "./CallViewModel.ts";
+import { type Handler, MuteState } from "../MuteStates.ts";
 
 initializeWidget();
 
@@ -1662,5 +1672,75 @@ describe("callViewModelOptionsFromParams", () => {
   it("carries hideScreensharing", () => {
     const params = computeUrlParams("", widgetUrl("hideScreensharing=true"));
     expect(callViewModelOptionsFromParams(params).hideScreensharing).toBe(true);
+  });
+});
+
+describe("a camera with a video processor", () => {
+  const withCallViewModel = withCallViewModelInMode(MatrixRTCMode.Matrix_2_0);
+  const processor = { name: "effect" } as VideoProcessor;
+
+  /** The handler the view model gives the camera's mute switch. */
+  const cameraHandler = (setHandler: {
+    mock: { calls: [Handler][] };
+  }): Handler => setHandler.mock.calls[1][0];
+
+  it("starts each camera track with the processor", () => {
+    const muteStates = mockMuteStates();
+    vi.spyOn(muteStates.video.enabled$, "value", "get").mockReturnValue(true);
+    expect(
+      initialPublishRequests(
+        muteStates,
+        mockMediaDevices({}),
+        {},
+        processor,
+      ).find((request) => request.source === "camera"),
+    ).toMatchObject({ processor });
+  });
+
+  it("replaces a camera turned off before the processor was chosen", async () => {
+    const setHandler = vi.spyOn(MuteState.prototype, "setHandler");
+    onTestFinished(() => setHandler.mockRestore());
+    const videoProcessor$ = new BehaviorSubject<VideoProcessor | undefined>(
+      undefined,
+    );
+    let participation: RTCParticipation | undefined;
+    withCallViewModel(
+      {},
+      (_vm, _session, { rtcParticipation }) => {
+        participation = rtcParticipation;
+      },
+      { videoProcessor$ },
+    );
+    // The camera is off, so it is stopped and can't take the processor
+    videoProcessor$.next(processor);
+    await cameraHandler(setHandler)(true);
+    await flushPromises();
+
+    expect(participation!.unpublish).toHaveBeenCalledWith("camera");
+    expect(participation!.publish).toHaveBeenCalledWith(
+      expect.objectContaining({ source: "camera", processor }),
+    );
+  });
+
+  it("turns on a camera that took the processor while running", async () => {
+    const setHandler = vi.spyOn(MuteState.prototype, "setHandler");
+    onTestFinished(() => setHandler.mockRestore());
+    const videoProcessor$ = new BehaviorSubject<VideoProcessor | undefined>(
+      undefined,
+    );
+    let participation: RTCParticipation | undefined;
+    withCallViewModel(
+      { videoEnabled: new Map([[localParticipant, constant(true)]]) },
+      (_vm, _session, { rtcParticipation }) => {
+        participation = rtcParticipation;
+      },
+      { videoProcessor$ },
+    );
+    videoProcessor$.next(processor);
+    await cameraHandler(setHandler)(true);
+    await flushPromises();
+
+    expect(participation!.unpublish).not.toHaveBeenCalled();
+    expect(participation!.publish).not.toHaveBeenCalled();
   });
 });

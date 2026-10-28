@@ -27,7 +27,7 @@ import {
 import { PreferencesSettingsTab } from "./PreferencesSettingsTab";
 import { Slider } from "../Slider";
 import { DeviceSelection } from "./DeviceSelection";
-import { useTrackProcessor } from "../tracks/TrackProcessorContext";
+import { useBackgroundEffects } from "../tracks/BackgroundEffectsContext";
 import {
   DeveloperSettingsTab,
   type DeveloperSettingsSnapshot,
@@ -78,7 +78,7 @@ export const SettingsModal: FC<Props> = ({
 
   // Generate a `Checkbox` input to turn blur on or off.
   const BlurCheckbox: React.FC = (): ReactNode => {
-    const { supported } = useTrackProcessor();
+    const { supported } = useBackgroundEffects();
 
     const [blurActive, setBlurActive] = useSetting(backgroundBlurSetting);
 

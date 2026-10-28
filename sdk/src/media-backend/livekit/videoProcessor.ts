@@ -9,14 +9,24 @@ import { type Track, type TrackProcessor } from "livekit-client";
 
 import { type VideoProcessor } from "../../media-api";
 
+const adapters = new WeakMap<
+  VideoProcessor,
+  TrackProcessor<Track.Kind.Video>
+>();
+
 /**
  * A `VideoProcessor` as livekit-client wants it. LiveKit reads the processed
  * track off the processor after `init` and `restart` rather than taking it as
  * their result, so the adapter keeps it there.
+ *
+ * One adapter per processor, so a track can tell that it already runs one: a
+ * processor set again would otherwise be torn down and built anew.
  */
 export function convertToLivekitProcessor(
   processor: VideoProcessor,
 ): TrackProcessor<Track.Kind.Video> {
+  const existing = adapters.get(processor);
+  if (existing) return existing;
   const adapter: TrackProcessor<Track.Kind.Video> = {
     name: processor.name,
     init: async (opts) => {
@@ -30,5 +40,6 @@ export function convertToLivekitProcessor(
     },
     destroy: async () => processor.destroy(),
   };
+  adapters.set(processor, adapter);
   return adapter;
 }
