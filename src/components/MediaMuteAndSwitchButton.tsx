@@ -363,14 +363,10 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
             {
               "--device-list-max-height":
                 listMaxHeight === undefined ? undefined : `${listMaxHeight}px`,
-              // A row reached by keyboard stays above the meter and the band its
-              // ground fills.
-              scrollPaddingBlockEnd:
-                meterHeight === undefined
-                  ? undefined
-                  : `calc(${meterHeight}px + var(--cpd-menu-padding-block-end, 0px))`,
-              "--device-list-scroll-padding-start":
+              "--device-list-heading-height":
                 headingHeight === undefined ? undefined : `${headingHeight}px`,
+              "--device-list-meter-height":
+                meterHeight === undefined ? undefined : `${meterHeight}px`,
             } as CSSProperties
           }
         >

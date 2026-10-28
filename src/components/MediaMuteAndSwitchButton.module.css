@@ -45,8 +45,16 @@ Please see LICENSE in the repository root for full details.
    so CSS can't size it against the call. */
 .deviceList {
   max-block-size: var(--device-list-max-height);
-  /* Keeps a row reached by keyboard clear of the sticky heading. */
-  scroll-padding-block-start: var(--device-list-scroll-padding-start, 0);
+  /* Keeps a row focused by keyboard clear of the sticky heading… */
+  scroll-padding-block-start: var(--device-list-heading-height, 0px);
+}
+
+/* …and of the sticky meter and the padding strip beneath it. */
+.deviceListWithMeter {
+  scroll-padding-block-end: calc(
+    var(--device-list-meter-height, 0px) +
+      var(--cpd-menu-padding-block-end, 0px)
+  );
 }
 
 /* Compound's heading rule heads each section; the design adds space below it. */
@@ -73,7 +81,7 @@ Please see LICENSE in the repository root for full details.
   background: var(--cpd-color-bg-canvas-default);
 }
 
-/* Fills the band between the meter and the frame, or rows show through it. */
+/* Fills the padding strip between the audio meter and the frame. Prohibits overlaps. */
 .stickyMeter::after {
   content: "";
   position: absolute;
