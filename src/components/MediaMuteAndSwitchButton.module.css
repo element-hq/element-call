@@ -91,14 +91,9 @@ Please see LICENSE in the repository root for full details.
   background: var(--cpd-color-bg-canvas-default);
 }
 
-/* Not Compound's fade: that stays at the edge while a bounce carries the meter.
-   This one starts at the chevron, below the meter at rest. */
+/* No fade under the sticky meter: Compound's would fade the meter out. */
 .deviceList.deviceListWithMeter[data-more-below] {
-  mask-image: linear-gradient(
-    to bottom,
-    #000 calc(100% - var(--cpd-space-6x)),
-    transparent calc(100% - var(--cpd-space-3x))
-  );
+  mask-image: none;
 }
 
 /* Radix focuses whatever the pointer is over, so the browser's ring would
