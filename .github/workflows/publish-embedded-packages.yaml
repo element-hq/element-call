@@ -328,7 +328,14 @@ jobs:
         run: echo "ARTIFACT_VERSION=${ARTIFACT_VERSION}" >> "$GITHUB_OUTPUT"
 
   release_notes:
-    needs: [versioning, publish_npm, publish_android, publish_ios, publish_component_npm]
+    needs:
+      [
+        versioning,
+        publish_npm,
+        publish_android,
+        publish_ios,
+        publish_component_npm,
+      ]
     if: always()
     name: Update release notes
     runs-on: ubuntu-latest
