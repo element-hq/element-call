@@ -5,12 +5,14 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { test } from "vitest";
+import EventEmitter from "events";
+import { expect, test } from "vitest";
 import {
   EventType,
-  type IRoomTimelineData,
   MatrixEvent,
   type Room,
+  RoomEvent,
+  RoomStickyEventsEvent,
 } from "matrix-js-sdk";
 import { type RTCCallIntent } from "matrix-js-sdk/lib/matrixrtc";
 import { map, mergeMap, NEVER, type Observable, startWith } from "rxjs";
@@ -25,6 +27,7 @@ import {
 import {
   type CallNotificationWrapper,
   createCallNotificationLifecycle$,
+  createReceivedDecline$,
   type RingAttempt,
 } from "./CallNotificationLifecycle";
 import { constant } from "../Behavior";
@@ -181,22 +184,16 @@ test("ring attempt can be declined", () => {
         a: mockRingEvent("$notif1", 30),
       }),
       receivedDecline$: hot("--d", {
-        d: [
-          new MatrixEvent({
-            type: EventType.RTCDecline,
-            sender: alice.userId,
-            content: {
-              "m.relates_to": {
-                rel_type: "m.reference",
-                event_id: "$notif1",
-              },
+        d: new MatrixEvent({
+          type: EventType.RTCDecline,
+          sender: alice.userId,
+          content: {
+            "m.relates_to": {
+              rel_type: "m.reference",
+              event_id: "$notif1",
             },
-          }),
-          {} as Room,
-          undefined,
-          false,
-          {} as IRoomTimelineData,
-        ],
+          },
+        }),
       }),
     });
 
@@ -216,22 +213,16 @@ test("ring attempt times out if recipient declines too late", () => {
         a: mockRingEvent("$notif1", 30),
       }),
       receivedDecline$: hot("100ms d", {
-        d: [
-          new MatrixEvent({
-            type: EventType.RTCDecline,
-            sender: alice.userId,
-            content: {
-              "m.relates_to": {
-                rel_type: "m.reference",
-                event_id: "$notif1",
-              },
+        d: new MatrixEvent({
+          type: EventType.RTCDecline,
+          sender: alice.userId,
+          content: {
+            "m.relates_to": {
+              rel_type: "m.reference",
+              event_id: "$notif1",
             },
-          }),
-          {} as Room,
-          undefined,
-          false,
-          {} as IRoomTimelineData,
-        ],
+          },
+        }),
       }),
     });
 
@@ -251,22 +242,16 @@ test("decline event relating to wrong event is ignored (times out)", () => {
         a: mockRingEvent("$notif1", 30),
       }),
       receivedDecline$: hot("--d", {
-        d: [
-          new MatrixEvent({
-            type: EventType.RTCDecline,
-            sender: alice.userId,
-            content: {
-              "m.relates_to": {
-                rel_type: "m.reference",
-                event_id: "$other", // <---- WRONG
-              },
+        d: new MatrixEvent({
+          type: EventType.RTCDecline,
+          sender: alice.userId,
+          content: {
+            "m.relates_to": {
+              rel_type: "m.reference",
+              event_id: "$other", // <---- WRONG
             },
-          }),
-          {} as Room,
-          undefined,
-          false,
-          {} as IRoomTimelineData,
-        ],
+          },
+        }),
       }),
     });
 
@@ -286,22 +271,16 @@ test("decline event from wrong sender is ignored (times out)", () => {
         a: mockRingEvent("$notif1", 30),
       }),
       receivedDecline$: hot("--d", {
-        d: [
-          new MatrixEvent({
-            type: EventType.RTCDecline,
-            sender: local.userId, // <---- WRONG
-            content: {
-              "m.relates_to": {
-                rel_type: "m.reference",
-                event_id: "$notif1",
-              },
+        d: new MatrixEvent({
+          type: EventType.RTCDecline,
+          sender: local.userId, // <---- WRONG
+          content: {
+            "m.relates_to": {
+              rel_type: "m.reference",
+              event_id: "$notif1",
             },
-          }),
-          {} as Room,
-          undefined,
-          false,
-          {} as IRoomTimelineData,
-        ],
+          },
+        }),
       }),
     });
 
@@ -310,4 +289,33 @@ test("decline event from wrong sender is ignored (times out)", () => {
       A: { outcome: "timeout" },
     });
   });
+});
+
+test("declines are received from the timeline and the sticky section", () => {
+  const room = new EventEmitter();
+  const received: string[] = [];
+  const subscription = createReceivedDecline$(
+    room as unknown as Room,
+  ).subscribe((event) => received.push(event.getId()!));
+  const event = (eventId: string, type = EventType.RTCDecline): MatrixEvent =>
+    new MatrixEvent({ event_id: eventId, type, sender: alice.userId });
+
+  const timelineArgs = [room, false, false, {}];
+  room.emit(RoomEvent.Timeline, event("$timeline"), ...timelineArgs);
+  room.emit(
+    RoomEvent.Timeline,
+    event("$message", EventType.RoomMessage),
+    ...timelineArgs,
+  );
+  // A gappy sync delivers the decline only in the sticky section
+  room.emit(RoomStickyEventsEvent.Update, [event("$sticky")], [], []);
+  room.emit(
+    RoomStickyEventsEvent.Update,
+    [],
+    [{ previous: event("$old"), current: event("$replacement") }],
+    [event("$removed")],
+  );
+  subscription.unsubscribe();
+
+  expect(received).toEqual(["$timeline", "$sticky", "$replacement"]);
 });
