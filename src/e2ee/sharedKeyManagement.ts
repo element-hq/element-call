@@ -60,8 +60,8 @@ const useRoomSharedKey = (
 /**
  * The shared key for a room, preferring one supplied in the parameters Element
  * Call was started with over whatever is in local storage. If the parameters
- * are for another room, the stored key wins, so that the password for that
- * room doesn't replace the one saved for this room.
+ * are for another room, only the stored key is used, because the password in
+ * the parameters belongs to that other room.
  */
 function keyForRoom(
   roomId: string,
@@ -77,7 +77,7 @@ function keyForRoom(
       roomId,
       paramsRoomId,
     );
-    return storedKey ?? password;
+    return storedKey;
   }
   return password ?? storedKey;
 }

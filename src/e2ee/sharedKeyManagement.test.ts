@@ -53,6 +53,12 @@ describe("getKeyForRoom", () => {
 
     expect(getKeyForRoom(roomId)).toBe("stored");
   });
+
+  test("ignores the password in the parameters for another room", () => {
+    window.location.hash = `#?roomId=${encodeURIComponent(otherRoomId)}&password=other-room`;
+
+    expect(getKeyForRoom(roomId)).toBeNull();
+  });
 });
 
 describe("useRoomEncryptionSystem", () => {
