@@ -163,7 +163,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
 
   // Kept clear at the list's foot, so a row reached by keyboard isn't under
   // the meter.
-  const [meterHeight, meter] = useMeasuredHeight();
+  const [meterHeight, meterRef] = useMeasuredHeight();
 
   // Likewise at its head, for the sticky headings.
   const [headingHeight, heading] = useMeasuredHeight();
@@ -172,7 +172,16 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
     if (menuOpen) devices.requestDeviceNames(); // No-op after the first call
   }, [menuOpen, devices]);
 
-  const MuteButton = iconsAndLabels === "audio" ? MicButton : VideoButton;
+  const audioMeter = iconsAndLabels === "audio" && (
+    <LiveMicrophoneLevelMeter
+      ref={meterRef}
+      deviceId={selectedOption}
+      // Only while open, so the microphone isn't held all call.
+      active={menuOpen}
+      className={styles.stickyMeter}
+    />
+  );
+  const MuteButton = audioMeter ? MicButton : VideoButton;
   const button = (
     <MuteButton
       enabled={enabled ?? false}
@@ -183,9 +192,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
         e.stopPropagation();
       }}
       disabled={isBusy || onMuteClick === undefined}
-      data-testid={
-        iconsAndLabels === "audio" ? "incall_mute" : "incall_videomute"
-      }
+      data-testid={audioMeter ? "incall_mute" : "incall_videomute"}
     />
   );
 
@@ -349,7 +356,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
         <MenuScrollArea
           ref={trackFocusSource}
           className={classNames(styles.deviceList, {
-            [styles.deviceListWithMeter]: iconsAndLabels === "audio",
+            [styles.deviceListWithMeter]: audioMeter,
           })}
           data-testid="device-list"
           style={
@@ -367,7 +374,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
             } as CSSProperties
           }
         >
-          {iconsAndLabels === "audio" && speakerOptions && (
+          {audioMeter && speakerOptions && (
             <>
               {/* A menu may only contain items, separators and groups, so each
                   heading is a hidden part of a named group. */}
@@ -398,15 +405,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
                 onSelect,
                 numberedLabel,
               )}
-              {iconsAndLabels === "audio" && (
-                <LiveMicrophoneLevelMeter
-                  ref={meter}
-                  deviceId={selectedOption}
-                  // Only while open, so the microphone isn't held all call.
-                  active={menuOpen}
-                  className={styles.stickyMeter}
-                />
-              )}
+              {audioMeter}
             </div>
           </div>
         </MenuScrollArea>
