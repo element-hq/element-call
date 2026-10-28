@@ -31,7 +31,11 @@ interface Transport {
  */
 const shapes = {
   url: { type: "livekit", url: sfuUrl },
-  both: { type: "livekit", url: sfuUrl, livekit_service_url: serviceUrl },
+  "url+legacy": {
+    type: "livekit",
+    url: sfuUrl,
+    livekit_service_url: serviceUrl,
+  },
   legacy: null,
 } satisfies Record<string, Transport | null>;
 type Shape = keyof typeof shapes;
@@ -56,15 +60,15 @@ const cases: {
   {
     // Publishers keep the legacy participant identity that clients predating
     // MSC4195 expect, which only the JWT service assigns.
-    hostShape: "both",
-    guestShape: "both",
+    hostShape: "url+legacy",
+    guestShape: "url+legacy",
     hostFlows: ["service-legacy"],
     guestFlows: ["service-legacy"],
   },
   {
     // The MatrixRTC mode has no bearing on the choice.
-    hostShape: "both",
-    guestShape: "both",
+    hostShape: "url+legacy",
+    guestShape: "url+legacy",
     mode: "2_0",
     hostFlows: ["service-legacy"],
     guestFlows: ["service-legacy"],
@@ -134,7 +138,7 @@ test("Subscriber falls back to the JWT service when the homeserver lacks MSC4195
   skipOnFirefox(browserName);
 
   // The host starts the call with both transport shapes.
-  await advertiseTransport(page, shapes.both);
+  await advertiseTransport(page, shapes["url+legacy"]);
   await page.goto("/");
   await SpaHelpers.createCall(page, "Androl", "HelloCall", true);
   const inviteLink = await SpaHelpers.getCallInviteLink(page);
@@ -198,7 +202,7 @@ test("Publisher shows an error when the homeserver lacks MSC4195", async ({
 const delegationCases: { shape: Shape; via: Delegation["via"] }[] = [
   { shape: "url", via: "homeserver" },
   { shape: "legacy", via: "service" },
-  { shape: "both", via: "service" },
+  { shape: "url+legacy", via: "service" },
 ];
 
 for (const { shape, via } of delegationCases) {
