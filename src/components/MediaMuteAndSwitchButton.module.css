@@ -45,16 +45,6 @@ Please see LICENSE in the repository root for full details.
    so CSS can't size it against the call. */
 .deviceList {
   max-block-size: var(--device-list-max-height);
-  /* Keeps a row focused by keyboard clear of the sticky heading… */
-  scroll-padding-block-start: var(--device-list-heading-height, 0px);
-}
-
-/* …and of the sticky meter and the padding strip beneath it. */
-.deviceListWithMeter {
-  scroll-padding-block-end: calc(
-    var(--device-list-meter-height, 0px) +
-      var(--cpd-menu-padding-block-end, 0px)
-  );
 }
 
 /* Compound's heading rule heads each section; the design adds space below it. */
@@ -65,35 +55,6 @@ Please see LICENSE in the repository root for full details.
 /* And more above a heading that follows another section. */
 .deviceList [role="group"] + [role="group"] h3 {
   margin-block-start: var(--cpd-space-7x);
-}
-
-/* Sticky within its own section, and opaque so rows scroll under it. */
-.sectionHeading {
-  position: sticky;
-  inset-block-start: 0;
-  background: var(--cpd-color-bg-canvas-default);
-}
-
-/* Sticky at the foot of the microphone section; opaque as above. */
-.stickyMeter {
-  position: sticky;
-  inset-block-end: 0;
-  background: var(--cpd-color-bg-canvas-default);
-}
-
-/* Fills the padding strip between the audio meter and the frame. Prohibits overlaps. */
-.stickyMeter::after {
-  content: "";
-  position: absolute;
-  inset-inline: 0;
-  inset-block-start: 100%;
-  block-size: var(--cpd-menu-padding-block-end, 0px);
-  background: var(--cpd-color-bg-canvas-default);
-}
-
-/* No fade under the sticky meter: Compound's would fade the meter out. */
-.deviceList.deviceListWithMeter[data-more-below] {
-  mask-image: none;
 }
 
 /* Radix focuses whatever the pointer is over, so the browser's ring would

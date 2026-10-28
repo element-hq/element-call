@@ -18,7 +18,7 @@ import {
   Menu,
   MenuItem,
   MenuScrollArea,
-  MenuTitle,
+  MenuScrollSection,
   RadioInput,
   ToggleMenuItem,
 } from "@vector-im/compound-web";
@@ -161,24 +161,15 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
     return (): void => subscription.unsubscribe();
   }, [menuOpen, rootElement]);
 
-  // Kept clear at the list's foot, so a row reached by keyboard isn't under
-  // the meter.
-  const [meterHeight, meterRef] = useMeasuredHeight();
-
-  // Likewise at its head, for the sticky headings.
-  const [headingHeight, heading] = useMeasuredHeight();
-
   useEffect(() => {
     if (menuOpen) devices.requestDeviceNames(); // No-op after the first call
   }, [menuOpen, devices]);
 
   const audioMeter = iconsAndLabels === "audio" && (
     <LiveMicrophoneLevelMeter
-      ref={meterRef}
       deviceId={selectedOption}
       // Only while open, so the microphone isn't held all call.
       active={menuOpen}
-      className={styles.stickyMeter}
     />
   );
   const MuteButton = audioMeter ? MicButton : VideoButton;
@@ -355,55 +346,38 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
       >
         <MenuScrollArea
           ref={trackFocusSource}
-          className={classNames(styles.deviceList, {
-            [styles.deviceListWithMeter]: audioMeter,
-          })}
+          className={styles.deviceList}
           data-testid="device-list"
           style={
             {
               "--device-list-max-height":
                 listMaxHeight === undefined ? undefined : `${listMaxHeight}px`,
-              "--device-list-heading-height":
-                headingHeight === undefined ? undefined : `${headingHeight}px`,
-              "--device-list-meter-height":
-                meterHeight === undefined ? undefined : `${meterHeight}px`,
             } as CSSProperties
           }
         >
           {audioMeter && speakerOptions && (
-            <>
-              {/* A menu may only contain items, separators and groups, so each
-                  heading is a hidden part of a named group. */}
-              <div role="group" aria-label={t("settings.devices.speaker")}>
-                <div aria-hidden className={styles.sectionHeading}>
-                  <MenuTitle title={t("settings.devices.speaker")} />
-                </div>
-                {deviceItems(
-                  "output",
-                  speakerOptions,
-                  selectedSpeaker,
-                  onSelectOutput,
-                  (n) => t("settings.devices.speaker_numbered", { n }),
-                )}
-              </div>
-            </>
-          )}
-          <div role="group" aria-label={optionsButtonLabel}>
-            <div ref={heading} aria-hidden className={styles.sectionHeading}>
-              <MenuTitle title={optionsButtonLabel} />
-            </div>
-            {/* Apart from the heading, so the sticky meter can't ride over it. */}
-            <div role="none">
+            <MenuScrollSection title={t("settings.devices.speaker")}>
               {deviceItems(
-                "input",
-                options,
-                selectedOption,
-                onSelect,
-                numberedLabel,
+                "output",
+                speakerOptions,
+                selectedSpeaker,
+                onSelectOutput,
+                (n) => t("settings.devices.speaker_numbered", { n }),
               )}
-              {audioMeter}
-            </div>
-          </div>
+            </MenuScrollSection>
+          )}
+          <MenuScrollSection
+            title={optionsButtonLabel}
+            stickyBottomItem={audioMeter}
+          >
+            {deviceItems(
+              "input",
+              options,
+              selectedOption,
+              onSelect,
+              numberedLabel,
+            )}
+          </MenuScrollSection>
         </MenuScrollArea>
         {toggles.length > 0 && <hr />}
         {toggles.map((toggle) => (
@@ -421,25 +395,3 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
     </div>
   );
 };
-
-/** Follows an element's height. */
-function useMeasuredHeight(): [
-  number | undefined,
-  (element: HTMLElement | null) => (() => void) | undefined,
-] {
-  const [height, setHeight] = useState<number>();
-  const ref = useCallback(
-    (element: HTMLElement | null): (() => void) | undefined => {
-      if (element === null) return;
-      const subscription = observeElementSize$(element)
-        .pipe(
-          map((size) => size.height),
-          distinctUntilChanged(),
-        )
-        .subscribe(setHeight);
-      return (): void => subscription.unsubscribe();
-    },
-    [],
-  );
-  return [height, ref];
-}

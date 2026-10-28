@@ -99,6 +99,10 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+// By place: Compound's section heading is aria-hidden, as its group carries
+// the name.
+const SECTION_HEADING = "[role='group'] > [aria-hidden]";
+
 export const Default: Story = {
   args: {
     iconsAndLabels: "audio",
@@ -221,9 +225,8 @@ export const SpeakerAndMicrophoneSections: Story = {
     await expect(
       document.body.querySelectorAll("[role='separator']"),
     ).toHaveLength(0);
-    const headings = document.body.querySelectorAll<HTMLElement>(
-      `.${styles.sectionHeading}`,
-    );
+    const headings =
+      document.body.querySelectorAll<HTMLElement>(SECTION_HEADING);
     await expect(headings).toHaveLength(2);
     const frame = menu.getBoundingClientRect();
     for (const heading of headings) {
@@ -435,14 +438,14 @@ export const ManyDevices: Story = {
     await userEvent.click(canvas.getByRole("button", { name: "Microphone" }));
     const menu = within(document.body);
 
-    // The sticky wrapper rather than the meter: without a fake microphone (as on
+    // The meter's box rather than its level: without a fake microphone (as on
     // WebKit) the meter shows a message instead of a level.
     const list = document.body.querySelector<HTMLElement>(
       `.${styles.deviceList}`,
     )!;
     const sticky = await waitFor(() => {
       const element = document.body.querySelector<HTMLElement>(
-        `.${styles.stickyMeter}`,
+        `.${meterStyles.meter}`,
       );
       if (element === null) throw new Error("the meter has not rendered yet");
       return element;
@@ -565,7 +568,7 @@ export const KeyboardReachesEveryDevice: Story = {
 
     const meter = await waitFor(() => {
       const element = document.body.querySelector<HTMLElement>(
-        `.${styles.stickyMeter}`,
+        `.${meterStyles.meter}`,
       );
       if (element === null) throw new Error("the meter has not rendered yet");
       return element;
@@ -574,9 +577,7 @@ export const KeyboardReachesEveryDevice: Story = {
     // Drawn over the list: the sticky headings and the meter.
     const overlays = [
       meter,
-      ...document.body.querySelectorAll<HTMLElement>(
-        `.${styles.sectionHeading}`,
-      ),
+      ...document.body.querySelectorAll<HTMLElement>(SECTION_HEADING),
     ];
     const items = within(document.body).getAllByRole("menuitemradio");
 
@@ -620,10 +621,7 @@ export const HeadingsStayWhileScrolling: Story = {
       `.${styles.deviceList}`,
     )!;
     const group = await menu.findByRole("group", { name: "Microphone" });
-    // By class: the heading is aria-hidden, and its group carries the name.
-    const heading = group.querySelector<HTMLElement>(
-      `.${styles.sectionHeading}`,
-    )!;
+    const heading = group.querySelector<HTMLElement>(":scope > [aria-hidden]")!;
 
     // Far enough that the heading is only on screen if it is stuck there.
     list.scrollTop +=
