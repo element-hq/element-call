@@ -125,7 +125,12 @@ test("leaves the host's own page unstyled", async ({ page }) => {
     timeout: 60_000,
   });
 
-  // Compound's document styles reach the host, but it loads them itself.
+  // Element Call's page-wide CSS (normalize.css and the tokens in base.css)
+  // should not reach the host's page. Compound CSS that gets loaded to EW (host)
+  // on the other hand should impact the host. So probe with styles only Element Call sets:
+  // - A fresh <sub> keeps the browser's `vertical-align: sub` unless
+  //   normalize.css leaked; it turns that into `baseline`.
+  // - `--font-scale` is Element Call's own token, so `:root` must not have it.
   const host = await page.evaluate(() => {
     const sub = document.body.appendChild(document.createElement("sub"));
     const verticalAlign = getComputedStyle(sub).verticalAlign;
