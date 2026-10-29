@@ -51,7 +51,7 @@ import {
   type MediaKey,
 } from "./media-backend/api";
 import { combineBackends } from "./media-backend/combineBackends";
-import { createLivekitBackend } from "./media-backend/livekit/LivekitBackend";
+import { createLivekitBackends } from "./media-backend/livekit/LivekitBackend";
 import { findRemotePublishLivekitTransport } from "./media-backend/livekit/RemotePublishTransport";
 import { createHomeserverConnected$ } from "./matrixrtc/HomeserverConnected";
 import { joinJsSdkSession } from "./matrixrtc/joinJsSdkSession";
@@ -137,7 +137,7 @@ export function createRTCParticipation(
   // fallback: another member's SFU may let us publish (MSC4195). LiveKit only,
   // so it stays out of the backend interface
   const transportFromBackends = async (): Promise<Transport | null> =>
-    backend.transportType === "livekit"
+    backend.transportType === "livekit" || backend.transportType === "m.livekit"
       ? findRemotePublishLivekitTransport({
           client,
           // A snapshot: if nobody with a usable SFU is here yet, the user has
@@ -325,7 +325,7 @@ function createBackend(
   if (backend) return backend(scope, context);
   return combineBackends(
     scope,
-    [createLivekitBackend(scope, context, { client, mediaQuality })],
+    createLivekitBackends(scope, context, { client, mediaQuality }),
     transport?.type ?? "livekit",
   );
 }

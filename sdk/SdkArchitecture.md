@@ -70,8 +70,10 @@ with the local media connection. LiveKit (`livekit/`) is the one backend today,
 and the client runs it inside a combination (`combineBackends.ts`). It publishes
 on the backend of the type of `options.transport`, LiveKit without one, and
 hands every remote member to the backend of that member's transport. A backend
-nobody is on connects nowhere. A cascading SFU or full mesh is another folder
-under `sdk/src/media-backend/`, added to the combination, and nothing in the
+nobody is on connects nowhere. LiveKit joins it twice (`createLivekitBackends`),
+once for the members on `livekit` and once for those on `m.livekit`, sharing
+its connections, so members of either type on one SFU share one. A cascading
+SFU or full mesh is another folder under `sdk/src/media-backend/`, added to the combination, and nothing in the
 left box changes; `options.backend` replaces the combination altogether.
 
 ### How Element Call uses it
