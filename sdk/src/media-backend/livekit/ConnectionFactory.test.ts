@@ -23,6 +23,7 @@ import {
   LivekitConnectionFactory,
   type ResolvedConnection,
 } from "./ConnectionFactory";
+import { LivekitRooms } from "./LivekitRooms";
 import { exampleTransport } from "./test";
 
 const urlTransport: UnstableLivekitTransport = {
@@ -56,6 +57,7 @@ function create(
     constant(audioOutputDeviceId),
     undefined,
     mediaQuality,
+    new LivekitRooms(logger),
   );
   const connection = factory.createConnection(
     testScope(),

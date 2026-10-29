@@ -31,6 +31,7 @@ import {
 } from "./auth";
 import { Connection, type ConnectionOpts } from "./Connection";
 import { buildLiveKitOptions } from "./livekitOptions";
+import { type LivekitRooms } from "./LivekitRooms";
 import {
   audioCaptureOptions,
   type PublishRequestFor,
@@ -108,6 +109,7 @@ export class LivekitConnectionFactory implements ConnectionFactory {
     private readonly audioOutputDeviceId$: Behavior<string | undefined>,
     private readonly keyProvider: BaseKeyProvider | undefined,
     private readonly mediaQuality: MediaQuality | undefined,
+    private readonly rooms: LivekitRooms,
   ) {}
 
   public createConnection(
@@ -127,6 +129,7 @@ export class LivekitConnectionFactory implements ConnectionFactory {
         serverName,
         client: this.client,
         scope,
+        rooms: this.rooms,
         livekitRoomFactory: () =>
           new LivekitRoom(
             roomOptions(

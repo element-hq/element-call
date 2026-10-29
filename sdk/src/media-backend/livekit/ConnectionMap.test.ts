@@ -22,6 +22,7 @@ import {
   keyFor,
 } from "./ConnectionMap.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
+import { LivekitRooms, livekitRoomKey } from "./LivekitRooms";
 import { type Connection } from "./Connection.ts";
 import { ownMemberMock, withTestScheduler } from "../../utils/test";
 import { type Behavior } from "../../reactive/Behavior";
@@ -101,6 +102,7 @@ describe("connections$ stream", () => {
         remoteTransports$: behavior("a", {
           a: new Epoch([TRANSPORT_1, TRANSPORT_2], 0),
         }),
+        rooms: new LivekitRooms(logger),
         logger: logger,
         ownMembershipIdentity: ownMemberMock,
       });
@@ -138,6 +140,7 @@ describe("connections$ stream", () => {
         remoteTransports$: behavior("a", {
           a: new Epoch([TRANSPORT_2], 0),
         }),
+        rooms: new LivekitRooms(logger),
         logger: logger,
         ownMembershipIdentity: ownMemberMock,
       });
@@ -180,6 +183,7 @@ describe("connections$ stream", () => {
         remoteTransports$: behavior("a", {
           a: new Epoch([sameServiceElsewhere], 0),
         }),
+        rooms: new LivekitRooms(logger),
         logger: logger,
         ownMembershipIdentity: ownMemberMock,
       });
@@ -224,6 +228,7 @@ describe("connections$ stream", () => {
         remoteTransports$: behavior("a", {
           a: new Epoch([sameUrlElsewhere], 0),
         }),
+        rooms: new LivekitRooms(logger),
         logger: logger,
         ownMembershipIdentity: ownMemberMock,
       });
@@ -257,6 +262,7 @@ describe("connections$ stream", () => {
           e: new Epoch([TRANSPORT_1], 4),
           f: new Epoch([TRANSPORT_1, TRANSPORT_2], 5),
         }),
+        rooms: new LivekitRooms(logger),
         logger: logger,
         ownMembershipIdentity: ownMemberMock,
       });
@@ -297,6 +303,7 @@ describe("connections$ stream", () => {
           b: new Epoch([TRANSPORT_1, TRANSPORT_2], 1),
           c: new Epoch([TRANSPORT_1], 2),
         }),
+        rooms: new LivekitRooms(logger),
         logger: logger,
         ownMembershipIdentity: ownMemberMock,
       });
@@ -436,6 +443,7 @@ describe("connectionMap$", () => {
         remoteTransports$: behavior("a", {
           a: new Epoch([TRANSPORT_1, TRANSPORT_2], 0),
         }),
+        rooms: new LivekitRooms(logger),
         logger,
         ownMembershipIdentity: ownMemberMock,
       });
@@ -489,5 +497,60 @@ describe("connectionMap$", () => {
         }),
       });
     });
+  });
+});
+
+describe("one connection per LiveKit room", () => {
+  const room = livekitRoomKey("wss://sfu.example.org", "alias");
+
+  test("reads a transport through the connection holding its room", async () => {
+    const rooms = new LivekitRooms(logger);
+    const connectionMap$ = createConnectionMap$({
+      scope: testScope,
+      connectionFactory: fakeConnectionFactory,
+      localTransport: TRANSPORT_1,
+      remoteTransports$: new BehaviorSubject(new Epoch([TRANSPORT_2], 0)),
+      rooms,
+      logger,
+      ownMembershipIdentity: ownMemberMock,
+    });
+    const [conn1, conn2] = allCreatedConnections;
+    const participant = { identity: "a" } as RemoteParticipant;
+    (conn1.remoteParticipants$ as BehaviorSubject<RemoteParticipant[]>).next([
+      participant,
+    ]);
+    expect(
+      connectionMap$.value.value.getParticipantsForTransport(TRANSPORT_2),
+    ).toEqual([]);
+
+    // Both tokens name the same room: the second connection waits for it
+    await rooms.claim(conn1, room);
+    void rooms.claim(conn2, room);
+
+    const map = connectionMap$.value.value;
+    expect(map.getConnectionForTransport(TRANSPORT_2)).toBe(conn1);
+    expect(map.getParticipantsForTransport(TRANSPORT_2)).toEqual([participant]);
+    expect(map.getConnections()).toEqual([conn1, conn2]);
+  });
+
+  test("forgets a connection with its transport", async () => {
+    const rooms = new LivekitRooms(logger);
+    const remoteTransports$ = new BehaviorSubject(new Epoch([TRANSPORT_2], 0));
+    createConnectionMap$({
+      scope: testScope,
+      connectionFactory: fakeConnectionFactory,
+      localTransport: TRANSPORT_1,
+      remoteTransports$,
+      rooms,
+      logger,
+      ownMembershipIdentity: ownMemberMock,
+    });
+    const [conn1, conn2] = allCreatedConnections;
+    await rooms.claim(conn1, room);
+    void rooms.claim(conn2, room);
+    expect(rooms.holders$.value.size).toBe(2);
+
+    remoteTransports$.next(new Epoch([], 1));
+    expect(rooms.holders$.value).toEqual(new Map([[conn1, conn1]]));
   });
 });

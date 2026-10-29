@@ -46,6 +46,7 @@ import {
   SFURoomCreationRestrictedError,
   UnknownRTCError,
 } from "../../errors";
+import { type LivekitRooms, livekitRoomKey } from "./LivekitRooms";
 
 export interface ConnectionOpts {
   /** The identity parts to use on this connection */
@@ -64,6 +65,8 @@ export interface ConnectionOpts {
   slotId: string;
   /** The observable scope to use for this connection. */
   scope: ObservableScope;
+  /** The room / connection mapping. */
+  rooms: LivekitRooms;
 
   /** Optional factory to create the LiveKit room, mainly for testing purposes. */
   livekitRoomFactory: () => LivekitRoom;
@@ -138,6 +141,7 @@ export class Connection {
   private readonly slotId: string;
   private readonly logger: Logger;
   private readonly ownMembershipIdentity: CallMembershipIdentityParts;
+  private readonly rooms: LivekitRooms;
   /**
    * Creates a new connection to a matrix RTC LiveKit backend.
    *
@@ -161,6 +165,7 @@ export class Connection {
     this.transport = transport;
     this.serverName = serverName;
     this.client = client;
+    this.rooms = opts.rooms;
 
     this.remoteParticipants$ = scope.behavior(
       // Only tracks remote participants
@@ -288,7 +293,9 @@ export class Connection {
    * This will:
    * 1. Authenticate with the transport for our role, through the homeserver
    *    or the JWT service.
-   * 2. Connect to the LiveKit room the token is for.
+   * 2. Claim the LiveKit room the token is for, waiting while another
+   *    connection holds it.
+   * 3. Connect to the room.
    *
    * The errors are also represented as a state in the `state$` observable.
    * It is safe to ignore those errors and handle them accordingly via the `state$` observable.
@@ -301,7 +308,7 @@ export class Connection {
     this.stopped = false;
     try {
       this._state$.next({ state: "authenticating" });
-      const { url, jwt, livekitAlias } = await this.getSFUConfig();
+      let { url, jwt, livekitAlias } = await this.getSFUConfig();
       this.logger.debug(
         "Starting Connection - jwt: ",
         jwt,
@@ -313,6 +320,18 @@ export class Connection {
       this._livekitAlias = livekitAlias;
       // If we were stopped while fetching the config, don't proceed to connect
       if (this.stopped) return;
+
+      // Try to claim the room.
+      const waited = await this.rooms.claim(
+        this,
+        livekitRoomKey(url, livekitAlias),
+      );
+      if (this.stopped) return;
+      if (waited) {
+        // Get a new token since it may have expired in the meantime.
+        ({ url, jwt, livekitAlias } = await this.getSFUConfig());
+        if (this.stopped) return;
+      }
 
       // Setup observer once we are done with getSFUConfig
       connectionStateObserver(this.livekitRoom)
@@ -369,6 +388,7 @@ export class Connection {
         return;
       }
       this.logger.debug(`Failed to connect to LiveKit room: ${error}`);
+      this.rooms.release(this);
       this._state$.next({
         state: "error",
         error:
@@ -426,6 +446,8 @@ export class Connection {
     // disconnect sees the flag and does not report the abort as an error.
     this.stopped = true;
     await this.livekitRoom.disconnect();
+    // Release the room after disconnecting so that the next holder never meets us on the SFU.
+    this.rooms.release(this);
     this._state$.next({ state: "stopped" });
     this.logger.debug("stop: DONE disconnecting from lk room");
   }

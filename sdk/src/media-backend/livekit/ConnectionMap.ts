@@ -21,6 +21,7 @@ import { generateItemsWithEpoch } from "../../reactive/observable";
 import { type ConnectionRole, type TransportLocator } from "./auth";
 import { type Connection } from "./Connection";
 import { type ConnectionFactory } from "./ConnectionFactory";
+import { type LivekitRooms } from "./LivekitRooms";
 
 // Branded, so that only values returned by `keyFor` can be used as keys
 export type TransportKey = string & { __transportKey: true };
@@ -57,12 +58,17 @@ function removeDuplicateTransports(
   return [...map.values()];
 }
 
-/** The connections at one moment, with the remote participants seen on each. */
+/**
+ * The connections at one moment, with the remote participants seen on each.
+ * A transport whose connection waits for a room another connection holds
+ * reads that room through the holder.
+ */
 export class ConnectionMap {
   private readonly map = new Map<
     TransportKey,
     { connection: Connection; participants: RemoteParticipant[] }
   >();
+  private readonly holders = new Map<TransportKey, TransportKey>();
 
   public constructor(private readonly logger?: Logger) {}
 
@@ -81,20 +87,33 @@ export class ConnectionMap {
     }
   }
 
+  /** Routes a transport's lookups through the connection holding its room. */
+  public alias(connection: Connection, holder: Connection): void {
+    this.holders.set(keyFor(connection), keyFor(holder));
+  }
+
   public getConnections(): Connection[] {
     return Array.from(this.map.values()).map(({ connection }) => connection);
   }
 
+  /** The connection a transport's media arrives on or null while it has none. */
   public getConnectionForTransport(
     transport: TransportLocator,
   ): Connection | null {
-    return this.map.get(keyFor(transport))?.connection ?? null;
+    return this.entryFor(transport)?.connection ?? null;
   }
 
   public getParticipantsForTransport(
     transport: TransportLocator,
   ): RemoteParticipant[] {
-    return this.map.get(keyFor(transport))?.participants ?? [];
+    return this.entryFor(transport)?.participants ?? [];
+  }
+
+  private entryFor(
+    transport: TransportLocator,
+  ): { connection: Connection; participants: RemoteParticipant[] } | undefined {
+    const key = keyFor(transport);
+    return this.map.get(this.holders.get(key) ?? key);
   }
 }
 
@@ -105,6 +124,8 @@ interface Props {
   localTransport: TransportLocator;
   /** Every transport some member is on, deduplicated against the local one. */
   remoteTransports$: Behavior<Epoch<TransportLocator[]>>;
+  /** The room / connection mapping. */
+  rooms: LivekitRooms;
   logger: Logger;
   ownMembershipIdentity: CallMembershipIdentityParts;
 }
@@ -112,13 +133,15 @@ interface Props {
 /**
  * One connection per transport in use by one or more session members, with
  * the remote participants each one sees. The connections start as they are
- * created and stop as their transport drops out of the list.
+ * created and stop as their transport drops out of the list. Transports that
+ * resolve to one LiveKit room share the connection holding it.
  */
 export function createConnectionMap$({
   scope,
   connectionFactory,
   localTransport,
   remoteTransports$,
+  rooms,
   logger: parentLogger,
   ownMembershipIdentity,
 }: Props): Behavior<Epoch<ConnectionMap>> {
@@ -162,6 +185,7 @@ export function createConnectionMap$({
             ownMembershipIdentity,
             logger,
           );
+          scope.onEnd(() => rooms.forget(connection));
           // The state carries the progress, errors included
           void connection.start();
           return connection;
@@ -175,16 +199,23 @@ export function createConnectionMap$({
       switchMap(({ value: connections, epoch }) => {
         if (connections.length === 0)
           return of(new Epoch(new ConnectionMap(), epoch));
-        return combineLatest(
+        const participants$ = combineLatest(
           connections.map((connection) =>
             connection.remoteParticipants$.pipe(
               map((participants) => ({ connection, participants })),
             ),
           ),
-          (...list) => {
+        );
+        return combineLatest(
+          [participants$, rooms.holders$],
+          (list, holders) => {
             const map = new ConnectionMap(logger);
-            for (const item of list)
-              map.add(item.connection, item.participants);
+            for (const { connection, participants } of list) {
+              map.add(connection, participants);
+              const holder = holders.get(connection);
+              if (holder !== undefined && holder !== connection)
+                map.alias(connection, holder);
+            }
             return new Epoch(map, epoch);
           },
         );
