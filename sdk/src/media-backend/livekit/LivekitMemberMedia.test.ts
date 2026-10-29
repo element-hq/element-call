@@ -25,7 +25,7 @@ describe("createLivekitMemberMedia", () => {
     const { participant, publications, room, emitter } = fakes();
     const media = createLivekitMemberMedia(
       testScope(),
-      constant({ participant, room }),
+      constant({ participants: [participant], room }),
       { kind: E2eeType.NONE },
     );
     expect(media.tracks$.value).toEqual([]);
@@ -52,7 +52,7 @@ describe("createLivekitMemberMedia", () => {
     const { participant, publications, room, emitter } = fakes();
     const media = createLivekitMemberMedia(
       testScope(),
-      constant({ participant, room }),
+      constant({ participants: [participant], room }),
       { kind: E2eeType.NONE },
     );
     emitter.emit(

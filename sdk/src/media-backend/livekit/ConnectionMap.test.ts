@@ -24,7 +24,7 @@ import {
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
 import { type Connection } from "./Connection.ts";
 import { ownMemberMock, withTestScheduler } from "../../utils/test";
-import { type Behavior } from "../../reactive/Behavior";
+import { constant, type Behavior } from "../../reactive/Behavior";
 import { type TransportLocator } from "./auth";
 
 const TRANSPORT_1: TransportLocator = {
@@ -207,7 +207,7 @@ describe("connections$ stream", () => {
     });
   });
 
-  test("Keeps one connection per homeserver for transports with a url", () => {
+  test("Keeps one connection per homeserver for url transports", () => {
     withTestScheduler(({ behavior, expectObservable }) => {
       const urlTransport: TransportLocator = {
         transport: { type: "livekit", url: "wss://sfu.example.org" },
@@ -237,6 +237,94 @@ describe("connections$ stream", () => {
           expect(e.value.length).toBe(2);
           expect(findConnection(urlTransport, e.value)).toBeDefined();
           expect(findConnection(sameUrlElsewhere, e.value)).toBeDefined();
+          return true;
+        }),
+      });
+    });
+  });
+
+  test("Shares connection between local livekit_service_url transport and remote url + livekit_service_url transport", () => {
+    withTestScheduler(({ behavior, expectObservable, scope }) => {
+      const serviceUrlTransport: TransportLocator = {
+        transport: {
+          type: "livekit",
+          livekit_service_url: "https://jwt.example.org",
+        },
+        serverName: "example.org",
+      };
+      const urlAndServiceUrlTransport: TransportLocator = {
+        transport: {
+          type: "livekit",
+          livekit_service_url: "https://jwt.example.org",
+          url: "wss://sfu.elsewhere.org",
+        },
+        // Should pass even if local server != remote server
+        serverName: "elsewhere.org",
+      };
+      const connectionMap$ = createConnectionMap$({
+        scope,
+        connectionFactory: fakeConnectionFactory,
+        localTransport: serviceUrlTransport,
+        remoteTransports$: constant(new Epoch([urlAndServiceUrlTransport])),
+        logger,
+        ownMembershipIdentity: ownMemberMock,
+      });
+
+      expectObservable(
+        connectionMap$.pipe(mapEpoch((d) => d.getConnections())),
+      ).toBe("a", {
+        a: expect.toSatisfy(({ value: cs }: Epoch<Connection[]>) => {
+          // One connection total, since local and remote connections are shared
+          expect(cs.length).toBe(1);
+          expect(findConnection(serviceUrlTransport, cs)).toBeDefined();
+          expect(findConnection(serviceUrlTransport, cs)).toBe(
+            findConnection(urlAndServiceUrlTransport, cs),
+          );
+          return true;
+        }),
+      });
+    });
+  });
+
+  test("Shares connection between remote livekit_service_url transport and remote url + livekit_service_url transport", () => {
+    withTestScheduler(({ behavior, expectObservable, scope }) => {
+      const serviceUrlTransport: TransportLocator = {
+        transport: {
+          type: "livekit",
+          livekit_service_url: "https://jwt.example.org",
+        },
+        serverName: "example.org",
+      };
+      const urlAndServiceUrlTransport: TransportLocator = {
+        transport: {
+          type: "livekit",
+          livekit_service_url: "https://jwt.example.org",
+          url: "wss://sfu.elsewhere.org",
+        },
+        // Should pass even if local server != remote server
+        serverName: "elsewhere.org",
+      };
+      const connectionMap$ = createConnectionMap$({
+        scope,
+        connectionFactory: fakeConnectionFactory,
+        localTransport: TRANSPORT_2,
+        remoteTransports$: constant(
+          new Epoch([serviceUrlTransport, urlAndServiceUrlTransport]),
+        ),
+        logger,
+        ownMembershipIdentity: ownMemberMock,
+      });
+
+      expectObservable(
+        connectionMap$.pipe(mapEpoch((d) => d.getConnections())),
+      ).toBe("a", {
+        a: expect.toSatisfy(({ value: cs }: Epoch<Connection[]>) => {
+          // Two connections total: a local connection and a shared remote connection
+          expect(cs.length).toBe(2);
+          expect(findConnection(serviceUrlTransport, cs)).toBeDefined();
+          expect(findConnection(serviceUrlTransport, cs)).toBe(
+            findConnection(urlAndServiceUrlTransport, cs),
+          );
           return true;
         }),
       });
@@ -344,7 +432,7 @@ describe("ConnectionMap", () => {
     data.add({ ...connection } as Connection, [p("b")]);
     expect(warn).toHaveBeenCalledWith(
       expect.stringContaining(
-        'second connection to [null,"https://lk.example.org",null]: existing [a], adding [b]',
+        'second connection to ["openID","https://lk.example.org"]: existing [a], adding [b]',
       ),
     );
     expect(data.getParticipantsForTransport(TRANSPORT_1)).toHaveLength(2);

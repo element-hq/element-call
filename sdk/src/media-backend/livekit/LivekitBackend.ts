@@ -60,7 +60,10 @@ import {
 import { toMediaConnectionState } from "./connectionState";
 import { createDataChannel$ } from "./DataChannel";
 import { createKeyProvider } from "./KeyProvider";
-import { createLivekitMemberMedia } from "./LivekitMemberMedia";
+import {
+  createLivekitMemberMedia,
+  participantSourcesEqual,
+} from "./LivekitMemberMedia";
 import { createLivekitLocalMedia } from "./LocalMedia";
 
 export interface LivekitBackendOptions {
@@ -166,9 +169,8 @@ export function createLivekitBackend(
       );
       canDelegate = Promise.resolve(false);
     } else {
-      // Delegation goes through whichever service authenticates us as a
-      // publisher, so only that service's support counts
-      const flow = chooseAuthFlow(transport, "publisher");
+      // Check for support using the same auth flow that we intend to use later
+      const flow = chooseAuthFlow(transport);
       canDelegate =
         flow.kind === "openID"
           ? supportsDelegation(
@@ -234,22 +236,28 @@ export function createLivekitBackend(
           const connection = connections.getConnectionForTransport(locator);
           // A member advertising both a `url` and a `livekit_service_url` may
           // have authenticated through either flow, under either identity
-          const participant = connections
+          const participants = connections
             .getParticipantsForTransport(locator)
-            .find((p) => backendIdentities.includes(p.identity));
-          return connection && participant
-            ? { participant, room: connection.livekitRoom }
+            .filter((p) => backendIdentities.includes(p.identity));
+          return connection && participants.length
+            ? { participants, room: connection.livekitRoom }
             : null;
         }),
-        distinctUntilChanged(
-          (a, b) => a?.participant === b?.participant && a?.room === b?.room,
-        ),
+        distinctUntilChanged(participantSourcesEqual),
       ),
     );
     source$.pipe(memberScope.bind()).subscribe((source) => {
-      logger.info(
-        `${member.rtcBackendIdentity}: LiveKit participant ${source ? `matched (${source.participant.sid})` : "missing"} on ${locator$.value ? JSON.stringify(locator$.value.transport) : "no transport"}`,
-      );
+      const transportString = locator$.value
+        ? JSON.stringify(locator$.value.transport)
+        : "no transport";
+      if (source)
+        logger.info(
+          `${member.rtcBackendIdentity}: ${source.participants.length} LiveKit participant(s) matched (${source.participants.map((p) => p.sid).join(", ")}) on ${transportString}`,
+        );
+      else
+        logger.info(
+          `${member.rtcBackendIdentity}: LiveKit participant missing on ${transportString}`,
+        );
     });
     return createLivekitMemberMedia(memberScope, source$, encryptionSystem);
   };
