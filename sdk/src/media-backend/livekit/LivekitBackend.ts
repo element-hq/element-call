@@ -254,9 +254,10 @@ export function createLivekitBackend(
         logger.info(
           `${member.rtcBackendIdentity}: ${source.participants.length} LiveKit participant(s) matched (${source.participants.map((p) => p.sid).join(", ")}) on ${transportString}`,
         );
-      logger.info(
-        `${member.rtcBackendIdentity}: LiveKit participant missing on ${transportString}`,
-      );
+      else
+        logger.info(
+          `${member.rtcBackendIdentity}: LiveKit participant missing on ${transportString}`,
+        );
     });
     return createLivekitMemberMedia(memberScope, source$, encryptionSystem);
   };
