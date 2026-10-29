@@ -160,6 +160,37 @@ test("Publisher shows an error when the homeserver lacks MSC4195", async ({
   ).toBeVisible();
 });
 
+test("Group call with all possible transport shapes at once", async ({
+  browser,
+  page,
+  browserName,
+}) => {
+  skipOnFirefox(browserName);
+
+  // The host starts the call with a url transport.
+  await advertiseTransport(page, shapes.url);
+  await page.goto("/");
+  await SpaHelpers.createCall(page, "Alice", "HelloCall", true);
+  const inviteLink = await SpaHelpers.getCallInviteLink(page);
+
+  // The guest with a legacy transport joins.
+  const bobContext = await browser.newContext({ reducedMotion: "reduce" });
+  const bobPage = await bobContext.newPage();
+  await advertiseTransport(bobPage, shapes.legacy);
+  await SpaHelpers.joinCallFromInviteLink(bobPage, inviteLink, "Bob");
+
+  // The guest with a url+legacy transport joins.
+  const carolContext = await browser.newContext({ reducedMotion: "reduce" });
+  const carolPage = await carolContext.newPage();
+  await advertiseTransport(carolPage, shapes["url+legacy"]);
+  await SpaHelpers.joinCallFromInviteLink(carolPage, inviteLink, "Carol");
+
+  // Wait for the call to connect and render.
+  await SpaHelpers.expectVideoTilesCount(page, 3);
+  await SpaHelpers.expectVideoTilesCount(bobPage, 3);
+  await SpaHelpers.expectVideoTilesCount(carolPage, 3);
+});
+
 /**
  * Delegation follows the flow that authenticated the publisher: the homeserver
  * for a `url`-only transport, the JWT service wherever there is one.
