@@ -289,15 +289,15 @@ jobs:
       id-token: write # Allow npm to authenticate as a trusted publisher
     steps:
       - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           persist-credentials: false
       - name: Enable Corepack
         run: corepack enable
       - name: Setup node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        # No dependency cache: a release build must not restore one another workflow could have poisoned
         with:
-          cache: "pnpm"
           node-version-file: .node-version
           registry-url: "https://registry.npmjs.org"
       # Not scripts/layered.sh: a release is built against the matrix-js-sdk the lockfile pins
