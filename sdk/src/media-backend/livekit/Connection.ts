@@ -383,15 +383,13 @@ export class Connection {
     }
   }
 
-  /**
-   * Behind a proxy, Firefox fails the first WebSocket to a host after trying
-   * it over HTTP/2, so a join that fails on the WebSocket gets a second try.
-   * https://bugzilla.mozilla.org/show_bug.cgi?id=2015411
-   */
   private async connectLivekitRoom(url: string, jwt: string): Promise<void> {
     try {
       await this.livekitRoom.connect(url, jwt);
     } catch (e) {
+      // Behind a proxy, Firefox fails the first WebSocket to a host after trying
+      // it over HTTP/2, so a join that fails on the WebSocket gets a second try.
+      // https://bugzilla.mozilla.org/show_bug.cgi?id=2015411
       const failedOnFirefoxWebSocket =
         getBrowser()?.name === "Firefox" &&
         e instanceof ConnectionError &&
