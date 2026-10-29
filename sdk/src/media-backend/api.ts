@@ -113,8 +113,11 @@ export interface DataPacket {
 }
 
 export interface MediaBackend {
-  /** The membership transport type this backend serves: "livekit". */
-  readonly transportType: string;
+  /**
+   * The membership transport types this backend serves, ordered decreasingly
+   * by preference.
+   */
+  readonly transportTypes: readonly string[];
 
   /**
    * Makes `transport` usable as the one the local member publishes on. The

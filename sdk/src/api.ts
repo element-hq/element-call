@@ -230,7 +230,7 @@ export interface DataMessage {
  * backend-specific developer panel and for connection diagnostics.
  */
 export interface TransportMetadata {
-  /** `"livekit"` today. */
+  /** `"m.livekit"` or `"livekit"` today. */
   type: string;
   /** Stable key, unique per transport in the slot: the raw transport, serialised with sorted keys. */
   id: string;

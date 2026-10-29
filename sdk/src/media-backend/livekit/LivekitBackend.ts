@@ -271,7 +271,7 @@ export function createLivekitBackend(
   });
 
   return {
-    transportType: "livekit",
+    transportTypes: ["m.livekit", "livekit"],
     prepareLocalTransport,
     delegateDelayedLeave: delegateLeave,
     local: localMedia_,

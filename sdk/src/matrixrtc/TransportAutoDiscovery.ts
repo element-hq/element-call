@@ -17,27 +17,27 @@ type TransportDiscoveryClient = Pick<
 
 export interface TransportAutoDiscoveryProps {
   client: TransportDiscoveryClient;
-  /** The transport type the media backend serves. */
-  transportType: string;
-  /** A transport to use when the homeserver advertises none of the type. */
+  /** The transport types the media backend serves, most preferred first. */
+  transportTypes: readonly string[];
+  /** A transport to use when the homeserver advertises none of the types. */
   fallbackTransport?: Transport;
   logger: Logger;
 }
 
 export class TransportAutoDiscovery {
   private readonly client: TransportDiscoveryClient;
-  private readonly transportType: string;
+  private readonly transportTypes: readonly string[];
   private readonly fallbackTransport: Transport | undefined;
   private readonly logger: Logger;
 
   public constructor({
     client,
-    transportType,
+    transportTypes,
     fallbackTransport,
     logger,
   }: TransportAutoDiscoveryProps) {
     this.client = client;
-    this.transportType = transportType;
+    this.transportTypes = transportTypes;
     this.fallbackTransport = fallbackTransport;
     this.logger = logger.getChild("[TransportAutoDiscovery]");
   }
@@ -64,7 +64,7 @@ export class TransportAutoDiscovery {
   }
 
   /**
-   * Fetches the first transport of the backend's type from the homeserver.
+   * Fetches the first transport of the backend's most preferred type from the homeserver.
    * This will not throw errors, but instead just log them and return null if the expected config is not found or malformed.
    * @private
    */
@@ -76,17 +76,16 @@ export class TransportAutoDiscovery {
       const transportList = await doNetworkOperationWithRetry(async () =>
         client._unstable_getRTCTransports(),
       );
-      const first = transportList.find(
-        (transport) => transport.type === this.transportType,
-      );
-      if (first) {
-        return first;
-      } else {
-        this.logger.info(
-          `No ${this.transportType} transport found in getRTCTransports end point`,
-          transportList,
+      for (const type of this.transportTypes) {
+        const first = transportList.find(
+          (transport) => transport.type === type,
         );
+        if (first) return first;
       }
+      this.logger.info(
+        `No ${this.transportTypes.join(" or ")} transport found in getRTCTransports end point`,
+        transportList,
+      );
     } catch (ex) {
       this.logger.info(`Failed to use getRTCTransports end point: ${ex}`);
     }
