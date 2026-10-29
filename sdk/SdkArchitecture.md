@@ -66,11 +66,12 @@ media backend: whatever carries the media, behind the `MediaBackend` interface i
 `sdk/src/media-backend/api.ts`. The client is the join of the two: a member exists
 once its membership does, and gets its media once the backend has something
 for that membership on its transport; `state$` is the membership state combined
-with the local media connection. LiveKit (`livekit/`) is the one backend today,
-and the client runs it inside a combination (`combineBackends.ts`). It publishes
-on the backend of the type of `options.transport`, LiveKit without one, and
-hands every remote member to the backend of that member's transport. A backend
-nobody is on connects nowhere. A cascading SFU or full mesh is another folder
+with the local media connection. Two backends exist, LiveKit (`livekit/`) and
+full mesh (`full-mesh/`, MSCXXXX), and the client always runs both, combined
+(`combineBackends.ts`). It publishes on the backend of the type of
+`options.transport`, LiveKit without one, and hands every remote member to the
+backend of that member's transport, so members on either are received. A
+backend nobody is on connects nowhere. Another transport is another folder
 under `sdk/src/media-backend/`, added to the combination, and nothing in the
 left box changes; `options.backend` replaces the combination altogether.
 
@@ -153,7 +154,7 @@ the sections below still describe `MatrixRTCClient` until that lands.
 | publish request             | a `PublishRequest`: a source, where to capture it from and how to encode it. Given at the join in `publish`, or later to `publish` on the participation                                                                                                |                                                                                                             |
 | attach, detach              | handing a `<video>` or `<audio>` element to a track and taking it back. The SDK owns the stream and the observers on the element                                                                                                                       | LiveKit `Track.attach`                                                                                      |
 | transport                   | an `RTCTransport`: where media is exchanged, a LiveKit service url today. Carries the raw js-sdk `Transport` from the membership and, in `resolved$`, what the backend fetched to connect to it                                                        | MSC4143 "focus"                                                                                             |
-| media backend               | a `MediaBackend`: what carries the media, behind `sdk/src/media-backend/api.ts`. One per participation: the SDK's backends combined, publishing on the type of `transport` in the join options, unless `backend` replaces them                         | "SFU", a LiveKit room, a peer connection                                                                    |
+| media backend               | a `MediaBackend`: what carries the media, behind `sdk/src/media-backend/api.ts`. One per participation: LiveKit and full mesh combined, publishing on the type of `transport` in the join options, unless `backend` replaces them                      | "SFU", a LiveKit room, a peer connection                                                                    |
 
 Names use `RTC` in capitals, as the js-sdk does: `RTCSlot`, `RTCParticipation`,
 `RTCMember`, `matrixRTCMode`.
