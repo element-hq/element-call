@@ -10,7 +10,6 @@ import {
   type LocalParticipant,
   type LocalTrackPublication,
   ParticipantEvent,
-  type Room as LivekitRoom,
 } from "livekit-client";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import {
@@ -43,7 +42,11 @@ import { type LocalMediaBackend, MediaConnectionState } from "../api";
 import { type TransportLocator } from "./auth";
 import { type Connection } from "./Connection";
 import { type ConnectionMap } from "./ConnectionMap";
-import { createLocalLivekitMemberMedia } from "./LivekitMemberMedia";
+import {
+  createLocalLivekitMemberMedia,
+  type ParticipantSource,
+  participantSourcesEqual,
+} from "./LivekitMemberMedia";
 import { livekitSources } from "./LivekitMediaTrack";
 import { type DesiredMedia, Publisher } from "./Publisher";
 import { toMediaConnectionState } from "./connectionState";
@@ -217,17 +220,15 @@ function participantAndRoom$(
   scope: ObservableScope,
   participant$: Behavior<LocalParticipant | null>,
   connection$: Behavior<Connection | null>,
-): Behavior<{ participant: LocalParticipant; room: LivekitRoom } | null> {
+): Behavior<ParticipantSource<LocalParticipant>> {
   return scope.behavior(
     combineLatest([participant$, connection$]).pipe(
       map(([participant, connection]) =>
         participant && connection
-          ? { participant, room: connection.livekitRoom }
+          ? { participants: [participant], room: connection.livekitRoom }
           : null,
       ),
-      distinctUntilChanged(
-        (a, b) => a?.participant === b?.participant && a?.room === b?.room,
-      ),
+      distinctUntilChanged(participantSourcesEqual),
     ),
   );
 }

@@ -16,13 +16,20 @@ import {
   RoomEvent,
   type TrackPublication,
 } from "livekit-client";
-import { EMPTY, filter, map, type Observable, of, switchMap } from "rxjs";
+import {
+  EMPTY,
+  filter,
+  map,
+  type Observable,
+  of,
+  switchMap,
+  combineLatest,
+} from "rxjs";
 
 import { type ObservableScope } from "../../reactive/ObservableScope";
 import { generateItems } from "../../reactive/observable";
 import { E2eeType, type EncryptionSystem } from "../../encryption";
 import { type Behavior } from "../../reactive/Behavior";
-import { mapScoped } from "../../utils/mapScoped";
 import {
   type EncryptionError,
   type LocalMemberMedia,
@@ -33,12 +40,26 @@ import {
   createLivekitMediaTrack,
   createLocalLivekitMediaTrack,
 } from "./LivekitMediaTrack";
+import { shallowEquals as arrayShallowEquals } from "../../utils/array";
 
 /** Where a member's media comes from: its participant on a room, null while it has none. */
 export type ParticipantSource<P extends Participant = Participant> = {
-  participant: P;
+  participants: P[];
   room: LivekitRoom;
 } | null;
+
+export function participantSourcesEqual<P extends Participant = Participant>(
+  a: ParticipantSource<P>,
+  b: ParticipantSource<P>,
+): boolean {
+  return (
+    a === b ||
+    (a !== null &&
+      b !== null &&
+      arrayShallowEquals(a.participants, b.participants) &&
+      a.room === b.room)
+  );
+}
 
 /**
  * A member's media from its participant. The only place, with
@@ -99,21 +120,28 @@ function memberTracks$<P extends Participant, T>(
   ) => T,
 ): Behavior<T[] | null> {
   return scope.behavior(
-    mapScoped(scope, source$, (participantScope, { participant, room }) =>
-      participantScope.behavior(
-        observeParticipantMedia(participant).pipe(
-          generateItems(
-            `${participant.identity} tracks$`,
-            function* () {
-              for (const publication of participant.trackPublications.values())
-                yield { keys: [publication.trackSid], data: publication };
-            },
-            (trackScope, publication$) =>
-              factory(trackScope, participant, publication$.value, room),
+    source$.pipe(
+      switchMap((source) => {
+        if (source === null) return of(null);
+        const { participants, room } = source;
+        return combineLatest(
+          participants.map((participant) =>
+            observeParticipantMedia(participant).pipe(
+              generateItems(
+                `${participant.identity} tracks$`,
+                function* () {
+                  for (const publication of participant.trackPublications.values())
+                    yield { keys: [publication.trackSid], data: publication };
+                },
+                (trackScope, publication$) =>
+                  factory(trackScope, participant, publication$.value, room),
+              ),
+            ),
           ),
-        ),
-      ),
-    ).pipe(switchMap((tracks$) => tracks$ ?? of(null))),
+          (...tracks) => tracks.flat(1),
+        );
+      }),
+    ),
   );
 }
 
@@ -133,7 +161,7 @@ function encryptionErrors$(
             filter(
               (message) =>
                 encryptionSystem.kind === E2eeType.SHARED_KEY ||
-                message.includes(source.participant.identity),
+                source.participants.some((p) => message.includes(p.identity)),
             ),
             map((message): EncryptionError | undefined =>
               message.includes("MissingKey")
