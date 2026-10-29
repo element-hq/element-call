@@ -70,6 +70,7 @@ import { ReactionsOverlay } from "./ReactionsOverlay";
 import { CallEventAudioRenderer } from "./CallEventAudioRenderer";
 import {
   createRTCSlot,
+  FULL_MESH_TRANSPORT_TYPE,
   type RTCParticipationOptions,
   type RTCSlotOptions,
   constant,
@@ -84,6 +85,7 @@ import {
   cameraFramerate,
   cameraResolution,
   customTransport,
+  fullMeshPublishing,
   echoCancellationSetting,
   matrixRTCMode as matrixRTCModeSetting,
   noiseSuppressionSetting,
@@ -823,7 +825,9 @@ export function rtcParticipationOptions(
       delegatedDelayedLeave: session.delegated_delayed_leave,
     },
     mediaQuality: config.media_quality,
-    transport: customTransport.value$.value ?? undefined,
+    transport: fullMeshPublishing.value$.value
+      ? { type: FULL_MESH_TRANSPORT_TYPE }
+      : (customTransport.value$.value ?? undefined),
     fallbackTransport: config.livekit && {
       type: "livekit",
       livekit_service_url: config.livekit.livekit_service_url,

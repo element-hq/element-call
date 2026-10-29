@@ -109,7 +109,7 @@ describe("widget", () => {
       receiveState,
       sendToDevice: sendRecvToDevice,
       receiveToDevice: sendRecvToDevice,
-      turnServers: false,
+      turnServers: true,
       rtcTransports: true,
       rtcLivekitGetToken: true,
       rtcLivekitDelegateDelayedLeave: true,

@@ -292,6 +292,7 @@ export class TestHelpers {
   public static async openWidgetSetEmbeddedElementCallRtcModeCloseWidget(
     page: Page,
     mode: RtcMode,
+    { fullMesh = false }: { fullMesh?: boolean } = {},
   ): Promise<void> {
     await page.getByRole("button", { name: "Video call" }).click({
       timeout: 5000,
@@ -300,7 +301,7 @@ export class TestHelpers {
       timeout: 10000,
     });
 
-    await TestHelpers.setEmbeddedElementCallRtcMode(page, mode);
+    await TestHelpers.setEmbeddedElementCallRtcMode(page, mode, { fullMesh });
     await page.getByRole("button", { name: "Close lobby" }).click();
   }
 
@@ -313,6 +314,7 @@ export class TestHelpers {
   public static async setEmbeddedElementCallRtcMode(
     page: Page,
     mode: RtcMode,
+    { fullMesh = false }: { fullMesh?: boolean } = {},
   ): Promise<void> {
     const iframe = page.locator('iframe[title="Element Call"]').contentFrame();
 
@@ -330,6 +332,10 @@ export class TestHelpers {
       // compat
       await iframe.getByText("Compatibility: state events").click();
     }
+    // Publish on the full mesh transport (MSCXXXX) instead of LiveKit
+    await iframe
+      .getByText("Publish on full mesh", { exact: false })
+      .setChecked(fullMesh);
     await iframe.getByTestId("modal_close").click();
   }
 
