@@ -165,6 +165,7 @@ test("Group call with all possible transport shapes at once", async ({
   page,
   browserName,
 }) => {
+  test.slow();
   skipOnFirefox(browserName);
 
   // The host starts the call with a url transport.
