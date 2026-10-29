@@ -134,8 +134,8 @@ importers:
         specifier: ^11.0.0
         version: 11.3.1(@types/react@19.2.18)(react@19.2.8)
       '@vector-im/compound-web':
-        specifier: github:element-hq/compound-web#c0578aab8ea2f2016f9e6a3dbd2d95f2737b635c
-        version: https://codeload.github.com/element-hq/compound-web/tar.gz/c0578aab8ea2f2016f9e6a3dbd2d95f2737b635c(@fontsource/inconsolata@5.3.0)(@fontsource/inter@5.3.0)(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(@vector-im/compound-design-tokens@11.3.1(@types/react@19.2.18)(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        specifier: github:element-hq/compound-web#a75cf8aa1dbd2eaf2659069a89dac47f495ad004
+        version: https://codeload.github.com/element-hq/compound-web/tar.gz/a75cf8aa1dbd2eaf2659069a89dac47f495ad004(@fontsource/inconsolata@5.3.0)(@fontsource/inter@5.3.0)(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(@vector-im/compound-design-tokens@11.3.1(@types/react@19.2.18)(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@vitejs/plugin-react':
         specifier: ^6.0.2
         version: 6.1.1(@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7(supports-color@7.2.0))(@babel/runtime@8.0.0)(rolldown@1.2.15)(vite@8.2.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.103.1)(terser@5.46.1)(yaml@2.9.0)))(babel-plugin-react-compiler@1.0.0)(vite@8.2.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.103.1)(terser@5.46.1)(yaml@2.9.0))
@@ -3310,8 +3310,8 @@ packages:
       react:
         optional: true
 
-  '@vector-im/compound-web@https://codeload.github.com/element-hq/compound-web/tar.gz/c0578aab8ea2f2016f9e6a3dbd2d95f2737b635c':
-    resolution: {gitHosted: true, integrity: sha512-I2CWgw36c/P1EZJYuc8+rOaALkSnl4UDtANua2/ICyTiAGRiMgbJw49/gUJV1ElMqqAR/bK0o4bcqNVg7wA+vA==, tarball: https://codeload.github.com/element-hq/compound-web/tar.gz/c0578aab8ea2f2016f9e6a3dbd2d95f2737b635c}
+  '@vector-im/compound-web@https://codeload.github.com/element-hq/compound-web/tar.gz/a75cf8aa1dbd2eaf2659069a89dac47f495ad004':
+    resolution: {gitHosted: true, integrity: sha512-KnG6/GTdMfBPfLf8u5HGBtBESJ0QpXB6WBFlDFR/zOHjh8V7f8tY0LXyIlNGIBK2Gz50PQGRauP1z/nPyjnyNA==, tarball: https://codeload.github.com/element-hq/compound-web/tar.gz/a75cf8aa1dbd2eaf2659069a89dac47f495ad004}
     version: 10.4.0
     peerDependencies:
       '@fontsource/inconsolata': ^5
@@ -8883,7 +8883,7 @@ snapshots:
       '@types/react': 19.2.18
       react: 19.2.8
 
-  '@vector-im/compound-web@https://codeload.github.com/element-hq/compound-web/tar.gz/c0578aab8ea2f2016f9e6a3dbd2d95f2737b635c(@fontsource/inconsolata@5.3.0)(@fontsource/inter@5.3.0)(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(@vector-im/compound-design-tokens@11.3.1(@types/react@19.2.18)(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@vector-im/compound-web@https://codeload.github.com/element-hq/compound-web/tar.gz/a75cf8aa1dbd2eaf2659069a89dac47f495ad004(@fontsource/inconsolata@5.3.0)(@fontsource/inter@5.3.0)(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(@vector-im/compound-design-tokens@11.3.1(@types/react@19.2.18)(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
       '@floating-ui/react': 0.27.20(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@floating-ui/react-dom': 2.1.9(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
