@@ -18,6 +18,7 @@ import {
   filter,
   firstValueFrom,
   map,
+  NEVER,
   type Observable,
   of,
   switchMap,
@@ -27,7 +28,7 @@ import { type ResolvedTransport, type RTCMember } from "../../api";
 import { type MediaQuality } from "../../config";
 import { MatrixRTCError } from "../../errors";
 import { type MemberMedia } from "../../media-api";
-import { type Behavior } from "../../reactive/Behavior";
+import { type Behavior, constant } from "../../reactive/Behavior";
 import {
   Epoch,
   type ObservableScope,
@@ -81,9 +82,44 @@ export interface LivekitBackendOptions {
 /**
  * MatrixRTC media over LiveKit SFUs: one room per transport, the local one
  * published on, every remote one subscribed to, each authenticated for its
- * role through the homeserver or the transport's JWT service.
+ * role through the homeserver or the transport's JWT service. Serves members
+ * on either LiveKit transport type, `livekit` and `m.livekit`.
  */
 export function createLivekitBackend(
+  scope: ObservableScope,
+  context: MediaBackendContext,
+  options: LivekitBackendOptions,
+): MediaBackend {
+  return livekitBackend(scope, context, options).backend;
+}
+
+/**
+ * The LiveKit backend once per transport type, for a combination of backends:
+ * `livekit` of the earlier versions of MSC4195 and `m.livekit` of the merged
+ * one. Each takes the members on its own type, and both share the connections,
+ * so members of either type on one SFU share a connection. The `livekit` one
+ * reports the shared connections and data.
+ */
+export function createLivekitBackends(
+  scope: ObservableScope,
+  context: MediaBackendContext,
+  options: LivekitBackendOptions,
+): MediaBackend[] {
+  const { backend, mediaForType } = livekitBackend(scope, context, options);
+  return [
+    { ...backend, mediaFor: mediaForType("livekit") },
+    {
+      ...backend,
+      transportType: "m.livekit",
+      mediaFor: mediaForType("m.livekit"),
+      connections$: constant([]),
+      setAudioOutputDeviceId: async () => Promise.resolve(),
+      data$: NEVER,
+    },
+  ];
+}
+
+function livekitBackend(
   scope: ObservableScope,
   {
     roomId,
@@ -96,7 +132,11 @@ export function createLivekitBackend(
     logger: parentLogger,
   }: MediaBackendContext,
   { client, mediaQuality }: LivekitBackendOptions,
-): MediaBackend {
+): {
+  backend: MediaBackend;
+  /** `mediaFor` for the members on transports of `type`, or of either type. */
+  mediaForType: (type?: string) => MediaBackend["mediaFor"];
+} {
   const logger = parentLogger.getChild("[LivekitBackend]");
   const keyProvider = createKeyProvider(encryptionSystem, mediaKeys$, logger);
   const transports = createTransportRegistry(scope);
@@ -217,13 +257,15 @@ export function createLivekitBackend(
   const mediaFor = (
     memberScope: ObservableScope,
     member: RTCMember,
+    type?: string,
   ): MemberMedia => {
     const { backendIdentities } = member;
     const locator$ = memberScope.behavior(
       member.transport$.pipe(
         map((transport): TransportLocator | undefined => {
           const raw = transport?.raw;
-          return isUnstableLivekitTransport(raw)
+          return isUnstableLivekitTransport(raw) &&
+            (type === undefined || raw.type === type)
             ? {
                 transport: raw,
                 serverName: serverNameOfTransport(raw, member.userId),
@@ -261,6 +303,10 @@ export function createLivekitBackend(
     });
     return createLivekitMemberMedia(memberScope, source$, encryptionSystem);
   };
+  const mediaForType =
+    (type?: string): MediaBackend["mediaFor"] =>
+    (memberScope, member) =>
+      mediaFor(memberScope, member, type);
 
   const connections$ = scope.behavior<BackendConnection[]>(
     connectionMap$.pipe(
@@ -279,15 +325,18 @@ export function createLivekitBackend(
   });
 
   return {
-    transportType: "livekit",
-    prepareLocalTransport,
-    delegateDelayedLeave: delegateLeave,
-    local: localMedia_,
-    mediaFor,
-    connections$,
-    setAudioOutputDeviceId: localMedia_.setAudioOutputDeviceId,
-    sendData,
-    data$,
+    backend: {
+      transportType: "livekit",
+      prepareLocalTransport,
+      delegateDelayedLeave: delegateLeave,
+      local: localMedia_,
+      mediaFor: mediaForType(),
+      connections$,
+      setAudioOutputDeviceId: localMedia_.setAudioOutputDeviceId,
+      sendData,
+      data$,
+    },
+    mediaForType,
   };
 }
 

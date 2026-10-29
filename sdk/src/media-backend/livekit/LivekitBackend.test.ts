@@ -28,7 +28,7 @@ import {
   ownMemberMock,
   testScope,
 } from "../../utils/test";
-import { MediaConnectionState } from "../api";
+import { MediaConnectionState, type MediaBackendContext } from "../api";
 import * as auth from "./auth";
 import { type TransportLocator } from "./auth";
 import { type Connection, type ConnectionState } from "./Connection";
@@ -36,6 +36,7 @@ import * as connectionFactory from "./ConnectionFactory";
 import { toMediaConnectionState } from "./connectionState";
 import {
   createLivekitBackend,
+  createLivekitBackends,
   createTransportRegistry,
   supportsDelegation,
 } from "./LivekitBackend";
@@ -214,21 +215,19 @@ describe("createLivekitBackend", () => {
     fetchMock.reset();
   });
 
+  const context: MediaBackendContext = {
+    roomId: "!room:example.org",
+    slotId: "m.call#ROOM",
+    ownMembershipIdentity: ownMemberMock,
+    publish: [],
+    encryptionSystem: { kind: E2eeType.NONE },
+    mediaKeys$: NEVER,
+    timings: defaultSessionTimings,
+    logger,
+  };
+
   function backend(): ReturnType<typeof createLivekitBackend> {
-    return createLivekitBackend(
-      testScope(),
-      {
-        roomId: "!room:example.org",
-        slotId: "m.call#ROOM",
-        ownMembershipIdentity: ownMemberMock,
-        publish: [],
-        encryptionSystem: { kind: E2eeType.NONE },
-        mediaKeys$: NEVER,
-        timings: defaultSessionTimings,
-        logger,
-      },
-      { client },
-    );
+    return createLivekitBackend(testScope(), context, { client });
   }
 
   // Delegation goes through whichever service authenticates us as a
@@ -473,6 +472,70 @@ describe("createLivekitBackend", () => {
       expect(b.connections$.value.map(({ transport }) => transport)).toEqual([
         bothTransport,
       ]);
+    });
+
+    it("serves members on either type", async () => {
+      const b = await prepared();
+      const stableTransport: UnstableLivekitTransport = {
+        ...otherTransport,
+        type: "m.livekit",
+      };
+      const media = b.mediaFor(testScope(), bob(stableTransport, [legacyId]));
+      await flushPromises();
+      const remote = connections.find(
+        (c) => c.connection.role === "subscriber",
+      );
+      expect(remote?.connection.transport).toEqual(stableTransport);
+
+      remote!.participants$.next([
+        mockRemoteParticipant({
+          identity: legacyId,
+          trackPublications: new Map(),
+        }),
+      ]);
+      await flushPromises();
+      expect(media.tracks$.value).toEqual([]);
+    });
+
+    it("splits members by type across the two backends, on shared connections", async () => {
+      const [legacy, stable] = createLivekitBackends(testScope(), context, {
+        client,
+      });
+      expect([legacy.transportType, stable.transportType]).toEqual([
+        "livekit",
+        "m.livekit",
+      ]);
+      // Bob and Carl are on the same SFU, each under a type of his own
+      const carlId = "@carl:example.org:DEV000";
+      const bobOnLegacy = bob(otherTransport, [legacyId]);
+      const carlOnStable = {
+        ...bob({ ...otherTransport, type: "m.livekit" } as const, [carlId]),
+        rtcBackendIdentity: carlId,
+        memberId: carlId,
+      };
+      const media = {
+        bob: legacy.mediaFor(testScope(), bobOnLegacy),
+        carl: stable.mediaFor(testScope(), carlOnStable),
+        // Each backend leaves the members of the other type alone
+        carlOnLegacy: legacy.mediaFor(testScope(), carlOnStable),
+        bobOnStable: stable.mediaFor(testScope(), bobOnLegacy),
+      };
+      await flushPromises();
+      expect(connections).toHaveLength(1);
+
+      connections[0].participants$.next(
+        [legacyId, carlId].map((identity) =>
+          mockRemoteParticipant({ identity, trackPublications: new Map() }),
+        ),
+      );
+      await flushPromises();
+      expect(media.bob.tracks$.value).toEqual([]);
+      expect(media.carl.tracks$.value).toEqual([]);
+      expect(media.carlOnLegacy.tracks$.value).toBeNull();
+      expect(media.bobOnStable.tracks$.value).toBeNull();
+      // The shared connection is reported once, by the `livekit` backend
+      expect(legacy.connections$.value).toHaveLength(1);
+      expect(stable.connections$.value).toEqual([]);
     });
 
     it("has no media for a member without a transport, and opens no connection", async () => {
