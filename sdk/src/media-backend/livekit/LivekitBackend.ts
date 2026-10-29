@@ -166,9 +166,8 @@ export function createLivekitBackend(
       );
       canDelegate = Promise.resolve(false);
     } else {
-      // Delegation goes through whichever service authenticates us as a
-      // publisher, so only that service's support counts
-      const flow = chooseAuthFlow(transport, "publisher");
+      // Check for support using the same auth flow that we intend to use later
+      const flow = chooseAuthFlow(transport);
       canDelegate =
         flow.kind === "openID"
           ? supportsDelegation(
