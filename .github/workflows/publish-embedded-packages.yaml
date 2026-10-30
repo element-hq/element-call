@@ -283,6 +283,11 @@ jobs:
     if: always()
     name: Update release notes
     runs-on: ubuntu-latest
+    # Shared with publish-component.yaml, which appends to the same release: two appends
+    # at once would each write back the body without the other's section
+    concurrency:
+      group: release-notes-${{ github.event.release.tag_name || github.run_id }}
+      cancel-in-progress: false
     permissions:
       contents: write # to update release notes
     steps:
