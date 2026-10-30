@@ -75,9 +75,12 @@ jobs:
         with:
           node-version-file: .node-version
           registry-url: "https://registry.npmjs.org"
-      # Not scripts/layered.sh: a release is built against the matrix-js-sdk the lockfile pins
+      # Layered like build-element-call.yaml, so a PR paired with a matrix-js-sdk branch
+      # builds against it; a release pins the SDK, so layered.sh leaves it as locked
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --ignore-pnpmfile
+        run: scripts/layered.sh --ignore-pnpmfile
+        env:
+          PR_HEAD_REPO_OWNER: ${{ github.event.pull_request.head.repo.owner.login }}
       - name: Build component
         run: pnpm build:component:production
         env:
