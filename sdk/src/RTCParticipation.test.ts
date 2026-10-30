@@ -164,7 +164,7 @@ function setup(
     context: MediaBackendContext,
   ): MediaBackend => {
     const backend: MediaBackend = {
-      transportType: "livekit",
+      transportTypes: ["m.livekit", "livekit"],
       prepareLocalTransport: async () => fake.prepared.promise,
       delegateDelayedLeave: fake.delegateDelayedLeave,
       local: {
