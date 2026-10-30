@@ -278,67 +278,16 @@ jobs:
         name: Output artifact version
         run: echo "ARTIFACT_VERSION=${ARTIFACT_VERSION}" >> "$GITHUB_OUTPUT"
 
-  publish_component_npm:
-    needs: versioning
-    name: Publish component NPM
-    runs-on: ubuntu-latest
-    outputs:
-      ARTIFACT_VERSION: ${{ steps.artifact_version.outputs.ARTIFACT_VERSION }}
-    permissions:
-      contents: read
-      id-token: write # Allow npm to authenticate as a trusted publisher
-    steps:
-      - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-        with:
-          persist-credentials: false
-      - name: Enable Corepack
-        run: corepack enable
-      - name: Setup node
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        # No dependency cache: a release build must not restore one another workflow could have poisoned
-        with:
-          node-version-file: .node-version
-          registry-url: "https://registry.npmjs.org"
-      # Not scripts/layered.sh: a release is built against the matrix-js-sdk the lockfile pins
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile --ignore-pnpmfile
-      # Into component/dist, which build-element-call.yaml (it uploads dist/) does not pick up
-      - name: Build component
-        run: pnpm build:component:production
-        env:
-          VITE_APP_VERSION: component-${{ needs.versioning.outputs.PREFIXED_VERSION }}
-          NODE_OPTIONS: "--max-old-space-size=4096"
-
-      # `devEngines` (pnpm only, which npm refuses) and the `prepare` build exist for
-      # git-dependency installs; the published package is already built
-      - name: Publish npm
-        working-directory: component
-        run: |
-          jq 'del(.devEngines, .scripts)' package.json > package.json.tmp && mv package.json.tmp package.json
-          npm version ${NEEDS_VERSIONING_OUTPUTS_PREFIXED_VERSION} --no-git-tag-version
-          echo "ARTIFACT_VERSION=$(jq '.version' --raw-output package.json)" >> "$GITHUB_ENV"
-          npm publish --provenance --access public --tag ${NEEDS_VERSIONING_OUTPUTS_TAG} ${{ needs.versioning.outputs.DRY_RUN == 'true' && '--dry-run' || '' }}
-        env:
-          NEEDS_VERSIONING_OUTPUTS_PREFIXED_VERSION: ${{ needs.versioning.outputs.PREFIXED_VERSION }}
-          NEEDS_VERSIONING_OUTPUTS_TAG: ${{ needs.versioning.outputs.TAG }}
-
-      - id: artifact_version
-        name: Output artifact version
-        run: echo "ARTIFACT_VERSION=${ARTIFACT_VERSION}" >> "$GITHUB_OUTPUT"
-
   release_notes:
-    needs:
-      [
-        versioning,
-        publish_npm,
-        publish_android,
-        publish_ios,
-        publish_component_npm,
-      ]
+    needs: [versioning, publish_npm, publish_android, publish_ios]
     if: always()
     name: Update release notes
     runs-on: ubuntu-latest
+    # Shared with publish-component.yaml, which appends to the same release: two appends
+    # at once would each write back the body without the other's section
+    concurrency:
+      group: release-notes-${{ github.event.release.tag_name || github.run_id }}
+      cancel-in-progress: false
     permissions:
       contents: write # to update release notes
     steps:
@@ -347,12 +296,10 @@ jobs:
           echo "NPM: ${NEEDS_PUBLISH_NPM_OUTPUTS_ARTIFACT_VERSION}"
           echo "Android: ${NEEDS_PUBLISH_ANDROID_OUTPUTS_ARTIFACT_VERSION}"
           echo "iOS: ${NEEDS_PUBLISH_IOS_OUTPUTS_ARTIFACT_VERSION}"
-          echo "Component: ${NEEDS_PUBLISH_COMPONENT_NPM_OUTPUTS_ARTIFACT_VERSION}"
         env:
           NEEDS_PUBLISH_NPM_OUTPUTS_ARTIFACT_VERSION: ${{ needs.publish_npm.outputs.ARTIFACT_VERSION }}
           NEEDS_PUBLISH_ANDROID_OUTPUTS_ARTIFACT_VERSION: ${{ needs.publish_android.outputs.ARTIFACT_VERSION }}
           NEEDS_PUBLISH_IOS_OUTPUTS_ARTIFACT_VERSION: ${{ needs.publish_ios.outputs.ARTIFACT_VERSION }}
-          NEEDS_PUBLISH_COMPONENT_NPM_OUTPUTS_ARTIFACT_VERSION: ${{ needs.publish_component_npm.outputs.ARTIFACT_VERSION }}
       - name: Add release notes
         if: ${{ needs.versioning.outputs.DRY_RUN == 'false' }}
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
@@ -383,12 +330,4 @@ jobs:
 
             ```
             .package(url: "https://github.com/element-hq/element-call-swift.git", from: "${{ needs.publish_ios.outputs.ARTIFACT_VERSION }}")
-            ```
-
-            ## React component (experimental)
-
-            Element Call as a React component, rendered in the host's page instead of in an iframe.
-
-            ```
-            npm install @element-hq/element-call-component@${{ needs.publish_component_npm.outputs.ARTIFACT_VERSION }}
             ```

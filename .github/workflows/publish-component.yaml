@@ -1,0 +1,129 @@
+name: Build & publish the component package for releases
+
+on:
+  release:
+    types: [published]
+  pull_request:
+    types:
+      - synchronize
+      - opened
+      - labeled
+  push:
+    branches: [main]
+
+jobs:
+  versioning:
+    name: Versioning
+    runs-on: ubuntu-latest
+    outputs:
+      DRY_RUN: ${{ steps.dry_run.outputs.DRY_RUN }}
+      PREFIXED_VERSION: ${{ steps.prefixed_version.outputs.PREFIXED_VERSION }}
+      TAG: ${{ steps.tag.outputs.TAG }}
+    steps:
+      - name: Calculate VERSION
+        # Safely store dynamic values in environment variables
+        # to prevent shell injection (template-injection)
+        run: |
+          if [ "$EVENT_NAME" = "release" ]; then
+            echo "VERSION=$RELEASE_TAG" >> "$GITHUB_ENV"
+          else
+            echo "VERSION=v0.0.0-pre.0" >> "$GITHUB_ENV"
+          fi
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          EVENT_NAME: ${{ github.event_name }}
+      - id: dry_run
+        name: Set DRY_RUN
+        # A dry run for everything but releases, so that a broken package shows up
+        # ahead of a release
+        run: echo "DRY_RUN=${{ github.event_name != 'release' }}" >> "$GITHUB_OUTPUT"
+      - id: prefixed_version
+        name: Set PREFIXED_VERSION
+        run: echo "PREFIXED_VERSION=${VERSION}" >> "$GITHUB_OUTPUT"
+      - id: tag
+        # latest = a proper release
+        # other = anything else
+        name: Set tag
+        run: |
+          if [[ "${VERSION}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "TAG=latest" >> "$GITHUB_OUTPUT"
+          elif [[ "${VERSION}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+\-rc\.[0-9]+$ ]]; then
+            echo "TAG=rc" >> "$GITHUB_OUTPUT"
+          else
+            echo "TAG=other" >> "$GITHUB_OUTPUT"
+          fi
+
+  publish_npm:
+    needs: versioning
+    name: Publish NPM
+    runs-on: ubuntu-latest
+    outputs:
+      ARTIFACT_VERSION: ${{ steps.artifact_version.outputs.ARTIFACT_VERSION }}
+    permissions:
+      contents: read
+      id-token: write # Allow npm to authenticate as a trusted publisher
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Setup node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        # No dependency cache: a release build must not restore one another workflow could have poisoned
+        with:
+          node-version-file: .node-version
+          registry-url: "https://registry.npmjs.org"
+      # Not scripts/layered.sh: a release is built against the matrix-js-sdk the lockfile pins
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-pnpmfile
+      - name: Build component
+        run: pnpm build:component:production
+        env:
+          VITE_APP_VERSION: component-${{ needs.versioning.outputs.PREFIXED_VERSION }}
+          NODE_OPTIONS: "--max-old-space-size=4096"
+
+      # `devEngines` (pnpm only, which npm refuses) and the `prepare` build exist for
+      # git-dependency installs; the published package is already built
+      - name: Publish npm
+        working-directory: component
+        run: |
+          jq 'del(.devEngines, .scripts)' package.json > package.json.tmp && mv package.json.tmp package.json
+          npm version ${NEEDS_VERSIONING_OUTPUTS_PREFIXED_VERSION} --no-git-tag-version
+          echo "ARTIFACT_VERSION=$(jq '.version' --raw-output package.json)" >> "$GITHUB_ENV"
+          npm publish --provenance --access public --tag ${NEEDS_VERSIONING_OUTPUTS_TAG} ${{ needs.versioning.outputs.DRY_RUN == 'true' && '--dry-run' || '' }}
+        env:
+          NEEDS_VERSIONING_OUTPUTS_PREFIXED_VERSION: ${{ needs.versioning.outputs.PREFIXED_VERSION }}
+          NEEDS_VERSIONING_OUTPUTS_TAG: ${{ needs.versioning.outputs.TAG }}
+
+      - id: artifact_version
+        name: Output artifact version
+        run: echo "ARTIFACT_VERSION=${ARTIFACT_VERSION}" >> "$GITHUB_OUTPUT"
+
+  release_notes:
+    needs: [versioning, publish_npm]
+    if: ${{ needs.versioning.outputs.DRY_RUN == 'false' }}
+    name: Update release notes
+    runs-on: ubuntu-latest
+    # Shared with publish-embedded-packages.yaml, which appends to the same release: two
+    # appends at once would each write back the body without the other's section
+    concurrency:
+      group: release-notes-${{ github.event.release.tag_name || github.run_id }}
+      cancel-in-progress: false
+    permissions:
+      contents: write # to update release notes
+    steps:
+      - name: Add release notes
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
+        with:
+          append_body: true
+          body: |
+
+            ## React component (experimental)
+
+            Element Call as a React component, rendered in the host's page instead of in an iframe.
+
+            ```
+            npm install @element-hq/element-call-component@${{ needs.publish_npm.outputs.ARTIFACT_VERSION }}
+            ```
