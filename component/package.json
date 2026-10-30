@@ -1,7 +1,7 @@
 {
   "name": "@element-hq/element-call-component",
   "version": "0.0.0",
-  "description": "Element Call as a React component. Published to npm with each release; it can also be consumed from the repository as a git dependency (github:element-hq/element-call#<ref>&path:/component), where the host's package manager runs `prepare`, which builds `dist/`.",
+  "description": "Element Call as a React component.",
   "license": "AGPL-3.0-only OR LicenseRef-Element-Commercial",
   "repository": {
     "type": "git",

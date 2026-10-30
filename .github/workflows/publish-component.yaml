@@ -11,6 +11,9 @@ on:
   push:
     branches: [main]
 
+# Each job asks for what it needs
+permissions: {}
+
 jobs:
   versioning:
     name: Versioning
