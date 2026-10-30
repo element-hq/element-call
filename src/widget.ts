@@ -21,8 +21,12 @@ import type { IWidgetApiRequest } from "matrix-widget-api";
 import { LazyEventEmitter } from "./LazyEventEmitter";
 import { getUrlParams } from "./UrlParams";
 import { Config } from "./config/Config";
-import { seedSettingsFromConfig } from "./settings/settings";
+import {
+  fullMeshPublishing,
+  seedSettingsFromConfig,
+} from "./settings/settings";
 import { ElementCallReactionEventType } from "./reactions";
+import { fullMeshSignallingEventTypes } from "@element-hq/matrixrtc-sdk";
 
 // Subset of the actions in element-web
 export enum ElementWidgetActions {
@@ -162,6 +166,10 @@ export const initializeWidget = (
         EventType.CallSDPStreamMetadataChangedPrefix,
         EventType.CallReplaces,
         EventType.CallEncryptionKeysPrefix,
+        // Full mesh signalling (MSCXXXX), only where it is turned on: Element
+        // Web doesn't auto-approve these for Element Call yet, and would ask
+        // the user on every call
+        ...(fullMeshPublishing.getValue() ? fullMeshSignallingEventTypes : []),
       ];
 
       const client = createRoomWidgetClient(
@@ -173,7 +181,8 @@ export const initializeWidget = (
           receiveState,
           sendToDevice: sendRecvToDevice,
           receiveToDevice: sendRecvToDevice,
-          turnServers: false,
+          // Full mesh connects through the homeserver's TURN server
+          turnServers: true,
           rtcTransports: true,
           rtcLivekitGetToken: true,
           rtcLivekitDelegateDelayedLeave: true,

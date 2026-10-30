@@ -51,6 +51,10 @@ import {
   type MediaKey,
 } from "./media-backend/api";
 import { combineBackends } from "./media-backend/combineBackends";
+import {
+  completeFullMeshTransport,
+  createFullMeshBackend,
+} from "./media-backend/full-mesh/FullMeshBackend";
 import { createLivekitBackend } from "./media-backend/livekit/LivekitBackend";
 import { findRemotePublishLivekitTransport } from "./media-backend/livekit/RemotePublishTransport";
 import { createHomeserverConnected$ } from "./matrixrtc/HomeserverConnected";
@@ -121,6 +125,13 @@ export function createRTCParticipation(
         ? uuidv4()
         : `${userId}:${deviceId}`,
   };
+
+  // The host names full mesh by its type alone; the device is ours
+  if (options.transport)
+    options = {
+      ...options,
+      transport: completeFullMeshTransport(options.transport, deviceId),
+    };
 
   const backend = createBackend(scope, client, options, {
     roomId: room.roomId,
@@ -325,7 +336,10 @@ function createBackend(
   if (backend) return backend(scope, context);
   return combineBackends(
     scope,
-    [createLivekitBackend(scope, context, { client, mediaQuality })],
+    [
+      createLivekitBackend(scope, context, { client, mediaQuality }),
+      createFullMeshBackend(scope, context, { client }),
+    ],
     transport?.type ?? "livekit",
   );
 }
