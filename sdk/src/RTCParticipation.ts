@@ -50,6 +50,7 @@ import {
   type MediaBackendContext,
   type MediaKey,
 } from "./media-backend/api";
+import { combineBackends } from "./media-backend/combineBackends";
 import { createLivekitBackend } from "./media-backend/livekit/LivekitBackend";
 import { findRemotePublishLivekitTransport } from "./media-backend/livekit/RemotePublishTransport";
 import { createHomeserverConnected$ } from "./matrixrtc/HomeserverConnected";
@@ -310,15 +311,23 @@ export function createRTCParticipation(
   };
 }
 
-/** The host's backend, or LiveKit configured from the participation options. */
+/**
+ * The host's backend, or every backend the SDK has, combined: we publish on
+ * the type of the transport the host named (LiveKit without one) and receive
+ * from members on any of them.
+ */
 function createBackend(
   scope: ObservableScope,
   client: MatrixClient,
-  { backend, mediaQuality }: RTCParticipationOptions,
+  { backend, mediaQuality, transport }: RTCParticipationOptions,
   context: MediaBackendContext,
 ): MediaBackend {
   if (backend) return backend(scope, context);
-  return createLivekitBackend(scope, context, { client, mediaQuality });
+  return combineBackends(
+    scope,
+    [createLivekitBackend(scope, context, { client, mediaQuality })],
+    transport?.type ?? "livekit",
+  );
 }
 
 /** The slot's per-participant keys: the ones it already holds on subscribe, then each new one. */

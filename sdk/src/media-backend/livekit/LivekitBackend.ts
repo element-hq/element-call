@@ -118,9 +118,14 @@ export function createLivekitBackend(
   );
 
   // A new map, in a scope of its own, whenever the local transport changes:
-  // the publisher role sits on one connection, and which one is fixed per map
+  // the publisher role sits on one connection, and which one is fixed per map.
+  // Without a local transport the map only subscribes, for when another
+  // backend publishes; boxed so that `mapScoped` builds a map for null too
+  const boxedLocalTransport$ = scope.behavior(
+    localTransport$.pipe(map((localTransport) => ({ localTransport }))),
+  );
   const connectionMap$ = scope.behavior<Epoch<ConnectionMap>>(
-    mapScoped(scope, localTransport$, (mapScope, localTransport) =>
+    mapScoped(scope, boxedLocalTransport$, (mapScope, { localTransport }) =>
       createConnectionMap$({
         scope: mapScope,
         connectionFactory,
@@ -142,12 +147,15 @@ export function createLivekitBackend(
     logger,
   });
 
-  // Probed once: the answer cannot change within a session
-  const homeserverSupportsDelegation = supportsDelegation(
-    `${client.baseUrl}/_matrix/client/unstable/io.element.msc4195/rtc/livekit/delegate_delayed_leave`,
-    "homeserver",
-    logger,
-  );
+  // Probed once, when first needed: the answer cannot change within a
+  // session, and a backend that only subscribes never needs it
+  let homeserverProbe: Promise<boolean> | undefined;
+  const homeserverSupportsDelegation = async (): Promise<boolean> =>
+    (homeserverProbe ??= supportsDelegation(
+      `${client.baseUrl}/_matrix/client/unstable/io.element.msc4195/rtc/livekit/delegate_delayed_leave`,
+      "homeserver",
+      logger,
+    ));
 
   const ownServerName = serverNameOf(ownMembershipIdentity.userId);
 
@@ -178,7 +186,7 @@ export function createLivekitBackend(
               `transport ${flow.serviceUrl}`,
               logger,
             )
-          : homeserverSupportsDelegation;
+          : homeserverSupportsDelegation();
     }
     localTransport$.next(locator);
     // The membership is only sent once the publisher connection holds its
