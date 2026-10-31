@@ -16,12 +16,16 @@ The following sound effects have been licensed from Pixabay, under https://pixab
 
 The following sound effects have been originally created by Element.
 
-- `blocked`
 - `end_talk`
 - `start_talk_local`
 - `start_talk_remote`
 - `join_call`
-- `end_call`
+- `left_call`
+- `screen_share_started`
+- `ringtone`
+- `call_declined`
+- `call_timeout`
 - `reactions/rock`
 - `reactions/wave`
 - `reactions/baduntss`
+- `reactions/deer`
