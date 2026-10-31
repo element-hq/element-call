@@ -135,14 +135,16 @@ export interface CaptureSettings {
 }
 
 /**
- * What to publish for a microphone or camera: the device the user picked and
- * the host's capture settings. The video processor is not in here; the call
- * attaches it to the camera track once that exists.
+ * What to publish for a microphone or camera: the device the user picked, the
+ * host's capture settings and, for the camera, the video processor, so that
+ * the track starts with it rather than letting the room through while it is
+ * built.
  */
 export function publishRequest(
   source: "microphone" | "camera",
   mediaDevices: MediaDevices,
   capture: CaptureSettings,
+  processor?: VideoProcessor,
 ): PublishRequest {
   return source === "microphone"
     ? {
@@ -154,6 +156,7 @@ export function publishRequest(
         source,
         deviceId: mediaDevices.videoInput.selected$.value?.id,
         capture: capture.camera,
+        ...(processor && { processor }),
       };
 }
 
@@ -162,12 +165,13 @@ export function initialPublishRequests(
   muteStates: MuteStates,
   mediaDevices: MediaDevices,
   capture: CaptureSettings,
+  processor?: VideoProcessor,
 ): PublishRequest[] {
   const requests: PublishRequest[] = [];
   if (muteStates.audio.enabled$.value)
     requests.push(publishRequest("microphone", mediaDevices, capture));
   if (muteStates.video.enabled$.value)
-    requests.push(publishRequest("camera", mediaDevices, capture));
+    requests.push(publishRequest("camera", mediaDevices, capture, processor));
   return requests;
 }
 
@@ -503,6 +507,17 @@ export function createCallViewModel$(
     "screenShare",
   ) as Behavior<LocalVideoMediaTrack | undefined>;
 
+  // Camera tracks the processor reached while they ran. A camera turned off is
+  // stopped, and a stopped track can't take one.
+  const tookProcessor = new WeakMap<LocalVideoMediaTrack, VideoProcessor>();
+  const missesProcessor = (track: LocalMediaTrack): boolean => {
+    const processor = videoProcessor$.value;
+    return (
+      processor !== undefined &&
+      tookProcessor.get(track as LocalVideoMediaTrack) !== processor
+    );
+  };
+
   // The mute switches drive our tracks, which report back what the device
   // allowed, so a denied permission flips the switch back. A source is muted
   // and unmuted while its track exists and published when it does not.
@@ -520,14 +535,23 @@ export function createCallViewModel$(
     muteState.setHandler(async (enabled) => {
       desired = enabled;
       const track = track$.value;
-      if (track !== undefined) {
+      // A camera turned off before the processor was chosen is replaced, so
+      // that the new one starts with it.
+      if (enabled && source === "camera" && track && missesProcessor(track))
+        await rtcParticipation.unpublish("camera");
+      else if (track !== undefined) {
         desired = await track.setEnabled(enabled);
         return desired;
       }
       if (!enabled) return false;
       try {
         await rtcParticipation.publish(
-          publishRequest(source, mediaDevices, capture),
+          publishRequest(
+            source,
+            mediaDevices,
+            capture,
+            source === "camera" ? videoProcessor$.value : undefined,
+          ),
         );
         return true;
       } catch (e) {
@@ -583,12 +607,15 @@ export function createCallViewModel$(
         });
       });
 
-  // Attached once the camera track exists rather than carried in the publish
-  // request, so that a new track and a change of processor take the same path
+  // Also set on each camera track as it appears and as the choice changes. A
+  // track made with the processor already runs it and is left alone.
   combineLatest([camera$, videoProcessor$])
     .pipe(scope.bind())
     .subscribe(([camera, processor]) => {
-      camera?.setProcessor(processor).catch((e) => {
+      if (camera === undefined) return;
+      if (processor && !camera.muted$.value)
+        tookProcessor.set(camera, processor);
+      camera.setProcessor(processor).catch((e) => {
         logger.error("Failed to set the video processor", e);
       });
     });

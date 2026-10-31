@@ -87,8 +87,10 @@ export class Publisher {
     // permission once; the room defaults carry their options. LiveKit
     // resolves these once the track is published, which may block on the
     // connection; LocalTrackPublished is what tells us a track exists.
-    if (sources.has("microphone") && sources.has("camera"))
+    if (sources.has("microphone") && sources.has("camera")) {
+      this.takeCaptureDefaults(requests);
       void this.room.localParticipant.enableCameraAndMicrophone();
+    }
     for (const request of requests)
       if (
         request.source === "screenShare" ||
@@ -97,6 +99,27 @@ export class Publisher {
         this.publish(request).catch((e) => {
           this.logger.error(`Failed to publish the ${request.source}`, e);
         });
+  }
+
+  /**
+   * Makes the requests the room's capture defaults. The room took its defaults
+   * from the requests at the join, but one made since, such as a camera turned
+   * on before the start, has options of its own: a video processor dropped
+   * here would let the room see the camera before it is applied.
+   */
+  private takeCaptureDefaults(requests: PublishRequest[]): void {
+    const options = this.room.options;
+    for (const request of requests)
+      if (request.source === "microphone")
+        options.audioCaptureDefaults = {
+          ...options.audioCaptureDefaults,
+          ...audioCaptureOptions(request),
+        };
+      else if (request.source === "camera")
+        options.videoCaptureDefaults = {
+          ...options.videoCaptureDefaults,
+          ...videoCaptureOptions(request),
+        };
   }
 
   /** Publishes one request and resolves with its publication once LiveKit has it. */

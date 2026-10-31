@@ -230,9 +230,10 @@ export function createLocalLivekitMediaTrack(
       const track = videoTrack();
       // A processor cannot be built on a track that has already ended
       if (!track || track.mediaStreamTrack.readyState === "ended") return;
-      if (processor)
-        await track.setProcessor(convertToLivekitProcessor(processor));
-      else if (track.getProcessor()) await track.stopProcessor();
+      if (processor) {
+        const adapter = convertToLivekitProcessor(processor);
+        if (track.getProcessor() !== adapter) await track.setProcessor(adapter);
+      } else if (track.getProcessor()) await track.stopProcessor();
     },
   };
 }

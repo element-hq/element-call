@@ -1,5 +1,6 @@
 /*
 Copyright 2024-2025 New Vector Ltd.
+Copyright 2026 Element Creations Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
@@ -9,6 +10,7 @@ import {
   BackgroundTransformer,
   VideoTransformer,
   type VideoTransformerInitOptions,
+  type BackgroundOptions,
 } from "@livekit/track-processors";
 import { ImageSegmenter } from "@mediapipe/tasks-vision";
 
@@ -49,7 +51,18 @@ const wasmFileset: WasmFileset = {
  * loads the segmentation models from our own bundle rather than as an external
  * resource fetched from the public internet.
  */
-export class BlurBackgroundTransformer extends BackgroundTransformer {
+export class BackgroundEffectTransformer extends BackgroundTransformer {
+  /**
+   * As the library's, except that disabling also drops the blur radius: kept,
+   * it has every frame segmented and the result thrown away, where with
+   * neither a radius nor a picture frames are passed on untouched.
+   */
+  public override async update(opts: BackgroundOptions): Promise<void> {
+    await super.update(
+      opts.backgroundDisabled ? { ...opts, blurRadius: undefined } : opts,
+    );
+  }
+
   public async init({
     outputCanvas,
     inputElement: inputVideo,
@@ -73,8 +86,10 @@ export class BlurBackgroundTransformer extends BackgroundTransformer {
       outputConfidenceMasks: false,
     });
 
+    // BackgroundTransformer's own init applies these, and this one replaces it.
     if (this.options.blurRadius) {
       this.gl?.setBlurRadius(this.options.blurRadius);
     }
+    this.gl?.setBackgroundDisabled(this.options.backgroundDisabled ?? false);
   }
 }

@@ -72,9 +72,9 @@ import {
   useUrlParams,
 } from "../src/UrlParams";
 import { MediaDevicesContext } from "../src/MediaDevicesContext";
-import { MediaDevices } from "../src/state/MediaDevices";
+import { AppViewModel } from "../src/state/AppViewModel";
 import { ObservableScope } from "../src/state/ObservableScope";
-import { ProcessorProvider } from "../src/tracks/TrackProcessorContext";
+import { BackgroundEffectsProvider } from "../src/tracks/BackgroundEffectsContext";
 import { Config } from "../src/config/Config";
 import { type ConfigOptions } from "../src/config/ConfigOptions";
 import { i18n } from "../src/utils/i18n";
@@ -194,14 +194,12 @@ export const ElementCall: FC<ElementCallProps> = ({
   // observers running for the rest of the page's life. Null until then, which
   // is one render.
   const { controlledAudioDevices, callIntent } = params;
-  const [mediaDevices, setMediaDevices] = useState<MediaDevices | null>(null);
+  const [vm, setVm] = useState<AppViewModel | null>(null);
   useEffect(() => {
     const scope = new ObservableScope();
-    setMediaDevices(
-      new MediaDevices(scope, { controlledAudioDevices, callIntent }),
-    );
+    setVm(new AppViewModel(scope, { controlledAudioDevices, callIntent }));
     return (): void => {
-      setMediaDevices(null);
+      setVm(null);
       scope.end();
     };
   }, [controlledAudioDevices, callIntent]);
@@ -222,8 +220,7 @@ export const ElementCall: FC<ElementCallProps> = ({
   // is told that Element Call has loaded, as the widget tells its client once
   // its own initialisation is over. Once per mount, however often the pieces
   // are later swapped out.
-  const ready =
-    container !== null && rtcSession !== null && mediaDevices !== null;
+  const ready = container !== null && rtcSession !== null && vm !== null;
   const announcedLoaded = useRef(false);
   useEffect(() => {
     if (!ready || announcedLoaded.current) return;
@@ -254,8 +251,10 @@ export const ElementCall: FC<ElementCallProps> = ({
                       <Decoration>
                         <TooltipProvider>
                           <ClientProvider client={client}>
-                            <MediaDevicesContext value={mediaDevices}>
-                              <ProcessorProvider>
+                            <MediaDevicesContext value={vm.mediaDevices}>
+                              <BackgroundEffectsProvider
+                                effects={vm.backgroundEffects}
+                              >
                                 <CallView
                                   client={client}
                                   rtcSession={rtcSession}
@@ -264,7 +263,7 @@ export const ElementCall: FC<ElementCallProps> = ({
                                   preload={params.preload}
                                   skipLobby={params.skipLobby}
                                 />
-                              </ProcessorProvider>
+                              </BackgroundEffectsProvider>
                             </MediaDevicesContext>
                           </ClientProvider>
                         </TooltipProvider>

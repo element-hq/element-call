@@ -41,9 +41,9 @@ import { useMediaDevices } from "../MediaDevicesContext";
 import { ObservableScope } from "../state/ObservableScope";
 import { useInitial } from "../useInitial";
 import {
-  useTrackProcessor,
-  useTrackProcessorSync,
-} from "../tracks/TrackProcessorContext";
+  useBackgroundEffects,
+  useSyncBackgroundEffects,
+} from "../tracks/BackgroundEffectsContext";
 import { getValue } from "../utils/observable";
 import { useBehavior } from "../useBehavior";
 import { CallFooter, type FooterSnapshot } from "../components/CallFooter";
@@ -137,7 +137,7 @@ export const LobbyView: FC<Props> = ({
       },
   );
 
-  const { processor } = useTrackProcessor();
+  const { processor } = useBackgroundEffects();
 
   const initialProcessor = useInitial(() => processor);
   const localTrackOptions = useMemo<CreateLocalTracksOptions>(
@@ -185,7 +185,7 @@ export const LobbyView: FC<Props> = ({
     }
   }, [devices, videoInputId, videoTrack]);
 
-  useTrackProcessorSync(videoTrack);
+  useSyncBackgroundEffects(videoTrack);
 
   const [footerVm, setFooterVm] = useState<ViewModel<FooterSnapshot> | null>(
     null,
