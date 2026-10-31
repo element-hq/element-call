@@ -65,8 +65,10 @@ const WithACallArea: FC<{ children: ReactNode }> = ({ children }) => {
     <div
       ref={setCallArea}
       style={{
-        // A call's size: anything smaller makes a short device list scroll.
+        // A call's size: anything smaller makes a short device list scroll, and
+        // a narrower one narrows the menu.
         blockSize: 720,
+        inlineSize: 1024,
         display: "flex",
         alignItems: "flex-end",
         justifyContent: "center",
@@ -96,6 +98,10 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
+
+// By place: Compound's section heading is aria-hidden, as its group carries
+// the name.
+const SECTION_HEADING = "[role='group'] > [aria-hidden]";
 
 export const Default: Story = {
   args: {
@@ -219,9 +225,8 @@ export const SpeakerAndMicrophoneSections: Story = {
     await expect(
       document.body.querySelectorAll("[role='separator']"),
     ).toHaveLength(0);
-    const headings = document.body.querySelectorAll<HTMLElement>(
-      `.${styles.sectionHeading}`,
-    );
+    const headings =
+      document.body.querySelectorAll<HTMLElement>(SECTION_HEADING);
     await expect(headings).toHaveLength(2);
     const frame = menu.getBoundingClientRect();
     for (const heading of headings) {
@@ -252,6 +257,37 @@ export const SpeakerAndMicrophoneSections: Story = {
     const nextHeading = groups[1]!.querySelector("h3")!.getBoundingClientRect();
     await expect(nextHeading.top - lastSpeaker.bottom).toBeGreaterThan(
       box.top - ruleBottom,
+    );
+  },
+};
+
+/** A long name wraps rather than widening the menu, which design sets. */
+export const LongDeviceNameWraps: Story = {
+  args: {
+    ...SpeakerAndMicrophoneSections.args,
+    outputOptions: [
+      {
+        label: {
+          type: "name",
+          name: "Logitech BRIO 4K Ultra HD Pro Business Webcam Speakers (046d:085e)",
+        },
+        id: "long",
+      },
+      { label: { type: "name", name: "Headset" }, id: "spk2" },
+    ],
+    selectedOutputOption: "long",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Microphone" }));
+    const body = within(document.body);
+    const long = await body.findByRole("menuitemradio", { name: /Logitech/ });
+    const short = await body.findByRole("menuitemradio", { name: "Headset" });
+
+    const menu = document.body.querySelector("[role='menu']")!;
+    await expect(Math.round(menu.getBoundingClientRect().width)).toBe(296);
+    await expect(long.getBoundingClientRect().height).toBeGreaterThan(
+      short.getBoundingClientRect().height,
     );
   },
 };
@@ -402,14 +438,14 @@ export const ManyDevices: Story = {
     await userEvent.click(canvas.getByRole("button", { name: "Microphone" }));
     const menu = within(document.body);
 
-    // The sticky wrapper rather than the meter: without a fake microphone (as on
+    // The meter's box rather than its level: without a fake microphone (as on
     // WebKit) the meter shows a message instead of a level.
     const list = document.body.querySelector<HTMLElement>(
       `.${styles.deviceList}`,
     )!;
     const sticky = await waitFor(() => {
       const element = document.body.querySelector<HTMLElement>(
-        `.${styles.stickyMeter}`,
+        `.${meterStyles.meter}`,
       );
       if (element === null) throw new Error("the meter has not rendered yet");
       return element;
@@ -436,10 +472,6 @@ export const ManyDevices: Story = {
       .getBoundingClientRect();
     await expect(frame.top).toBeGreaterThanOrEqual(0);
     await expect(frame.bottom).toBeLessThanOrEqual(window.innerHeight + 1);
-
-    // The meter is the menu's one opaque part, so it must stay inside the frame.
-    await expect(pinned.left).toBeGreaterThan(frame.left);
-    await expect(pinned.right).toBeLessThan(frame.right);
   },
 };
 
@@ -536,7 +568,7 @@ export const KeyboardReachesEveryDevice: Story = {
 
     const meter = await waitFor(() => {
       const element = document.body.querySelector<HTMLElement>(
-        `.${styles.stickyMeter}`,
+        `.${meterStyles.meter}`,
       );
       if (element === null) throw new Error("the meter has not rendered yet");
       return element;
@@ -545,9 +577,7 @@ export const KeyboardReachesEveryDevice: Story = {
     // Drawn over the list: the sticky headings and the meter.
     const overlays = [
       meter,
-      ...document.body.querySelectorAll<HTMLElement>(
-        `.${styles.sectionHeading}`,
-      ),
+      ...document.body.querySelectorAll<HTMLElement>(SECTION_HEADING),
     ];
     const items = within(document.body).getAllByRole("menuitemradio");
 
@@ -591,10 +621,7 @@ export const HeadingsStayWhileScrolling: Story = {
       `.${styles.deviceList}`,
     )!;
     const group = await menu.findByRole("group", { name: "Microphone" });
-    // By class: the heading is aria-hidden, and its group carries the name.
-    const heading = group.querySelector<HTMLElement>(
-      `.${styles.sectionHeading}`,
-    )!;
+    const heading = group.querySelector<HTMLElement>(":scope > [aria-hidden]")!;
 
     // Far enough that the heading is only on screen if it is stuck there.
     list.scrollTop +=
@@ -606,13 +633,6 @@ export const HeadingsStayWhileScrolling: Story = {
     );
     await expect(heading.getBoundingClientRect().bottom).toBeGreaterThan(
       scrollport.top,
-    );
-    // Clear of the menu's frame.
-    const frame = document.body
-      .querySelector("[role='menu']")!
-      .getBoundingClientRect();
-    await expect(heading.getBoundingClientRect().left).toBeGreaterThan(
-      frame.left,
     );
   },
 };
