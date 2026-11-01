@@ -118,7 +118,7 @@
     "postcss": "^8.4.41",
     "postcss-preset-env": "^10.0.0",
     "postcss-selector-parser": "^7.1.1",
-    "posthog-js": "1.408.2",
+    "posthog-js": "1.438.24",
     "qrcode": "^1.5.4",
     "react": "19",
     "react-dom": "19",
