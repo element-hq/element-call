@@ -7,13 +7,13 @@
     "features": ["plural_postfix_us", "filter_untranslated"],
     "files": [
       {
-        "pattern": "locales/en/*.json",
+        "pattern": "locales/en/app.json",
         "lang": "inherited"
       },
       {
         "group": "existing",
-        "pattern": "locales/*/*.json",
-        "excludes": ["locales/en/*.json"],
+        "pattern": "locales/*/app.json",
+        "excludes": ["locales/en/app.json"],
         "lang": "${autodetectLang}"
       }
     ]
@@ -22,6 +22,7 @@
   "download": {
     "files": [
       {
+        "conditions": ["equals: ${file}, app.json"],
         "output": "locales/${langLsrDash}/${file}"
       }
     ],
