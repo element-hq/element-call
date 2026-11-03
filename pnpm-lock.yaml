@@ -66,7 +66,7 @@ importers:
         version: 10.1.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@rolldown/plugin-babel':
         specifier: ^0.2.3
-        version: 0.2.3(@babel/core@7.29.7(supports-color@7.2.0))(@babel/runtime@8.0.0)(rolldown@1.2.15)(vite@8.2.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.103.1)(terser@5.46.1)(yaml@2.9.0))
+        version: 0.2.3(@babel/core@7.29.7(supports-color@7.2.0))(@babel/runtime@8.0.8)(rolldown@1.2.15)(vite@8.2.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.103.1)(terser@5.46.1)(yaml@2.9.0))
       '@sentry/react':
         specifier: ^8.0.0
         version: 8.55.2(react@19.2.8)
@@ -138,7 +138,7 @@ importers:
         version: 10.5.0(@fontsource/inconsolata@5.3.0)(@fontsource/inter@5.3.0)(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(@vector-im/compound-design-tokens@11.3.1(@types/react@19.2.18)(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@vitejs/plugin-react':
         specifier: ^6.0.2
-        version: 6.1.1(@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7(supports-color@7.2.0))(@babel/runtime@8.0.0)(rolldown@1.2.15)(vite@8.2.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.103.1)(terser@5.46.1)(yaml@2.9.0)))(babel-plugin-react-compiler@1.0.0)(vite@8.2.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.103.1)(terser@5.46.1)(yaml@2.9.0))
+        version: 6.1.1(@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7(supports-color@7.2.0))(@babel/runtime@8.0.8)(rolldown@1.2.15)(vite@8.2.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.103.1)(terser@5.46.1)(yaml@2.9.0)))(babel-plugin-react-compiler@1.0.0)(vite@8.2.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.103.1)(terser@5.46.1)(yaml@2.9.0))
       '@vitest/browser-playwright':
         specifier: ^4.1.5
         version: 4.1.11(playwright@1.62.1)(vite@8.2.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.103.1)(terser@5.46.1)(yaml@2.9.0))(vitest@4.1.11)
@@ -191,8 +191,8 @@ importers:
         specifier: ^1.9.1
         version: 1.9.2
       matrix-js-sdk:
-        specifier: github:matrix-org/matrix-js-sdk#3f05dc4d104a3dfc753c5e3549a18c74fab4b076
-        version: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/3f05dc4d104a3dfc753c5e3549a18c74fab4b076
+        specifier: github:matrix-org/matrix-js-sdk#a9ef09fbf2f1644c8663d0aeaf6a921cd16e7b01
+        version: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/a9ef09fbf2f1644c8663d0aeaf6a921cd16e7b01
       matrix-widget-api:
         specifier: ^1.18.0
         version: 1.20.0
@@ -397,8 +397,8 @@ packages:
     resolution: {integrity: sha512-Nq8OhGWiZIZGV6hLHoyAKLLcJihP/xFeBMGJoUrxTX2psI8dCifzLhZISFb+VWS3wFMRDmCGw5R+dOySCqPLhw==}
     engines: {node: '>=6.9.0'}
 
-  '@babel/runtime@8.0.0':
-    resolution: {integrity: sha512-sL6cvO2IfkSu/iU+zs2S/w01B7A8V7suXSIKEN4hPFFdZoiPGxrj5pAG0lCaqLWiEIrjKzdznIWuaLcxPR53qw==}
+  '@babel/runtime@8.0.8':
+    resolution: {integrity: sha512-dEu8nGlRqjsJsvviUUoSMfcRHpwomCiRlXsc2mPfJ79+ffTpDm+JtfUtTMzUrqCApHQnCsVPD3gT1ZT8RgBRCQ==}
 
   '@babel/template@7.29.7':
     resolution: {integrity: sha512-puq+Gf35oI24FeN11LkoUQFqv9uwNeWpxXZi/Ji3rRIoKAzKnxRaZ+Gkj0vKS9ZCiTESfng1N9LyOyXvo+m+Gg==}
@@ -4750,9 +4750,9 @@ packages:
   matrix-events-sdk@0.0.1:
     resolution: {integrity: sha512-1QEOsXO+bhyCroIe2/A5OwaxHvBm7EsSQ46DEDn8RBIfQwN5HWBpFvyWWR4QY0KHPPnnJdI99wgRiAl7Ad5qaA==}
 
-  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/3f05dc4d104a3dfc753c5e3549a18c74fab4b076:
-    resolution: {gitHosted: true, integrity: sha512-Ly8eS7fNNKDo9KmPvTkE49KvD8iMUmrVWJMNERNuxc8UksMLMG36NLz3fs8HytdwrB7AKPfyVo392VZsxILDIg==, tarball: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/3f05dc4d104a3dfc753c5e3549a18c74fab4b076}
-    version: 44.0.0
+  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/a9ef09fbf2f1644c8663d0aeaf6a921cd16e7b01:
+    resolution: {gitHosted: true, integrity: sha512-ZAhn/zB44MgrXqUzi9ffSFcmZY3+2nx7bEgfEJR7chYDFyT/XmlmfCJx7Ar4rOTAYZJRVnMxrEwiEHGDapUi0Q==, tarball: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/a9ef09fbf2f1644c8663d0aeaf6a921cd16e7b01}
+    version: 45.0.0
     engines: {node: '>=22.0.0'}
 
   matrix-widget-api@1.20.0:
@@ -6424,7 +6424,7 @@ snapshots:
 
   '@babel/runtime@7.29.7': {}
 
-  '@babel/runtime@8.0.0': {}
+  '@babel/runtime@8.0.8': {}
 
   '@babel/template@7.29.7':
     dependencies:
@@ -8146,13 +8146,13 @@ snapshots:
   '@rolldown/binding-win32-x64-msvc@1.2.15':
     optional: true
 
-  '@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7(supports-color@7.2.0))(@babel/runtime@8.0.0)(rolldown@1.2.15)(vite@8.2.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.103.1)(terser@5.46.1)(yaml@2.9.0))':
+  '@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7(supports-color@7.2.0))(@babel/runtime@8.0.8)(rolldown@1.2.15)(vite@8.2.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.103.1)(terser@5.46.1)(yaml@2.9.0))':
     dependencies:
       '@babel/core': 7.29.7(supports-color@7.2.0)
       picomatch: 4.0.4
       rolldown: 1.2.15
     optionalDependencies:
-      '@babel/runtime': 8.0.0
+      '@babel/runtime': 8.0.8
       vite: 8.2.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.103.1)(terser@5.46.1)(yaml@2.9.0)
 
   '@rolldown/pluginutils@1.0.1': {}
@@ -8904,12 +8904,12 @@ snapshots:
       - '@types/react-dom'
       - react-dom
 
-  '@vitejs/plugin-react@6.1.1(@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7(supports-color@7.2.0))(@babel/runtime@8.0.0)(rolldown@1.2.15)(vite@8.2.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.103.1)(terser@5.46.1)(yaml@2.9.0)))(babel-plugin-react-compiler@1.0.0)(vite@8.2.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.103.1)(terser@5.46.1)(yaml@2.9.0))':
+  '@vitejs/plugin-react@6.1.1(@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7(supports-color@7.2.0))(@babel/runtime@8.0.8)(rolldown@1.2.15)(vite@8.2.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.103.1)(terser@5.46.1)(yaml@2.9.0)))(babel-plugin-react-compiler@1.0.0)(vite@8.2.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.103.1)(terser@5.46.1)(yaml@2.9.0))':
     dependencies:
       '@rolldown/pluginutils': 1.0.1
       vite: 8.2.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.103.1)(terser@5.46.1)(yaml@2.9.0)
     optionalDependencies:
-      '@rolldown/plugin-babel': 0.2.3(@babel/core@7.29.7(supports-color@7.2.0))(@babel/runtime@8.0.0)(rolldown@1.2.15)(vite@8.2.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.103.1)(terser@5.46.1)(yaml@2.9.0))
+      '@rolldown/plugin-babel': 0.2.3(@babel/core@7.29.7(supports-color@7.2.0))(@babel/runtime@8.0.8)(rolldown@1.2.15)(vite@8.2.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.103.1)(terser@5.46.1)(yaml@2.9.0))
       babel-plugin-react-compiler: 1.0.0
 
   '@vitest/browser-playwright@4.1.11(playwright@1.62.1)(vite@8.2.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.103.1)(terser@5.46.1)(yaml@2.9.0))(vitest@4.1.11)':
@@ -10445,9 +10445,9 @@ snapshots:
 
   matrix-events-sdk@0.0.1: {}
 
-  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/3f05dc4d104a3dfc753c5e3549a18c74fab4b076:
+  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/a9ef09fbf2f1644c8663d0aeaf6a921cd16e7b01:
     dependencies:
-      '@babel/runtime': 8.0.0
+      '@babel/runtime': 8.0.8
       '@matrix-org/matrix-sdk-crypto-wasm': 18.9.0
       another-json: 0.2.0
       bs58: 6.0.0

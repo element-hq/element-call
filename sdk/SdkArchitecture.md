@@ -538,7 +538,7 @@ backend is handed the whole session's view and gives back media:
 type MemberMediaFields = Pick<RTCMember, "tracks$" | "encryptionError$">;
 
 export interface MediaBackend {
-  readonly transportType: string; // "livekit"
+  readonly transportTypes: readonly string[]; // ["m.livekit", "livekit"]
   /** Authenticate with the transport the client found; the probe for delegation runs here. */
   prepareLocalTransport(
     transport: Transport,

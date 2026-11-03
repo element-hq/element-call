@@ -15,14 +15,15 @@ import { TransportAutoDiscovery } from "./TransportAutoDiscovery";
 
 /**
  * The transport the local member advertises: the one the host names, else the
- * homeserver's first of the type the backend serves, else the host's fallback,
- * else the first the backends can provide, which are asked only then.
+ * homeserver's first of the most preferred type the backend serves, else the
+ * host's fallback, else the first the backends can provide, which are asked
+ * only then.
  *
  * @throws {MatrixRTCTransportMissingError} where none of these exists.
  */
 export async function discoverLocalTransport(
   client: Pick<MatrixClient, "getDomain" | "_unstable_getRTCTransports">,
-  transportType: string,
+  transportTypes: readonly string[],
   {
     transport: override,
     fallbackTransport,
@@ -34,7 +35,7 @@ export async function discoverLocalTransport(
     override ??
     (await new TransportAutoDiscovery({
       client,
-      transportType,
+      transportTypes,
       fallbackTransport,
       logger,
     }).discoverPreferredTransport()) ??
