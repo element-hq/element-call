@@ -191,8 +191,8 @@ importers:
         specifier: ^1.9.1
         version: 1.9.2
       matrix-js-sdk:
-        specifier: github:matrix-org/matrix-js-sdk#b3f17e3ee8ca53f5625f7d8c482155d5a82ef4a2
-        version: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/b3f17e3ee8ca53f5625f7d8c482155d5a82ef4a2
+        specifier: github:matrix-org/matrix-js-sdk#a9ef09fbf2f1644c8663d0aeaf6a921cd16e7b01
+        version: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/a9ef09fbf2f1644c8663d0aeaf6a921cd16e7b01
       matrix-widget-api:
         specifier: ^1.18.0
         version: 1.20.0
@@ -4750,8 +4750,8 @@ packages:
   matrix-events-sdk@0.0.1:
     resolution: {integrity: sha512-1QEOsXO+bhyCroIe2/A5OwaxHvBm7EsSQ46DEDn8RBIfQwN5HWBpFvyWWR4QY0KHPPnnJdI99wgRiAl7Ad5qaA==}
 
-  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/b3f17e3ee8ca53f5625f7d8c482155d5a82ef4a2:
-    resolution: {gitHosted: true, integrity: sha512-AXD5ClohyPLBY30QfmkD99fAGlAMsQ+2flR8rWqTy8aNpLHnTUisNhAClDgkAaDTnnFbOX/vZ8hwVzmYSefqTA==, tarball: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/b3f17e3ee8ca53f5625f7d8c482155d5a82ef4a2}
+  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/a9ef09fbf2f1644c8663d0aeaf6a921cd16e7b01:
+    resolution: {gitHosted: true, integrity: sha512-ZAhn/zB44MgrXqUzi9ffSFcmZY3+2nx7bEgfEJR7chYDFyT/XmlmfCJx7Ar4rOTAYZJRVnMxrEwiEHGDapUi0Q==, tarball: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/a9ef09fbf2f1644c8663d0aeaf6a921cd16e7b01}
     version: 45.0.0
     engines: {node: '>=22.0.0'}
 
@@ -10445,7 +10445,7 @@ snapshots:
 
   matrix-events-sdk@0.0.1: {}
 
-  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/b3f17e3ee8ca53f5625f7d8c482155d5a82ef4a2:
+  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/a9ef09fbf2f1644c8663d0aeaf6a921cd16e7b01:
     dependencies:
       '@babel/runtime': 8.0.8
       '@matrix-org/matrix-sdk-crypto-wasm': 18.9.0
