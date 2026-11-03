@@ -17,7 +17,7 @@ type TransportDiscoveryClient = Pick<
 
 export interface TransportAutoDiscoveryProps {
   client: TransportDiscoveryClient;
-  /** The transport types the media backend serves, most preferred first. */
+  /** The transport types we want to discover. Those are the ones, the local media backend supports. most preferred first. */
   transportTypes: readonly string[];
   /** A transport to use when the homeserver advertises none of the types. */
   fallbackTransport?: Transport;
