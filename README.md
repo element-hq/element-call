@@ -289,8 +289,14 @@ callback; with one, it asks the host to unmount it instead. The
 [global JS controls](./docs/controls.md) on `window` are unchanged and remain
 page-wide, so with several instances on one page they apply to all of them.
 
-The package is not published yet. A host installs it as a git dependency on the
-`component` directory of this repository,
+Each release publishes the package to npm, with the same version as the release:
+
+```sh
+npm install @element-hq/element-call-component
+```
+
+To use an unreleased commit, a host can instead install it as a git dependency
+on the `component` directory of this repository,
 
 ```json
 "@element-hq/element-call-component": "github:element-hq/element-call#main&path:/component"

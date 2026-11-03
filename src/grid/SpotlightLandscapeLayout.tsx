@@ -40,7 +40,7 @@ export const makeSpotlightLandscapeLayout: CallLayout<
           <Slot
             className={styles.slot}
             id="spotlight"
-            model={model.spotlight}
+            model={model.spotlight.vm}
           />
         </div>
         <div className={styles.grid} />
@@ -59,7 +59,7 @@ export const makeSpotlightLandscapeLayout: CallLayout<
 
     return (
       <div ref={ref} className={styles.layer}>
-        <SpotlightSlot media$={model.spotlight.media$} />
+        <SpotlightSlot media$={model.spotlight.vm.media$} />
         <div className={styles.grid}>
           {model.grid.map((m) => (
             <Slot key={m.id} className={styles.slot} id={m.id} model={m} />

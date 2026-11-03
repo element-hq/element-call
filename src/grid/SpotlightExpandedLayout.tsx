@@ -5,13 +5,39 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type ReactNode, useCallback } from "react";
+import { type ReactNode, type ComponentType, type FC } from "react";
 
 import { type SpotlightExpandedLayout as SpotlightExpandedLayoutModel } from "../state/layout-types.ts";
 import { type CallLayout } from "./CallLayout";
-import { type DragCallback, useUpdateLayout } from "./Grid";
+import { type SlotProps, useUpdateLayout } from "./Grid";
 import styles from "./SpotlightExpandedLayout.module.css";
 import { useBehavior } from "../useBehavior";
+import { type FloatingTile } from "../state/FloatingTile.ts";
+import {
+  type GridTileViewModel,
+  type TileViewModel,
+} from "../state/TileViewModel.ts";
+
+interface PipSlotProps {
+  model: FloatingTile & { vm: GridTileViewModel };
+  Slot: ComponentType<SlotProps<TileViewModel>>;
+}
+
+const PipSlot: FC<PipSlotProps> = ({ model, Slot }) => {
+  useUpdateLayout();
+  const alignment = useBehavior(model.alignment$);
+
+  return (
+    <Slot
+      className={styles.pip}
+      id={model.vm.id}
+      model={model.vm}
+      onDrag={model.onDrag}
+      data-block-alignment={alignment.block}
+      data-inline-alignment={alignment.inline}
+    />
+  );
+};
 
 /**
  * An implementation of the "expanded spotlight" layout, in which the spotlight
@@ -28,7 +54,6 @@ export const makeSpotlightExpandedLayout: CallLayout<
     Slot,
   }): ReactNode {
     useUpdateLayout();
-
     return (
       <div ref={ref} className={styles.layer}>
         <Slot
@@ -46,29 +71,9 @@ export const makeSpotlightExpandedLayout: CallLayout<
     Slot,
   }): ReactNode {
     useUpdateLayout();
-    const pipAlignment = useBehavior(model.pipAlignment$);
-
-    const onDragPip: DragCallback = useCallback(
-      ({ xRatio, yRatio }) =>
-        model.pipAlignment$.next({
-          block: yRatio < 0.5 ? "start" : "end",
-          inline: xRatio < 0.5 ? "start" : "end",
-        }),
-      [model.pipAlignment$],
-    );
-
     return (
       <div ref={ref} className={styles.layer}>
-        {model.pip && (
-          <Slot
-            className={styles.pip}
-            id={model.pip.id}
-            model={model.pip}
-            onDrag={onDragPip}
-            data-block-alignment={pipAlignment.block}
-            data-inline-alignment={pipAlignment.inline}
-          />
-        )}
+        {model.pip && <PipSlot model={model.pip} Slot={Slot} />}
       </div>
     );
   },

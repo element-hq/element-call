@@ -16,6 +16,7 @@ import {
   vi,
 } from "vitest";
 import {
+  ConnectionError,
   type LocalParticipant,
   type RemoteParticipant,
   type RemoteTrack,
@@ -41,7 +42,7 @@ import {
 } from "./Connection.ts";
 import { ObservableScope } from "../../reactive/ObservableScope";
 import { type ClientGetTokenParts, type ClientOpenIDParts } from "./auth";
-import { MatrixRTCError } from "../../errors";
+import { LivekitConnectionError, MatrixRTCError } from "../../errors";
 import { testJWTToken } from "../../utils/test-fixtures";
 import { ownMemberMock } from "../../utils/test";
 import { mockRemoteParticipant } from "./test";
@@ -57,6 +58,10 @@ let fakeLocalParticipant: MockedObject<LocalParticipant>;
 
 const ROOM_ID = "!roomID:example.org";
 const SLOT_ID = "m.call#ROOM";
+const FIREFOX_USER_AGENT =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0";
+const CHROME_USER_AGENT =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36";
 
 const transport: UnstableLivekitTransport = {
   type: "livekit",
@@ -145,6 +150,13 @@ function setupRemoteConnection(): Connection {
   });
 
   return new Connection(opts, logger);
+}
+
+function mockUserAgent(userAgent: string): void {
+  const spy = vi
+    .spyOn(navigator, "userAgent", "get")
+    .mockReturnValue(userAgent);
+  onTestFinished(() => spy.mockRestore());
 }
 
 afterEach(() => {
@@ -373,6 +385,89 @@ describe("Start connection states", () => {
       testJWTToken,
     );
     expect(connection.livekitAlias).toBe("!example_room_id");
+  });
+
+  it("retries a join that failed on the WebSocket in Firefox", async () => {
+    setupTest();
+    mockUserAgent(FIREFOX_USER_AGENT);
+    const connection = setupRemoteConnection();
+    const capturedStates: ConnectionState[] = [];
+    const s = connection.state$.subscribe((value) => {
+      capturedStates.push(value);
+    });
+    onTestFinished(() => s.unsubscribe());
+    const firstJoin = Promise.withResolvers<void>();
+    fakeLivekitRoom.connect.mockReturnValueOnce(firstJoin.promise);
+
+    const started = connection.start();
+    await vi.waitFor(() => expect(fakeLivekitRoom.connect).toHaveBeenCalled());
+    expect(fakeLivekitRoom.connect).toHaveBeenCalledTimes(1);
+    firstJoin.reject(ConnectionError.websocket("WS closed unexpectedly"));
+    await started;
+
+    expect(fakeLivekitRoom.connect).toHaveBeenCalledTimes(2);
+    expect(capturedStates.at(-1)).toEqual({
+      state: "authenticated",
+      livekitState: LivekitConnectionState.Connected,
+    });
+    expect(capturedStates.some((st) => st.state === "error")).toBe(false);
+  });
+
+  it("retries a join in Firefox only once", async () => {
+    setupTest();
+    mockUserAgent(FIREFOX_USER_AGENT);
+    const connection = setupRemoteConnection();
+    fakeLivekitRoom.connect.mockRejectedValue(
+      ConnectionError.websocket("WS closed unexpectedly"),
+    );
+
+    await expect(connection.start()).rejects.toThrow(LivekitConnectionError);
+
+    expect(fakeLivekitRoom.connect).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not retry a join that failed for another reason in Firefox", async () => {
+    setupTest();
+    mockUserAgent(FIREFOX_USER_AGENT);
+    const connection = setupRemoteConnection();
+    fakeLivekitRoom.connect.mockRejectedValueOnce(
+      ConnectionError.serverUnreachable("server was not reachable"),
+    );
+
+    await expect(connection.start()).rejects.toThrow(LivekitConnectionError);
+
+    expect(fakeLivekitRoom.connect).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not retry a join that failed on the WebSocket in other browsers", async () => {
+    setupTest();
+    mockUserAgent(CHROME_USER_AGENT);
+    const connection = setupRemoteConnection();
+    fakeLivekitRoom.connect.mockRejectedValueOnce(
+      ConnectionError.websocket("WS closed unexpectedly"),
+    );
+
+    await expect(connection.start()).rejects.toThrow(LivekitConnectionError);
+
+    expect(fakeLivekitRoom.connect).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not retry a join in Firefox once stopped", async () => {
+    setupTest();
+    mockUserAgent(FIREFOX_USER_AGENT);
+    const connection = setupRemoteConnection();
+    const firstJoin = Promise.withResolvers<void>();
+    fakeLivekitRoom.connect.mockReturnValueOnce(firstJoin.promise);
+    fakeLivekitRoom.disconnect.mockResolvedValue(undefined);
+
+    const started = connection.start();
+    await vi.waitFor(() => expect(fakeLivekitRoom.connect).toHaveBeenCalled());
+    const stopping = connection.stop();
+    firstJoin.reject(ConnectionError.websocket("WS closed unexpectedly"));
+    await stopping;
+
+    await expect(started).resolves.toBeUndefined();
+    expect(fakeLivekitRoom.connect).toHaveBeenCalledTimes(1);
   });
 
   it("stopping while connecting does not report an error", async () => {

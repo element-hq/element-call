@@ -155,7 +155,7 @@ function summarizeLayout$(l$: Observable<Layout>): Observable<LayoutSummary> {
         case "grid":
           return combineLatest(
             [
-              l.spotlight?.media$ ?? constant(undefined),
+              l.spotlight?.vm.media$ ?? constant(undefined),
               ...l.grid.map((vm) => vm.media$),
             ],
             (spotlight, ...grid) => ({
@@ -167,7 +167,7 @@ function summarizeLayout$(l$: Observable<Layout>): Observable<LayoutSummary> {
         case "spotlight-landscape":
         case "spotlight-portrait":
           return combineLatest(
-            [l.spotlight.media$, ...l.grid.map((vm) => vm.media$)],
+            [l.spotlight.vm.media$, ...l.grid.map((vm) => vm.media$)],
             (spotlight, ...grid) => ({
               type: l.type,
               spotlight: spotlight.map((vm) => vm.id),
@@ -176,7 +176,7 @@ function summarizeLayout$(l$: Observable<Layout>): Observable<LayoutSummary> {
           );
         case "spotlight-expanded":
           return combineLatest(
-            [l.spotlight.media$, l.pip?.media$ ?? constant(undefined)],
+            [l.spotlight.media$, l.pip?.vm.media$ ?? constant(undefined)],
             (spotlight, pip) => ({
               type: l.type,
               spotlight: spotlight.map((vm) => vm.id),
@@ -185,7 +185,7 @@ function summarizeLayout$(l$: Observable<Layout>): Observable<LayoutSummary> {
           );
         case "one-on-one-desktop":
           return combineLatest(
-            [l.spotlight.media$, l.pip.media$],
+            [l.spotlight.media$, l.pip.vm.media$],
             (spotlight, pip) => ({
               type: l.type,
               spotlight: spotlight.id,
@@ -196,8 +196,8 @@ function summarizeLayout$(l$: Observable<Layout>): Observable<LayoutSummary> {
           return combineLatest(
             [
               l.spotlight.media$,
-              l.pip?.media$ ?? constant(undefined),
-              l.pipSize$,
+              l.pip?.vm.media$ ?? constant(undefined),
+              l.pip?.size$ ?? constant(undefined),
             ],
             (spotlight, pip, pipSize) => ({
               type: l.type,
@@ -506,7 +506,7 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
                 type: "one-on-one-mobile",
                 spotlight: [`${aliceId}:0`],
                 pip: undefined,
-                pipSize: "lg",
+                pipSize: undefined,
               },
               b: {
                 type: "one-on-one-mobile",
@@ -544,7 +544,7 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
               type: "one-on-one-mobile",
               spotlight: [`${aliceId}:0`],
               pip: undefined,
-              pipSize: "lg",
+              pipSize: undefined,
             },
           });
           // It wouldn't be clear whether Alice or Bob is the remote video tile,
@@ -592,7 +592,7 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
                 type: "one-on-one-mobile",
                 spotlight: [`${aliceId}:0`],
                 pip: undefined,
-                pipSize: "sm",
+                pipSize: undefined,
               },
               b: {
                 type: "spotlight-landscape",
@@ -791,7 +791,7 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
                 type: "one-on-one-mobile",
                 spotlight: [`${aliceId}:0`],
                 pip: undefined,
-                pipSize: "lg",
+                pipSize: undefined,
               },
               b: {
                 // In a larger window, expect the one-on-one desktop layout

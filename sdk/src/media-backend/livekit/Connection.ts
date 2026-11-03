@@ -14,6 +14,7 @@ import {
   ConnectionError,
   ConnectionErrorReason,
   type ConnectionState as LivekitConnectionState,
+  getBrowser,
   type Participant,
   type RemoteParticipant,
   type RemoteTrackPublication,
@@ -322,7 +323,7 @@ export class Connection {
 
       try {
         this.logger.info(`livekitRoom.connect ${url}`);
-        await this.livekitRoom.connect(url, jwt);
+        await this.connectLivekitRoom(url, jwt);
         this.logger.info(`livekitRoom.connect SUCCESS ${url}`);
       } catch (e) {
         this.logger.info(`livekitRoom.connect FAILED ${url}`, e);
@@ -379,6 +380,23 @@ export class Connection {
       });
       // Its okay to ignore the throw. The error is part of the state.
       throw error;
+    }
+  }
+
+  private async connectLivekitRoom(url: string, jwt: string): Promise<void> {
+    try {
+      await this.livekitRoom.connect(url, jwt);
+    } catch (e) {
+      // Behind a proxy, Firefox fails the first WebSocket to a host after trying
+      // it over HTTP/2, so a join that fails on the WebSocket gets a second try.
+      // https://bugzilla.mozilla.org/show_bug.cgi?id=2015411
+      const failedOnFirefoxWebSocket =
+        getBrowser()?.name === "Firefox" &&
+        e instanceof ConnectionError &&
+        e.reason === ConnectionErrorReason.WebSocket;
+      if (this.stopped || !failedOnFirefoxWebSocket) throw e;
+      this.logger.info(`livekitRoom.connect RETRY ${url}`, e);
+      await this.livekitRoom.connect(url, jwt);
     }
   }
 

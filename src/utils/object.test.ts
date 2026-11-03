@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { test, expect } from "vitest";
 import { shallowEquals } from "./object";
+import { shallowEquals as arrayShallowEquals } from "./array";
 
 interface Thing {
   type: string;
@@ -29,12 +30,26 @@ test("shallowEquals detects a missing key", () => {
 test("shallowEquals detects a differing value", () =>
   expect(shallowEquals(withArray, { ...withArray, value: 2 })).toBe(false));
 
-test("shallowEquals considers arrays with equal contents to be equal", () =>
+const comparator = (aValue: unknown, bValue: unknown): boolean => {
+  if (Array.isArray(aValue) && Array.isArray(bValue))
+    return arrayShallowEquals(aValue, bValue);
+  return aValue === bValue;
+};
+
+test("shallowEquals with comparator considers arrays with equal contents to be equal", () =>
   expect(
-    shallowEquals(withArray, { ...withArray, items: [...withArray.items] }),
+    shallowEquals(
+      withArray,
+      { ...withArray, items: [...withArray.items] },
+      comparator,
+    ),
   ).toBe(true));
 
-test("shallowEquals detects arrays with different contents", () =>
+test("shallowEquals with comparator detects arrays with different contents", () =>
   expect(
-    shallowEquals(withArray, { ...withArray, items: [...withArray.items, {}] }),
+    shallowEquals(
+      withArray,
+      { ...withArray, items: [...withArray.items, {}] },
+      comparator,
+    ),
   ).toBe(false));

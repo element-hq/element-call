@@ -65,7 +65,10 @@ export interface GetSFUConfigParams {
   logger: Logger;
 }
 
-/** Authenticates with a transport, through whichever flow suits it and our role. */
+/**
+ * Gets an {@link SFUConfig} appropriate for connecting to a given transport,
+ * using whichever auth flow is appropriate.
+ */
 export async function getSFUConfig({
   client,
   membership,
@@ -76,48 +79,36 @@ export async function getSFUConfig({
   role,
   logger,
 }: GetSFUConfigParams): Promise<SFUConfig> {
-  const viaOpenID = async (serviceUrl: string): Promise<SFUConfig> =>
-    await openID.getSFUConfig({
+  const flow = chooseAuthFlow(transport);
+  if (flow.kind === "openID") {
+    return await openID.getSFUConfig({
       client,
       membership,
-      serviceUrl,
+      serviceUrl: flow.serviceUrl,
       roomId,
       slotId,
       role,
       logger,
     });
-
-  const flow = chooseAuthFlow(transport, role);
-  if (flow.kind === "openID") return await viaOpenID(flow.serviceUrl);
-
-  try {
-    return await csApi.getSFUConfig({
-      client,
-      membership,
-      url: flow.url,
-      serverName,
-      roomId,
-      slotId,
-    });
-  } catch (e) {
-    // A publisher never falls back: a homeserver that advertises a `url` but
-    // does not implement MSC4195 is misconfigured, and the admin should hear
-    // about it before `livekit_service_url` is deprecated
-    const mayFallBack =
-      role === "subscriber" && "livekit_service_url" in transport;
-    if (mayFallBack && isCsApiUnavailable(e)) {
-      logger.warn(
-        `Cannot use the MSC4195 get_token endpoint (${e}), falling back to the OpenID flow with service ${transport.livekit_service_url}`,
-      );
-      return await viaOpenID(transport.livekit_service_url);
+  } else {
+    try {
+      return await csApi.getSFUConfig({
+        client,
+        membership,
+        url: flow.url,
+        serverName,
+        roomId,
+        slotId,
+      });
+    } catch (e) {
+      if (isEndpointUnsupported(e)) {
+        logger.error(
+          `Homeserver does not support the MSC4195 get_token endpoint, cannot get token for transport ${flow.url}`,
+        );
+        throw new NoMatrix2AuthorizationService(e as Error);
+      }
+      throw e;
     }
-    if (isEndpointUnsupported(e)) {
-      logger.error(
-        `Homeserver does not support the MSC4195 get_token endpoint, cannot get token for transport ${flow.url}`,
-      );
-      throw new NoMatrix2AuthorizationService(e as Error);
-    }
-    throw e;
   }
 }
 
@@ -149,7 +140,7 @@ export async function delegateDelayedLeave({
   delayTimeoutMs,
   logger,
 }: DelegateDelayedLeaveParams): Promise<void> {
-  const flow = chooseAuthFlow(transport, "publisher");
+  const flow = chooseAuthFlow(transport);
   if (flow.kind === "csApi") {
     try {
       await csApi.delegateDelayedLeave({
@@ -190,23 +181,18 @@ export type AuthFlow =
   | { kind: "openID"; serviceUrl: string };
 
 /**
- * Chooses between the MSC4195 client-server API and the OpenID flow against
- * the transport's JWT service.
- *
- * Only the JWT service's `/sfu/get` endpoint assigns the legacy participant
- * identity that clients predating MSC4195 expect from anyone advertising a
- * membership, so a publisher keeps using the JWT service wherever the
- * transport still offers one, even next to a `url`. A subscriber may use the
- * client-server API regardless, as nobody matches its identity.
+ * Chooses which auth flow to use for a given transport. For now this returns a
+ * single auth flow, with no provision for a fallback behavior.
  */
-export function chooseAuthFlow(
-  transport: UnstableLivekitTransport,
-  role: ConnectionRole,
-): AuthFlow {
-  if ("url" in transport) {
-    const useCsApi =
-      !("livekit_service_url" in transport) || role === "subscriber";
-    if (useCsApi) return { kind: "csApi", url: transport.url };
-  }
+export function chooseAuthFlow(transport: UnstableLivekitTransport): AuthFlow {
+  if ("url" in transport && !("livekit_service_url" in transport))
+    return { kind: "csApi", url: transport.url };
+  // All other transports use the OpenID flow, even if they contain a `url`.
+  // This is necessary since the auth flow determines the participant identity
+  // format, and we still have older clients out in the wild which would not yet
+  // know to look for a hashed participant identity in case `url` is present in
+  // someone else's transport.
+  // TODO: Once users have updated their clients, choose the CS API flow if
+  // available, keeping OpenID as a fallback.
   return { kind: "openID", serviceUrl: transport.livekit_service_url };
 }
