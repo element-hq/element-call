@@ -125,25 +125,24 @@ test("leaves the host's own page unstyled", async ({ page }) => {
     timeout: 60_000,
   });
 
-  // Element Call's stylesheet is written for a page of its own: normalize.css
-  // gives `html` a line height, Compound gives `body` its font and feature
-  // settings, and the design tokens live on `:root`. None of that may reach the
-  // host's document — the harness sets none of these itself, so anything other
-  // than the browser's defaults here came from us.
+  // Element Call's page-wide CSS (normalize.css and the tokens in base.css)
+  // should not reach the host's page. Compound CSS that gets loaded to EW (host)
+  // on the other hand should impact the host. So probe with styles only Element Call sets:
+  // - A fresh <sub> keeps the browser's `vertical-align: sub` unless
+  //   normalize.css leaked; it turns that into `baseline`.
+  // - `--font-scale` is Element Call's own token, so `:root` must not have it.
   const host = await page.evaluate(() => {
-    const html = getComputedStyle(document.documentElement);
-    const body = getComputedStyle(document.body);
+    const sub = document.body.appendChild(document.createElement("sub"));
+    const verticalAlign = getComputedStyle(sub).verticalAlign;
+    sub.remove();
     return {
-      lineHeight: html.lineHeight,
-      fontFeatureSettings: body.fontFeatureSettings,
-      token: html.getPropertyValue("--cpd-color-text-primary"),
+      verticalAlign,
+      token: getComputedStyle(document.documentElement).getPropertyValue(
+        "--font-scale",
+      ),
     };
   });
-  expect(host).toEqual({
-    lineHeight: "normal",
-    fontFeatureSettings: "normal",
-    token: "",
-  });
+  expect(host).toEqual({ verticalAlign: "sub", token: "" });
 
   // While inside the container, the same rules do apply
   const root = panes.first().locator("[data-element-call-root]");

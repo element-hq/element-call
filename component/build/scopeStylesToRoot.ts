@@ -60,12 +60,18 @@ const IS_ROOT = `:where(${ROOT_SELECTOR})`;
  * tokens, the component styles, the fonts — is not in this build at all: the
  * host supplies it, unscoped, along with its copy of Compound.
  */
-export function scopeStylesToRoot(): Plugin {
+interface Options {
+  /** Stylesheets left as they are: a host's own, which it doesn't scope. */
+  exclude?: RegExp[];
+}
+
+export function scopeStylesToRoot({ exclude = [] }: Options = {}): Plugin {
   return {
     postcssPlugin: "element-call-scope-styles-to-root",
     Once(root) {
-      const isModule =
-        root.source?.input.file?.endsWith(".module.css") ?? false;
+      const file = root.source?.input.file ?? "";
+      if (exclude.some((pattern) => pattern.test(file))) return;
+      const isModule = file.endsWith(".module.css");
       root.walkRules((rule) => {
         if (isRelative(rule)) return;
         rule.selector = (isModule ? scopeBare : scopeAll).processSync(

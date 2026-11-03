@@ -36,20 +36,15 @@ Please see LICENSE in the repository root for full details.
   }
 }
 
+/* The width design sets: a long device name wraps. */
 .menu {
-  display: flex;
-  flex-direction: column;
+  inline-size: 296px;
 }
 
-/* Only the device lists scroll, bounded by the measured call area: the menu is
-   portalled out of the root, so CSS can't size it against the call. */
+/* Its share of the measured call area: the menu is portalled out of the root,
+   so CSS can't size it against the call. */
 .deviceList {
-  overflow-y: auto;
-  min-block-size: 0;
   max-block-size: var(--device-list-max-height);
-  /* Keeps a row reached by keyboard clear of the sticky heading and meter. */
-  scroll-padding-block: var(--device-list-scroll-padding-start, 0)
-    var(--device-list-scroll-padding-end, 0);
 }
 
 /* Compound's heading rule heads each section; the design adds space below it. */
@@ -60,25 +55,6 @@ Please see LICENSE in the repository root for full details.
 /* And more above a heading that follows another section. */
 .deviceList [role="group"] + [role="group"] h3 {
   margin-block-start: var(--cpd-space-7x);
-}
-
-/* Sticky within its own section. Opaque and inset a border width so it doesn't
-   paint over the menu's outline. */
-.sectionHeading {
-  position: sticky;
-  inset-block-start: 0;
-  background: var(--cpd-color-bg-canvas-default);
-  margin-inline: var(--cpd-border-width-1);
-  margin-block-start: var(--cpd-border-width-1);
-}
-
-/* Sticky at the foot of the microphone section; opaque and inset as above. */
-.stickyMeter {
-  position: sticky;
-  inset-block-end: 0;
-  background: var(--cpd-color-bg-canvas-default);
-  margin-inline: var(--cpd-border-width-1);
-  margin-block-end: var(--cpd-border-width-1);
 }
 
 /* Radix focuses whatever the pointer is over, so the browser's ring would
