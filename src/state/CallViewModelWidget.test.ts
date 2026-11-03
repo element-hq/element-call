@@ -8,7 +8,6 @@ Please see LICENSE in the repository root for full details.
 import { it, vi, expect } from "vitest";
 import { Subject } from "rxjs";
 
-// import * as ComponentsCore from "@livekit/components-core";
 import { withCallViewModel } from "./CallViewModel/CallViewModelTestUtils.ts";
 import { type CallViewModel } from "./CallViewModel/CallViewModel.ts";
 import { constant } from "./Behavior.ts";
@@ -20,8 +19,6 @@ import {
 } from "../HostBridge.ts";
 import { E2eeType } from "../e2ee/e2eeType.ts";
 import { MatrixRTCMode } from "../config/ConfigOptions.ts";
-
-vi.mock("@livekit/components-core", { spy: true });
 
 it.each([[MatrixRTCMode.Compatibility], [MatrixRTCMode.Matrix_2_0]])(
   "expect leave when the host asks us to hang up (%s mode)",

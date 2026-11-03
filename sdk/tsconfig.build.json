@@ -1,0 +1,18 @@
+{
+  // Declaration output for the SDK package (`pnpm build:sdk:types`). The root
+  // tsconfig only type-checks; this one emits `.d.ts` files, and nothing else,
+  // for everything the entry point reaches. The layout under `dist/types`
+  // mirrors the repository (`sdk/index.d.ts`, `src/…`), which is what
+  // `package.json` points its `types` at.
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    "declarationMap": false,
+    "rootDir": "..",
+    "outDir": "./dist/types"
+  },
+  "include": ["./index.ts", "../src/@types/*.d.ts"],
+  "exclude": []
+}

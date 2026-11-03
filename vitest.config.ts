@@ -26,6 +26,7 @@ export default defineConfig((configEnv) =>
                 "src/**/*.test.tsx",
                 "component/**/*.test.ts",
                 "component/**/*.test.tsx",
+                "sdk/**/*.test.ts",
               ],
             },
           },
@@ -37,6 +38,8 @@ export default defineConfig((configEnv) =>
               }),
               ...vitePluginsConfig(configEnv).plugins!,
             ],
+            // The stories import the SDK by its package name like the app does
+            resolve: vitePluginsConfig(configEnv).resolve,
             test: {
               name: "storybook",
               browser: {
@@ -51,13 +54,18 @@ export default defineConfig((configEnv) =>
         ],
         coverage: {
           reporter: ["html", "json"],
-          include: ["src/**/*.{ts,tsx,js,jsx}"],
+          include: ["src/**/*.{ts,tsx,js,jsx}", "sdk/**/*.ts"],
           exclude: [
             "src/**/*.md",
             "src/**/*.{d,test,stories}.{ts,tsx}",
             "src/utils/test.ts",
             "src/utils/test-viewmodel.ts",
             "src/utils/test-fixtures.ts",
+            "sdk/**/*.{d,test}.ts",
+            "sdk/**/test.ts",
+            "sdk/**/test-fixtures.ts",
+            "sdk/dev/**",
+            "sdk/dist/**",
             "playwright/**",
           ],
         },
