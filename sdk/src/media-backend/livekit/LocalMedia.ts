@@ -27,6 +27,7 @@ import {
 
 import {
   type LocalAudioMediaTrack,
+  type LocalMedia,
   type LocalVideoMediaTrack,
   type MediaSource,
   type PublishRequest,
@@ -57,6 +58,8 @@ interface Props {
   /** The transport we publish on; null until the session has found it. */
   localTransport$: Behavior<TransportLocator | null>;
   publish: PublishRequest[];
+  /** Tracks the host captured ahead of the join; the publisher takes them over. */
+  media?: LocalMedia;
   /** Read by the connection factory for the rooms it creates from now on. */
   audioOutputDeviceId$: BehaviorSubject<string | undefined>;
   encryptionSystem: EncryptionSystem;
@@ -79,6 +82,7 @@ export function createLivekitLocalMedia({
   connectionMap$,
   localTransport$,
   publish: initialRequests,
+  media,
   audioOutputDeviceId$,
   encryptionSystem,
   logger: parentLogger,
@@ -119,6 +123,7 @@ export function createLivekitLocalMedia({
       connection.livekitRoom,
       desired,
       logger.getChild(`[Publisher ${JSON.stringify(connection.transport)}]`),
+      media,
     );
     publisher$.next(publisher);
     return Promise.resolve(async (): Promise<void> => {

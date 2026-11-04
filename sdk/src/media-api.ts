@@ -185,3 +185,45 @@ export interface MemberMedia {
 export interface LocalMemberMedia extends MemberMedia {
   tracks$: Behavior<(LocalAudioMediaTrack | LocalVideoMediaTrack)[] | null>;
 }
+
+/**
+ * Tracks captured ahead of a join, for a lobby: the same local tracks a
+ * participation hands out, on nothing but the browser's devices, so they fit
+ * whichever backend joins. Handed to `join` as `publish`, they are moved once
+ * the participation publishes them: they leave `tracks$`, their objects are
+ * finished (controls reject, elements detached), and the same devices come
+ * back under `localMember$.tracks$` as new objects. `stop` releases only what
+ * was not moved; `capture` works again afterwards.
+ */
+export interface LocalMedia {
+  /** What was captured with, one per source; a join reads its defaults from here. */
+  readonly requests: PublishRequest[];
+  tracks$: Behavior<(LocalAudioMediaTrack | LocalVideoMediaTrack)[]>;
+  /**
+   * Opens the devices, in one permission prompt where the browser asks for
+   * one. Rejects where a device cannot be opened, having opened none of them.
+   * A source captured already is replaced.
+   */
+  capture(
+    requests: PublishRequest[],
+  ): Promise<(LocalAudioMediaTrack | LocalVideoMediaTrack)[]>;
+  /** Closes the device behind a source; nothing where it was not captured. */
+  release(source: MediaSource): void;
+  /** Closes every device still held. */
+  stop(): void;
+  /**
+   * For a media backend, as it starts publishing: moves every track out,
+   * finishing its object here. Not for a host; the participation calls it.
+   */
+  takeTracks(): Map<"microphone" | "camera", HandedOverTrack>;
+}
+
+/** One track as a backend receives it: the device's own track and what runs on it. */
+export interface HandedOverTrack {
+  track: MediaStreamTrack;
+  /** What it was opened with, for a backend that restarts it. */
+  constraints: MediaTrackConstraints;
+  muted: boolean;
+  /** Where a processor runs: it and its output, to adopt rather than initialise again. */
+  processor?: { processor: VideoProcessor; processedTrack: MediaStreamTrack };
+}

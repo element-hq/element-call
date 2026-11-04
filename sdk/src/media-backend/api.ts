@@ -20,6 +20,7 @@ import { type Observable } from "rxjs";
 import { type ResolvedTransport, type RTCMember } from "../api";
 import {
   type LocalAudioMediaTrack,
+  type LocalMedia,
   type LocalMemberMedia,
   type LocalVideoMediaTrack,
   type MediaSource,
@@ -56,8 +57,8 @@ export interface MediaBackendContext {
   /** The slot the session is in, `application#id`; a token is issued for it. */
   slotId: string;
   ownMembershipIdentity: CallMembershipIdentityParts;
-  /** What the local member publishes at the join. */
-  publish: PublishRequest[];
+  /** What the local member publishes at the join: requests, or a lobby's media. */
+  publish: PublishRequest[] | LocalMedia;
   encryptionSystem: EncryptionSystem;
   /**
    * Every media key the session knows: the current ones replayed on

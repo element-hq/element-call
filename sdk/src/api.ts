@@ -20,6 +20,7 @@ import { type Observable } from "rxjs";
 import { type Behavior } from "./reactive/Behavior";
 import {
   type LocalAudioMediaTrack,
+  type LocalMedia,
   type LocalMemberMedia,
   type LocalVideoMediaTrack,
   type MediaSource,
@@ -84,12 +85,15 @@ export interface RTCSlot {
 
 export interface RTCParticipationOptions {
   /**
-   * Published at the join; `publish` on the participation adds to it from then
-   * on. Kept as an option, rather than only the method, because the LiveKit
-   * backend reads the initial requests to build the room's default capture
-   * options before the first connection exists.
+   * What the local member publishes at the join: requests the SDK captures
+   * itself, or the media a lobby captured ahead of the join, which the
+   * participation takes over (its tracks leave `media.tracks$`) and publishes
+   * in place of capturing. `publish` on the participation adds to either from
+   * then on. Kept as an option, rather than only the method, because the
+   * LiveKit backend reads it to build the room's default capture options
+   * before the first connection exists.
    */
-  publish: PublishRequest[];
+  publish: PublishRequest[] | LocalMedia;
   /**
    * LEGACY
    *
