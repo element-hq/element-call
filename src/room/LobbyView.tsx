@@ -31,7 +31,7 @@ import { LeaveToHomeLink } from "../button/LeaveToHomeLink";
 import { useLeaveToHome } from "../LeaveToHomeContext";
 import { useMediaDevices } from "../MediaDevicesContext";
 import { ObservableScope } from "../state/ObservableScope";
-import { useTrackProcessorState$ } from "../tracks/TrackProcessorContext";
+import { useBackgroundEffectsState$ } from "../tracks/BackgroundEffectsContext";
 import { useBehavior } from "../useBehavior";
 import { CallFooter, type FooterSnapshot } from "../components/CallFooter";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
@@ -122,7 +122,7 @@ export const LobbyView: FC<Props> = ({
 
   const devices = useMediaDevices();
   const videoInputId = useBehavior(devices.videoInput.selected$)?.id;
-  const trackProcessorState$ = useTrackProcessorState$();
+  const backgroundEffectsState$ = useBackgroundEffectsState$();
 
   const [mediaVm, setMediaVm] = useState<LobbyMediaViewModel | null>(null);
   useEffect(() => {
@@ -135,14 +135,14 @@ export const LobbyView: FC<Props> = ({
         devices,
         captureSettings(),
         mediaScope.behavior(
-          trackProcessorState$.pipe(map((state) => state.processor)),
+          backgroundEffectsState$.pipe(map((state) => state.processor)),
         ),
       ),
     );
     return (): void => {
       mediaScope.end();
     };
-  }, [media, muteStates, devices, trackProcessorState$]);
+  }, [media, muteStates, devices, backgroundEffectsState$]);
   const videoTrack = useBehavior(mediaVm?.videoTrack$ ?? noVideoTrack);
 
   useEffect(() => {
