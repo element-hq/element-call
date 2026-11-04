@@ -53,9 +53,12 @@ const wasmFileset: WasmFileset = {
  */
 export class BackgroundEffectTransformer extends BackgroundTransformer {
   /**
-   * As the library's, except that disabling also drops the blur radius: kept,
-   * it has every frame segmented and the result thrown away, where with
-   * neither a radius nor a picture frames are passed on untouched.
+   * As the library's, except that disabling also drops the blur radius. The
+   * library skips a frame on `isDisabled ?? backgroundDisabled`, and
+   * `isDisabled` is never undefined, so a disabled effect that keeps its
+   * radius has every frame segmented and drawn for nothing. With neither a
+   * radius nor a picture, frames are passed on untouched.
+   * TODO: drop once fixed upstream in livekit/track-processors-js (still in 0.8.2).
    */
   public override async update(opts: BackgroundOptions): Promise<void> {
     await super.update(
