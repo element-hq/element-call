@@ -23,28 +23,39 @@ export interface LivekitProcessor extends TrackProcessor<Track.Kind.Video> {
  * that the join does not initialise it again. Every step takes its turn on
  * the processor, which a stopped track tears down without waiting for the
  * next one's init.
+ *
+ * Set on a camera that is off, whose track LiveKit has stopped, the build
+ * waits for the restart that turns it back on. LiveKit restarts a processor
+ * before it hands the new track to the sender, so the camera's first frame
+ * out is already processed.
  */
 export function toLivekitProcessor(
   processor: VideoProcessor,
   running?: MediaStreamTrack,
 ): LivekitProcessor {
+  let built = false;
   const adapter: LivekitProcessor = {
     name: processor.name,
     source: processor,
     init: async (opts) =>
       inTurn(processor, async () => {
+        if (running === undefined && opts.track.readyState === "ended") return;
         adapter.processedTrack =
           running ?? (await processor.init(opts.track, opts.element));
         running = undefined;
+        built = true;
       }),
     restart: async (opts) =>
       inTurn(processor, async () => {
-        adapter.processedTrack = await processor.restart(
-          opts.track,
-          opts.element,
-        );
+        adapter.processedTrack = built
+          ? await processor.restart(opts.track, opts.element)
+          : await processor.init(opts.track, opts.element);
+        built = true;
       }),
-    destroy: async () => inTurn(processor, async () => processor.destroy()),
+    destroy: async () =>
+      inTurn(processor, async () => {
+        if (built) await processor.destroy();
+      }),
   };
   return adapter;
 }

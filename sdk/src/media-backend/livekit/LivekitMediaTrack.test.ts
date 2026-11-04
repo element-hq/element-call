@@ -8,6 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { EventEmitter } from "events";
 import {
   type LocalParticipant,
+  LocalVideoTrack,
   ParticipantEvent,
   RemoteAudioTrack,
   type RemoteParticipant,
@@ -17,10 +18,22 @@ import {
   TrackEvent,
   type TrackPublication,
 } from "livekit-client";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  onTestFinished,
+  vi,
+} from "vitest";
 
 import { ObservableScope } from "../../reactive/ObservableScope";
-import { type AudioMediaTrack } from "../../media-api";
+import {
+  type AudioMediaTrack,
+  type LocalVideoMediaTrack,
+  type VideoProcessor,
+} from "../../media-api";
 import {
   createLivekitMediaTrack,
   createLocalLivekitMediaTrack,
@@ -211,6 +224,49 @@ describe("createLivekitMediaTrack", () => {
       false,
     );
   });
+
+  // LiveKit stops a camera that is turned off; the processor is built when it
+  // is turned on again
+  it.each([
+    { state: "is off", isMuted: true, takes: true },
+    { state: "has stopped for good", isMuted: false, takes: false },
+  ])(
+    "gives a processor to a camera that $state: $takes",
+    async ({ isMuted, takes }) => {
+      // jsdom has none; LiveKit's facing mode checks against it
+      vi.stubGlobal("MediaStreamTrack", class {});
+      onTestFinished(() => {
+        vi.unstubAllGlobals();
+      });
+      const camera = Object.assign(Object.create(LocalVideoTrack.prototype), {
+        isMuted,
+        _mediaStreamTrack: {
+          readyState: "ended",
+          label: "",
+          getSettings: () => ({}),
+        },
+        getProcessor: () => undefined,
+        setProcessor: vi.fn().mockResolvedValue(undefined),
+      }) as LocalVideoTrack;
+      const { participant, publication, room } = fakes({
+        track: camera as unknown as FakeTrack,
+      });
+      const track = createLocalLivekitMediaTrack(
+        scope,
+        Object.assign(participant, {
+          isLocal: true,
+        }) as unknown as LocalParticipant,
+        publication as unknown as TrackPublication,
+        room,
+        vi.fn(),
+      ) as LocalVideoMediaTrack;
+
+      await track.setProcessor({ name: "blur" } as VideoProcessor);
+      expect(vi.mocked(camera.setProcessor).mock.calls.length).toBe(
+        takes ? 1 : 0,
+      );
+    },
+  );
 });
 
 type FakeTrack = Track & {
