@@ -14,6 +14,7 @@ import {
   type EncryptionSystem,
   generateItems,
   type LocalAudioMediaTrack,
+  type LocalMediaTrack,
   type LocalRTCMember,
   type LocalVideoMediaTrack,
   type RTCParticipation,
@@ -140,14 +141,16 @@ export interface CaptureSettings {
 }
 
 /**
- * What to publish for a microphone or camera: the device the user picked and
- * the host's capture settings. The video processor is not in here; the call
- * attaches it to the camera track once that exists.
+ * What to publish for a microphone or camera: the device the user picked, the
+ * host's capture settings and, for the camera, the video processor, so that
+ * the track starts with it rather than letting the room through while it is
+ * built.
  */
 export function publishRequest(
   source: "microphone" | "camera",
   mediaDevices: MediaDevices,
   capture: CaptureSettings,
+  processor?: VideoProcessor,
 ): PublishRequest {
   return source === "microphone"
     ? {
@@ -159,6 +162,7 @@ export function publishRequest(
         source,
         deviceId: mediaDevices.videoInput.selected$.value?.id,
         capture: capture.camera,
+        ...(processor && { processor }),
       };
 }
 
@@ -167,12 +171,13 @@ export function initialPublishRequests(
   muteStates: MuteStates,
   mediaDevices: MediaDevices,
   capture: CaptureSettings,
+  processor?: VideoProcessor,
 ): PublishRequest[] {
   const requests: PublishRequest[] = [];
   if (muteStates.audio.enabled$.value)
     requests.push(publishRequest("microphone", mediaDevices, capture));
   if (muteStates.video.enabled$.value)
-    requests.push(publishRequest("camera", mediaDevices, capture));
+    requests.push(publishRequest("camera", mediaDevices, capture, processor));
   return requests;
 }
 
@@ -508,9 +513,36 @@ export function createCallViewModel$(
     "screenShare",
   ) as Behavior<LocalVideoMediaTrack | undefined>;
 
+  // Camera tracks the processor reached while they ran. A camera turned off is
+  // stopped, and a stopped track can't take one.
+  const tookProcessor = new WeakMap<LocalVideoMediaTrack, VideoProcessor>();
+  const missesProcessor = (track: LocalMediaTrack): boolean => {
+    const processor = videoProcessor$.value;
+    return (
+      processor !== undefined &&
+      tookProcessor.get(track as LocalVideoMediaTrack) !== processor
+    );
+  };
   const supply = (source: "microphone" | "camera"): TrackSupply => ({
     publish: async () =>
-      rtcParticipation.publish(publishRequest(source, mediaDevices, capture)),
+      rtcParticipation.publish(
+        publishRequest(
+          source,
+          mediaDevices,
+          capture,
+          source === "camera" ? videoProcessor$.value : undefined,
+        ),
+      ),
+    // A camera turned off before the processor was chosen is replaced, so
+    // that the new one starts with it
+    replace:
+      source === "camera"
+        ? async (track): Promise<boolean> => {
+            if (!missesProcessor(track)) return false;
+            await rtcParticipation.unpublish("camera");
+            return true;
+          }
+        : undefined,
   });
   followMuteState(
     scope,
@@ -550,7 +582,13 @@ export function createCallViewModel$(
         });
       });
 
-  followProcessor(scope, camera$, videoProcessor$, logger);
+  followProcessor(
+    scope,
+    camera$,
+    videoProcessor$,
+    logger,
+    (camera, processor) => tookProcessor.set(camera, processor),
+  );
 
   const members$ = scope.behavior<(LocalRTCMember | RemoteRTCMember)[]>(
     combineLatest(
