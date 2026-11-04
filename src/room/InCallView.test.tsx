@@ -227,6 +227,18 @@ describe("InCallView", () => {
   });
 });
 
+// Media that opened nothing: the join captures as it always did
+function fakeLocalMedia(): MatrixRTCSdk.LocalMedia {
+  return {
+    requests: [],
+    tracks$: constant([]),
+    capture: vi.fn(async () => Promise.resolve([])),
+    release: vi.fn(),
+    stop: vi.fn(),
+    takeTracks: () => new Map(),
+  };
+}
+
 describe("ActiveCall", () => {
   it("creates the view models and renders the call", async () => {
     const mediaDevices = mockMediaDevices({});
@@ -244,6 +256,7 @@ describe("ActiveCall", () => {
                 matrixInfo={matrixInfo}
                 onShareClick={null}
                 e2eeSystem={{ kind: E2eeType.NONE }}
+                media={fakeLocalMedia()}
                 onLeft={(): void => {}}
               />
             </TooltipProvider>
@@ -292,6 +305,7 @@ describe("ActiveCall", () => {
                     matrixInfo={matrixInfo}
                     onShareClick={null}
                     e2eeSystem={{ kind: E2eeType.NONE }}
+                    media={fakeLocalMedia()}
                     onLeft={(): void => {}}
                   />
                 </TooltipProvider>

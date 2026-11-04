@@ -50,6 +50,7 @@ import { Grid, type TileProps } from "../grid/Grid";
 import { SpotlightTile } from "../tile/SpotlightTile";
 import {
   type EncryptionSystem,
+  type LocalMedia,
   type MatrixRTCMode,
 } from "@element-hq/matrixrtc-sdk";
 import { E2eeType } from "../e2ee/e2eeType";
@@ -133,6 +134,8 @@ export interface ActiveCallProps extends Omit<
   "vm" | "footerVm" | "developerSettingsVm"
 > {
   e2eeSystem: EncryptionSystem;
+  /** The tracks the lobby opened, for the join to publish. */
+  media: LocalMedia;
   // TODO refactor those reasons into an enum
   onLeft: (
     reason: "user" | "timeout" | "decline" | "allOthersLeft" | "error",
@@ -170,7 +173,11 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     );
     const rtcParticipation = slot.join({
       ...rtcParticipationOptions(urlParams),
-      publish: initialPublishRequests(props.muteStates, mediaDevices, capture),
+      // Without a lobby nothing was captured and the join captures itself
+      publish:
+        props.media.requests.length > 0
+          ? props.media
+          : initialPublishRequests(props.muteStates, mediaDevices, capture),
     });
 
     const vm = createCallViewModel$(
@@ -216,6 +223,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     mediaDevices,
     trackProcessorState$,
     props.client,
+    props.media,
     rootElement,
   ]);
 
