@@ -120,6 +120,24 @@ describe("Publisher", () => {
       expect(participant.createTracks).not.toHaveBeenCalled();
     });
 
+    it("creates both with the options of requests made since the join", async () => {
+      const processor: VideoProcessor = {
+        name: "effect",
+        init: vi.fn(),
+        restart: vi.fn(),
+        destroy: vi.fn(),
+      };
+      want(microphone, { source: "camera", deviceId: "front", processor });
+
+      publisher.start();
+      await flushPromises();
+
+      expect(room.options.videoCaptureDefaults).toMatchObject({
+        deviceId: "front",
+        processor: expect.objectContaining({ source: processor }),
+      });
+    });
+
     it("asks for the camera and the microphone in one call", async () => {
       const enableBoth = vi.spyOn(participant, "enableCameraAndMicrophone");
       want(microphone, camera);

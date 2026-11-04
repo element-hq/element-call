@@ -177,7 +177,12 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       publish:
         props.media.requests.length > 0
           ? props.media
-          : initialPublishRequests(props.muteStates, mediaDevices, capture),
+          : initialPublishRequests(
+              props.muteStates,
+              mediaDevices,
+              capture,
+              backgroundEffectsState$.value.processor,
+            ),
     });
 
     const vm = createCallViewModel$(

@@ -18,9 +18,14 @@ import { combineLatest } from "rxjs";
 import { type MediaDevice } from "./MediaDevices";
 import { type Handler } from "./MuteStates";
 
-/** How a mute switch gets a track where there is none. */
+/**
+ * How a mute switch gets a track where there is none and, where given,
+ * whether a track it has should be let go and published anew instead of
+ * unmuted: resolves true once it is gone.
+ */
 export interface TrackSupply {
   publish: () => Promise<unknown>;
+  replace?: (track: LocalMediaTrack) => Promise<boolean>;
 }
 
 /**
@@ -46,7 +51,9 @@ export function followMuteState(
   muteState.setHandler(async (enabled) => {
     desired = enabled;
     const track = track$.value;
-    if (track !== undefined) {
+    const replaced =
+      enabled && track !== undefined && (await supply.replace?.(track));
+    if (track !== undefined && !replaced) {
       desired = await track.setEnabled(enabled);
       return desired;
     }
@@ -100,11 +107,15 @@ export function followProcessor(
   camera$: Behavior<LocalVideoMediaTrack | undefined>,
   videoProcessor$: Behavior<VideoProcessor | undefined>,
   logger: Logger,
+  /** Told of each camera a processor reaches while it runs. */
+  applied?: (camera: LocalVideoMediaTrack, processor: VideoProcessor) => void,
 ): void {
   combineLatest([camera$, videoProcessor$])
     .pipe(scope.bind())
     .subscribe(([camera, processor]) => {
-      camera?.setProcessor(processor).catch((e) => {
+      if (camera === undefined) return;
+      if (processor && !camera.muted$.value) applied?.(camera, processor);
+      camera.setProcessor(processor).catch((e) => {
         logger.error("Failed to set the video processor", e);
       });
     });
