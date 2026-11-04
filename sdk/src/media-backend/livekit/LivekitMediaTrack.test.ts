@@ -205,7 +205,11 @@ describe("createLivekitMediaTrack", () => {
     await expect(track.setEnabled(false)).resolves.toBe(false);
     expect(setEnabled).toHaveBeenCalledWith("microphone", false);
     await track.setDevice("mic-2");
-    expect(switchActiveDevice).toHaveBeenCalledWith("audioinput", "mic-2");
+    expect(switchActiveDevice).toHaveBeenCalledWith(
+      "audioinput",
+      "mic-2",
+      false,
+    );
   });
 });
 

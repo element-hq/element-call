@@ -126,10 +126,15 @@ probe that decides whether the service that issued the token can take over the
 delayed leave, which picks the delayed leave timings the join uses. The join
 waits for the publisher to hold its token, so that the LiveKit room exists
 before a subscriber, who lacks the permission to create it, asks for a token
-of its own. Until `join()` the tracks exist but their upstream is paused: a host
-can show a preview without anyone hearing it. The upstream flows exactly while the
-membership is `joined`: a sync outage pauses it, and `leave()` pauses it for good
-and sends the leave.
+of its own. The tracks are created once the membership is `joined`, with their
+upstream paused until then. A lobby that wants them earlier captures them with
+`createLocalMedia`, on the browser's devices alone so that any backend fits, and
+hands the media to `join()` as `publish`: the tracks are moved, not shared — they
+leave the lobby's `tracks$`, their objects are finished, and the backend
+publishes the very same device tracks and the processor already running on them,
+so nothing is captured or initialised again at the join. The upstream flows
+exactly while the membership is `joined`: a sync outage pauses it, and `leave()`
+pauses it for good and sends the leave.
 
 ## Vocabulary
 

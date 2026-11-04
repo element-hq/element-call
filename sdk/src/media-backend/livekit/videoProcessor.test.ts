@@ -47,4 +47,29 @@ describe("convertToLivekitProcessor", () => {
     await adapter.destroy();
     expect(processor.destroy).toHaveBeenCalled();
   });
+
+  // A stopped track tears its processor down without waiting, while the track
+  // replacing it initialises the same one
+  it("runs a destroy and the next init on one processor in turn, across adapters", async () => {
+    const processor = fakeProcessor();
+    let finishDestroy = (): void => {};
+    vi.mocked(processor.destroy).mockImplementation(
+      async () =>
+        new Promise<void>((resolve) => {
+          finishDestroy = resolve;
+        }),
+    );
+    const previous = convertToLivekitProcessor(processor);
+    const next = convertToLivekitProcessor(processor);
+
+    const destroying = previous.destroy();
+    const initialising = next.init(options);
+    await Promise.resolve();
+    expect(processor.init).not.toHaveBeenCalled();
+
+    finishDestroy();
+    await Promise.all([destroying, initialising]);
+    expect(processor.init).toHaveBeenCalledOnce();
+    expect(next.processedTrack).toBe(processed);
+  });
 });

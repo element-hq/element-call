@@ -6,15 +6,23 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
+  LocalAudioTrack,
   type LocalTrackPublication,
+  LocalVideoTrack,
   ParticipantEvent,
   type Room as LivekitRoom,
   type Track,
 } from "livekit-client";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 
-import { type MediaSource, type PublishRequest } from "../../media-api";
+import {
+  type HandedOverTrack,
+  type LocalMedia,
+  type MediaSource,
+  type PublishRequest,
+} from "../../media-api";
 import { livekitSources, mediaSources } from "./LivekitMediaTrack";
+import { convertToLivekitProcessor } from "./videoProcessor";
 import {
   audioCaptureOptions,
   screenShareCaptureOptions,
@@ -31,6 +39,9 @@ export interface DesiredPublication {
 
 export type DesiredMedia = Map<MediaSource, DesiredPublication>;
 
+/** A lobby's tracks, moved out of its media, until each is published. */
+export type HandedOverTracks = ReturnType<LocalMedia["takeTracks"]>;
+
 /**
  * Publishes the local media on one LiveKit room, following the host's
  * requests.
@@ -46,10 +57,19 @@ export class Publisher {
   public started = false;
   private readonly room: LivekitRoom;
 
+  /** A lobby's tracks, taken over at `start`; each leaves the map as it is published. */
+  private captured: HandedOverTracks = new Map();
+
+  /**
+   * @param media - What a lobby opened ahead of the join, published in place
+   * of capturing. Taken over only at `start`, so that a publisher torn down
+   * before it publishes leaves the tracks to the next one.
+   */
   public constructor(
     room: LivekitRoom,
     private readonly desired: DesiredMedia,
     private readonly logger: Logger,
+    private readonly media?: LocalMedia,
   ) {
     this.room = room;
     room.setE2EEEnabled(room.options.e2ee !== undefined)?.catch((e: Error) => {
@@ -79,24 +99,75 @@ export class Publisher {
   public start(): void {
     if (this.started) return;
     this.started = true;
+    this.captured = this.media?.takeTracks() ?? new Map();
+    // A track muted in the lobby joins muted
+    for (const [source, { muted }] of this.captured) {
+      const wanted = this.desired.get(source);
+      if (wanted && muted) wanted.enabled = false;
+    }
     const requests = [...this.desired.values()]
-      .filter(({ enabled }) => enabled)
+      .filter(
+        ({ request, enabled }) => enabled || this.hasCaptured(request.source),
+      )
       .map(({ request }) => request);
-    const sources = new Set(requests.map((request) => request.source));
+    const toCapture = new Set(
+      requests
+        .map((request) => request.source)
+        .filter((source) => !this.hasCaptured(source)),
+    );
     // Microphone and camera in one call so that the browser asks for
     // permission once; the room defaults carry their options. LiveKit
     // resolves these once the track is published, which may block on the
     // connection; LocalTrackPublished is what tells us a track exists.
-    if (sources.has("microphone") && sources.has("camera"))
+    const captureBoth = toCapture.has("microphone") && toCapture.has("camera");
+    if (captureBoth)
       void this.room.localParticipant.enableCameraAndMicrophone();
     for (const request of requests)
       if (
         request.source === "screenShare" ||
-        !(sources.has("microphone") && sources.has("camera"))
+        this.hasCaptured(request.source) ||
+        !captureBoth
       )
         this.publish(request).catch((e) => {
           this.logger.error(`Failed to publish the ${request.source}`, e);
         });
+  }
+
+  private hasCaptured(source: MediaSource): boolean {
+    return (
+      (source === "microphone" || source === "camera") &&
+      this.captured.has(source)
+    );
+  }
+
+  private takeCaptured(request: PublishRequest): HandedOverTrack | undefined {
+    if (request.source === "screenShare") return undefined;
+    const track = this.captured.get(request.source);
+    this.captured.delete(request.source);
+    return track;
+  }
+
+  /** A lobby's track as if this participant had captured it: LiveKit restarts and stops it as its own. */
+  private async adopt(
+    { track, constraints, muted, processor }: HandedOverTrack,
+    request: PublishRequest,
+  ): Promise<LocalTrackPublication> {
+    const local =
+      track.kind === "audio"
+        ? new LocalAudioTrack(track, constraints, false)
+        : new LocalVideoTrack(track, constraints, false);
+    if (muted) await local.mute();
+    if (processor && local instanceof LocalVideoTrack)
+      await local.setProcessor(
+        convertToLivekitProcessor(
+          processor.processor,
+          processor.processedTrack,
+        ),
+      );
+    return this.room.localParticipant.publishTrack(local, {
+      source: livekitSources[request.source],
+      ...(request.source === "camera" && videoPublishOptions(request.capture)),
+    });
   }
 
   /** Publishes one request and resolves with its publication once LiveKit has it. */
@@ -105,7 +176,9 @@ export class Publisher {
   ): Promise<LocalTrackPublication | undefined> {
     const participant = this.room.localParticipant;
     let publication: LocalTrackPublication | undefined;
-    if (request.source === "microphone")
+    const captured = this.takeCaptured(request);
+    if (captured) publication = await this.adopt(captured, request);
+    else if (request.source === "microphone")
       publication = await participant.setMicrophoneEnabled(
         true,
         audioCaptureOptions(request),
