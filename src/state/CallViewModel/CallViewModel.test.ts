@@ -1697,7 +1697,9 @@ describe("a camera with a video processor", () => {
     ).toMatchObject({ processor });
   });
 
-  it("replaces a camera turned off before the processor was chosen", async () => {
+  // The SDK builds the processor on the camera's restart, before the room
+  // sees a frame, so the track is unmuted rather than published anew
+  it("turns on a camera turned off before the processor was chosen", async () => {
     const setHandler = vi.spyOn(MuteState.prototype, "setHandler");
     onTestFinished(() => setHandler.mockRestore());
     const videoProcessor$ = new BehaviorSubject<VideoProcessor | undefined>(
@@ -1706,31 +1708,6 @@ describe("a camera with a video processor", () => {
     let participation: RTCParticipation | undefined;
     withCallViewModel(
       {},
-      (_vm, _session, { rtcParticipation }) => {
-        participation = rtcParticipation;
-      },
-      { videoProcessor$ },
-    );
-    // The camera is off, so it is stopped and can't take the processor
-    videoProcessor$.next(processor);
-    await cameraHandler(setHandler)(true);
-    await flushPromises();
-
-    expect(participation!.unpublish).toHaveBeenCalledWith("camera");
-    expect(participation!.publish).toHaveBeenCalledWith(
-      expect.objectContaining({ source: "camera", processor }),
-    );
-  });
-
-  it("turns on a camera that took the processor while running", async () => {
-    const setHandler = vi.spyOn(MuteState.prototype, "setHandler");
-    onTestFinished(() => setHandler.mockRestore());
-    const videoProcessor$ = new BehaviorSubject<VideoProcessor | undefined>(
-      undefined,
-    );
-    let participation: RTCParticipation | undefined;
-    withCallViewModel(
-      { videoEnabled: new Map([[localParticipant, constant(true)]]) },
       (_vm, _session, { rtcParticipation }) => {
         participation = rtcParticipation;
       },
