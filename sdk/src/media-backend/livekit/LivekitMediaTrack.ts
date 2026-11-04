@@ -238,8 +238,13 @@ export function createLocalLivekitMediaTrack(
     },
     setProcessor: async (processor) => {
       const track = videoTrack();
-      // A processor cannot be built on a track that has already ended
-      if (!track || track.mediaStreamTrack.readyState === "ended") return;
+      // A camera that is off has a stopped track and takes the processor on
+      // turning on again; one stopped for good takes none
+      if (
+        !track ||
+        (track.mediaStreamTrack.readyState === "ended" && !track.isMuted)
+      )
+        return;
       const current = track.getProcessor() as LivekitProcessor | undefined;
       if (processor === current?.source) return;
       if (processor) await track.setProcessor(toLivekitProcessor(processor));
