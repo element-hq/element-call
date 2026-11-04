@@ -63,6 +63,11 @@ export {
 } from "./src/media-backend/livekit/LivekitBackend";
 // Tracks for a lobby, captured ahead of the join and handed to it
 export { createLocalMedia } from "./src/LocalMedia";
+// For a host whose processor is a livekit-client one, such as @livekit/track-processors
+export {
+  fromLivekitProcessor,
+  toLivekitProcessor,
+} from "./src/media-backend/livekit/videoProcessor";
 // For a developer panel to check a transport before using it
 export {
   getSFUConfig as authenticateWithTransport,

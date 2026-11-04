@@ -50,10 +50,7 @@ import {
   type VideoMediaTrack,
 } from "../../media-api";
 import { MatrixRTCError } from "../../errors";
-import {
-  convertToLivekitProcessor,
-  type LivekitProcessor,
-} from "./videoProcessor";
+import { toLivekitProcessor, type LivekitProcessor } from "./videoProcessor";
 
 export const mediaSources: Record<Track.Source, MediaSource> = {
   [Track.Source.Microphone]: "microphone",
@@ -245,8 +242,7 @@ export function createLocalLivekitMediaTrack(
       if (!track || track.mediaStreamTrack.readyState === "ended") return;
       const current = track.getProcessor() as LivekitProcessor | undefined;
       if (processor === current?.source) return;
-      if (processor)
-        await track.setProcessor(convertToLivekitProcessor(processor));
+      if (processor) await track.setProcessor(toLivekitProcessor(processor));
       else if (current) await track.stopProcessor();
     },
   };

@@ -33,7 +33,7 @@ import {
 } from "../utils/test";
 import { type MediaDevices } from "../state/MediaDevices";
 import { MediaDevicesContext } from "../MediaDevicesContext";
-import { type ProcessorState } from "../tracks/TrackProcessorContext";
+import { type BackgroundEffectsState } from "../state/BackgroundEffects";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import lobbyStyles from "./LobbyView.module.css";
 import headerStyles from "../Header.module.css";
@@ -44,12 +44,12 @@ const leaveToHome = vi.fn();
 
 // One instance: the view keys an effect on it
 const processorState$ = vi.hoisted(() => ({ current: undefined as unknown }));
-vi.mock("../tracks/TrackProcessorContext", () => ({
-  useTrackProcessorState$: (): Behavior<ProcessorState> =>
+vi.mock("../tracks/BackgroundEffectsContext", () => ({
+  useBackgroundEffectsState$: (): Behavior<BackgroundEffectsState> =>
     (processorState$.current ??= constant({
       supported: false,
       processor: undefined,
-    })) as Behavior<ProcessorState>,
+    })) as Behavior<BackgroundEffectsState>,
 }));
 
 // Media that opens no device: the view is what is under test

@@ -22,7 +22,7 @@ import {
   type PublishRequest,
 } from "../../media-api";
 import { livekitSources, mediaSources } from "./LivekitMediaTrack";
-import { convertToLivekitProcessor } from "./videoProcessor";
+import { toLivekitProcessor } from "./videoProcessor";
 import {
   audioCaptureOptions,
   screenShareCaptureOptions,
@@ -159,10 +159,7 @@ export class Publisher {
     if (muted) await local.mute();
     if (processor && local instanceof LocalVideoTrack)
       await local.setProcessor(
-        convertToLivekitProcessor(
-          processor.processor,
-          processor.processedTrack,
-        ),
+        toLivekitProcessor(processor.processor, processor.processedTrack),
       );
     return this.room.localParticipant.publishTrack(local, {
       source: livekitSources[request.source],
