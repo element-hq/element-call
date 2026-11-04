@@ -140,14 +140,16 @@ export interface CaptureSettings {
 }
 
 /**
- * What to publish for a microphone or camera: the device the user picked and
- * the host's capture settings. The video processor is not in here; the call
- * attaches it to the camera track once that exists.
+ * What to publish for a microphone or camera: the device the user picked, the
+ * host's capture settings and, for the camera, the video processor, so that
+ * the track starts with it rather than letting the room through while it is
+ * built.
  */
 export function publishRequest(
   source: "microphone" | "camera",
   mediaDevices: MediaDevices,
   capture: CaptureSettings,
+  processor?: VideoProcessor,
 ): PublishRequest {
   return source === "microphone"
     ? {
@@ -159,6 +161,7 @@ export function publishRequest(
         source,
         deviceId: mediaDevices.videoInput.selected$.value?.id,
         capture: capture.camera,
+        ...(processor && { processor }),
       };
 }
 
@@ -167,12 +170,13 @@ export function initialPublishRequests(
   muteStates: MuteStates,
   mediaDevices: MediaDevices,
   capture: CaptureSettings,
+  processor?: VideoProcessor,
 ): PublishRequest[] {
   const requests: PublishRequest[] = [];
   if (muteStates.audio.enabled$.value)
     requests.push(publishRequest("microphone", mediaDevices, capture));
   if (muteStates.video.enabled$.value)
-    requests.push(publishRequest("camera", mediaDevices, capture));
+    requests.push(publishRequest("camera", mediaDevices, capture, processor));
   return requests;
 }
 
@@ -510,7 +514,14 @@ export function createCallViewModel$(
 
   const supply = (source: "microphone" | "camera"): TrackSupply => ({
     publish: async () =>
-      rtcParticipation.publish(publishRequest(source, mediaDevices, capture)),
+      rtcParticipation.publish(
+        publishRequest(
+          source,
+          mediaDevices,
+          capture,
+          source === "camera" ? videoProcessor$.value : undefined,
+        ),
+      ),
   });
   followMuteState(
     scope,

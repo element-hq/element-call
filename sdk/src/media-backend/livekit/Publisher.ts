@@ -22,7 +22,7 @@ import {
   type PublishRequest,
 } from "../../media-api";
 import { livekitSources, mediaSources } from "./LivekitMediaTrack";
-import { convertToLivekitProcessor } from "./videoProcessor";
+import { toLivekitProcessor } from "./videoProcessor";
 import {
   audioCaptureOptions,
   screenShareCaptureOptions,
@@ -120,8 +120,10 @@ export class Publisher {
     // resolves these once the track is published, which may block on the
     // connection; LocalTrackPublished is what tells us a track exists.
     const captureBoth = toCapture.has("microphone") && toCapture.has("camera");
-    if (captureBoth)
+    if (captureBoth) {
+      this.takeCaptureDefaults(requests);
       void this.room.localParticipant.enableCameraAndMicrophone();
+    }
     for (const request of requests)
       if (
         request.source === "screenShare" ||
@@ -131,6 +133,27 @@ export class Publisher {
         this.publish(request).catch((e) => {
           this.logger.error(`Failed to publish the ${request.source}`, e);
         });
+  }
+
+  /**
+   * Makes the requests the room's capture defaults. The room took its defaults
+   * from the requests at the join, but one made since, such as a camera turned
+   * on before the start, has options of its own: a video processor dropped
+   * here would let the room see the camera before it is applied.
+   */
+  private takeCaptureDefaults(requests: PublishRequest[]): void {
+    const options = this.room.options;
+    for (const request of requests)
+      if (request.source === "microphone")
+        options.audioCaptureDefaults = {
+          ...options.audioCaptureDefaults,
+          ...audioCaptureOptions(request),
+        };
+      else if (request.source === "camera")
+        options.videoCaptureDefaults = {
+          ...options.videoCaptureDefaults,
+          ...videoCaptureOptions(request),
+        };
   }
 
   private hasCaptured(source: MediaSource): boolean {
@@ -159,10 +182,7 @@ export class Publisher {
     if (muted) await local.mute();
     if (processor && local instanceof LocalVideoTrack)
       await local.setProcessor(
-        convertToLivekitProcessor(
-          processor.processor,
-          processor.processedTrack,
-        ),
+        toLivekitProcessor(processor.processor, processor.processedTrack),
       );
     return this.room.localParticipant.publishTrack(local, {
       source: livekitSources[request.source],

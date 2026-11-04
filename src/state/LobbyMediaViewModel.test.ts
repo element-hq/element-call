@@ -29,7 +29,8 @@ describe("LobbyMediaViewModel", () => {
 
     expect(media.capture).toHaveBeenCalledExactlyOnceWith([
       expect.objectContaining({ source: "microphone", deviceId: "mic" }),
-      expect.objectContaining({ source: "camera", deviceId: "cam" }),
+      // With the processor, so that the camera starts with it
+      expect.objectContaining({ source: "camera", deviceId: "cam", processor }),
     ]);
     const camera = vm.videoTrack$.value!;
     expect(camera.source).toBe("camera");

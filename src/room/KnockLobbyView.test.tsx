@@ -19,7 +19,7 @@ import {
 import { KnockLobbyView } from "./KnockLobbyView";
 import { LeaveToHomeProvider } from "../LeaveToHomeContext";
 import { MediaDevicesContext } from "../MediaDevicesContext";
-import { type ProcessorState } from "../tracks/TrackProcessorContext";
+import { type BackgroundEffectsState } from "../state/BackgroundEffects";
 import { mockMediaDevices } from "../utils/test";
 
 // One instance each: the lobby keys effects on them
@@ -27,12 +27,12 @@ const stable = vi.hoisted(() => ({
   processorState$: undefined as unknown,
   media: undefined as unknown,
 }));
-vi.mock("../tracks/TrackProcessorContext", () => ({
-  useTrackProcessorState$: (): Behavior<ProcessorState> =>
+vi.mock("../tracks/BackgroundEffectsContext", () => ({
+  useBackgroundEffectsState$: (): Behavior<BackgroundEffectsState> =>
     (stable.processorState$ ??= constant({
       supported: false,
       processor: undefined,
-    })) as Behavior<ProcessorState>,
+    })) as Behavior<BackgroundEffectsState>,
 }));
 // Media that opens no device: the view is what is under test
 vi.mock("../useLocalMedia", () => ({

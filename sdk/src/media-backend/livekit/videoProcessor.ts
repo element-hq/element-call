@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type Track, type TrackProcessor } from "livekit-client";
+import { Track, type TrackProcessor } from "livekit-client";
 
 import { type VideoProcessor } from "../../media-api";
 import { inTurn } from "../../utils/processorTurns";
@@ -16,34 +16,73 @@ export interface LivekitProcessor extends TrackProcessor<Track.Kind.Video> {
 }
 
 /**
- * A `VideoProcessor` as livekit-client wants it. LiveKit reads the processed
- * track off the processor after `init` and `restart` rather than taking it as
- * their result, so the adapter keeps it there. A processor a lobby already
- * runs on the track is adopted with its output, `running`, so that the join
- * does not initialise it again. Every step takes its turn on the processor,
- * which a stopped track tears down without waiting for the next one's init.
+ * A `VideoProcessor` as a livekit-client processor. LiveKit reads the
+ * processed track off the processor after `init` and `restart` rather than
+ * taking it as their result, so the adapter keeps it there. A processor a
+ * lobby already runs on the track is adopted with its output, `running`, so
+ * that the join does not initialise it again. Every step takes its turn on
+ * the processor, which a stopped track tears down without waiting for the
+ * next one's init.
+ *
+ * Set on a camera that is off, whose track LiveKit has stopped, the build
+ * waits for the restart that turns it back on. LiveKit restarts a processor
+ * before it hands the new track to the sender, so the camera's first frame
+ * out is already processed.
  */
-export function convertToLivekitProcessor(
+export function toLivekitProcessor(
   processor: VideoProcessor,
   running?: MediaStreamTrack,
 ): LivekitProcessor {
+  let built = false;
   const adapter: LivekitProcessor = {
     name: processor.name,
     source: processor,
     init: async (opts) =>
       inTurn(processor, async () => {
+        if (running === undefined && opts.track.readyState === "ended") return;
         adapter.processedTrack =
           running ?? (await processor.init(opts.track, opts.element));
         running = undefined;
+        built = true;
       }),
     restart: async (opts) =>
       inTurn(processor, async () => {
-        adapter.processedTrack = await processor.restart(
-          opts.track,
-          opts.element,
-        );
+        adapter.processedTrack = built
+          ? await processor.restart(opts.track, opts.element)
+          : await processor.init(opts.track, opts.element);
+        built = true;
       }),
-    destroy: async () => inTurn(processor, async () => processor.destroy()),
+    destroy: async () =>
+      inTurn(processor, async () => {
+        if (built) await processor.destroy();
+      }),
   };
   return adapter;
+}
+
+/**
+ * A livekit-client processor, such as one from `@livekit/track-processors`,
+ * as a `VideoProcessor`: `init` and `restart` resolve with the track it
+ * leaves on itself.
+ */
+export function fromLivekitProcessor(
+  processor: TrackProcessor<Track.Kind.Video>,
+): VideoProcessor {
+  const processedTrack = (): MediaStreamTrack => {
+    if (processor.processedTrack === undefined)
+      throw new Error(`Processor ${processor.name} produced no track`);
+    return processor.processedTrack;
+  };
+  return {
+    name: processor.name,
+    init: async (track, element) => {
+      await processor.init({ kind: Track.Kind.Video, track, element });
+      return processedTrack();
+    },
+    restart: async (track, element) => {
+      await processor.restart({ kind: Track.Kind.Video, track, element });
+      return processedTrack();
+    },
+    destroy: async () => processor.destroy(),
+  };
 }

@@ -71,7 +71,14 @@ export function createLobbyMediaViewModel(
       if (audio && microphone === undefined && !opening.has("microphone"))
         open.push(publishRequest("microphone", mediaDevices, capture));
       if (video && camera === undefined && !opening.has("camera"))
-        open.push(publishRequest("camera", mediaDevices, capture));
+        open.push(
+          publishRequest(
+            "camera",
+            mediaDevices,
+            capture,
+            videoProcessor$.value,
+          ),
+        );
       if (open.length > 0) {
         for (const { source } of open) opening.add(source);
         media
