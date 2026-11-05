@@ -269,8 +269,7 @@ export class TestHelpers {
     page: Page,
   ): Promise<void> {
     await TestHelpers.closeReleaseAnnouncement(page, "Introducing Sections");
-    await TestHelpers.expandAllSections(page);
-    await TestHelpers.roomListItem(page, roomName).click({ timeout: 10000 });
+    await TestHelpers.openRoomInvite(page, roomName);
     await page.getByRole("button", { name: "Accept" }).click({
       timeout: 5000,
     });
@@ -374,6 +373,26 @@ export class TestHelpers {
    */
   public static roomListItem(page: Page, roomName: string): Locator {
     return page.locator(`[aria-label^="Open room ${roomName}"]`);
+  }
+
+  /**
+   * Opens a pending invite from the room list by its room name.
+   *
+   * Element Web collapses the Invites section every time it appears, so it is
+   * expanded here once the invite has arrived.
+   */
+  public static async openRoomInvite(
+    page: Page,
+    roomName: string,
+  ): Promise<void> {
+    const invitesSection = page.getByRole("button", {
+      name: "Toggle Invites section",
+    });
+    await expect(invitesSection).toBeVisible({ timeout: 10000 });
+    if ((await invitesSection.getAttribute("aria-expanded")) !== "true") {
+      await invitesSection.click();
+    }
+    await TestHelpers.roomListItem(page, roomName).click({ timeout: 10000 });
   }
 
   /**

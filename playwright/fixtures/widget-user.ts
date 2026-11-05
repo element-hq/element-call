@@ -113,11 +113,7 @@ export const widgetTest = test.extend<MyFixtures>({
         ewPage2,
         "Introducing Sections",
       );
-      await TestHelpers.expandAllSections(ewPage2);
-      await expect(
-        TestHelpers.roomListItem(ewPage2, "Welcome Room"),
-      ).toBeVisible();
-      await TestHelpers.roomListItem(ewPage2, "Welcome Room").click();
+      await TestHelpers.openRoomInvite(ewPage2, "Welcome Room");
       await ewPage2.getByRole("button", { name: "Accept" }).click();
       await expect(
         ewPage2
@@ -161,8 +157,7 @@ export const widgetTest = test.extend<MyFixtures>({
         ewPage2,
         "Introducing Sections",
       );
-      await TestHelpers.expandAllSections(ewPage2);
-      await TestHelpers.roomListItem(ewPage2, brooksDisplayName).click();
+      await TestHelpers.openRoomInvite(ewPage2, brooksDisplayName);
       await ewPage2.getByRole("button", { name: "Start chatting" }).click();
     }
 
