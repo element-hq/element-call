@@ -157,10 +157,19 @@ export class TestHelpers {
   // Toast can be stacked, and only the top one can be dismiss, so just look at what is on top and
   // dismiss (if part of expected toats)
   public static async dismissStartupToasts(page: Page): Promise<void> {
-    const expectedToasts = [
+    const expectedToasts: {
+      title: string;
+      button: string;
+      confirm?: string;
+    }[] = [
       { title: "Failed to load service worker", button: "OK" },
       { title: "Back up your chats", button: "Not now" },
-      { title: "Turn on key storage", button: "Dismiss" },
+      {
+        title: "Turn on key storage",
+        button: "Dismiss",
+        confirm: "Yes, dismiss",
+      },
+      { title: "Notifications", button: "Dismiss" },
       { title: "Element does not support this browser", button: "Dismiss" },
     ];
 
@@ -183,6 +192,12 @@ export class TestHelpers {
           await toast
             .getByRole("button", { name: toastConfig.button })
             .click({ timeout: 5000 });
+          if (toastConfig.confirm) {
+            await page
+              .getByRole("dialog")
+              .getByRole("button", { name: toastConfig.confirm })
+              .click({ timeout: 5000 });
+          }
         } else {
           // Unknown toast. We don't want to act on unknown toasts
           break;
@@ -389,6 +404,8 @@ export class TestHelpers {
       name: "Toggle Invites section",
     });
     await expect(invitesSection).toBeVisible({ timeout: 10000 });
+    // Toasts stack over the top of the room list, where this header sits
+    await TestHelpers.dismissStartupToasts(page);
     if ((await invitesSection.getAttribute("aria-expanded")) !== "true") {
       await invitesSection.click();
     }
