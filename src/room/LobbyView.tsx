@@ -164,6 +164,7 @@ export const LobbyView: FC<Props> = ({
         footerScope,
         muteStates,
         devices,
+        backgroundEffectsState$.pipe(map(({ settling }) => settling ?? false)),
         openSettings,
         hangup,
         // Logo and header are connected: only show the logo in SPA with header.
@@ -173,7 +174,14 @@ export const LobbyView: FC<Props> = ({
     return (): void => {
       footerScope.end();
     };
-  }, [devices, hangup, hideHeader, muteStates, openSettings]);
+  }, [
+    devices,
+    backgroundEffectsState$,
+    hangup,
+    hideHeader,
+    muteStates,
+    openSettings,
+  ]);
 
   // TODO: Unify this component with InCallView, so we can get slick joining
   // animations and don't have to feel bad about reusing its CSS

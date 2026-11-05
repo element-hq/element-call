@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { BehaviorSubject } from "rxjs";
 
 import { testScope, mockMuteStates, mockMediaDevices } from "../utils/test";
 import { constant } from "../state/Behavior";
@@ -30,8 +31,10 @@ vi.mock("../Platform", () => ({
 
 // The SDK's own check needs WebGL and canvas APIs jsdom does not have.
 const sdkSupportMock = vi.hoisted(() => vi.fn(() => false));
+const modernRouteMock = vi.hoisted(() => vi.fn(() => true));
 vi.mock("@livekit/track-processors", () => ({
   supportsBackgroundProcessors: (): boolean => sdkSupportMock(),
+  supportsModernBackgroundProcessors: (): boolean => modernRouteMock(),
 }));
 
 const outputSelectionMock = vi.hoisted(() => vi.fn(() => true));
@@ -109,6 +112,7 @@ describe("createCallFooterViewModel", () => {
         buildMinimalCallViewModel(gridLayout),
         mockMuteStates(),
         twoMicsAndOneCamMediaDevices,
+        constant(false),
         /* reactionIdentifier */ undefined,
         { showControls: true, header: HeaderStyle.Standard },
       );
@@ -151,6 +155,7 @@ describe("createCallFooterViewModel", () => {
             select: vi.fn(),
           },
         }),
+        constant(false),
         /* reactionIdentifier */ undefined,
         { showControls: true, header: HeaderStyle.Standard },
       );
@@ -169,6 +174,7 @@ describe("createCallFooterViewModel", () => {
         buildMinimalCallViewModel(layout),
         mockMuteStates(),
         twoMicsAndOneCamMediaDevices,
+        constant(false),
         /* reactionIdentifier */ undefined,
         { showControls: true, header: HeaderStyle.Standard },
       );
@@ -191,6 +197,7 @@ describe("createCallFooterViewModel", () => {
         buildMinimalCallViewModel(gridLayout),
         mockMuteStates(),
         twoMicsAndOneCamMediaDevices,
+        constant(false),
         /* reactionIdentifier */ undefined,
         { showControls: true, header: HeaderStyle.Standard },
       );
@@ -236,18 +243,19 @@ describe("createCallFooterViewModel", () => {
         testScope(),
         mockMuteStates(),
         twoMicsAndOneCamMediaDevices,
+        constant(false),
         /* openSettings */ undefined,
         /* hangup */ undefined,
         /* showLogo */ false,
       );
     }
 
-    it("offers nothing on a phone, where the pipeline would refuse them", () => {
+    it("offers them on a phone whose browser can run them", () => {
       sdkSupportMock.mockReturnValue(true);
-      expect(lobbyOn("ios").selectBackgroundEffect$.value).toBeUndefined();
+      expect(lobbyOn("ios").selectBackgroundEffect$.value).toBeDefined();
     });
 
-    it("offers them where the pipeline will honour them", () => {
+    it("offers them on a desktop whose browser can run them", () => {
       sdkSupportMock.mockReturnValue(true);
       expect(lobbyOn("desktop").selectBackgroundEffect$.value).toBeDefined();
     });
@@ -275,6 +283,16 @@ describe("createCallFooterViewModel", () => {
       expect(backgroundEffectSetting.getValue()).toBe("none");
     });
 
+    it("says they run slowly where only the slower route exists", () => {
+      sdkSupportMock.mockReturnValue(true);
+      modernRouteMock.mockReturnValue(false);
+      const slow = lobbyOn("desktop");
+      expect(slow.backgroundEffectNotice$.value).toBe("slow");
+      expect(slow.selectBackgroundEffect$.value).toBeDefined();
+      modernRouteMock.mockReturnValue(true);
+      expect(lobbyOn("desktop").backgroundEffectNotice$.value).toBeUndefined();
+    });
+
     it("offers every effect in order", () => {
       sdkSupportMock.mockReturnValue(true);
       expect(lobbyOn("desktop").backgroundEffects$.value).toEqual([
@@ -295,6 +313,23 @@ describe("createCallFooterViewModel", () => {
       );
     });
 
+    it("passes on the wait for the first effect", () => {
+      platformMock.mockReturnValue("desktop");
+      const settling$ = new BehaviorSubject(true);
+      const vm = createLobbyFooterViewModel(
+        testScope(),
+        mockMuteStates(),
+        twoMicsAndOneCamMediaDevices,
+        settling$,
+        /* openSettings */ undefined,
+        /* hangup */ undefined,
+        /* showLogo */ false,
+      );
+      expect(vm.backgroundEffectSettling$.value).toBe(true);
+      settling$.next(false);
+      expect(vm.backgroundEffectSettling$.value).toBe(false);
+    });
+
     it("availability is the same before and during a call", () => {
       for (const supported of [true, false]) {
         sdkSupportMock.mockReturnValue(supported);
@@ -304,6 +339,7 @@ describe("createCallFooterViewModel", () => {
           buildMinimalCallViewModel(gridLayout),
           mockMuteStates(),
           twoMicsAndOneCamMediaDevices,
+          constant(false),
           /* reactionIdentifier */ undefined,
           { showControls: true, header: HeaderStyle.Standard },
         );
