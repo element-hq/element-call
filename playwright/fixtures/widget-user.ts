@@ -125,6 +125,7 @@ export const widgetTest = test.extend<MyFixtures>({
         ewPage1,
         "Introducing Sections",
       );
+      await TestHelpers.dismissStartupToasts(ewPage1);
 
       await ewPage1
         .getByRole("navigation", { name: "Room list" })

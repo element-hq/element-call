@@ -239,6 +239,7 @@ export class TestHelpers {
     andInvite: string[] = [],
   ): Promise<void> {
     await TestHelpers.closeReleaseAnnouncement(page, "Introducing Sections");
+    await TestHelpers.dismissStartupToasts(page);
 
     await page
       .getByRole("navigation", { name: "Room list" })
