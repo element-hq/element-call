@@ -24,6 +24,14 @@ export const HOST2 = "https://app.othersite.m.localhost/#/welcome";
 
 export type RtcMode = "compat" | "2_0";
 
+/** Full mesh (MSC4575) in the widget's developer settings. */
+export interface FullMeshOptions {
+  /** Ask the host for the signalling capabilities, to receive full mesh. */
+  capabilities?: boolean;
+  /** Publish on full mesh instead of LiveKit; needs the capabilities. */
+  publish?: boolean;
+}
+
 export class TestHelpers {
   public static async startCallInCurrentRoom(
     page: Page,
@@ -306,7 +314,7 @@ export class TestHelpers {
   public static async openWidgetSetEmbeddedElementCallRtcModeCloseWidget(
     page: Page,
     mode: RtcMode,
-    { fullMesh = false }: { fullMesh?: boolean } = {},
+    fullMesh: FullMeshOptions = {},
   ): Promise<void> {
     await page.getByRole("button", { name: "Video call" }).click({
       timeout: 5000,
@@ -315,7 +323,7 @@ export class TestHelpers {
       timeout: 10000,
     });
 
-    await TestHelpers.setEmbeddedElementCallRtcMode(page, mode, { fullMesh });
+    await TestHelpers.setEmbeddedElementCallRtcMode(page, mode, fullMesh);
     await page.getByRole("button", { name: "Close lobby" }).click();
   }
 
@@ -328,7 +336,7 @@ export class TestHelpers {
   public static async setEmbeddedElementCallRtcMode(
     page: Page,
     mode: RtcMode,
-    { fullMesh = false }: { fullMesh?: boolean } = {},
+    { capabilities = false, publish = false }: FullMeshOptions = {},
   ): Promise<void> {
     const iframe = page.locator('iframe[title="Element Call"]').contentFrame();
 
@@ -346,10 +354,14 @@ export class TestHelpers {
       // compat
       await iframe.getByText("Compatibility: state events").click();
     }
-    // Publish on the full mesh transport (MSC4575) instead of LiveKit
+    // Full mesh (MSC4575): the capabilities first, as publishing needs them
     await iframe
-      .getByText("Publish on full mesh", { exact: false })
-      .setChecked(fullMesh);
+      .getByText("Take part in full mesh", { exact: false })
+      .setChecked(capabilities);
+    if (capabilities)
+      await iframe
+        .getByText("Publish on full mesh", { exact: false })
+        .setChecked(publish);
     await iframe.getByTestId("modal_close").click();
   }
 

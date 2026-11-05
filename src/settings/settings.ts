@@ -168,8 +168,19 @@ export const customTransport = new Setting<UnstableLivekitTransport | null>(
 );
 
 /**
- * Publish on the full mesh transport (MSC4575) instead of LiveKit. Members on
- * either transport are received whatever this says.
+ * Take part in the full mesh transport (MSC4575): as a widget, ask the host
+ * for the signalling capabilities, so that members publishing on full mesh
+ * are received. Element Web doesn't auto-approve them for Element Call yet
+ * and asks the user whenever the widget opens, hence a setting.
+ */
+export const fullMeshCapabilities = new Setting<boolean>(
+  "full-mesh-capabilities",
+  false,
+);
+
+/**
+ * Publish on the full mesh transport instead of LiveKit. Only with
+ * `fullMeshCapabilities`: a widget without them couldn't be subscribed to.
  */
 export const fullMeshPublishing = new Setting<boolean>(
   "full-mesh-publishing",

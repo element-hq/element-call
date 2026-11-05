@@ -45,6 +45,7 @@ import {
   alwaysShowIphoneEarpiece as alwaysShowIphoneEarpieceSetting,
   matrixRTCMode as matrixRTCModeSetting,
   customTransport as customTransportSetting,
+  fullMeshCapabilities as fullMeshCapabilitiesSetting,
   fullMeshPublishing as fullMeshPublishingSetting,
   advancedScreenShare as advancedScreenShareSetting,
   screenShareResolution as screenShareResolutionSetting,
@@ -177,6 +178,9 @@ export const DeveloperSettingsTab: FC<Props> = ({
   const [customTransportUpdateError, setCustomTransportUpdateError] = useState<
     string | null
   >(null);
+  const [fullMeshCapabilities, setFullMeshCapabilities] = useSetting(
+    fullMeshCapabilitiesSetting,
+  );
   const [fullMeshPublishing, setFullMeshPublishing] = useSetting(
     fullMeshPublishingSetting,
   );
@@ -424,9 +428,24 @@ export const DeveloperSettingsTab: FC<Props> = ({
       </FieldRow>
       <FieldRow>
         <InputField
+          id="fullMeshCapabilities"
+          type="checkbox"
+          checked={fullMeshCapabilities}
+          label={t("developer_mode.full_mesh_capabilities")}
+          description={t("developer_mode.full_mesh_capabilities_description")}
+          onChange={(event: ChangeEvent<HTMLInputElement>): void => {
+            setFullMeshCapabilities(event.target.checked);
+            // Publishing needs the capabilities
+            if (!event.target.checked) setFullMeshPublishing(false);
+          }}
+        />
+      </FieldRow>
+      <FieldRow className={styles.subOption}>
+        <InputField
           id="fullMeshPublishing"
           type="checkbox"
-          checked={fullMeshPublishing}
+          checked={fullMeshPublishing && fullMeshCapabilities}
+          disabled={!fullMeshCapabilities}
           label={t("developer_mode.full_mesh_publishing")}
           onChange={(event: ChangeEvent<HTMLInputElement>): void =>
             setFullMeshPublishing(event.target.checked)

@@ -55,14 +55,28 @@ async function recordWidgetToDevice(
     );
 }
 
-const cases: { name: string; fullMesh: [boolean, boolean] }[] = [
+const cases: {
+  name: string;
+  /** Who publishes on full mesh; both have the capabilities unless said. */
+  fullMesh: [boolean, boolean];
+  capabilities?: [boolean, boolean];
+}[] = [
   // Both publish on full mesh: the media flows without any SFU
   { name: "both on full mesh", fullMesh: [true, true] },
-  // One on each: Florian receives Valere over LiveKit without publishing there
+  // One on each: Florian receives Valere over LiveKit without publishing
+  // there, and Valere receives Florian over full mesh without publishing there
   { name: "full mesh and LiveKit mixed", fullMesh: [true, false] },
+  // Without the capabilities a widget can't be subscribed to full mesh
+  {
+    name: "LiveKit side without the full mesh capabilities",
+    fullMesh: [true, false],
+    capabilities: [true, false],
+  },
 ];
 
-cases.forEach(({ name, fullMesh: [florianMesh, valereMesh] }) => {
+cases.forEach(({ name, fullMesh, capabilities = [true, true] }) => {
+  const [florianMesh, valereMesh] = fullMesh;
+  const [florianCaps, valereCaps] = capabilities;
   widgetTest(`Full mesh call: ${name}`, async ({ addUser, browserName }) => {
     test.skip(
       browserName === "firefox",
@@ -71,7 +85,7 @@ cases.forEach(({ name, fullMesh: [florianMesh, valereMesh] }) => {
     test.slow();
 
     // Distinct per case: the cases run in parallel and register at once
-    const suffix = `${Number(florianMesh)}${Number(valereMesh)}`;
+    const suffix = `${Number(florianMesh)}${Number(valereMesh)}${Number(florianCaps)}${Number(valereCaps)}`;
     const [florian, valere] = await Promise.all([
       addUser(`florian${suffix}`, HOST1),
       addUser(`valere${suffix}`, HOST1),
@@ -95,24 +109,22 @@ cases.forEach(({ name, fullMesh: [florianMesh, valereMesh] }) => {
     await TestHelpers.openWidgetSetEmbeddedElementCallRtcModeCloseWidget(
       florian.page,
       "2_0",
-      { fullMesh: florianMesh },
+      { capabilities: florianCaps, publish: florianMesh },
     );
     await TestHelpers.openWidgetSetEmbeddedElementCallRtcModeCloseWidget(
       valere.page,
       "2_0",
-      { fullMesh: valereMesh },
+      { capabilities: valereCaps, publish: valereMesh },
     );
 
     await TestHelpers.startCallInCurrentRoom(florian.page, false);
     await TestHelpers.joinCallFromLobby(florian.page);
     await TestHelpers.joinCallInCurrentRoom(valere.page);
 
-    // A widget only asks for the full mesh signalling with full mesh turned
-    // on, so a LiveKit publisher in Element Web can't receive full mesh yet:
-    // the other's media arrives if it is on LiveKit or we have full mesh
+    // The other's media arrives if it is on LiveKit, or we can signal full mesh
     const receives = {
-      florian: !valereMesh || florianMesh,
-      valere: !florianMesh || valereMesh,
+      florian: !valereMesh || florianCaps,
+      valere: !florianMesh || valereCaps,
     };
     // In parallel: assertions on a page also run its permission handler
     await Promise.all(

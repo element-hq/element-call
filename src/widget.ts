@@ -22,7 +22,7 @@ import { LazyEventEmitter } from "./LazyEventEmitter";
 import { getUrlParams } from "./UrlParams";
 import { Config } from "./config/Config";
 import {
-  fullMeshPublishing,
+  fullMeshCapabilities,
   seedSettingsFromConfig,
 } from "./settings/settings";
 import { ElementCallReactionEventType } from "./reactions";
@@ -169,7 +169,9 @@ export const initializeWidget = (
         // Full mesh signalling (MSC4575), only where it is turned on: Element
         // Web doesn't auto-approve these for Element Call yet, and would ask
         // the user on every call
-        ...(fullMeshPublishing.getValue() ? fullMeshSignallingEventTypes : []),
+        ...(fullMeshCapabilities.getValue()
+          ? fullMeshSignallingEventTypes
+          : []),
       ];
 
       const client = createRoomWidgetClient(
