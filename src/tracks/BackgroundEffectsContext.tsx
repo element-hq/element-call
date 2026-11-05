@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { BackgroundProcessorWrapper } from "@livekit/track-processors";
 import { createContext, type FC, type JSX, use } from "react";
 
-import { backgroundBlur as backgroundBlurSettings } from "../settings/settings";
+import { backgroundEffect as backgroundEffectSetting } from "../settings/settings";
 import { BackgroundEffectTransformer } from "./BackgroundEffectTransformer";
 import { supportsBackgroundProcessors } from "./backgroundProcessing";
 import { type Behavior } from "../state/Behavior";
@@ -47,7 +47,7 @@ export function createAppBackgroundEffects(
 ): BackgroundEffects {
   return createBackgroundEffects(scope, {
     supported: supportsBackgroundProcessors(),
-    blur$: backgroundBlurSettings.value$,
+    effect$: backgroundEffectSetting.value$,
     pipeline: new BackgroundProcessorWrapper(
       new BackgroundEffectTransformer({ backgroundDisabled: true }),
       "background-effect",
