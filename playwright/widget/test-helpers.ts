@@ -193,10 +193,11 @@ export class TestHelpers {
             .getByRole("button", { name: toastConfig.button })
             .click({ timeout: 5000 });
           if (toastConfig.confirm) {
-            await page
-              .getByRole("dialog")
+            const dialog = page.getByRole("dialog");
+            await dialog
               .getByRole("button", { name: toastConfig.confirm })
               .click({ timeout: 5000 });
+            await expect(dialog).toBeHidden({ timeout: 5000 });
           }
         } else {
           // Unknown toast. We don't want to act on unknown toasts
@@ -240,15 +241,7 @@ export class TestHelpers {
   ): Promise<void> {
     await TestHelpers.closeReleaseAnnouncement(page, "Introducing Sections");
     await TestHelpers.dismissStartupToasts(page);
-
-    await page
-      .getByRole("navigation", { name: "Room list" })
-      .getByRole("button", { name: "New", exact: true })
-      .click();
-
-    await page.getByRole("menuitem", { name: "New Room" }).click({
-      timeout: 5000,
-    });
+    await TestHelpers.chooseFromRoomListNewMenu(page, "New Room");
     await page.getByRole("textbox", { name: "Name" }).fill(name);
     await page.getByRole("button", { name: "Create room" }).click();
     await expect(page.getByText("You created this room.")).toBeVisible({
@@ -273,6 +266,33 @@ export class TestHelpers {
       await page.getByRole("button", { name: "Invite" }).click();
       await TestHelpers.dismissInviteUnknownUserModal(page);
     }
+  }
+
+  /**
+   * Opens the room list's "New" menu and picks the given item.
+   *
+   * A dialog that closes shortly before the click, such as the one behind a
+   * dismissed toast, hands focus back asynchronously and that closes the menu
+   * again, so the menu is reopened when the item does not show up.
+   */
+  public static async chooseFromRoomListNewMenu(
+    page: Page,
+    itemName: string,
+  ): Promise<void> {
+    const newButton = page
+      .getByRole("navigation", { name: "Room list" })
+      .getByRole("button", { name: "New", exact: true });
+    const item = page.getByRole("menuitem", { name: itemName });
+    for (let attempt = 1; ; attempt++) {
+      await newButton.click();
+      try {
+        await expect(item).toBeVisible({ timeout: 2000 });
+        break;
+      } catch (e) {
+        if (attempt === 3) throw e;
+      }
+    }
+    await item.click();
   }
 
   /**

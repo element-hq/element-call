@@ -126,13 +126,7 @@ export const widgetTest = test.extend<MyFixtures>({
         "Introducing Sections",
       );
       await TestHelpers.dismissStartupToasts(ewPage1);
-
-      await ewPage1
-        .getByRole("navigation", { name: "Room list" })
-        .getByRole("button", { name: "New", exact: true })
-        .click();
-
-      await ewPage1.getByRole("menuitem", { name: "Start chat" }).click();
+      await TestHelpers.chooseFromRoomListNewMenu(ewPage1, "Start chat");
       await ewPage1.getByRole("textbox", { name: "Search" }).click();
       await ewPage1.getByRole("textbox", { name: "Search" }).fill(whistlerMxId);
       await ewPage1.getByRole("button", { name: "Go" }).click();
