@@ -21,6 +21,7 @@ import {
 import { backgroundEffect } from "../settings/settings";
 import { flushPromises, testScope } from "../utils/test";
 
+const sdkSupportMock = vi.hoisted(() => vi.fn(() => true));
 const pipelines = vi.hoisted(() => ({
   built: 0,
   destroyed: 0,
@@ -41,7 +42,7 @@ vi.mock("@livekit/track-processors", () => ({
       return Promise.resolve();
     });
   }),
-  supportsBackgroundProcessors: (): boolean => true,
+  supportsBackgroundProcessors: (): boolean => sdkSupportMock(),
 }));
 const platformMock = vi.hoisted(() => ({ platform: "desktop" }));
 vi.mock("../Platform", () => platformMock);
@@ -77,6 +78,7 @@ describe("BackgroundEffectsProvider", () => {
     pipelines.destroyed = 0;
     pipelines.switches = [];
     platformMock.platform = "desktop";
+    sdkSupportMock.mockReturnValue(true);
     backgroundEffect.setValue("none");
   });
   afterEach(() => backgroundEffect.setValue("none"));
