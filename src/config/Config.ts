@@ -140,13 +140,20 @@ export function validateConfig(config: ConfigOptions): ConfigOptions {
 }
 
 async function downloadConfig(fetchTarget: string): Promise<ConfigOptions> {
-  const response = await fetch(fetchTarget);
+  let response: Response;
+  try {
+    response = await fetch(fetchTarget);
+  } catch (e) {
+    // The embedded package ships no config.json, and some webviews (Element X
+    // iOS) reject the fetch of a missing local file rather than answering 404.
+    logger.info(`No config at ${fetchTarget}, using defaults`, e);
+    // resolveConfig merges in the defaults.
+    return {};
+  }
 
   if (isFailure(response)) {
-    // Lack of a config isn't an error, we should just use the defaults.
-    // Also treat a blank config as no config, assuming the status code is 0, because we don't get 404s from file:
-    // URIs so this is the only way we can not fail if the file doesn't exist when loading from a file:// URI.
-    return DEFAULT_CONFIG;
+    // resolveConfig merges in the defaults.
+    return {};
   }
 
   return response.json();
