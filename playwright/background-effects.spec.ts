@@ -183,8 +183,8 @@ test.describe("joining with a background chosen", () => {
         timeout: 60_000,
       })
       .toBeLessThan(distance(camera, picture) / 2);
-    // A pipeline built again for the call's track now takes as long as it
-    // does on the slower route. Routing bypasses the cache, so it waits.
+    // Were the pipeline built again for the call's track, it would take as
+    // long as on the slower route. Routing bypasses the cache, so it waits.
     let heldBack = 0;
     await guest.route("**/*.tflite*", async (route) => {
       heldBack += 1;
@@ -212,8 +212,8 @@ test.describe("joining with a background chosen", () => {
       })
       .toBeDefined();
     await expectNoFrameOfTheRoom(host, trackId!, 0, camera, picture);
-    // Otherwise nothing was waited for.
-    expect(heldBack).toBeGreaterThan(0);
+    // The join adopts the lobby's pipeline, so the model is never fetched again.
+    expect(heldBack).toBe(0);
 
     await hostContext.close();
     await guestContext.close();
