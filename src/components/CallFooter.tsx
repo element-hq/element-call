@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { type FC, type JSX, type Ref, useMemo } from "react";
 import classNames from "classnames";
+import { useTranslation } from "react-i18next";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
@@ -31,6 +32,7 @@ import { type ViewModel } from "../state/ViewModel";
 import { useBehavior } from "../useBehavior";
 import { type LayoutSwitchViewModel } from "../state/LayoutSwitchViewModel";
 import { LayoutSwitch } from "../room/LayoutSwitch";
+import { type BackgroundEffectGridItem } from "./BackgroundEffectGrid";
 
 export interface AudioOutputSwitcher {
   targetOutput: string;
@@ -56,20 +58,27 @@ export interface FooterActions {
   toggleAudio: (() => void) | undefined;
   /** Also controls if the videoMute button is disabled */
   toggleVideo: (() => void) | undefined;
-  toggleBlur: (() => void) | undefined;
+  /** Undefined where background effects can't be chosen. */
+  selectBackgroundEffect: ((id: string) => void) | undefined;
   toggleScreenSharing: (() => void) | undefined;
   /** Also controls if the settings button is visible */
   openSettings: (() => void) | undefined;
   /** Also controls if the hangup button is visible */
   hangup: (() => void) | undefined;
 }
+
 // we do not use any ? optional properties so that the vm type is including all fields.
 export interface FooterState {
   audioEnabled: boolean;
   audioBusy: boolean;
   videoEnabled: boolean;
   videoBusy: boolean;
-  videoBlurEnabled: boolean;
+  /** The background effect in force, as its option id. */
+  backgroundEffect: string;
+  /** Every effect on offer, in the order they are shown. */
+  backgroundEffects: BackgroundEffectGridItem[];
+  /** What the user is told about effects here, if anything. */
+  backgroundEffectNotice: "unavailable" | undefined;
   showFooter: boolean;
 
   /* This is needed for WindowMode = "flat" */
@@ -117,12 +126,14 @@ export interface FooterProps {
   children?: JSX.Element | JSX.Element[] | false;
   vm: ViewModel<FooterSnapshot>;
 }
+
 export const CallFooter: FC<FooterProps> = ({
   className,
   ref,
   children,
   vm,
 }) => {
+  const { t } = useTranslation();
   const asOverlay = useBehavior(vm.asOverlay$);
   const showFooter = useBehavior(vm.showFooter$);
   const hideControls = useBehavior(vm.hideControls$);
@@ -151,8 +162,10 @@ export const CallFooter: FC<FooterProps> = ({
   const selectedAudioOutput = useBehavior(vm.selectedAudioOutput$);
   const selectAudioOutputOption = useBehavior(vm.selectAudioOutputOption$);
   const selectVideoButtonOption = useBehavior(vm.selectVideoButtonOption$);
-  const toggleBlur = useBehavior(vm.toggleBlur$);
-  const videoBlurEnabled = useBehavior(vm.videoBlurEnabled$);
+  const backgroundEffect = useBehavior(vm.backgroundEffect$);
+  const selectBackgroundEffect = useBehavior(vm.selectBackgroundEffect$);
+  const backgroundEffectNotice = useBehavior(vm.backgroundEffectNotice$);
+  const backgroundEffects = useBehavior(vm.backgroundEffects$);
   const buttonSize = useBehavior(vm.buttonSize$);
   const showLogo = useBehavior(vm.showLogo$);
 
@@ -214,8 +227,14 @@ export const CallFooter: FC<FooterProps> = ({
         options={videoOptions}
         selectedOption={selectedVideo}
         onSelect={selectVideoButtonOption}
-        videoBlurToggleClick={toggleBlur}
-        videoBlurEnabled={videoBlurEnabled}
+        backgroundEffects={backgroundEffects}
+        selectedBackgroundEffect={backgroundEffect}
+        onSelectBackgroundEffect={selectBackgroundEffect}
+        backgroundEffectNotice={
+          backgroundEffectNotice === "unavailable"
+            ? t("background_effects.unavailable")
+            : undefined
+        }
       />,
     );
   } else {
