@@ -69,6 +69,21 @@ export type PublishRequest =
       capture?: VideoCaptureSettings;
     };
 
+/** A named channel of bytes a member publishes beside its media. */
+export interface DataPublishRequest {
+  source: "data";
+  /**
+   * What receivers find the track by, with `dataTrackByName$`. Unique per
+   * member: publishing a name that is published already rejects.
+   */
+  name: string;
+  /**
+   * Whether every message arrives, in order. Default true. Lossy delivery is
+   * for high-rate state where only the newest value matters, such as cursors.
+   */
+  reliable?: boolean;
+}
+
 export type MediaSource =
   | "microphone"
   | "camera"
@@ -82,7 +97,7 @@ export type MediaStreamStats =
   | RTCOutboundRtpStreamStats
   | undefined;
 
-/** One published track of a member. */
+/** One published audio or video track of a member. */
 export interface MediaTrack {
   source: MediaSource;
   kind: "audio" | "video";
@@ -163,6 +178,48 @@ export interface LocalVideoMediaTrack extends VideoMediaTrack, LocalMediaTrack {
   setProcessor(processor: VideoProcessor | undefined): Promise<void>;
 }
 
+/**
+ * One data track of a member. It exists only on a member of the slot, so
+ * whatever arrives on it comes from an attested member.
+ */
+export interface DataTrack {
+  source: "data";
+  kind: "data";
+  /** Stable for the life of the track. */
+  id: string;
+  /** As the publisher named it in its `DataPublishRequest`. */
+  name: string;
+  reliable: boolean;
+  /** Whether payloads are end-to-end encrypted with the media key. */
+  encrypted: boolean;
+  /**
+   * What the member sends from now on. The track is subscribed while this is
+   * observed and not at all otherwise; nothing sent earlier is replayed.
+   */
+  data$: Observable<Uint8Array>;
+}
+
+/**
+ * Our own data track. Its `data$` replays what we sent: each payload once
+ * `send` has handed it to the transport, so a host renders its own messages
+ * from the same stream as a remote member's.
+ */
+export interface LocalDataTrack extends DataTrack {
+  /**
+   * Sends to every member subscribed to this track. Rejects while the local
+   * transport is not connected, and where the payload is larger than the
+   * backend carries.
+   */
+  send(payload: Uint8Array): Promise<void>;
+}
+
+/** Any track of a member: its media and its data. */
+export type Track = AudioMediaTrack | VideoMediaTrack | DataTrack;
+export type LocalTrack =
+  | LocalAudioMediaTrack
+  | LocalVideoMediaTrack
+  | LocalDataTrack;
+
 export type EncryptionError = "MissingKey" | "InvalidKey";
 
 /**
@@ -172,18 +229,19 @@ export type EncryptionError = "MissingKey" | "InvalidKey";
  */
 export interface MemberMedia {
   /**
-   * The member's tracks, in publication order, once it has shown up on its
-   * transport; null until then ("waiting for media"). An entry stays the same
-   * object for as long as the same publication is behind it. Which track is
-   * which is in its `source`; `trackBySource$` picks one out.
+   * The member's tracks, media and data, in publication order, once it has
+   * shown up on its transport; null until then ("waiting for media"). An
+   * entry stays the same object for as long as the same publication is
+   * behind it. Which track is which is in its `source`: `trackBySource$`
+   * picks a media track out, `dataTrackByName$` a data track.
    */
-  tracks$: Behavior<(AudioMediaTrack | VideoMediaTrack)[] | null>;
+  tracks$: Behavior<Track[] | null>;
   /** Emits when the SFU reports a key problem for this member. */
   encryptionError$: Observable<EncryptionError>;
 }
 
 export interface LocalMemberMedia extends MemberMedia {
-  tracks$: Behavior<(LocalAudioMediaTrack | LocalVideoMediaTrack)[] | null>;
+  tracks$: Behavior<LocalTrack[] | null>;
 }
 
 /**

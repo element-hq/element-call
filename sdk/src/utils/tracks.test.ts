@@ -8,9 +8,9 @@ Please see LICENSE in the repository root for full details.
 import { BehaviorSubject } from "rxjs";
 import { describe, expect, it } from "vitest";
 
-import { type MediaTrack } from "../media-api";
+import { type DataTrack, type MediaTrack } from "../media-api";
 import { testScope } from "./test";
-import { trackBySource$ } from "./tracks";
+import { dataTrackByName$, trackBySource$ } from "./tracks";
 
 const camera = { source: "camera", kind: "video", id: "1" } as MediaTrack;
 const microphone = {
@@ -37,5 +37,42 @@ describe("trackBySource$", () => {
     camera$.subscribe((t) => emissions.push(t));
     tracks$.next([camera, microphone]);
     expect(emissions).toEqual([camera]);
+  });
+});
+
+const chat = {
+  source: "data",
+  kind: "data",
+  id: "3",
+  name: "chat",
+} as DataTrack;
+const cursors = {
+  source: "data",
+  kind: "data",
+  id: "4",
+  name: "cursors",
+} as DataTrack;
+
+describe("dataTrackByName$", () => {
+  it("picks the data track of a name and follows the list", () => {
+    const tracks$ = new BehaviorSubject<(MediaTrack | DataTrack)[] | null>(
+      null,
+    );
+    const chat$ = dataTrackByName$(testScope(), tracks$, "chat");
+    expect(chat$.value).toBeUndefined();
+    tracks$.next([camera, cursors, chat]);
+    expect(chat$.value).toBe(chat);
+    tracks$.next([camera, cursors]);
+    expect(chat$.value).toBeUndefined();
+  });
+
+  it("does not emit when the list changes elsewhere", () => {
+    const tracks$ = new BehaviorSubject<(MediaTrack | DataTrack)[]>([chat]);
+    const chat$ = dataTrackByName$(testScope(), tracks$, "chat");
+    const emissions: unknown[] = [];
+    chat$.subscribe((t) => emissions.push(t));
+    tracks$.next([chat, camera]);
+    tracks$.next([microphone, chat, cursors]);
+    expect(emissions).toEqual([chat]);
   });
 });

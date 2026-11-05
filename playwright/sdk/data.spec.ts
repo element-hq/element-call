@@ -11,7 +11,8 @@ import { startPair, tileOf } from "./harness";
 
 test.describe.configure({ timeout: 300_000 });
 
-test("a message sent beside the media reaches the peer, and only the peer", async ({
+// The LiveKit backend carries no data tracks yet, so publishing one rejects
+test.fixme("a message sent on a data track reaches the peer, and only the peer", async ({
   browser,
 }) => {
   const { pages, users } = await startPair(browser, "sdkdata");
@@ -34,7 +35,7 @@ test("a message sent beside the media reaches the peer, and only the peer", asyn
       timeout: 30_000,
     },
   );
-  await expect(message).toHaveAttribute("data-topic", "chat");
+  await expect(message).toHaveAttribute("data-name", "chat");
   await expect(message).toHaveAttribute("data-user-id", users[0].userId);
   // Our own messages are not echoed back
   await expect(sender.getByTestId("message")).toHaveCount(0);

@@ -16,11 +16,25 @@ Please see LICENSE in the repository root for full details.
  */
 
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
-import { EMPTY, filter, map, type Observable, of, switchMap, take } from "rxjs";
+import {
+  distinct,
+  distinctUntilChanged,
+  EMPTY,
+  filter,
+  map,
+  mergeMap,
+  type Observable,
+  of,
+  switchMap,
+  take,
+  takeUntil,
+} from "rxjs";
 import {
   type Behavior,
   createRTCSlot,
+  type DataTrack,
   E2eeType,
+  type LocalDataTrack,
   type LocalRTCMember,
   ObservableScope,
   type RemoteRTCMember,
@@ -45,7 +59,7 @@ import { getUrlParams } from "../src/UrlParams";
 import { observeElementSize$ } from "../src/utils/elementSize";
 import { initializeWidget } from "../src/widget";
 
-/** The data channel topic this bundle has always used, so that old and new builds talk. */
+/** The name of our data track: the topic this bundle has always used, so that old and new builds talk. */
 const TOPIC = "matrixRTC";
 
 export interface MatrixRTCSdk {
@@ -59,9 +73,9 @@ export interface MatrixRTCSdk {
   localMember$: Behavior<LocalRTCMember | null>;
   /** The other members of the slot, with the media the participation carries for them. */
   remoteMembers$: Behavior<RemoteRTCMember[]>;
-  /** What other members sent with `sendData`. */
+  /** What other members sent with `sendData`, on their data track. */
   data$: Observable<{ rtcBackendIdentity: string; data: string }>;
-  /** Sends to every member on our transport. Rejects while not joined. */
+  /** Sends on our data track, published with the first message. Rejects while not joined. */
   sendData: (data: unknown) => Promise<void>;
   sendRoomMessage: (message: string) => Promise<void>;
 }
@@ -100,6 +114,9 @@ export async function createMatrixRTCSdk(
     id,
   });
   let vm: CallViewModel | undefined;
+  let dataTrack: Promise<LocalDataTrack> | undefined;
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
   const failed =
     (what: string) =>
     (e: unknown): void =>
@@ -115,6 +132,8 @@ export async function createMatrixRTCSdk(
       ),
     );
 
+  const remoteMembers$ = over((p) => p.remoteMembers$, []);
+
   return {
     join: (): void => {
       if (slot.participation$.value !== null) return;
@@ -122,6 +141,7 @@ export async function createMatrixRTCSdk(
         widget.api
           .setAlwaysOnScreen(true)
           .catch(failed("Failed to make the widget sticky"));
+      dataTrack = undefined;
       const participation = slot.join({
         ...rtcParticipationOptions(urlParams),
         publish: initialPublishRequests(muteStates, mediaDevices, capture),
@@ -169,20 +189,40 @@ export async function createMatrixRTCSdk(
       false,
     ),
     localMember$: over((p) => p.localMember$, null),
-    remoteMembers$: over((p) => p.remoteMembers$, []),
-    // Attested members only: the SDK has matched the sender
-    data$: slot.participation$.pipe(
-      switchMap((p) => p?.data$ ?? EMPTY),
-      filter(({ topic }) => topic === TOPIC),
-      map(({ member, text }) => ({
-        rtcBackendIdentity: member.rtcBackendIdentity,
-        data: text,
-      })),
+    remoteMembers$,
+    data$: remoteMembers$.pipe(
+      // Each member once, for as long as it stays: a data track is only
+      // subscribed while observed, so it is not dropped on every list change
+      mergeMap((members) => members),
+      distinct(),
+      mergeMap((member) =>
+        member.tracks$.pipe(
+          map((tracks) =>
+            tracks?.find(
+              (t): t is DataTrack => t.kind === "data" && t.name === TOPIC,
+            ),
+          ),
+          distinctUntilChanged(),
+          switchMap((track) => track?.data$ ?? EMPTY),
+          map((payload) => ({
+            rtcBackendIdentity: member.rtcBackendIdentity,
+            data: decoder.decode(payload),
+          })),
+          takeUntil(
+            remoteMembers$.pipe(filter((members) => !members.includes(member))),
+          ),
+        ),
+      ),
     ),
     sendData: async (data): Promise<void> => {
       const participation = slot.participation$.value;
       if (participation === null) throw new Error("Not joined");
-      await participation.sendData(TOPIC, JSON.stringify(data));
+      dataTrack ??= participation.publish({ source: "data", name: TOPIC });
+      const track = await dataTrack.catch((e: unknown) => {
+        dataTrack = undefined;
+        throw e;
+      });
+      await track.send(encoder.encode(JSON.stringify(data)));
     },
     sendRoomMessage: async (message): Promise<void> => {
       await client.sendTextMessage(room.roomId, message);

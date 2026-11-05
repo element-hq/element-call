@@ -494,7 +494,12 @@ export function createCallViewModel$(
   >(
     rtcParticipation.localMember$.pipe(
       switchMap((member) => member?.tracks$ ?? of(null)),
-      map((tracks) => tracks ?? []),
+      map((tracks) =>
+        (tracks ?? []).filter(
+          (t): t is LocalAudioMediaTrack | LocalVideoMediaTrack =>
+            t.kind !== "data",
+        ),
+      ),
     ),
   );
   // Our own tracks, which carry the controls remote ones lack
@@ -1454,7 +1459,7 @@ export function createCallViewModel$(
                 source: "screenShare",
                 capture: capture.screenShare,
               })
-            : rtcParticipation.unpublish("screenShare")
+            : rtcParticipation.unpublish(track)
           ).catch((e: unknown) => {
             logger.error(
               `Screen share ${track === undefined ? "start" : "stop"} failed`,

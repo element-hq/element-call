@@ -25,7 +25,7 @@ Call's `src/` to get there is listed in [`SdkMigration.md`](./SdkMigration.md).
 │                                                                              │
 │   public API, all Behaviors:                                                 │
 │     join() leave() state$                                                    │
-│     localMember$ remoteMembers$ memberCount$ sendData() data$                │
+│     localMember$ remoteMembers$ memberCount$ publish(data)                   │
 │     keyRotationSuppressed$ connectedTransports$                              │
 │                                                                              │
 │   per member    RTCMember   { id userId deviceId membership$ displayName$    │
@@ -146,12 +146,12 @@ the sections below still describe `MatrixRTCClient` until that lands.
 | Word                        | Meaning here                                                                                                                                                                                                                                           | Elsewhere                                                                                                   |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
 | slot                        | an `RTCSlot`: the namespace in a room that memberships join into, `application` plus `id`. It exists while the room does, with nobody in it too. Holds `members$`, its open or closed `status$`, and `join()`                                          | the js-sdk `MatrixRTCSession` is one per slot; the MSC4143 slot event                                       |
-| participation               | an `RTCParticipation`: the span between our `join()` of a slot and our `leave()`. Holds the connection and its `state$`, `localMember$`, `remoteMembers$`, the connected transports and the data channel. Made by `slot.join()`, never reused          | "session" is not used here, because in the js-sdk it means the slot                                         |
+| participation               | an `RTCParticipation`: the span between our `join()` of a slot and our `leave()`. Holds the connection and its `state$`, `localMember$`, `remoteMembers$`, and the connected transports. Made by `slot.join()`, never reused                           | "session" is not used here, because in the js-sdk it means the slot                                         |
 | member                      | an `RTCMember`: one membership in a slot with what the SDK derives from it, `rtcBackendIdentity`, `userId`, `deviceId`, `memberId`, `displayName$`, `avatarUrl$`, `transport$` and `applicationData$`. No media. What the slot hands out in `members$` | the js-sdk `CallMembership` behind it, which never leaves the SDK; Element Call's old "matrixLivekitMember" |
 | local member, remote member | `LocalRTCMember` and `RemoteRTCMember`: an `RTCMember` plus its `MemberMedia`, which only a participation can carry. The local one's tracks carry the controls. What the participation hands out in `localMember$` and `remoteMembers$`                | LiveKit `LocalParticipant` and `RemoteParticipant`, which never leave the SDK                               |
 | media                       | a `MemberMedia`: what a member sends once it has arrived on its transport, `tracks$`, null while waiting, and `encryptionError$` beside it. The media backend supplies exactly these two fields per member                                             | Element Call's `MediaViewModel` is a view of it                                                             |
-| track                       | a `MediaTrack`: one publication of a member, audio or video, with `source`, `kind`, `id` and the behaviors on it. `LocalAudioMediaTrack` and `LocalVideoMediaTrack` add the controls over our own                                                      | LiveKit `TrackPublication` and `Track`, which never leave the SDK                                           |
-| publish request             | a `PublishRequest`: a source, where to capture it from and how to encode it. Given at the join in `publish`, or later to `publish` on the participation                                                                                                |                                                                                                             |
+| track                       | a `Track`: one publication of a member. A `MediaTrack` is audio or video, with `source`, `kind`, `id` and the behaviors on it; a `DataTrack` is a named channel of bytes. The `Local…` variants add the controls over our own, and `send` for data     | LiveKit `TrackPublication` and `Track`, which never leave the SDK                                           |
+| publish request             | a `PublishRequest`: a source, where to capture it from and how to encode it. Given at the join in `publish`, or later to `publish` on the participation. A `DataPublishRequest` names a data track, and only goes to `publish`                         |                                                                                                             |
 | attach, detach              | handing a `<video>` or `<audio>` element to a track and taking it back. The SDK owns the stream and the observers on the element                                                                                                                       | LiveKit `Track.attach`                                                                                      |
 | transport                   | an `RTCTransport`: where media is exchanged, a LiveKit service url today. Carries the raw js-sdk `Transport` from the membership and, in `resolved$`, what the backend fetched to connect to it                                                        | MSC4143 "focus"                                                                                             |
 | media backend               | a `MediaBackend`: what carries the media, behind `sdk/src/media-backend/api.ts`. One per participation, chosen with `backend` in the join options; LiveKit under `sdk/src/media-backend/livekit/` is the one that exists                               | "SFU", a LiveKit room, a peer connection                                                                    |
@@ -340,28 +340,6 @@ export interface MatrixRTCClient {
    * the browser's choice, never calls it.
    */
   setAudioOutputDeviceId(deviceId: string): Promise<void>;
-
-  /**
-   * Sends a short text to every member on the local transport, over a
-   * reliable data channel beside the media. A packet holds about 15 KiB;
-   * anything larger belongs in a room event. Rejects while the local
-   * transport is not connected. Encrypted on the wire like the media, but
-   * not end to end with the media key.
-   */
-  sendData(topic: string, text: string): Promise<void>;
-  /**
-   * What remote members sent with `sendData`, on every transport the client
-   * is connected to. A message from an identity that is not a member is
-   * dropped, so a host only ever hears from attested members.
-   */
-  data$: Observable<DataMessage>;
-}
-
-/** One `sendData` call as it arrives at a remote member. */
-export interface DataMessage {
-  member: RemoteRTCMember;
-  topic: string;
-  text: string;
 }
 ```
 
@@ -452,11 +430,15 @@ export interface LocalRTCMember extends RTCMember {
    * user closing the picker. One publication per source: publishing a source
    * again unmutes it.
    */
+  publish(request: DataPublishRequest): Promise<LocalDataTrack>;
   publish(
     request: PublishRequest,
   ): Promise<LocalAudioMediaTrack | LocalVideoMediaTrack>;
-  /** Removes one of our tracks; a screen share takes its audio with it. */
-  unpublish(id: string): Promise<void>;
+  /**
+   * Removes one of our tracks, as `publish` handed it out; a screen share
+   * takes its audio with it. The track's controls and `send` reject from then on.
+   */
+  unpublish(track: LocalTrack): Promise<void>;
 }
 ```
 
@@ -557,6 +539,7 @@ export interface MediaBackend {
     membership$: Behavior<RTCMembership>,
   ): MemberMediaFields;
   readonly connections$: Behavior<BackendConnection[]>; // transport, state, resolved; diagnostics
+  // Until LiveKit carries data tracks; then data travels as tracks in `tracks$`
   sendData(topic: string, text: string): Promise<void>;
   readonly data$: Observable<DataPacket>;
 }
@@ -707,14 +690,52 @@ export interface LocalVideoMediaTrack extends VideoMediaTrack, LocalMediaTrack {
   setProcessor(processor: VideoProcessor | undefined): Promise<void>;
 }
 
+/** A named channel of bytes a member publishes beside its media. */
+export interface DataPublishRequest {
+  source: "data";
+  /** Unique per member; what receivers find the track by. */
+  name: string;
+  /** Whether every message arrives, in order. Default true. */
+  reliable?: boolean;
+}
+
+/** One data track of a member; it exists only on a member, so its sender is attested. */
+export interface DataTrack {
+  source: "data";
+  kind: "data";
+  id: string;
+  name: string;
+  reliable: boolean;
+  /** Whether payloads are end-to-end encrypted with the media key. */
+  encrypted: boolean;
+  /** What the member sends from now on, subscribed while observed. */
+  data$: Observable<Uint8Array>;
+}
+
+/** Our own data track; its `data$` replays what we sent. */
+export interface LocalDataTrack extends DataTrack {
+  send(payload: Uint8Array): Promise<void>;
+}
+
+export type Track = AudioMediaTrack | VideoMediaTrack | DataTrack;
+export type LocalTrack =
+  LocalAudioMediaTrack | LocalVideoMediaTrack | LocalDataTrack;
+
 export type EncryptionError = "MissingKey" | "InvalidKey";
 
 /** The member's first track of a source; undefined while there is none, or no media yet. */
 export function trackBySource$<S extends MediaSource>(
   scope: ObservableScope,
-  tracks$: Behavior<MediaTrack[] | null>,
+  tracks$: Behavior<readonly (MediaTrack | DataTrack)[] | null>,
   source: S,
 ): Behavior<TrackOfSource<S> | undefined>;
+
+/** The member's data track of this name; undefined while there is none. */
+export function dataTrackByName$(
+  scope: ObservableScope,
+  tracks$: Behavior<readonly (MediaTrack | DataTrack)[] | null>,
+  name: string,
+): Behavior<DataTrack | undefined>;
 ```
 
 ### Rendering: `attach` and `detach`
@@ -822,13 +843,15 @@ public API only.
 - **Developer panel.** `resolved$` on each connected transport covers what the
   panel shows today. Anything beyond that (LiveKit room state, connection
   quality) needs an opaque `debug$` per transport.
-- **Data beside the media.** `sendData`/`data$` ride on LiveKit's reliable data
-  packets: topic-agnostic, matched to members by identity, received on every
-  connection but sent only on the local transport, so a member on another
-  transport does not hear us. They are transport-encrypted, not end to end:
-  LiveKit can encrypt data packets with the media key, but that is not wired
-  through the key provider yet. A host that needs either reach or end-to-end
-  encryption uses room events.
+- **Data beside the media.** Data travels as tracks: a member publishes a named
+  `DataTrack` with a `DataPublishRequest`, it shows up in the member's `tracks$`
+  next to the media, and receivers find it with `dataTrackByName$`. Reliability
+  and encryption are per track. The public API is in place, but the LiveKit
+  backend does not carry data tracks yet, so publishing one rejects. Its old
+  packet channel (`MediaBackend.sendData`/`data$`) is still behind the seam,
+  and the mapping onto LiveKit replaces it: reliable tracks on data packets,
+  lossy ones on LiveKit data tracks, announced so that a track exists before
+  its first message, encrypted through the key provider.
 - **Unencrypted rooms with per-participant keys.** Keys only reach devices the
   crypto tracks, which are the members of encrypted rooms. If the SDK is to work
   in an unencrypted room, tracking the members' devices becomes its job.

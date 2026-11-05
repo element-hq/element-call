@@ -12,12 +12,16 @@ Please see LICENSE in the repository root for full details.
  */
 
 import { logger } from "matrix-js-sdk/lib/logger";
-import { combineLatest, type Observable, of, switchMap } from "rxjs";
+import { combineLatest, EMPTY, type Observable, of, switchMap } from "rxjs";
 import {
   type AudioMediaTrack,
   createRTCSlot,
+  dataTrackByName$,
   E2eeType,
+  type LocalAudioMediaTrack,
+  type LocalDataTrack,
   type LocalRTCMember,
+  type LocalVideoMediaTrack,
   MatrixRTCMode,
   ObservableScope,
   type RemoteRTCMember,
@@ -82,7 +86,7 @@ async function start(
         state.kind === "failed" ? `Error: ${state.error.message}` : state.kind;
     });
     showMembers(scope, rtcParticipation);
-    showMessages(scope, rtcParticipation);
+    showMessages(rtcParticipation);
 
     toggle(buttons.microphone, async (enabled) =>
       setPublished(rtcParticipation, "microphone", enabled),
@@ -120,10 +124,11 @@ async function setPublished(
   enabled: boolean,
 ): Promise<boolean> {
   const track = rtcParticipation.localMember$.value?.tracks$.value?.find(
-    (t) => t.source === source,
+    (t): t is LocalAudioMediaTrack | LocalVideoMediaTrack =>
+      t.source === source,
   );
   if (track && source === "screenShare") {
-    if (!enabled) await rtcParticipation.unpublish(source);
+    if (!enabled) await rtcParticipation.unpublish(track);
     return enabled;
   }
   if (track) return track.setEnabled(enabled);
@@ -145,30 +150,44 @@ function toggle(
   };
 }
 
-/** Sends what the form holds on the "chat" topic, and lists what arrives. */
-function showMessages(
-  scope: ObservableScope,
-  rtcParticipation: RTCParticipation,
-): void {
+/**
+ * Sends what the form holds on our "chat" data track, published with the
+ * first message. What arrives is listed per member, in `memberTile`.
+ */
+function showMessages(rtcParticipation: RTCParticipation): void {
+  const encoder = new TextEncoder();
+  let chat: Promise<LocalDataTrack> | undefined;
   dataForm.hidden = false;
   dataForm.onsubmit = (event): void => {
     event.preventDefault();
     const text = new FormData(dataForm).get("text") as string;
-    rtcParticipation.sendData("chat", text).then(
-      () => dataForm.reset(),
-      (e: unknown) => {
-        status.textContent = `Error: ${e}`;
-      },
-    );
+    chat ??= rtcParticipation.publish({ source: "data", name: "chat" });
+    chat
+      .then(async (track) => track.send(encoder.encode(text)))
+      .then(
+        () => dataForm.reset(),
+        (e: unknown) => {
+          chat = undefined;
+          status.textContent = `Error: ${e}`;
+        },
+      );
   };
-  rtcParticipation.data$
-    .pipe(scope.bind())
-    .subscribe(({ member, topic, text }) => {
+}
+
+/** Lists what a remote member sends on its "chat" data track. */
+function listMessages(scope: ObservableScope, member: RemoteRTCMember): void {
+  const decoder = new TextDecoder();
+  dataTrackByName$(scope, member.tracks$, "chat")
+    .pipe(
+      switchMap((track) => track?.data$ ?? EMPTY),
+      scope.bind(),
+    )
+    .subscribe((payload) => {
       const line = messages.appendChild(document.createElement("li"));
       line.dataset.testid = "message";
-      line.dataset.topic = topic;
+      line.dataset.name = "chat";
       line.dataset.userId = member.userId;
-      line.textContent = `${member.displayName$.value}: ${text}`;
+      line.textContent = `${member.displayName$.value}: ${decoder.decode(payload)}`;
     });
 }
 
@@ -218,12 +237,14 @@ function memberTile(
     tile.appendChild(document.createElement("video")),
   );
   // Our own microphone would only echo
-  if (!member.local)
+  if (!member.local) {
     render(
       scope,
       trackBySource$(scope, member.tracks$, "microphone"),
       tile.appendChild(document.createElement("audio")),
     );
+    listMessages(scope, member);
+  }
   return tile;
 }
 

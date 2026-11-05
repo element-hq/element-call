@@ -67,6 +67,8 @@ interface Props {
 }
 
 export interface LivekitLocalMedia extends LocalMediaBackend {
+  /** Media only: LiveKit carries no data tracks yet. */
+  tracks$: Behavior<(LocalAudioMediaTrack | LocalVideoMediaTrack)[] | null>;
   /** The connection the local member publishes on; the data channel sends on it. */
   connection$: Behavior<Connection | null>;
   setAudioOutputDeviceId(deviceId: string): Promise<void>;

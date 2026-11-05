@@ -18,7 +18,6 @@ import { BehaviorSubject, EMPTY, Subject } from "rxjs";
 import { describe, expect, it, type Mock, vi } from "vitest";
 
 import {
-  type DataMessage,
   type ParticipationState,
   type RTCMember,
   type RTCParticipationOptions,
@@ -35,7 +34,11 @@ import {
   MediaConnectionState,
   type MediaKey,
 } from "./media-backend/api";
-import { type MemberMedia } from "./media-api";
+import {
+  type LocalDataTrack,
+  type LocalVideoMediaTrack,
+  type MemberMedia,
+} from "./media-api";
 import { constant } from "./reactive/Behavior";
 import { ObservableScope } from "./reactive/ObservableScope";
 import { createRTCParticipation } from "./RTCParticipation";
@@ -414,27 +417,32 @@ describe("createRTCParticipation", () => {
     scope.end();
   });
 
-  it("delivers data from a member with its member and drops the rest", () => {
-    const { participation, members$, fake, scope } = setup();
-    members$.next([
-      member({
-        userId: "@bob:example.org",
-        memberId: "bob-member",
-        backendIdentities: ["bob-hashed", "bob-member"],
-      }),
-    ]);
-    const messages: DataMessage[] = [];
-    participation.data$.subscribe((message) => messages.push(message));
+  it("rejects a data track until the backend carries them", async () => {
+    const { participation, fake, scope } = setup();
 
-    fake.data$.next({ senderId: "bob-hashed", topic: "chat", text: "hi" });
-    fake.data$.next({ senderId: "stranger", topic: "chat", text: "boo" });
+    await expect(
+      participation.publish({ source: "data", name: "chat" }),
+    ).rejects.toThrow("not supported");
+    expect(fake.backend.local.publish).not.toHaveBeenCalled();
+    await expect(
+      participation.unpublish({ kind: "data" } as LocalDataTrack),
+    ).rejects.toThrow("not supported");
+    expect(fake.backend.local.unpublish).not.toHaveBeenCalled();
+    scope.end();
+  });
 
-    expect(messages).toHaveLength(1);
-    expect(messages[0]).toMatchObject({
-      topic: "chat",
-      text: "hi",
-      member: { memberId: "bob-member" },
+  it("hands media publications to the backend by their source", async () => {
+    const { participation, fake, scope } = setup();
+
+    await participation.publish({ source: "camera" });
+    expect(fake.backend.local.publish).toHaveBeenCalledWith({
+      source: "camera",
     });
+    await participation.unpublish({
+      kind: "video",
+      source: "screenShare",
+    } as LocalVideoMediaTrack);
+    expect(fake.backend.local.unpublish).toHaveBeenCalledWith("screenShare");
     scope.end();
   });
 

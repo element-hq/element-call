@@ -20,7 +20,6 @@ import { v4 as uuidv4 } from "uuid";
 import {
   combineLatest,
   distinctUntilChanged,
-  filter,
   from,
   fromEvent,
   map,
@@ -35,7 +34,6 @@ import { type ObservableScope } from "./reactive/ObservableScope";
 import { generateItems } from "./reactive/observable";
 import { mapScoped } from "./utils/mapScoped";
 import {
-  type DataMessage,
   type LocalRTCMember,
   type ParticipationState,
   type RemoteRTCMember,
@@ -45,6 +43,14 @@ import {
   type RTCSlot,
   type RTCSlotOptions,
 } from "./api";
+import {
+  type DataPublishRequest,
+  type LocalAudioMediaTrack,
+  type LocalDataTrack,
+  type LocalTrack,
+  type LocalVideoMediaTrack,
+  type PublishRequest,
+} from "./media-api";
 import {
   type MediaBackend,
   type MediaBackendContext,
@@ -245,22 +251,6 @@ export function createRTCParticipation(
     ).pipe(map((member) => member ?? null)),
   );
 
-  // A packet from an identity that is not a member is dropped, so a host only
-  // ever hears from attested members
-  const data$ = backend.data$.pipe(
-    map(({ senderId, topic, text }): DataMessage | null => {
-      const member = remoteMembers$.value.find((m) =>
-        m.backendIdentities.includes(senderId),
-      );
-      if (member === undefined) {
-        logger.warn(`Dropping data from ${senderId}: not a member`);
-        return null;
-      }
-      return { member, topic, text };
-    }),
-    filter((message) => message !== null),
-  );
-
   // Nothing leaves this device while it may already have been dropped from
   // the session: the member would show as away while still being heard
   localMembership.state$
@@ -285,6 +275,22 @@ export function createRTCParticipation(
     ),
   );
 
+  function publish(request: DataPublishRequest): Promise<LocalDataTrack>;
+  function publish(
+    request: PublishRequest,
+  ): Promise<LocalAudioMediaTrack | LocalVideoMediaTrack>;
+  async function publish(
+    request: DataPublishRequest | PublishRequest,
+  ): Promise<LocalTrack> {
+    if (request.source === "data") throw dataTracksUnsupported();
+    return backend.local.publish(request);
+  }
+
+  const unpublish = async (track: LocalTrack): Promise<void> => {
+    if (track.kind === "data") throw dataTracksUnsupported();
+    await backend.local.unpublish(track.source);
+  };
+
   const leave = (): void => {
     if (state$.value.kind === "left") return;
     localMembership.leave();
@@ -299,14 +305,12 @@ export function createRTCParticipation(
       state$,
       localMember$,
       remoteMembers$,
-      publish: async (request) => backend.local.publish(request),
-      unpublish: async (source) => backend.local.unpublish(source),
+      publish,
+      unpublish,
       keyRotationSuppressed$: createKeyRotationSuppressed$(scope, jsSdkSession),
       connectedTransports$: transports.connected$,
       setAudioOutputDeviceId: async (deviceId) =>
         backend.setAudioOutputDeviceId(deviceId),
-      sendData: async (topic, text) => backend.sendData(topic, text),
-      data$,
     },
   };
 }
@@ -335,4 +339,10 @@ function mediaKeys$(session: JsSdkRTCSession): Observable<MediaKey> {
     session.reemitEncryptionKeys();
     return () => session.off(MatrixRTCSessionEvent.EncryptionKeyChanged, onKey);
   });
+}
+
+// Until the media backend carries data tracks; see "Data beside the media" in
+// SdkArchitecture.md
+function dataTracksUnsupported(): Error {
+  return new Error("Data tracks are not supported by this backend yet");
 }

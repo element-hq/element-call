@@ -32,7 +32,9 @@ import { E2eeType, type EncryptionSystem } from "../../encryption";
 import { type Behavior } from "../../reactive/Behavior";
 import {
   type EncryptionError,
+  type LocalAudioMediaTrack,
   type LocalMemberMedia,
+  type LocalVideoMediaTrack,
   type MediaSource,
   type MemberMedia,
 } from "../../media-api";
@@ -82,12 +84,17 @@ export function createLivekitMemberMedia(
   };
 }
 
+/** Media only: LiveKit carries no data tracks yet. */
+export interface LivekitLocalMemberMedia extends LocalMemberMedia {
+  tracks$: Behavior<(LocalAudioMediaTrack | LocalVideoMediaTrack)[] | null>;
+}
+
 export function createLocalLivekitMemberMedia(
   scope: ObservableScope,
   source$: Behavior<ParticipantSource<LocalParticipant>>,
   encryptionSystem: EncryptionSystem,
   setEnabled: (source: MediaSource, enabled: boolean) => Promise<boolean>,
-): LocalMemberMedia {
+): LivekitLocalMemberMedia {
   return {
     tracks$: memberTracks$(
       scope,

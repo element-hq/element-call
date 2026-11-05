@@ -15,15 +15,15 @@ import {
   type RTCNotificationType,
   type Transport,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { type Observable } from "rxjs";
-
 import { type Behavior } from "./reactive/Behavior";
 import {
+  type DataPublishRequest,
   type LocalAudioMediaTrack,
+  type LocalDataTrack,
   type LocalMedia,
   type LocalMemberMedia,
+  type LocalTrack,
   type LocalVideoMediaTrack,
-  type MediaSource,
   type MemberMedia,
   type PublishRequest,
 } from "./media-api";
@@ -176,15 +176,19 @@ export interface RTCParticipation {
   remoteMembers$: Behavior<RemoteRTCMember[]>;
 
   /**
-   * Publishes a source and resolves with its track, which also shows up in
-   * `localMember$.tracks$`. Works from the moment `join()` returns: before the
-   * transport is connected.
+   * Publishes a source, or a data track, and resolves with its track, which
+   * also shows up in `localMember$.tracks$`. Works from the moment `join()`
+   * returns: before the transport is connected.
    */
+  publish(request: DataPublishRequest): Promise<LocalDataTrack>;
   publish(
     request: PublishRequest,
   ): Promise<LocalAudioMediaTrack | LocalVideoMediaTrack>;
-  /** Removes one of our publications; a screen share takes its audio with it. */
-  unpublish(source: MediaSource): Promise<void>;
+  /**
+   * Removes one of our publications; a screen share takes its audio with it.
+   * The track's object is finished: its controls and `send` reject from then on.
+   */
+  unpublish(track: LocalTrack): Promise<void>;
 
   /**
    * Whether the slot has grown large enough that MatrixRTC has stopped
@@ -201,28 +205,6 @@ export interface RTCParticipation {
    * the browser's choice, never calls it.
    */
   setAudioOutputDeviceId(deviceId: string): Promise<void>;
-
-  /**
-   * Sends a short text to every member on the local transport, over a
-   * reliable data channel beside the media. A packet holds about 15 KiB;
-   * anything larger belongs in a room event. Rejects while the local
-   * transport is not connected. Encrypted on the wire like the media, but
-   * not end to end with the media key.
-   */
-  sendData(topic: string, text: string): Promise<void>;
-  /**
-   * What remote members sent with `sendData`, on every transport the
-   * participation is connected to. A message from an identity that is not a
-   * member is dropped, so a host only ever hears from attested members.
-   */
-  data$: Observable<DataMessage>;
-}
-
-/** One `sendData` call as it arrives at a remote member. */
-export interface DataMessage {
-  member: RemoteRTCMember;
-  topic: string;
-  text: string;
 }
 
 // ---------------------------------------------------------------------------
