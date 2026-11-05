@@ -45,6 +45,7 @@ import {
   alwaysShowIphoneEarpiece as alwaysShowIphoneEarpieceSetting,
   matrixRTCMode as matrixRTCModeSetting,
   customTransport as customTransportSetting,
+  fullMeshPublishing as fullMeshPublishingSetting,
   advancedScreenShare as advancedScreenShareSetting,
   screenShareResolution as screenShareResolutionSetting,
   screenShareFramerate as screenShareFramerateSetting,
@@ -68,6 +69,7 @@ import { Slider } from "../Slider";
 import { useUrlParams } from "../UrlParams";
 import {
   authenticateWithTransport,
+  FULL_MESH_TRANSPORT_TYPE,
   type TransportMetadata,
 } from "@element-hq/matrixrtc-sdk";
 import { useBehavior } from "../useBehavior";
@@ -175,6 +177,9 @@ export const DeveloperSettingsTab: FC<Props> = ({
   const [customTransportUpdateError, setCustomTransportUpdateError] = useState<
     string | null
   >(null);
+  const [fullMeshPublishing, setFullMeshPublishing] = useSetting(
+    fullMeshPublishingSetting,
+  );
   const [customTransport, setCustomTransport] = useSetting(
     customTransportSetting,
   );
@@ -415,6 +420,17 @@ export const DeveloperSettingsTab: FC<Props> = ({
             },
             [setDuplicateTiles],
           )}
+        />
+      </FieldRow>
+      <FieldRow>
+        <InputField
+          id="fullMeshPublishing"
+          type="checkbox"
+          checked={fullMeshPublishing}
+          label={t("developer_mode.full_mesh_publishing")}
+          onChange={(event: ChangeEvent<HTMLInputElement>): void =>
+            setFullMeshPublishing(event.target.checked)
+          }
         />
       </FieldRow>
       <FieldRow>
@@ -665,11 +681,21 @@ function transportText(transport: UnstableLivekitTransport | null): string {
 const TransportBox: FC<TransportInfo> = ({ transport, local }) => {
   const { t } = useTranslation();
   const resolved = useBehavior(transport.resolved$);
+  const fullMesh = transport.type === FULL_MESH_TRANSPORT_TYPE;
   return (
     <div className={styles.livekit_room_box}>
-      <h4>{t("developer_mode.livekit_sfu", { url: transport.id })}</h4>
+      <h4>
+        {fullMesh
+          ? t("developer_mode.full_mesh_transport", {
+              device: transport.raw.device_id,
+            })
+          : t("developer_mode.livekit_sfu", { url: transport.id })}
+      </h4>
       <p>
-        {t("developer_mode.livekit_server_info")}({local ? "local" : "remote"})
+        {fullMesh
+          ? t("developer_mode.full_mesh_peer_connections")
+          : t("developer_mode.livekit_server_info")}
+        ({local ? "local" : "remote"})
       </p>
       <pre className={styles.pre}>
         {resolved === undefined

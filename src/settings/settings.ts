@@ -167,6 +167,15 @@ export const customTransport = new Setting<UnstableLivekitTransport | null>(
   null,
 );
 
+/**
+ * Publish on the full mesh transport (MSC4575) instead of LiveKit. Members on
+ * either transport are received whatever this says.
+ */
+export const fullMeshPublishing = new Setting<boolean>(
+  "full-mesh-publishing",
+  false,
+);
+
 export type VideoCodec = "vp8" | "vp9" | "h264" | "av1";
 
 /**
