@@ -15,7 +15,7 @@ import {
   type BackgroundEffectsOptions,
   type BackgroundEffectsState,
 } from "./BackgroundEffects";
-import { shippedBackgrounds } from "../tracks/backgroundEffects";
+import { shippedBackgrounds } from "../tracks/backgroundEffectCatalog";
 import { flushPromises, testScope, withTestScheduler } from "../utils/test";
 
 /** A pipeline that records what it is switched to. */

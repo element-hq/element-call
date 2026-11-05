@@ -13,7 +13,7 @@ import { type Behavior } from "../state/Behavior";
 import { useBehavior } from "../useBehavior";
 import { MatrixRTCMode } from "../config/ConfigOptions";
 import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
-import { type EffectId } from "../tracks/backgroundEffects";
+import { type EffectId } from "../tracks/backgroundEffectCatalog";
 
 export class Setting<T> {
   public constructor(

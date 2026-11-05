@@ -9,7 +9,7 @@ import { combineLatest, map, type Observable, switchMap } from "rxjs";
 import { supportsAudioOutputSelection } from "livekit-client";
 
 import { supportsBackgroundProcessors } from "../tracks/backgroundProcessing";
-import { parseEffect } from "../tracks/backgroundEffects";
+import { parseEffect } from "../tracks/backgroundEffectCatalog";
 
 import { type CallViewModel } from "../state/CallViewModel/CallViewModel";
 import { type MenuOptions } from "./MediaMuteAndSwitchButton";

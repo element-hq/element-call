@@ -21,10 +21,11 @@ import { type Behavior } from "./Behavior";
 import { type ObservableScope } from "./ObservableScope";
 import {
   type BackgroundEffect,
-  blurRadius,
   imagePathFor,
   parseEffect,
-} from "../tracks/backgroundEffects";
+} from "../tracks/backgroundEffectCatalog";
+
+const blurRadius = 15;
 
 export interface BackgroundEffectsState {
   supported: boolean | undefined;

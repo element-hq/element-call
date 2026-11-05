@@ -28,7 +28,10 @@ import { PreferencesSettingsTab } from "./PreferencesSettingsTab";
 import { Slider } from "../Slider";
 import { DeviceSelection } from "./DeviceSelection";
 import { useBackgroundEffects } from "../tracks/BackgroundEffectsContext";
-import { parseEffect, serializeEffect } from "../tracks/backgroundEffects";
+import {
+  parseEffect,
+  serializeEffect,
+} from "../tracks/backgroundEffectCatalog";
 import {
   DeveloperSettingsTab,
   type DeveloperSettingsSnapshot,

@@ -14,7 +14,7 @@ import {
   parseEffect,
   serializeEffect,
   shippedBackgrounds,
-} from "./backgroundEffects";
+} from "./backgroundEffectCatalog";
 
 describe("the chosen background effect", () => {
   test("round-trips through its stored form", () => {

@@ -8,8 +8,6 @@ Please see LICENSE in the repository root for full details.
 import arc from "../graphics/background-arc.jpg?url";
 import glow from "../graphics/background-glow.jpg?url";
 
-export const blurRadius = 15;
-
 export interface ShippedBackground {
   /** Stored in the user's settings when chosen, so it must not change. */
   id: string;
