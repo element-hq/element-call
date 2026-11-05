@@ -225,6 +225,51 @@ describe("createLivekitMediaTrack", () => {
     );
   });
 
+  // LiveKit's media stream track is the processed one while a processor runs,
+  // and that one names no device; the camera behind it does
+  it.each([
+    { deviceId: "cam-1", switches: false },
+    { deviceId: "cam-2", switches: true },
+  ])(
+    "leaves a processed camera alone unless its device changes: $deviceId",
+    async ({ deviceId, switches }) => {
+      vi.stubGlobal("MediaStreamTrack", class {});
+      onTestFinished(() => {
+        vi.unstubAllGlobals();
+      });
+      const camera = Object.assign(Object.create(LocalVideoTrack.prototype), {
+        source: Track.Source.Camera,
+        _mediaStreamTrack: {
+          readyState: "live",
+          label: "",
+          getSettings: () => ({ deviceId: "cam-1" }),
+        },
+        // What LiveKit shows as the track, with no device of its own
+        processor: {
+          processedTrack: { label: "", getSettings: () => ({}) },
+        },
+      }) as LocalVideoTrack;
+      const switchActiveDevice = vi.fn().mockResolvedValue(true);
+      const { participant, publication, room } = fakes({
+        track: camera as unknown as FakeTrack,
+      });
+      const track = createLocalLivekitMediaTrack(
+        scope,
+        Object.assign(participant, {
+          isLocal: true,
+        }) as unknown as LocalParticipant,
+        publication as unknown as TrackPublication,
+        Object.assign(room, { switchActiveDevice }),
+        vi.fn(),
+      );
+
+      await track.setDevice(deviceId);
+      expect(switchActiveDevice.mock.calls).toEqual(
+        switches ? [["videoinput", deviceId, false]] : [],
+      );
+    },
+  );
+
   // LiveKit stops a camera that is turned off; the processor is built when it
   // is turned on again
   it.each([

@@ -199,11 +199,13 @@ export function createLocalLivekitMediaTrack(
         throw new MatrixRTCError(`A ${base.source} track has no device`);
       // LiveKit decides whether to restart by the constraints it keeps, which
       // a browser that does not echo the device id back (Firefox) leaves
-      // without one; a track already on the device is left alone here
+      // without one; a track already on the device is left alone here. Asked
+      // of the camera track itself: with a processor on, LiveKit's media
+      // stream track is the processed one, which names no device
       const current = publication.track;
       if (
         current instanceof LocalTrack &&
-        current.mediaStreamTrack.getSettings().deviceId === deviceId
+        (await current.getDeviceId(false)) === deviceId
       )
         return;
       await room.switchActiveDevice(
