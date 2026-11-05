@@ -44,7 +44,7 @@ import { observeElementSize$ } from "../utils/elementSize";
 import { LiveMicrophoneLevelMeter } from "./MicrophoneLevelMeter";
 import {
   BackgroundEffectGrid,
-  type BackgroundEffectOption,
+  type BackgroundEffectGridItem,
 } from "./BackgroundEffectGrid";
 
 export interface MenuOptions {
@@ -71,7 +71,7 @@ export interface MediaMuteAndSwitchButtonProps {
   /** Picks an output device. Undefined disables the speaker section. */
   onSelectOutput?: (id: string) => void;
   /** Camera menu only. None or an empty list leaves the section out. */
-  backgroundEffects?: BackgroundEffectOption[];
+  backgroundEffects?: BackgroundEffectGridItem[];
   selectedBackgroundEffect?: string;
   /** Undefined where effects can't run: all but no effect are disabled. */
   onSelectBackgroundEffect?: (id: string) => void;

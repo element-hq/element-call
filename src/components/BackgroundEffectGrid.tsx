@@ -17,7 +17,7 @@ import {
 import styles from "./BackgroundEffectGrid.module.css";
 
 /** One choice in the camera menu's Background effects section. */
-export interface BackgroundEffectOption {
+export interface BackgroundEffectGridItem {
   id: string;
   /** The tile's accessible name; drawn only where the tile has no picture. */
   label: string;
@@ -27,7 +27,7 @@ export interface BackgroundEffectOption {
 }
 
 interface Props {
-  effects: BackgroundEffectOption[];
+  effects: BackgroundEffectGridItem[];
   selected: string | undefined;
   /** Undefined where effects can't run: all but no effect are disabled. */
   onSelect: ((id: string) => void) | undefined;
@@ -100,7 +100,7 @@ function TileContent({
   checked,
   settling,
 }: {
-  effect: BackgroundEffectOption;
+  effect: BackgroundEffectGridItem;
   checked: boolean;
   settling: boolean;
 }): ReactElement {

@@ -32,7 +32,7 @@ import { type ViewModel } from "../state/ViewModel";
 import { useBehavior } from "../useBehavior";
 import { type LayoutSwitchViewModel } from "../state/LayoutSwitchViewModel";
 import { LayoutSwitch } from "../room/LayoutSwitch";
-import { type BackgroundEffectOption } from "./BackgroundEffectGrid";
+import { type BackgroundEffectGridItem } from "./BackgroundEffectGrid";
 
 /** A background effect on offer, which the view names. */
 export interface BackgroundEffectChoice {
@@ -372,7 +372,7 @@ const TilesDebugInfo: FC<TilesDebugInfoProps> = ({ generation$ }) => {
 
 function useBackgroundEffectLabels(
   choices: BackgroundEffectChoice[],
-): BackgroundEffectOption[] {
+): BackgroundEffectGridItem[] {
   const { t } = useTranslation();
   return useMemo(() => {
     let pictures = 0;

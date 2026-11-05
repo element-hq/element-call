@@ -11,7 +11,7 @@ import { useEffect, useState, type FC, type JSX, type ReactNode } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { MediaMuteAndSwitchButton } from "./MediaMuteAndSwitchButton";
 import styles from "./MediaMuteAndSwitchButton.module.css";
-import { type BackgroundEffectOption } from "./BackgroundEffectGrid";
+import { type BackgroundEffectGridItem } from "./BackgroundEffectGrid";
 import { shippedBackgrounds } from "../tracks/backgroundEffectCatalog";
 import meterStyles from "./MicrophoneLevelMeter.module.css";
 import { MediaDevicesContext } from "../MediaDevicesContext";
@@ -176,7 +176,7 @@ export const VideoMute: Story = {
   },
 };
 
-const effects: BackgroundEffectOption[] = [
+const effects: BackgroundEffectGridItem[] = [
   { id: "none", kind: "none", label: "None" },
   { id: "blur", kind: "blur", label: "Blur" },
   ...shippedBackgrounds.map((background, i) => ({

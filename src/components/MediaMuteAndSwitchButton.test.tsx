@@ -23,12 +23,12 @@ import {
   MediaMuteAndSwitchButton,
   type MenuOptions,
 } from "./MediaMuteAndSwitchButton";
-import { type BackgroundEffectOption } from "./BackgroundEffectGrid";
+import { type BackgroundEffectGridItem } from "./BackgroundEffectGrid";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { type MediaDevices } from "../state/MediaDevices";
 import { restoreAudioCapture, stubAudioCapture } from "../utils/test";
 
-const effects: BackgroundEffectOption[] = [
+const effects: BackgroundEffectGridItem[] = [
   { id: "none", kind: "none", label: "None" },
   { id: "blur", kind: "blur", label: "Blur" },
   { id: "image:arc", kind: "image", label: "Background 1", imageUrl: "" },
