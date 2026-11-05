@@ -177,12 +177,11 @@ export const VideoMute: Story = {
 };
 
 const effects: BackgroundEffectGridItem[] = [
-  { id: "none", kind: "none", label: "None" },
-  { id: "blur", kind: "blur", label: "Blur" },
-  ...shippedBackgrounds.map((background, i) => ({
+  { id: "none", kind: "none" },
+  { id: "blur", kind: "blur" },
+  ...shippedBackgrounds.map((background) => ({
     id: `image:${background.id}`,
     kind: "image" as const,
-    label: `Background ${i + 1}`,
     imageUrl: background.imagePath,
   })),
 ];

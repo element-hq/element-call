@@ -29,10 +29,10 @@ import { type MediaDevices } from "../state/MediaDevices";
 import { restoreAudioCapture, stubAudioCapture } from "../utils/test";
 
 const effects: BackgroundEffectGridItem[] = [
-  { id: "none", kind: "none", label: "None" },
-  { id: "blur", kind: "blur", label: "Blur" },
-  { id: "image:arc", kind: "image", label: "Background 1", imageUrl: "" },
-  { id: "image:glow", kind: "image", label: "Background 2", imageUrl: "" },
+  { id: "none", kind: "none" },
+  { id: "blur", kind: "blur" },
+  { id: "image:arc", kind: "image", imageUrl: "" },
+  { id: "image:glow", kind: "image", imageUrl: "" },
 ];
 
 interface RenderOptions {

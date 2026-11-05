@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type FC, type ReactElement } from "react";
+import { useTranslation } from "react-i18next";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { InlineSpinner, MenuItem } from "@vector-im/compound-web";
 import {
@@ -16,11 +17,13 @@ import {
 
 import styles from "./BackgroundEffectGrid.module.css";
 
-/** One choice in the camera menu's Background effects section. */
+/**
+ * One choice in the camera menu's Background effects section, as the view
+ * model offers it. The grid names it: pictures are numbered in order.
+ */
 export interface BackgroundEffectGridItem {
+  /** Its option id, as `backgroundEffect` gives the one in force. */
   id: string;
-  /** The tile's accessible name; drawn only where the tile has no picture. */
-  label: string;
   kind: "none" | "blur" | "image";
   /** For kind "image". */
   imageUrl?: string;
@@ -49,10 +52,18 @@ export const BackgroundEffectGrid: FC<Props> = ({
   settling = false,
   describedBy,
 }) => {
+  const { t } = useTranslation();
   const choose = (id: string): void => {
     if (id !== selected) onSelect?.(id);
   };
+  let pictures = 0;
   const tiles = effects.map((effect) => {
+    const label =
+      effect.kind === "none"
+        ? t("background_effects.none")
+        : effect.kind === "blur"
+          ? t("background_effects.blur")
+          : t("background_effects.numbered", { n: ++pictures });
     const checked = effect.id === selected;
     const disabled = onSelect === undefined && effect.kind !== "none";
     return (
@@ -80,6 +91,7 @@ export const BackgroundEffectGrid: FC<Props> = ({
       >
         <TileContent
           effect={effect}
+          label={label}
           checked={checked}
           settling={checked && settling}
         />
@@ -97,10 +109,13 @@ export const BackgroundEffectGrid: FC<Props> = ({
 
 function TileContent({
   effect,
+  label,
   checked,
   settling,
 }: {
   effect: BackgroundEffectGridItem;
+  /** The tile's accessible name; drawn only where the tile has no picture. */
+  label: string;
   checked: boolean;
   settling: boolean;
 }): ReactElement {
@@ -127,9 +142,9 @@ function TileContent({
         ) : null}
       </span>
       {effect.kind === "image" ? (
-        <VisuallyHidden>{effect.label}</VisuallyHidden>
+        <VisuallyHidden>{label}</VisuallyHidden>
       ) : (
-        <span className={styles.label}>{effect.label}</span>
+        <span className={styles.label}>{label}</span>
       )}
     </>
   );

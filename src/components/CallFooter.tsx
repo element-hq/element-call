@@ -34,14 +34,6 @@ import { type LayoutSwitchViewModel } from "../state/LayoutSwitchViewModel";
 import { LayoutSwitch } from "../room/LayoutSwitch";
 import { type BackgroundEffectGridItem } from "./BackgroundEffectGrid";
 
-/** A background effect on offer, which the view names. */
-export interface BackgroundEffectChoice {
-  /** Its option id, as `backgroundEffect` gives the one in force. */
-  id: string;
-  kind: "none" | "blur" | "image";
-  imageUrl?: string;
-}
-
 export interface AudioOutputSwitcher {
   targetOutput: string;
   switch: () => void;
@@ -84,7 +76,7 @@ export interface FooterState {
   /** The background effect in force, as its option id. */
   backgroundEffect: string;
   /** Every effect on offer, in the order they are shown. */
-  backgroundEffects: BackgroundEffectChoice[];
+  backgroundEffects: BackgroundEffectGridItem[];
   /** What the user is told about effects here, if anything. */
   backgroundEffectNotice: "unavailable" | undefined;
   showFooter: boolean;
@@ -173,9 +165,7 @@ export const CallFooter: FC<FooterProps> = ({
   const backgroundEffect = useBehavior(vm.backgroundEffect$);
   const selectBackgroundEffect = useBehavior(vm.selectBackgroundEffect$);
   const backgroundEffectNotice = useBehavior(vm.backgroundEffectNotice$);
-  const backgroundEffects = useBackgroundEffectLabels(
-    useBehavior(vm.backgroundEffects$),
-  );
+  const backgroundEffects = useBehavior(vm.backgroundEffects$);
   const buttonSize = useBehavior(vm.buttonSize$);
   const showLogo = useBehavior(vm.showLogo$);
 
@@ -369,21 +359,3 @@ const TilesDebugInfo: FC<TilesDebugInfoProps> = ({ generation$ }) => {
   const generation = useBehavior(generation$);
   return `Tiles generation: ${generation}`;
 };
-
-function useBackgroundEffectLabels(
-  choices: BackgroundEffectChoice[],
-): BackgroundEffectGridItem[] {
-  const { t } = useTranslation();
-  return useMemo(() => {
-    let pictures = 0;
-    return choices.map((choice) => ({
-      ...choice,
-      label:
-        choice.kind === "none"
-          ? t("background_effects.none")
-          : choice.kind === "blur"
-            ? t("background_effects.blur")
-            : t("background_effects.numbered", { n: ++pictures }),
-    }));
-  }, [choices, t]);
-}

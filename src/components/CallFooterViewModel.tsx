@@ -28,7 +28,8 @@ import { type MuteStates } from "../state/MuteStates";
 import { createStaticViewModel, type ViewModel } from "../state/ViewModel";
 import { HeaderStyle } from "../UrlParams";
 import { platform } from "../Platform";
-import { type BackgroundEffectChoice, type FooterSnapshot } from "./CallFooter";
+import { type FooterSnapshot } from "./CallFooter";
+import { type BackgroundEffectGridItem } from "./BackgroundEffectGrid";
 
 /**
  * Shared helper: maps MuteStates into the audio/video enabled + toggle behaviors
@@ -300,7 +301,7 @@ export function createLobbyFooterViewModel(
   };
 }
 
-function backgroundEffectChoices(): BackgroundEffectChoice[] {
+function backgroundEffectChoices(): BackgroundEffectGridItem[] {
   return [
     { id: serializeEffect({ kind: "none" }), kind: "none" },
     { id: serializeEffect({ kind: "blur" }), kind: "blur" },
