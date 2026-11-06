@@ -158,6 +158,7 @@ export const LobbyView: FC<Props> = ({
     null,
   );
   useEffect(() => {
+    if (mediaVm === null) return;
     const footerScope = new ObservableScope();
     setFooterVm(
       createLobbyFooterViewModel(
@@ -165,6 +166,7 @@ export const LobbyView: FC<Props> = ({
         muteStates,
         devices,
         backgroundEffectsState$.pipe(map(({ settling }) => settling ?? false)),
+        mediaVm.videoTrack$,
         openSettings,
         hangup,
         // Logo and header are connected: only show the logo in SPA with header.
@@ -179,6 +181,7 @@ export const LobbyView: FC<Props> = ({
     backgroundEffectsState$,
     hangup,
     hideHeader,
+    mediaVm,
     muteStates,
     openSettings,
   ]);
