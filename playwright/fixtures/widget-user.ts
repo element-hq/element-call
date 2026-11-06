@@ -109,10 +109,6 @@ export const widgetTest = test.extend<MyFixtures>({
       await TestHelpers.dismissInviteUnknownUserModal(ewPage1);
 
       // Accept the invite
-      await TestHelpers.closeReleaseAnnouncement(
-        ewPage2,
-        "Introducing Sections",
-      );
       await TestHelpers.openRoomInvite(ewPage2, "Welcome Room");
       await ewPage2.getByRole("button", { name: "Accept" }).click();
       await expect(
@@ -121,11 +117,6 @@ export const widgetTest = test.extend<MyFixtures>({
           .getByRole("heading", { name: "Welcome Room" }),
       ).toBeVisible();
     } else if (callType === "dm") {
-      await TestHelpers.closeReleaseAnnouncement(
-        ewPage1,
-        "Introducing Sections",
-      );
-      await TestHelpers.dismissStartupToasts(ewPage1);
       await TestHelpers.chooseFromRoomListNewMenu(ewPage1, "Start chat");
       await ewPage1.getByRole("textbox", { name: "Search" }).click();
       await ewPage1.getByRole("textbox", { name: "Search" }).fill(whistlerMxId);
@@ -148,10 +139,6 @@ export const widgetTest = test.extend<MyFixtures>({
       ).toBeVisible();
 
       // Accept the DM invite from brooks
-      await TestHelpers.closeReleaseAnnouncement(
-        ewPage2,
-        "Introducing Sections",
-      );
       await TestHelpers.openRoomInvite(ewPage2, brooksDisplayName);
       await ewPage2.getByRole("button", { name: "Start chatting" }).click();
     }
