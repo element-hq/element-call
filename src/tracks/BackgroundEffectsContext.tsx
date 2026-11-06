@@ -12,6 +12,7 @@ import {
 import { createContext, type FC, type JSX, use } from "react";
 
 import { backgroundEffect as backgroundEffectSetting } from "../settings/settings";
+import { Config } from "../config/Config";
 import {
   BackgroundEffectTransformer,
   canSegment,
@@ -51,15 +52,19 @@ export function useBackgroundEffectsState$(): Behavior<BackgroundEffectsState> {
 export function createAppBackgroundEffects(
   scope: ObservableScope,
 ): BackgroundEffects {
-  const transformer = new BackgroundEffectTransformer({
-    backgroundDisabled: true,
-  });
+  const sources = {
+    wasmBaseUrl: Config.get().background_effects?.mediapipe_wasm_url,
+  };
+  const transformer = new BackgroundEffectTransformer(
+    { backgroundDisabled: true },
+    sources,
+  );
   return createBackgroundEffects(scope, {
     supported: supportsBackgroundProcessors(),
     effect$: backgroundEffectSetting.value$,
     setEffect: backgroundEffectSetting.setValue,
     added$: addedBackgrounds.added$,
-    canSegment,
+    canSegment: async () => canSegment(sources),
     pipeline: new BackgroundProcessorWrapper(transformer, "background-effect"),
     transformer,
   });

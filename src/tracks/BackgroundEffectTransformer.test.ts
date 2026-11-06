@@ -11,7 +11,7 @@ import {
   VideoTransformer,
   type VideoTransformerInitOptions,
 } from "@livekit/track-processors";
-import { ImageSegmenter } from "@mediapipe/tasks-vision";
+import { FilesetResolver, ImageSegmenter } from "@mediapipe/tasks-vision";
 
 import {
   BackgroundEffectTransformer,
@@ -53,17 +53,43 @@ describe("BackgroundEffectTransformer", () => {
     const create = vi
       .spyOn(ImageSegmenter, "createFromOptions")
       .mockResolvedValue({} as ImageSegmenter);
+    const resolve = vi.spyOn(FilesetResolver, "forVisionTasks");
 
     await new BackgroundEffectTransformer({ backgroundDisabled: true }).init(
       {} as VideoTransformerInitOptions,
     );
 
+    expect(resolve).not.toHaveBeenCalled();
     const [fileset, options] = create.mock.calls[0];
     expect(fileset.wasmLoaderPath).toMatch(/vision_wasm_internal\.js/);
     expect(fileset.wasmBinaryPath).toMatch(/vision_wasm_internal\.wasm/);
     expect(options.baseOptions?.modelAssetPath).toMatch(
       /selfie_segmenter\.tflite/,
     );
+  });
+
+  it("runs MediaPipe from where the deployment serves it, if it does", async () => {
+    vi.spyOn(VideoTransformer.prototype, "init").mockResolvedValue();
+    const create = vi
+      .spyOn(ImageSegmenter, "createFromOptions")
+      .mockResolvedValue({} as ImageSegmenter);
+    const served = {
+      wasmLoaderPath:
+        "https://cdn.example.org/mediapipe/vision_wasm_internal.js",
+      wasmBinaryPath:
+        "https://cdn.example.org/mediapipe/vision_wasm_internal.wasm",
+    };
+    const resolve = vi
+      .spyOn(FilesetResolver, "forVisionTasks")
+      .mockResolvedValue(served);
+
+    await new BackgroundEffectTransformer(
+      { backgroundDisabled: true },
+      { wasmBaseUrl: "https://cdn.example.org/mediapipe" },
+    ).init({} as VideoTransformerInitOptions);
+
+    expect(resolve).toHaveBeenCalledWith("https://cdn.example.org/mediapipe");
+    expect(create.mock.calls[0][0]).toBe(served);
   });
 
   it("reports the first frame carrying an effect, once", async () => {
