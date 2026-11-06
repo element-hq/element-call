@@ -157,25 +157,34 @@ export class TestHelpers {
   // Toast can be stacked, and only the top one can be dismiss, so just look at what is on top and
   // dismiss (if part of expected toats)
   public static async dismissStartupToasts(page: Page): Promise<void> {
-    const expectedToasts = [
+    const expectedToasts: {
+      title: string;
+      button: string;
+      confirm?: string;
+    }[] = [
       { title: "Failed to load service worker", button: "OK" },
       { title: "Back up your chats", button: "Not now" },
-      { title: "Turn on key storage", button: "Dismiss" },
+      {
+        title: "Turn on key storage",
+        button: "Dismiss",
+        confirm: "Yes, dismiss",
+      },
+      { title: "Notifications", button: "Dismiss" },
       { title: "Element does not support this browser", button: "Dismiss" },
     ];
 
     const toast = page.locator(".mx_Toast_toast");
+    const toastTitle = toast.locator(".mx_Toast_title h2");
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
       try {
         await toast.waitFor({ state: "visible", timeout: 700 });
-        const title = await toast.locator(".mx_Toast_title h2").textContent();
+        const title = await toastTitle.textContent();
+        if (!title) break;
 
         // Find the matching toast config
-        const toastConfig = expectedToasts.find((t) =>
-          title?.includes(t.title),
-        );
+        const toastConfig = expectedToasts.find((t) => title.includes(t.title));
 
         if (toastConfig) {
           // Bounded so that a renamed button leaves the toast in place and the
@@ -183,6 +192,16 @@ export class TestHelpers {
           await toast
             .getByRole("button", { name: toastConfig.button })
             .click({ timeout: 5000 });
+          if (toastConfig.confirm) {
+            const dialog = page.getByRole("dialog");
+            await dialog
+              .getByRole("button", { name: toastConfig.confirm })
+              .click({ timeout: 5000 });
+            await expect(dialog).toBeHidden({ timeout: 5000 });
+          }
+          // The same element shows the next toast a moment after the click, so
+          // reading it straight away acts on the dismissed one a second time
+          await expect(toastTitle).not.toHaveText(title, { timeout: 5000 });
         } else {
           // Unknown toast. We don't want to act on unknown toasts
           break;
@@ -192,6 +211,16 @@ export class TestHelpers {
         break;
       }
     }
+  }
+
+  /**
+   * Clears what Element Web stacks over the room list after sign-in. The
+   * release announcement is held back while any toast is up, so it is closed
+   * after the toasts, not before.
+   */
+  public static async clearRoomListOverlays(page: Page): Promise<void> {
+    await TestHelpers.dismissStartupToasts(page);
+    await TestHelpers.closeReleaseAnnouncement(page, "Introducing Sections");
   }
 
   public static async closeReleaseAnnouncement(
@@ -223,16 +252,7 @@ export class TestHelpers {
     page: Page,
     andInvite: string[] = [],
   ): Promise<void> {
-    await TestHelpers.closeReleaseAnnouncement(page, "Introducing Sections");
-
-    await page
-      .getByRole("navigation", { name: "Room list" })
-      .getByRole("button", { name: "New", exact: true })
-      .click();
-
-    await page.getByRole("menuitem", { name: "New Room" }).click({
-      timeout: 5000,
-    });
+    await TestHelpers.chooseFromRoomListNewMenu(page, "New Room");
     await page.getByRole("textbox", { name: "Name" }).fill(name);
     await page.getByRole("button", { name: "Create room" }).click();
     await expect(page.getByText("You created this room.")).toBeVisible({
@@ -260,6 +280,25 @@ export class TestHelpers {
   }
 
   /**
+   * Opens the room list's "New" menu and picks the given item.
+   *
+   * While the sections announcement is anchored to the "New" button, the
+   * button has no menu at all, so the overlays go first. Driven by keyboard,
+   * as a toast arriving afterwards sits over the button and swallows clicks.
+   */
+  public static async chooseFromRoomListNewMenu(
+    page: Page,
+    itemName: string,
+  ): Promise<void> {
+    await TestHelpers.clearRoomListOverlays(page);
+    await page
+      .getByRole("navigation", { name: "Room list" })
+      .getByRole("button", { name: "New", exact: true })
+      .press("Enter");
+    await page.getByRole("menuitem", { name: itemName }).press("Enter");
+  }
+
+  /**
    * Accepts a room invite using the room name.
    * Locatest the invite in the room list.
    *
@@ -268,9 +307,7 @@ export class TestHelpers {
     roomName: string,
     page: Page,
   ): Promise<void> {
-    await TestHelpers.closeReleaseAnnouncement(page, "Introducing Sections");
-    await TestHelpers.expandAllSections(page);
-    await TestHelpers.roomListItem(page, roomName).click({ timeout: 10000 });
+    await TestHelpers.openRoomInvite(page, roomName);
     await page.getByRole("button", { name: "Accept" }).click({
       timeout: 5000,
     });
@@ -374,6 +411,29 @@ export class TestHelpers {
    */
   public static roomListItem(page: Page, roomName: string): Locator {
     return page.locator(`[aria-label^="Open room ${roomName}"]`);
+  }
+
+  /**
+   * Opens a pending invite from the room list by its room name.
+   *
+   * Element Web collapses the Invites section every time it appears, so it is
+   * expanded here once the invite has arrived.
+   */
+  public static async openRoomInvite(
+    page: Page,
+    roomName: string,
+  ): Promise<void> {
+    const invitesSection = page.getByRole("button", {
+      name: "Toggle Invites section",
+    });
+    await expect(invitesSection).toBeVisible({ timeout: 10000 });
+    // Toasts and the announcement sit over the top of the room list, where
+    // this header is
+    await TestHelpers.clearRoomListOverlays(page);
+    if ((await invitesSection.getAttribute("aria-expanded")) !== "true") {
+      await invitesSection.click();
+    }
+    await TestHelpers.roomListItem(page, roomName).click({ timeout: 10000 });
   }
 
   /**
