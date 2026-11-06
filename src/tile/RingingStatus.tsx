@@ -12,6 +12,7 @@ import {
   EndCallIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { useTranslation } from "react-i18next";
+import { RTC_CALL_INTENT_VIDEO } from "matrix-js-sdk/lib/matrixrtc";
 
 import { type RingingMediaViewModel } from "../state/media/RingingMediaViewModel";
 import { useBehavior } from "../useBehavior";
@@ -25,7 +26,7 @@ export const RingingStatus: FC<Props> = ({ vm }) => {
   const pickupState = useBehavior(vm.pickupState$);
   const Icon =
     pickupState === "ringing"
-      ? vm.intent === "video"
+      ? vm.intent === RTC_CALL_INTENT_VIDEO
         ? VideoCallSolidIcon
         : VoiceCallSolidIcon
       : EndCallIcon;
