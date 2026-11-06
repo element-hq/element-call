@@ -18,6 +18,8 @@ Please see LICENSE in the repository root for full details.
  */
 
 import {
+  RTC_CALL_INTENT_AUDIO,
+  RTC_CALL_INTENT_VIDEO,
   type RTCCallIntent,
   type RTCNotificationType,
 } from "matrix-js-sdk/lib/matrixrtc";
@@ -179,40 +181,40 @@ export function configurationForIntent(intent: UserIntent): UrlConfiguration {
   switch (intent) {
     case UserIntent.StartNewCall:
       preset.skipLobby = false;
-      preset.callIntent = "video";
+      preset.callIntent = RTC_CALL_INTENT_VIDEO;
       break;
     case UserIntent.JoinExistingCall:
       // On desktop this will be overridden based on which button was used to join the call
       preset.skipLobby = false;
-      preset.callIntent = "video";
+      preset.callIntent = RTC_CALL_INTENT_VIDEO;
       break;
     case UserIntent.StartNewCallVoice:
       preset.skipLobby = false;
-      preset.callIntent = "audio";
+      preset.callIntent = RTC_CALL_INTENT_AUDIO;
       break;
     case UserIntent.JoinExistingCallVoice:
       // On desktop this will be overridden based on which button was used to join the call
       preset.skipLobby = false;
-      preset.callIntent = "audio";
+      preset.callIntent = RTC_CALL_INTENT_AUDIO;
       break;
     case UserIntent.StartNewCallDMVoice:
-      preset.callIntent = "audio";
+      preset.callIntent = RTC_CALL_INTENT_AUDIO;
     // Fall through
     case UserIntent.StartNewCallDM:
       preset.skipLobby = true;
       preset.sendNotificationType = "ring";
       preset.autoLeaveWhenOthersLeft = true;
       preset.waitForCallPickup = true;
-      preset.callIntent = preset.callIntent ?? "video";
+      preset.callIntent = preset.callIntent ?? RTC_CALL_INTENT_VIDEO;
       break;
     case UserIntent.JoinExistingCallDMVoice:
-      preset.callIntent = "audio";
+      preset.callIntent = RTC_CALL_INTENT_AUDIO;
     // Fall through
     case UserIntent.JoinExistingCallDM:
       // On desktop this will be overridden based on which button was used to join the call
       preset.skipLobby = true;
       preset.autoLeaveWhenOthersLeft = true;
-      preset.callIntent = preset.callIntent ?? "video";
+      preset.callIntent = preset.callIntent ?? RTC_CALL_INTENT_VIDEO;
       break;
     // Non widget usecase defaults
     default:

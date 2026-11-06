@@ -8,7 +8,10 @@ Please see LICENSE in the repository root for full details.
 import { test, expect } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import { axe } from "vitest-axe";
-import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
+import {
+  RTC_CALL_INTENT_AUDIO,
+  type MatrixRTCSession,
+} from "matrix-js-sdk/lib/matrixrtc";
 import { BehaviorSubject } from "rxjs";
 
 import { GridTile } from "./GridTile";
@@ -122,7 +125,7 @@ test("GridTile displays ringing media", async () => {
   const vm = createRingingMedia({
     pickupState$,
     id: "test",
-    intent: "audio",
+    intent: RTC_CALL_INTENT_AUDIO,
     userId: "@alice:example.org",
     displayName$: constant("Alice"),
     mxcAvatarUrl$: constant(undefined),
