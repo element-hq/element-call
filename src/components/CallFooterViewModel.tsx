@@ -16,10 +16,7 @@ import {
 } from "rxjs";
 import { supportsAudioOutputSelection } from "livekit-client";
 import { type LocalVideoMediaTrack } from "@element-hq/matrixrtc-sdk";
-import {
-  supportsBackgroundProcessors,
-  supportsModernBackgroundProcessors,
-} from "@livekit/track-processors";
+import { supportsModernBackgroundProcessors } from "@livekit/track-processors";
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import {
@@ -35,6 +32,7 @@ import {
 } from "../tracks/backgroundImages";
 
 import { type CallViewModel } from "../state/CallViewModel/CallViewModel";
+import { type BackgroundEffectsState } from "../state/BackgroundEffects";
 import { type MenuOptions } from "./MediaMuteAndSwitchButton";
 import { type MediaDevices } from "../state/MediaDevices";
 import {
@@ -89,7 +87,7 @@ function buildDeviceBehaviors(
   mediaDevices: MediaDevices,
   /** return empty arrays for  audioOptions and videoOptions*/
   disableSwitcher$: Behavior<boolean>,
-  backgroundEffectSettling$: Observable<boolean>,
+  backgroundEffectsState$: Observable<BackgroundEffectsState>,
   /** The camera as the pipeline has it, for the menu's preview. */
   camera$: Observable<LocalVideoMediaTrack | null | undefined>,
 ): Pick<
@@ -128,10 +126,14 @@ function buildDeviceBehaviors(
       ),
     );
 
-  const supported = supportsBackgroundProcessors();
+  // Also false once the pipeline has failed to build this session.
+  const supported$ = backgroundEffectsState$.pipe(
+    map(({ supported }) => supported === true),
+    distinctUntilChanged(),
+  );
   const slow = !supportsModernBackgroundProcessors();
-  const offered$ = disableSwitcher$.pipe(
-    map((switcherDisabled) => !switcherDisabled && supported),
+  const offered$ = combineLatest([disableSwitcher$, supported$]).pipe(
+    map(([switcherDisabled, supported]) => !switcherDisabled && supported),
   );
   // A new object for each refusal, so the same one twice is shown twice.
   const refusal$ = new BehaviorSubject<BackgroundImageRefusal | undefined>(
@@ -162,8 +164,10 @@ function buildDeviceBehaviors(
     ),
     selectVideoButtonOption$: constant(mediaDevices.videoInput.select),
     backgroundEffect$: scope.behavior(
-      backgroundEffectSetting.value$.pipe(
-        map((raw) => (supported ? serializeEffect(parseEffect(raw)) : "none")),
+      combineLatest([backgroundEffectSetting.value$, supported$]).pipe(
+        map(([raw, supported]) =>
+          supported ? serializeEffect(parseEffect(raw)) : "none",
+        ),
       ),
     ),
     selectBackgroundEffect$: scope.behavior(
@@ -191,7 +195,10 @@ function buildDeviceBehaviors(
       ),
     ),
     backgroundEffectSettling$: scope.behavior(
-      backgroundEffectSettling$.pipe(distinctUntilChanged()),
+      backgroundEffectsState$.pipe(
+        map(({ wait }) => wait !== undefined),
+        distinctUntilChanged(),
+      ),
       false,
     ),
     // Kept and offered, not put on: that waits for the user to choose it.
@@ -253,8 +260,8 @@ function buildDeviceBehaviors(
  * @param callModel - The root CallViewModel; provides layout, grid mode, reactions, etc.
  * @param muteStates - Audio and video mute state + toggles.
  * @param mediaDevices - Available and selected input devices.
- * @param backgroundEffectSettling$ - Whether the first effect chosen is still
- *   being prepared.
+ * @param backgroundEffectsState$ - The background pipeline's state: whether
+ *   effects run here, and the wait for the first.
  * @param reactionIdentifier - The local user's reaction identifier string, or
  *   undefined when reactions are not supported (hides the reaction button).
  * @param options - `showControls`: whether the call controls should be shown.
@@ -265,7 +272,7 @@ export function createCallFooterViewModel(
   callModel: CallViewModel,
   muteStates: MuteStates,
   mediaDevices: MediaDevices,
-  backgroundEffectSettling$: Observable<boolean>,
+  backgroundEffectsState$: Observable<BackgroundEffectsState>,
   reactionIdentifier: string | undefined,
   options: { showControls: boolean; header: HeaderStyle },
 ): ViewModel<FooterSnapshot> {
@@ -284,7 +291,7 @@ export function createCallFooterViewModel(
       scope,
       mediaDevices,
       disableDeviceSwitcher$,
-      backgroundEffectSettling$,
+      backgroundEffectsState$,
       callModel.camera$,
     ),
     // candidat to move into the FooterViewModel
@@ -348,8 +355,8 @@ export function createCallFooterViewModel(
  * @param scope - ObservableScope that bounds the lifetime of derived behaviors.
  * @param muteStates - Audio and video mute state + toggles.
  * @param mediaDevices - Available and selected input devices.
- * @param backgroundEffectSettling$ - Whether the first effect chosen is still
- *   being prepared.
+ * @param backgroundEffectsState$ - The background pipeline's state: whether
+ *   effects run here, and the wait for the first.
  * @param camera$ - The lobby's camera, for the camera menu's preview.
  * @param openSettings - Callback to open the settings modal, or undefined.
  * @param hangup - Callback to leave/cancel, or undefined (hides the button).
@@ -359,7 +366,7 @@ export function createLobbyFooterViewModel(
   scope: ObservableScope,
   muteStates: MuteStates,
   mediaDevices: MediaDevices,
-  backgroundEffectSettling$: Observable<boolean>,
+  backgroundEffectsState$: Observable<BackgroundEffectsState>,
   camera$: Behavior<LocalVideoMediaTrack | null>,
   openSettings: (() => void) | undefined,
   hangup: (() => void) | undefined,
@@ -408,7 +415,7 @@ export function createLobbyFooterViewModel(
       scope,
       mediaDevices,
       constant(false),
-      backgroundEffectSettling$,
+      backgroundEffectsState$,
       camera$,
     ),
   };

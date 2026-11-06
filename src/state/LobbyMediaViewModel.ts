@@ -13,7 +13,6 @@ import {
   type ObservableScope,
   type PublishRequest,
   trackBySource$,
-  type VideoProcessor,
 } from "@element-hq/matrixrtc-sdk";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import { combineLatest, debounceTime, map } from "rxjs";
@@ -25,6 +24,7 @@ import {
 import { type MediaDevices } from "./MediaDevices";
 import { type MuteStates } from "./MuteStates";
 import { followDevice, followProcessor } from "./localMediaControls";
+import { type BackgroundEffectsState } from "./BackgroundEffects";
 
 export interface LobbyMediaViewModel {
   /** The camera, once open, for the preview. */
@@ -42,9 +42,13 @@ export function createLobbyMediaViewModel(
   muteStates: MuteStates,
   mediaDevices: MediaDevices,
   capture: CaptureSettings,
-  videoProcessor$: Behavior<VideoProcessor | undefined>,
+  /** No camera is opened while its pipeline is prepared: it would show the room without the processor. */
+  backgroundEffectsState$: Behavior<BackgroundEffectsState>,
 ): LobbyMediaViewModel {
   const logger = rootLogger.getChild("[LobbyMedia]");
+  const videoProcessor$ = scope.behavior(
+    backgroundEffectsState$.pipe(map(({ processor }) => processor)),
+  );
   const microphone$ = trackBySource$(
     scope,
     media.tracks$,
@@ -64,13 +68,19 @@ export function createLobbyMediaViewModel(
     muteStates.video.enabled$,
     microphone$,
     camera$,
+    backgroundEffectsState$,
   ])
     .pipe(debounceTime(0), scope.bind())
-    .subscribe(([audio, video, microphone, camera]) => {
+    .subscribe(([audio, video, microphone, camera, { wait }]) => {
       const open: PublishRequest[] = [];
       if (audio && microphone === undefined && !opening.has("microphone"))
         open.push(publishRequest("microphone", mediaDevices, capture));
-      if (video && camera === undefined && !opening.has("camera"))
+      if (
+        video &&
+        camera === undefined &&
+        !opening.has("camera") &&
+        wait !== "preparing"
+      )
         open.push(
           publishRequest(
             "camera",

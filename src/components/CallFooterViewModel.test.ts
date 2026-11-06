@@ -16,7 +16,8 @@ import {
   mockMediaDevices,
   mockVideoTrack,
 } from "../utils/test";
-import { constant } from "../state/Behavior";
+import { type Behavior, constant } from "../state/Behavior";
+import { type BackgroundEffectsState } from "../state/BackgroundEffects";
 import type { CallViewModel } from "../state/CallViewModel/CallViewModel";
 import type { Layout } from "../state/layout-types";
 import type { SpotlightTileViewModel } from "../state/TileViewModel";
@@ -112,6 +113,16 @@ const pipLayout: Layout = {
   spotlight: {} as SpotlightTileViewModel,
 };
 
+const noPipeline = constant<BackgroundEffectsState>({
+  supported: false,
+  processor: undefined,
+});
+
+/** The provider's verdict, which the SDK's check stands for here. */
+function pipelineAsTheSdkSays(): Behavior<BackgroundEffectsState> {
+  return constant({ supported: sdkSupportMock(), processor: undefined });
+}
+
 const twoMicsAndOneCamMediaDevices = mockMediaDevices({
   audioInput: {
     available$: constant(
@@ -143,7 +154,7 @@ describe("createCallFooterViewModel", () => {
         buildMinimalCallViewModel(gridLayout),
         mockMuteStates(),
         twoMicsAndOneCamMediaDevices,
-        constant(false),
+        noPipeline,
         /* reactionIdentifier */ undefined,
         { showControls: true, header: HeaderStyle.Standard },
       );
@@ -186,7 +197,7 @@ describe("createCallFooterViewModel", () => {
             select: vi.fn(),
           },
         }),
-        constant(false),
+        noPipeline,
         /* reactionIdentifier */ undefined,
         { showControls: true, header: HeaderStyle.Standard },
       );
@@ -205,7 +216,7 @@ describe("createCallFooterViewModel", () => {
         buildMinimalCallViewModel(layout),
         mockMuteStates(),
         twoMicsAndOneCamMediaDevices,
-        constant(false),
+        noPipeline,
         /* reactionIdentifier */ undefined,
         { showControls: true, header: HeaderStyle.Standard },
       );
@@ -228,7 +239,7 @@ describe("createCallFooterViewModel", () => {
         buildMinimalCallViewModel(gridLayout),
         mockMuteStates(),
         twoMicsAndOneCamMediaDevices,
-        constant(false),
+        noPipeline,
         /* reactionIdentifier */ undefined,
         { showControls: true, header: HeaderStyle.Standard },
       );
@@ -274,7 +285,7 @@ describe("createCallFooterViewModel", () => {
         testScope(),
         mockMuteStates(),
         twoMicsAndOneCamMediaDevices,
-        constant(false),
+        pipelineAsTheSdkSays(),
         /* camera$ */ constant(null),
         /* openSettings */ undefined,
         /* hangup */ undefined,
@@ -360,20 +371,50 @@ describe("createCallFooterViewModel", () => {
 
     it("passes on the wait for the first effect", () => {
       platformMock.mockReturnValue("desktop");
-      const settling$ = new BehaviorSubject(true);
+      const pipeline$ = new BehaviorSubject<BackgroundEffectsState>({
+        supported: true,
+        processor: undefined,
+        wait: "settling",
+      });
       const vm = createLobbyFooterViewModel(
         testScope(),
         mockMuteStates(),
         twoMicsAndOneCamMediaDevices,
-        settling$,
+        pipeline$,
         /* camera$ */ constant(null),
         /* openSettings */ undefined,
         /* hangup */ undefined,
         /* showLogo */ false,
       );
       expect(vm.backgroundEffectSettling$.value).toBe(true);
-      settling$.next(false);
+      pipeline$.next({ ...pipeline$.value, wait: undefined });
       expect(vm.backgroundEffectSettling$.value).toBe(false);
+    });
+
+    it("offers nothing once the pipeline fails to build, keeping the choice", () => {
+      platformMock.mockReturnValue("desktop");
+      backgroundEffectSetting.setValue("blur");
+      const pipeline$ = new BehaviorSubject<BackgroundEffectsState>({
+        supported: true,
+        processor: undefined,
+      });
+      const vm = createLobbyFooterViewModel(
+        testScope(),
+        mockMuteStates(),
+        twoMicsAndOneCamMediaDevices,
+        pipeline$,
+        /* camera$ */ constant(null),
+        /* openSettings */ undefined,
+        /* hangup */ undefined,
+        /* showLogo */ false,
+      );
+      expect(vm.backgroundEffect$.value).toBe("blur");
+
+      pipeline$.next({ supported: false, processor: undefined });
+      expect(vm.selectBackgroundEffect$.value).toBeUndefined();
+      expect(vm.addBackgroundImage$.value).toBeUndefined();
+      expect(vm.backgroundEffect$.value).toBe("none");
+      expect(backgroundEffectSetting.getValue()).toBe("blur");
     });
 
     it("adding is unavailable at the limit", () => {
@@ -439,7 +480,7 @@ describe("createCallFooterViewModel", () => {
         testScope(),
         mockMuteStates(),
         twoMicsAndOneCamMediaDevices,
-        constant(false),
+        noPipeline,
         camera$,
         /* openSettings */ undefined,
         /* hangup */ undefined,
@@ -459,7 +500,7 @@ describe("createCallFooterViewModel", () => {
         { ...buildMinimalCallViewModel(gridLayout), camera$: constant(track) },
         mockMuteStates(),
         twoMicsAndOneCamMediaDevices,
-        constant(false),
+        noPipeline,
         /* reactionIdentifier */ undefined,
         { showControls: true, header: HeaderStyle.Standard },
       );
@@ -479,7 +520,7 @@ describe("createCallFooterViewModel", () => {
           buildMinimalCallViewModel(gridLayout),
           mockMuteStates(),
           twoMicsAndOneCamMediaDevices,
-          constant(false),
+          pipelineAsTheSdkSays(),
           /* reactionIdentifier */ undefined,
           { showControls: true, header: HeaderStyle.Standard },
         );

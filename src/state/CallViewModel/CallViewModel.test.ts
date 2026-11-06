@@ -70,9 +70,11 @@ import {
 } from "./CallViewModel.ts";
 import { type Handler, MuteState } from "../MuteStates.ts";
 import {
+  type LocalVideoMediaTrack,
   type RTCParticipation,
   type VideoProcessor,
 } from "@element-hq/matrixrtc-sdk";
+import { type BackgroundEffectsState } from "../BackgroundEffects";
 
 initializeWidget();
 
@@ -1692,9 +1694,93 @@ describe("a camera with a video processor", () => {
         muteStates,
         mockMediaDevices({}),
         {},
-        processor,
+        { supported: true, processor },
       ).find((request) => request.source === "camera"),
     ).toMatchObject({ processor });
+  });
+
+  it("leaves the camera out of the join while the processor is prepared", () => {
+    const muteStates = mockMuteStates();
+    vi.spyOn(muteStates.video.enabled$, "value", "get").mockReturnValue(true);
+    const sources = (wait?: "preparing"): string[] =>
+      initialPublishRequests(
+        muteStates,
+        mockMediaDevices({}),
+        {},
+        {
+          supported: true,
+          processor: undefined,
+          wait,
+        },
+      ).map((request) => request.source);
+    expect(sources("preparing")).not.toContain("camera");
+    expect(sources()).toContain("camera");
+  });
+
+  it("waits to make a camera track until it is known the processor builds", async () => {
+    const setHandler = vi.spyOn(MuteState.prototype, "setHandler");
+    onTestFinished(() => setHandler.mockRestore());
+    const effects$ = new BehaviorSubject<BackgroundEffectsState>({
+      supported: true,
+      processor: undefined,
+      wait: "preparing",
+    });
+    let participation: RTCParticipation | undefined;
+    withCallViewModel(
+      {},
+      (_vm, _session, { rtcParticipation }) => {
+        participation = rtcParticipation;
+      },
+      { backgroundEffectsState$: effects$ },
+    );
+    const camera = participation!.localMember$.value?.tracks$.value?.find(
+      (track) => track.source === "camera",
+    ) as LocalVideoMediaTrack;
+    const turnedOn = cameraHandler(setHandler)(true);
+    await flushPromises();
+    expect(camera.setEnabled).not.toHaveBeenCalledWith(true);
+
+    effects$.next({ supported: true, processor });
+    await turnedOn;
+    expect(camera.setEnabled).toHaveBeenCalledWith(true);
+    expect(participation!.publish).not.toHaveBeenCalled();
+  });
+
+  it("turns the camera on only once its processor is on the track", async () => {
+    const setHandler = vi.spyOn(MuteState.prototype, "setHandler");
+    onTestFinished(() => setHandler.mockRestore());
+    const effects$ = new BehaviorSubject<BackgroundEffectsState>({
+      supported: true,
+      processor: undefined,
+      wait: "preparing",
+    });
+    let participation: RTCParticipation | undefined;
+    withCallViewModel(
+      {},
+      (_vm, _session, { rtcParticipation }) => {
+        participation = rtcParticipation;
+      },
+      { backgroundEffectsState$: effects$ },
+    );
+    const camera = participation!.localMember$.value?.tracks$.value?.find(
+      (track) => track.source === "camera",
+    ) as LocalVideoMediaTrack;
+    // Attaching takes its time, as the pipeline is built on the track
+    let attached!: () => void;
+    vi.mocked(camera.setProcessor).mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        attached = resolve;
+      }),
+    );
+    const turnedOn = cameraHandler(setHandler)(true);
+    effects$.next({ supported: true, processor });
+    await flushPromises();
+    expect(camera.setProcessor).toHaveBeenCalledWith(processor);
+    expect(camera.setEnabled).not.toHaveBeenCalledWith(true);
+
+    attached();
+    await turnedOn;
+    expect(camera.setEnabled).toHaveBeenCalledWith(true);
   });
 
   // The SDK builds the processor on the camera's restart, before the room
@@ -1702,18 +1788,19 @@ describe("a camera with a video processor", () => {
   it("turns on a camera turned off before the processor was chosen", async () => {
     const setHandler = vi.spyOn(MuteState.prototype, "setHandler");
     onTestFinished(() => setHandler.mockRestore());
-    const videoProcessor$ = new BehaviorSubject<VideoProcessor | undefined>(
-      undefined,
-    );
+    const effects$ = new BehaviorSubject<BackgroundEffectsState>({
+      supported: true,
+      processor: undefined,
+    });
     let participation: RTCParticipation | undefined;
     withCallViewModel(
       {},
       (_vm, _session, { rtcParticipation }) => {
         participation = rtcParticipation;
       },
-      { videoProcessor$ },
+      { backgroundEffectsState$: effects$ },
     );
-    videoProcessor$.next(processor);
+    effects$.next({ supported: true, processor });
     await cameraHandler(setHandler)(true);
     await flushPromises();
 

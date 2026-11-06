@@ -75,7 +75,6 @@ import {
   type RTCSlotOptions,
   constant,
 } from "@element-hq/matrixrtc-sdk";
-import { map } from "rxjs";
 import {
   advancedCamera,
   advancedScreenShare,
@@ -181,7 +180,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
               props.muteStates,
               mediaDevices,
               capture,
-              backgroundEffectsState$.value.processor,
+              backgroundEffectsState$.value,
             ),
     });
 
@@ -195,9 +194,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
         ...callViewModelOptionsFromParams(urlParams),
         encryptionSystem: props.e2eeSystem,
         capture,
-        videoProcessor$: scope.behavior(
-          backgroundEffectsState$.pipe(map((state) => state.processor)),
-        ),
+        backgroundEffectsState$,
         hostBridge,
         autoLeaveWhenOthersLeft,
         waitForCallPickup: waitForCallPickup && sendNotificationType === "ring",
@@ -241,7 +238,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       vm,
       props.muteStates,
       mediaDevices,
-      backgroundEffectsState$.pipe(map(({ settling }) => settling ?? false)),
+      backgroundEffectsState$,
       `${props.client.getUserId()}:${props.client.getDeviceId()}`,
       { showControls: urlParams.showControls, header: urlParams.header },
     );
