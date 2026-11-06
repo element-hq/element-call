@@ -9,7 +9,9 @@ import {
   type IRTCNotificationContent,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
+  RTC_CALL_INTENT_AUDIO,
   type RTCCallIntent,
+  toStableCallIntent,
 } from "matrix-js-sdk/lib/matrixrtc";
 import {
   filter,
@@ -155,7 +157,10 @@ export function createCallNotificationLifecycle$({
         );
 
         return of({
-          intent: notificationEvent["m.call.intent"] ?? "audio",
+          // The notification still carries the legacy intent values
+          intent:
+            toStableCallIntent(notificationEvent["m.call.intent"]) ??
+            RTC_CALL_INTENT_AUDIO,
           recipient,
           outcome$: race(timeout$, accept$, decline$).pipe(
             take(1),

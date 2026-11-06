@@ -6,7 +6,10 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { logger } from "matrix-js-sdk/lib/logger";
-import { type RTCCallIntent } from "matrix-js-sdk/lib/matrixrtc";
+import {
+  RTC_CALL_INTENT_AUDIO,
+  type RTCCallIntent,
+} from "matrix-js-sdk/lib/matrixrtc";
 
 /**
  * Calculates the initial mute state for media devices based on configuration.
@@ -40,10 +43,10 @@ export function calculateInitialMuteState(
 
   // A host that vouches for the intent is a trusted environment, so it allows
   // unmuted by default. Same for when showing a lobby, as users can adjust
-  // their settings there. Additionally, if the call intent is "audio", we
+  // their settings there. Additionally, if the call intent is "m.audio", we
   // disable video by default.
   return {
     audioEnabled: true,
-    videoEnabled: callIntent != "audio",
+    videoEnabled: callIntent != RTC_CALL_INTENT_AUDIO,
   };
 }

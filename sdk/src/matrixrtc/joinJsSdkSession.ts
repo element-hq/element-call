@@ -23,6 +23,7 @@ interface Options {
   encryptMedia: boolean;
   matrixRTCMode: MatrixRTCMode;
   sendNotificationType?: RTCNotificationType;
+  callIntent?: RTCCallIntent;
   applicationData?: Record<string, unknown>;
   timings: SessionTimings;
   /** The delayed leave timings to use: delegated to the SFU or not. */
@@ -43,15 +44,12 @@ export function joinJsSdkSession(
     encryptMedia,
     matrixRTCMode,
     sendNotificationType,
+    callIntent,
     applicationData,
     timings,
     delayedLeave,
   }: Options,
 ): void {
-  // The membership format carries the intent as a field of its own
-  const { "m.call.intent": intent, ...rest } = applicationData ?? {};
-  const callIntent =
-    typeof intent === "string" ? (intent as RTCCallIntent) : undefined;
   // Give up on the network as soon as either the sync has been down for the
   // grace period or the delayed leave has probably been sent, whichever is
   // sooner
@@ -78,7 +76,7 @@ export function joinJsSdkSession(
     {
       notificationType: sendNotificationType,
       callIntent,
-      applicationData: rest,
+      applicationData,
       manageMediaKeys: encryptMedia,
       delayedLeaveEventRestartMs: delayedLeave.restart_ms,
       delayedLeaveEventDelayMs: delayedLeave.delay_ms,
