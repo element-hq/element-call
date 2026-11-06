@@ -243,6 +243,11 @@ needs a certificate exception for `https://localhost:3001` as well (see the
 note under [Backend](#backend)). It reads the same `public/config.json` as
 `pnpm dev` if one exists, and runs with Element Call's defaults otherwise.
 
+`pnpm build:component` ends with `scripts/check-component-bundle.mjs`, which
+fails the build on what a host must not be handed: an asset inlined into the
+module as a data URL, a file referenced by an absolute path, the standalone
+app's client store worker, or a module over its size budget.
+
 The call lays itself out for the size of the element it is mounted in, not the
 window: a host that shrinks the container to a corner of its page gets the
 picture-in-picture layout, just as a host that shrank the whole iframe used to.
