@@ -25,13 +25,17 @@ import {
   EMPTY,
   race,
   take,
+  mergeMap,
 } from "rxjs";
 import {
   type EventTimelineSetHandlerMap,
   EventType,
+  type MatrixEvent,
   type Room as MatrixRoom,
   RoomEvent,
+  RoomStickyEventsEvent,
 } from "matrix-js-sdk";
+import { type RoomStickyEventsMap } from "matrix-js-sdk/lib/models/room-sticky-events";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 
 import { type Behavior, type ObservableScope } from "@element-hq/matrixrtc-sdk";
@@ -68,12 +72,28 @@ export function createSentCallNotification$(
 
 export function createReceivedDecline$(
   matrixRoom: MatrixRoom,
-): Observable<Parameters<EventTimelineSetHandlerMap[RoomEvent.Timeline]>> {
-  return (
+): Observable<MatrixEvent> {
+  // A decline is sticky, so after a gappy sync it arrives only in the sticky
+  // section, which never reaches the timeline. Racing for the first outcome
+  // makes a decline seen in both places harmless.
+  const timeline$ = (
     fromEvent(matrixRoom, RoomEvent.Timeline) as Observable<
       Parameters<EventTimelineSetHandlerMap[RoomEvent.Timeline]>
     >
-  ).pipe(filter(([event]) => event.getType() === EventType.RTCDecline));
+  ).pipe(map(([event]) => event));
+  const sticky$ = (
+    fromEvent(matrixRoom, RoomStickyEventsEvent.Update) as Observable<
+      Parameters<RoomStickyEventsMap[RoomStickyEventsEvent.Update]>
+    >
+  ).pipe(
+    mergeMap(([added, updated]) => [
+      ...added,
+      ...updated.map(({ current }) => current),
+    ]),
+  );
+  return merge(timeline$, sticky$).pipe(
+    filter((event) => event.getType() === EventType.RTCDecline),
+  );
 }
 
 export interface Props {
@@ -83,9 +103,7 @@ export interface Props {
   /** The user ids of the room's members, ours included. */
   roomMemberUserIds$: Behavior<string[]>;
   sentCallNotification$: Observable<CallNotificationWrapper | null>;
-  receivedDecline$: Observable<
-    Parameters<EventTimelineSetHandlerMap[RoomEvent.Timeline]>
-  >;
+  receivedDecline$: Observable<MatrixEvent>;
   options: { waitForCallPickup?: boolean; autoLeaveWhenOthersLeft?: boolean };
   localUser: { deviceId: string; userId: string };
 }
@@ -146,7 +164,7 @@ export function createCallNotificationLifecycle$({
         // Call is declined when we receive a decline event
         const decline$ = receivedDecline$.pipe(
           filter(
-            ([event]) =>
+            (event) =>
               event.getRelation()?.rel_type === "m.reference" &&
               event.getRelation()?.event_id === notificationEvent.event_id &&
               event.getSender() === recipient,
