@@ -34,6 +34,22 @@ export default defineConfig(({ mode }) => {
     // whatever is in `public` — including the developer's own config.json, which
     // is not in the repository — into the output we would publish.
     publicDir: false,
+    // A library does not know where it will be served from, so every file it
+    // emits beside itself — the sounds, the pictures, MediaPipe's runtime — is
+    // referenced relative to the module's own URL. (A library build inlines
+    // each asset as a data URL unless its import says `no-inline`, so the
+    // imports do.)
+    base: "./",
+    experimental: {
+      // Spelled `./assets/…`, not `assets/…` as the relative base would have it:
+      // a host's bundler reads a bare name as a package to look up.
+      renderBuiltUrl: (filename, { hostType }) =>
+        hostType === "js"
+          ? {
+              runtime: `new URL(${JSON.stringify(`./${filename}`)}, import.meta.url).href`,
+            }
+          : { relative: true },
+    },
     // A host's document is not ours to style: everything in the stylesheet is
     // confined to the element Element Call is mounted in
     css: { postcss: { plugins: [scopeStylesToRoot()] } },
@@ -64,6 +80,15 @@ export default defineConfig(({ mode }) => {
         cssFileName: "element-call",
       },
       rollupOptions: {
+        output: {
+          // Hashed, as the app's are, so that a file a host serves as it is
+          // stays correct across versions of the package. Not the stylesheet,
+          // which the package exports by name (see `cssFileName`).
+          assetFileNames: ({ names }) =>
+            names.some((name) => name.endsWith(".css"))
+              ? "[name][extname]"
+              : "assets/[name]-[hash][extname]",
+        },
         // The host already has these, and a second copy of any of them does not
         // merely bloat the bundle: React would hold two sets of hooks, the
         // Matrix client would run two sync loops, and a second Compound would
