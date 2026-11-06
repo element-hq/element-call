@@ -12,6 +12,7 @@ import {
 import { createContext, type FC, type JSX, use } from "react";
 
 import { backgroundEffect as backgroundEffectSetting } from "../settings/settings";
+import { Config } from "../config/Config";
 import { BackgroundEffectTransformer } from "./BackgroundEffectTransformer";
 import { type Behavior } from "../state/Behavior";
 import { type ObservableScope } from "../state/ObservableScope";
@@ -47,9 +48,10 @@ export function useBackgroundEffectsState$(): Behavior<BackgroundEffectsState> {
 export function createAppBackgroundEffects(
   scope: ObservableScope,
 ): BackgroundEffects {
-  const transformer = new BackgroundEffectTransformer({
-    backgroundDisabled: true,
-  });
+  const transformer = new BackgroundEffectTransformer(
+    { backgroundDisabled: true },
+    { wasmBaseUrl: Config.get().background_effects?.mediapipe_wasm_url },
+  );
   return createBackgroundEffects(scope, {
     supported: supportsBackgroundProcessors(),
     effect$: backgroundEffectSetting.value$,

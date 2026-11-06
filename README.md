@@ -273,7 +273,11 @@ effects are files beside the module rather than data URLs inside it, each
 referenced relative to the module (`new URL("./assets/…", import.meta.url)`),
 so a host's bundler copies them as assets of its own — webpack 5, Vite and
 Rollup all do — and the browser fetches the MediaPipe runtime, the largest of
-them by far, only when an effect is first switched on.
+them by far, only when an effect is first switched on. A deployment that would
+rather serve MediaPipe itself, from a CDN say, points
+`background_effects.mediapipe_wasm_url` in the config at a directory holding the
+`wasm` files of `@mediapipe/tasks-vision` at the version Element Call depends
+on.
 
 A host must call and await `initializeElementCall(config)` once before
 rendering the component: it loads the `Intl` polyfills, applies the

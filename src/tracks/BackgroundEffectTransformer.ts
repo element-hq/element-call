@@ -13,7 +13,7 @@ import {
   type BackgroundOptions,
 } from "@livekit/track-processors";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { ImageSegmenter } from "@mediapipe/tasks-vision";
+import { FilesetResolver, ImageSegmenter } from "@mediapipe/tasks-vision";
 
 // Only the SIMD build of MediaPipe's runtime: every browser Element Call
 // supports has WebAssembly SIMD. As files rather than data URLs, so that a
@@ -30,7 +30,15 @@ interface WasmFileset {
   wasmBinaryPath: string;
 }
 
-const wasmFileset: WasmFileset = { wasmLoaderPath, wasmBinaryPath };
+const bundledFileset: WasmFileset = { wasmLoaderPath, wasmBinaryPath };
+
+export interface BackgroundEffectTransformerSources {
+  /**
+   * Where to fetch MediaPipe's runtime from instead of the bundled copy: a
+   * directory holding its `vision_wasm_internal.js` and `.wasm` files.
+   */
+  wasmBaseUrl?: string;
+}
 
 /**
  * Track processor that applies effects such as blurring to a user's background.
@@ -42,6 +50,13 @@ const wasmFileset: WasmFileset = { wasmLoaderPath, wasmBinaryPath };
 export class BackgroundEffectTransformer extends BackgroundTransformer {
   /** Called once, when the first frame carrying an effect has been drawn. */
   public onFirstFrame: (() => void) | undefined;
+
+  public constructor(
+    opts: BackgroundOptions,
+    private readonly sources: BackgroundEffectTransformerSources = {},
+  ) {
+    super(opts);
+  }
 
   public override async transform(
     frame: VideoFrame,
@@ -79,7 +94,11 @@ export class BackgroundEffectTransformer extends BackgroundTransformer {
       inputElement: inputVideo,
     });
 
-    this.imageSegmenter = await ImageSegmenter.createFromOptions(wasmFileset, {
+    const fileset =
+      this.sources.wasmBaseUrl === undefined
+        ? bundledFileset
+        : await FilesetResolver.forVisionTasks(this.sources.wasmBaseUrl);
+    this.imageSegmenter = await ImageSegmenter.createFromOptions(fileset, {
       baseOptions: {
         modelAssetPath,
         delegate: "GPU",
