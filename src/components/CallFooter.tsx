@@ -33,6 +33,7 @@ import { useBehavior } from "../useBehavior";
 import { type LayoutSwitchViewModel } from "../state/LayoutSwitchViewModel";
 import { LayoutSwitch } from "../room/LayoutSwitch";
 import { type BackgroundEffectGridItem } from "./BackgroundEffectGrid";
+import { SelfPreview } from "./SelfPreview";
 import { type UnusableReason } from "../tracks/backgroundImages";
 import { type LocalVideoMediaTrack } from "@element-hq/matrixrtc-sdk";
 
@@ -184,6 +185,7 @@ export const CallFooter: FC<FooterProps> = ({
   const backgroundEffectSettling = useBehavior(vm.backgroundEffectSettling$);
   const addBackgroundImage = useBehavior(vm.addBackgroundImage$);
   const removeBackgroundEffect = useBehavior(vm.removeBackgroundEffect$);
+  const cameraTrack = useBehavior(vm.cameraTrack$);
   const refusal = useBehavior(vm.backgroundImageRefusal$);
   const refusalMessage = useMemo(() => {
     switch (refusal?.reason) {
@@ -267,6 +269,7 @@ export const CallFooter: FC<FooterProps> = ({
         backgroundEffectSettling={backgroundEffectSettling}
         onAddBackgroundImage={addBackgroundImage}
         onRemoveBackgroundEffect={removeBackgroundEffect}
+        selfPreview={<SelfPreview track={cameraTrack} />}
         backgroundImageRefusal={refusalMessage}
         backgroundEffectNotice={
           backgroundEffectNotice === "unavailable"
