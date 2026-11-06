@@ -1746,6 +1746,43 @@ describe("a camera with a video processor", () => {
     expect(participation!.publish).not.toHaveBeenCalled();
   });
 
+  it("turns the camera on only once its processor is on the track", async () => {
+    const setHandler = vi.spyOn(MuteState.prototype, "setHandler");
+    onTestFinished(() => setHandler.mockRestore());
+    const effects$ = new BehaviorSubject<BackgroundEffectsState>({
+      supported: true,
+      processor: undefined,
+      wait: "preparing",
+    });
+    let participation: RTCParticipation | undefined;
+    withCallViewModel(
+      {},
+      (_vm, _session, { rtcParticipation }) => {
+        participation = rtcParticipation;
+      },
+      { backgroundEffectsState$: effects$ },
+    );
+    const camera = participation!.localMember$.value?.tracks$.value?.find(
+      (track) => track.source === "camera",
+    ) as LocalVideoMediaTrack;
+    // Attaching takes its time, as the pipeline is built on the track
+    let attached!: () => void;
+    vi.mocked(camera.setProcessor).mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        attached = resolve;
+      }),
+    );
+    const turnedOn = cameraHandler(setHandler)(true);
+    effects$.next({ supported: true, processor });
+    await flushPromises();
+    expect(camera.setProcessor).toHaveBeenCalledWith(processor);
+    expect(camera.setEnabled).not.toHaveBeenCalledWith(true);
+
+    attached();
+    await turnedOn;
+    expect(camera.setEnabled).toHaveBeenCalledWith(true);
+  });
+
   // The SDK builds the processor on the camera's restart, before the room
   // sees a frame, so the track is unmuted rather than published anew
   it("turns on a camera turned off before the processor was chosen", async () => {
