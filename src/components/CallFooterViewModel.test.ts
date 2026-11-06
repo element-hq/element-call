@@ -7,12 +7,14 @@ Please see LICENSE in the repository root for full details.
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { BehaviorSubject } from "rxjs";
+import { type LocalVideoMediaTrack } from "@element-hq/matrixrtc-sdk";
 
 import {
   flushPromises,
   testScope,
   mockMuteStates,
   mockMediaDevices,
+  mockVideoTrack,
 } from "../utils/test";
 import { constant } from "../state/Behavior";
 import type { CallViewModel } from "../state/CallViewModel/CallViewModel";
@@ -78,6 +80,7 @@ vi.mock("livekit-client", () => ({
 function buildMinimalCallViewModel(layout: Layout): CallViewModel {
   return {
     layout$: constant(layout),
+    camera$: constant(undefined),
     edgeToEdge$: constant(false),
     showHeader$: constant(false),
     hangup: (): void => {},
@@ -272,6 +275,7 @@ describe("createCallFooterViewModel", () => {
         mockMuteStates(),
         twoMicsAndOneCamMediaDevices,
         constant(false),
+        /* camera$ */ constant(null),
         /* openSettings */ undefined,
         /* hangup */ undefined,
         /* showLogo */ false,
@@ -362,6 +366,7 @@ describe("createCallFooterViewModel", () => {
         mockMuteStates(),
         twoMicsAndOneCamMediaDevices,
         settling$,
+        /* camera$ */ constant(null),
         /* openSettings */ undefined,
         /* hangup */ undefined,
         /* showLogo */ false,
@@ -425,6 +430,44 @@ describe("createCallFooterViewModel", () => {
       expect(store.remove).not.toHaveBeenCalled();
       vm.removeBackgroundEffect$.value!("added:spare");
       expect(store.remove).toHaveBeenCalledWith("spare");
+    });
+
+    it("previews the lobby's camera while there is one", () => {
+      const track = mockVideoTrack({});
+      const camera$ = new BehaviorSubject<LocalVideoMediaTrack | null>(track);
+      const vm = createLobbyFooterViewModel(
+        testScope(),
+        mockMuteStates(),
+        twoMicsAndOneCamMediaDevices,
+        constant(false),
+        camera$,
+        /* openSettings */ undefined,
+        /* hangup */ undefined,
+        /* showLogo */ false,
+      );
+      expect(vm.cameraTrack$.value).toBe(track);
+      // The lobby releases the camera when it is turned off
+      camera$.next(null);
+      expect(vm.cameraTrack$.value).toBeNull();
+    });
+
+    it("previews the call's camera only while it is not muted", () => {
+      const muted$ = new BehaviorSubject(false);
+      const track = mockVideoTrack({ muted$ });
+      const vm = createCallFooterViewModel(
+        testScope(),
+        { ...buildMinimalCallViewModel(gridLayout), camera$: constant(track) },
+        mockMuteStates(),
+        twoMicsAndOneCamMediaDevices,
+        constant(false),
+        /* reactionIdentifier */ undefined,
+        { showControls: true, header: HeaderStyle.Standard },
+      );
+      expect(vm.cameraTrack$.value).toBe(track);
+      muted$.next(true);
+      expect(vm.cameraTrack$.value).toBeNull();
+      muted$.next(false);
+      expect(vm.cameraTrack$.value).toBe(track);
     });
 
     it("availability is the same before and during a call", () => {

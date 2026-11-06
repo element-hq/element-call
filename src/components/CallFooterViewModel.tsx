@@ -11,9 +11,11 @@ import {
   distinctUntilChanged,
   map,
   type Observable,
+  of,
   switchMap,
 } from "rxjs";
 import { supportsAudioOutputSelection } from "livekit-client";
+import { type LocalVideoMediaTrack } from "@element-hq/matrixrtc-sdk";
 import {
   supportsBackgroundProcessors,
   supportsModernBackgroundProcessors,
@@ -88,6 +90,8 @@ function buildDeviceBehaviors(
   /** return empty arrays for  audioOptions and videoOptions*/
   disableSwitcher$: Behavior<boolean>,
   backgroundEffectSettling$: Observable<boolean>,
+  /** The camera as the pipeline has it, for the menu's preview. */
+  camera$: Observable<LocalVideoMediaTrack | null | undefined>,
 ): Pick<
   ViewModel<FooterSnapshot>,
   | "audioOptions$"
@@ -107,6 +111,7 @@ function buildDeviceBehaviors(
   | "addBackgroundImage$"
   | "backgroundImageRefusal$"
   | "removeBackgroundEffect$"
+  | "cameraTrack$"
 > {
   const options$ = (
     available$: Behavior<Map<string, MenuOptions["label"]>>,
@@ -208,6 +213,17 @@ function buildDeviceBehaviors(
       ),
     ),
     backgroundImageRefusal$: refusal$,
+    // None while muted: the call mutes its track rather than releasing it.
+    cameraTrack$: scope.behavior(
+      camera$.pipe(
+        switchMap((camera) =>
+          camera
+            ? camera.muted$.pipe(map((muted) => (muted ? null : camera)))
+            : of(null),
+        ),
+      ),
+      null,
+    ),
     // Never the one in force: taking it away would leave nothing chosen.
     removeBackgroundEffect$: scope.behavior(
       offered$.pipe(
@@ -269,6 +285,7 @@ export function createCallFooterViewModel(
       mediaDevices,
       disableDeviceSwitcher$,
       backgroundEffectSettling$,
+      callModel.camera$,
     ),
     // candidat to move into the FooterViewModel
     showFooter$: callModel.showFooter$,
@@ -333,6 +350,7 @@ export function createCallFooterViewModel(
  * @param mediaDevices - Available and selected input devices.
  * @param backgroundEffectSettling$ - Whether the first effect chosen is still
  *   being prepared.
+ * @param camera$ - The lobby's camera, for the camera menu's preview.
  * @param openSettings - Callback to open the settings modal, or undefined.
  * @param hangup - Callback to leave/cancel, or undefined (hides the button).
  * @param showLogo - Whether to show the Element Call logo.
@@ -342,6 +360,7 @@ export function createLobbyFooterViewModel(
   muteStates: MuteStates,
   mediaDevices: MediaDevices,
   backgroundEffectSettling$: Observable<boolean>,
+  camera$: Behavior<LocalVideoMediaTrack | null>,
   openSettings: (() => void) | undefined,
   hangup: (() => void) | undefined,
   showLogo: boolean,
@@ -390,6 +409,7 @@ export function createLobbyFooterViewModel(
       mediaDevices,
       constant(false),
       backgroundEffectSettling$,
+      camera$,
     ),
   };
 }

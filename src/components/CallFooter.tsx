@@ -34,6 +34,7 @@ import { type LayoutSwitchViewModel } from "../state/LayoutSwitchViewModel";
 import { LayoutSwitch } from "../room/LayoutSwitch";
 import { type BackgroundEffectGridItem } from "./BackgroundEffectGrid";
 import { type UnusableReason } from "../tracks/backgroundImages";
+import { type LocalVideoMediaTrack } from "@element-hq/matrixrtc-sdk";
 
 export interface BackgroundImageRefusal {
   reason: UnusableReason | "not-kept";
@@ -92,6 +93,8 @@ export interface FooterState {
   backgroundEffectSettling: boolean;
   /** Why the last file offered couldn't be kept, if it couldn't. */
   backgroundImageRefusal: BackgroundImageRefusal | undefined;
+  /** The camera to preview, with the effect in force; null while it is off. */
+  cameraTrack: LocalVideoMediaTrack | null;
   showFooter: boolean;
 
   /* This is needed for WindowMode = "flat" */
