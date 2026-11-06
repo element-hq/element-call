@@ -533,6 +533,19 @@ export function createCallViewModel$(
     "screenShare",
   ) as Behavior<LocalVideoMediaTrack | undefined>;
 
+  const processorAttached = followProcessor(
+    scope,
+    camera$,
+    videoProcessor$,
+    logger,
+  );
+
+  // A camera turned on waits for its processor to be known, then to be on
+  // the track: LiveKit restarts the track with whatever processor it has then.
+  const cameraReady = async (): Promise<void> => {
+    await processorKnown();
+    await processorAttached();
+  };
   const supply = (source: "microphone" | "camera"): TrackSupply => ({
     publish: async () =>
       rtcParticipation.publish(
@@ -543,7 +556,7 @@ export function createCallViewModel$(
           source === "camera" ? videoProcessor$.value : undefined,
         ),
       ),
-    ready: source === "camera" ? processorKnown : undefined,
+    ready: source === "camera" ? cameraReady : undefined,
   });
   followMuteState(
     scope,
@@ -605,8 +618,6 @@ export function createCallViewModel$(
           logger.error("Failed to switch the audio output device", e);
         });
       });
-
-  followProcessor(scope, camera$, videoProcessor$, logger);
 
   const members$ = scope.behavior<(LocalRTCMember | RemoteRTCMember)[]>(
     combineLatest(

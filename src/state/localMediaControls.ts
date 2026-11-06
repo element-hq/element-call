@@ -97,18 +97,23 @@ export function followDevice(
 /**
  * Attached once the camera track exists rather than carried in the publish
  * request, so that a new track and a change of processor take the same path.
+ * Answers with a wait for the latest attachment to have gone through: a
+ * camera turned on before then would restart without its processor.
  */
 export function followProcessor(
   scope: ObservableScope,
   camera$: Behavior<LocalVideoMediaTrack | undefined>,
   videoProcessor$: Behavior<VideoProcessor | undefined>,
   logger: Logger,
-): void {
+): () => Promise<void> {
+  let attached = Promise.resolve();
   combineLatest([camera$, videoProcessor$])
     .pipe(scope.bind())
     .subscribe(([camera, processor]) => {
-      camera?.setProcessor(processor).catch((e) => {
-        logger.error("Failed to set the video processor", e);
-      });
+      attached =
+        camera?.setProcessor(processor).catch((e) => {
+          logger.error("Failed to set the video processor", e);
+        }) ?? Promise.resolve();
     });
+  return async () => attached;
 }
