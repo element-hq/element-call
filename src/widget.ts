@@ -181,6 +181,8 @@ export const initializeWidget = (
           updateDelayedEvents: true,
           sendSticky: true,
           receiveSticky: true,
+          rtcLivekitGetToken: true,
+          rtcLivekitDelegateDelayedLeave: true,
         },
         roomId,
         {

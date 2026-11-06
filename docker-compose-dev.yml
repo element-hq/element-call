@@ -157,6 +157,9 @@ services:
     pull_policy: always
     volumes:
       - ./backend/ew.test.config.json:/app/config.json:Z
+      # Replaces the Element Call widget bundled in the image with the embedded
+      # build of the current sources. See "Backend" in README.md.
+      - ./dist-embedded:/app/widgets/element-call:ro,Z
     environment:
       ELEMENT_WEB_PORT: 8081
     ports:
@@ -169,6 +172,9 @@ services:
     pull_policy: always
     volumes:
       - ./backend/ew.test.othersite.config.json:/app/config.json:Z
+      # Replaces the Element Call widget bundled in the image with the embedded
+      # build of the current sources. See "Backend" in README.md.
+      - ./dist-embedded:/app/widgets/element-call:ro,Z
     environment:
       ELEMENT_WEB_PORT: 18081
     ports:

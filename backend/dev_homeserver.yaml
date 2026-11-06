@@ -79,4 +79,6 @@ rc_message:
 matrix_rtc:
   transports:
     - type: livekit
-      livekit_service_url: https://matrix-rtc.m.localhost/livekit/jwt
+      # Omitting livekit_service_url forces usage of the C-S endpoints.
+      # livekit_service_url: https://matrix-rtc.m.localhost/livekit/jwt
+      url: wss://matrix-rtc.m.localhost/livekit/sfu
