@@ -12,7 +12,10 @@ import {
 import { createContext, type FC, type JSX, use } from "react";
 
 import { backgroundEffect as backgroundEffectSetting } from "../settings/settings";
-import { BackgroundEffectTransformer } from "./BackgroundEffectTransformer";
+import {
+  BackgroundEffectTransformer,
+  canSegment,
+} from "./BackgroundEffectTransformer";
 import { addedBackgrounds } from "./backgroundImages";
 import { type Behavior } from "../state/Behavior";
 import { type ObservableScope } from "../state/ObservableScope";
@@ -56,6 +59,7 @@ export function createAppBackgroundEffects(
     effect$: backgroundEffectSetting.value$,
     setEffect: backgroundEffectSetting.setValue,
     added$: addedBackgrounds.added$,
+    canSegment,
     pipeline: new BackgroundProcessorWrapper(transformer, "background-effect"),
     transformer,
   });

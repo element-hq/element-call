@@ -37,6 +37,7 @@ import {
   combineLatest,
   distinctUntilChanged,
   filter,
+  firstValueFrom,
   fromEvent,
   map,
   merge,
@@ -77,6 +78,7 @@ import {
   type ReactionInfo,
   type ReactionOption,
 } from "../../reactions";
+import { type BackgroundEffectsState } from "../BackgroundEffects";
 import { shallowEquals as arrayShallowEquals } from "../../utils/array";
 import { type MediaDevices } from "../MediaDevices";
 import { type MuteStates } from "../MuteStates";
@@ -170,13 +172,16 @@ export function initialPublishRequests(
   muteStates: MuteStates,
   mediaDevices: MediaDevices,
   capture: CaptureSettings,
-  processor?: VideoProcessor,
+  effects?: BackgroundEffectsState,
 ): PublishRequest[] {
   const requests: PublishRequest[] = [];
   if (muteStates.audio.enabled$.value)
     requests.push(publishRequest("microphone", mediaDevices, capture));
-  if (muteStates.video.enabled$.value)
-    requests.push(publishRequest("camera", mediaDevices, capture, processor));
+  // Left out while the processor is prepared; the call publishes it after
+  if (muteStates.video.enabled$.value && effects?.wait !== "preparing")
+    requests.push(
+      publishRequest("camera", mediaDevices, capture, effects?.processor),
+    );
   return requests;
 }
 
@@ -187,8 +192,8 @@ export interface CallViewModelOptions {
    * defaults otherwise.
    */
   capture?: CaptureSettings;
-  /** Background blur and the like, applied to the camera as it changes. */
-  videoProcessor$?: Behavior<VideoProcessor | undefined>;
+  /** The background effects state (preparing, supported...) including the processor itself. */
+  backgroundEffectsState$?: Behavior<BackgroundEffectsState>;
   /**
    * The application hosting Element Call, which can ask it to hang up and wants
    * to know when the user joins or leaves. Defaults to no host.
@@ -490,7 +495,21 @@ export function createCallViewModel$(
     sentCallNotification$ = of(null),
   } = options;
 
-  const { capture = {}, videoProcessor$ = constant(undefined) } = options;
+  const {
+    capture = {},
+    backgroundEffectsState$ = constant<BackgroundEffectsState>({
+      supported: false,
+      processor: undefined,
+    }),
+  } = options;
+  const videoProcessor$ = scope.behavior(
+    backgroundEffectsState$.pipe(map(({ processor }) => processor)),
+  );
+  // Resolves once it is known whether the processor builds
+  const processorKnown = async (): Promise<unknown> =>
+    firstValueFrom(
+      backgroundEffectsState$.pipe(filter(({ wait }) => wait !== "preparing")),
+    );
   const localTracks$ = scope.behavior<
     (LocalAudioMediaTrack | LocalVideoMediaTrack)[]
   >(
@@ -524,6 +543,7 @@ export function createCallViewModel$(
           source === "camera" ? videoProcessor$.value : undefined,
         ),
       ),
+    ready: source === "camera" ? processorKnown : undefined,
   });
   followMuteState(
     scope,
@@ -549,6 +569,29 @@ export function createCallViewModel$(
     logger,
   );
   followDevice(scope, camera$, mediaDevices.videoInput, "camera", logger);
+
+  // A camera wanted at the join was left out of it while the processor was
+  // prepared (see initialPublishRequests), and is published once that is known
+  if (
+    backgroundEffectsState$.value.wait === "preparing" &&
+    muteStates.video.enabled$.value
+  )
+    processorKnown()
+      .then(async () => {
+        if (camera$.value !== undefined || !muteStates.video.enabled$.value)
+          return;
+        await rtcParticipation.publish(
+          publishRequest(
+            "camera",
+            mediaDevices,
+            capture,
+            videoProcessor$.value,
+          ),
+        );
+      })
+      .catch((e) => {
+        logger.error("Failed to publish the camera", e);
+      });
 
   // The output device follows the selection onto the client the same way. A
   // host that routes audio itself picks the output outside the browser, so the
