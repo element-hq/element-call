@@ -143,9 +143,34 @@ interface Props {
    * own.
    */
   client?: MatrixClient;
+  /**
+   * How Element Call finds a client when none is supplied: the standalone app
+   * restores or creates a session of its own. Stable, as a hook dependency.
+   * Left out along with the client, no one is signed in.
+   *
+   * A prop, rather than this module importing `utils/spa` itself, because:
+   * - This module is in the component build, and so is everything it imports,
+   *   dynamically or not: a dynamic import becomes a chunk in the package,
+   *   not a module left out of it.
+   * - Behind `utils/spa` sits `utils/initClient` and the client store worker,
+   *   which the bundler emits as soon as it loads the import (see there).
+   * - `App.tsx`, which the component never imports, is where the standalone
+   *   app passes the loader in; the component passes nothing, having the
+   *   host's client.
+   */
+  loadClient?: ClientLoader;
 }
 
-export const ClientProvider: FC<Props> = ({ children, client }) => {
+/**
+ * Restores or creates a session of Element Call's own, kept where the given
+ * functions keep it. Resolves to null when no one is signed in.
+ */
+export type ClientLoader = (
+  loadSession: () => Session | undefined,
+  clearSession: () => void,
+) => Promise<InitResult | null>;
+
+export const ClientProvider: FC<Props> = ({ children, client, loadClient }) => {
   const leaveToHome = useLeaveToHome();
   const hostBridge = useHostBridge();
 
@@ -179,9 +204,13 @@ export const ClientProvider: FC<Props> = ({ children, client }) => {
     // React does in strict mode), we need to make sure not to doubly initialize
     // the client.
     if (initializing.current) return;
+    if (loadClient === undefined) {
+      setInitClientState(null);
+      return;
+    }
     initializing.current = true;
 
-    loadClient()
+    loadClient(loadSession, clearSession)
       .then((initResult) => {
         setInitClientState(initResult);
         if (PosthogAnalytics.instance.isEnabled())
@@ -189,7 +218,7 @@ export const ClientProvider: FC<Props> = ({ children, client }) => {
       })
       .catch((err) => logger.error(err))
       .finally(() => (initializing.current = false));
-  }, [client]);
+  }, [client, loadClient]);
 
   const changePassword = useCallback(
     async (password: string) => {
@@ -359,15 +388,6 @@ export type InitResult = {
   client: MatrixClient;
   passwordlessUser: boolean;
 };
-
-/**
- * Restores or creates a session of Element Call's own. Only reached when no
- * client was supplied for it to use.
- */
-async function loadClient(): Promise<InitResult | null> {
-  const { initSPA } = await import("./utils/spa");
-  return initSPA(loadSession, clearSession);
-}
 
 export interface Session {
   user_id: string;
