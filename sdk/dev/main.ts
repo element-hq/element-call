@@ -12,14 +12,20 @@ Please see LICENSE in the repository root for full details.
  */
 
 import { logger } from "matrix-js-sdk/lib/logger";
-import { combineLatest, EMPTY, type Observable, of, switchMap } from "rxjs";
+import {
+  combineLatest,
+  EMPTY,
+  map,
+  type Observable,
+  of,
+  switchMap,
+} from "rxjs";
 import {
   type AudioMediaTrack,
   createRTCSlot,
   dataTrackByName$,
   E2eeType,
   type LocalAudioMediaTrack,
-  type LocalDataTrack,
   type LocalRTCMember,
   type LocalVideoMediaTrack,
   MatrixRTCMode,
@@ -151,41 +157,60 @@ function toggle(
 }
 
 /**
- * Sends what the form holds on our "chat" data track, published with the
- * first message. What arrives is listed per member, in `memberTile`.
+ * Publishes our "chat" data track with the join, so that the others hear the
+ * first message, and sends what the form holds on it. What arrives is listed
+ * per member, in `memberTile`.
  */
 function showMessages(rtcParticipation: RTCParticipation): void {
   const encoder = new TextEncoder();
-  let chat: Promise<LocalDataTrack> | undefined;
+  const chat = rtcParticipation.publish({ source: "data", name: "chat" });
+  chat.catch((e: unknown) => {
+    status.textContent = `Error: ${e}`;
+  });
   dataForm.hidden = false;
   dataForm.onsubmit = (event): void => {
     event.preventDefault();
     const text = new FormData(dataForm).get("text") as string;
-    chat ??= rtcParticipation.publish({ source: "data", name: "chat" });
     chat
       .then(async (track) => track.send(encoder.encode(text)))
       .then(
         () => dataForm.reset(),
         (e: unknown) => {
-          chat = undefined;
           status.textContent = `Error: ${e}`;
         },
       );
   };
 }
 
-/** Lists what a remote member sends on its "chat" data track. */
-function listMessages(scope: ObservableScope, member: RemoteRTCMember): void {
+/**
+ * Lists what a remote member sends on its "chat" data track, and marks its
+ * tile while it has one.
+ */
+function listMessages(
+  scope: ObservableScope,
+  member: RemoteRTCMember,
+  tile: HTMLElement,
+): void {
   const decoder = new TextDecoder();
-  dataTrackByName$(scope, member.tracks$, "chat")
+  const chat$ = dataTrackByName$(scope, member.tracks$, "chat");
+  chat$.pipe(scope.bind()).subscribe((track) => {
+    tile.dataset.chat = String(track !== undefined);
+  });
+  chat$
     .pipe(
-      switchMap((track) => track?.data$ ?? EMPTY),
+      switchMap(
+        (track) =>
+          track?.data$.pipe(
+            map((payload) => ({ payload, encrypted: track.encrypted })),
+          ) ?? EMPTY,
+      ),
       scope.bind(),
     )
-    .subscribe((payload) => {
+    .subscribe(({ payload, encrypted }) => {
       const line = messages.appendChild(document.createElement("li"));
       line.dataset.testid = "message";
       line.dataset.name = "chat";
+      line.dataset.encrypted = String(encrypted);
       line.dataset.userId = member.userId;
       line.textContent = `${member.displayName$.value}: ${decoder.decode(payload)}`;
     });
@@ -243,7 +268,7 @@ function memberTile(
       trackBySource$(scope, member.tracks$, "microphone"),
       tile.appendChild(document.createElement("audio")),
     );
-    listMessages(scope, member);
+    listMessages(scope, member, tile);
   }
   return tile;
 }

@@ -282,14 +282,11 @@ export function createRTCParticipation(
   async function publish(
     request: DataPublishRequest | PublishRequest,
   ): Promise<LocalTrack> {
-    if (request.source === "data") throw dataTracksUnsupported();
-    return backend.local.publish(request);
+    // Narrowed for the overloads; both go to the backend alike
+    return request.source === "data"
+      ? backend.local.publish(request)
+      : backend.local.publish(request);
   }
-
-  const unpublish = async (track: LocalTrack): Promise<void> => {
-    if (track.kind === "data") throw dataTracksUnsupported();
-    await backend.local.unpublish(track.source);
-  };
 
   const leave = (): void => {
     if (state$.value.kind === "left") return;
@@ -306,7 +303,7 @@ export function createRTCParticipation(
       localMember$,
       remoteMembers$,
       publish,
-      unpublish,
+      unpublish: async (track) => backend.local.unpublish(track),
       keyRotationSuppressed$: createKeyRotationSuppressed$(scope, jsSdkSession),
       connectedTransports$: transports.connected$,
       setAudioOutputDeviceId: async (deviceId) =>
@@ -339,10 +336,4 @@ function mediaKeys$(session: JsSdkRTCSession): Observable<MediaKey> {
     session.reemitEncryptionKeys();
     return () => session.off(MatrixRTCSessionEvent.EncryptionKeyChanged, onKey);
   });
-}
-
-// Until the media backend carries data tracks; see "Data beside the media" in
-// SdkArchitecture.md
-function dataTracksUnsupported(): Error {
-  return new Error("Data tracks are not supported by this backend yet");
 }

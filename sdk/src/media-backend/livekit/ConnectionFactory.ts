@@ -19,6 +19,7 @@ import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/En
 import { BehaviorSubject, combineLatest, map } from "rxjs";
 
 import { type ResolvedTransport } from "../../api";
+import { watchRemoteDataTracks } from "./RemoteDataTracks";
 import { type MediaQuality } from "../../config";
 import { type PublishRequest } from "../../media-api";
 import { type Behavior } from "../../reactive/Behavior";
@@ -128,12 +129,14 @@ export class LivekitConnectionFactory implements ConnectionFactory {
         client: this.client,
         scope,
         livekitRoomFactory: () =>
-          new LivekitRoom(
-            roomOptions(
-              this.publish,
-              this.audioOutputDeviceId$.value,
-              this.keyProvider,
-              this.mediaQuality,
+          watchRemoteDataTracks(
+            new LivekitRoom(
+              roomOptions(
+                this.publish,
+                this.audioOutputDeviceId$.value,
+                this.keyProvider,
+                this.mediaQuality,
+              ),
             ),
           ),
         ownMembershipIdentity,
@@ -169,8 +172,10 @@ function roomOptions(
     },
     audioOutput: { deviceId: audioOutputDeviceId },
     // Every room needs a worker of its own: one gets confused by streams from
-    // several rooms
-    e2ee: keyProvider && { keyProvider, worker: new E2EEWorker() },
+    // several rooms. `encryption` rather than `e2ee`, so that LiveKit encrypts
+    // the data channel too, which carries the reliable data tracks; media is
+    // encrypted the same either way
+    encryption: keyProvider && { keyProvider, worker: new E2EEWorker() },
   };
 }
 

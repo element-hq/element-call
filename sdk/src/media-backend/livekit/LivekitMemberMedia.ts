@@ -9,6 +9,7 @@ import {
   observeParticipantMedia,
   roomEventSelector,
 } from "@livekit/components-core";
+import { type Logger } from "matrix-js-sdk/lib/logger";
 import {
   type LocalParticipant,
   type Participant,
@@ -31,13 +32,14 @@ import { generateItems } from "../../reactive/observable";
 import { E2eeType, type EncryptionSystem } from "../../encryption";
 import { type Behavior } from "../../reactive/Behavior";
 import {
+  type DataTrack,
   type EncryptionError,
-  type LocalAudioMediaTrack,
   type LocalMemberMedia,
-  type LocalVideoMediaTrack,
   type MediaSource,
   type MemberMedia,
 } from "../../media-api";
+import { createLivekitDataTrack } from "./LivekitDataTrack";
+import { remoteDataTracks$ } from "./RemoteDataTracks";
 import {
   createLivekitMediaTrack,
   createLocalLivekitMediaTrack,
@@ -72,21 +74,24 @@ export function createLivekitMemberMedia(
   scope: ObservableScope,
   source$: Behavior<ParticipantSource>,
   encryptionSystem: EncryptionSystem,
+  logger: Logger,
 ): MemberMedia {
+  const media$ = memberTracks$(
+    scope,
+    source$,
+    (trackScope, participant, publication, room) =>
+      createLivekitMediaTrack(trackScope, participant, publication, room),
+  );
+  const data$ = memberDataTracks$(scope, source$, logger);
   return {
-    tracks$: memberTracks$(
-      scope,
-      source$,
-      (trackScope, participant, publication, room) =>
-        createLivekitMediaTrack(trackScope, participant, publication, room),
+    // The data tracks after the media, both null while there is no participant
+    tracks$: scope.behavior(
+      combineLatest([media$, data$], (media, data) =>
+        media === null ? null : [...media, ...data],
+      ),
     ),
     encryptionError$: encryptionErrors$(source$, encryptionSystem),
   };
-}
-
-/** Media only: LiveKit carries no data tracks yet. */
-export interface LivekitLocalMemberMedia extends LocalMemberMedia {
-  tracks$: Behavior<(LocalAudioMediaTrack | LocalVideoMediaTrack)[] | null>;
 }
 
 export function createLocalLivekitMemberMedia(
@@ -94,7 +99,7 @@ export function createLocalLivekitMemberMedia(
   source$: Behavior<ParticipantSource<LocalParticipant>>,
   encryptionSystem: EncryptionSystem,
   setEnabled: (source: MediaSource, enabled: boolean) => Promise<boolean>,
-): LivekitLocalMemberMedia {
+): LocalMemberMedia {
   return {
     tracks$: memberTracks$(
       scope,
@@ -146,6 +151,40 @@ function memberTracks$<P extends Participant, T>(
             ),
           ),
           (...tracks) => tracks.flat(1),
+        );
+      }),
+    ),
+  );
+}
+
+/**
+ * One data track per LiveKit data track of the member's participants, each
+ * living as long as it is published.
+ */
+function memberDataTracks$(
+  scope: ObservableScope,
+  source$: Behavior<ParticipantSource>,
+  logger: Logger,
+): Behavior<DataTrack[]> {
+  return scope.behavior(
+    source$.pipe(
+      switchMap((source) => {
+        if (source === null) return of([]);
+        const { participants, room } = source;
+        const identities = new Set(participants.map((p) => p.identity));
+        return remoteDataTracks$(room).pipe(
+          map((tracks) =>
+            tracks.filter((t) => identities.has(t.publisherIdentity)),
+          ),
+          generateItems(
+            `${[...identities].join(",")} dataTracks$`,
+            function* (tracks) {
+              for (const track of tracks)
+                yield { keys: [track.info.sid], data: track };
+            },
+            (_trackScope, track$) =>
+              createLivekitDataTrack(room, track$.value, logger),
+          ),
         );
       }),
     ),

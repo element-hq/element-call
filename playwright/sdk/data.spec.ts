@@ -11,19 +11,25 @@ import { startPair, tileOf } from "./harness";
 
 test.describe.configure({ timeout: 300_000 });
 
-// The LiveKit backend carries no data tracks yet, so publishing one rejects
-test.fixme("a message sent on a data track reaches the peer, and only the peer", async ({
+test("a message sent on a data track reaches the peer, and only the peer", async ({
   browser,
 }) => {
   const { pages, users } = await startPair(browser, "sdkdata");
   const [sender, receiver] = pages;
   // Both are in the call before anything is sent, so the receiver knows the
-  // sender as a member and does not drop the message
+  // sender as a member
   for (const page of pages)
     await expect(page.getByTestId("member")).toHaveCount(2, {
       timeout: 60_000,
     });
-  await expect(tileOf(receiver, users[0])).toBeVisible();
+  // The receiver listens on the sender's track, published with the join
+  await expect(tileOf(receiver, users[0])).toHaveAttribute(
+    "data-chat",
+    "true",
+    {
+      timeout: 30_000,
+    },
+  );
 
   await sender.getByPlaceholder("message").fill("hello from the SDK");
   await sender.getByRole("button", { name: "Send" }).click();
@@ -36,6 +42,8 @@ test.fixme("a message sent on a data track reaches the peer, and only the peer",
     },
   );
   await expect(message).toHaveAttribute("data-name", "chat");
+  // Decrypted with the sender's key, at the key index the stream carried
+  await expect(message).toHaveAttribute("data-encrypted", "true");
   await expect(message).toHaveAttribute("data-user-id", users[0].userId);
   // Our own messages are not echoed back
   await expect(sender.getByTestId("message")).toHaveCount(0);

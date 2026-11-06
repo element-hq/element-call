@@ -26,13 +26,16 @@ import {
 } from "rxjs";
 
 import {
+  type DataPublishRequest,
   type LocalAudioMediaTrack,
+  type LocalDataTrack,
   type LocalMedia,
+  type LocalTrack,
   type LocalVideoMediaTrack,
   type MediaSource,
   type PublishRequest,
 } from "../../media-api";
-import { type EncryptionSystem } from "../../encryption";
+import { E2eeType, type EncryptionSystem } from "../../encryption";
 import { FailToStartLivekitConnection, toMatrixRTCError } from "../../errors";
 import { type Behavior } from "../../reactive/Behavior";
 import {
@@ -50,6 +53,7 @@ import {
 } from "./LivekitMemberMedia";
 import { livekitSources } from "./LivekitMediaTrack";
 import { type DesiredMedia, Publisher } from "./Publisher";
+import { createLocalDataTracks } from "./LocalDataTracks";
 import { toMediaConnectionState } from "./connectionState";
 
 interface Props {
@@ -67,9 +71,7 @@ interface Props {
 }
 
 export interface LivekitLocalMedia extends LocalMediaBackend {
-  /** Media only: LiveKit carries no data tracks yet. */
-  tracks$: Behavior<(LocalAudioMediaTrack | LocalVideoMediaTrack)[] | null>;
-  /** The connection the local member publishes on; the data channel sends on it. */
+  /** The connection the local member publishes on. */
   connection$: Behavior<Connection | null>;
   setAudioOutputDeviceId(deviceId: string): Promise<void>;
 }
@@ -173,14 +175,42 @@ export function createLivekitLocalMedia({
     return result;
   };
 
-  const { tracks$, encryptionError$ } = createLocalLivekitMemberMedia(
+  const { tracks$: mediaTracks$, encryptionError$ } =
+    createLocalLivekitMemberMedia(
+      scope,
+      participantAndRoom$(scope, participant$, connection$),
+      encryptionSystem,
+      setEnabled,
+    );
+  const dataTracks = createLocalDataTracks({
     scope,
-    participantAndRoom$(scope, participant$, connection$),
-    encryptionSystem,
-    setEnabled,
+    connection$,
+    publishing$,
+    encrypted: encryptionSystem.kind !== E2eeType.NONE,
+    logger,
+  });
+  // The data tracks after the media, both null while there is no participant
+  const tracks$ = scope.behavior<LocalTrack[] | null>(
+    combineLatest([mediaTracks$, dataTracks.tracks$], (media, data) =>
+      media === null ? null : [...media, ...data],
+    ),
   );
 
-  const publish = async (
+  function publish(request: DataPublishRequest): Promise<LocalDataTrack>;
+  function publish(
+    request: PublishRequest,
+  ): Promise<LocalAudioMediaTrack | LocalVideoMediaTrack>;
+  async function publish(
+    request: DataPublishRequest | PublishRequest,
+  ): Promise<LocalTrack> {
+    if (request.source === "data")
+      return dataTracks.publish(request).catch((e: unknown) => {
+        throw toMatrixRTCError(e);
+      });
+    return publishMedia(request);
+  }
+
+  const publishMedia = async (
     request: PublishRequest,
   ): Promise<LocalAudioMediaTrack | LocalVideoMediaTrack> => {
     desired.set(request.source, { request, enabled: true });
@@ -197,8 +227,9 @@ export function createLivekitLocalMedia({
     }
   };
 
-  const unpublish = async (source: MediaSource): Promise<void> => {
-    const published = publishedSource(source);
+  const unpublish = async (track: LocalTrack): Promise<void> => {
+    if (track.kind === "data") return dataTracks.unpublish(track);
+    const published = publishedSource(track.source);
     if (published === undefined) return;
     desired.delete(published);
     await publisher$.value?.unpublish(published);
@@ -261,11 +292,16 @@ function publication$(
 }
 
 function trackWithId$(
-  tracks$: Behavior<(LocalAudioMediaTrack | LocalVideoMediaTrack)[] | null>,
+  tracks$: Behavior<LocalTrack[] | null>,
   id: string,
 ): Observable<LocalAudioMediaTrack | LocalVideoMediaTrack> {
   return tracks$.pipe(
-    map((tracks) => tracks?.find((track) => track.id === id)),
+    map((tracks) =>
+      tracks?.find(
+        (track): track is LocalAudioMediaTrack | LocalVideoMediaTrack =>
+          track.kind !== "data" && track.id === id,
+      ),
+    ),
     filter((track) => track !== undefined),
   );
 }

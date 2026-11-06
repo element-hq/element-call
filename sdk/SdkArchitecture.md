@@ -48,7 +48,7 @@ Call's `src/` to get there is listed in [`SdkMigration.md`](./SdkMigration.md).
 │  │   (LocalMembership)       │ local.publish,  │ Publisher: local tracks,  │ │
 │  │ transport registry        │   setPublishing▶│   upstream paused until   │ │
 │  │   (TransportMetadata)     │ ◀─ connections$ │   joined                  │ │
-│  │ data packet → member      │ ◀─ data$        │ LivekitMemberMedia:       │ │
+│  │                           │                 │ LivekitMemberMedia:       │ │
 │  │                           │                 │   participant → tracks    │ │
 │  └───────────────────────────┘                 └───────────────────────────┘ │
 │                                                                              │
@@ -539,9 +539,6 @@ export interface MediaBackend {
     membership$: Behavior<RTCMembership>,
   ): MemberMediaFields;
   readonly connections$: Behavior<BackendConnection[]>; // transport, state, resolved; diagnostics
-  // Until LiveKit carries data tracks; then data travels as tracks in `tracks$`
-  sendData(topic: string, text: string): Promise<void>;
-  readonly data$: Observable<DataPacket>;
 }
 ```
 
@@ -551,8 +548,7 @@ LiveKit backend only, a last resort of another member's SFU that lets us
 publish (`findRemotePublishLivekitTransport`, wired in by `RTCParticipation` rather
 than by the backend interface, since it is an MSC4195 matter), the membership
 state machine in `LocalMembership.ts` and its combination with
-`local.connectionState$` into `state$`, the choice of delayed leave timings,
-mapping a data packet's sender to a member, and the transport registry, which keys on the raw
+`local.connectionState$` into `state$`, the choice of delayed leave timings, and the transport registry, which keys on the raw
 transport serialised with sorted keys and derives `connectedTransports$` and each
 `TransportMetadata.resolved$` from `connections$`.
 
@@ -595,6 +591,43 @@ not ours. The backend derives it from the member's user id, and from our own for
 the local transport, and keys its connections on the transport plus the server
 name where the transport has a `url`. A JWT service is reached directly, so
 members of several homeservers advertising the same one share a connection.
+
+### Data tracks on LiveKit
+
+A data track is a track like the media, in `tracks$`, so the backend carries it
+the way it carries the media: `local.publish` takes a `DataPublishRequest`, and
+`mediaFor` lists a remote member's data tracks after its media. Its sender is
+attested by construction: a track only exists on a member. The session never
+sees a key, a frame or a stream.
+
+Every data track is one LiveKit data track, whose publication announces it: a
+receiver sees the track before its first message, and sees it go. LiveKit's
+data tracks are lossy only, so the LiveKit name says how the payloads travel
+(`dataTrackName.ts`):
+
+| Request           | LiveKit name      | Payloads                                                        |
+| ----------------- | ----------------- | --------------------------------------------------------------- |
+| `reliable: false` | `lossy:<name>`    | frames on the data track: unordered, no retransmits             |
+| `reliable: true`  | `reliable:<name>` | one byte stream per `send` on topic `reliable:<name>`, in order |
+
+A track without a prefix, from a plain LiveKit publisher, is read as lossy. A
+room takes one byte stream handler per topic, so `ByteStreams.ts` shares it
+between every reliable track on that topic and filters by sender identity.
+
+Encryption is LiveKit's. The rooms are built with `encryption` rather than
+`e2ee`, which encrypts the data channel as well as the media with the same
+E2EE manager and our key provider. The sender encrypts with its current key
+and puts the key index and IV on the wire: in each frame's E2EE extension for a
+lossy track, in each packet's `EncryptedPacket` for a stream. The receiver
+decrypts with the sender's key at that index. A frame that does not decrypt is
+dropped. A stream cannot be checked: LiveKit 2.23 sends an encrypted packet
+without its encryption type, so every received stream reads as unencrypted,
+and a cleartext stream injected on the way would be accepted as the sender's.
+
+A local track is published on LiveKit once publishing is allowed, like the
+media, and again on every new connection to the local transport; `publish`
+resolves with that first publication. The object a host holds outlives the
+connections.
 
 ## Media: `tracks$` and `MediaTrack`
 
@@ -843,15 +876,11 @@ public API only.
 - **Developer panel.** `resolved$` on each connected transport covers what the
   panel shows today. Anything beyond that (LiveKit room state, connection
   quality) needs an opaque `debug$` per transport.
-- **Data beside the media.** Data travels as tracks: a member publishes a named
-  `DataTrack` with a `DataPublishRequest`, it shows up in the member's `tracks$`
-  next to the media, and receivers find it with `dataTrackByName$`. Reliability
-  and encryption are per track. The public API is in place, but the LiveKit
-  backend does not carry data tracks yet, so publishing one rejects. Its old
-  packet channel (`MediaBackend.sendData`/`data$`) is still behind the seam,
-  and the mapping onto LiveKit replaces it: reliable tracks on data packets,
-  lossy ones on LiveKit data tracks, announced so that a track exists before
-  its first message, encrypted through the key provider.
+- **Data before a receiver listens.** Nothing is replayed: a message sent
+  before a receiver has subscribed to the track, which it does once it has
+  seen the track published, does not reach it. Old builds of the legacy
+  widget bundle, which sent bare packets, do not hear new builds or the other
+  way round.
 - **Unencrypted rooms with per-participant keys.** Keys only reach devices the
   crypto tracks, which are the members of encrypted rooms. If the SDK is to work
   in an unencrypted room, tracking the members' devices becomes its job.

@@ -19,11 +19,13 @@ import { type Observable } from "rxjs";
 
 import { type ResolvedTransport, type RTCMember } from "../api";
 import {
+  type DataPublishRequest,
   type LocalAudioMediaTrack,
+  type LocalDataTrack,
   type LocalMedia,
   type LocalMemberMedia,
+  type LocalTrack,
   type LocalVideoMediaTrack,
-  type MediaSource,
   type MemberMedia,
   type PublishRequest,
 } from "../media-api";
@@ -106,13 +108,6 @@ export interface BackendConnection {
   resolved: ResolvedTransport | undefined;
 }
 
-export interface DataPacket {
-  /** The backend identity of the sender. */
-  senderId: string;
-  topic: string;
-  text: string;
-}
-
 export interface MediaBackend {
   /**
    * The membership transport types this backend serves, ordered decreasingly
@@ -158,14 +153,6 @@ export interface MediaBackend {
    * exists keeps the device it was created with.
    */
   setAudioOutputDeviceId(deviceId: string): Promise<void>;
-
-  /**
-   * A text channel beside the media: sent on the local transport, received on every one.
-   * This could well be just another track kind. Not needed for element call. just for the sdk target.
-   * Keeping it on the top level for visibility. Should be tackled in a future refactor.
-   */
-  sendData(topic: string, text: string): Promise<void>;
-  readonly data$: Observable<DataPacket>;
 }
 
 /** `tracks$` is null until the connection carries a local participant. */
@@ -187,14 +174,17 @@ export interface LocalMediaBackend extends LocalMemberMedia {
   readonly publishError$: Behavior<Error | null>;
 
   /**
-   * Publishes a source and resolves with its track once it is in `tracks$`.
-   * Remembered across connections, so a request before the
+   * Publishes a source, or a data track, and resolves with its track once it
+   * is in `tracks$`. Remembered across connections, so a request before the
    * transport is up is applied once it is, and republished after a
-   * reconnection. Rejects where the device could not be used.
+   * reconnection. Rejects where the device could not be used. A data track
+   * is end-to-end encrypted by the backend wherever the media is; the session
+   * never sees how.
    */
+  publish(request: DataPublishRequest): Promise<LocalDataTrack>;
   publish(
     request: PublishRequest,
   ): Promise<LocalAudioMediaTrack | LocalVideoMediaTrack>;
   /** Removes one of our publications; a screen share takes its audio with it. */
-  unpublish(source: MediaSource): Promise<void>;
+  unpublish(track: LocalTrack): Promise<void>;
 }
