@@ -26,8 +26,7 @@
   "features": {
     "feature_element_call_video_rooms": true,
     "feature_video_rooms": true,
-    "feature_group_calls": true,
-    "feature_release_announcement": false
+    "feature_group_calls": true
   },
   "default_federate": true,
   "default_theme": "light",
@@ -40,7 +39,10 @@
   },
   "setting_defaults": {
     "breadcrumbs": true,
-    "feature_group_calls": true
+    "feature_group_calls": true,
+    "releaseAnnouncementData": {
+      "room_list_section": true
+    }
   },
   "jitsi": {
     "preferred_domain": "meet.element.io"
