@@ -48,6 +48,8 @@ Test what a user observes: the peer sees the change, it survives a reconnect, it
 right after a reload. Reuse `playwright/spa-helpers.ts`,
 `playwright/widget/test-helpers.ts`, `playwright/fixtures/`.
 
+To mark new release announcements as viewed, add them in `backend/ew.test*.config.json`.
+
 ```sh
 pnpm test                   # unit + storybook
 pnpm backend                # Synapse + LiveKit, required for e2e

@@ -153,9 +153,10 @@ export class TestHelpers {
     return { page, clientHandle, mxId };
   }
 
-  // Dismisses any toasts that appear on startup, such as "Failed to load service worker" or "Back up your chats".
-  // Toast can be stacked, and only the top one can be dismiss, so just look at what is on top and
-  // dismiss (if part of expected toats)
+  // Dismisses the toasts a fresh device gets after sign-in.
+  //
+  // Toasts stack and only the top one can be dismissed, so look
+  // at what is on top each time.
   public static async dismissStartupToasts(page: Page): Promise<void> {
     const expectedToasts: {
       title: string;
@@ -163,6 +164,7 @@ export class TestHelpers {
       confirm?: string;
     }[] = [
       { title: "Failed to load service worker", button: "OK" },
+      { title: "Verify this device", button: "Later" },
       { title: "Back up your chats", button: "Not now" },
       {
         title: "Turn on key storage",
@@ -213,30 +215,6 @@ export class TestHelpers {
     }
   }
 
-  /**
-   * Clears what Element Web stacks over the room list after sign-in. The
-   * release announcement is held back while any toast is up, so it is closed
-   * after the toasts, not before.
-   */
-  public static async clearRoomListOverlays(page: Page): Promise<void> {
-    await TestHelpers.dismissStartupToasts(page);
-    await TestHelpers.closeReleaseAnnouncement(page, "Introducing Sections");
-  }
-
-  public static async closeReleaseAnnouncement(
-    page: Page,
-    name: string,
-  ): Promise<void> {
-    try {
-      await page
-        .getByRole("dialog", { name })
-        .getByRole("button", { name: "OK" })
-        .click({ timeout: 2000 });
-    } catch {
-      // Announcement not shown; nothing to do
-    }
-  }
-
   public static async expandAllSections(page: Page): Promise<void> {
     try {
       await page
@@ -282,15 +260,14 @@ export class TestHelpers {
   /**
    * Opens the room list's "New" menu and picks the given item.
    *
-   * While the sections announcement is anchored to the "New" button, the
-   * button has no menu at all, so the overlays go first. Driven by keyboard,
-   * as a toast arriving afterwards sits over the button and swallows clicks.
+   * Driven by keyboard, as a toast arriving late sits over the button and
+   * swallows clicks.
    */
   public static async chooseFromRoomListNewMenu(
     page: Page,
     itemName: string,
   ): Promise<void> {
-    await TestHelpers.clearRoomListOverlays(page);
+    await TestHelpers.dismissStartupToasts(page);
     await page
       .getByRole("navigation", { name: "Room list" })
       .getByRole("button", { name: "New", exact: true })
@@ -427,9 +404,8 @@ export class TestHelpers {
       name: "Toggle Invites section",
     });
     await expect(invitesSection).toBeVisible({ timeout: 10000 });
-    // Toasts and the announcement sit over the top of the room list, where
-    // this header is
-    await TestHelpers.clearRoomListOverlays(page);
+    // Toasts sit over the top of the room list, where this header is.
+    await TestHelpers.dismissStartupToasts(page);
     if ((await invitesSection.getAttribute("aria-expanded")) !== "true") {
       await invitesSection.click();
     }

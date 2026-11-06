@@ -29,47 +29,10 @@ export interface MyFixtures {
   addUser: (username: string, host: string) => Promise<UserBaseFixture>;
 }
 
-// Minimal config.json for the local element-web instance
-const CONFIG_JSON = {
-  default_server_config: {
-    "m.homeserver": {
-      base_url: "https://synapse.m.localhost",
-      server_name: "synapse.m.localhost",
-    },
-  },
-
-  element_call: {
-    participant_limit: 8,
-    brand: "Element Call",
-  },
-
-  // The default language is set here for test consistency
-  setting_defaults: {
-    language: "en-GB",
-    feature_group_calls: true,
-  },
-
-  // the location tests want a map style url.
-  map_style_url:
-    "https://api.maptiler.com/maps/streets/style.json?key=fU3vlMsMn4Jb6dnEIFsx",
-
-  features: {
-    // We don't want to go through the feature announcement during the e2e test
-    feature_release_announcement: false,
-    feature_element_call_video_rooms: true,
-    feature_video_rooms: true,
-    feature_group_calls: true,
-  },
-};
-
 export const widgetTest = test.extend<MyFixtures>({
   // allow per-test override: `widgetTest.use({ callType: "dm" })`
   callType: ["room", { option: true }],
-  asWidget: async ({ browser, context, callType }, pUse) => {
-    await context.route(`http://localhost:8081/config.json*`, async (route) => {
-      await route.fulfill({ json: CONFIG_JSON });
-    });
-
+  asWidget: async ({ browser, callType }, pUse) => {
     const brooksDisplayName = `brooks_${Date.now()}`;
     const whistlerDisplayName = `whistler_${Date.now()}`;
 
