@@ -14,7 +14,7 @@ import {
 } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
 
-import { initClient } from "../utils/matrix";
+import { initClient } from "../utils/initClient";
 import { type Session } from "../ClientContext";
 import { Config } from "../config/Config";
 import { useUrlParams } from "../UrlParams";
