@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { defineConfig } from "vite";
+import { posix } from "node:path";
 
 import { vitePluginsConfig } from "./vite.config.ts";
 import { scopeStylesToRoot } from "./component/build/scopeStylesToRoot.ts";
@@ -41,14 +42,17 @@ export default defineConfig(({ mode }) => {
     // imports do.)
     base: "./",
     experimental: {
-      // Spelled `./assets/…`, not `assets/…` as the relative base would have it:
-      // a host's bundler reads a bare name as a package to look up.
-      renderBuiltUrl: (filename, { hostType }) =>
-        hostType === "js"
-          ? {
-              runtime: `new URL(${JSON.stringify(`./${filename}`)}, import.meta.url).href`,
-            }
-          : { relative: true },
+      // Relative to the chunk that references it, wherever that chunk lands,
+      // and spelled `./assets/…` rather than `assets/…`: a host's bundler reads
+      // a bare name as a package to look up.
+      renderBuiltUrl: (filename, { hostId, hostType }) => {
+        if (hostType !== "js") return { relative: true };
+        const relative = posix.relative(posix.dirname(hostId), filename);
+        const specifier = relative.startsWith(".") ? relative : `./${relative}`;
+        return {
+          runtime: `new URL(${JSON.stringify(specifier)}, import.meta.url).href`,
+        };
+      },
     },
     // A host's document is not ours to style: everything in the stylesheet is
     // confined to the element Element Call is mounted in
