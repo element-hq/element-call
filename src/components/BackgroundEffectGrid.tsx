@@ -45,7 +45,7 @@ interface Props {
   /** Offers to add a background of one's own. Omit to leave that tile out. */
   onAdd?: () => void;
   addLabel?: string;
-  /** Removes a removable one, never the one in force. Omit to offer none. */
+  /** Removes a removable one, unless it is the selected one. Omit to offer none. */
   onRemove?: (id: string) => void;
   removeLabel?: string;
 }

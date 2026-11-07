@@ -440,7 +440,7 @@ function swatch(colour: string): string {
   )}`;
 }
 
-/** One's own backgrounds are removable, never the one in force. */
+/** One's own backgrounds are removable, unless one is the selected one. */
 export const AddedBackgroundsCanBeRemoved: Story = {
   args: {
     ...VideoUnmute.args,

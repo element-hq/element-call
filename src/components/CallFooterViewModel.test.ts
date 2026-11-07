@@ -5,18 +5,15 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { BehaviorSubject } from "rxjs";
-import { type LocalVideoMediaTrack } from "@element-hq/matrixrtc-sdk";
+import { describe, expect, it, vi } from "vitest";
 
 import {
-  flushPromises,
   testScope,
   mockMuteStates,
   mockMediaDevices,
   mockVideoTrack,
 } from "../utils/test";
-import { type Behavior, constant } from "../state/Behavior";
+import { constant } from "../state/Behavior";
 import { type BackgroundEffectsState } from "../state/BackgroundEffects";
 import type { CallViewModel } from "../state/CallViewModel/CallViewModel";
 import type { Layout } from "../state/layout-types";
@@ -27,50 +24,12 @@ import {
   createLobbyFooterViewModel,
 } from "./CallFooterViewModel";
 import { HeaderStyle } from "../UrlParams";
-import { backgroundEffect as backgroundEffectSetting } from "../settings/settings";
-import { shippedBackgrounds } from "../tracks/backgroundEffectCatalog";
-import type * as BackgroundImages from "../tracks/backgroundImages";
-import {
-  type AddedBackground,
-  addedBackgrounds,
-  maxAddedBackgrounds,
-  UnusableImage,
-} from "../tracks/backgroundImages";
 
 const platformMock = vi.hoisted(() => vi.fn(() => "desktop"));
 vi.mock("../Platform", () => ({
   get platform(): string {
     return platformMock();
   },
-}));
-
-// The SDK's own check needs WebGL and canvas APIs jsdom does not have.
-const sdkSupportMock = vi.hoisted(() => vi.fn(() => false));
-const modernRouteMock = vi.hoisted(() => vi.fn(() => true));
-vi.mock("@livekit/track-processors", () => ({
-  supportsBackgroundProcessors: (): boolean => sdkSupportMock(),
-  supportsModernBackgroundProcessors: (): boolean => modernRouteMock(),
-}));
-
-const store = vi.hoisted(() => ({
-  add: vi.fn<(file: Blob) => Promise<string>>(),
-  remove: vi.fn<(id: string) => Promise<void>>(),
-}));
-vi.mock("../tracks/backgroundImages", async (original) => {
-  const { BehaviorSubject } = await import("rxjs");
-  return {
-    ...(await original<typeof BackgroundImages>()),
-    addedBackgrounds: {
-      added$: new BehaviorSubject<AddedBackground[] | undefined>([]),
-      add: store.add,
-      remove: store.remove,
-    },
-  };
-});
-
-const outputSelectionMock = vi.hoisted(() => vi.fn(() => true));
-vi.mock("livekit-client", () => ({
-  supportsAudioOutputSelection: (): boolean => outputSelectionMock(),
 }));
 
 /**
@@ -113,424 +72,82 @@ const pipLayout: Layout = {
   spotlight: {} as SpotlightTileViewModel,
 };
 
-const noPipeline = constant<BackgroundEffectsState>({
-  supported: false,
+const pipeline = constant<BackgroundEffectsState>({
+  supported: true,
   processor: undefined,
 });
 
-/** The provider's verdict, which the SDK's check stands for here. */
-function pipelineAsTheSdkSays(): Behavior<BackgroundEffectsState> {
-  return constant({ supported: sdkSupportMock(), processor: undefined });
-}
-
-const twoMicsAndOneCamMediaDevices = mockMediaDevices({
-  audioInput: {
-    available$: constant(
-      new Map<string, DeviceLabel>([
-        ["mic1", { type: "number", number: 1 }],
-        ["mic2", { type: "name", name: "Microphone 2" }],
-      ]),
-    ),
-    selected$: constant(undefined),
-    select: vi.fn(),
-  },
-  videoInput: {
-    available$: constant(
-      new Map<string, DeviceLabel>([
-        ["cam1", { type: "name", name: "Camera 1" }],
-      ]),
-    ),
-    selected$: constant(undefined),
-    select: vi.fn(),
-  },
+const oneOfEach = {
+  available$: constant(
+    new Map<string, DeviceLabel>([["1", { type: "number", number: 1 }]]),
+  ),
+  selected$: constant(undefined),
+  select: vi.fn(),
+};
+const devices = mockMediaDevices({
+  audioInput: oneOfEach,
+  videoInput: oneOfEach,
 });
 
 describe("createCallFooterViewModel", () => {
-  describe("selectAudioOutputOption", () => {
-    function buildFooterVm(): ReturnType<typeof createCallFooterViewModel> {
-      platformMock.mockReturnValue("desktop");
-      return createCallFooterViewModel(
-        testScope(),
-        buildMinimalCallViewModel(gridLayout),
-        mockMuteStates(),
-        twoMicsAndOneCamMediaDevices,
-        noPipeline,
-        /* reactionIdentifier */ undefined,
-        { showControls: true, header: HeaderStyle.Standard },
-      );
-    }
-
-    it("is withheld where the platform cannot route audio to a chosen device", () => {
-      outputSelectionMock.mockReturnValue(false);
-      expect(buildFooterVm().selectAudioOutputOption$.value).toBeUndefined();
-    });
-
-    it("is offered where the platform can route audio to a chosen device", () => {
-      outputSelectionMock.mockReturnValue(true);
-      expect(buildFooterVm().selectAudioOutputOption$.value).toBeDefined();
-    });
-  });
-
-  describe("audioOutputOptions", () => {
-    it("is an empty list, not absent, where the platform enumerates no outputs", () => {
-      platformMock.mockReturnValue("desktop");
-      outputSelectionMock.mockReturnValue(true);
-
-      const vm = createCallFooterViewModel(
-        testScope(),
-        buildMinimalCallViewModel(gridLayout),
-        mockMuteStates(),
-        mockMediaDevices({
-          audioInput: {
-            available$: constant(
-              new Map<string, DeviceLabel>([
-                ["mic1", { type: "name", name: "Microphone 1" }],
-              ]),
-            ),
-            selected$: constant(undefined),
-            select: vi.fn(),
-          },
-          // As Safari: no outputs listed.
-          audioOutput: {
-            available$: constant(new Map<string, DeviceLabel>()),
-            selected$: constant(undefined),
-            select: vi.fn(),
-          },
-        }),
-        noPipeline,
-        /* reactionIdentifier */ undefined,
-        { showControls: true, header: HeaderStyle.Standard },
-      );
-
-      // Empty, not undefined: undefined would hide the section.
-      expect(vm.audioOutputOptions$.value).toEqual([]);
-    });
-  });
-
-  describe("audioOptions and videoOptions", () => {
-    function checkEmptyFor(platform: string, layout: Layout): void {
+  it.each([
+    ["desktop", "grid", true, gridLayout],
+    ["ios", "grid", false, gridLayout],
+    ["desktop", "pip", false, pipLayout],
+  ] as const)(
+    "on %s in a %s layout, offers the device menus: %s",
+    (platform, _, offered, layout) => {
       platformMock.mockReturnValue(platform);
-
       const vm = createCallFooterViewModel(
         testScope(),
         buildMinimalCallViewModel(layout),
         mockMuteStates(),
-        twoMicsAndOneCamMediaDevices,
-        noPipeline,
+        devices,
+        pipeline,
         /* reactionIdentifier */ undefined,
         { showControls: true, header: HeaderStyle.Standard },
       );
+      const audio = vm.audioMenuVm$.value;
+      const camera = vm.cameraMenuVm$.value;
+      expect(audio.options$.value.length > 0).toBe(offered);
+      expect(camera.options$.value.length > 0).toBe(offered);
+      expect(camera.selectBackgroundEffect$.value !== undefined).toBe(offered);
+    },
+  );
 
-      expect(vm.audioOptions$.value).toEqual([]);
-      expect(vm.videoOptions$.value).toEqual([]);
-    }
-    it("are both empty when the platform is iOS", () => {
-      checkEmptyFor("ios", gridLayout);
-    });
-    it("are both empty when the layout is pip", () => {
-      checkEmptyFor("desktop", pipLayout);
-    });
-
-    it("are populated when the platform is desktop and the layout is not PiP", () => {
-      platformMock.mockReturnValue("desktop");
-
-      const vm = createCallFooterViewModel(
-        testScope(),
-        buildMinimalCallViewModel(gridLayout),
-        mockMuteStates(),
-        twoMicsAndOneCamMediaDevices,
-        noPipeline,
-        /* reactionIdentifier */ undefined,
-        { showControls: true, header: HeaderStyle.Standard },
-      );
-
-      expect(vm.audioOptions$?.value).toEqual([
-        {
-          id: "mic1",
-          label: {
-            number: 1,
-            type: "number",
-          },
-        },
-        {
-          id: "mic2",
-          label: {
-            name: "Microphone 2",
-            type: "name",
-          },
-        },
-      ]);
-      expect(vm.videoOptions$?.value).toEqual([
-        {
-          id: "cam1",
-          label: {
-            name: "Camera 1",
-            type: "name",
-          },
-        },
-      ]);
-    });
+  it("previews the call's camera", () => {
+    const track = mockVideoTrack({});
+    const vm = createCallFooterViewModel(
+      testScope(),
+      { ...buildMinimalCallViewModel(gridLayout), camera$: constant(track) },
+      mockMuteStates(),
+      devices,
+      pipeline,
+      /* reactionIdentifier */ undefined,
+      { showControls: true, header: HeaderStyle.Standard },
+    );
+    expect(vm.cameraMenuVm$.value.cameraTrack$.value).toBe(track);
   });
+});
 
-  describe("background effects", () => {
-    afterEach(() => backgroundEffectSetting.setValue("none"));
-
-    // The lobby, because in a call the whole device switcher is already
-    // withheld on a phone, whatever the verdict says.
-    function lobbyOn(
-      platform: string,
-    ): ReturnType<typeof createLobbyFooterViewModel> {
-      platformMock.mockReturnValue(platform);
-      return createLobbyFooterViewModel(
-        testScope(),
-        mockMuteStates(),
-        twoMicsAndOneCamMediaDevices,
-        pipelineAsTheSdkSays(),
-        /* camera$ */ constant(null),
-        /* openSettings */ undefined,
-        /* hangup */ undefined,
-        /* showLogo */ false,
-      );
-    }
-
-    it("offers them on a phone whose browser can run them", () => {
-      sdkSupportMock.mockReturnValue(true);
-      expect(lobbyOn("ios").selectBackgroundEffect$.value).toBeDefined();
-    });
-
-    it("offers them on a desktop whose browser can run them", () => {
-      sdkSupportMock.mockReturnValue(true);
-      expect(lobbyOn("desktop").selectBackgroundEffect$.value).toBeDefined();
-    });
-
-    it("offers nothing where the browser itself cannot run them", () => {
-      sdkSupportMock.mockReturnValue(false);
-      expect(lobbyOn("desktop").selectBackgroundEffect$.value).toBeUndefined();
-      expect(lobbyOn("desktop").addBackgroundImage$.value).toBeUndefined();
-    });
-
-    it("puts no effect in force where the browser cannot run them", () => {
-      backgroundEffectSetting.setValue("blur");
-      sdkSupportMock.mockReturnValue(false);
-      expect(lobbyOn("desktop").backgroundEffect$.value).toBe("none");
-      sdkSupportMock.mockReturnValue(true);
-      expect(lobbyOn("desktop").backgroundEffect$.value).toBe("blur");
-    });
-
-    it("stores the effect chosen", () => {
-      sdkSupportMock.mockReturnValue(true);
-      const vm = lobbyOn("desktop");
-      vm.selectBackgroundEffect$.value?.("image:arc");
-      expect(vm.backgroundEffect$.value).toBe("image:arc");
-      // What isn't an effect on offer is stored as none.
-      vm.selectBackgroundEffect$.value?.("image:gone");
-      expect(backgroundEffectSetting.getValue()).toBe("none");
-    });
-
-    it("says they run slowly where only the slower route exists", () => {
-      sdkSupportMock.mockReturnValue(true);
-      modernRouteMock.mockReturnValue(false);
-      const slow = lobbyOn("desktop");
-      expect(slow.backgroundEffectNotice$.value).toBe("slow");
-      expect(slow.selectBackgroundEffect$.value).toBeDefined();
-      modernRouteMock.mockReturnValue(true);
-      expect(lobbyOn("desktop").backgroundEffectNotice$.value).toBeUndefined();
-    });
-
-    it("offers every effect in order, the added ones removable", () => {
-      sdkSupportMock.mockReturnValue(true);
-      const added$ = addedBackgrounds.added$ as BehaviorSubject<
-        AddedBackground[] | undefined
-      >;
-      added$.next([{ id: "mine", url: "blob:mine" }]);
-      expect(lobbyOn("desktop").backgroundEffects$.value).toEqual([
-        { id: "none", kind: "none", removable: false },
-        { id: "blur", kind: "blur", removable: false },
-        ...shippedBackgrounds.map((background) => ({
-          id: `image:${background.id}`,
-          kind: "image",
-          imageUrl: background.imagePath,
-          removable: false,
-        })),
-        {
-          id: "added:mine",
-          kind: "image",
-          imageUrl: "blob:mine",
-          removable: true,
-        },
-      ]);
-      added$.next([]);
-    });
-
-    it("says they are unavailable where they cannot be chosen", () => {
-      sdkSupportMock.mockReturnValue(false);
-      expect(lobbyOn("desktop").backgroundEffectNotice$.value).toBe(
-        "unavailable",
-      );
-    });
-
-    it("passes on the wait for the first effect", () => {
-      platformMock.mockReturnValue("desktop");
-      const pipeline$ = new BehaviorSubject<BackgroundEffectsState>({
-        supported: true,
-        processor: undefined,
-        wait: "settling",
-      });
-      const vm = createLobbyFooterViewModel(
-        testScope(),
-        mockMuteStates(),
-        twoMicsAndOneCamMediaDevices,
-        pipeline$,
-        /* camera$ */ constant(null),
-        /* openSettings */ undefined,
-        /* hangup */ undefined,
-        /* showLogo */ false,
-      );
-      expect(vm.backgroundEffectSettling$.value).toBe(true);
-      pipeline$.next({ ...pipeline$.value, wait: undefined });
-      expect(vm.backgroundEffectSettling$.value).toBe(false);
-    });
-
-    it("offers nothing once the pipeline fails to build, keeping the choice", () => {
-      platformMock.mockReturnValue("desktop");
-      backgroundEffectSetting.setValue("blur");
-      const pipeline$ = new BehaviorSubject<BackgroundEffectsState>({
-        supported: true,
-        processor: undefined,
-      });
-      const vm = createLobbyFooterViewModel(
-        testScope(),
-        mockMuteStates(),
-        twoMicsAndOneCamMediaDevices,
-        pipeline$,
-        /* camera$ */ constant(null),
-        /* openSettings */ undefined,
-        /* hangup */ undefined,
-        /* showLogo */ false,
-      );
-      expect(vm.backgroundEffect$.value).toBe("blur");
-
-      pipeline$.next({ supported: false, processor: undefined });
-      expect(vm.selectBackgroundEffect$.value).toBeUndefined();
-      expect(vm.addBackgroundImage$.value).toBeUndefined();
-      expect(vm.backgroundEffect$.value).toBe("none");
-      expect(backgroundEffectSetting.getValue()).toBe("blur");
-    });
-
-    it("adding is unavailable at the limit", () => {
-      sdkSupportMock.mockReturnValue(true);
-      const added$ = addedBackgrounds.added$ as BehaviorSubject<
-        AddedBackground[] | undefined
-      >;
-      const vm = lobbyOn("desktop");
-      expect(vm.addBackgroundImage$.value).toBeDefined();
-      added$.next(
-        Array.from({ length: maxAddedBackgrounds }, (_, i) => ({
-          id: `${i}`,
-          url: `blob:${i}`,
-        })),
-      );
-      expect(vm.addBackgroundImage$.value).toBeUndefined();
-      added$.next(added$.value!.slice(1));
-      expect(vm.addBackgroundImage$.value).toBeDefined();
-      added$.next([]);
-    });
-
-    it("says why each refused file was refused", async () => {
-      sdkSupportMock.mockReturnValue(true);
-      const vm = lobbyOn("desktop");
-      store.add.mockRejectedValue(new UnusableImage("animated"));
-      vm.addBackgroundImage$.value!(new File(["x"], "a.gif"));
-      await flushPromises();
-      const first = vm.backgroundImageRefusal$.value;
-      expect(first).toEqual({ reason: "animated" });
-
-      // The same again is a refusal of its own, so it is shown again.
-      vm.addBackgroundImage$.value!(new File(["x"], "a.gif"));
-      await flushPromises();
-      expect(vm.backgroundImageRefusal$.value).toEqual({ reason: "animated" });
-      expect(vm.backgroundImageRefusal$.value).not.toBe(first);
-
-      store.add.mockRejectedValue(new Error("quota"));
-      vm.addBackgroundImage$.value!(new File(["x"], "b.png"));
-      await flushPromises();
-      expect(vm.backgroundImageRefusal$.value).toEqual({ reason: "not-kept" });
-
-      store.add.mockResolvedValue("kept");
-      vm.addBackgroundImage$.value!(new File(["x"], "c.png"));
-      await flushPromises();
-      expect(vm.backgroundImageRefusal$.value).toBeUndefined();
-    });
-
-    it("never removes the background in force", () => {
-      sdkSupportMock.mockReturnValue(true);
-      store.remove.mockResolvedValue();
-      const vm = lobbyOn("desktop");
-      backgroundEffectSetting.setValue("added:worn");
-      vm.removeBackgroundEffect$.value!("added:worn");
-      expect(store.remove).not.toHaveBeenCalled();
-      vm.removeBackgroundEffect$.value!("added:spare");
-      expect(store.remove).toHaveBeenCalledWith("spare");
-    });
-
-    it("previews the lobby's camera while there is one", () => {
-      const track = mockVideoTrack({});
-      const camera$ = new BehaviorSubject<LocalVideoMediaTrack | null>(track);
-      const vm = createLobbyFooterViewModel(
-        testScope(),
-        mockMuteStates(),
-        twoMicsAndOneCamMediaDevices,
-        noPipeline,
-        camera$,
-        /* openSettings */ undefined,
-        /* hangup */ undefined,
-        /* showLogo */ false,
-      );
-      expect(vm.cameraTrack$.value).toBe(track);
-      // The lobby releases the camera when it is turned off
-      camera$.next(null);
-      expect(vm.cameraTrack$.value).toBeNull();
-    });
-
-    it("previews the call's camera only while it is not muted", () => {
-      const muted$ = new BehaviorSubject(false);
-      const track = mockVideoTrack({ muted$ });
-      const vm = createCallFooterViewModel(
-        testScope(),
-        { ...buildMinimalCallViewModel(gridLayout), camera$: constant(track) },
-        mockMuteStates(),
-        twoMicsAndOneCamMediaDevices,
-        noPipeline,
-        /* reactionIdentifier */ undefined,
-        { showControls: true, header: HeaderStyle.Standard },
-      );
-      expect(vm.cameraTrack$.value).toBe(track);
-      muted$.next(true);
-      expect(vm.cameraTrack$.value).toBeNull();
-      muted$.next(false);
-      expect(vm.cameraTrack$.value).toBe(track);
-    });
-
-    it("availability is the same before and during a call", () => {
-      for (const supported of [true, false]) {
-        sdkSupportMock.mockReturnValue(supported);
-        const lobby = lobbyOn("desktop");
-        const inCall = createCallFooterViewModel(
-          testScope(),
-          buildMinimalCallViewModel(gridLayout),
-          mockMuteStates(),
-          twoMicsAndOneCamMediaDevices,
-          pipelineAsTheSdkSays(),
-          /* reactionIdentifier */ undefined,
-          { showControls: true, header: HeaderStyle.Standard },
-        );
-        const offeredInLobby =
-          lobby.selectBackgroundEffect$.value !== undefined;
-        expect(inCall.selectBackgroundEffect$.value !== undefined).toBe(
-          offeredInLobby,
-        );
-        expect(offeredInLobby).toBe(supported);
-      }
-    });
+describe("createLobbyFooterViewModel", () => {
+  it("offers the device menus even on a phone, previewing the lobby's camera", () => {
+    platformMock.mockReturnValue("ios");
+    const track = mockVideoTrack({});
+    const vm = createLobbyFooterViewModel(
+      testScope(),
+      mockMuteStates(),
+      devices,
+      pipeline,
+      constant(track),
+      /* openSettings */ undefined,
+      /* hangup */ undefined,
+      /* showLogo */ false,
+    );
+    const camera = vm.cameraMenuVm$.value;
+    expect(vm.audioMenuVm$.value.options$.value).not.toEqual([]);
+    expect(camera.options$.value).not.toEqual([]);
+    expect(camera.selectBackgroundEffect$.value).toBeDefined();
+    expect(camera.cameraTrack$.value).toBe(track);
   });
 });

@@ -85,7 +85,7 @@ export interface MediaMuteAndSwitchButtonProps {
   backgroundEffectSettling?: boolean;
   /** Called with the file chosen from the add tile. Omit to leave it out. */
   onAddBackgroundImage?: (file: File) => void;
-  /** Removes a removable effect, never the one in force. */
+  /** Removes a removable effect, unless it is the selected one. */
   onRemoveBackgroundEffect?: (id: string) => void;
   /** Why the last file offered couldn't be used; a new object each time. */
   backgroundImageRefusal?: { text: string };

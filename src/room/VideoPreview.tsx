@@ -16,6 +16,7 @@ import styles from "./VideoPreview.module.css";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import videoPlaceholder from "../graphics/video-placeholder.gif";
 import { useBehavior } from "../useBehavior";
+import { mirrors } from "../utils/media";
 
 const noFacingMode = constant(undefined);
 
@@ -64,7 +65,7 @@ export const VideoPreview: FC<Props> = ({
   return (
     <div className={classNames(styles.preview)} ref={previewRef}>
       <video
-        className={facingMode === "user" ? styles.mirror : undefined}
+        className={mirrors(facingMode) ? styles.mirror : undefined}
         ref={videoEl}
         muted
         playsInline

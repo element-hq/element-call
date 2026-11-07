@@ -11,6 +11,7 @@ import { VideoCallOffIcon } from "@vector-im/compound-design-tokens/assets/web/i
 
 import styles from "./SelfPreview.module.css";
 import { useBehavior } from "../useBehavior";
+import { mirrors } from "../utils/media";
 
 const noFacingMode = constant(undefined);
 
@@ -42,7 +43,7 @@ export const SelfPreview: FC<Props> = ({ track }) => {
       ref={videoRef}
       muted
       playsInline
-      className={facingMode === "user" ? styles.mirrored : undefined}
+      className={mirrors(facingMode) ? styles.mirrored : undefined}
     />
   );
 };
