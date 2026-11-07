@@ -143,31 +143,28 @@ server {
 }
 ```
 
-Or Using Caddy, you can achieve this by:
+Or using Caddy, you can achieve this by:
 
 ```caddy configuration file
-# Route for lk-jwt-service with livekit/jwt prefix
-@jwt_service path /livekit/jwt/sfu/get /livekit/jwt/healthz
-handle @jwt_service {
-  uri strip_prefix /livekit/jwt
-  reverse_proxy http://[::1]:8080 {
-    header_up Host {host}
-    header_up X-Forwarded-Server {host}
-    header_up X-Real-IP {remote_host}
-    header_up X-Forwarded-For {remote_host}
+matrix-rtc.example.com {
+  # Route the current /get_token, legacy /sfu/get, and health endpoints
+  # to the MatrixRTC Authorization Service.
+  @jwt_service path /livekit/jwt/get_token /livekit/jwt/sfu/get /livekit/jwt/healthz
+  handle @jwt_service {
+    uri strip_prefix /livekit/jwt
+    reverse_proxy http://[::1]:8080
   }
-}
 
-# Default route for livekit
-handle {
-  reverse_proxy http://localhost:7880 {
-    header_up Host {host}
-    header_up X-Forwarded-Server {host}
-    header_up X-Real-IP {remote_host}
-    header_up X-Forwarded-For {remote_host}
+  # Forward the LiveKit signalling path without the /livekit/sfu prefix.
+  handle_path /livekit/sfu/* {
+    reverse_proxy http://localhost:7880
   }
 }
 ```
+
+Keep the legacy `/livekit/jwt/sfu/get` route during the transition to
+`/livekit/jwt/get_token`. Both routes must reach the authorization service
+without the `/livekit/jwt` prefix.
 
 Using Haproxy, you can achieve this by:
 
@@ -177,7 +174,8 @@ Using Haproxy, you can achieve this by:
     acl is_sfu path_beg -i /livekit/sfu/
     use_backend sfu_backend if is_sfu matrixrtc_domain
 
-    acl is_mxrtc_auth path_beg -i /sfu/get
+    # Match current and legacy MatrixRTC authorization routes.
+    acl is_mxrtc_auth path_beg -i /livekit/jwt/
     use_backend mxrtc_auth_backend if is_mxrtc_auth matrixrtc_domain
 
 # Backend
@@ -193,7 +191,8 @@ backend sfu_backend
     option http-buffer-request
 
 backend mxrtc_auth_backend
-    server sfu 127.0.0.1:8070
+    server jwt_service 127.0.0.1:8080
+    http-request set-path %[path,regsub(^/livekit/jwt/,/)]
     http-request set-header Host %[req.hdr(host)]
     timeout server 120s
     # WebSocket support
