@@ -268,6 +268,13 @@ widget's `theme` URL parameter: `light`, `dark`, `light-high-contrast` or
 `dark-high-contrast`. Both can change while a call is running without
 disturbing it.
 
+The component's sounds, pictures and the MediaPipe runtime behind background
+effects are files beside the module rather than data URLs inside it, each
+referenced relative to the module (`new URL("./assets/…", import.meta.url)`),
+so a host's bundler copies them as assets of its own — webpack 5, Vite and
+Rollup all do — and the browser fetches the MediaPipe runtime, the largest of
+them by far, only when an effect is first switched on.
+
 A host must call and await `initializeElementCall(config)` once before
 rendering the component: it loads the `Intl` polyfills, applies the
 deployment-wide `config.json`-style configuration and sets up translations.
