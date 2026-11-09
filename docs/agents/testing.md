@@ -34,6 +34,10 @@ translations. The browser is Playwright's, so a fresh clone needs
 
 ## End-to-end
 
+The Element Web instance `HOST1` opens the app the dev server serves. The instance
+`HOST2` (the other site) opens the embedded package as a host ships it. This package
+is built by the `build-embedded` setup project and mounted in `docker-compose-playwright.yml`.
+
 - `playwright/*.spec.ts` — standalone, on Chromium and Firefox.
 - `playwright/widget/` — widget mode, where cross-context bugs surface.
 - `playwright/component/` — the component in a host page, via the harness on port

@@ -107,6 +107,9 @@ jobs:
         run: pnpm playwright install --with-deps
       - name: Run backend components
         run: |
+          # Make sure the directory for the embedded build exists as Docker might
+          # create it with wrong access rights otherwise.
+          mkdir -p embedded/web/dist
           docker compose -f docker-compose-dev.yml -f docker-compose-playwright.yml pull
           docker compose -f docker-compose-dev.yml -f docker-compose-playwright.yml up -d
           docker ps

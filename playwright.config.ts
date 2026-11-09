@@ -64,7 +64,14 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
+      // Builds the embedded package into the directory the other site's
+      // Element Web container serves it from (see docker-compose-playwright.yml).
+      name: "build-embedded",
+      testMatch: "**/widget/embedded/build.setup.ts",
+    },
+    {
       name: "chromium",
+      dependencies: ["build-embedded"],
       testIgnore: "**/mobile/**",
       use: {
         ...devices["Desktop Chrome"],
@@ -86,6 +93,7 @@ export default defineConfig({
     },
     {
       name: "firefox",
+      dependencies: ["build-embedded"],
       testIgnore: "**/mobile/**",
       use: {
         ...devices["Desktop Firefox"],
