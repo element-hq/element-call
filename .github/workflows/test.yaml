@@ -71,10 +71,27 @@ jobs:
           flags: unittests
           fail_ci_if_error: true
   playwright:
-    name: Run end-to-end tests
+    name: Run end-to-end tests (${{ matrix.part }})
     if: ${{ !inputs.disable_e2e_tests }}
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    # We manually shard the tests across runners. Playwright's own shards cut
+    # the list of tests into equal counts in file order, which would leave the
+    # widget suite, the slowest tests by far, together at the end.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - part: chromium-1
+            args: --project=chromium --shard=1/2
+          - part: chromium-2
+            args: --project=chromium --shard=2/2
+          - part: widget-1
+            args: --project=widget --shard=1/2
+          - part: widget-2
+            args: --project=widget --shard=2/2
+          - part: firefox-mobile
+            args: --project=firefox --project=mobile
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
@@ -113,11 +130,55 @@ jobs:
       - name: Run Playwright tests
         env:
           USE_DOCKER: 1
-        run: pnpm exec playwright test
+          ARGS: ${{ matrix.args }}
+        # Unquoted on purpose: the part's arguments are several words
+        run: pnpm exec playwright test $ARGS
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: ${{ !cancelled() }}
+        with:
+          name: blob-report-${{ matrix.part }}
+          path: blob-report
+          if-no-files-found: error
+          # Only read by the merge below.
+          retention-days: 1
+
+  e2e_report:
+    # Combines the blobs into a single HTML report and blocks PRs on failure.
+    name: Run end-to-end tests
+    needs: playwright
+    if: ${{ always() && !inputs.disable_e2e_tests }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          # Inside a called workflow, github.repository is the caller so we need to make sure to still check out the EC repo here.
+          repository: ${{ inputs.matrix-js-sdk-sha && 'element-hq/element-call' || github.repository }}
+          persist-credentials: false
+      - name: Enable Corepack
+        run: corepack enable
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          cache: "pnpm"
+          node-version-file: ".node-version"
+      - name: Install dependencies
+        run: scripts/layered.sh --ignore-pnpmfile
+        env:
+          PR_HEAD_REPO_OWNER: ${{ github.event.pull_request.head.repo.owner.login }}
+          JS_SDK_GITHUB_BASE_REF: ${{ inputs.matrix-js-sdk-sha }}
+      - name: Download the parts' reports
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: blob-report-*
+          path: all-blob-reports
+          merge-multiple: true
+      - name: Merge into one HTML report
+        run: pnpm exec playwright merge-reports --reporter html ./all-blob-reports
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: html-report
           path: playwright-report
           if-no-files-found: error
           retention-days: 4
+      - name: Fail on a failed part
+        if: ${{ needs.playwright.result != 'success' }}
+        run: exit 1

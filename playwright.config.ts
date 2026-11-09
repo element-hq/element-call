@@ -26,6 +26,19 @@ process.env.NODE_EXTRA_CA_CERTS = join(
   "backend/dev_tls_local-ca.crt",
 );
 
+const desktopChrome = {
+  ...devices["Desktop Chrome"],
+  permissions: ["clipboard-write", "clipboard-read", "microphone", "camera"],
+  ignoreHTTPSErrors: true,
+  launchOptions: {
+    args: [
+      "--use-fake-ui-for-media-stream",
+      "--use-fake-device-for-media-stream",
+      "--mute-audio",
+    ],
+  },
+};
+
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
@@ -43,11 +56,11 @@ export default defineConfig({
    * Reporter to use. See https://playwright.dev/docs/test-reporters
    *
    * On CI, `list` prints a line per test as it finishes, which keeps the job
-   * log moving; `github` annotates failures on the PR; `html` is uploaded as
-   * an artifact and must never try to open a browser there.
+   * log moving; `github` annotates failures on the PR; the `blob` format is
+   * uploaded by sharded CI runs and combined into a HTML report by the workflow.
    */
   reporter: process.env.CI
-    ? [["list"], ["github"], ["html", { open: "never" }]]
+    ? [["list"], ["github"], ["blob"]]
     : [["list"], ["html"]],
   /* Stop a broken run early on CI instead of waiting out every retry. */
   maxFailures: process.env.CI ? 5 : undefined,
@@ -65,24 +78,15 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      testIgnore: "**/mobile/**",
-      use: {
-        ...devices["Desktop Chrome"],
-        permissions: [
-          "clipboard-write",
-          "clipboard-read",
-          "microphone",
-          "camera",
-        ],
-        ignoreHTTPSErrors: true,
-        launchOptions: {
-          args: [
-            "--use-fake-ui-for-media-stream",
-            "--use-fake-device-for-media-stream",
-            "--mute-audio",
-          ],
-        },
-      },
+      testIgnore: ["**/mobile/**", "**/widget/**"],
+      use: desktopChrome,
+    },
+    {
+      // Element Call as a widget in Element Web, on Chromium. This uses its
+      // own project so that it can be sharded on CI.
+      name: "widget",
+      testMatch: "**/widget/**/*.@(spec|test).ts",
+      use: desktopChrome,
     },
     {
       name: "firefox",
