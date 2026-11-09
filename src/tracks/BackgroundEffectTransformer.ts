@@ -56,16 +56,30 @@ const wasmFileset: WasmFileset = {
 export class BackgroundEffectTransformer extends BackgroundTransformer {
   /** Called once, when the first frame carrying an effect has been drawn. */
   public onFirstFrame: (() => void) | undefined;
+  private drewAFrame = false;
+
+  public constructor(opts: BackgroundOptions) {
+    super(opts);
+    // Called by the library for a frame it drew, never for one it passed on
+    // untouched.
+    this.options.onFrameProcessed = (stats): void => {
+      opts.onFrameProcessed?.(stats);
+      if (this.drewAFrame) return;
+      this.drewAFrame = true;
+      this.onFirstFrame?.();
+    };
+  }
 
   public override async transform(
     frame: VideoFrame,
     controller: TransformStreamDefaultController<VideoFrame>,
   ): Promise<void> {
-    const priming = this.isFirstFrame;
+    // For the first frame, the library enqueues the raw frame ahead of the
+    // processed one, so that the output shows something while the first
+    // segmentation runs. The raw frame is the room without the effect,
+    // so no frame is allowed to count as the first.
+    this.isFirstFrame = false;
     await super.transform(frame, controller);
-    // Cleared only once a frame has been through the segmenter; a frame
-    // passed through untouched leaves it set.
-    if (priming && !this.isFirstFrame) this.onFirstFrame?.();
   }
 
   /**

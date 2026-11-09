@@ -20,6 +20,7 @@ import {
 
 const frame = {} as VideoFrame;
 const controller = {} as TransformStreamDefaultController<VideoFrame>;
+const stats = { processingTimeMs: 1, segmentationTimeMs: 1, filterTimeMs: 0 };
 
 describe("BackgroundEffectTransformer", () => {
   afterEach(() => {
@@ -48,9 +49,10 @@ describe("BackgroundEffectTransformer", () => {
   });
 
   it("reports the first frame carrying an effect, once", async () => {
+    // The library reports every frame it draws.
     vi.spyOn(BackgroundTransformer.prototype, "transform").mockImplementation(
       async function (this: BackgroundTransformer) {
-        this.isFirstFrame = false;
+        this.options.onFrameProcessed?.(stats);
         return Promise.resolve();
       },
     );
@@ -71,6 +73,37 @@ describe("BackgroundEffectTransformer", () => {
 
     await transformer.transform(frame, controller);
     expect(transformer.onFirstFrame).not.toHaveBeenCalled();
+  });
+
+  it("keeps reporting drawn frames to whoever asked", async () => {
+    vi.spyOn(BackgroundTransformer.prototype, "transform").mockImplementation(
+      async function (this: BackgroundTransformer) {
+        this.options.onFrameProcessed?.(stats);
+        return Promise.resolve();
+      },
+    );
+    const onFrameProcessed = vi.fn();
+    const transformer = new BackgroundEffectTransformer({ onFrameProcessed });
+
+    await transformer.transform(frame, controller);
+    expect(onFrameProcessed).toHaveBeenCalledWith(stats);
+  });
+
+  it("never sends the first frame on untouched", async () => {
+    // The library copies its first frame through untouched, ahead of the
+    // drawn one, unless told the first frame is past
+    const seen: boolean[] = [];
+    vi.spyOn(BackgroundTransformer.prototype, "transform").mockImplementation(
+      async function (this: BackgroundTransformer) {
+        seen.push(this.isFirstFrame);
+        return Promise.resolve();
+      },
+    );
+    const transformer = new BackgroundEffectTransformer({});
+    expect(transformer.isFirstFrame).toBe(true);
+
+    await transformer.transform(frame, controller);
+    expect(seen).toEqual([false]);
   });
 
   it("passes frames on untouched once disabled, even after blurring", async () => {
