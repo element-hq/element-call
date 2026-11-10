@@ -77,6 +77,12 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
+      // Builds the embedded package into the directory the other site's
+      // Element Web container serves it from (see docker-compose-playwright.yml).
+      name: "build-embedded",
+      testMatch: "**/widget/embedded/build.setup.ts",
+    },
+    {
       name: "chromium",
       testIgnore: ["**/mobile/**", "**/widget/**"],
       use: desktopChrome,
@@ -85,11 +91,13 @@ export default defineConfig({
       // Element Call as a widget in Element Web, on Chromium. This uses its
       // own project so that it can be sharded on CI.
       name: "widget",
+      dependencies: ["build-embedded"],
       testMatch: "**/widget/**/*.@(spec|test).ts",
       use: desktopChrome,
     },
     {
       name: "firefox",
+      dependencies: ["build-embedded"],
       testIgnore: "**/mobile/**",
       use: {
         ...devices["Desktop Firefox"],
