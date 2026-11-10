@@ -33,7 +33,6 @@ for (const [answer, respond] of Object.entries(HOST_ANSWERS)) {
   widgetTest(
     `reaches the lobby when config.json gets ${answer}`,
     async ({ addUser }) => {
-      test.slow();
       const { page } = await addUser("Brooks", HOST2);
       await TestHelpers.createRoom("Config Room", page);
 
