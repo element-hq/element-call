@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { expect, type Route, test } from "@playwright/test";
+import { expect, type Route } from "@playwright/test";
 
 import { widgetTest } from "../../fixtures/widget-user.ts";
 import { HOST2, TestHelpers } from "../test-helpers.ts";
