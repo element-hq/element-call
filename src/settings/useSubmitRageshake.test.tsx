@@ -78,9 +78,6 @@ function renderWithMockClient(
       value={{
         state: "valid",
         disconnected: false,
-        supportedFeatures: {
-          reactions: true,
-        },
         setClient: vi.fn(),
         authenticated: {
           client,

@@ -21,7 +21,6 @@ import { type ISyncStateData, type SyncState } from "matrix-js-sdk/lib/sync";
 import { ClientEvent, type MatrixClient } from "matrix-js-sdk";
 
 import { ErrorPage } from "./FullScreenView";
-import { useHostBridge } from "./HostBridge";
 import { useLeaveToHome } from "./LeaveToHomeContext";
 import {
   PosthogAnalytics,
@@ -45,9 +44,6 @@ export type ValidClientState = {
   // 'Disconnected' rather than 'connected' because it tracks specifically
   // whether the client is supposed to be connected but is not
   disconnected: boolean;
-  supportedFeatures: {
-    reactions: boolean;
-  };
   setClient: (client: MatrixClient, session: Session) => void;
 };
 
@@ -172,7 +168,6 @@ export type ClientLoader = (
 
 export const ClientProvider: FC<Props> = ({ children, client, loadClient }) => {
   const leaveToHome = useLeaveToHome();
-  const hostBridge = useHostBridge();
 
   // null = signed out, undefined = loading
   const [initClientState, setInitClientState] = useState<
@@ -306,7 +301,6 @@ export const ClientProvider: FC<Props> = ({ children, client, loadClient }) => {
   );
 
   const [isDisconnected, setIsDisconnected] = useState(false);
-  const [supportsReactions, setSupportsReactions] = useState(false);
 
   const state: ClientState | undefined = useMemo(() => {
     if (alreadyOpenedErr) {
@@ -330,9 +324,6 @@ export const ClientProvider: FC<Props> = ({ children, client, loadClient }) => {
       authenticated,
       setClient,
       disconnected: isDisconnected,
-      supportedFeatures: {
-        reactions: supportsReactions,
-      },
     };
   }, [
     alreadyOpenedErr,
@@ -341,7 +332,6 @@ export const ClientProvider: FC<Props> = ({ children, client, loadClient }) => {
     logout,
     setClient,
     isDisconnected,
-    supportsReactions,
   ]);
 
   const onSync = useCallback(
@@ -366,16 +356,12 @@ export const ClientProvider: FC<Props> = ({ children, client, loadClient }) => {
       initClientState.client.on(ClientEvent.Sync, onSync);
     }
 
-    if (!hostBridge.supportsReactions)
-      logger.warn("The host does not permit reactions");
-    setSupportsReactions(hostBridge.supportsReactions);
-
     return (): void => {
       if (initClientState.client) {
         initClientState.client.removeListener(ClientEvent.Sync, onSync);
       }
     };
-  }, [initClientState, onSync, hostBridge]);
+  }, [initClientState, onSync]);
 
   if (alreadyOpenedErr) {
     return <ErrorPage error={alreadyOpenedErr} />;
