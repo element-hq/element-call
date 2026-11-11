@@ -17,7 +17,7 @@ permissions: {}
 jobs:
   versioning:
     name: Versioning
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       DRY_RUN: ${{ steps.dry_run.outputs.DRY_RUN }}
       PREFIXED_VERSION: ${{ steps.prefixed_version.outputs.PREFIXED_VERSION }}
@@ -59,7 +59,7 @@ jobs:
   publish_npm:
     needs: versioning
     name: Publish NPM
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       ARTIFACT_VERSION: ${{ steps.artifact_version.outputs.ARTIFACT_VERSION }}
     permissions:
@@ -111,7 +111,7 @@ jobs:
     needs: [versioning, publish_npm]
     if: ${{ needs.versioning.outputs.DRY_RUN == 'false' }}
     name: Update release notes
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # Shared with publish-embedded-packages.yaml, which appends to the same release: two
     # appends at once would each write back the body without the other's section
     concurrency:

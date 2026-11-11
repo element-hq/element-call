@@ -184,6 +184,7 @@ export function createRTCParticipation(
           encryptMedia: encryptionSystem.kind !== E2eeType.NONE,
           matrixRTCMode,
           sendNotificationType: options.sendNotificationType,
+          callIntent: options.callIntent,
           applicationData: options.applicationData,
           timings,
           delayedLeave,

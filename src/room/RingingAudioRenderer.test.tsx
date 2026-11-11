@@ -8,6 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { expect, type MockedFunction, test, vi } from "vitest";
 import { act, render } from "@testing-library/react";
 import { BehaviorSubject } from "rxjs";
+import { RTC_CALL_INTENT_AUDIO } from "matrix-js-sdk/lib/matrixrtc";
 
 import { useAudioContext } from "../useAudioContext";
 import { createRingingMedia } from "../state/media/RingingMediaViewModel";
@@ -39,7 +40,7 @@ test("ringtone plays on loop while ringing", () => {
     userId: alice.userId,
     displayName$: constant("Alice"),
     mxcAvatarUrl$: constant(undefined),
-    intent: "audio",
+    intent: RTC_CALL_INTENT_AUDIO,
     pickupState$,
   });
 

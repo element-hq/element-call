@@ -21,6 +21,7 @@ import {
   type CallMembership,
   type IRTCNotificationContent,
   MatrixRTCSessionEvent,
+  RTC_CALL_INTENT_AUDIO,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
 
@@ -1559,7 +1560,7 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
             b: expect.objectContaining({
               type: "ringing",
               userId: alice.userId,
-              intent: "audio",
+              intent: RTC_CALL_INTENT_AUDIO,
             }),
           });
           // Layout should show placeholder media for the participant we're
@@ -1605,7 +1606,7 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
             b: expect.objectContaining({
               type: "ringing",
               userId: alice.userId,
-              intent: "audio",
+              intent: RTC_CALL_INTENT_AUDIO,
             }),
           });
           // Layout should show placeholder media for the participant we're

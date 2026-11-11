@@ -12,6 +12,7 @@ Please see LICENSE in the repository root for full details.
  */
 
 import {
+  type RTCCallIntent,
   type RTCNotificationType,
   type Transport,
 } from "matrix-js-sdk/lib/matrixrtc";
@@ -104,10 +105,13 @@ export interface RTCParticipationOptions {
    */
   sendNotificationType?: RTCNotificationType;
   /**
+   * The kind of call the local member intends to take part in: `"m.audio"`
+   * or `"m.video"`. Carried by the membership as a field of its own.
+   */
+  callIntent?: RTCCallIntent;
+  /**
    * Whatever the application wants to say about itself in the membership,
-   * under namespaced keys. Opaque to the SDK, apart from `m.call.intent`
-   * (`"audio"` or `"video"`), which the membership format carries as a
-   * field of its own.
+   * under namespaced keys. Opaque to the SDK.
    */
   applicationData?: Record<string, unknown>;
   /** Timings the host has configured; the defaults otherwise. */
@@ -287,7 +291,7 @@ export interface RTCMember {
   memberId: string;
   /** Which transport this member is on; undefined when the membership has none. */
   transport$: Behavior<TransportMetadata | undefined>;
-  /** What the member's application says about itself, e.g. `m.call.intent`. */
+  /** What the member's application says about itself, e.g. `intent`. */
   applicationData$: Behavior<Record<string, unknown>>;
 
   displayName$: Behavior<string>;
