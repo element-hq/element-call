@@ -14,8 +14,6 @@ import { BehaviorSubject } from "rxjs";
 
 import {
   ClientProvider,
-  useClientDisconnected,
-  useClientLegacy,
   useClientSession,
   useClientSessionState,
 } from "./ClientContext";
@@ -24,8 +22,6 @@ import {
   type ClientSessionState,
   hostClientSession,
 } from "./state/ClientSession";
-import { LeaveToHomeProvider } from "./LeaveToHomeContext";
-import { flushPromises } from "./utils/test";
 
 const mockClient = (userId = "@alice:example.org"): MatrixClient =>
   ({
@@ -136,75 +132,3 @@ test("hands the session itself to the context", () => {
   });
   expect(result.current).toBe(session);
 });
-
-test("leaves for home after logging out of the session", async () => {
-  const logout = vi.fn().mockResolvedValue(undefined);
-  const leaveToHome = vi.fn();
-  const { result } = renderClientLegacy(
-    {
-      state$: new BehaviorSubject<ClientSessionState>({
-        state: "signedIn",
-        client: mockClient(),
-        passwordlessUser: false,
-      }),
-      logout,
-    },
-    leaveToHome,
-  );
-
-  await act(async () => {
-    result.current.logout?.();
-    await flushPromises();
-  });
-  expect(logout).toHaveBeenCalled();
-  expect(leaveToHome).toHaveBeenCalled();
-});
-
-test("offers no logout when the session is not ours to end", () => {
-  const { result } = renderClientLegacy(hostClientSession(mockClient()));
-  expect(result.current.logout).toBeUndefined();
-});
-
-test("reports the client as disconnected while its sync fails to connect", () => {
-  const client = mockClient();
-  const { result } = renderHook(() => useClientDisconnected(), {
-    wrapper: ({ children }) => (
-      <ClientProvider session={hostClientSession(client)}>
-        <>{children}</>
-      </ClientProvider>
-    ),
-  });
-  expect(result.current).toBe(false);
-
-  const [, onSync] = vi.mocked(client.on).mock.calls[0] as [
-    unknown,
-    (state: string, old: null, data?: { error?: Error }) => void,
-  ];
-  const connectionError = Object.assign(new Error("offline"), {
-    name: "ConnectionError",
-  });
-  act(() => onSync("ERROR", null, { error: connectionError }));
-  expect(result.current).toBe(true);
-  // Any other failure is not a connection problem
-  act(() => onSync("ERROR", null, { error: new Error("rate limited") }));
-  expect(result.current).toBe(false);
-  act(() => onSync("SYNCING", null));
-  expect(result.current).toBe(false);
-});
-
-function renderClientLegacy(
-  session: ClientSession,
-  leaveToHome: (() => void) | null = null,
-): ReturnType<typeof renderHook<ReturnType<typeof useClientLegacy>, never>> {
-  return renderHook(() => useClientLegacy(), {
-    wrapper: ({ children }) => (
-      <BrowserRouter>
-        <LeaveToHomeProvider value={leaveToHome}>
-          <ClientProvider session={session}>
-            <>{children}</>
-          </ClientProvider>
-        </LeaveToHomeProvider>
-      </BrowserRouter>
-    ),
-  });
-}

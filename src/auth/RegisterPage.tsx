@@ -22,7 +22,7 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import { Button, Text } from "@vector-im/compound-web";
 
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
-import { useClientLegacy, useClientSession } from "../ClientContext";
+import { useClientSession, useClientSessionState } from "../ClientContext";
 import { useRegistrationTerms } from "./useRegistrationTerms";
 import styles from "./LoginPage.module.css";
 import Logo from "../icons/LogoLarge.svg?react";
@@ -37,8 +37,12 @@ export const RegisterPage: FC = () => {
   const { t } = useTranslation();
   usePageTitle(t("action.register"));
 
-  const { loading, authenticated, passwordlessUser, client } =
-    useClientLegacy();
+  const session = useClientSessionState();
+  const loading = session.state === "loading";
+  const client = session.state === "signedIn" ? session.client : undefined;
+  const authenticated = client !== undefined;
+  const passwordlessUser =
+    session.state === "signedIn" && session.passwordlessUser;
   const { register } = useClientSession();
 
   const confirmPasswordRef = useRef<HTMLInputElement>(null);

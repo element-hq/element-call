@@ -5,25 +5,11 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import {
-  type FC,
-  useEffect,
-  useState,
-  createContext,
-  use,
-  useMemo,
-  type JSX,
-} from "react";
-import { logger } from "matrix-js-sdk/lib/logger";
-import { type ISyncStateData, type SyncState } from "matrix-js-sdk/lib/sync";
-import { ClientEvent, type MatrixClient } from "matrix-js-sdk";
+import { type FC, useEffect, createContext, use, type JSX } from "react";
+import { type MatrixClient } from "matrix-js-sdk";
 
 import { ErrorPage } from "./FullScreenView";
-import { useLeaveToHome } from "./LeaveToHomeContext";
-import {
-  PosthogAnalytics,
-  RegistrationType,
-} from "./analytics/PosthogAnalytics";
+import { PosthogAnalytics } from "./analytics/PosthogAnalytics";
 import { useBehavior } from "./useBehavior";
 import { constant } from "./state/Behavior";
 import {
@@ -57,77 +43,6 @@ export function useClient(): { client?: MatrixClient } {
   return { client: state.state === "signedIn" ? state.client : undefined };
 }
 
-// Plain representation of the `ClientContext` as a helper for old components that expected an object with multiple fields.
-export function useClientLegacy(): {
-  client?: MatrixClient;
-  passwordlessUser: boolean;
-  loading: boolean;
-  authenticated: boolean;
-  logout?: () => void;
-  error?: Error;
-} {
-  const state = useClientSessionState();
-  const logout = useLogout();
-  const client = state.state === "signedIn" ? state.client : undefined;
-
-  return {
-    client,
-    passwordlessUser: state.state === "signedIn" && state.passwordlessUser,
-    loading: state.state === "loading",
-    authenticated: client !== undefined,
-    logout,
-    error: state.state === "error" ? state.error : undefined,
-  };
-}
-
-/**
- * Ends the session, where it is ours to end, and leaves for home.
- */
-function useLogout(): (() => void) | undefined {
-  const { logout } = useClientSession();
-  const leaveToHome = useLeaveToHome();
-  return useMemo(() => {
-    if (logout === undefined) return undefined;
-    return (): void => {
-      logout()
-        .then(() => {
-          leaveToHome?.();
-          PosthogAnalytics.instance.logout();
-          PosthogAnalytics.instance.setRegistrationType(RegistrationType.Guest);
-        })
-        .catch((e) => logger.error("Failed to log out", e));
-    };
-  }, [logout, leaveToHome]);
-}
-
-/**
- * Whether the signed-in client is supposed to be connected but is not.
- */
-export function useClientDisconnected(): boolean {
-  const state = useClientSessionState();
-  const client = state.state === "signedIn" ? state.client : undefined;
-  // Tagged with the client it describes, so that a swapped client does not
-  // inherit the old one's verdict before its first sync
-  const [disconnected, setDisconnected] = useState<
-    [MatrixClient, boolean] | null
-  >(null);
-
-  useEffect(() => {
-    if (client === undefined) return;
-    const onSync = (
-      syncState: SyncState,
-      _old: SyncState | null,
-      data?: ISyncStateData,
-    ): void => setDisconnected([client, clientIsDisconnected(syncState, data)]);
-    client.on(ClientEvent.Sync, onSync);
-    return (): void => {
-      client.removeListener(ClientEvent.Sync, onSync);
-    };
-  }, [client]);
-
-  return disconnected !== null && disconnected[0] === client && disconnected[1];
-}
-
 interface Props {
   children: JSX.Element;
   /**
@@ -156,9 +71,3 @@ export const ClientProvider: FC<Props> = ({ children, session }) => {
 
   return <ClientContext value={session}>{children}</ClientContext>;
 };
-
-const clientIsDisconnected = (
-  syncState: SyncState,
-  syncData?: ISyncStateData,
-): boolean =>
-  syncState === "ERROR" && syncData?.error?.name === "ConnectionError";
