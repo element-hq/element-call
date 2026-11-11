@@ -6,15 +6,12 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { useCallback } from "react";
-import { InteractiveAuth } from "matrix-js-sdk";
-import {
-  createClient,
-  type LoginResponse,
-  type MatrixClient,
-} from "matrix-js-sdk";
+import { type MatrixClient } from "matrix-js-sdk";
 
 import { initClient } from "../utils/initClient";
 import { type Session } from "../ClientContext";
+import { loginWithPassword } from "./interactiveAuth";
+
 /**
  * This provides the login method to login using user credentials.
  * @param oldClient If there is an already authenticated client it should be passed to this hook
@@ -36,32 +33,8 @@ export function useInteractiveLogin(
     ) => Promise<[MatrixClient, Session]>
   >(
     async (homeserver: string, username: string, password: string) => {
-      const authClient = createClient({ baseUrl: homeserver });
-
-      const interactiveAuth = new InteractiveAuth({
-        matrixClient: authClient,
-        doRequest: async (): Promise<LoginResponse> =>
-          authClient.login("m.login.password", {
-            identifier: {
-              type: "m.id.user",
-              user: username,
-            },
-            password,
-          }),
-        stateUpdated: (): void => {},
-        requestEmailToken: async (): Promise<{ sid: string }> =>
-          Promise.resolve({ sid: "" }),
-      });
-
-      // XXX: This claims to return an IAuthData which contains none of these
-      // things - the js-sdk types may be wrong?
-      /* eslint-disable camelcase,@typescript-eslint/no-explicit-any */
-      const { user_id, access_token, device_id } =
-        (await interactiveAuth.attemptAuth()) as any;
-      const session = {
-        user_id,
-        access_token,
-        device_id,
+      const session: Session = {
+        ...(await loginWithPassword(homeserver, username, password)),
         passwordlessUser: false,
       };
 
@@ -70,13 +43,12 @@ export function useInteractiveLogin(
       const client = await initClient(
         {
           baseUrl: homeserver,
-          accessToken: access_token,
-          userId: user_id,
-          deviceId: device_id,
+          accessToken: session.access_token,
+          userId: session.user_id,
+          deviceId: session.device_id,
         },
         false,
       );
-      /* eslint-enable camelcase */
       return [client, session];
     },
     [oldClient],
