@@ -54,7 +54,10 @@ const wasmFileset: WasmFileset = {
  * resource fetched from the public internet.
  */
 export class BackgroundEffectTransformer extends BackgroundTransformer {
-  /** Called once, when the first frame carrying an effect has been drawn. */
+  /**
+   * Called once, when the first frame carrying an effect has been drawn.
+   * This is used for drewAFrame$ to show the correct loading state.
+  */
   public onFirstFrame: (() => void) | undefined;
   private drewAFrame = false;
 
@@ -74,10 +77,16 @@ export class BackgroundEffectTransformer extends BackgroundTransformer {
     frame: VideoFrame,
     controller: TransformStreamDefaultController<VideoFrame>,
   ): Promise<void> {
-    // For the first frame, the library enqueues the raw frame ahead of the
-    // processed one, so that the output shows something while the first
-    // segmentation runs. The raw frame is the room without the effect,
-    // so no frame is allowed to count as the first.
+    // From the LK docs:
+    // > Render a copy of the first frame is rendered to the screen as soon as possible to act
+    // > as a less jarring initial state than a solid color while the synchronous work below
+    // > (segmentation + frame rendering) occurs.
+    // We do not want this copy (it leaks unblurred media).
+    // So we always set `isFirstFrame` to false -> never show an unprocessed frame.
+    // It does not have any impact other than setting the unprocessed frame while loading the processor.
+    //
+    // To not show the blank frame, we have our own mechanism for hiding the loading overlay:
+    // `onFirstFrame` is what the EC UI will listen to and only then show the video feed.
     this.isFirstFrame = false;
     await super.transform(frame, controller);
   }
