@@ -58,7 +58,7 @@ jobs:
             - The fix proposal(s)
 
             Be brief and concise in all your communication. Do not mention things
-            you have not done or workflows that did not fail.
+            workflows that did not fail.
 
             Use Markdown links for anything that can be navigated to on GitHub
             such as files, commits, issues, pull requests, workflow runs and
