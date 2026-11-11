@@ -17,13 +17,8 @@ import {
 import { type ISyncStateData, type SyncState } from "matrix-js-sdk/lib/sync";
 import { logger } from "matrix-js-sdk/lib/logger";
 
-// This import is why `initClient` has a module of its own:
-// - The bundler emits the worker file (11 MB: the Matrix SDK and its crypto
-//   wasm) the moment it loads this import — whether or not anything ever calls
-//   `new IndexedDBWorker()`. Tree shaking drops the call, not the file.
-// - So it may only sit in a module the component build never loads. It used
-//   to be in `./matrix`, which the component reaches for the room URL helpers,
-//   and the worker shipped in the package, unused and unusable by any host.
+// This import pulls in many MBs of SDK code and crypto WASM which should only
+// be included in full SPA builds, which is why `initClient` gets its own module.
 import IndexedDBWorker from "../IndexedDBWorker?worker";
 import { getUrlParams } from "../UrlParams";
 import { Config } from "../config/Config";
