@@ -73,6 +73,7 @@ import {
 } from "../src/UrlParams";
 import { MediaDevicesContext } from "../src/MediaDevicesContext";
 import { AppViewModel } from "../src/state/AppViewModel";
+import { hostClientSession } from "../src/state/ClientSession";
 import { ObservableScope } from "../src/state/ObservableScope";
 import { BackgroundEffectsProvider } from "../src/tracks/BackgroundEffectsContext";
 import { Config } from "../src/config/Config";
@@ -204,6 +205,10 @@ export const ElementCall: FC<ElementCallProps> = ({
     };
   }, [controlledAudioDevices, callIntent]);
 
+  // The host owns the user's session, so Element Call neither authenticates
+  // anyone nor manages it; it follows whichever client the host hands it.
+  const clientSession = useMemo(() => hostClientSession(client), [client]);
+
   const room = client.getRoom(roomId);
   const rtcSession = useMemo(
     () => (room === null ? null : client.matrixRTC.getRoomSession(room)),
@@ -250,7 +255,7 @@ export const ElementCall: FC<ElementCallProps> = ({
                     >
                       <Decoration>
                         <TooltipProvider>
-                          <ClientProvider client={client}>
+                          <ClientProvider session={clientSession}>
                             <MediaDevicesContext value={vm.mediaDevices}>
                               <BackgroundEffectsProvider
                                 effects={vm.backgroundEffects}

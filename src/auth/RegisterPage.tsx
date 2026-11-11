@@ -22,8 +22,8 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import { Button, Text } from "@vector-im/compound-web";
 
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
-import { useClientLegacy } from "../ClientContext";
-import { useInteractiveRegistration } from "./useInteractiveRegistration";
+import { useClientLegacy, useClientSession } from "../ClientContext";
+import { useRegistrationTerms } from "./useRegistrationTerms";
 import styles from "./LoginPage.module.css";
 import Logo from "../icons/LogoLarge.svg?react";
 import { LoadingPage } from "../FullScreenView";
@@ -37,8 +37,9 @@ export const RegisterPage: FC = () => {
   const { t } = useTranslation();
   usePageTitle(t("action.register"));
 
-  const { loading, authenticated, passwordlessUser, client, setClient } =
+  const { loading, authenticated, passwordlessUser, client } =
     useClientLegacy();
+  const { register } = useClientSession();
 
   const confirmPasswordRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
@@ -47,7 +48,7 @@ export const RegisterPage: FC = () => {
   const [error, setError] = useState<Error>();
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
-  const { recaptchaKey, register } = useInteractiveRegistration(client);
+  const { recaptchaKey } = useRegistrationTerms();
   const { execute, reset, recaptchaId } = useRecaptcha(recaptchaKey);
 
   const onSubmitRegisterForm = useCallback(
@@ -62,9 +63,10 @@ export const RegisterPage: FC = () => {
 
       const submit = async (): Promise<void> => {
         setRegistering(true);
+        if (!register) throw new Error("This session cannot register");
 
         const recaptchaResponse = await execute();
-        const [newClient, session] = await register(
+        const { client: newClient, setSignedIn } = await register(
           userName,
           password,
           userName,
@@ -95,7 +97,7 @@ export const RegisterPage: FC = () => {
           }
         }
 
-        setClient?.(newClient, session);
+        setSignedIn();
         PosthogAnalytics.instance.eventSignup.cacheSignupEnd(new Date());
       };
 
@@ -117,16 +119,7 @@ export const RegisterPage: FC = () => {
           reset();
         });
     },
-    [
-      register,
-      location,
-      navigate,
-      passwordlessUser,
-      reset,
-      execute,
-      client,
-      setClient,
-    ],
+    [register, location, navigate, passwordlessUser, reset, execute, client],
   );
 
   useEffect(() => {

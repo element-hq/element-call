@@ -23,20 +23,20 @@ import {
 import * as Sentry from "@sentry/react";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { type MatrixClient } from "matrix-js-sdk";
 import { I18nextProvider } from "react-i18next";
 
 import { HomePage } from "./home/HomePage";
 import { LoginPage } from "./auth/LoginPage";
 import { RegisterPage } from "./auth/RegisterPage";
 import { RoomPage } from "./room/RoomPage";
-import { type ClientLoader, ClientProvider } from "./ClientContext";
+import { ClientProvider } from "./ClientContext";
 import { ErrorPage, LoadingPage } from "./FullScreenView";
 import { Initializer } from "./initializer";
 import { type WidgetHelpers } from "./widget";
 import { useTheme } from "./useTheme";
 import { BackgroundEffectsProvider } from "./tracks/BackgroundEffectsContext";
 import { type AppViewModel } from "./state/AppViewModel";
+import { type ClientSession } from "./state/ClientSession";
 import { MediaDevicesContext } from "./MediaDevicesContext";
 import {
   HeaderStyle,
@@ -56,16 +56,6 @@ import { useInitial } from "./useInitial";
 import { LeaveToHomeProvider } from "./LeaveToHomeContext";
 
 const SentryRoute = Sentry.withSentryReactRouterV7Routing(Route);
-
-// Element Call's own session, for when no host supplies a client.
-// - Passed in here, not imported by ClientProvider: this module is only in the
-//   app builds, so the client setup and the store worker behind it stay out of
-//   the component package (see the `loadClient` prop).
-// - Imported on demand, as it was before, so that a widget, which gets its
-//   client from the host, never downloads it.
-// - Module-level, so that the provider's effect sees one stable loader.
-const loadStandaloneClient: ClientLoader = async (...args) =>
-  (await import("./utils/spa")).initSPA(...args);
 
 interface SimpleProviderProps {
   children: JSX.Element;
@@ -122,9 +112,11 @@ interface Props {
   vm: AppViewModel;
   /** A point of access to the widget API, if running as a widget. */
   widget: WidgetHelpers | null;
+  /** Where the client comes from. It abstracts: widget, from the host, SPA managed client. */
+  clientSession: ClientSession;
 }
 
-export const App: FC<Props> = ({ vm, widget }) => {
+export const App: FC<Props> = ({ vm, widget, clientSession }) => {
   // The standalone build has no host; the widget build's host is the client it
   // is a widget of.
   const hostBridge = useInitial(() =>
@@ -141,40 +133,26 @@ export const App: FC<Props> = ({ vm, widget }) => {
       .catch(logger.error);
   });
 
-  // As a widget, the client comes from the host over the widget API. Standalone,
-  // Element Call finds one itself, so there is nothing to wait for here.
-  const [widgetClient, setWidgetClient] = useState<MatrixClient | undefined>(
-    undefined,
+  const content = loaded ? (
+    <ClientProvider session={clientSession}>
+      <MediaDevicesContext value={vm.mediaDevices}>
+        <BackgroundEffectsProvider effects={vm.backgroundEffects}>
+          <Sentry.ErrorBoundary
+            fallback={(error) => <ErrorPage error={error} />}
+          >
+            <Routes>
+              <SentryRoute path="/" element={<HomePage />} />
+              <SentryRoute path="/login" element={<LoginPage />} />
+              <SentryRoute path="/register" element={<RegisterPage />} />
+              <SentryRoute path="*" element={<RoomPage />} />
+            </Routes>
+          </Sentry.ErrorBoundary>
+        </BackgroundEffectsProvider>
+      </MediaDevicesContext>
+    </ClientProvider>
+  ) : (
+    <LoadingPage />
   );
-  useEffect(() => {
-    if (widget === null) return;
-    widget.client
-      .then(setWidgetClient)
-      .catch((e) => logger.error("Failed to obtain the host's client", e));
-  }, [widget]);
-  const clientReady = widget === null || widgetClient !== undefined;
-
-  const content =
-    loaded && clientReady ? (
-      <ClientProvider client={widgetClient} loadClient={loadStandaloneClient}>
-        <MediaDevicesContext value={vm.mediaDevices}>
-          <BackgroundEffectsProvider effects={vm.backgroundEffects}>
-            <Sentry.ErrorBoundary
-              fallback={(error) => <ErrorPage error={error} />}
-            >
-              <Routes>
-                <SentryRoute path="/" element={<HomePage />} />
-                <SentryRoute path="/login" element={<LoginPage />} />
-                <SentryRoute path="/register" element={<RegisterPage />} />
-                <SentryRoute path="*" element={<RoomPage />} />
-              </Routes>
-            </Sentry.ErrorBoundary>
-          </BackgroundEffectsProvider>
-        </MediaDevicesContext>
-      </ClientProvider>
-    ) : (
-      <LoadingPage />
-    );
 
   return (
     <I18nextProvider i18n={i18n}>

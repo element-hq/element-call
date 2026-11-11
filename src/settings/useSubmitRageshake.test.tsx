@@ -20,6 +20,7 @@ import { type MatrixClient } from "matrix-js-sdk/lib/client";
 
 import { useSubmitRageshake, getRageshakeSubmitUrl } from "./submit-rageshake";
 import { ClientContextProvider } from "../ClientContext";
+import { hostClientSession } from "../state/ClientSession";
 import { getUrlParams } from "../UrlParams";
 import { mockConfig } from "../utils/test";
 import { DEFAULT_CONFIG } from "../config/ConfigOptions";
@@ -74,18 +75,7 @@ function renderWithMockClient(
   } as unknown as MatrixClient);
 
   render(
-    <ClientContextProvider
-      value={{
-        state: "valid",
-        setClient: vi.fn(),
-        authenticated: {
-          client,
-          isPasswordlessUser: true,
-          changePassword: vi.fn(),
-          logout: vi.fn(),
-        },
-      }}
-    >
+    <ClientContextProvider value={hostClientSession(client)}>
       <TestComponent
         sendLogs={sendLogs}
         getRageshakeSubmitUrl={getRageshakeSubmitUrl}

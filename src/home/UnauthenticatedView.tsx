@@ -12,7 +12,7 @@ import { Button, Heading, Text } from "@vector-im/compound-web";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { useNavigate } from "react-router-dom";
 
-import { useClient } from "../ClientContext";
+import { useClientSession } from "../ClientContext";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
 import { UserMenuContainer } from "../UserMenuContainer";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
@@ -22,7 +22,7 @@ import {
   roomAliasLocalpartFromRoomName,
   sanitiseRoomNameInput,
 } from "../utils/matrix";
-import { useInteractiveRegistration } from "../auth/useInteractiveRegistration";
+import { useRegistrationTerms } from "../auth/useRegistrationTerms";
 import { JoinExistingCallModal } from "./JoinExistingCallModal";
 import { useRecaptcha } from "../auth/useRecaptcha";
 import { Form } from "../form/Form";
@@ -37,12 +37,12 @@ import { ExternalLink, Link } from "../button/Link";
 import { useUrlParams } from "../UrlParams";
 
 export const UnauthenticatedView: FC = () => {
-  const { setClient } = useClient();
+  const { register } = useClientSession();
   const { header } = useUrlParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
   const [optInAnalytics] = useOptInAnalytics();
-  const { recaptchaKey, register } = useInteractiveRegistration();
+  const { recaptchaKey } = useRegistrationTerms();
   const { execute, reset, recaptchaId } = useRecaptcha(recaptchaKey);
 
   const [joinExistingCallModalOpen, setJoinExistingCallModalOpen] =
@@ -65,9 +65,12 @@ export const UnauthenticatedView: FC = () => {
       async function submit(): Promise<void> {
         setError(undefined);
         setLoading(true);
+        if (!register) throw new Error("This session cannot register");
         const recaptchaResponse = await execute();
         const userName = generateRandomName();
-        const [client, session] = await register(
+        // Signed in only once the call exists too: this view is replaced the
+        // moment the session has a user, and the call is what they came for
+        const { client, setSignedIn } = await register(
           userName,
           secureRandomString(16),
           displayName,
@@ -83,15 +86,11 @@ export const UnauthenticatedView: FC = () => {
             E2eeType.SHARED_KEY,
           );
         } catch (error) {
-          if (!setClient) {
-            throw error;
-          }
-
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           if (error.errcode === "M_ROOM_IN_USE") {
             setOnFinished(() => {
-              setClient(client, session);
+              setSignedIn();
               const aliasLocalpart = roomAliasLocalpartFromRoomName(roomName);
               navigate(`/${aliasLocalpart}`)?.catch((error) => {
                 logger.error("Failed to navigate to alias localpart", error);
@@ -106,14 +105,10 @@ export const UnauthenticatedView: FC = () => {
           }
         }
 
-        // Only consider the registration successful if we managed to create the room, too
-        if (!setClient) {
-          throw new Error("setClient is undefined");
-        }
         if (!createRoomResult.password)
           throw new Error("Failed to create room with shared secret");
 
-        setClient(client, session);
+        setSignedIn();
         await navigate(
           getRelativeRoomUrl(
             createRoomResult.roomId,
@@ -130,14 +125,7 @@ export const UnauthenticatedView: FC = () => {
         reset();
       });
     },
-    [
-      register,
-      reset,
-      execute,
-      navigate,
-      setJoinExistingCallModalOpen,
-      setClient,
-    ],
+    [register, reset, execute, navigate, setJoinExistingCallModalOpen],
   );
 
   return (

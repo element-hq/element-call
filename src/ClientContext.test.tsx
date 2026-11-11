@@ -6,17 +6,26 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { expect, test, vi } from "vitest";
-import { act, render, renderHook, waitFor } from "@testing-library/react";
+import { act, render, renderHook } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import { type MatrixClient } from "matrix-js-sdk";
 import { type FC } from "react";
+import { BehaviorSubject } from "rxjs";
 
 import {
-  type ClientLoader,
   ClientProvider,
   useClientDisconnected,
-  useClientState,
+  useClientLegacy,
+  useClientSession,
+  useClientSessionState,
 } from "./ClientContext";
+import {
+  type ClientSession,
+  type ClientSessionState,
+  hostClientSession,
+} from "./state/ClientSession";
+import { LeaveToHomeProvider } from "./LeaveToHomeContext";
+import { flushPromises } from "./utils/test";
 
 const mockClient = (userId = "@alice:example.org"): MatrixClient =>
   ({
@@ -29,67 +38,47 @@ const mockClient = (userId = "@alice:example.org"): MatrixClient =>
 
 /** Reports what the context says, so a test can assert on it. */
 const ShowClientState: FC = () => {
-  const state = useClientState();
-  if (state === undefined) return <span>loading</span>;
-  if (state.state === "error") return <span>error</span>;
-  return (
-    <span>{state.authenticated?.client.getUserId() ?? "unauthenticated"}</span>
-  );
+  const state = useClientSessionState();
+  switch (state.state) {
+    case "signedIn":
+      return <span>{state.client.getUserId()}</span>;
+    case "signedOut":
+      return <span>unauthenticated</span>;
+    default:
+      return <span>{state.state}</span>;
+  }
 };
 
-test("uses a client supplied by the host without waiting", () => {
-  const client = mockClient();
-
-  const { container } = render(
+const renderProvider = (
+  session: ClientSession,
+  children = <ShowClientState />,
+): ReturnType<typeof render> =>
+  render(
     <BrowserRouter>
-      <ClientProvider client={client}>
-        <ShowClientState />
-      </ClientProvider>
+      <ClientProvider session={session}>{children}</ClientProvider>
     </BrowserRouter>,
   );
+
+test("uses a client supplied by the host without waiting", () => {
+  const { container } = renderProvider(hostClientSession(mockClient()));
 
   // Available on the very first render: a supplied client needs no session
   // restoring, so there is no loading state to pass through.
   expect(container.textContent).toBe("@alice:example.org");
 });
 
-test("does not claim exclusive use of storage when given a client", () => {
-  // The channel is created when the module loads, so spy on the prototype
-  // rather than trying to replace the global.
-  const postMessage = vi.spyOn(BroadcastChannel.prototype, "postMessage");
-
-  render(
-    <BrowserRouter>
-      <ClientProvider client={mockClient()}>
-        <ShowClientState />
-      </ClientProvider>
-    </BrowserRouter>,
-  );
-
-  // The broadcast shuts down other instances to protect Element Call's own
-  // stores. A host's client brings its own, so there is nothing to protect.
-  expect(postMessage).not.toHaveBeenCalled();
-
-  postMessage.mockRestore();
-});
-
 test("follows the client when the host swaps it", () => {
-  const first = mockClient();
-  const second = mockClient("@bob:example.org");
-
-  const { container, rerender } = render(
-    <BrowserRouter>
-      <ClientProvider client={first}>
-        <ShowClientState />
-      </ClientProvider>
-    </BrowserRouter>,
+  const { container, rerender } = renderProvider(
+    hostClientSession(mockClient()),
   );
   expect(container.textContent).toBe("@alice:example.org");
 
   // A host that re-authenticates hands us a new client on a mounted component
   rerender(
     <BrowserRouter>
-      <ClientProvider client={second}>
+      <ClientProvider
+        session={hostClientSession(mockClient("@bob:example.org"))}
+      >
         <ShowClientState />
       </ClientProvider>
     </BrowserRouter>,
@@ -98,47 +87,89 @@ test("follows the client when the host swaps it", () => {
   expect(container.textContent).toBe("@bob:example.org");
 });
 
-test("finds a client of its own when the host supplies none", async () => {
-  const client = mockClient();
-  const loadClient = vi
-    .fn<ClientLoader>()
-    .mockResolvedValue({ client, passwordlessUser: true });
-
-  const { container } = render(
-    <BrowserRouter>
-      <ClientProvider loadClient={loadClient}>
-        <ShowClientState />
-      </ClientProvider>
-    </BrowserRouter>,
-  );
+test("follows a session of its own as it is restored", () => {
+  const state$ = new BehaviorSubject<ClientSessionState>({ state: "loading" });
+  const { container } = renderProvider({ state$ });
 
   // Nothing to show until a session has been restored or created
   expect(container.textContent).toBe("loading");
-  await waitFor(() => expect(container.textContent).toBe("@alice:example.org"));
-  // Given the session store to restore from and to clear on a stale session
-  expect(loadClient).toHaveBeenCalledWith(
-    expect.any(Function),
-    expect.any(Function),
+  act(() =>
+    state$.next({
+      state: "signedIn",
+      client: mockClient(),
+      passwordlessUser: true,
+    }),
   );
+  expect(container.textContent).toBe("@alice:example.org");
 });
 
-test("has no one signed in when given neither a client nor a way to load one", async () => {
-  const { container } = render(
-    <BrowserRouter>
-      <ClientProvider>
-        <ShowClientState />
+test("has no one signed in when the session says so", () => {
+  const { container } = renderProvider({
+    state$: new BehaviorSubject<ClientSessionState>({ state: "signedOut" }),
+  });
+  expect(container.textContent).toBe("unauthenticated");
+});
+
+test("shows the session's error in place of its children", () => {
+  const { container } = renderProvider({
+    state$: new BehaviorSubject<ClientSessionState>({
+      state: "error",
+      error: new Error("Opened elsewhere"),
+    }),
+  });
+  // The error page, not the children
+  expect(container.textContent).not.toContain("error");
+  expect(container.textContent).toContain("Something went wrong");
+});
+
+test("hands the session itself to the context", () => {
+  const session: ClientSession = {
+    state$: new BehaviorSubject<ClientSessionState>({ state: "signedOut" }),
+    register: vi.fn(),
+  };
+  const { result } = renderHook(() => useClientSession(), {
+    wrapper: ({ children }) => (
+      <ClientProvider session={session}>
+        <>{children}</>
       </ClientProvider>
-    </BrowserRouter>,
+    ),
+  });
+  expect(result.current).toBe(session);
+});
+
+test("leaves for home after logging out of the session", async () => {
+  const logout = vi.fn().mockResolvedValue(undefined);
+  const leaveToHome = vi.fn();
+  const { result } = renderClientLegacy(
+    {
+      state$: new BehaviorSubject<ClientSessionState>({
+        state: "signedIn",
+        client: mockClient(),
+        passwordlessUser: false,
+      }),
+      logout,
+    },
+    leaveToHome,
   );
 
-  await waitFor(() => expect(container.textContent).toBe("unauthenticated"));
+  await act(async () => {
+    result.current.logout?.();
+    await flushPromises();
+  });
+  expect(logout).toHaveBeenCalled();
+  expect(leaveToHome).toHaveBeenCalled();
+});
+
+test("offers no logout when the session is not ours to end", () => {
+  const { result } = renderClientLegacy(hostClientSession(mockClient()));
+  expect(result.current.logout).toBeUndefined();
 });
 
 test("reports the client as disconnected while its sync fails to connect", () => {
   const client = mockClient();
   const { result } = renderHook(() => useClientDisconnected(), {
     wrapper: ({ children }) => (
-      <ClientProvider client={client}>
+      <ClientProvider session={hostClientSession(client)}>
         <>{children}</>
       </ClientProvider>
     ),
@@ -160,3 +191,20 @@ test("reports the client as disconnected while its sync fails to connect", () =>
   act(() => onSync("SYNCING", null));
   expect(result.current).toBe(false);
 });
+
+function renderClientLegacy(
+  session: ClientSession,
+  leaveToHome: (() => void) | null = null,
+): ReturnType<typeof renderHook<ReturnType<typeof useClientLegacy>, never>> {
+  return renderHook(() => useClientLegacy(), {
+    wrapper: ({ children }) => (
+      <BrowserRouter>
+        <LeaveToHomeProvider value={leaveToHome}>
+          <ClientProvider session={session}>
+            <>{children}</>
+          </ClientProvider>
+        </LeaveToHomeProvider>
+      </BrowserRouter>
+    ),
+  });
+}

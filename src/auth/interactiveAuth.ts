@@ -13,11 +13,11 @@ import {
 } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
 
-import { type Session } from "../ClientContext";
+import { type StoredSession } from "../state/ClientSession";
 
 /** What the homeserver hands out for a new session. */
 export type Credentials = Pick<
-  Session,
+  StoredSession,
   "user_id" | "device_id" | "access_token"
 >;
 
