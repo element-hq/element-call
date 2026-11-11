@@ -21,6 +21,7 @@ import { type MediaDevices } from "./MediaDevices";
 import { MuteStates } from "./MuteStates";
 import { nullHostBridge } from "../HostBridge";
 import { flushPromises, mockMediaDevices, testScope } from "../utils/test";
+import { type BackgroundEffectsState } from "./BackgroundEffects";
 
 describe("LobbyMediaViewModel", () => {
   it("opens what starts enabled in one capture and follows the devices", async () => {
@@ -135,7 +136,7 @@ function setup(
     muteStates,
     mediaDevices,
     {},
-    constant(processor),
+    constant<BackgroundEffectsState>({ supported: true, processor }),
   );
   return { media, vm, muteStates, mediaDevices };
 }

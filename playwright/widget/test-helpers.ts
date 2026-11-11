@@ -144,7 +144,11 @@ export class TestHelpers {
 
     await this.dismissStartupToasts(page);
 
-    await TestHelpers.setDevToolElementCallDevUrl(page);
+    // The other site's Element Web opens the embedded package it serves itself
+    // (see docker-compose-playwright.yml), not the dev server's app.
+    if (host !== HOST2) {
+      await TestHelpers.setDevToolElementCallDevUrl(page);
+    }
 
     const clientHandle = await page.evaluateHandle(() =>
       window.mxMatrixClientPeg.get(),

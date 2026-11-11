@@ -5,8 +5,8 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import arc from "../graphics/background-arc.jpg?url";
-import glow from "../graphics/background-glow.jpg?url";
+import arc from "../graphics/background-arc.jpg?url&no-inline";
+import glow from "../graphics/background-glow.jpg?url&no-inline";
 
 export interface ShippedBackground {
   /** Stored in the user's settings when chosen, so it must not change. */

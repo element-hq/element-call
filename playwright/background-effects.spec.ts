@@ -106,6 +106,66 @@ async function drawsPerSecond(page: Page): Promise<number> {
   });
 }
 
+test.describe("the camera menu's preview", () => {
+  test("shows the camera with the effect in force", async ({ page }) => {
+    test.setTimeout(120_000);
+    await page.goto("/");
+    await SpaHelpers.createCall(page, "Preview user", "Preview in the menu");
+    const camera = await cameraColour(page.locator("video").first());
+
+    await page.getByRole("button", { name: "Camera", exact: true }).click();
+    const preview = page.getByRole("menu").locator("video");
+    await expect(preview).toBeVisible();
+    await expect
+      .poll(async () => distance(await averageColour(preview), camera), {
+        timeout: 20_000,
+      })
+      .toBeLessThan(30);
+
+    const tile = page.getByRole("menuitemradio", { name: "Background 1" });
+    await tile.click();
+    const picture = await averageColour(tile.locator("img"));
+    await expect
+      .poll(async () => distance(await averageColour(preview), picture), {
+        timeout: 60_000,
+      })
+      .toBeLessThan(distance(camera, picture) / 2);
+  });
+
+  test("shows the call's own camera once joined", async ({ page }) => {
+    test.setTimeout(120_000);
+    await page.goto("/");
+    await SpaHelpers.createCall(
+      page,
+      "Call preview user",
+      "Preview in the call's menu",
+      true,
+    );
+    await expect(page.getByTestId("incall_videomute")).toBeEnabled({
+      timeout: 10_000,
+    });
+    const camera = await cameraColour(page.locator("video").first());
+
+    await page.getByRole("button", { name: "Camera", exact: true }).click();
+    const preview = page.getByRole("menu").locator("video");
+    await expect(preview).toBeVisible();
+    await expect
+      .poll(async () => distance(await averageColour(preview), camera), {
+        timeout: 20_000,
+      })
+      .toBeLessThan(30);
+
+    const tile = page.getByRole("menuitemradio", { name: "Background 1" });
+    await tile.click();
+    const picture = await averageColour(tile.locator("img"));
+    await expect
+      .poll(async () => distance(await averageColour(preview), picture), {
+        timeout: 60_000,
+      })
+      .toBeLessThan(distance(camera, picture) / 2);
+  });
+});
+
 test.describe("background effects section", () => {
   test("section stays within the call area at every size", async ({ page }) => {
     test.setTimeout(120_000);
@@ -148,6 +208,46 @@ test.describe("background effects section", () => {
       await page.keyboard.press("Escape");
       await expect(menu).toBeHidden();
     }
+  });
+});
+
+test.describe("a pipeline that fails to build", () => {
+  test("offers no effects for the session, and keeps the choice", async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    await page.goto("/");
+    await SpaHelpers.createCall(page, "Failing user", "Pipeline fails");
+    const preview = page.locator("video").first();
+    const camera = await cameraColour(preview);
+    await page.route("**/*.tflite*", async (route) => route.abort());
+
+    await page.getByRole("button", { name: "Camera", exact: true }).click();
+    const tile = page.getByRole("menuitemradio", { name: "Background 1" });
+    await tile.click();
+    await expect(
+      page.getByText("Background effects are not supported on this platform."),
+    ).toBeVisible({ timeout: 30_000 });
+    await expect(tile).toBeDisabled();
+    await page.keyboard.press("Escape");
+    // The camera and microphone carry on without it.
+    expect(distance(await cameraColour(preview), camera)).toBeLessThan(30);
+    await expect(page.getByTestId("incall_mute")).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+
+    await page.unroute("**/*.tflite*");
+    await page.reload();
+    await expect(page.getByTestId("lobby_joinCall")).toBeVisible();
+    await page.getByRole("button", { name: "Camera", exact: true }).click();
+    await expect(tile).toHaveAttribute("aria-checked", "true");
+    const picture = await averageColour(tile.locator("img"));
+    await expect
+      .poll(async () => distance(await averageColour(preview), picture), {
+        timeout: 60_000,
+      })
+      .toBeLessThan(distance(camera, picture) / 2);
   });
 });
 
