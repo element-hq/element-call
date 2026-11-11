@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { expect, test, vi } from "vitest";
-import { render, waitFor } from "@testing-library/react";
+import { act, render, renderHook, waitFor } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import { type MatrixClient } from "matrix-js-sdk";
 import { type FC } from "react";
@@ -14,6 +14,7 @@ import { type FC } from "react";
 import {
   type ClientLoader,
   ClientProvider,
+  useClientDisconnected,
   useClientState,
 } from "./ClientContext";
 
@@ -131,4 +132,31 @@ test("has no one signed in when given neither a client nor a way to load one", a
   );
 
   await waitFor(() => expect(container.textContent).toBe("unauthenticated"));
+});
+
+test("reports the client as disconnected while its sync fails to connect", () => {
+  const client = mockClient();
+  const { result } = renderHook(() => useClientDisconnected(), {
+    wrapper: ({ children }) => (
+      <ClientProvider client={client}>
+        <>{children}</>
+      </ClientProvider>
+    ),
+  });
+  expect(result.current).toBe(false);
+
+  const [, onSync] = vi.mocked(client.on).mock.calls[0] as [
+    unknown,
+    (state: string, old: null, data?: { error?: Error }) => void,
+  ];
+  const connectionError = Object.assign(new Error("offline"), {
+    name: "ConnectionError",
+  });
+  act(() => onSync("ERROR", null, { error: connectionError }));
+  expect(result.current).toBe(true);
+  // Any other failure is not a connection problem
+  act(() => onSync("ERROR", null, { error: new Error("rate limited") }));
+  expect(result.current).toBe(false);
+  act(() => onSync("SYNCING", null));
+  expect(result.current).toBe(false);
 });

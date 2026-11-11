@@ -41,9 +41,6 @@ export type ClientState = ValidClientState | ErrorState;
 export type ValidClientState = {
   state: "valid";
   authenticated?: AuthenticatedClient;
-  // 'Disconnected' rather than 'connected' because it tracks specifically
-  // whether the client is supposed to be connected but is not
-  disconnected: boolean;
   setClient: (client: MatrixClient, session: Session) => void;
 };
 
@@ -122,6 +119,33 @@ export function useClientLegacy(): {
     logout,
     error,
   };
+}
+
+/**
+ * Whether the signed-in client is supposed to be connected but is not.
+ */
+export function useClientDisconnected(): boolean {
+  const { client } = useClient();
+  // Tagged with the client it describes, so that a swapped client does not
+  // inherit the old one's verdict before its first sync
+  const [disconnected, setDisconnected] = useState<
+    [MatrixClient, boolean] | null
+  >(null);
+
+  useEffect(() => {
+    if (client === undefined) return;
+    const onSync = (
+      syncState: SyncState,
+      _old: SyncState | null,
+      data?: ISyncStateData,
+    ): void => setDisconnected([client, clientIsDisconnected(syncState, data)]);
+    client.on(ClientEvent.Sync, onSync);
+    return (): void => {
+      client.removeListener(ClientEvent.Sync, onSync);
+    };
+  }, [client]);
+
+  return disconnected !== null && disconnected[0] === client && disconnected[1];
 }
 
 const loadChannel =
@@ -300,8 +324,6 @@ export const ClientProvider: FC<Props> = ({ children, client, loadClient }) => {
     }, [initClientState?.client, setAlreadyOpenedErr]),
   );
 
-  const [isDisconnected, setIsDisconnected] = useState(false);
-
   const state: ClientState | undefined = useMemo(() => {
     if (alreadyOpenedErr) {
       return { state: "error", error: alreadyOpenedErr };
@@ -323,23 +345,8 @@ export const ClientProvider: FC<Props> = ({ children, client, loadClient }) => {
       state: "valid",
       authenticated,
       setClient,
-      disconnected: isDisconnected,
     };
-  }, [
-    alreadyOpenedErr,
-    changePassword,
-    initClientState,
-    logout,
-    setClient,
-    isDisconnected,
-  ]);
-
-  const onSync = useCallback(
-    (state: SyncState, _old: SyncState | null, data?: ISyncStateData) => {
-      setIsDisconnected(clientIsDisconnected(state, data));
-    },
-    [],
-  );
+  }, [alreadyOpenedErr, changePassword, initClientState, logout, setClient]);
 
   useEffect(() => {
     if (!initClientState) {
@@ -351,17 +358,7 @@ export const ClientProvider: FC<Props> = ({ children, client, loadClient }) => {
 
     if (PosthogAnalytics.hasInstance())
       PosthogAnalytics.instance.onLoginStatusChanged();
-
-    if (initClientState.client) {
-      initClientState.client.on(ClientEvent.Sync, onSync);
-    }
-
-    return (): void => {
-      if (initClientState.client) {
-        initClientState.client.removeListener(ClientEvent.Sync, onSync);
-      }
-    };
-  }, [initClientState, onSync]);
+  }, [initClientState]);
 
   if (alreadyOpenedErr) {
     return <ErrorPage error={alreadyOpenedErr} />;

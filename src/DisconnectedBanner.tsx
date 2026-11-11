@@ -10,7 +10,7 @@ import { type FC, type HTMLAttributes, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import styles from "./DisconnectedBanner.module.css";
-import { type ValidClientState, useClientState } from "./ClientContext";
+import { useClientDisconnected } from "./ClientContext";
 
 interface Props extends HTMLAttributes<HTMLElement> {
   children?: ReactNode;
@@ -23,13 +23,7 @@ export const DisconnectedBanner: FC<Props> = ({
   ...rest
 }) => {
   const { t } = useTranslation();
-  const clientState = useClientState();
-  let shouldShowBanner = false;
-
-  if (clientState?.state === "valid") {
-    const validClientState = clientState as ValidClientState;
-    shouldShowBanner = validClientState.disconnected;
-  }
+  const shouldShowBanner = useClientDisconnected();
 
   return (
     <>
