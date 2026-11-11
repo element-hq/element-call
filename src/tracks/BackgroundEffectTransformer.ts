@@ -11,11 +11,18 @@ import {
   VideoTransformer,
   type VideoTransformerInitOptions,
   type BackgroundOptions,
+  type SegmenterOptions,
 } from "@livekit/track-processors";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { ImageSegmenter } from "@mediapipe/tasks-vision";
 
-import modelAssetPath from "../mediapipe/imageSegmenter/selfie_segmenter.tflite?url";
+// Only the SIMD build of MediaPipe's runtime: every browser Element Call
+// supports has WebAssembly SIMD. As files rather than data URLs, so that a
+// host's bundler serves them as assets of its own, and a browser fetches them
+// only when an effect is first switched on.
+import wasmLoaderPath from "@mediapipe/tasks-vision/vision_wasm_internal.js?url&no-inline";
+import wasmBinaryPath from "@mediapipe/tasks-vision/vision_wasm_internal.wasm?url&no-inline";
+import modelAssetPath from "../mediapipe/imageSegmenter/selfie_segmenter.tflite?url&no-inline";
 
 interface WasmFileset {
   /** The path to the Wasm loader script. */
@@ -24,26 +31,7 @@ interface WasmFileset {
   wasmBinaryPath: string;
 }
 
-// The MediaPipe package, by default, ships some alternative versions of the
-// WASM files which avoid SIMD for compatibility with older browsers. But SIMD
-// in WASM is actually fine by our support policy, so we include just the SIMD
-// versions.
-// It's really not ideal that we have to reference these internal files from
-// MediaPipe and depend on node_modules having this specific structure. It's
-// easy to see this breaking if our dependencies changed and MediaPipe were
-// no longer hoisted, or if we switched to another dependency loader such as
-// yarn PnP.
-// https://github.com/google-ai-edge/mediapipe/issues/5961
-const wasmFileset: WasmFileset = {
-  wasmLoaderPath: new URL(
-    "../../node_modules/@mediapipe/tasks-vision/wasm/vision_wasm_internal.js",
-    import.meta.url,
-  ).href,
-  wasmBinaryPath: new URL(
-    "../../node_modules/@mediapipe/tasks-vision/wasm/vision_wasm_internal.wasm",
-    import.meta.url,
-  ).href,
-};
+const wasmFileset: WasmFileset = { wasmLoaderPath, wasmBinaryPath };
 
 /**
  * Track processor that applies effects such as blurring to a user's background.
@@ -53,18 +41,41 @@ const wasmFileset: WasmFileset = {
  * resource fetched from the public internet.
  */
 export class BackgroundEffectTransformer extends BackgroundTransformer {
-  /** Called once, when the first frame carrying an effect has been drawn. */
+  /**
+   * Called once, when the first frame carrying an effect has been drawn.
+   * This is used for drewAFrame$ to show the correct loading state.
+   */
   public onFirstFrame: (() => void) | undefined;
+  private drewAFrame = false;
+
+  public constructor(opts: BackgroundOptions) {
+    super(opts);
+    // Called by the library for a frame it drew, never for one it passed on
+    // untouched.
+    this.options.onFrameProcessed = (stats): void => {
+      opts.onFrameProcessed?.(stats);
+      if (this.drewAFrame) return;
+      this.drewAFrame = true;
+      this.onFirstFrame?.();
+    };
+  }
 
   public override async transform(
     frame: VideoFrame,
     controller: TransformStreamDefaultController<VideoFrame>,
   ): Promise<void> {
-    const priming = this.isFirstFrame;
+    // From the LK docs:
+    // > Render a copy of the first frame is rendered to the screen as soon as possible to act
+    // > as a less jarring initial state than a solid color while the synchronous work below
+    // > (segmentation + frame rendering) occurs.
+    // We do not want this copy (it leaks unblurred media).
+    // So we always set `isFirstFrame` to false -> never show an unprocessed frame.
+    // It does not have any impact other than setting the unprocessed frame while loading the processor.
+    //
+    // To not show the blank frame, we have our own mechanism for hiding the loading overlay:
+    // `onFirstFrame` is what the EC UI will listen to and only then show the video feed.
+    this.isFirstFrame = false;
     await super.transform(frame, controller);
-    // Cleared only once a frame has been through the segmenter; a frame
-    // passed through untouched leaves it set.
-    if (priming && !this.isFirstFrame) this.onFirstFrame?.();
   }
 
   /**
@@ -92,17 +103,10 @@ export class BackgroundEffectTransformer extends BackgroundTransformer {
       inputElement: inputVideo,
     });
 
-    this.imageSegmenter = await ImageSegmenter.createFromOptions(wasmFileset, {
-      baseOptions: {
-        modelAssetPath,
-        delegate: "GPU",
-        ...this.options.segmenterOptions,
-      },
-      canvas: this.canvas,
-      runningMode: "VIDEO",
-      outputCategoryMask: true,
-      outputConfidenceMasks: false,
-    });
+    this.imageSegmenter = await createSegmenter(
+      this.canvas,
+      this.options.segmenterOptions,
+    );
 
     // BackgroundTransformer's own init applies these, and this one replaces it.
     if (this.options.imagePath) {
@@ -114,5 +118,40 @@ export class BackgroundEffectTransformer extends BackgroundTransformer {
       this.gl?.setBlurRadius(this.options.blurRadius);
     }
     this.gl?.setBackgroundDisabled(this.options.backgroundDisabled ?? false);
+  }
+}
+
+/**
+ * Whether a segmenter can be built here, asked once before any camera depends
+ * on one: a pipeline that fails to build takes the camera down with it.
+ */
+export async function canSegment(): Promise<boolean> {
+  try {
+    (await createSegmenter(new OffscreenCanvas(1, 1))).close();
+    return true;
+  } catch (e) {
+    logger.warn("Background effects cannot run here", e);
+    return false;
+  }
+}
+
+/** On the GPU, or on the CPU where the GPU refuses, as a blocklisted one does. */
+async function createSegmenter(
+  canvas: HTMLCanvasElement | OffscreenCanvas | undefined,
+  segmenterOptions?: SegmenterOptions,
+): Promise<ImageSegmenter> {
+  const build = async (delegate: "GPU" | "CPU"): Promise<ImageSegmenter> =>
+    ImageSegmenter.createFromOptions(wasmFileset, {
+      baseOptions: { modelAssetPath, delegate, ...segmenterOptions },
+      canvas,
+      runningMode: "VIDEO",
+      outputCategoryMask: true,
+      outputConfidenceMasks: false,
+    });
+  try {
+    return await build("GPU");
+  } catch (e) {
+    logger.warn("Segmenting on the CPU, as the GPU refused", e);
+    return build("CPU");
   }
 }

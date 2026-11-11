@@ -12,6 +12,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { MediaMuteAndSwitchButton } from "./MediaMuteAndSwitchButton";
 import styles from "./MediaMuteAndSwitchButton.module.css";
 import { type BackgroundEffectGridItem } from "./BackgroundEffectGrid";
+import { SelfPreview } from "./SelfPreview";
 import { shippedBackgrounds } from "../tracks/backgroundEffectCatalog";
 import meterStyles from "./MicrophoneLevelMeter.module.css";
 import { MediaDevicesContext } from "../MediaDevicesContext";
@@ -58,6 +59,50 @@ const WithAMicrophone: FC<{ children: ReactNode }> = ({ children }) => {
   }, []);
 
   return <>{children}</>;
+};
+
+/** A camera for the preview: a figure against a room, drawn to a stream. */
+const FakeCamera: FC = () => {
+  const [stream, setStream] = useState<MediaStream>();
+  useEffect(() => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 640;
+    canvas.height = 360;
+    const context = canvas.getContext("2d")!;
+    const draw = (): void => {
+      context.fillStyle = "#6b7f8e";
+      context.fillRect(0, 0, 640, 360);
+      context.fillStyle = "#c9a27e";
+      context.beginPath();
+      context.arc(320, 150, 62, 0, 2 * Math.PI);
+      context.fill();
+      context.fillStyle = "#34495e";
+      context.beginPath();
+      context.ellipse(320, 380, 150, 140, 0, Math.PI, 2 * Math.PI);
+      context.fill();
+    };
+    draw();
+    // Redrawn, so the stream keeps delivering frames.
+    const timer = setInterval(draw, 200);
+    const captured = canvas.captureStream(10);
+    setStream(captured);
+    return (): void => {
+      clearInterval(timer);
+      captured.getTracks().forEach((track) => track.stop());
+    };
+  }, []);
+  return (
+    <video
+      data-testid="preview-camera"
+      autoPlay
+      muted
+      playsInline
+      ref={(video): void => {
+        if (video && stream && video.srcObject !== stream)
+          video.srcObject = stream;
+      }}
+    />
+  );
 };
 
 /** Supplies a call-sized root. Without one the list is bounded by the whole Storybook frame. */
@@ -171,8 +216,8 @@ export const VideoMute: Story = {
       { label: { type: "name", name: "Camera 1" }, id: "1" },
       { label: { type: "name", name: "Camera 2" }, id: "2" },
     ],
-
     selectedOption: "1",
+    selfPreview: <SelfPreview track={null} />,
   },
 };
 
@@ -198,6 +243,9 @@ export const VideoUnmute: Story = {
     backgroundEffects: effects,
     selectedBackgroundEffect: "none",
     onSelectBackgroundEffect: fn(),
+    onAddBackgroundImage: fn(),
+    // As the footer always gives the camera menu one.
+    selfPreview: <FakeCamera />,
   },
 };
 
@@ -240,6 +288,11 @@ export const BackgroundEffects: Story = {
       await expect(tile.left >= frame.left && tile.right <= frame.right).toBe(
         true,
       );
+
+    const add = within(section).getByRole("menuitem", { name: "Add image" });
+    await expect(
+      tiles[3].compareDocumentPosition(add) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
 
     await userEvent.click(menu.getByRole("menuitemradio", { name: "Blur" }));
     await expect(args.onSelectBackgroundEffect).toHaveBeenCalledWith("blur");
@@ -338,6 +391,270 @@ export const BackgroundEffectsSettling: Story = {
       checked: false,
     }))
       await expect(other).toHaveAttribute("aria-busy", "false");
+    await expect(menu.queryByTestId("preview-camera")).toBeNull();
+    const frames = document.body.querySelectorAll(`.${styles.selfPreview} svg`);
+    await expect(frames).toHaveLength(1);
+  },
+};
+
+/** A file that can't be used: said where it was chosen, and nothing changes. */
+export const BackgroundImageRefused: Story = {
+  args: {
+    ...VideoUnmute.args,
+    selectedBackgroundEffect: "blur",
+    backgroundEffectNotice:
+      "Background effects run slowly on this platform, which may cause your video to stutter.",
+    backgroundImageRefusal: { text: "That file is not a supported image" },
+  },
+  decorators: [
+    (Story): JSX.Element => (
+      <WithACallArea blockSize={300}>
+        <Story />
+      </WithACallArea>
+    ),
+  ],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
+    const menu = within(document.body);
+    const message = await menu.findByText("That file is not a supported image");
+    const list = document.body.querySelector<HTMLElement>(
+      `.${styles.deviceList}`,
+    )!;
+    await expect(list.scrollHeight).toBeGreaterThan(list.clientHeight);
+    const scrollport = list.getBoundingClientRect();
+    const shown = message.getBoundingClientRect();
+    await expect(shown.bottom).toBeLessThanOrEqual(scrollport.bottom + 1);
+    await expect(shown.top).toBeGreaterThanOrEqual(scrollport.top - 1);
+    await expect(menu.queryByText(/run slowly/)).toBeNull();
+    await expect(
+      menu.getByRole("menuitemradio", { name: "Blur" }),
+    ).toHaveAttribute("aria-checked", "true");
+  },
+};
+
+/** A flat picture, for backgrounds of one's own. */
+function swatch(colour: string): string {
+  return `data:image/svg+xml,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="9"><rect width="16" height="9" fill="${colour}"/></svg>`,
+  )}`;
+}
+
+/** One's own backgrounds are removable, never the one in force. */
+export const AddedBackgroundsCanBeRemoved: Story = {
+  args: {
+    ...VideoUnmute.args,
+    backgroundEffects: [
+      ...effects,
+      {
+        id: "added:one",
+        kind: "image",
+        imageUrl: swatch("#c2410c"),
+        removable: true,
+      },
+      {
+        id: "added:two",
+        kind: "image",
+        imageUrl: swatch("#1d4ed8"),
+        removable: true,
+      },
+    ],
+    selectedBackgroundEffect: "added:one",
+    onRemoveBackgroundEffect: fn(),
+  },
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
+    const body = within(document.body);
+
+    const inForce = await body.findByRole("menuitemradio", {
+      name: "Background 3",
+    });
+    await expect(inForce).not.toHaveAttribute("aria-keyshortcuts");
+
+    const other = body.getByRole("menuitemradio", { name: "Background 4" });
+    await expect(other).toHaveAttribute("aria-keyshortcuts", "Delete");
+    other.focus();
+    await userEvent.keyboard("{Delete}");
+    await expect(args.onRemoveBackgroundEffect).toHaveBeenCalledWith(
+      "added:two",
+    );
+
+    const wrapper = other.parentElement!;
+    await userEvent.hover(wrapper);
+    const cross = wrapper.querySelector<HTMLElement>(
+      "[aria-hidden]:last-child",
+    )!;
+    const probe = document.createElement("span");
+    probe.style.color = "var(--cpd-color-icon-critical-primary)";
+    cross.append(probe);
+    const critical = getComputedStyle(probe).color;
+    probe.remove();
+    await expect(getComputedStyle(cross).color).toBe(critical);
+    const tile = other.getBoundingClientRect();
+    const box = cross.getBoundingClientRect();
+    await expect(box.right).toBeGreaterThan(tile.right);
+    await expect(box.top).toBeLessThan(tile.top);
+
+    await userEvent.hover(cross);
+    await waitFor(async () =>
+      expect(
+        [...document.body.querySelectorAll("div")].some(
+          (d) => d.textContent === "Remove" && d.offsetParent !== null,
+        ),
+      ).toBe(true),
+    );
+  },
+};
+
+/** Removing by pointer while the selection really changes. */
+export const RemovingWithLiveSelection: Story = {
+  args: AddedBackgroundsCanBeRemoved.args,
+  render: function WithLiveSelection(args): JSX.Element {
+    const [selected, setSelected] = useState("none");
+    const [offered, setOffered] = useState(args.backgroundEffects ?? []);
+    return (
+      <MediaMuteAndSwitchButton
+        {...args}
+        backgroundEffects={offered}
+        selectedBackgroundEffect={selected}
+        onSelectBackgroundEffect={setSelected}
+        onRemoveBackgroundEffect={(id): void =>
+          setOffered((current) => current.filter((o) => o.id !== id))
+        }
+      />
+    );
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
+    const body = within(document.body);
+
+    const tile = await body.findByRole("menuitemradio", {
+      name: "Background 4",
+    });
+    await userEvent.hover(tile);
+    const cross = tile.parentElement!.querySelector<HTMLElement>(
+      "[aria-hidden]:last-child",
+    )!;
+    await expect(cross).toBeVisible();
+    await userEvent.click(cross);
+
+    await waitFor(async () =>
+      expect(
+        body.queryByRole("menuitemradio", { name: "Background 4" }),
+      ).toBeNull(),
+    );
+    await expect(
+      body.getByRole("menuitemradio", { name: "None" }),
+    ).toHaveAttribute("aria-checked", "true");
+  },
+};
+
+/** Where the call leaves room, the camera holds the top while the options scroll. */
+export const BackgroundEffectsWithPreview: Story = {
+  args: {
+    ...VideoUnmute.args,
+    // Enough that the list fills its share, so the preview's cost counts.
+    options: Array.from({ length: 8 }, (_, i) => ({
+      label: { type: "name" as const, name: `Camera ${i + 1}` },
+      id: `${i + 1}`,
+    })),
+  },
+  decorators: [
+    (Story): JSX.Element => (
+      <WithACallArea blockSize={640}>
+        <Story />
+      </WithACallArea>
+    ),
+  ],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
+    const picture = await within(document.body).findByTestId("preview-camera");
+    const preview = picture.parentElement!;
+    const list = document.body.querySelector<HTMLElement>(
+      `.${styles.deviceList}`,
+    )!;
+    const frame = document.body
+      .querySelector("[role='menu']")!
+      .getBoundingClientRect();
+
+    const box = preview.getBoundingClientRect();
+    await expect(list.contains(preview)).toBe(false);
+    await expect(box.top - frame.top).toBeLessThanOrEqual(2);
+    await expect(frame.width - box.width).toBeLessThanOrEqual(2);
+    await expect(box.width / box.height).toBeCloseTo(16 / 9, 1);
+    await expect(box.bottom).toBeLessThanOrEqual(
+      list.getBoundingClientRect().top,
+    );
+
+    const listShare = Math.round(640 * 0.6);
+    // The list runs on through the menu's padding at its foot, which isn't
+    // part of its share.
+    const listEnd =
+      list.getBoundingClientRect().bottom -
+      Number.parseFloat(getComputedStyle(list).paddingBlockEnd);
+    await expect(listEnd - box.top).toBeLessThanOrEqual(listShare + 1);
+
+    await expect(list.scrollHeight).toBeGreaterThan(list.clientHeight);
+    list.scrollTop = list.scrollHeight;
+    await expect(preview.getBoundingClientRect().top).toBe(box.top);
+  },
+};
+
+/** With the camera off the preview says so, and effects can still be chosen. */
+export const BackgroundEffectsPreviewWithTheCameraOff: Story = {
+  args: {
+    ...VideoUnmute.args,
+    enabled: false,
+    selfPreview: <SelfPreview track={null} />,
+  },
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
+    const menu = within(document.body);
+    await menu.findByRole("group", { name: "Background effects" });
+    const preview = document.body.querySelector(`.${styles.selfPreview}`)!;
+    await expect(preview.querySelector("video")).toBeNull();
+    await expect(preview.querySelector("svg")).not.toBeNull();
+
+    await userEvent.click(menu.getByRole("menuitemradio", { name: "Blur" }));
+    await expect(args.onSelectBackgroundEffect).toHaveBeenCalledWith("blur");
+  },
+};
+
+/** In a call too short to hold it, the camera leads the options and scrolls away. */
+export const BackgroundEffectsPreviewScrollsWithTheList: Story = {
+  args: VideoUnmute.args,
+  decorators: [
+    (Story): JSX.Element => (
+      <WithACallArea blockSize={300}>
+        <Story />
+      </WithACallArea>
+    ),
+  ],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Camera" }));
+    const picture = await within(document.body).findByTestId("preview-camera");
+    const preview = picture.parentElement!;
+    const list = document.body.querySelector<HTMLElement>(
+      `.${styles.deviceList}`,
+    )!;
+    await expect(list.contains(preview)).toBe(true);
+    const cameras = within(document.body).getByRole("group", {
+      name: "Camera",
+    });
+    await expect(
+      preview.compareDocumentPosition(cameras) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+
+    list.scrollTop = list.scrollHeight;
+    await expect(preview.getBoundingClientRect().bottom).toBeLessThan(
+      list.getBoundingClientRect().top,
+    );
   },
 };
 

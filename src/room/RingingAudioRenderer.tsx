@@ -12,8 +12,8 @@ import { type RingingMediaViewModel } from "../state/media/RingingMediaViewModel
 import { useBehavior } from "../useBehavior";
 import { useInitial } from "../useInitial";
 import { prefetchSounds } from "../soundUtils";
-import ringtoneMp3 from "../sound/ringtone.mp3?url";
-import ringtoneOgg from "../sound/ringtone.ogg?url";
+import ringtoneMp3 from "../sound/ringtone.mp3?url&no-inline";
+import ringtoneOgg from "../sound/ringtone.ogg?url&no-inline";
 import { type UseAudioContext, useAudioContext } from "../useAudioContext";
 import { useLatest } from "../useLatest";
 

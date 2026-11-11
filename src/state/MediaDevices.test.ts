@@ -35,6 +35,10 @@ import { AudioOutput, MediaDevices } from "./MediaDevices";
 import { AndroidControlledAudioOutput } from "./AndroidControlledAudioOutput";
 import { IOSControlledAudioOutput } from "./IOSControlledAudioOutput";
 import { ObservableScope } from "./ObservableScope";
+import {
+  RTC_CALL_INTENT_AUDIO,
+  RTC_CALL_INTENT_VIDEO,
+} from "matrix-js-sdk/lib/matrixrtc";
 
 // Which audio output implementation is used is decided by what the app hosting
 // Element Call told it, rather than being discovered from the environment.
@@ -52,7 +56,7 @@ describe("MediaDevices audio output", () => {
 
     const devices = new MediaDevices(new ObservableScope(), {
       controlledAudioDevices: true,
-      callIntent: "audio",
+      callIntent: RTC_CALL_INTENT_AUDIO,
     });
 
     expect(devices.audioOutput).toBeInstanceOf(AndroidControlledAudioOutput);
@@ -63,7 +67,7 @@ describe("MediaDevices audio output", () => {
 
     const devices = new MediaDevices(new ObservableScope(), {
       controlledAudioDevices: true,
-      callIntent: "video",
+      callIntent: RTC_CALL_INTENT_VIDEO,
     });
 
     expect(devices.audioOutput).toBeInstanceOf(IOSControlledAudioOutput);

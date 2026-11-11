@@ -21,6 +21,8 @@ import { type Handler } from "./MuteStates";
 /** How a mute switch gets a track where there is none. */
 export interface TrackSupply {
   publish: () => Promise<unknown>;
+  /** Awaited before a switch turned on acts: a camera waits for its processor to be known. */
+  ready?: () => Promise<unknown>;
 }
 
 /**
@@ -45,6 +47,7 @@ export function followMuteState(
   let desired = muteState.enabled$.value;
   muteState.setHandler(async (enabled) => {
     desired = enabled;
+    if (enabled) await supply.ready?.();
     const track = track$.value;
     if (track !== undefined) {
       desired = await track.setEnabled(enabled);
@@ -94,18 +97,23 @@ export function followDevice(
 /**
  * Attached once the camera track exists rather than carried in the publish
  * request, so that a new track and a change of processor take the same path.
+ * Answers with a wait for the latest attachment to have gone through: a
+ * camera turned on before then would restart without its processor.
  */
 export function followProcessor(
   scope: ObservableScope,
   camera$: Behavior<LocalVideoMediaTrack | undefined>,
   videoProcessor$: Behavior<VideoProcessor | undefined>,
   logger: Logger,
-): void {
+): () => Promise<void> {
+  let attached = Promise.resolve();
   combineLatest([camera$, videoProcessor$])
     .pipe(scope.bind())
     .subscribe(([camera, processor]) => {
-      camera?.setProcessor(processor).catch((e) => {
-        logger.error("Failed to set the video processor", e);
-      });
+      attached =
+        camera?.setProcessor(processor).catch((e) => {
+          logger.error("Failed to set the video processor", e);
+        }) ?? Promise.resolve();
     });
+  return async () => attached;
 }

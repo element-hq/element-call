@@ -60,7 +60,7 @@ describe("joinJsSdkSession", () => {
     expect(s.join).toHaveBeenCalledWith(ownMemberMock, [transportWithAlias], {
       notificationType: "ring",
       callIntent: undefined,
-      applicationData: {},
+      applicationData: undefined,
       manageMediaKeys: true,
       delayedLeaveEventRestartMs: 300_000,
       delayedLeaveEventDelayMs: 3_600_000,
@@ -95,13 +95,14 @@ describe("joinJsSdkSession", () => {
     );
   });
 
-  it("lifts the call intent out of the application data and sends sticky events in Matrix 2.0 mode", () => {
+  it("passes the call intent and application data through and sends sticky events in Matrix 2.0 mode", () => {
     const s = session();
 
     joinJsSdkSession("!room:example.org", s, ownMemberMock, transport, {
       encryptMedia: true,
       matrixRTCMode: MatrixRTCMode.Matrix_2_0,
-      applicationData: { "m.call.intent": "audio", custom: 1 },
+      callIntent: "m.audio",
+      applicationData: { custom: 1 },
       timings: defaultSessionTimings,
       delayedLeave: defaultSessionTimings.delayedLeave,
     });
@@ -110,7 +111,7 @@ describe("joinJsSdkSession", () => {
       ownMemberMock,
       [transportWithAlias],
       expect.objectContaining({
-        callIntent: "audio",
+        callIntent: "m.audio",
         applicationData: { custom: 1 },
         unstableSendStickyEvents: true,
       }),
@@ -124,7 +125,8 @@ describe("joinJsSdkSession", () => {
     joinJsSdkSession("!room:example.org", s, ownMemberMock, transport, {
       encryptMedia: true,
       matrixRTCMode: MatrixRTCMode.Matrix_2_0,
-      applicationData: { "m.call.intent": "audio", custom: 1 },
+      callIntent: "m.audio",
+      applicationData: { custom: 1 },
       timings: defaultSessionTimings,
       delayedLeave: defaultSessionTimings.delayedLeave,
     });
@@ -133,7 +135,7 @@ describe("joinJsSdkSession", () => {
       ownMemberMock,
       [transport],
       expect.objectContaining({
-        callIntent: "audio",
+        callIntent: "m.audio",
         applicationData: { custom: 1 },
         unstableSendStickyEvents: true,
       }),

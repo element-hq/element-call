@@ -16,7 +16,6 @@ import {
   type LocalMedia,
   type LocalVideoMediaTrack,
 } from "@element-hq/matrixrtc-sdk";
-import { map } from "rxjs";
 
 import inCallStyles from "./InCallView.module.css";
 import styles from "./LobbyView.module.css";
@@ -134,9 +133,7 @@ export const LobbyView: FC<Props> = ({
         muteStates,
         devices,
         captureSettings(),
-        mediaScope.behavior(
-          backgroundEffectsState$.pipe(map((state) => state.processor)),
-        ),
+        backgroundEffectsState$,
       ),
     );
     return (): void => {
@@ -158,13 +155,15 @@ export const LobbyView: FC<Props> = ({
     null,
   );
   useEffect(() => {
+    if (mediaVm === null) return;
     const footerScope = new ObservableScope();
     setFooterVm(
       createLobbyFooterViewModel(
         footerScope,
         muteStates,
         devices,
-        backgroundEffectsState$.pipe(map(({ settling }) => settling ?? false)),
+        backgroundEffectsState$,
+        mediaVm.videoTrack$,
         openSettings,
         hangup,
         // Logo and header are connected: only show the logo in SPA with header.
@@ -179,6 +178,7 @@ export const LobbyView: FC<Props> = ({
     backgroundEffectsState$,
     hangup,
     hideHeader,
+    mediaVm,
     muteStates,
     openSettings,
   ]);

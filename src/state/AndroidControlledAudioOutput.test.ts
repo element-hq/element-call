@@ -7,7 +7,11 @@ Please see LICENSE in the repository root for full details.
 
 import { it, vi, expect, beforeEach, afterEach, describe } from "vitest";
 import { firstValueFrom, of, Subject, take, toArray } from "rxjs";
-import { type RTCCallIntent } from "matrix-js-sdk/lib/matrixrtc";
+import {
+  RTC_CALL_INTENT_AUDIO,
+  RTC_CALL_INTENT_VIDEO,
+  type RTCCallIntent,
+} from "matrix-js-sdk/lib/matrixrtc";
 
 import { AndroidControlledAudioOutput } from "./AndroidControlledAudioOutput.ts";
 import type { Controls, OutputDevice } from "../controls";
@@ -117,7 +121,7 @@ describe("Default selection", () => {
     const controlledAudioOutput = new AndroidControlledAudioOutput(
       of(BASE_DEVICE_LIST),
       testScope,
-      "video",
+      RTC_CALL_INTENT_VIDEO,
       mockControls,
     );
 
@@ -142,7 +146,7 @@ describe("Default selection", () => {
     const controlledAudioOutput = new AndroidControlledAudioOutput(
       of(BASE_DEVICE_LIST),
       testScope,
-      "audio",
+      RTC_CALL_INTENT_AUDIO,
       mockControls,
     );
 
@@ -163,7 +167,7 @@ describe("Default selection", () => {
     });
   });
 
-  ["audio", "video"].forEach((callIntent) => {
+  [RTC_CALL_INTENT_AUDIO, RTC_CALL_INTENT_VIDEO].forEach((callIntent) => {
     it(`Default to BT headset for ${callIntent} calls if present`, async () => {
       const controlledAudioOutput = new AndroidControlledAudioOutput(
         of(BT_HEADSET_BASE_DEVICE_LIST),
@@ -190,7 +194,7 @@ describe("Default selection", () => {
     });
   });
 
-  ["audio", "video"].forEach((callIntent) => {
+  [RTC_CALL_INTENT_AUDIO, RTC_CALL_INTENT_VIDEO].forEach((callIntent) => {
     it(`Default to wired headset for ${callIntent} calls if present`, async () => {
       const controlledAudioOutput = new AndroidControlledAudioOutput(
         of(WIRED_HEADSET_BASE_DEVICE_LIST),
@@ -300,7 +304,7 @@ describe("Test select a device", () => {
           b: BT_HEADSET_BASE_DEVICE_LIST,
         }),
         testScope,
-        "audio",
+        RTC_CALL_INTENT_AUDIO,
         mockControls,
       );
 
@@ -340,7 +344,7 @@ describe("Test select a device", () => {
           c: BASE_DEVICE_LIST,
         }),
         testScope,
-        "audio",
+        RTC_CALL_INTENT_AUDIO,
         mockControls,
       );
 
@@ -393,7 +397,7 @@ describe("Available device changes", () => {
   });
 
   it("When a BT headset is added, control should switch to use it", () => {
-    createAudioControlledOutput("video");
+    createAudioControlledOutput(RTC_CALL_INTENT_VIDEO);
 
     // Emit the base device list, the speaker should be selected
     availableSource$.next(BASE_DEVICE_LIST);
@@ -419,7 +423,9 @@ describe("Available device changes", () => {
 
   // Android does not set `isExternalHeadset` to true for wired headphones, so we can't test this case.'
   it.skip("When a wired headset is added, control should switch to use it", async () => {
-    const controlledAudioOutput = createAudioControlledOutput("video");
+    const controlledAudioOutput = createAudioControlledOutput(
+      RTC_CALL_INTENT_VIDEO,
+    );
 
     // Emit the base device list, the speaker should be selected
     availableSource$.next(BASE_DEVICE_LIST);
@@ -446,7 +452,7 @@ describe("Available device changes", () => {
   });
 
   it("When the active bt headset is removed on audio call, control should switch to earpiece", () => {
-    createAudioControlledOutput("audio");
+    createAudioControlledOutput(RTC_CALL_INTENT_AUDIO);
 
     // Emit the BT headset device list, the BT headset should be selected
     availableSource$.next(BT_HEADSET_BASE_DEVICE_LIST);
@@ -472,7 +478,7 @@ describe("Available device changes", () => {
   });
 
   it("When the active bt headset is removed on video call, control should switch to speaker", () => {
-    createAudioControlledOutput("video");
+    createAudioControlledOutput(RTC_CALL_INTENT_VIDEO);
 
     availableSource$.next(BT_HEADSET_BASE_DEVICE_LIST);
 
@@ -497,7 +503,7 @@ describe("Available device changes", () => {
   });
 
   it("Do not repeatidly set the same device", () => {
-    createAudioControlledOutput("video");
+    createAudioControlledOutput(RTC_CALL_INTENT_VIDEO);
 
     availableSource$.next(BT_HEADSET_BASE_DEVICE_LIST);
     availableSource$.next(BT_HEADSET_BASE_DEVICE_LIST);

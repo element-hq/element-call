@@ -107,6 +107,7 @@ export function createLocalMedia(
     if (source !== "microphone" && source !== "camera") return;
     capturedTracks.get(source)?.stop();
     capturedTracks.delete(source);
+    requests.delete(source);
     publishCapturedTracks();
   };
 

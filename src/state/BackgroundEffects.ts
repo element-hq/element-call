@@ -8,9 +8,15 @@ Please see LICENSE in the repository root for full details.
 import {
   combineLatest,
   distinctUntilChanged,
+  first,
+  from,
   map,
   Observable,
+  type ObservableInput,
+  of,
   scan,
+  startWith,
+  switchMap,
 } from "rxjs";
 import {
   type BackgroundProcessorWrapper,
@@ -27,17 +33,23 @@ import { type Behavior } from "./Behavior";
 import { type ObservableScope } from "./ObservableScope";
 import {
   type BackgroundEffect,
+  type EffectId,
   imagePathFor,
   parseEffect,
 } from "../tracks/backgroundEffectCatalog";
+import { type AddedBackground } from "../tracks/backgroundImages";
 
 const blurRadius = 15;
 
 export interface BackgroundEffectsState {
   supported: boolean | undefined;
   processor: undefined | VideoProcessor;
-  /** From the first effect chosen until a frame carrying it is drawn. */
-  settling?: boolean;
+  /**
+   * The effect is not ready:
+   * preparing, asking whether the pipeline can be built.
+   * settling, once it is attached until a frame carrying the effect
+   */
+  wait?: "preparing" | "settling";
 }
 
 export interface BackgroundEffectsOptions {
@@ -45,6 +57,12 @@ export interface BackgroundEffectsOptions {
   supported: boolean;
   /** The effect chosen, as the setting stores it. */
   effect$: Behavior<string>;
+  /** Stores a choice, to forget one that can't be honoured. */
+  setEffect: (id: EffectId) => void;
+  /** The backgrounds the device keeps, undefined until it has said. */
+  added$: Behavior<AddedBackground[] | undefined>;
+  /** Builds a segmenter on trial, and answers whether it could. */
+  canSegment: () => ObservableInput<boolean>;
   /** The background processor pipeline to be switched between effects. */
   pipeline: BackgroundProcessorWrapper;
   /** Tells, once, that a frame carrying an effect has been drawn. */
@@ -59,14 +77,49 @@ export interface BackgroundEffects {
 /** Switches the pipeline as the choice changes, for as long as the scope lasts. */
 export function createBackgroundEffects(
   scope: ObservableScope,
-  { supported, effect$, pipeline, transformer }: BackgroundEffectsOptions,
+  {
+    supported,
+    effect$,
+    setEffect,
+    added$,
+    canSegment,
+    pipeline,
+    transformer,
+  }: BackgroundEffectsOptions,
 ): BackgroundEffects {
   // Wrapped once, so the call and the preview see one processor throughout.
   const processor = fromLivekitProcessor(pipeline);
   const choice$ = effect$.pipe(map(parseEffect));
-  const wanted$ = choice$.pipe(
-    map((effect) => effect.kind !== "none"),
-    distinctUntilChanged(),
+  const wanted$ = scope.behavior(
+    choice$.pipe(
+      map((effect) => effect.kind !== "none"),
+      distinctUntilChanged(),
+    ),
+  );
+
+  combineLatest([choice$, added$])
+    .pipe(scope.bind())
+    .subscribe(([effect, added]) => {
+      if (effect.kind === "none") return;
+      if (
+        !supported ||
+        (effect.kind === "added" &&
+          added !== undefined &&
+          !added.some(({ id }) => id === effect.id))
+      )
+        setEffect("none");
+    });
+
+  // Asked once an effect is first wanted. A browser update may fix what
+  // fails, so the choice is kept for the next session rather than cleared.
+  const buildable$ = scope.behavior<boolean | undefined>(
+    supported
+      ? wanted$.pipe(
+          first(Boolean),
+          switchMap(() => from(canSegment())),
+          startWith(undefined),
+        )
+      : of(undefined),
   );
 
   const drewAFrame$ = scope.behavior(
@@ -79,18 +132,25 @@ export function createBackgroundEffects(
     }),
   );
 
+  // In one step, so that nothing sees the pipeline neither preparing nor
+  // attached.
   const state$ = scope.behavior(
-    combineLatest([wanted$, drewAFrame$]).pipe(
-      scan<[boolean, boolean], BackgroundEffectsState>(
-        (previous, [wanted, drewAFrame]) => {
+    combineLatest([wanted$, buildable$, drewAFrame$]).pipe(
+      scan<[boolean, boolean | undefined, boolean], BackgroundEffectsState>(
+        (previous, [wanted, buildable, drewAFrame]) => {
           // Attached the first time an effect is wanted and never detached
           // after, so someone who never turns one on pays for none of it.
           const enable =
-            previous.processor !== undefined || (supported && wanted);
+            previous.processor !== undefined || (wanted && buildable === true);
+          const preparing = supported && wanted && buildable === undefined;
           return {
-            supported,
+            supported: supported && buildable !== false,
             processor: enable ? processor : undefined,
-            settling: enable && !drewAFrame,
+            wait: preparing
+              ? "preparing"
+              : enable && !drewAFrame
+                ? "settling"
+                : undefined,
           };
         },
         { supported, processor: undefined },
@@ -101,9 +161,16 @@ export function createBackgroundEffects(
   const switchOptions$ = scope.behavior<
     SwitchBackgroundProcessorOptions | undefined
   >(
-    combineLatest([state$, choice$]).pipe(
-      map(([{ processor }, effect]) =>
-        processor === undefined ? undefined : switchOptionsFor(effect),
+    combineLatest([state$, choice$, added$]).pipe(
+      map(([{ processor }, effect, added]) =>
+        processor === undefined
+          ? undefined
+          : switchOptionsFor(
+              effect,
+              effect.kind === "added"
+                ? added?.find(({ id }) => id === effect.id)?.url
+                : undefined,
+            ),
       ),
       distinctUntilChanged(deepCompare),
     ),
@@ -121,18 +188,24 @@ export function createBackgroundEffects(
   return { state$ };
 }
 
+/** `addedUrl` is the picture of the added background chosen, if still kept. */
 function switchOptionsFor(
   effect: BackgroundEffect,
+  addedUrl: string | undefined,
 ): SwitchBackgroundProcessorOptions {
+  const withImage = (
+    imagePath: string | undefined,
+  ): SwitchBackgroundProcessorOptions =>
+    imagePath
+      ? { mode: "virtual-background", imagePath }
+      : { mode: "disabled" };
   switch (effect.kind) {
     case "blur":
       return { mode: "background-blur", blurRadius };
-    case "shipped": {
-      const imagePath = imagePathFor(effect.id);
-      return imagePath
-        ? { mode: "virtual-background", imagePath }
-        : { mode: "disabled" };
-    }
+    case "shipped":
+      return withImage(imagePathFor(effect.id));
+    case "added":
+      return withImage(addedUrl);
     default:
       return { mode: "disabled" };
   }

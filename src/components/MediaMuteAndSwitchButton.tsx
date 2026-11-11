@@ -8,14 +8,18 @@ Please see LICENSE in the repository root for full details.
 import {
   useCallback,
   useId,
+  useRef,
   useState,
   type CSSProperties,
   type FC,
   useEffect,
   type ReactElement,
+  type ReactNode,
 } from "react";
 import {
+  Alert,
   Button,
+  InlineSpinner,
   Menu,
   MenuItem,
   MenuScrollArea,
@@ -79,6 +83,14 @@ export interface MediaMuteAndSwitchButtonProps {
   backgroundEffectNotice?: string;
   /** Whether the first effect chosen is still being prepared. */
   backgroundEffectSettling?: boolean;
+  /** Called with the file chosen from the add tile. Omit to leave it out. */
+  onAddBackgroundImage?: (file: File) => void;
+  /** Removes a removable effect, never the one in force. */
+  onRemoveBackgroundEffect?: (id: string) => void;
+  /** Why the last file offered couldn't be used; a new object each time. */
+  backgroundImageRefusal?: { text: string };
+  /** The user's own camera, shown at the top of the camera menu. */
+  selfPreview?: ReactNode;
   /**
    * For any toggle and option this method will be called.
    * So toggles need to be implemented by listening here and setting the right toggle item to `enabled`
@@ -95,8 +107,15 @@ const LIST_SHARE_OF_CALL = 0.6;
 /** Smallest device list height in px, so a short call still shows more than one device. */
 const MIN_LIST_HEIGHT = 160;
 
+/** The menu's width as its stylesheet sets it, to place the preview before
+    the menu is drawn. */
+const MENU_WIDTH = 296;
+
 /** Space kept between the menu and the call area's sides. */
 const MENU_MARGIN = 16;
+
+/** Below the preview, as its stylesheet draws it. */
+const PREVIEW_GAP = 12;
 
 export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   enabled,
@@ -113,6 +132,10 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   onSelectBackgroundEffect,
   backgroundEffectNotice,
   backgroundEffectSettling,
+  onAddBackgroundImage,
+  onRemoveBackgroundEffect,
+  backgroundImageRefusal,
+  selfPreview,
   onSelect,
 }) => {
   // Requested but not yet selected. Keyed by kind too, since Chrome uses
@@ -122,11 +145,42 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
     id: string;
   } | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const onOpenChange = useCallback((open: boolean): void => {
-    setMenuOpen(open);
-    // Drop a request that never arrived.
-    if (!open) setPlannedSelection(null);
+  // The file picker takes the focus, which the menu reads as a click
+  // elsewhere; it is held open until the picker is done.
+  const choosingFile = useRef(false);
+  const fileInput = useRef<HTMLInputElement | null>(null);
+  // A refusal is about the attempt that caused it: shown until dismissed or
+  // until the menu closes, and again for the next one.
+  const [seenRefusal, setSeenRefusal] = useState<object>();
+  const refusal =
+    backgroundImageRefusal !== seenRefusal ? backgroundImageRefusal : undefined;
+  const onOpenChange = useCallback(
+    (open: boolean): void => {
+      if (!open && choosingFile.current) return;
+      setMenuOpen(open);
+      // Drop a request that never arrived.
+      if (!open) setPlannedSelection(null);
+      if (!open) setSeenRefusal(backgroundImageRefusal);
+    },
+    [backgroundImageRefusal],
+  );
+  // Scrolled to as it appears, as the list may be scrolled away from it.
+  const scrollIntoView = useCallback((element: HTMLElement | null): void => {
+    element?.scrollIntoView({ block: "nearest" });
   }, []);
+  const watchFileInput = useCallback(
+    (input: HTMLInputElement | null): (() => void) | undefined => {
+      fileInput.current = input;
+      if (input === null) return;
+      // Dismissing the picker fires cancel, which React doesn't type.
+      const done = (): void => {
+        choosingFile.current = false;
+      };
+      input.addEventListener("cancel", done);
+      return (): void => input.removeEventListener("cancel", done);
+    },
+    [],
+  );
   const isBusy = busy ?? false;
   const { t } = useTranslation();
   const devices = useMediaDevices();
@@ -160,20 +214,52 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
 
   // Measured on the call area: CSS can't size the portalled menu against it.
   const rootElement = useRootElement();
-  const [listMaxHeight, setListMaxHeight] = useState<number>();
+  const [listShare, setListShare] = useState<number>();
+  const [previewBlock, setPreviewBlock] = useState(0);
   useEffect(() => {
     if (!menuOpen) return;
     // Followed, since a host can resize the call while the menu is open.
     const subscription = observeElementSize$(rootElement)
       .pipe(
-        map(({ height }) =>
-          Math.max(MIN_LIST_HEIGHT, Math.round(height * LIST_SHARE_OF_CALL)),
+        map(({ width, height }) => ({
+          height: Math.round(height * LIST_SHARE_OF_CALL),
+          width: Math.min(MENU_WIDTH, Math.round(width - 2 * MENU_MARGIN)),
+        })),
+        distinctUntilChanged(
+          (a, b) => a.height === b.height && a.width === b.width,
         ),
-        distinctUntilChanged(),
       )
-      .subscribe(setListMaxHeight);
+      .subscribe(({ height, width }) => {
+        setListShare(height);
+        setPreviewBlock(Math.round((width * 9) / 16) + PREVIEW_GAP);
+      });
     return (): void => subscription.unsubscribe();
   }, [menuOpen, rootElement]);
+
+  // Paid for out of the list's share, so a preview makes the menu no taller.
+  const hasPreview =
+    iconsAndLabels === "video" &&
+    selfPreview !== undefined &&
+    listShare !== undefined;
+  const previewPinned =
+    hasPreview && listShare - previewBlock >= MIN_LIST_HEIGHT;
+  const listMaxHeight =
+    listShare === undefined
+      ? undefined
+      : Math.max(
+          MIN_LIST_HEIGHT,
+          listShare - (previewPinned ? previewBlock : 0),
+        );
+  const preview = hasPreview && (
+    <div
+      aria-hidden
+      className={classNames(styles.selfPreview, {
+        [styles.selfPreviewPinned]: previewPinned,
+      })}
+    >
+      {backgroundEffectSettling ? <InlineSpinner size={32} /> : selfPreview}
+    </div>
+  );
 
   useEffect(() => {
     if (menuOpen) devices.requestDeviceNames(); // No-op after the first call
@@ -326,6 +412,21 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
     >
       {/* The mute button lives inside */}
       {button}
+      {onAddBackgroundImage !== undefined && (
+        <input
+          ref={watchFileInput}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            // Cleared, so the same file can be chosen twice in a row.
+            e.target.value = "";
+            choosingFile.current = false;
+            if (file) onAddBackgroundImage(file);
+          }}
+        />
+      )}
       <Menu
         className={styles.menu}
         // Named for screen readers only: each section has its own heading.
@@ -350,9 +451,12 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
           />
         }
       >
+        {previewPinned && preview}
         <MenuScrollArea
           ref={trackFocusSource}
-          className={styles.deviceList}
+          className={classNames(styles.deviceList, {
+            [styles.deviceListLeadsWithPreview]: hasPreview && !previewPinned,
+          })}
           data-testid="device-list"
           style={
             {
@@ -361,6 +465,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
             } as CSSProperties
           }
         >
+          {hasPreview && !previewPinned && preview}
           {audioMeter && speakerOptions && (
             <MenuScrollSection title={t("settings.devices.speaker")}>
               {deviceItems(
@@ -394,14 +499,39 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
                 describedBy={
                   backgroundEffectNotice === undefined ? undefined : noticeId
                 }
+                onAdd={
+                  onAddBackgroundImage === undefined
+                    ? undefined
+                    : (): void => {
+                        choosingFile.current = true;
+                        fileInput.current?.click();
+                      }
+                }
+                addLabel={t("action.add_background_image")}
+                onRemove={onRemoveBackgroundEffect}
+                removeLabel={t("action.remove")}
               />
               {/* In the list, so the menu grows no taller for it. */}
-              {backgroundEffectNotice !== undefined && (
-                <div id={noticeId} role="none" className={styles.notice}>
-                  <InfoIcon width={20} height={20} />
-                  <span>{backgroundEffectNotice}</span>
+              {refusal !== undefined && (
+                <div
+                  ref={scrollIntoView}
+                  role="none"
+                  className={styles.refusal}
+                >
+                  <Alert
+                    type="critical"
+                    title={refusal.text}
+                    onClose={(): void => setSeenRefusal(refusal)}
+                  />
                 </div>
               )}
+              {refusal === undefined &&
+                backgroundEffectNotice !== undefined && (
+                  <div id={noticeId} role="none" className={styles.notice}>
+                    <InfoIcon width={20} height={20} />
+                    <span>{backgroundEffectNotice}</span>
+                  </div>
+                )}
             </MenuScrollSection>
           )}
         </MenuScrollArea>
