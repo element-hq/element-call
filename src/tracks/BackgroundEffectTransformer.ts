@@ -16,7 +16,13 @@ import {
 import { logger } from "matrix-js-sdk/lib/logger";
 import { ImageSegmenter } from "@mediapipe/tasks-vision";
 
-import modelAssetPath from "../mediapipe/imageSegmenter/selfie_segmenter.tflite?url";
+// Only the SIMD build of MediaPipe's runtime: every browser Element Call
+// supports has WebAssembly SIMD. As files rather than data URLs, so that a
+// host's bundler serves them as assets of its own, and a browser fetches them
+// only when an effect is first switched on.
+import wasmLoaderPath from "@mediapipe/tasks-vision/vision_wasm_internal.js?url&no-inline";
+import wasmBinaryPath from "@mediapipe/tasks-vision/vision_wasm_internal.wasm?url&no-inline";
+import modelAssetPath from "../mediapipe/imageSegmenter/selfie_segmenter.tflite?url&no-inline";
 
 interface WasmFileset {
   /** The path to the Wasm loader script. */
@@ -25,26 +31,7 @@ interface WasmFileset {
   wasmBinaryPath: string;
 }
 
-// The MediaPipe package, by default, ships some alternative versions of the
-// WASM files which avoid SIMD for compatibility with older browsers. But SIMD
-// in WASM is actually fine by our support policy, so we include just the SIMD
-// versions.
-// It's really not ideal that we have to reference these internal files from
-// MediaPipe and depend on node_modules having this specific structure. It's
-// easy to see this breaking if our dependencies changed and MediaPipe were
-// no longer hoisted, or if we switched to another dependency loader such as
-// yarn PnP.
-// https://github.com/google-ai-edge/mediapipe/issues/5961
-const wasmFileset: WasmFileset = {
-  wasmLoaderPath: new URL(
-    "../../node_modules/@mediapipe/tasks-vision/wasm/vision_wasm_internal.js",
-    import.meta.url,
-  ).href,
-  wasmBinaryPath: new URL(
-    "../../node_modules/@mediapipe/tasks-vision/wasm/vision_wasm_internal.wasm",
-    import.meta.url,
-  ).href,
-};
+const wasmFileset: WasmFileset = { wasmLoaderPath, wasmBinaryPath };
 
 /**
  * Track processor that applies effects such as blurring to a user's background.

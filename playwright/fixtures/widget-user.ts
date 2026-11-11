@@ -127,13 +127,14 @@ export const widgetTest = test.extend<MyFixtures>({
    * Provide a way to add additional users within a test.
    * The returned user will be registered on the default homeserver, the name will be made unique by appending a timestamp.
    */
-  addUser: async ({ browser }, use) => {
+  addUser: async ({ browser }, use, testInfo) => {
     await use(
       async (
         username: string,
         host: string = HOST1,
       ): Promise<UserBaseFixture> => {
-        const uniqueSuffix = Date.now();
+        // Tests in parallel workers can reach this in the same millisecond.
+        const uniqueSuffix = `${Date.now()}_${testInfo.parallelIndex}`;
         const { page, clientHandle, mxId } = await TestHelpers.registerUser(
           browser,
           `${username.toLowerCase()}_${uniqueSuffix}`,

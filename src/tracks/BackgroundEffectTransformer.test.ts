@@ -48,6 +48,24 @@ describe("BackgroundEffectTransformer", () => {
     expect(load).toHaveBeenCalledWith("/background.jpg");
   });
 
+  it("runs MediaPipe from its own bundle", async () => {
+    vi.spyOn(VideoTransformer.prototype, "init").mockResolvedValue();
+    const create = vi
+      .spyOn(ImageSegmenter, "createFromOptions")
+      .mockResolvedValue({} as ImageSegmenter);
+
+    await new BackgroundEffectTransformer({ backgroundDisabled: true }).init(
+      {} as VideoTransformerInitOptions,
+    );
+
+    const [fileset, options] = create.mock.calls[0];
+    expect(fileset.wasmLoaderPath).toMatch(/vision_wasm_internal\.js/);
+    expect(fileset.wasmBinaryPath).toMatch(/vision_wasm_internal\.wasm/);
+    expect(options.baseOptions?.modelAssetPath).toMatch(
+      /selfie_segmenter\.tflite/,
+    );
+  });
+
   it("reports the first frame carrying an effect, once", async () => {
     // The library reports every frame it draws.
     vi.spyOn(BackgroundTransformer.prototype, "transform").mockImplementation(

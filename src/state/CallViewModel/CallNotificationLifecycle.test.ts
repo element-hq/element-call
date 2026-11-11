@@ -12,7 +12,11 @@ import {
   MatrixEvent,
   type Room,
 } from "matrix-js-sdk";
-import { type RTCCallIntent } from "matrix-js-sdk/lib/matrixrtc";
+import {
+  RTC_CALL_INTENT_AUDIO,
+  RTC_CALL_INTENT_VIDEO,
+  type RTCCallIntent,
+} from "matrix-js-sdk/lib/matrixrtc";
 import { map, mergeMap, NEVER, type Observable, startWith } from "rxjs";
 
 import { withTestScheduler } from "../../utils/test";
@@ -33,10 +37,12 @@ function mockRingEvent(
   eventId: string,
   lifetimeMs: number | undefined,
   sender = local.userId,
+  legacyIntent?: string,
 ): CallNotificationWrapper {
   return {
     event_id: eventId,
     ...(lifetimeMs === undefined ? {} : { lifetime: lifetimeMs }),
+    ...(legacyIntent === undefined ? {} : { "m.call.intent": legacyIntent }),
     notification_type: "ring",
     sender,
   } as unknown as CallNotificationWrapper;
@@ -128,7 +134,25 @@ test("ring attempt times out after nobody joins", () => {
     });
 
     expectObservable(summarizeRingAttempts$(ringAttempts$)).toBe("-a 29ms A", {
-      a: { intent: "audio", recipient: alice.userId },
+      a: { intent: RTC_CALL_INTENT_AUDIO, recipient: alice.userId },
+      A: { outcome: "timeout" },
+    });
+  });
+});
+
+test("ring attempt maps the legacy intent on the notification to its stable value", () => {
+  withTestScheduler(({ scope, expectObservable, hot }) => {
+    const { ringAttempts$ } = createCallNotificationLifecycle$({
+      scope,
+      ...defaultProps,
+      memberUserIds$: constant<string[]>([]),
+      sentCallNotification$: hot("-a", {
+        a: mockRingEvent("$notif1", 30, local.userId, "video"),
+      }),
+    });
+
+    expectObservable(summarizeRingAttempts$(ringAttempts$)).toBe("-a 29ms A", {
+      a: { intent: RTC_CALL_INTENT_VIDEO, recipient: alice.userId },
       A: { outcome: "timeout" },
     });
   });
@@ -148,7 +172,7 @@ test("ring attempt is accepted once recipient joins", () => {
     });
 
     expectObservable(summarizeRingAttempts$(ringAttempts$)).toBe("-aA", {
-      a: { intent: "audio", recipient: alice.userId },
+      a: { intent: RTC_CALL_INTENT_AUDIO, recipient: alice.userId },
       A: { outcome: "accept" },
     });
   });
@@ -166,7 +190,7 @@ test("ring attempt is immediately accepted if recipient is already joined", () =
     });
 
     expectObservable(summarizeRingAttempts$(ringAttempts$)).toBe("-(aA)", {
-      a: { intent: "audio", recipient: alice.userId },
+      a: { intent: RTC_CALL_INTENT_AUDIO, recipient: alice.userId },
       A: { outcome: "accept" },
     });
   });
@@ -201,7 +225,7 @@ test("ring attempt can be declined", () => {
     });
 
     expectObservable(summarizeRingAttempts$(ringAttempts$)).toBe("-aA", {
-      a: { intent: "audio", recipient: alice.userId },
+      a: { intent: RTC_CALL_INTENT_AUDIO, recipient: alice.userId },
       A: { outcome: "decline" },
     });
   });
@@ -236,7 +260,7 @@ test("ring attempt times out if recipient declines too late", () => {
     });
 
     expectObservable(summarizeRingAttempts$(ringAttempts$)).toBe("-a 29ms A", {
-      a: { intent: "audio", recipient: alice.userId },
+      a: { intent: RTC_CALL_INTENT_AUDIO, recipient: alice.userId },
       A: { outcome: "timeout" },
     });
   });
@@ -271,7 +295,7 @@ test("decline event relating to wrong event is ignored (times out)", () => {
     });
 
     expectObservable(summarizeRingAttempts$(ringAttempts$)).toBe("-a 29ms A", {
-      a: { intent: "audio", recipient: alice.userId },
+      a: { intent: RTC_CALL_INTENT_AUDIO, recipient: alice.userId },
       A: { outcome: "timeout" },
     });
   });
@@ -306,7 +330,7 @@ test("decline event from wrong sender is ignored (times out)", () => {
     });
 
     expectObservable(summarizeRingAttempts$(ringAttempts$)).toBe("-a 29ms A", {
-      a: { intent: "audio", recipient: alice.userId },
+      a: { intent: RTC_CALL_INTENT_AUDIO, recipient: alice.userId },
       A: { outcome: "timeout" },
     });
   });

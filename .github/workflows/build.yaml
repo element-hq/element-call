@@ -25,7 +25,7 @@ jobs:
     # Deploy main branch to call.element.dev after build completes
     if: github.ref == 'refs/heads/main'
     needs: build_full_element_call
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Deploy to call.element.dev
         uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6
@@ -92,7 +92,7 @@ jobs:
   build_storybook:
     name: Build Storybook
     if: contains(github.event.pull_request.labels.*.name, 'storybook build')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4

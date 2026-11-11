@@ -822,9 +822,7 @@ export function rtcParticipationOptions(
   const session = config.matrix_rtc_session;
   return {
     sendNotificationType: urlParams.sendNotificationType,
-    applicationData: urlParams.callIntent
-      ? { "m.call.intent": urlParams.callIntent }
-      : undefined,
+    callIntent: urlParams.callIntent,
     timings: {
       syncDisconnectGracePeriodMs: config.sync_disconnect_grace_period_ms,
       networkErrorRetryMs: session.network_error_retry_ms,

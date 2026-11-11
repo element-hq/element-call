@@ -156,5 +156,10 @@ async function downloadConfig(fetchTarget: string): Promise<ConfigOptions> {
     return {};
   }
 
-  return response.json();
+  try {
+    return await response.json();
+  } catch (e) {
+    logger.warn(`Config at ${fetchTarget} is not JSON, using defaults`, e);
+    return {};
+  }
 }
