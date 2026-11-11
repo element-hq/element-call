@@ -41,18 +41,41 @@ const wasmFileset: WasmFileset = { wasmLoaderPath, wasmBinaryPath };
  * resource fetched from the public internet.
  */
 export class BackgroundEffectTransformer extends BackgroundTransformer {
-  /** Called once, when the first frame carrying an effect has been drawn. */
+  /**
+   * Called once, when the first frame carrying an effect has been drawn.
+   * This is used for drewAFrame$ to show the correct loading state.
+   */
   public onFirstFrame: (() => void) | undefined;
+  private drewAFrame = false;
+
+  public constructor(opts: BackgroundOptions) {
+    super(opts);
+    // Called by the library for a frame it drew, never for one it passed on
+    // untouched.
+    this.options.onFrameProcessed = (stats): void => {
+      opts.onFrameProcessed?.(stats);
+      if (this.drewAFrame) return;
+      this.drewAFrame = true;
+      this.onFirstFrame?.();
+    };
+  }
 
   public override async transform(
     frame: VideoFrame,
     controller: TransformStreamDefaultController<VideoFrame>,
   ): Promise<void> {
-    const priming = this.isFirstFrame;
+    // From the LK docs:
+    // > Render a copy of the first frame is rendered to the screen as soon as possible to act
+    // > as a less jarring initial state than a solid color while the synchronous work below
+    // > (segmentation + frame rendering) occurs.
+    // We do not want this copy (it leaks unblurred media).
+    // So we always set `isFirstFrame` to false -> never show an unprocessed frame.
+    // It does not have any impact other than setting the unprocessed frame while loading the processor.
+    //
+    // To not show the blank frame, we have our own mechanism for hiding the loading overlay:
+    // `onFirstFrame` is what the EC UI will listen to and only then show the video feed.
+    this.isFirstFrame = false;
     await super.transform(frame, controller);
-    // Cleared only once a frame has been through the segmenter; a frame
-    // passed through untouched leaves it set.
-    if (priming && !this.isFirstFrame) this.onFirstFrame?.();
   }
 
   /**

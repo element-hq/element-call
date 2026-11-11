@@ -162,6 +162,7 @@ describe("createLocalMedia", () => {
     media.release("camera");
     expect(trackBehind(camera).stop).toHaveBeenCalled();
     expect(media.tracks$.value).toEqual([microphone]);
+    expect(media.requests.map((r) => r.source)).toEqual(["microphone"]);
 
     media.stop();
     expect(trackBehind(microphone).stop).toHaveBeenCalled();
