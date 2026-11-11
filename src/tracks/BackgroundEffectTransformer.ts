@@ -44,7 +44,7 @@ export class BackgroundEffectTransformer extends BackgroundTransformer {
   /**
    * Called once, when the first frame carrying an effect has been drawn.
    * This is used for drewAFrame$ to show the correct loading state.
-  */
+   */
   public onFirstFrame: (() => void) | undefined;
   private drewAFrame = false;
 
