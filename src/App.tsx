@@ -30,7 +30,7 @@ import { HomePage } from "./home/HomePage";
 import { LoginPage } from "./auth/LoginPage";
 import { RegisterPage } from "./auth/RegisterPage";
 import { RoomPage } from "./room/RoomPage";
-import { ClientProvider } from "./ClientContext";
+import { type ClientLoader, ClientProvider } from "./ClientContext";
 import { ErrorPage, LoadingPage } from "./FullScreenView";
 import { Initializer } from "./initializer";
 import { type WidgetHelpers } from "./widget";
@@ -56,6 +56,16 @@ import { useInitial } from "./useInitial";
 import { LeaveToHomeProvider } from "./LeaveToHomeContext";
 
 const SentryRoute = Sentry.withSentryReactRouterV7Routing(Route);
+
+// Element Call's own session, for when no host supplies a client.
+// - Passed in here, not imported by ClientProvider: this module is only in the
+//   app builds, so the client setup and the store worker behind it stay out of
+//   the component package (see the `loadClient` prop).
+// - Imported on demand, as it was before, so that a widget, which gets its
+//   client from the host, never downloads it.
+// - Module-level, so that the provider's effect sees one stable loader.
+const loadStandaloneClient: ClientLoader = async (...args) =>
+  (await import("./utils/spa")).initSPA(...args);
 
 interface SimpleProviderProps {
   children: JSX.Element;
@@ -146,7 +156,7 @@ export const App: FC<Props> = ({ vm, widget }) => {
 
   const content =
     loaded && clientReady ? (
-      <ClientProvider client={widgetClient}>
+      <ClientProvider client={widgetClient} loadClient={loadStandaloneClient}>
         <MediaDevicesContext value={vm.mediaDevices}>
           <BackgroundEffectsProvider effects={vm.backgroundEffects}>
             <Sentry.ErrorBoundary
