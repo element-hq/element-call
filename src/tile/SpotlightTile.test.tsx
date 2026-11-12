@@ -11,6 +11,7 @@ import { axe } from "vitest-axe";
 import userEvent from "@testing-library/user-event";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { BehaviorSubject } from "rxjs";
+import { RTC_CALL_INTENT_AUDIO } from "matrix-js-sdk/lib/matrixrtc";
 
 import { SpotlightTile } from "./SpotlightTile";
 import {
@@ -176,7 +177,7 @@ test("SpotlightTile displays ringing media", async () => {
   const vm = createRingingMedia({
     pickupState$,
     id: "test",
-    intent: "audio",
+    intent: RTC_CALL_INTENT_AUDIO,
     userId: "@alice:example.org",
     displayName$: constant("Alice"),
     mxcAvatarUrl$: constant(undefined),

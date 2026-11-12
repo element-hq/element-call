@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { defineConfig } from "vite";
+import { posix } from "node:path";
 
 import { vitePluginsConfig } from "./vite.config.ts";
 import { scopeStylesToRoot } from "./component/build/scopeStylesToRoot.ts";
@@ -34,6 +35,25 @@ export default defineConfig(({ mode }) => {
     // whatever is in `public` — including the developer's own config.json, which
     // is not in the repository — into the output we would publish.
     publicDir: false,
+    // A library does not know where it will be served from, so every file it
+    // emits beside itself — the sounds, the pictures, MediaPipe's runtime — is
+    // referenced relative to the module's own URL. (A library build inlines
+    // each asset as a data URL unless its import says `no-inline`, so the
+    // imports do.)
+    base: "./",
+    experimental: {
+      // Relative to the chunk that references it, wherever that chunk lands,
+      // and spelled `./assets/…` rather than `assets/…`: a host's bundler reads
+      // a bare name as a package to look up.
+      renderBuiltUrl: (filename, { hostId, hostType }) => {
+        if (hostType !== "js") return { relative: true };
+        const relative = posix.relative(posix.dirname(hostId), filename);
+        const specifier = relative.startsWith(".") ? relative : `./${relative}`;
+        return {
+          runtime: `new URL(${JSON.stringify(specifier)}, import.meta.url).href`,
+        };
+      },
+    },
     // A host's document is not ours to style: everything in the stylesheet is
     // confined to the element Element Call is mounted in
     css: { postcss: { plugins: [scopeStylesToRoot()] } },
@@ -64,6 +84,15 @@ export default defineConfig(({ mode }) => {
         cssFileName: "element-call",
       },
       rollupOptions: {
+        output: {
+          // Hashed, as the app's are, so that a file a host serves as it is
+          // stays correct across versions of the package. Not the stylesheet,
+          // which the package exports by name (see `cssFileName`).
+          assetFileNames: ({ names }) =>
+            names.some((name) => name.endsWith(".css"))
+              ? "[name][extname]"
+              : "assets/[name]-[hash][extname]",
+        },
         // The host already has these, and a second copy of any of them does not
         // merely bloat the bundle: React would hold two sets of hooks, the
         // Matrix client would run two sync loops, and a second Compound would

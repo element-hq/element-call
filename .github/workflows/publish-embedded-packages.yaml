@@ -14,7 +14,7 @@ on:
 jobs:
   versioning:
     name: Versioning
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       DRY_RUN: ${{ steps.dry_run.outputs.DRY_RUN }}
       PREFIXED_VERSION: ${{ steps.prefixed_version.outputs.PREFIXED_VERSION }}
@@ -76,7 +76,7 @@ jobs:
     needs: [build_element_call, versioning]
     if: always()
     name: Publish tarball
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write # required to upload release asset
     steps:
@@ -107,7 +107,7 @@ jobs:
     needs: [build_element_call, versioning]
     if: always()
     name: Publish NPM
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       ARTIFACT_VERSION: ${{ steps.artifact_version.outputs.ARTIFACT_VERSION }}
     permissions:
@@ -152,7 +152,7 @@ jobs:
     needs: [build_element_call, versioning]
     if: always()
     name: Publish Android AAR
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       ARTIFACT_VERSION: ${{ steps.artifact_version.outputs.ARTIFACT_VERSION }}
     permissions:
@@ -212,7 +212,7 @@ jobs:
     needs: [build_element_call, versioning]
     if: always()
     name: Publish SwiftPM Library
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       ARTIFACT_VERSION: ${{ steps.artifact_version.outputs.ARTIFACT_VERSION }}
     permissions:
@@ -282,7 +282,7 @@ jobs:
     needs: [versioning, publish_npm, publish_android, publish_ios]
     if: always()
     name: Update release notes
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # Shared with publish-component.yaml, which appends to the same release: two appends
     # at once would each write back the body without the other's section
     concurrency:

@@ -12,6 +12,7 @@ Please see LICENSE in the repository root for full details.
  */
 
 import {
+  type RTCCallIntent,
   type RTCNotificationType,
   type Transport,
 } from "matrix-js-sdk/lib/matrixrtc";
@@ -20,6 +21,7 @@ import { type Observable } from "rxjs";
 import { type Behavior } from "./reactive/Behavior";
 import {
   type LocalAudioMediaTrack,
+  type LocalMedia,
   type LocalMemberMedia,
   type LocalVideoMediaTrack,
   type MediaSource,
@@ -84,12 +86,15 @@ export interface RTCSlot {
 
 export interface RTCParticipationOptions {
   /**
-   * Published at the join; `publish` on the participation adds to it from then
-   * on. Kept as an option, rather than only the method, because the LiveKit
-   * backend reads the initial requests to build the room's default capture
-   * options before the first connection exists.
+   * What the local member publishes at the join: requests the SDK captures
+   * itself, or the media a lobby captured ahead of the join, which the
+   * participation takes over (its tracks leave `media.tracks$`) and publishes
+   * in place of capturing. `publish` on the participation adds to either from
+   * then on. Kept as an option, rather than only the method, because the
+   * LiveKit backend reads it to build the room's default capture options
+   * before the first connection exists.
    */
-  publish: PublishRequest[];
+  publish: PublishRequest[] | LocalMedia;
   /**
    * LEGACY
    *
@@ -100,10 +105,13 @@ export interface RTCParticipationOptions {
    */
   sendNotificationType?: RTCNotificationType;
   /**
+   * The kind of call the local member intends to take part in: `"m.audio"`
+   * or `"m.video"`. Carried by the membership as a field of its own.
+   */
+  callIntent?: RTCCallIntent;
+  /**
    * Whatever the application wants to say about itself in the membership,
-   * under namespaced keys. Opaque to the SDK, apart from `m.call.intent`
-   * (`"audio"` or `"video"`), which the membership format carries as a
-   * field of its own.
+   * under namespaced keys. Opaque to the SDK.
    */
   applicationData?: Record<string, unknown>;
   /** Timings the host has configured; the defaults otherwise. */
@@ -230,7 +238,7 @@ export interface DataMessage {
  * backend-specific developer panel and for connection diagnostics.
  */
 export interface TransportMetadata {
-  /** `"livekit"` today. */
+  /** `"m.livekit"` or `"livekit"` today. */
   type: string;
   /** Stable key, unique per transport in the slot: the raw transport, serialised with sorted keys. */
   id: string;
@@ -283,7 +291,7 @@ export interface RTCMember {
   memberId: string;
   /** Which transport this member is on; undefined when the membership has none. */
   transport$: Behavior<TransportMetadata | undefined>;
-  /** What the member's application says about itself, e.g. `m.call.intent`. */
+  /** What the member's application says about itself, e.g. `intent`. */
   applicationData$: Behavior<Record<string, unknown>>;
 
   displayName$: Behavior<string>;

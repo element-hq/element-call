@@ -29,47 +29,10 @@ export interface MyFixtures {
   addUser: (username: string, host: string) => Promise<UserBaseFixture>;
 }
 
-// Minimal config.json for the local element-web instance
-const CONFIG_JSON = {
-  default_server_config: {
-    "m.homeserver": {
-      base_url: "https://synapse.m.localhost",
-      server_name: "synapse.m.localhost",
-    },
-  },
-
-  element_call: {
-    participant_limit: 8,
-    brand: "Element Call",
-  },
-
-  // The default language is set here for test consistency
-  setting_defaults: {
-    language: "en-GB",
-    feature_group_calls: true,
-  },
-
-  // the location tests want a map style url.
-  map_style_url:
-    "https://api.maptiler.com/maps/streets/style.json?key=fU3vlMsMn4Jb6dnEIFsx",
-
-  features: {
-    // We don't want to go through the feature announcement during the e2e test
-    feature_release_announcement: false,
-    feature_element_call_video_rooms: true,
-    feature_video_rooms: true,
-    feature_group_calls: true,
-  },
-};
-
 export const widgetTest = test.extend<MyFixtures>({
   // allow per-test override: `widgetTest.use({ callType: "dm" })`
   callType: ["room", { option: true }],
-  asWidget: async ({ browser, context, callType }, pUse) => {
-    await context.route(`http://localhost:8081/config.json*`, async (route) => {
-      await route.fulfill({ json: CONFIG_JSON });
-    });
-
+  asWidget: async ({ browser, callType }, pUse) => {
     const brooksDisplayName = `brooks_${Date.now()}`;
     const whistlerDisplayName = `whistler_${Date.now()}`;
 
@@ -109,15 +72,7 @@ export const widgetTest = test.extend<MyFixtures>({
       await TestHelpers.dismissInviteUnknownUserModal(ewPage1);
 
       // Accept the invite
-      await TestHelpers.closeReleaseAnnouncement(
-        ewPage2,
-        "Introducing Sections",
-      );
-      await TestHelpers.expandAllSections(ewPage2);
-      await expect(
-        TestHelpers.roomListItem(ewPage2, "Welcome Room"),
-      ).toBeVisible();
-      await TestHelpers.roomListItem(ewPage2, "Welcome Room").click();
+      await TestHelpers.openRoomInvite(ewPage2, "Welcome Room");
       await ewPage2.getByRole("button", { name: "Accept" }).click();
       await expect(
         ewPage2
@@ -125,17 +80,7 @@ export const widgetTest = test.extend<MyFixtures>({
           .getByRole("heading", { name: "Welcome Room" }),
       ).toBeVisible();
     } else if (callType === "dm") {
-      await TestHelpers.closeReleaseAnnouncement(
-        ewPage1,
-        "Introducing Sections",
-      );
-
-      await ewPage1
-        .getByRole("navigation", { name: "Room list" })
-        .getByRole("button", { name: "New", exact: true })
-        .click();
-
-      await ewPage1.getByRole("menuitem", { name: "Start chat" }).click();
+      await TestHelpers.chooseFromRoomListNewMenu(ewPage1, "Start chat");
       await ewPage1.getByRole("textbox", { name: "Search" }).click();
       await ewPage1.getByRole("textbox", { name: "Search" }).fill(whistlerMxId);
       await ewPage1.getByRole("button", { name: "Go" }).click();
@@ -157,12 +102,7 @@ export const widgetTest = test.extend<MyFixtures>({
       ).toBeVisible();
 
       // Accept the DM invite from brooks
-      await TestHelpers.closeReleaseAnnouncement(
-        ewPage2,
-        "Introducing Sections",
-      );
-      await TestHelpers.expandAllSections(ewPage2);
-      await TestHelpers.roomListItem(ewPage2, brooksDisplayName).click();
+      await TestHelpers.openRoomInvite(ewPage2, brooksDisplayName);
       await ewPage2.getByRole("button", { name: "Start chatting" }).click();
     }
 
@@ -187,13 +127,14 @@ export const widgetTest = test.extend<MyFixtures>({
    * Provide a way to add additional users within a test.
    * The returned user will be registered on the default homeserver, the name will be made unique by appending a timestamp.
    */
-  addUser: async ({ browser }, use) => {
+  addUser: async ({ browser }, use, testInfo) => {
     await use(
       async (
         username: string,
         host: string = HOST1,
       ): Promise<UserBaseFixture> => {
-        const uniqueSuffix = Date.now();
+        // Tests in parallel workers can reach this in the same millisecond.
+        const uniqueSuffix = `${Date.now()}_${testInfo.parallelIndex}`;
         const { page, clientHandle, mxId } = await TestHelpers.registerUser(
           browser,
           `${username.toLowerCase()}_${uniqueSuffix}`,

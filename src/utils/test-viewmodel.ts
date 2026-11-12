@@ -217,6 +217,7 @@ export function getBasicCallViewModelEnvironment(
     vm,
     muteStates,
     mediaDevices,
+    constant({ supported: false, processor: undefined }),
     "reactionId",
     { showControls: true, header: HeaderStyle.Standard },
   );

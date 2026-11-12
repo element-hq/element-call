@@ -14,7 +14,6 @@ import {
   type EncryptionSystem,
   generateItems,
   type LocalAudioMediaTrack,
-  type LocalMediaTrack,
   type LocalRTCMember,
   type LocalVideoMediaTrack,
   type RTCParticipation,
@@ -38,6 +37,7 @@ import {
   combineLatest,
   distinctUntilChanged,
   filter,
+  firstValueFrom,
   fromEvent,
   map,
   merge,
@@ -78,9 +78,16 @@ import {
   type ReactionInfo,
   type ReactionOption,
 } from "../../reactions";
+import { type BackgroundEffectsState } from "../BackgroundEffects";
 import { shallowEquals as arrayShallowEquals } from "../../utils/array";
-import { type MediaDevice, type MediaDevices } from "../MediaDevices";
-import { type Handler, type MuteStates } from "../MuteStates";
+import { type MediaDevices } from "../MediaDevices";
+import { type MuteStates } from "../MuteStates";
+import {
+  followDevice,
+  followMuteState,
+  followProcessor,
+  type TrackSupply,
+} from "../localMediaControls";
 import { HeaderStyle, type UrlParams } from "../../UrlParams";
 import { type HostBridge, nullHostBridge } from "../../HostBridge";
 import {
@@ -136,14 +143,16 @@ export interface CaptureSettings {
 }
 
 /**
- * What to publish for a microphone or camera: the device the user picked and
- * the host's capture settings. The video processor is not in here; the call
- * attaches it to the camera track once that exists.
+ * What to publish for a microphone or camera: the device the user picked, the
+ * host's capture settings and, for the camera, the video processor, so that
+ * the track starts with it rather than letting the room through while it is
+ * built.
  */
 export function publishRequest(
   source: "microphone" | "camera",
   mediaDevices: MediaDevices,
   capture: CaptureSettings,
+  processor?: VideoProcessor,
 ): PublishRequest {
   return source === "microphone"
     ? {
@@ -155,6 +164,7 @@ export function publishRequest(
         source,
         deviceId: mediaDevices.videoInput.selected$.value?.id,
         capture: capture.camera,
+        ...(processor && { processor }),
       };
 }
 
@@ -163,12 +173,16 @@ export function initialPublishRequests(
   muteStates: MuteStates,
   mediaDevices: MediaDevices,
   capture: CaptureSettings,
+  effects?: BackgroundEffectsState,
 ): PublishRequest[] {
   const requests: PublishRequest[] = [];
   if (muteStates.audio.enabled$.value)
     requests.push(publishRequest("microphone", mediaDevices, capture));
-  if (muteStates.video.enabled$.value)
-    requests.push(publishRequest("camera", mediaDevices, capture));
+  // Left out while the processor is prepared; the call publishes it after
+  if (muteStates.video.enabled$.value && effects?.wait !== "preparing")
+    requests.push(
+      publishRequest("camera", mediaDevices, capture, effects?.processor),
+    );
   return requests;
 }
 
@@ -179,8 +193,8 @@ export interface CallViewModelOptions {
    * defaults otherwise.
    */
   capture?: CaptureSettings;
-  /** Background blur and the like, applied to the camera as it changes. */
-  videoProcessor$?: Behavior<VideoProcessor | undefined>;
+  /** The background effects state (preparing, supported...) including the processor itself. */
+  backgroundEffectsState$?: Behavior<BackgroundEffectsState>;
   /**
    * The application hosting Element Call, which can ask it to hang up and wants
    * to know when the user joins or leaves. Defaults to no host.
@@ -355,6 +369,8 @@ export interface CallViewModel {
   keyRotationSuppressed$: Behavior<boolean>;
   /** The local member, once our membership has been seen in the room. */
   localMember$: Behavior<LocalRTCMember | null>;
+  /** Our own camera track, while one is published. */
+  camera$: Behavior<LocalVideoMediaTrack | undefined>;
   remoteMembers$: Behavior<RemoteRTCMember[]>;
   /** The transports the client holds a connection to, for the developer panel. */
   connectedTransports$: Behavior<TransportMetadata[]>;
@@ -480,7 +496,21 @@ export function createCallViewModel$(
     sentCallNotification$ = of(null),
   } = options;
 
-  const { capture = {}, videoProcessor$ = constant(undefined) } = options;
+  const {
+    capture = {},
+    backgroundEffectsState$ = constant<BackgroundEffectsState>({
+      supported: false,
+      processor: undefined,
+    }),
+  } = options;
+  const videoProcessor$ = scope.behavior(
+    backgroundEffectsState$.pipe(map(({ processor }) => processor)),
+  );
+  // Resolves once it is known whether the processor builds
+  const processorKnown = async (): Promise<unknown> =>
+    firstValueFrom(
+      backgroundEffectsState$.pipe(filter(({ wait }) => wait !== "preparing")),
+    );
   const localTracks$ = scope.behavior<
     (LocalAudioMediaTrack | LocalVideoMediaTrack)[]
   >(
@@ -504,72 +534,78 @@ export function createCallViewModel$(
     "screenShare",
   ) as Behavior<LocalVideoMediaTrack | undefined>;
 
-  // The mute switches drive our tracks, which report back what the device
-  // allowed, so a denied permission flips the switch back. A source is muted
-  // and unmuted while its track exists and published when it does not.
-  const followMuteState = (
-    muteState: {
-      setHandler: (handler: Handler) => void;
-      enabled$: Behavior<boolean>;
-    },
-    track$: Behavior<LocalMediaTrack | undefined>,
-    source: "microphone" | "camera",
-  ): void => {
-    // What the switch asks for, ahead of what it shows: the switch follows
-    // only once the handler has resolved
-    let desired = muteState.enabled$.value;
-    muteState.setHandler(async (enabled) => {
-      desired = enabled;
-      const track = track$.value;
-      if (track !== undefined) {
-        desired = await track.setEnabled(enabled);
-        return desired;
-      }
-      if (!enabled) return false;
-      try {
-        await rtcParticipation.publish(
-          publishRequest(source, mediaDevices, capture),
-        );
-        return true;
-      } catch (e) {
-        logger.error(`Failed to publish the ${source}`, e);
-        desired = false;
-        return false;
-      }
-    });
-    // A track that arrives after its switch was flipped off catches up with it
-    track$.pipe(scope.bind()).subscribe((track) => {
-      if (track !== undefined && !desired)
-        track.setEnabled(false).catch((e) => {
-          logger.error(`Failed to mute the ${source}`, e);
-        });
-    });
-  };
-  followMuteState(muteStates.audio, microphone$, "microphone");
-  followMuteState(muteStates.video, camera$, "camera");
-  scope.onEnd(() => {
-    muteStates.audio.unsetHandler();
-    muteStates.video.unsetHandler();
-  });
+  const processorAttached = followProcessor(
+    scope,
+    camera$,
+    videoProcessor$,
+    logger,
+  );
 
-  // The device the user picked follows onto the track as it is made and as the
-  // choice changes; the SDK does not watch the settings itself
-  const followDevice = (
-    track$: Behavior<LocalMediaTrack | undefined>,
-    device: MediaDevice<unknown, { id: string }>,
-    source: "microphone" | "camera",
-  ): void => {
-    combineLatest([track$, device.selected$])
-      .pipe(scope.bind())
-      .subscribe(([track, selected]) => {
-        if (track === undefined || selected === undefined) return;
-        track.setDevice(selected.id).catch((e) => {
-          logger.error(`Failed to switch the ${source} device`, e);
-        });
-      });
+  // A camera turned on waits for its processor to be known, then to be on
+  // the track: LiveKit restarts the track with whatever processor it has then.
+  const cameraReady = async (): Promise<void> => {
+    await processorKnown();
+    await processorAttached();
   };
-  followDevice(microphone$, mediaDevices.audioInput, "microphone");
-  followDevice(camera$, mediaDevices.videoInput, "camera");
+  const supply = (source: "microphone" | "camera"): TrackSupply => ({
+    publish: async () =>
+      rtcParticipation.publish(
+        publishRequest(
+          source,
+          mediaDevices,
+          capture,
+          source === "camera" ? videoProcessor$.value : undefined,
+        ),
+      ),
+    ready: source === "camera" ? cameraReady : undefined,
+  });
+  followMuteState(
+    scope,
+    muteStates.audio,
+    microphone$,
+    supply("microphone"),
+    "microphone",
+    logger,
+  );
+  followMuteState(
+    scope,
+    muteStates.video,
+    camera$,
+    supply("camera"),
+    "camera",
+    logger,
+  );
+  followDevice(
+    scope,
+    microphone$,
+    mediaDevices.audioInput,
+    "microphone",
+    logger,
+  );
+  followDevice(scope, camera$, mediaDevices.videoInput, "camera", logger);
+
+  // A camera wanted at the join was left out of it while the processor was
+  // prepared (see initialPublishRequests), and is published once that is known
+  if (
+    backgroundEffectsState$.value.wait === "preparing" &&
+    muteStates.video.enabled$.value
+  )
+    processorKnown()
+      .then(async () => {
+        if (camera$.value !== undefined || !muteStates.video.enabled$.value)
+          return;
+        await rtcParticipation.publish(
+          publishRequest(
+            "camera",
+            mediaDevices,
+            capture,
+            videoProcessor$.value,
+          ),
+        );
+      })
+      .catch((e) => {
+        logger.error("Failed to publish the camera", e);
+      });
 
   // The output device follows the selection onto the client the same way. A
   // host that routes audio itself picks the output outside the browser, so the
@@ -583,16 +619,6 @@ export function createCallViewModel$(
           logger.error("Failed to switch the audio output device", e);
         });
       });
-
-  // Attached once the camera track exists rather than carried in the publish
-  // request, so that a new track and a change of processor take the same path
-  combineLatest([camera$, videoProcessor$])
-    .pipe(scope.bind())
-    .subscribe(([camera, processor]) => {
-      camera?.setProcessor(processor).catch((e) => {
-        logger.error("Failed to set the video processor", e);
-      });
-    });
 
   const members$ = scope.behavior<(LocalRTCMember | RemoteRTCMember)[]>(
     combineLatest(
@@ -1550,6 +1576,7 @@ export function createCallViewModel$(
     leave,
     toggleScreenSharing: toggleScreenSharing,
     sharingScreen$: sharingScreen$,
+    camera$,
 
     tapScreen: (): void => screenTap$.next(),
     tapControls: (): void => controlsTap$.next(),

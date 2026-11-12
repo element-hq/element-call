@@ -10,23 +10,41 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { type MatrixClient, type RoomSummary } from "matrix-js-sdk";
+import {
+  type Behavior,
+  constant,
+  type LocalMedia,
+} from "@element-hq/matrixrtc-sdk";
 
 import { KnockLobbyView } from "./KnockLobbyView";
 import { LeaveToHomeProvider } from "../LeaveToHomeContext";
 import { MediaDevicesContext } from "../MediaDevicesContext";
-import { type ProcessorState } from "../tracks/TrackProcessorContext";
+import { type BackgroundEffectsState } from "../state/BackgroundEffects";
 import { mockMediaDevices } from "../utils/test";
 
-vi.mock("@livekit/components-react", () => ({
-  usePreviewTracks: (): unknown[] => [],
+// One instance each: the lobby keys effects on them
+const stable = vi.hoisted(() => ({
+  processorState$: undefined as unknown,
+  media: undefined as unknown,
 }));
-
-vi.mock("../tracks/TrackProcessorContext", () => ({
-  useTrackProcessor: (): ProcessorState => ({
-    supported: false,
-    processor: undefined,
-  }),
-  useTrackProcessorSync: (): void => {},
+vi.mock("../tracks/BackgroundEffectsContext", () => ({
+  useBackgroundEffectsState$: (): Behavior<BackgroundEffectsState> =>
+    (stable.processorState$ ??= constant({
+      supported: false,
+      processor: undefined,
+    })) as Behavior<BackgroundEffectsState>,
+}));
+// Media that opens no device: the view is what is under test
+vi.mock("../useLocalMedia", () => ({
+  useLocalMedia: (): LocalMedia =>
+    (stable.media ??= {
+      requests: [],
+      tracks$: constant([]),
+      capture: vi.fn(async () => Promise.resolve([])),
+      release: vi.fn(),
+      stop: vi.fn(),
+      takeTracks: () => new Map(),
+    }) as LocalMedia,
 }));
 
 vi.mock("react-use-measure", () => ({

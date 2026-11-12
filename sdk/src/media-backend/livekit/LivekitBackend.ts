@@ -92,7 +92,7 @@ export function createLivekitBackend(
     roomId,
     slotId,
     ownMembershipIdentity,
-    publish,
+    publish: requestsOrMedia,
     encryptionSystem,
     mediaKeys$,
     timings,
@@ -101,6 +101,9 @@ export function createLivekitBackend(
   { client, mediaQuality }: LivekitBackendOptions,
 ): MediaBackend {
   const logger = parentLogger.getChild("[LivekitBackend]");
+  const [publish, media] = Array.isArray(requestsOrMedia)
+    ? [requestsOrMedia, undefined]
+    : [requestsOrMedia.requests, requestsOrMedia];
   const keyProvider = createKeyProvider(encryptionSystem, mediaKeys$, logger);
   const transports = createTransportRegistry(scope);
   const localTransport$ = new BehaviorSubject<TransportLocator | null>(null);
@@ -137,6 +140,7 @@ export function createLivekitBackend(
     connectionMap$,
     localTransport$,
     publish,
+    media,
     audioOutputDeviceId$,
     encryptionSystem,
     logger,
@@ -279,7 +283,7 @@ export function createLivekitBackend(
   });
 
   return {
-    transportType: "livekit",
+    transportTypes: ["m.livekit", "livekit"],
     prepareLocalTransport,
     delegateDelayedLeave: delegateLeave,
     local: localMedia_,

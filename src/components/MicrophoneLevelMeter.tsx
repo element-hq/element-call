@@ -5,17 +5,9 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import {
-  useCallback,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type FC,
-  type Ref,
-} from "react";
+import { useCallback, useLayoutEffect, useRef, useState, type FC } from "react";
 import { Text } from "@vector-im/compound-web";
 import { MicOnIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
-import classNames from "classnames";
 import { useTranslation } from "react-i18next";
 
 import { distinctUntilChanged, map } from "rxjs";
@@ -30,8 +22,6 @@ export interface LiveMicrophoneLevelMeterProps {
   deviceId: string | undefined;
   /** Whether to hold a capture at all. */
   active: boolean;
-  className?: string;
-  ref?: Ref<HTMLDivElement>;
 }
 
 /**
@@ -41,24 +31,18 @@ export interface LiveMicrophoneLevelMeterProps {
 export const LiveMicrophoneLevelMeter: FC<LiveMicrophoneLevelMeterProps> = ({
   deviceId,
   active,
-  className,
-  ref,
 }) => {
   const state = useMicrophoneLevel(deviceId, active);
-  return <MicrophoneLevelMeter state={state} className={className} ref={ref} />;
+  return <MicrophoneLevelMeter state={state} />;
 };
 
 export interface MicrophoneLevelMeterProps {
   state: MicrophoneState;
-  className?: string;
-  ref?: Ref<HTMLDivElement>;
 }
 
 /** The input level of a microphone, or why there is none. */
 export const MicrophoneLevelMeter: FC<MicrophoneLevelMeterProps> = ({
   state,
-  className,
-  ref,
 }) => {
   const { t } = useTranslation();
   // Bars keep one size, so their count follows the width. Starts full so the
@@ -104,7 +88,7 @@ export const MicrophoneLevelMeter: FC<MicrophoneLevelMeterProps> = ({
   }, [state, barCount, t]);
 
   return (
-    <div ref={ref} className={classNames(styles.meter, className)}>
+    <div className={styles.meter}>
       <MicOnIcon className={styles.icon} aria-hidden />
       {state.type !== "level" ? (
         <Text size="sm" className={styles.message}>

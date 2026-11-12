@@ -99,7 +99,7 @@ export function useRoomEncryptionSystem(roomId: string): EncryptionSystem {
   );
 
   const room = client?.getRoom(roomId);
-  const e2eeSystem = <EncryptionSystem>useMemo(() => {
+  const e2eeSystem = useMemo<EncryptionSystem>(() => {
     if (!room) return { kind: E2eeType.NONE };
     if (storedPassword)
       return {

@@ -9,7 +9,8 @@ import { type ICreateClientOpts, MatrixError } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import { Config } from "../config/Config";
-import { fallbackICEServerAllowed, initClient } from "./matrix";
+import { fallbackICEServerAllowed } from "./matrix";
+import { initClient } from "./initClient";
 import type { InitResult, Session } from "../ClientContext";
 
 export async function initSPA(

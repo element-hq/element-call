@@ -28,6 +28,7 @@ import {
   type MockRTCSession,
   mockRTCSlot,
   mockRTCMember,
+  testScope,
 } from "../utils/test";
 import { E2eeType } from "../e2ee/e2eeType";
 import {
@@ -48,7 +49,10 @@ import { MediaDevicesContext } from "../MediaDevicesContext";
 import { type MediaDevices as ECMediaDevices } from "../state/MediaDevices";
 import { AppBar } from "../AppBar";
 import { type MatrixInfo } from "./VideoPreview";
-import { ProcessorProvider } from "../tracks/TrackProcessorContext";
+import {
+  BackgroundEffectsProvider,
+  createAppBackgroundEffects,
+} from "../tracks/BackgroundEffectsContext";
 import { initializeWidget } from "../widget";
 import { RootElementProvider } from "../RootElementContext";
 
@@ -227,6 +231,18 @@ describe("InCallView", () => {
   });
 });
 
+// Media that opened nothing: the join captures as it always did
+function fakeLocalMedia(): MatrixRTCSdk.LocalMedia {
+  return {
+    requests: [],
+    tracks$: constant([]),
+    capture: vi.fn(async () => Promise.resolve([])),
+    release: vi.fn(),
+    stop: vi.fn(),
+    takeTracks: () => new Map(),
+  };
+}
+
 describe("ActiveCall", () => {
   it("creates the view models and renders the call", async () => {
     const mediaDevices = mockMediaDevices({});
@@ -234,7 +250,9 @@ describe("ActiveCall", () => {
     const { findByTestId } = render(
       <BrowserRouter>
         <MediaDevicesContext value={mediaDevices}>
-          <ProcessorProvider>
+          <BackgroundEffectsProvider
+            effects={createAppBackgroundEffects(testScope())}
+          >
             <TooltipProvider>
               <ActiveCall
                 client={matrixRoom.client}
@@ -244,10 +262,11 @@ describe("ActiveCall", () => {
                 matrixInfo={matrixInfo}
                 onShareClick={null}
                 e2eeSystem={{ kind: E2eeType.NONE }}
+                media={fakeLocalMedia()}
                 onLeft={(): void => {}}
               />
             </TooltipProvider>
-          </ProcessorProvider>
+          </BackgroundEffectsProvider>
         </MediaDevicesContext>
       </BrowserRouter>,
     );
@@ -282,7 +301,9 @@ describe("ActiveCall", () => {
         <BrowserRouter>
           <RootElementProvider value={root}>
             <MediaDevicesContext value={mediaDevices}>
-              <ProcessorProvider>
+              <BackgroundEffectsProvider
+                effects={createAppBackgroundEffects(testScope())}
+              >
                 <TooltipProvider>
                   <ActiveCall
                     client={matrixRoom.client}
@@ -292,10 +313,11 @@ describe("ActiveCall", () => {
                     matrixInfo={matrixInfo}
                     onShareClick={null}
                     e2eeSystem={{ kind: E2eeType.NONE }}
+                    media={fakeLocalMedia()}
                     onLeft={(): void => {}}
                   />
                 </TooltipProvider>
-              </ProcessorProvider>
+              </BackgroundEffectsProvider>
             </MediaDevicesContext>
           </RootElementProvider>
         </BrowserRouter>,

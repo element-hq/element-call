@@ -50,6 +50,7 @@ import { Grid, type TileProps } from "../grid/Grid";
 import { SpotlightTile } from "../tile/SpotlightTile";
 import {
   type EncryptionSystem,
+  type LocalMedia,
   type MatrixRTCMode,
 } from "@element-hq/matrixrtc-sdk";
 import { E2eeType } from "../e2ee/e2eeType";
@@ -74,7 +75,6 @@ import {
   type RTCSlotOptions,
   constant,
 } from "@element-hq/matrixrtc-sdk";
-import { map } from "rxjs";
 import {
   advancedCamera,
   advancedScreenShare,
@@ -109,7 +109,7 @@ import { useBehavior } from "../useBehavior.ts";
 import { useValueBehavior } from "../useValueBehavior.ts";
 import { Toast } from "../Toast.tsx";
 import overlayStyles from "../Overlay.module.css";
-import { useTrackProcessorState$ } from "../tracks/TrackProcessorContext.tsx";
+import { useBackgroundEffectsState$ } from "../tracks/BackgroundEffectsContext";
 import { type Layout } from "../state/layout-types.ts";
 import { ObservableScope } from "../state/ObservableScope.ts";
 import { CallFooter, type FooterSnapshot } from "../components/CallFooter.tsx";
@@ -133,6 +133,8 @@ export interface ActiveCallProps extends Omit<
   "vm" | "footerVm" | "developerSettingsVm"
 > {
   e2eeSystem: EncryptionSystem;
+  /** The tracks the lobby opened, for the join to publish. */
+  media: LocalMedia;
   // TODO refactor those reasons into an enum
   onLeft: (
     reason: "user" | "timeout" | "decline" | "allOthersLeft" | "error",
@@ -150,7 +152,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
   const urlParams = useUrlParams();
   const hostBridge = useHostBridge();
   const mediaDevices = useMediaDevices();
-  const trackProcessorState$ = useTrackProcessorState$();
+  const backgroundEffectsState$ = useBackgroundEffectsState$();
   // The element we have to draw the call in: the page, or the container a host
   // gave us. Its size, not the window's, decides how the call is laid out.
   const rootElement = useRootElement();
@@ -170,7 +172,16 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     );
     const rtcParticipation = slot.join({
       ...rtcParticipationOptions(urlParams),
-      publish: initialPublishRequests(props.muteStates, mediaDevices, capture),
+      // Without a lobby nothing was captured and the join captures itself
+      publish:
+        props.media.requests.length > 0
+          ? props.media
+          : initialPublishRequests(
+              props.muteStates,
+              mediaDevices,
+              capture,
+              backgroundEffectsState$.value,
+            ),
     });
 
     const vm = createCallViewModel$(
@@ -183,9 +194,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
         ...callViewModelOptionsFromParams(urlParams),
         encryptionSystem: props.e2eeSystem,
         capture,
-        videoProcessor$: scope.behavior(
-          trackProcessorState$.pipe(map((state) => state.processor)),
-        ),
+        backgroundEffectsState$,
         hostBridge,
         autoLeaveWhenOthersLeft,
         waitForCallPickup: waitForCallPickup && sendNotificationType === "ring",
@@ -214,8 +223,9 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     urlParams,
     hostBridge,
     mediaDevices,
-    trackProcessorState$,
+    backgroundEffectsState$,
     props.client,
+    props.media,
     rootElement,
   ]);
 
@@ -228,6 +238,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       vm,
       props.muteStates,
       mediaDevices,
+      backgroundEffectsState$,
       `${props.client.getUserId()}:${props.client.getDeviceId()}`,
       { showControls: urlParams.showControls, header: urlParams.header },
     );
@@ -245,7 +256,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     props.onLeft,
     urlParams,
     mediaDevices,
-    trackProcessorState$,
+    backgroundEffectsState$,
     props.client,
     vm,
   ]);
@@ -811,9 +822,7 @@ export function rtcParticipationOptions(
   const session = config.matrix_rtc_session;
   return {
     sendNotificationType: urlParams.sendNotificationType,
-    applicationData: urlParams.callIntent
-      ? { "m.call.intent": urlParams.callIntent }
-      : undefined,
+    callIntent: urlParams.callIntent,
     timings: {
       syncDisconnectGracePeriodMs: config.sync_disconnect_grace_period_ms,
       networkErrorRetryMs: session.network_error_retry_ms,

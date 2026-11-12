@@ -22,6 +22,7 @@ import { MediaDevices } from "../state/MediaDevices";
 import { globalScope } from "../state/ObservableScope";
 import { constant } from "../state/Behavior";
 import { type LayoutMode } from "../state/LayoutSwitchViewModel";
+import { shippedBackgrounds } from "../tracks/backgroundEffectCatalog";
 
 // consts for tests
 const reactionIdentifier = "@user:example.com:DEVICE";
@@ -123,8 +124,24 @@ export const Default: Story = {
     toggleAudio: fn(),
     toggleVideo: fn(),
     toggleScreenSharing: fn(),
-    toggleBlur: fn(),
-    videoBlurEnabled: true,
+    selectBackgroundEffect: fn(),
+    backgroundEffect: "blur",
+    backgroundEffects: [
+      { id: "none", kind: "none", removable: false },
+      { id: "blur", kind: "blur", removable: false },
+      ...shippedBackgrounds.map((background) => ({
+        id: `image:${background.id}`,
+        kind: "image" as const,
+        imageUrl: background.imagePath,
+        removable: false,
+      })),
+    ],
+    backgroundEffectNotice: undefined,
+    backgroundEffectSettling: false,
+    backgroundImageRefusal: undefined,
+    addBackgroundImage: fn(),
+    removeBackgroundEffect: fn(),
+    cameraTrack: null,
     hangup: fn(),
     buttonSize: "lg",
     showFooter: true,

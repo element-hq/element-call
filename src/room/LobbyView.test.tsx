@@ -12,6 +12,11 @@ import { of } from "rxjs";
 import { LeaveToHomeProvider } from "../LeaveToHomeContext";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { type MatrixClient } from "matrix-js-sdk";
+import {
+  type Behavior,
+  constant,
+  type LocalMedia,
+} from "@element-hq/matrixrtc-sdk";
 import { axe } from "vitest-axe";
 import {
   ArrowLeftIcon,
@@ -28,7 +33,7 @@ import {
 } from "../utils/test";
 import { type MediaDevices } from "../state/MediaDevices";
 import { MediaDevicesContext } from "../MediaDevicesContext";
-import { type ProcessorState } from "../tracks/TrackProcessorContext";
+import { type BackgroundEffectsState } from "../state/BackgroundEffects";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import lobbyStyles from "./LobbyView.module.css";
 import headerStyles from "../Header.module.css";
@@ -37,17 +42,27 @@ import { AppBar } from "../AppBar";
 // Somewhere to go home to, so that the lobby offers the way back
 const leaveToHome = vi.fn();
 
-vi.mock("@livekit/components-react", () => ({
-  usePreviewTracks: (): unknown[] => [],
+// One instance: the view keys an effect on it
+const processorState$ = vi.hoisted(() => ({ current: undefined as unknown }));
+vi.mock("../tracks/BackgroundEffectsContext", () => ({
+  useBackgroundEffectsState$: (): Behavior<BackgroundEffectsState> =>
+    (processorState$.current ??= constant({
+      supported: false,
+      processor: undefined,
+    })) as Behavior<BackgroundEffectsState>,
 }));
 
-vi.mock("../tracks/TrackProcessorContext", () => ({
-  useTrackProcessor: (): ProcessorState => ({
-    supported: false,
-    processor: undefined,
-  }),
-  useTrackProcessorSync: (): void => {},
-}));
+// Media that opens no device: the view is what is under test
+function fakeLocalMedia(): LocalMedia {
+  return {
+    requests: [],
+    tracks$: constant([]),
+    capture: vi.fn(async () => Promise.resolve([])),
+    release: vi.fn(),
+    stop: vi.fn(),
+    takeTracks: () => new Map(),
+  };
+}
 
 vi.mock("react-use-measure", () => ({
   default: (): [() => void, object] => [(): void => {}, {}],
@@ -95,6 +110,7 @@ function renderLobbyView(
     <LobbyView
       client={mockClient}
       matrixInfo={matrixInfo}
+      media={fakeLocalMedia()}
       muteStates={muteStates}
       onEnter={() => {}}
       confineToRoom={false}
