@@ -35,7 +35,7 @@ import { ErrorPage, LoadingPage } from "./FullScreenView";
 import { Initializer } from "./initializer";
 import { type WidgetHelpers } from "./widget";
 import { useTheme } from "./useTheme";
-import { ProcessorProvider } from "./livekit/TrackProcessorContext";
+import { ProcessorProvider } from "./tracks/TrackProcessorContext";
 import { type AppViewModel } from "./state/AppViewModel";
 import { MediaDevicesContext } from "./MediaDevicesContext";
 import {

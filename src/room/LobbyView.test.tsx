@@ -28,7 +28,7 @@ import {
 } from "../utils/test";
 import { type MediaDevices } from "../state/MediaDevices";
 import { MediaDevicesContext } from "../MediaDevicesContext";
-import { type ProcessorState } from "../livekit/TrackProcessorContext";
+import { type ProcessorState } from "../tracks/TrackProcessorContext";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import lobbyStyles from "./LobbyView.module.css";
 import headerStyles from "../Header.module.css";
@@ -41,7 +41,7 @@ vi.mock("@livekit/components-react", () => ({
   usePreviewTracks: (): unknown[] => [],
 }));
 
-vi.mock("../livekit/TrackProcessorContext", () => ({
+vi.mock("../tracks/TrackProcessorContext", () => ({
   useTrackProcessor: (): ProcessorState => ({
     supported: false,
     processor: undefined,

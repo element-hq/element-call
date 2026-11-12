@@ -33,8 +33,9 @@ export default defineConfig(({ mode }) => {
     } catch {}
   }
 
+  const base = vitePluginsConfig({ mode, html: false });
   return {
-    ...vitePluginsConfig({ mode, html: false }),
+    ...base,
     root: "component/dev",
     // The same scoping the library build applies, so the harness shows what a
     // host will get — including whether its own page is left alone
@@ -60,6 +61,7 @@ export default defineConfig(({ mode }) => {
     },
     resolve: {
       alias: {
+        ...base.resolve?.alias,
         // matrix-widget-api has its transpiled lib/index.js as its entry point,
         // which Vite for some reason refuses to work with, so we point it to
         // src/index.ts instead

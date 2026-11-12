@@ -27,7 +27,6 @@ import {
   createCallNotificationLifecycle$,
   type RingAttempt,
 } from "./CallNotificationLifecycle";
-import { Epoch, trackEpoch } from "../ObservableScope";
 import { constant } from "../Behavior";
 
 function mockRingEvent(
@@ -44,8 +43,8 @@ function mockRingEvent(
 }
 
 const defaultProps = {
-  memberships$: constant(new Epoch([])),
-  matrixRoomMembers$: constant(new Map([[alice.userId, alice]])),
+  memberUserIds$: constant<string[]>([]),
+  roomMemberUserIds$: constant([alice.userId]),
   receivedDecline$: NEVER,
   options: {
     waitForCallPickup: true,
@@ -122,7 +121,7 @@ test("ring attempt times out after nobody joins", () => {
       scope,
       ...defaultProps,
       // No one ever joins (only local user)
-      memberships$: constant(new Epoch([])),
+      memberUserIds$: constant<string[]>([]),
       sentCallNotification$: hot("-a", {
         a: mockRingEvent("$notif1", 30),
       }),
@@ -140,8 +139,8 @@ test("ring attempt is accepted once recipient joins", () => {
     const { ringAttempts$ } = createCallNotificationLifecycle$({
       scope,
       ...defaultProps,
-      memberships$: scope.behavior(
-        behavior("a-b", { a: [], b: [aliceRtcMember] }).pipe(trackEpoch()),
+      memberUserIds$: scope.behavior(
+        behavior("a-b", { a: [], b: [aliceRtcMember.userId] }),
       ),
       sentCallNotification$: hot("-a", {
         a: mockRingEvent("$notif1", 30),
@@ -160,7 +159,7 @@ test("ring attempt is immediately accepted if recipient is already joined", () =
     const { ringAttempts$ } = createCallNotificationLifecycle$({
       scope,
       ...defaultProps,
-      memberships$: constant(new Epoch([aliceRtcMember])),
+      memberUserIds$: constant([aliceRtcMember.userId]),
       sentCallNotification$: hot("-a", {
         a: mockRingEvent("$notif1", 30),
       }),

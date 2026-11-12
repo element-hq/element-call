@@ -13,7 +13,7 @@ import {
   useLocalStorage,
 } from "../useLocalStorage";
 import { getUrlParams, useUrlParams } from "../UrlParams";
-import { E2eeType } from "./e2eeType";
+import { E2eeType, type EncryptionSystem } from "@element-hq/matrixrtc-sdk";
 import { useClient } from "../ClientContext";
 
 /**
@@ -59,22 +59,27 @@ const useRoomSharedKey = (
 
 /**
  * The shared key for a room, preferring one supplied in the parameters Element
- * Call was started with over whatever is in local storage.
+ * Call was started with over whatever is in local storage. If the parameters
+ * are for another room, only the stored key is used, because the password in
+ * the parameters belongs to that other room.
  */
 function keyForRoom(
   roomId: string,
   paramsRoomId: string | null,
   password: string | null,
 ): string | null {
-  if (roomId !== paramsRoomId)
+  const storedKey = localStorage.getItem(
+    getRoomSharedKeyLocalStorageKey(roomId),
+  );
+  if (roomId !== paramsRoomId) {
     logger.warn(
       "requested key for a roomId which is not the current call room id (from the URL)",
       roomId,
       paramsRoomId,
     );
-  return (
-    password ?? localStorage.getItem(getRoomSharedKeyLocalStorageKey(roomId))
-  );
+    return storedKey;
+  }
+  return password ?? storedKey;
 }
 
 export function getKeyForRoom(roomId: string): string | null {
@@ -82,21 +87,14 @@ export function getKeyForRoom(roomId: string): string | null {
   return keyForRoom(roomId, paramsRoomId, password);
 }
 
-export type Unencrypted = { kind: E2eeType.NONE };
-export type SharedSecret = { kind: E2eeType.SHARED_KEY; secret: string };
-export type PerParticipantE2EE = { kind: E2eeType.PER_PARTICIPANT };
-export type EncryptionSystem = Unencrypted | SharedSecret | PerParticipantE2EE;
+export { type EncryptionSystem } from "@element-hq/matrixrtc-sdk";
 
 export function useRoomEncryptionSystem(roomId: string): EncryptionSystem {
   const { client } = useClient();
   const { roomId: paramsRoomId, password } = useUrlParams();
 
   const [storedPassword] = useRoomSharedKey(
-    // TODO: this passes an already-prefixed key where a room ID is expected, so
-    // the local storage key ends up prefixed twice and never matches what
-    // saveKeyForRoom writes. Preserved as-is here to keep this commit a pure
-    // refactor; the reactive read is effectively dead until it is fixed.
-    getRoomSharedKeyLocalStorageKey(roomId),
+    roomId,
     keyForRoom(roomId, paramsRoomId, password) ?? undefined,
   );
 

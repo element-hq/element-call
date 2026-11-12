@@ -159,7 +159,7 @@ export class TestHelpers {
   public static async dismissStartupToasts(page: Page): Promise<void> {
     const expectedToasts = [
       { title: "Failed to load service worker", button: "OK" },
-      { title: "Back up your chats", button: "Dismiss" },
+      { title: "Back up your chats", button: "Not now" },
       { title: "Turn on key storage", button: "Dismiss" },
       { title: "Element does not support this browser", button: "Dismiss" },
     ];
@@ -178,7 +178,11 @@ export class TestHelpers {
         );
 
         if (toastConfig) {
-          await toast.getByRole("button", { name: toastConfig.button }).click();
+          // Bounded so that a renamed button leaves the toast in place and the
+          // next step reports it, instead of hanging until the test timeout.
+          await toast
+            .getByRole("button", { name: toastConfig.button })
+            .click({ timeout: 5000 });
         } else {
           // Unknown toast. We don't want to act on unknown toasts
           break;

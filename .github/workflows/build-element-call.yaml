@@ -64,5 +64,6 @@ jobs:
         with:
           name: build-output-${{ inputs.package }}
           path: dist
+          if-no-files-found: error
           # We'll only use this in a triggered job, then we're done with it
           retention-days: 1

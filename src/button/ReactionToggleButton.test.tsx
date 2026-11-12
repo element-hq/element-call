@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { act, render } from "@testing-library/react";
-import { expect, test, vi } from "vitest";
+import { expect, test } from "vitest";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { userEvent } from "@testing-library/user-event";
 import { type ReactNode } from "react";
@@ -20,7 +20,6 @@ import { type MockRTCSession } from "../utils/test";
 import { ReactionsSenderProvider } from "../reactions/useReactionsSender";
 import { initializeWidget } from "../widget";
 initializeWidget();
-vi.mock("livekit-client/e2ee-worker?worker");
 
 const localIdent = `${localRtcMember.userId}:${localRtcMember.deviceId}`;
 

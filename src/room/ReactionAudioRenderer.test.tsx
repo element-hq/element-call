@@ -48,7 +48,6 @@ function TestComponent({ vm }: { vm: CallViewModel }): ReactNode {
   );
 }
 
-vitest.mock("livekit-client/e2ee-worker?worker");
 vitest.mock("../useAudioContext");
 vitest.mock("../soundUtils");
 

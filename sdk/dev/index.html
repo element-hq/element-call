@@ -1,0 +1,78 @@
+<!doctype html>
+<!--
+Copyright 2026 Element Creations Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MatrixRTC SDK harness</title>
+    <style>
+      body {
+        margin: 1rem;
+        font-family: system-ui, sans-serif;
+      }
+      form {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+      #members {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+      #members section {
+        width: 240px;
+      }
+      #members video {
+        width: 100%;
+        aspect-ratio: 4 / 3;
+        background: #222;
+      }
+      #members h2 {
+        font-size: 1rem;
+        margin: 0.25rem 0;
+      }
+    </style>
+  </head>
+  <body>
+    <form>
+      <input
+        name="homeserver"
+        placeholder="homeserver"
+        value="https://synapse.m.localhost"
+      />
+      <input name="username" placeholder="username" />
+      <input name="password" type="password" placeholder="password" />
+      <input name="room" placeholder="room id or alias" />
+      <!-- A host that already holds a session passes it instead of a password -->
+      <input name="accessToken" type="hidden" />
+      <input name="userId" type="hidden" />
+      <input name="deviceId" type="hidden" />
+      <button type="submit">Start</button>
+      <button type="button" id="microphone" aria-pressed="true" hidden>
+        Microphone
+      </button>
+      <button type="button" id="camera" aria-pressed="true" hidden>
+        Camera
+      </button>
+      <button type="button" id="screenShare" aria-pressed="false" hidden>
+        Share screen
+      </button>
+      <button type="button" id="leave" hidden>Leave</button>
+    </form>
+    <p id="status" data-testid="status"></p>
+    <!-- A line of text to the other members, beside the media -->
+    <form id="data" hidden>
+      <input name="text" placeholder="message" />
+      <button type="submit">Send</button>
+    </form>
+    <ul id="messages"></ul>
+    <main id="members"></main>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

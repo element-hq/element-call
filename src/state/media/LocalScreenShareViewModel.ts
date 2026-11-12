@@ -6,23 +6,19 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type LocalParticipant } from "livekit-client";
+import { type ObservableScope } from "@element-hq/matrixrtc-sdk";
 
-import { type Behavior } from "../Behavior";
 import {
   type BaseScreenShareInputs,
   type BaseScreenShareViewModel,
   createBaseScreenShare,
 } from "./ScreenShareViewModel";
-import { type ObservableScope } from "../ObservableScope";
 
 export interface LocalScreenShareViewModel extends BaseScreenShareViewModel {
   local: true;
 }
 
-export interface LocalScreenShareInputs extends BaseScreenShareInputs {
-  participant$: Behavior<LocalParticipant | null>;
-}
+export type LocalScreenShareInputs = BaseScreenShareInputs;
 
 export function createLocalScreenShare(
   scope: ObservableScope,
