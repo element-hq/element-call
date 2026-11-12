@@ -37,8 +37,10 @@ export interface BackgroundEffectTransformerSources {
   /**
    * Where to fetch MediaPipe's runtime from instead of the bundled copy: a
    * directory holding its `vision_wasm_internal.js` and `.wasm` files.
+   * Consulted only when the runtime is about to load, so a transformer can be
+   * built before the deployment's config has arrived.
    */
-  wasmBaseUrl?: string;
+  wasmBaseUrl?: () => string | undefined;
 }
 
 /**
@@ -155,10 +157,11 @@ async function createSegmenter(
   canvas: HTMLCanvasElement | OffscreenCanvas | undefined,
   segmenterOptions?: SegmenterOptions,
 ): Promise<ImageSegmenter> {
+  const wasmBaseUrl = sources.wasmBaseUrl?.();
   const fileset =
-    sources.wasmBaseUrl === undefined
+    wasmBaseUrl === undefined
       ? bundledFileset
-      : await FilesetResolver.forVisionTasks(sources.wasmBaseUrl);
+      : await FilesetResolver.forVisionTasks(wasmBaseUrl);
   const build = async (delegate: "GPU" | "CPU"): Promise<ImageSegmenter> =>
     ImageSegmenter.createFromOptions(fileset, {
       baseOptions: { modelAssetPath, delegate, ...segmenterOptions },

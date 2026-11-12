@@ -53,7 +53,8 @@ export function createAppBackgroundEffects(
   scope: ObservableScope,
 ): BackgroundEffects {
   const sources = {
-    wasmBaseUrl: Config.get().background_effects?.mediapipe_wasm_url,
+    wasmBaseUrl: (): string | undefined =>
+      Config.get().background_effects?.mediapipe_wasm_url,
   };
   const transformer = new BackgroundEffectTransformer(
     { backgroundDisabled: true },

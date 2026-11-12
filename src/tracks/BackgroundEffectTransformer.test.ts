@@ -83,10 +83,14 @@ describe("BackgroundEffectTransformer", () => {
       .spyOn(FilesetResolver, "forVisionTasks")
       .mockResolvedValue(served);
 
-    await new BackgroundEffectTransformer(
+    const wasmBaseUrl = vi.fn(() => "https://cdn.example.org/mediapipe");
+    const transformer = new BackgroundEffectTransformer(
       { backgroundDisabled: true },
-      { wasmBaseUrl: "https://cdn.example.org/mediapipe" },
-    ).init({} as VideoTransformerInitOptions);
+      { wasmBaseUrl },
+    );
+    expect(wasmBaseUrl).not.toHaveBeenCalled();
+
+    await transformer.init({} as VideoTransformerInitOptions);
 
     expect(resolve).toHaveBeenCalledWith("https://cdn.example.org/mediapipe");
     expect(create.mock.calls[0][0]).toBe(served);
