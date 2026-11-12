@@ -88,7 +88,8 @@ export const UnauthenticatedView: FC = () => {
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           if (error.errcode === "M_ROOM_IN_USE") {
-            setOnFinished(() => {
+            // Wrapped once more, as a bare function would be taken for an updater
+            setOnFinished(() => () => {
               setSignedIn();
               const aliasLocalpart = roomAliasLocalpartFromRoomName(roomName);
               navigate(`/${aliasLocalpart}`)?.catch((error) => {
