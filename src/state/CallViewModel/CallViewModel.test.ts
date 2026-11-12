@@ -35,7 +35,6 @@ import {
   mockRtcMembership,
   testScope,
 } from "../../utils/test.ts";
-import { E2eeType } from "../../e2ee/e2eeType.ts";
 import {
   alice,
   aliceId,
@@ -1465,7 +1464,6 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
         },
         {
           autoLeaveWhenOthersLeft: true,
-          encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
         },
       );
     });
@@ -1483,7 +1481,6 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
         },
         {
           autoLeaveWhenOthersLeft: true,
-          encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
         },
       );
     });
@@ -1501,7 +1498,6 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
         },
         {
           autoLeaveWhenOthersLeft: false,
-          encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
         },
       );
     });
@@ -1531,7 +1527,6 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
         },
         {
           autoLeaveWhenOthersLeft: true,
-          encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
         },
       );
     });

@@ -132,16 +132,16 @@ export async function createMatrixRTCSdk(
         room,
         mediaDevices,
         muteStates,
+        encryptionSystem,
+        // The bundle owns its page, so the body is the space it has
+        scope.behavior(observeElementSize$(document.body)),
+        of({}),
+        of({}),
         {
           ...callViewModelOptionsFromParams(urlParams),
-          encryptionSystem,
           capture,
           hostBridge,
-          // The bundle owns its page, so the body is the space it has
-          windowSize$: scope.behavior(observeElementSize$(document.body)),
         },
-        of({}),
-        of({}),
       );
       // Once the hang-up has gone through, unstick and ask the host to close us
       vm.leave$

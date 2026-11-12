@@ -265,18 +265,18 @@ export function withCallViewModel(mode: MatrixRTCMode) {
       room,
       mediaDevices,
       muteStates,
+      { kind: E2eeType.PER_PARTICIPANT },
+      windowSize$,
+      raisedHands$,
+      reactions$,
       {
-        encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
         autoLeaveWhenOthersLeft: false,
         sentCallNotification$: createSentCallNotification$(
           scope,
           rtcSession.asMockedSession(),
         ),
-        windowSize$,
         ...options,
       },
-      raisedHands$,
-      reactions$,
     );
     void mode;
 
