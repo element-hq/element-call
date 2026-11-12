@@ -10,10 +10,7 @@ import { type Logger } from "matrix-js-sdk/lib/logger";
 
 import { doNetworkOperationWithRetry } from "../utils/network";
 
-type TransportDiscoveryClient = Pick<
-  MatrixClient,
-  "getDomain" | "_unstable_getRTCTransports"
->;
+type TransportDiscoveryClient = Pick<MatrixClient, "getRTCTransports">;
 
 export interface TransportAutoDiscoveryProps {
   client: TransportDiscoveryClient;
@@ -74,7 +71,7 @@ export class TransportAutoDiscovery {
     this.logger.info("First try to use getRTCTransports end point ...");
     try {
       const transportList = await doNetworkOperationWithRetry(async () =>
-        client._unstable_getRTCTransports(),
+        client.getRTCTransports(),
       );
       for (const type of this.transportTypes) {
         const first = transportList.find(
