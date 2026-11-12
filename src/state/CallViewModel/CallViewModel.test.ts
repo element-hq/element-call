@@ -1681,6 +1681,47 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
     });
   });
 
+  test("ringing picks the human recipient over a functional member listed first", () => {
+    withTestScheduler(({ behavior, schedule, expectObservable }) => {
+      withCallViewModel(
+        {
+          // Alice answers after 20ms
+          rtcMembers$: behavior("a 20ms b", {
+            a: [localRtcMember],
+            b: [localRtcMember, aliceRtcMember],
+          }),
+          // A DM with a bot, where the bot happens to come first
+          roomMembers: [bob, alice, local],
+          functionalMembers: [bob.userId],
+        },
+        (vm, rtcSession) => {
+          // Fire a ringing notification with a 30ms lifetime
+          schedule("n", {
+            n: () => {
+              rtcSession.emit(
+                MatrixRTCSessionEvent.DidSendCallNotification,
+                mockRingEvent("$notif1", 30),
+              );
+            },
+          });
+
+          // Alice, not the bot, is the recipient, and her pickup stops the ring
+          expectObservable(vm.ringingVm$).toBe("(ab) 17ms a", {
+            a: null,
+            b: expect.objectContaining({
+              type: "ringing",
+              userId: alice.userId,
+              intent: RTC_CALL_INTENT_AUDIO,
+            }),
+          });
+          // The ring was answered, so the lifetime running out must not leave
+          expectObservable(vm.autoLeave$).toBe("-");
+        },
+        { waitForCallPickup: true },
+      );
+    });
+  });
+
   it.skip("audio output changes when toggling earpiece mode", () => {
     withTestScheduler(({ schedule, expectObservable }) => {
       const devices = new MediaDevices(testScope(), {
