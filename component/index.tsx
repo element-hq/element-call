@@ -190,24 +190,25 @@ export const ElementCall: FC<ElementCallProps> = ({
     [roomId, intent, stableConfig],
   );
 
-  // Created in an effect so that the scope it lives in ends when the component
-  // is unmounted (or these options change), rather than keeping its device
-  // observers running for the rest of the page's life. Null until then, which
-  // is one render.
   const { controlledAudioDevices, callIntent } = params;
   const [vm, setVm] = useState<AppViewModel | null>(null);
   useEffect(() => {
     const scope = new ObservableScope();
-    setVm(new AppViewModel(scope, { controlledAudioDevices, callIntent }));
+    setVm(
+      new AppViewModel(
+        scope,
+        { controlledAudioDevices, callIntent },
+        // The host owns the client. We create a clientSession wrapping the host client.
+        hostClientSession(client),
+        // The host owns the session too, so there is nothing to manage here
+        null,
+      ),
+    );
     return (): void => {
       setVm(null);
       scope.end();
     };
-  }, [controlledAudioDevices, callIntent]);
-
-  // The host owns the user's session, so Element Call neither authenticates
-  // anyone nor manages it; it follows whichever client the host hands it.
-  const clientSession = useMemo(() => hostClientSession(client), [client]);
+  }, [controlledAudioDevices, callIntent, client]);
 
   const room = client.getRoom(roomId);
   const rtcSession = useMemo(
@@ -255,7 +256,7 @@ export const ElementCall: FC<ElementCallProps> = ({
                     >
                       <Decoration>
                         <TooltipProvider>
-                          <ClientProvider session={clientSession}>
+                          <ClientProvider session={vm.clientSession}>
                             <MediaDevicesContext value={vm.mediaDevices}>
                               <BackgroundEffectsProvider
                                 effects={vm.backgroundEffects}

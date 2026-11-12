@@ -9,12 +9,12 @@ import { type FC, useCallback, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { logger } from "matrix-js-sdk/lib/logger";
 
-import { useClientSession, useClientSessionState } from "./ClientContext";
-import { useLeaveToHome } from "./LeaveToHomeContext";
 import {
-  PosthogAnalytics,
-  RegistrationType,
-} from "./analytics/PosthogAnalytics";
+  useClient,
+  useClientManagerIfAny,
+  useClientSessionState,
+} from "./ClientContext";
+import { useLeaveToHome } from "./LeaveToHomeContext";
 import { useProfile } from "./profile/useProfile";
 import { defaultSettingsTab, SettingsModal } from "./settings/SettingsModal";
 import { UserMenu } from "./UserMenu";
@@ -26,12 +26,12 @@ interface Props {
 export const UserMenuContainer: FC<Props> = ({ preventNavigation = false }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { client } = useClient();
   const session = useClientSessionState();
-  const client = session.state === "signedIn" ? session.client : undefined;
   const passwordlessUser =
     session.state === "signedIn" && session.passwordlessUser;
   // Absent when the session is a host's, which Element Call cannot end
-  const { logout } = useClientSession();
+  const logout = useClientManagerIfAny()?.logout;
   const leaveToHome = useLeaveToHome();
   const { displayName, avatarUrl } = useProfile(client);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
@@ -55,13 +55,7 @@ export const UserMenuContainer: FC<Props> = ({ preventNavigation = false }) => {
           break;
         case "logout":
           logout?.()
-            .then(() => {
-              leaveToHome?.();
-              PosthogAnalytics.instance.logout();
-              PosthogAnalytics.instance.setRegistrationType(
-                RegistrationType.Guest,
-              );
-            })
+            .then(() => leaveToHome?.())
             .catch((e) => logger.error("Failed to log out", e));
           break;
         case "login":

@@ -29,14 +29,13 @@ import { HomePage } from "./home/HomePage";
 import { LoginPage } from "./auth/LoginPage";
 import { RegisterPage } from "./auth/RegisterPage";
 import { RoomPage } from "./room/RoomPage";
-import { ClientProvider } from "./ClientContext";
+import { ClientManagerProvider, ClientProvider } from "./ClientContext";
 import { ErrorPage, LoadingPage } from "./FullScreenView";
 import { Initializer } from "./initializer";
 import { type WidgetHelpers } from "./widget";
 import { useTheme } from "./useTheme";
 import { BackgroundEffectsProvider } from "./tracks/BackgroundEffectsContext";
 import { type AppViewModel } from "./state/AppViewModel";
-import { type ClientSession } from "./state/ClientSession";
 import { MediaDevicesContext } from "./MediaDevicesContext";
 import {
   HeaderStyle,
@@ -112,11 +111,9 @@ interface Props {
   vm: AppViewModel;
   /** A point of access to the widget API, if running as a widget. */
   widget: WidgetHelpers | null;
-  /** Where the client comes from. It abstracts: widget, from the host, SPA managed client. */
-  clientSession: ClientSession;
 }
 
-export const App: FC<Props> = ({ vm, widget, clientSession }) => {
+export const App: FC<Props> = ({ vm, widget }) => {
   // The standalone build has no host; the widget build's host is the client it
   // is a widget of.
   const hostBridge = useInitial(() =>
@@ -134,21 +131,23 @@ export const App: FC<Props> = ({ vm, widget, clientSession }) => {
   });
 
   const content = loaded ? (
-    <ClientProvider session={clientSession}>
-      <MediaDevicesContext value={vm.mediaDevices}>
-        <BackgroundEffectsProvider effects={vm.backgroundEffects}>
-          <Sentry.ErrorBoundary
-            fallback={(error) => <ErrorPage error={error} />}
-          >
-            <Routes>
-              <SentryRoute path="/" element={<HomePage />} />
-              <SentryRoute path="/login" element={<LoginPage />} />
-              <SentryRoute path="/register" element={<RegisterPage />} />
-              <SentryRoute path="*" element={<RoomPage />} />
-            </Routes>
-          </Sentry.ErrorBoundary>
-        </BackgroundEffectsProvider>
-      </MediaDevicesContext>
+    <ClientProvider session={vm.clientSession}>
+      <ClientManagerProvider value={vm.clientManager}>
+        <MediaDevicesContext value={vm.mediaDevices}>
+          <BackgroundEffectsProvider effects={vm.backgroundEffects}>
+            <Sentry.ErrorBoundary
+              fallback={(error) => <ErrorPage error={error} />}
+            >
+              <Routes>
+                <SentryRoute path="/" element={<HomePage />} />
+                <SentryRoute path="/login" element={<LoginPage />} />
+                <SentryRoute path="/register" element={<RegisterPage />} />
+                <SentryRoute path="*" element={<RoomPage />} />
+              </Routes>
+            </Sentry.ErrorBoundary>
+          </BackgroundEffectsProvider>
+        </MediaDevicesContext>
+      </ClientManagerProvider>
     </ClientProvider>
   ) : (
     <LoadingPage />

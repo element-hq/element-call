@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { type MatrixClient } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { catchError, EMPTY, from, map } from "rxjs";
+import { catchError, from, map, of } from "rxjs";
 
 import { type Behavior, constant } from "./Behavior";
 import { type ObservableScope } from "./ObservableScope";
@@ -20,7 +20,6 @@ export interface StoredSession {
   device_id: string;
   access_token: string;
   passwordlessUser: boolean;
-  tempPassword?: string;
 }
 
 export type ClientSessionState =
@@ -41,28 +40,33 @@ export interface Registration {
 }
 
 /**
- * Where Element Call's client comes from, and what can be done with the
- * session behind it. Actions are absent when the session is not Element Call's
- * to manage, as with a client supplied by a host.
+ * Where Element Call's client comes from. Every build has one: a session of
+ * Element Call's own, or one a host has supplied.
  */
 export interface ClientSession {
   state$: Behavior<ClientSessionState>;
+}
+
+/**
+ * What can be done with a client created in EC (SPA). Widget and host client
+ * wont have this, see useClientManager and useClientManagerIfAny
+ */
+export interface ClientManager {
   /** Signs in to the homeserver with a password, ending any current session. */
-  login?: (
+  login: (
     homeserver: string,
     username: string,
     password: string,
   ) => Promise<MatrixClient>;
   /** Registers an account on the default homeserver. */
-  register?: (
+  register: (
     username: string,
     password: string,
     displayName: string,
     recaptchaResponse: string,
     passwordlessUser: boolean,
   ) => Promise<Registration>;
-  changePassword?: (password: string) => Promise<void>;
-  logout?: () => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 /**
@@ -87,7 +91,7 @@ export function pendingHostClientSession(
         map(signedIn),
         catchError((e) => {
           logger.error("Failed to obtain the host's client", e);
-          return EMPTY;
+          return of<ClientSessionState>({ state: "error", error: e });
         }),
       ),
       { state: "loading" },

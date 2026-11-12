@@ -15,6 +15,7 @@ import {
   loginWithPassword,
   registerWithPassword,
 } from "../auth/interactiveAuth";
+import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { Config } from "../config/Config";
 import { OpenElsewhereError } from "../RichError";
 import { flushPromises, testScope } from "../utils/test";
@@ -32,14 +33,12 @@ const session: StoredSession = {
   device_id: "AAAA",
   access_token: "secret",
   passwordlessUser: true,
-  tempPassword: "temporary",
 };
 
 const user = { setRawDisplayName: vi.fn(), setDisplayName: vi.fn() };
 const mockClient = (): MatrixClient =>
   ({
     stopClient: vi.fn(),
-    setPassword: vi.fn().mockResolvedValue(undefined),
     logout: vi.fn().mockResolvedValue(undefined),
     clearStores: vi.fn().mockResolvedValue(undefined),
     setDisplayName: vi.fn().mockResolvedValue(undefined),
@@ -115,13 +114,15 @@ test("drops a session the homeserver no longer knows", async () => {
   expect(clientSession.state$.value).toEqual({ state: "signedOut" });
 });
 
-test("drops the session and stays loading on any other error", async () => {
+test("drops the session and reports any other error", async () => {
   storeSession();
-  vi.mocked(initClient).mockRejectedValue(new Error("offline"));
+  const error = new Error("offline");
+  vi.mocked(initClient).mockRejectedValue(error);
   const clientSession = new StandaloneClientSession(testScope());
   await flushPromises();
   expect(storedSession()).toBeNull();
-  expect(clientSession.state$.value).toEqual({ state: "loading" });
+  // An error page rather than a spinner that never ends
+  expect(clientSession.state$.value).toEqual({ state: "error", error });
 });
 
 test("logs in with a password, ending the session it had", async () => {
@@ -197,12 +198,7 @@ test("registers a passwordless account, signing in only when asked", async () =>
     client,
     passwordlessUser: true,
   });
-  // A passwordless user keeps the generated password, to set a real one later
-  expect(storedSession()).toEqual({
-    ...credentials,
-    passwordlessUser: true,
-    tempPassword: "temporary",
-  });
+  expect(storedSession()).toEqual({ ...credentials, passwordlessUser: true });
 });
 
 test("registers an account with a password of its own", async () => {
@@ -223,27 +219,6 @@ test("registers an account with a password of its own", async () => {
   expect(storedSession()).toEqual({ ...credentials, passwordlessUser: false });
 });
 
-test("turns a passwordless user into one with a password", async () => {
-  storeSession();
-  const client = mockClient();
-  vi.mocked(initClient).mockResolvedValue(client);
-  const clientSession = new StandaloneClientSession(testScope());
-  await flushPromises();
-
-  await clientSession.changePassword("hunter2");
-
-  expect(client.setPassword).toHaveBeenCalledWith(
-    expect.objectContaining({ user: session.user_id, password: "temporary" }),
-    "hunter2",
-  );
-  expect(clientSession.state$.value).toEqual({
-    state: "signedIn",
-    client,
-    passwordlessUser: false,
-  });
-  expect(storedSession()).toEqual({ ...session, passwordlessUser: false });
-});
-
 test("logs out, clearing the client's stores and the stored session", async () => {
   storeSession();
   const client = mockClient();
@@ -251,12 +226,16 @@ test("logs out, clearing the client's stores and the stored session", async () =
   const clientSession = new StandaloneClientSession(testScope());
   await flushPromises();
 
+  const analyticsLogout = vi.spyOn(PosthogAnalytics.instance, "logout");
+
   await clientSession.logout();
 
   expect(client.logout).toHaveBeenCalledWith(true);
   expect(client.clearStores).toHaveBeenCalled();
   expect(storedSession()).toBeNull();
   expect(clientSession.state$.value).toEqual({ state: "signedOut" });
+  // Analytics forget the user along with the session
+  expect(analyticsLogout).toHaveBeenCalled();
 });
 
 test("claims exclusive use of storage from other instances of the app", () => {

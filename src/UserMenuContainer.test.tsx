@@ -13,9 +13,10 @@ import { type MatrixClient } from "matrix-js-sdk";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { BehaviorSubject } from "rxjs";
 
-import { ClientProvider } from "./ClientContext";
+import { ClientManagerProvider, ClientProvider } from "./ClientContext";
 import { LeaveToHomeProvider } from "./LeaveToHomeContext";
 import {
+  type ClientManager,
   type ClientSession,
   type ClientSessionState,
   hostClientSession,
@@ -49,8 +50,8 @@ test("leaves for home after logging out of the session", async () => {
         client: mockClient(),
         passwordlessUser: false,
       }),
-      logout,
     },
+    { login: vi.fn(), register: vi.fn(), logout },
     leaveToHome,
   );
 
@@ -61,7 +62,7 @@ test("leaves for home after logging out of the session", async () => {
 
 test("cannot end a session that is not ours", async () => {
   const leaveToHome = vi.fn();
-  renderMenu(hostClientSession(mockClient()), leaveToHome);
+  renderMenu(hostClientSession(mockClient()), null, leaveToHome);
 
   await selectSignOut();
   expect(leaveToHome).not.toHaveBeenCalled();
@@ -76,6 +77,7 @@ async function selectSignOut(): Promise<void> {
 
 function renderMenu(
   session: ClientSession,
+  manager: ClientManager | null,
   leaveToHome: (() => void) | null = null,
 ): void {
   render(
@@ -83,7 +85,9 @@ function renderMenu(
       <TooltipProvider>
         <LeaveToHomeProvider value={leaveToHome}>
           <ClientProvider session={session}>
-            <UserMenuContainer />
+            <ClientManagerProvider value={manager}>
+              <UserMenuContainer />
+            </ClientManagerProvider>
           </ClientProvider>
         </LeaveToHomeProvider>
       </TooltipProvider>

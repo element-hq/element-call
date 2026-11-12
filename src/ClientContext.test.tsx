@@ -13,11 +13,14 @@ import { type FC } from "react";
 import { BehaviorSubject } from "rxjs";
 
 import {
+  ClientManagerProvider,
   ClientProvider,
-  useClientSession,
+  useClientManager,
+  useClientManagerIfAny,
   useClientSessionState,
 } from "./ClientContext";
 import {
+  type ClientManager,
   type ClientSession,
   type ClientSessionState,
   hostClientSession,
@@ -118,17 +121,28 @@ test("shows the session's error in place of its children", () => {
   expect(container.textContent).toContain("Something went wrong");
 });
 
-test("hands the session itself to the context", () => {
-  const session: ClientSession = {
-    state$: new BehaviorSubject<ClientSessionState>({ state: "signedOut" }),
+test("hands the session's manager to views that need one", () => {
+  const manager: ClientManager = {
+    login: vi.fn(),
     register: vi.fn(),
+    logout: vi.fn(),
   };
-  const { result } = renderHook(() => useClientSession(), {
-    wrapper: ({ children }) => (
-      <ClientProvider session={session}>
-        <>{children}</>
-      </ClientProvider>
-    ),
-  });
-  expect(result.current).toBe(session);
+  const { result } = renderHook(
+    () => [useClientManager(), useClientManagerIfAny()],
+    {
+      wrapper: ({ children }) => (
+        <ClientManagerProvider value={manager}>
+          <>{children}</>
+        </ClientManagerProvider>
+      ),
+    },
+  );
+  expect(result.current).toEqual([manager, manager]);
+});
+
+test("has no manager for a host's session", () => {
+  // The component and the widget provide none; a view that insists on one is
+  // in the wrong build
+  expect(renderHook(() => useClientManagerIfAny()).result.current).toBeNull();
+  expect(() => renderHook(() => useClientManager())).toThrow();
 });

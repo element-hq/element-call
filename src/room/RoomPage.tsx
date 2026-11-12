@@ -12,7 +12,7 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import { Trans, useTranslation } from "react-i18next";
 import { UnknownSolidIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 
-import { useClientSessionState } from "../ClientContext";
+import { useClient, useClientSessionState } from "../ClientContext";
 import { ErrorPage, FullScreenView, LoadingPage } from "../FullScreenView";
 import { RoomAuthView } from "./RoomAuthView";
 import { CallView } from "./CallView";
@@ -42,12 +42,12 @@ export const RoomPage: FC = (): ReactNode => {
   const { registerPasswordlessUser } = useRegisterPasswordlessUser();
   const [isRegistering, setIsRegistering] = useState(false);
 
+  const { client } = useClient();
   const session = useClientSessionState();
   const loading = session.state === "loading";
-  const client = session.state === "signedIn" ? session.client : undefined;
-  const authenticated = client !== undefined;
   const passwordlessUser =
     session.state === "signedIn" && session.passwordlessUser;
+  const authenticated = client !== undefined;
   const { avatarUrl, displayName: userDisplayName } = useProfile(client);
 
   const groupCallState = useLoadGroupCall(client, roomIdOrAlias, viaServers);

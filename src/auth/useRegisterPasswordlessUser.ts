@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { useCallback } from "react";
 import { secureRandomString } from "matrix-js-sdk/lib/randomstring";
 
-import { useClientSession } from "../ClientContext";
+import { useClientManagerIfAny } from "../ClientContext";
 import { useRegistrationTerms } from "../auth/useRegistrationTerms";
 import { generateRandomName } from "../auth/generateRandomName";
 import { useRecaptcha } from "../auth/useRecaptcha";
@@ -21,7 +21,8 @@ interface UseRegisterPasswordlessUserType {
 }
 
 export function useRegisterPasswordlessUser(): UseRegisterPasswordlessUserType {
-  const { register } = useClientSession();
+  // Null in the widget, which never registers anyone
+  const register = useClientManagerIfAny()?.register;
   const { isWidget } = useUrlParams();
   const { privacyPolicyUrl, recaptchaKey } = useRegistrationTerms();
   const { execute, reset, recaptchaId } = useRecaptcha(recaptchaKey);

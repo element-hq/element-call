@@ -53,24 +53,25 @@ if (fatalError !== null) {
 Initializer.initBeforeReact()
   .then((widget) => {
     const { controlledAudioDevices, callIntent } = getUrlParams();
-    // As a widget, the client comes from the host over the widget API.
-    // Standalone, Element Call restores or creates a session of its own.
-    const clientSession =
-      widget === null
-        ? new StandaloneClientSession(globalScope)
-        : pendingHostClientSession(globalScope, widget.client);
+    // As a widget, the client comes from the host over the widget API, and
+    // the session is the host's. Standalone, Element Call restores or creates
+    // a session of its own, which it also manages.
+    const options = { controlledAudioDevices, callIntent };
+    let vm: AppViewModel;
+    if (widget === null) {
+      const session = new StandaloneClientSession(globalScope);
+      vm = new AppViewModel(globalScope, options, session, session);
+    } else {
+      vm = new AppViewModel(
+        globalScope,
+        options,
+        pendingHostClientSession(globalScope, widget.client),
+        null,
+      );
+    }
     root.render(
       <StrictMode>
-        <App
-          vm={
-            new AppViewModel(globalScope, {
-              controlledAudioDevices,
-              callIntent,
-            })
-          }
-          widget={widget}
-          clientSession={clientSession}
-        />
+        <App vm={vm} widget={widget} />
       </StrictMode>,
     );
   })

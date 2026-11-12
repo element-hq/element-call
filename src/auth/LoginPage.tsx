@@ -11,7 +11,7 @@ import { Trans, useTranslation } from "react-i18next";
 import { Button } from "@vector-im/compound-web";
 
 import Logo from "../icons/LogoLarge.svg?react";
-import { useClientSession } from "../ClientContext";
+import { useClientManager } from "../ClientContext";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import styles from "./LoginPage.module.css";
 import { usePageTitle } from "../usePageTitle";
@@ -23,7 +23,7 @@ export const LoginPage: FC = () => {
   const { t } = useTranslation();
   usePageTitle(t("login_title"));
 
-  const { login } = useClientSession();
+  const { login } = useClientManager();
   const homeserver = Config.defaultHomeserverUrl(); // TODO: Make this configurable
   const usernameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
@@ -44,12 +44,6 @@ export const LoginPage: FC = () => {
         setLoading(false);
         return;
       }
-      if (!login) {
-        setError(Error("This session cannot be logged in to"));
-        setLoading(false);
-        return;
-      }
-
       login(homeserver, usernameRef.current.value, passwordRef.current.value)
         .then(async () => {
           const locationState = location.state;

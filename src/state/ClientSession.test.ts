@@ -20,11 +20,6 @@ test("a host's client is signed in from the start", () => {
     client,
     passwordlessUser: false,
   });
-  // The host owns the session, so there is nothing for Element Call to do to it
-  expect(session.login).toBeUndefined();
-  expect(session.register).toBeUndefined();
-  expect(session.logout).toBeUndefined();
-  expect(session.changePassword).toBeUndefined();
 });
 
 test("a pending host client is loading until it arrives", async () => {
@@ -41,11 +36,10 @@ test("a pending host client is loading until it arrives", async () => {
   });
 });
 
-test("a pending host client that never arrives stays loading", async () => {
-  const session = pendingHostClientSession(
-    testScope(),
-    Promise.reject(new Error("no widget API")),
-  );
+test("a pending host client that never arrives is an error", async () => {
+  const error = new Error("no widget API");
+  const session = pendingHostClientSession(testScope(), Promise.reject(error));
   await flushPromises();
-  expect(session.state$.value).toEqual({ state: "loading" });
+  // An error page rather than a spinner that never ends
+  expect(session.state$.value).toEqual({ state: "error", error });
 });

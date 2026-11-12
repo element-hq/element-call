@@ -12,7 +12,7 @@ import { Button, Heading, Text } from "@vector-im/compound-web";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { useNavigate } from "react-router-dom";
 
-import { useClientSession } from "../ClientContext";
+import { useClientManager } from "../ClientContext";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
 import { UserMenuContainer } from "../UserMenuContainer";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
@@ -37,7 +37,7 @@ import { ExternalLink, Link } from "../button/Link";
 import { useUrlParams } from "../UrlParams";
 
 export const UnauthenticatedView: FC = () => {
-  const { register } = useClientSession();
+  const { register } = useClientManager();
   const { header } = useUrlParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
@@ -65,7 +65,6 @@ export const UnauthenticatedView: FC = () => {
       async function submit(): Promise<void> {
         setError(undefined);
         setLoading(true);
-        if (!register) throw new Error("This session cannot register");
         const recaptchaResponse = await execute();
         const userName = generateRandomName();
         // Signed in only once the call exists too: this view is replaced the

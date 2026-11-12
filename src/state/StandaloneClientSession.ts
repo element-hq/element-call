@@ -9,6 +9,10 @@ import { type MatrixClient, MatrixError } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { BehaviorSubject } from "rxjs";
 
+import {
+  PosthogAnalytics,
+  RegistrationType,
+} from "../analytics/PosthogAnalytics";
 import { Config } from "../config/Config";
 import { OpenElsewhereError } from "../RichError";
 import {
@@ -19,6 +23,7 @@ import { initClient } from "../utils/initClient";
 import { fallbackICEServerAllowed } from "../utils/matrix";
 import { type Behavior } from "./Behavior";
 import {
+  type ClientManager,
   type ClientSession,
   type ClientSessionState,
   type Registration,
@@ -40,7 +45,7 @@ const SESSION_KEY = "matrix-auth-store";
  * and therefore the client store worker, so it may only be imported by the
  * standalone app's entry point.
  */
-export class StandaloneClientSession implements ClientSession {
+export class StandaloneClientSession implements ClientSession, ClientManager {
   private readonly state = new BehaviorSubject<ClientSessionState>({
     state: "loading",
   });
@@ -65,7 +70,10 @@ export class StandaloneClientSession implements ClientSession {
       this.loadChannel?.removeEventListener("message", onOpenedElsewhere),
     );
 
-    this.restore().catch((e) => logger.error(e));
+    this.restore().catch((e) => {
+      logger.error("Failed to restore the session", e);
+      this.state.next({ state: "error", error: e });
+    });
   }
 
   private get client(): MatrixClient | undefined {
@@ -146,7 +154,6 @@ export class StandaloneClientSession implements ClientSession {
         recaptchaResponse,
       )),
       passwordlessUser,
-      ...(passwordlessUser ? { tempPassword: password } : {}),
     };
     const client = await this.createClient(homeserver, session);
 
@@ -188,28 +195,6 @@ export class StandaloneClientSession implements ClientSession {
     });
   }
 
-  public readonly changePassword = async (password: string): Promise<void> => {
-    const client = this.client;
-    const session = loadSession();
-    if (!client || !session) return;
-
-    await client.setPassword(
-      {
-        type: "m.login.password",
-        identifier: {
-          type: "m.id.user",
-          user: session.user_id,
-        },
-        user: session.user_id,
-        password: session.tempPassword,
-      },
-      password,
-    );
-
-    saveSession({ ...session, passwordlessUser: false });
-    this.state.next({ state: "signedIn", client, passwordlessUser: false });
-  };
-
   public readonly logout = async (): Promise<void> => {
     const client = this.client;
     if (!client) return;
@@ -218,6 +203,8 @@ export class StandaloneClientSession implements ClientSession {
     await client.clearStores();
     clearSession();
     this.state.next({ state: "signedOut" });
+    PosthogAnalytics.instance.logout();
+    PosthogAnalytics.instance.setRegistrationType(RegistrationType.Guest);
   };
 }
 

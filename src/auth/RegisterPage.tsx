@@ -22,7 +22,11 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import { Button, Text } from "@vector-im/compound-web";
 
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
-import { useClientSession, useClientSessionState } from "../ClientContext";
+import {
+  useClient,
+  useClientManager,
+  useClientSessionState,
+} from "../ClientContext";
 import { useRegistrationTerms } from "./useRegistrationTerms";
 import styles from "./LoginPage.module.css";
 import Logo from "../icons/LogoLarge.svg?react";
@@ -39,11 +43,11 @@ export const RegisterPage: FC = () => {
 
   const session = useClientSessionState();
   const loading = session.state === "loading";
-  const client = session.state === "signedIn" ? session.client : undefined;
-  const authenticated = client !== undefined;
   const passwordlessUser =
     session.state === "signedIn" && session.passwordlessUser;
-  const { register } = useClientSession();
+  const { client } = useClient();
+  const authenticated = client !== undefined;
+  const { register } = useClientManager();
 
   const confirmPasswordRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
@@ -67,7 +71,6 @@ export const RegisterPage: FC = () => {
 
       const submit = async (): Promise<void> => {
         setRegistering(true);
-        if (!register) throw new Error("This session cannot register");
 
         const recaptchaResponse = await execute();
         const { client: newClient, setSignedIn } = await register(
