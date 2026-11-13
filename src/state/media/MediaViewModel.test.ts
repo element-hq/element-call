@@ -235,22 +235,35 @@ test("audio and video follow the tracks' mute state", () => {
 
 test("user media polls stream stats only while the setting is on", () => {
   onTestFinished(() => showConnectionStats.setValue(false));
+
   withTestScheduler(({ cold, expectObservable, schedule }) => {
     const stats = { type: "inbound-rtp" } as RTCInboundRtpStreamStats;
     const vm = mockRemoteMedia(rtcMembership, {}, [
-      mockAudioTrack({
-        stats$: () => cold("-s", { s: stats }),
-      }),
+      mockAudioTrack({ stats$: () => cold("-s", { s: { ...stats } }) }),
     ]);
-    schedule("-a-b", {
-      a() {
-        showConnectionStats.setValue(true);
-      },
-      b() {
-        showConnectionStats.setValue(false);
-      },
+    schedule("-t-f-t", {
+      t: () => showConnectionStats.setValue(true),
+      f: () => showConnectionStats.setValue(false),
     });
-    expectObservable(vm.audioStreamStats$).toBe("u-su", {
+
+    expectObservable(vm.audioStreamStats$).toBe("u-s---s", {
+      u: undefined,
+      s: stats,
+    });
+  });
+});
+
+test("stream stats can be enabled before creating media", () => {
+  showConnectionStats.setValue(true);
+  onTestFinished(() => showConnectionStats.setValue(false));
+
+  withTestScheduler(({ cold, expectObservable }) => {
+    const stats = { type: "inbound-rtp" } as RTCInboundRtpStreamStats;
+    const vm = mockRemoteMedia(rtcMembership, {}, [
+      mockAudioTrack({ stats$: () => cold("-s", { s: stats }) }),
+    ]);
+
+    expectObservable(vm.audioStreamStats$).toBe("us", {
       u: undefined,
       s: stats,
     });

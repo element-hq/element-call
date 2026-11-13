@@ -21,6 +21,10 @@ import {
   UserIntent,
 } from "../src/UrlParams";
 import { mockConfig } from "./utils/test";
+import {
+  RTC_CALL_INTENT_AUDIO,
+  RTC_CALL_INTENT_VIDEO,
+} from "matrix-js-sdk/lib/matrixrtc";
 
 const ROOM_NAME = "roomNameHere";
 const ROOM_ID = "!d45f138fsd";
@@ -275,7 +279,7 @@ describe("UrlParams", () => {
       ).toMatchObject({
         ...startNewCallDefaults("desktop"),
         skipLobby: false,
-        callIntent: "video",
+        callIntent: RTC_CALL_INTENT_VIDEO,
       });
     });
 
@@ -322,7 +326,7 @@ describe("UrlParams", () => {
       ).toMatchObject({
         ...startNewCallDefaults("desktop"),
         skipLobby: false,
-        callIntent: "audio",
+        callIntent: RTC_CALL_INTENT_AUDIO,
       });
     });
 
@@ -333,7 +337,7 @@ describe("UrlParams", () => {
         ),
       ).toMatchObject({
         ...joinExistingCallDefaults("desktop"),
-        callIntent: "audio",
+        callIntent: RTC_CALL_INTENT_AUDIO,
       });
     });
 
@@ -348,7 +352,7 @@ describe("UrlParams", () => {
         sendNotificationType: "ring",
         autoLeaveWhenOthersLeft: true,
         waitForCallPickup: true,
-        callIntent: "audio",
+        callIntent: RTC_CALL_INTENT_AUDIO,
       });
     });
 
@@ -363,7 +367,7 @@ describe("UrlParams", () => {
         skipLobby: true,
         autoLeaveWhenOthersLeft: true,
         waitForCallPickup: false,
-        callIntent: "video",
+        callIntent: RTC_CALL_INTENT_VIDEO,
       });
     });
 
@@ -377,7 +381,7 @@ describe("UrlParams", () => {
         skipLobby: true,
         autoLeaveWhenOthersLeft: true,
         waitForCallPickup: false,
-        callIntent: "audio",
+        callIntent: RTC_CALL_INTENT_AUDIO,
       });
     });
   });

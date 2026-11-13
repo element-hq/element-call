@@ -44,8 +44,9 @@ const TARGETS = [
   {
     config: "vite-component.config.ts",
     what: "the component build",
-    sources: ["src", "component"],
-    excluded: ["component/dev"],
+    // `sdk` too: the build resolves `@element-hq/matrixrtc-sdk` to its source
+    sources: ["src", "component", "sdk"],
+    excluded: ["component/dev", "sdk/dev"],
     mustBeExternal: [
       "react",
       "react-dom",

@@ -5,15 +5,38 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { combineLatest, map, type Observable, switchMap } from "rxjs";
-import { supportsBackgroundProcessors } from "@livekit/track-processors";
+import {
+  BehaviorSubject,
+  combineLatest,
+  distinctUntilChanged,
+  map,
+  type Observable,
+  of,
+  switchMap,
+} from "rxjs";
 import { supportsAudioOutputSelection } from "livekit-client";
+import { type LocalVideoMediaTrack } from "@element-hq/matrixrtc-sdk";
+import { supportsModernBackgroundProcessors } from "@livekit/track-processors";
+import { logger } from "matrix-js-sdk/lib/logger";
+
+import {
+  parseEffect,
+  serializeEffect,
+  shippedBackgrounds,
+} from "../tracks/backgroundEffectCatalog";
+import {
+  type AddedBackground,
+  addedBackgrounds,
+  maxAddedBackgrounds,
+  UnusableImage,
+} from "../tracks/backgroundImages";
 
 import { type CallViewModel } from "../state/CallViewModel/CallViewModel";
+import { type BackgroundEffectsState } from "../state/BackgroundEffects";
 import { type MenuOptions } from "./MediaMuteAndSwitchButton";
 import { type MediaDevices } from "../state/MediaDevices";
 import {
-  backgroundBlur as backgroundBlurSettings,
+  backgroundEffect as backgroundEffectSetting,
   debugTileLayout as debugTileLayoutSetting,
 } from "../settings/settings";
 import { type Behavior, constant } from "../state/Behavior";
@@ -22,7 +45,8 @@ import { type MuteStates } from "../state/MuteStates";
 import { createStaticViewModel, type ViewModel } from "../state/ViewModel";
 import { HeaderStyle } from "../UrlParams";
 import { platform } from "../Platform";
-import { type FooterSnapshot } from "./CallFooter";
+import { type BackgroundImageRefusal, type FooterSnapshot } from "./CallFooter";
+import { type BackgroundEffectGridItem } from "./BackgroundEffectGrid";
 
 /**
  * Shared helper: maps MuteStates into the audio/video enabled + toggle behaviors
@@ -56,13 +80,16 @@ function buildMuteBehaviors(
 
 /**
  * Shared helper: maps MediaDevices into the audio/video device-list behaviors
- * needed by FooterSnapshot (options, selection, callbacks, blur toggle).
+ * needed by FooterSnapshot (options, selection, callbacks, background effect).
  */
 function buildDeviceBehaviors(
   scope: ObservableScope,
   mediaDevices: MediaDevices,
   /** return empty arrays for  audioOptions and videoOptions*/
   disableSwitcher$: Behavior<boolean>,
+  backgroundEffectsState$: Observable<BackgroundEffectsState>,
+  /** The camera as the pipeline has it, for the menu's preview. */
+  camera$: Observable<LocalVideoMediaTrack | null | undefined>,
 ): Pick<
   ViewModel<FooterSnapshot>,
   | "audioOptions$"
@@ -74,8 +101,15 @@ function buildDeviceBehaviors(
   | "videoOptions$"
   | "selectedVideo$"
   | "selectVideoButtonOption$"
-  | "toggleBlur$"
-  | "videoBlurEnabled$"
+  | "backgroundEffect$"
+  | "selectBackgroundEffect$"
+  | "backgroundEffects$"
+  | "backgroundEffectNotice$"
+  | "backgroundEffectSettling$"
+  | "addBackgroundImage$"
+  | "backgroundImageRefusal$"
+  | "removeBackgroundEffect$"
+  | "cameraTrack$"
 > {
   const options$ = (
     available$: Behavior<Map<string, MenuOptions["label"]>>,
@@ -92,6 +126,19 @@ function buildDeviceBehaviors(
       ),
     );
 
+  // Also false once the pipeline has failed to build this session.
+  const supported$ = backgroundEffectsState$.pipe(
+    map(({ supported }) => supported === true),
+    distinctUntilChanged(),
+  );
+  const slow = !supportsModernBackgroundProcessors();
+  const offered$ = combineLatest([disableSwitcher$, supported$]).pipe(
+    map(([switcherDisabled, supported]) => !switcherDisabled && supported),
+  );
+  // A new object for each refusal, so the same one twice is shown twice.
+  const refusal$ = new BehaviorSubject<BackgroundImageRefusal | undefined>(
+    undefined,
+  );
   return {
     audioOptions$: scope.behavior(options$(mediaDevices.audioInput.available$)),
     selectedAudio$: scope.behavior(
@@ -116,18 +163,93 @@ function buildDeviceBehaviors(
       mediaDevices.videoInput.selected$.pipe(map((s) => s?.id)),
     ),
     selectVideoButtonOption$: constant(mediaDevices.videoInput.select),
-    toggleBlur$: scope.behavior(
-      combineLatest([backgroundBlurSettings.value$, disableSwitcher$]).pipe(
-        map(([current, switcherDisabled]) => {
-          return !switcherDisabled && supportsBackgroundProcessors()
-            ? (): void => {
-                backgroundBlurSettings.setValue(!current);
-              }
-            : undefined;
-        }),
+    backgroundEffect$: scope.behavior(
+      combineLatest([backgroundEffectSetting.value$, supported$]).pipe(
+        map(([raw, supported]) =>
+          supported ? serializeEffect(parseEffect(raw)) : "none",
+        ),
       ),
     ),
-    videoBlurEnabled$: backgroundBlurSettings.value$,
+    selectBackgroundEffect$: scope.behavior(
+      offered$.pipe(
+        map((offered) =>
+          offered
+            ? (id: string): void =>
+                backgroundEffectSetting.setValue(
+                  serializeEffect(parseEffect(id)),
+                )
+            : undefined,
+        ),
+      ),
+    ),
+    backgroundEffects$: scope.behavior(
+      addedBackgrounds.added$.pipe(
+        map((added) => backgroundEffectChoices(added ?? [])),
+      ),
+    ),
+    backgroundEffectNotice$: scope.behavior(
+      offered$.pipe(
+        map((offered) =>
+          !offered ? "unavailable" : slow ? "slow" : undefined,
+        ),
+      ),
+    ),
+    backgroundEffectSettling$: scope.behavior(
+      backgroundEffectsState$.pipe(
+        map(({ wait }) => wait !== undefined),
+        distinctUntilChanged(),
+      ),
+      false,
+    ),
+    // Kept and offered, not put on: that waits for the user to choose it.
+    addBackgroundImage$: scope.behavior(
+      combineLatest([offered$, addedBackgrounds.added$]).pipe(
+        map(([offered, added]) =>
+          offered && (added?.length ?? 0) < maxAddedBackgrounds
+            ? (file: File): void => {
+                refusal$.next(undefined);
+                addedBackgrounds.add(file).catch((e) => {
+                  logger.warn("Could not keep that background", e);
+                  refusal$.next({
+                    reason: e instanceof UnusableImage ? e.reason : "not-kept",
+                  });
+                });
+              }
+            : undefined,
+        ),
+      ),
+    ),
+    backgroundImageRefusal$: refusal$,
+    // None while muted: the call mutes its track rather than releasing it.
+    cameraTrack$: scope.behavior(
+      camera$.pipe(
+        switchMap((camera) =>
+          camera
+            ? camera.muted$.pipe(map((muted) => (muted ? null : camera)))
+            : of(null),
+        ),
+      ),
+      null,
+    ),
+    // Never the one in force: taking it away would leave nothing chosen.
+    removeBackgroundEffect$: scope.behavior(
+      offered$.pipe(
+        map((offered) =>
+          offered
+            ? (optionId: string): void => {
+                const effect = parseEffect(optionId);
+                if (effect.kind !== "added") return;
+                if (backgroundEffectSetting.getValue() === optionId) return;
+                addedBackgrounds
+                  .remove(effect.id)
+                  .catch((e) =>
+                    logger.warn("Could not remove that background", e),
+                  );
+              }
+            : undefined,
+        ),
+      ),
+    ),
   };
 }
 
@@ -138,6 +260,8 @@ function buildDeviceBehaviors(
  * @param callModel - The root CallViewModel; provides layout, grid mode, reactions, etc.
  * @param muteStates - Audio and video mute state + toggles.
  * @param mediaDevices - Available and selected input devices.
+ * @param backgroundEffectsState$ - The background pipeline's state: whether
+ *   effects run here, and the wait for the first.
  * @param reactionIdentifier - The local user's reaction identifier string, or
  *   undefined when reactions are not supported (hides the reaction button).
  * @param options - `showControls`: whether the call controls should be shown.
@@ -148,6 +272,7 @@ export function createCallFooterViewModel(
   callModel: CallViewModel,
   muteStates: MuteStates,
   mediaDevices: MediaDevices,
+  backgroundEffectsState$: Observable<BackgroundEffectsState>,
   reactionIdentifier: string | undefined,
   options: { showControls: boolean; header: HeaderStyle },
 ): ViewModel<FooterSnapshot> {
@@ -162,7 +287,13 @@ export function createCallFooterViewModel(
   );
   return {
     ...buildMuteBehaviors(scope, muteStates),
-    ...buildDeviceBehaviors(scope, mediaDevices, disableDeviceSwitcher$),
+    ...buildDeviceBehaviors(
+      scope,
+      mediaDevices,
+      disableDeviceSwitcher$,
+      backgroundEffectsState$,
+      callModel.camera$,
+    ),
     // candidat to move into the FooterViewModel
     showFooter$: callModel.showFooter$,
     hideControls$: constant(!showControls),
@@ -224,6 +355,9 @@ export function createCallFooterViewModel(
  * @param scope - ObservableScope that bounds the lifetime of derived behaviors.
  * @param muteStates - Audio and video mute state + toggles.
  * @param mediaDevices - Available and selected input devices.
+ * @param backgroundEffectsState$ - The background pipeline's state: whether
+ *   effects run here, and the wait for the first.
+ * @param camera$ - The lobby's camera, for the camera menu's preview.
  * @param openSettings - Callback to open the settings modal, or undefined.
  * @param hangup - Callback to leave/cancel, or undefined (hides the button).
  * @param showLogo - Whether to show the Element Call logo.
@@ -232,6 +366,8 @@ export function createLobbyFooterViewModel(
   scope: ObservableScope,
   muteStates: MuteStates,
   mediaDevices: MediaDevices,
+  backgroundEffectsState$: Observable<BackgroundEffectsState>,
+  camera$: Behavior<LocalVideoMediaTrack | null>,
   openSettings: (() => void) | undefined,
   hangup: (() => void) | undefined,
   showLogo: boolean,
@@ -275,6 +411,33 @@ export function createLobbyFooterViewModel(
       selectVideoButtonOption: undefined,
     }),
     ...buildMuteBehaviors(scope, muteStates),
-    ...buildDeviceBehaviors(scope, mediaDevices, constant(false)),
+    ...buildDeviceBehaviors(
+      scope,
+      mediaDevices,
+      constant(false),
+      backgroundEffectsState$,
+      camera$,
+    ),
   };
+}
+
+function backgroundEffectChoices(
+  added: AddedBackground[],
+): BackgroundEffectGridItem[] {
+  return [
+    { id: serializeEffect({ kind: "none" }), kind: "none", removable: false },
+    { id: serializeEffect({ kind: "blur" }), kind: "blur", removable: false },
+    ...shippedBackgrounds.map((background) => ({
+      id: serializeEffect({ kind: "shipped", id: background.id }),
+      kind: "image" as const,
+      imageUrl: background.imagePath,
+      removable: false,
+    })),
+    ...added.map((background) => ({
+      id: serializeEffect({ kind: "added", id: background.id }),
+      kind: "image" as const,
+      imageUrl: background.url,
+      removable: true,
+    })),
+  ];
 }

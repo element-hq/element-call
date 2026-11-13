@@ -7,23 +7,29 @@ Please see LICENSE in the repository root for full details.
 
 import {
   useCallback,
+  useId,
+  useRef,
   useState,
   type CSSProperties,
   type FC,
   useEffect,
   type ReactElement,
+  type ReactNode,
 } from "react";
 import {
+  Alert,
   Button,
+  InlineSpinner,
   Menu,
   MenuItem,
-  MenuTitle,
+  MenuScrollArea,
+  MenuScrollSection,
   RadioInput,
-  ToggleMenuItem,
 } from "@vector-im/compound-web";
 import {
   ChevronUpIcon,
   ChevronDownIcon,
+  InfoIcon,
   SpinnerIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import classNames from "classnames";
@@ -40,6 +46,10 @@ import { useMediaDevices } from "../MediaDevicesContext";
 import { useRootElement } from "../RootElementContext";
 import { observeElementSize$ } from "../utils/elementSize";
 import { LiveMicrophoneLevelMeter } from "./MicrophoneLevelMeter";
+import {
+  BackgroundEffectGrid,
+  type BackgroundEffectGridItem,
+} from "./BackgroundEffectGrid";
 
 export interface MenuOptions {
   label: DeviceLabel | AudioOutputDeviceLabel;
@@ -64,16 +74,29 @@ export interface MediaMuteAndSwitchButtonProps {
   selectedOutputOption?: string;
   /** Picks an output device. Undefined disables the speaker section. */
   onSelectOutput?: (id: string) => void;
-  videoBlurToggleClick?: () => void;
-  videoBlurEnabled?: boolean;
+  /** Camera menu only. None or an empty list leaves the section out. */
+  backgroundEffects?: BackgroundEffectGridItem[];
+  selectedBackgroundEffect?: string;
+  /** Undefined where effects can't run: all but no effect are disabled. */
+  onSelectBackgroundEffect?: (id: string) => void;
+  /** What the user should know before choosing an effect, if anything. */
+  backgroundEffectNotice?: string;
+  /** Whether the first effect chosen is still being prepared. */
+  backgroundEffectSettling?: boolean;
+  /** Called with the file chosen from the add tile. Omit to leave it out. */
+  onAddBackgroundImage?: (file: File) => void;
+  /** Removes a removable effect, never the one in force. */
+  onRemoveBackgroundEffect?: (id: string) => void;
+  /** Why the last file offered couldn't be used; a new object each time. */
+  backgroundImageRefusal?: { text: string };
+  /** The user's own camera, shown at the top of the camera menu. */
+  selfPreview?: ReactNode;
   /**
    * For any toggle and option this method will be called.
    * So toggles need to be implemented by listening here and setting the right toggle item to `enabled`
    */
   onSelect?: (id: string) => void;
 }
-
-const BLUR_ID = "blur";
 
 /** Id of the placeholder "Default" row, shown when the platform lists no outputs. */
 const DEFAULT_OUTPUT_ID = "default";
@@ -83,6 +106,16 @@ const LIST_SHARE_OF_CALL = 0.6;
 
 /** Smallest device list height in px, so a short call still shows more than one device. */
 const MIN_LIST_HEIGHT = 160;
+
+/** The menu's width as its stylesheet sets it, to place the preview before
+    the menu is drawn. */
+const MENU_WIDTH = 296;
+
+/** Space kept between the menu and the call area's sides. */
+const MENU_MARGIN = 16;
+
+/** Below the preview, as its stylesheet draws it. */
+const PREVIEW_GAP = 12;
 
 export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   enabled,
@@ -94,8 +127,15 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   outputOptions,
   selectedOutputOption,
   onSelectOutput,
-  videoBlurEnabled,
-  videoBlurToggleClick,
+  backgroundEffects,
+  selectedBackgroundEffect,
+  onSelectBackgroundEffect,
+  backgroundEffectNotice,
+  backgroundEffectSettling,
+  onAddBackgroundImage,
+  onRemoveBackgroundEffect,
+  backgroundImageRefusal,
+  selfPreview,
   onSelect,
 }) => {
   // Requested but not yet selected. Keyed by kind too, since Chrome uses
@@ -105,14 +145,46 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
     id: string;
   } | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const onOpenChange = useCallback((open: boolean): void => {
-    setMenuOpen(open);
-    // Drop a request that never arrived.
-    if (!open) setPlannedSelection(null);
+  // The file picker takes the focus, which the menu reads as a click
+  // elsewhere; it is held open until the picker is done.
+  const choosingFile = useRef(false);
+  const fileInput = useRef<HTMLInputElement | null>(null);
+  // A refusal is about the attempt that caused it: shown until dismissed or
+  // until the menu closes, and again for the next one.
+  const [seenRefusal, setSeenRefusal] = useState<object>();
+  const refusal =
+    backgroundImageRefusal !== seenRefusal ? backgroundImageRefusal : undefined;
+  const onOpenChange = useCallback(
+    (open: boolean): void => {
+      if (!open && choosingFile.current) return;
+      setMenuOpen(open);
+      // Drop a request that never arrived.
+      if (!open) setPlannedSelection(null);
+      if (!open) setSeenRefusal(backgroundImageRefusal);
+    },
+    [backgroundImageRefusal],
+  );
+  // Scrolled to as it appears, as the list may be scrolled away from it.
+  const scrollIntoView = useCallback((element: HTMLElement | null): void => {
+    element?.scrollIntoView({ block: "nearest" });
   }, []);
+  const watchFileInput = useCallback(
+    (input: HTMLInputElement | null): (() => void) | undefined => {
+      fileInput.current = input;
+      if (input === null) return;
+      // Dismissing the picker fires cancel, which React doesn't type.
+      const done = (): void => {
+        choosingFile.current = false;
+      };
+      input.addEventListener("cancel", done);
+      return (): void => input.removeEventListener("cancel", done);
+    },
+    [],
+  );
   const isBusy = busy ?? false;
   const { t } = useTranslation();
   const devices = useMediaDevices();
+  const noticeId = useId();
 
   /**
    * Records on the menu whether the keyboard or the pointer moved focus, for
@@ -142,33 +214,65 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
 
   // Measured on the call area: CSS can't size the portalled menu against it.
   const rootElement = useRootElement();
-  const [listMaxHeight, setListMaxHeight] = useState<number>();
+  const [listShare, setListShare] = useState<number>();
+  const [previewBlock, setPreviewBlock] = useState(0);
   useEffect(() => {
     if (!menuOpen) return;
     // Followed, since a host can resize the call while the menu is open.
     const subscription = observeElementSize$(rootElement)
       .pipe(
-        map(({ height }) =>
-          Math.max(MIN_LIST_HEIGHT, Math.round(height * LIST_SHARE_OF_CALL)),
+        map(({ width, height }) => ({
+          height: Math.round(height * LIST_SHARE_OF_CALL),
+          width: Math.min(MENU_WIDTH, Math.round(width - 2 * MENU_MARGIN)),
+        })),
+        distinctUntilChanged(
+          (a, b) => a.height === b.height && a.width === b.width,
         ),
-        distinctUntilChanged(),
       )
-      .subscribe(setListMaxHeight);
+      .subscribe(({ height, width }) => {
+        setListShare(height);
+        setPreviewBlock(Math.round((width * 9) / 16) + PREVIEW_GAP);
+      });
     return (): void => subscription.unsubscribe();
   }, [menuOpen, rootElement]);
 
-  // Kept clear at the list's foot, so a row reached by keyboard isn't under
-  // the meter.
-  const [meterHeight, meter] = useMeasuredHeight();
-
-  // Likewise at its head, for the sticky headings.
-  const [headingHeight, heading] = useMeasuredHeight();
+  // Paid for out of the list's share, so a preview makes the menu no taller.
+  const hasPreview =
+    iconsAndLabels === "video" &&
+    selfPreview !== undefined &&
+    listShare !== undefined;
+  const previewPinned =
+    hasPreview && listShare - previewBlock >= MIN_LIST_HEIGHT;
+  const listMaxHeight =
+    listShare === undefined
+      ? undefined
+      : Math.max(
+          MIN_LIST_HEIGHT,
+          listShare - (previewPinned ? previewBlock : 0),
+        );
+  const preview = hasPreview && (
+    <div
+      aria-hidden
+      className={classNames(styles.selfPreview, {
+        [styles.selfPreviewPinned]: previewPinned,
+      })}
+    >
+      {backgroundEffectSettling ? <InlineSpinner size={32} /> : selfPreview}
+    </div>
+  );
 
   useEffect(() => {
     if (menuOpen) devices.requestDeviceNames(); // No-op after the first call
   }, [menuOpen, devices]);
 
-  const MuteButton = iconsAndLabels === "audio" ? MicButton : VideoButton;
+  const audioMeter = iconsAndLabels === "audio" && (
+    <LiveMicrophoneLevelMeter
+      deviceId={selectedOption}
+      // Only while open, so the microphone isn't held all call.
+      active={menuOpen}
+    />
+  );
+  const MuteButton = audioMeter ? MicButton : VideoButton;
   const button = (
     <MuteButton
       enabled={enabled ?? false}
@@ -179,22 +283,12 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
         e.stopPropagation();
       }}
       disabled={isBusy || onMuteClick === undefined}
-      data-testid={
-        iconsAndLabels === "audio" ? "incall_mute" : "incall_videomute"
-      }
+      data-testid={audioMeter ? "incall_mute" : "incall_videomute"}
     />
   );
 
-  const toggles =
-    iconsAndLabels === "video" && videoBlurToggleClick !== undefined
-      ? [
-          {
-            label: t("action.blur_background"),
-            enabled: videoBlurEnabled ?? false,
-            id: BLUR_ID,
-          },
-        ]
-      : [];
+  const showEffects =
+    iconsAndLabels === "video" && (backgroundEffects?.length ?? 0) > 0;
 
   let optionsButtonLabel: string;
   let menuTitle: string;
@@ -318,6 +412,21 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
     >
       {/* The mute button lives inside */}
       {button}
+      {onAddBackgroundImage !== undefined && (
+        <input
+          ref={watchFileInput}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            // Cleared, so the same file can be chosen twice in a row.
+            e.target.value = "";
+            choosingFile.current = false;
+            if (file) onAddBackgroundImage(file);
+          }}
+        />
+      )}
       <Menu
         className={styles.menu}
         // Named for screen readers only: each section has its own heading.
@@ -326,6 +435,8 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
         open={menuOpen}
         onOpenChange={onOpenChange}
         side="top"
+        collisionBoundary={rootElement}
+        collisionPadding={MENU_MARGIN}
         trigger={
           <Button
             iconOnly
@@ -340,101 +451,91 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
           />
         }
       >
-        <div
+        {previewPinned && preview}
+        <MenuScrollArea
           ref={trackFocusSource}
-          // Keeps the items the menu's own children for assistive tech.
-          role="none"
-          className={styles.deviceList}
+          className={classNames(styles.deviceList, {
+            [styles.deviceListLeadsWithPreview]: hasPreview && !previewPinned,
+          })}
           data-testid="device-list"
           style={
             {
               "--device-list-max-height":
                 listMaxHeight === undefined ? undefined : `${listMaxHeight}px`,
-              "--device-list-scroll-padding-end":
-                meterHeight === undefined ? undefined : `${meterHeight}px`,
-              "--device-list-scroll-padding-start":
-                headingHeight === undefined ? undefined : `${headingHeight}px`,
             } as CSSProperties
           }
         >
-          {iconsAndLabels === "audio" && speakerOptions && (
-            <>
-              {/* A menu may only contain items, separators and groups, so each
-                  heading is a hidden part of a named group. */}
-              <div role="group" aria-label={t("settings.devices.speaker")}>
-                <div aria-hidden className={styles.sectionHeading}>
-                  <MenuTitle title={t("settings.devices.speaker")} />
-                </div>
-                {deviceItems(
-                  "output",
-                  speakerOptions,
-                  selectedSpeaker,
-                  onSelectOutput,
-                  (n) => t("settings.devices.speaker_numbered", { n }),
-                )}
-              </div>
-            </>
-          )}
-          <div role="group" aria-label={optionsButtonLabel}>
-            <div ref={heading} aria-hidden className={styles.sectionHeading}>
-              <MenuTitle title={optionsButtonLabel} />
-            </div>
-            {/* Apart from the heading, so the sticky meter can't ride over it. */}
-            <div role="none">
+          {hasPreview && !previewPinned && preview}
+          {audioMeter && speakerOptions && (
+            <MenuScrollSection title={t("settings.devices.speaker")}>
               {deviceItems(
-                "input",
-                options,
-                selectedOption,
-                onSelect,
-                numberedLabel,
+                "output",
+                speakerOptions,
+                selectedSpeaker,
+                onSelectOutput,
+                (n) => t("settings.devices.speaker_numbered", { n }),
               )}
-              {iconsAndLabels === "audio" && (
-                <LiveMicrophoneLevelMeter
-                  ref={meter}
-                  deviceId={selectedOption}
-                  // Only while open, so the microphone isn't held all call.
-                  active={menuOpen}
-                  className={styles.stickyMeter}
-                />
+            </MenuScrollSection>
+          )}
+          <MenuScrollSection
+            title={optionsButtonLabel}
+            stickyBottomItem={audioMeter}
+          >
+            {deviceItems(
+              "input",
+              options,
+              selectedOption,
+              onSelect,
+              numberedLabel,
+            )}
+          </MenuScrollSection>
+          {showEffects && (
+            <MenuScrollSection title={t("settings.background_effects_header")}>
+              <BackgroundEffectGrid
+                effects={backgroundEffects ?? []}
+                selected={selectedBackgroundEffect}
+                onSelect={onSelectBackgroundEffect}
+                settling={backgroundEffectSettling}
+                describedBy={
+                  backgroundEffectNotice === undefined ? undefined : noticeId
+                }
+                onAdd={
+                  onAddBackgroundImage === undefined
+                    ? undefined
+                    : (): void => {
+                        choosingFile.current = true;
+                        fileInput.current?.click();
+                      }
+                }
+                addLabel={t("action.add_background_image")}
+                onRemove={onRemoveBackgroundEffect}
+                removeLabel={t("action.remove")}
+              />
+              {/* In the list, so the menu grows no taller for it. */}
+              {refusal !== undefined && (
+                <div
+                  ref={scrollIntoView}
+                  role="none"
+                  className={styles.refusal}
+                >
+                  <Alert
+                    type="critical"
+                    title={refusal.text}
+                    onClose={(): void => setSeenRefusal(refusal)}
+                  />
+                </div>
               )}
-            </div>
-          </div>
-        </div>
-        {toggles.length > 0 && <hr />}
-        {toggles.map((toggle) => (
-          <ToggleMenuItem
-            label={toggle.label}
-            onSelect={(e) => {
-              videoBlurToggleClick?.();
-              e.preventDefault();
-            }}
-            checked={toggle.enabled}
-            key={toggle.id}
-          />
-        ))}
+              {refusal === undefined &&
+                backgroundEffectNotice !== undefined && (
+                  <div id={noticeId} role="none" className={styles.notice}>
+                    <InfoIcon width={20} height={20} />
+                    <span>{backgroundEffectNotice}</span>
+                  </div>
+                )}
+            </MenuScrollSection>
+          )}
+        </MenuScrollArea>
       </Menu>
     </div>
   );
 };
-
-/** Follows an element's height. */
-function useMeasuredHeight(): [
-  number | undefined,
-  (element: HTMLElement | null) => (() => void) | undefined,
-] {
-  const [height, setHeight] = useState<number>();
-  const ref = useCallback(
-    (element: HTMLElement | null): (() => void) | undefined => {
-      if (element === null) return;
-      const subscription = observeElementSize$(element)
-        .pipe(
-          map((size) => size.height),
-          distinctUntilChanged(),
-        )
-        .subscribe(setHeight);
-      return (): void => subscription.unsubscribe();
-    },
-    [],
-  );
-  return [height, ref];
-}

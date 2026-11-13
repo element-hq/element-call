@@ -13,7 +13,7 @@ import {
   type MatrixClient,
 } from "matrix-js-sdk";
 
-import { initClient } from "../utils/matrix";
+import { initClient } from "../utils/initClient";
 import { type Session } from "../ClientContext";
 /**
  * This provides the login method to login using user credentials.

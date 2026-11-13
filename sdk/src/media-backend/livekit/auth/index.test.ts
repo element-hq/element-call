@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { afterEach, describe, expect, it, type Mocked, vi } from "vitest";
 import fetchMock from "fetch-mock";
-import { ConnectionError, MatrixError } from "matrix-js-sdk";
+import { MatrixError } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
@@ -144,26 +144,8 @@ describe("getSFUConfig", () => {
     expect(jwtServiceCalls()).toEqual(["/get_token"]);
   });
 
-  it("uses CS API when subscribing with url + livekit_service_url transport", async () => {
+  it("uses OpenID when subscribing with url + livekit_service_url transport", async () => {
     mockJWTService();
-    expect(
-      await getSFUConfig({
-        ...defaultParams,
-        transport: urlAndServiceUrlTransport,
-      }),
-    ).toEqual(
-      expect.objectContaining({
-        jwt: csApiJWTToken,
-        livekitAlias: "via CS API",
-      }),
-    );
-    expect(client._unstable_getLivekitToken).toHaveBeenCalled();
-    expect(jwtServiceCalls()).toEqual([]);
-  });
-
-  it("falls back to OpenID with url + livekit_service_url transport", async () => {
-    mockJWTService();
-    client._unstable_getLivekitToken.mockRejectedValueOnce(unsupportedError);
     expect(
       await getSFUConfig({
         ...defaultParams,
@@ -175,25 +157,7 @@ describe("getSFUConfig", () => {
         livekitAlias: "via default endpoint",
       }),
     );
-    expect(client._unstable_getLivekitToken).toHaveBeenCalled();
-    expect(jwtServiceCalls()).toEqual(["/get_token"]);
-  });
-
-  it("falls back to OpenID when the widget host refuses the CS API", async () => {
-    mockJWTService();
-    // In widget mode a host without MSC4533 rejects the request before it
-    // reaches the homeserver, with a plain error rather than a Matrix error
-    client._unstable_getLivekitToken.mockRejectedValueOnce(
-      new Error(
-        "The rtc_livekit_get_token action is not supported by the client.",
-      ),
-    );
-    expect(
-      await getSFUConfig({
-        ...defaultParams,
-        transport: urlAndServiceUrlTransport,
-      }),
-    ).toEqual(expect.objectContaining({ jwt: defaultJWTToken }));
+    expect(client._unstable_getLivekitToken).not.toHaveBeenCalled();
     expect(jwtServiceCalls()).toEqual(["/get_token"]);
   });
 
@@ -222,7 +186,7 @@ describe("getSFUConfig", () => {
     expect(jwtServiceCalls()).toEqual([]);
   });
 
-  it("does not fall back to OpenID when publishing", async () => {
+  it("does not fall back to OpenID when publishing with url transport", async () => {
     mockJWTService();
     client._unstable_getLivekitToken.mockRejectedValueOnce(unsupportedError);
     await expect(
@@ -254,33 +218,6 @@ describe("getSFUConfig", () => {
     );
     expect(client._unstable_getLivekitToken).not.toHaveBeenCalled();
     expect(jwtServiceCalls()).toEqual(["/sfu/get"]);
-  });
-
-  it("does not fall back to OpenID on connection error", async () => {
-    vi.useFakeTimers();
-    try {
-      mockJWTService();
-      const client_ = {
-        ...client,
-        _unstable_getLivekitToken: vi
-          .fn()
-          .mockRejectedValue(new ConnectionError("No connection")),
-      };
-      await Promise.all([
-        expect(
-          getSFUConfig({
-            ...defaultParams,
-            client: client_,
-            transport: urlAndServiceUrlTransport,
-          }),
-        ).rejects.toThrow(expect.any(ConnectionError)),
-        vi.runAllTimersAsync(), // Allow request to be retried
-      ]);
-      expect(client_._unstable_getLivekitToken).toHaveBeenCalled();
-      expect(jwtServiceCalls()).toEqual([]);
-    } finally {
-      vi.useRealTimers();
-    }
   });
 });
 
@@ -362,46 +299,21 @@ describe("delegateDelayedLeave", () => {
 
 describe("chooseAuthFlow", () => {
   it.each([
-    [
-      "url",
-      "publisher",
-      urlTransport,
-      { kind: "csApi", url: urlTransport.url },
-    ],
-    [
-      "url",
-      "subscriber",
-      urlTransport,
-      { kind: "csApi", url: urlTransport.url },
-    ],
+    ["url", urlTransport, { kind: "csApi", url: urlTransport.url }],
     [
       "livekit_service_url",
-      "publisher",
-      serviceUrlTransport,
-      { kind: "openID", serviceUrl },
-    ],
-    [
-      "livekit_service_url",
-      "subscriber",
       serviceUrlTransport,
       { kind: "openID", serviceUrl },
     ],
     [
       "url + livekit_service_url",
-      "publisher",
       urlAndServiceUrlTransport,
       { kind: "openID", serviceUrl },
-    ],
-    [
-      "url + livekit_service_url",
-      "subscriber",
-      urlAndServiceUrlTransport,
-      { kind: "csApi", url: urlTransport.url },
     ],
   ] as const)(
     "chooses the flow for a %s transport as %s",
-    (_shape, role, transport, flow) => {
-      expect(chooseAuthFlow(transport, role)).toEqual(flow);
+    (_shape, transport, flow) => {
+      expect(chooseAuthFlow(transport)).toEqual(flow);
     },
   );
 });

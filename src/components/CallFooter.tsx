@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { type FC, type JSX, type Ref, useMemo } from "react";
 import classNames from "classnames";
+import { useTranslation } from "react-i18next";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
@@ -31,6 +32,14 @@ import { type ViewModel } from "../state/ViewModel";
 import { useBehavior } from "../useBehavior";
 import { type LayoutSwitchViewModel } from "../state/LayoutSwitchViewModel";
 import { LayoutSwitch } from "../room/LayoutSwitch";
+import { type BackgroundEffectGridItem } from "./BackgroundEffectGrid";
+import { SelfPreview } from "./SelfPreview";
+import { type UnusableReason } from "../tracks/backgroundImages";
+import { type LocalVideoMediaTrack } from "@element-hq/matrixrtc-sdk";
+
+export interface BackgroundImageRefusal {
+  reason: UnusableReason | "not-kept";
+}
 
 export interface AudioOutputSwitcher {
   targetOutput: string;
@@ -56,20 +65,37 @@ export interface FooterActions {
   toggleAudio: (() => void) | undefined;
   /** Also controls if the videoMute button is disabled */
   toggleVideo: (() => void) | undefined;
-  toggleBlur: (() => void) | undefined;
+  /** Undefined where background effects can't be chosen. */
+  selectBackgroundEffect: ((id: string) => void) | undefined;
+  /** Undefined where no background can be added. */
+  addBackgroundImage: ((file: File) => void) | undefined;
+  /** Removes an added background by its option id; never the one in force. */
+  removeBackgroundEffect: ((id: string) => void) | undefined;
   toggleScreenSharing: (() => void) | undefined;
   /** Also controls if the settings button is visible */
   openSettings: (() => void) | undefined;
   /** Also controls if the hangup button is visible */
   hangup: (() => void) | undefined;
 }
+
 // we do not use any ? optional properties so that the vm type is including all fields.
 export interface FooterState {
   audioEnabled: boolean;
   audioBusy: boolean;
   videoEnabled: boolean;
   videoBusy: boolean;
-  videoBlurEnabled: boolean;
+  /** The background effect in force, as its option id. */
+  backgroundEffect: string;
+  /** Every effect on offer, in the order they are shown. */
+  backgroundEffects: BackgroundEffectGridItem[];
+  /** What the user is told about effects here, if anything. */
+  backgroundEffectNotice: "unavailable" | "slow" | undefined;
+  /** Whether the first effect chosen is still being prepared. */
+  backgroundEffectSettling: boolean;
+  /** Why the last file offered couldn't be kept, if it couldn't. */
+  backgroundImageRefusal: BackgroundImageRefusal | undefined;
+  /** The camera to preview, with the effect in force; null while it is off. */
+  cameraTrack: LocalVideoMediaTrack | null;
   showFooter: boolean;
 
   /* This is needed for WindowMode = "flat" */
@@ -117,12 +143,14 @@ export interface FooterProps {
   children?: JSX.Element | JSX.Element[] | false;
   vm: ViewModel<FooterSnapshot>;
 }
+
 export const CallFooter: FC<FooterProps> = ({
   className,
   ref,
   children,
   vm,
 }) => {
+  const { t } = useTranslation();
   const asOverlay = useBehavior(vm.asOverlay$);
   const showFooter = useBehavior(vm.showFooter$);
   const hideControls = useBehavior(vm.hideControls$);
@@ -151,8 +179,29 @@ export const CallFooter: FC<FooterProps> = ({
   const selectedAudioOutput = useBehavior(vm.selectedAudioOutput$);
   const selectAudioOutputOption = useBehavior(vm.selectAudioOutputOption$);
   const selectVideoButtonOption = useBehavior(vm.selectVideoButtonOption$);
-  const toggleBlur = useBehavior(vm.toggleBlur$);
-  const videoBlurEnabled = useBehavior(vm.videoBlurEnabled$);
+  const backgroundEffect = useBehavior(vm.backgroundEffect$);
+  const selectBackgroundEffect = useBehavior(vm.selectBackgroundEffect$);
+  const backgroundEffectNotice = useBehavior(vm.backgroundEffectNotice$);
+  const backgroundEffectSettling = useBehavior(vm.backgroundEffectSettling$);
+  const addBackgroundImage = useBehavior(vm.addBackgroundImage$);
+  const removeBackgroundEffect = useBehavior(vm.removeBackgroundEffect$);
+  const cameraTrack = useBehavior(vm.cameraTrack$);
+  const refusal = useBehavior(vm.backgroundImageRefusal$);
+  const refusalMessage = useMemo(() => {
+    switch (refusal?.reason) {
+      case undefined:
+        return undefined;
+      case "not-an-image":
+        return { text: t("error.background_not_an_image") };
+      case "animated":
+        return { text: t("error.background_animated") };
+      case "undecodable":
+        return { text: t("error.background_undecodable") };
+      case "not-kept":
+        return { text: t("error.background_not_kept") };
+    }
+  }, [refusal, t]);
+  const backgroundEffects = useBehavior(vm.backgroundEffects$);
   const buttonSize = useBehavior(vm.buttonSize$);
   const showLogo = useBehavior(vm.showLogo$);
 
@@ -214,8 +263,21 @@ export const CallFooter: FC<FooterProps> = ({
         options={videoOptions}
         selectedOption={selectedVideo}
         onSelect={selectVideoButtonOption}
-        videoBlurToggleClick={toggleBlur}
-        videoBlurEnabled={videoBlurEnabled}
+        backgroundEffects={backgroundEffects}
+        selectedBackgroundEffect={backgroundEffect}
+        onSelectBackgroundEffect={selectBackgroundEffect}
+        backgroundEffectSettling={backgroundEffectSettling}
+        onAddBackgroundImage={addBackgroundImage}
+        onRemoveBackgroundEffect={removeBackgroundEffect}
+        selfPreview={<SelfPreview track={cameraTrack} />}
+        backgroundImageRefusal={refusalMessage}
+        backgroundEffectNotice={
+          backgroundEffectNotice === "unavailable"
+            ? t("background_effects.unavailable")
+            : backgroundEffectNotice === "slow"
+              ? t("background_effects.slow")
+              : undefined
+        }
       />,
     );
   } else {

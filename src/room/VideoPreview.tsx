@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { useEffect, useMemo, useRef, type FC, type ReactNode } from "react";
 import useMeasure from "react-use-measure";
-import { facingModeFromLocalTrack, type LocalVideoTrack } from "livekit-client";
+import { constant, type LocalVideoMediaTrack } from "@element-hq/matrixrtc-sdk";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
 
@@ -15,6 +15,9 @@ import { TileAvatar } from "../tile/TileAvatar";
 import styles from "./VideoPreview.module.css";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import videoPlaceholder from "../graphics/video-placeholder.gif";
+import { useBehavior } from "../useBehavior";
+
+const noFacingMode = constant(undefined);
 
 export type MatrixInfo = {
   userId: string;
@@ -30,7 +33,7 @@ export type MatrixInfo = {
 interface Props {
   matrixInfo: MatrixInfo;
   videoEnabled: boolean;
-  videoTrack: LocalVideoTrack | null;
+  videoTrack: LocalVideoMediaTrack | null;
   children: ReactNode;
 }
 
@@ -46,14 +49,12 @@ export const VideoPreview: FC<Props> = ({
   const videoEl = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
-    // Effect to connect the videoTrack with the video element.
-    if (videoEl.current) {
-      videoTrack?.attach(videoEl.current);
-    }
-    return (): void => {
-      videoTrack?.detach();
-    };
+    const element = videoEl.current;
+    if (!element || !videoTrack) return;
+    videoTrack.attach(element);
+    return (): void => videoTrack.detach(element);
   }, [videoTrack]);
+  const facingMode = useBehavior(videoTrack?.facingMode$ ?? noFacingMode);
 
   const cameraIsStarting = useMemo(
     () => videoEnabled && !videoTrack,
@@ -63,12 +64,7 @@ export const VideoPreview: FC<Props> = ({
   return (
     <div className={classNames(styles.preview)} ref={previewRef}>
       <video
-        className={
-          videoTrack &&
-          facingModeFromLocalTrack(videoTrack).facingMode === "user"
-            ? styles.mirror
-            : undefined
-        }
+        className={facingMode === "user" ? styles.mirror : undefined}
         ref={videoEl}
         muted
         playsInline

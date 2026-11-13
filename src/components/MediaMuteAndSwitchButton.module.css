@@ -36,20 +36,17 @@ Please see LICENSE in the repository root for full details.
   }
 }
 
+/* The width design sets: a long device name wraps. */
 .menu {
-  display: flex;
-  flex-direction: column;
+  inline-size: 296px;
 }
 
-/* Only the device lists scroll, bounded by the measured call area: the menu is
-   portalled out of the root, so CSS can't size it against the call. */
+/* Its share of the measured call area: the menu is portalled out of the root,
+   so CSS can't size it against the call. */
 .deviceList {
-  overflow-y: auto;
-  min-block-size: 0;
   max-block-size: var(--device-list-max-height);
-  /* Keeps a row reached by keyboard clear of the sticky heading and meter. */
-  scroll-padding-block: var(--device-list-scroll-padding-start, 0)
-    var(--device-list-scroll-padding-end, 0);
+  /* The raised headings stay raised within the list, under the menu's frame. */
+  isolation: isolate;
 }
 
 /* Compound's heading rule heads each section; the design adds space below it. */
@@ -62,23 +59,10 @@ Please see LICENSE in the repository root for full details.
   margin-block-start: var(--cpd-space-7x);
 }
 
-/* Sticky within its own section. Opaque and inset a border width so it doesn't
-   paint over the menu's outline. */
-.sectionHeading {
-  position: sticky;
-  inset-block-start: 0;
-  background: var(--cpd-color-bg-canvas-default);
-  margin-inline: var(--cpd-border-width-1);
-  margin-block-start: var(--cpd-border-width-1);
-}
-
-/* Sticky at the foot of the microphone section; opaque and inset as above. */
-.stickyMeter {
-  position: sticky;
-  inset-block-end: 0;
-  background: var(--cpd-color-bg-canvas-default);
-  margin-inline: var(--cpd-border-width-1);
-  margin-block-end: var(--cpd-border-width-1);
+/* Raised, or the positioned effect tiles scroll over the heading they sit
+   under. Compound's sticky heading is the section's aria-hidden first child. */
+.deviceList [role="group"] > [aria-hidden="true"]:first-child {
+  z-index: 1;
 }
 
 /* Radix focuses whatever the pointer is over, so the browser's ring would
@@ -91,4 +75,57 @@ Please see LICENSE in the repository root for full details.
 .menu[data-focus-source="keyboard"] [role^="menuitem"]:focus {
   outline: var(--cpd-border-width-2) solid var(--cpd-color-border-focused);
   outline-offset: calc(-1 * var(--cpd-border-width-2));
+}
+
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--cpd-space-3x);
+  margin: var(--cpd-space-2x) var(--cpd-space-4x) 0;
+  padding: var(--cpd-space-3x);
+  border-radius: var(--cpd-space-2x);
+  background: var(--cpd-color-bg-subtle-secondary);
+  color: var(--cpd-color-text-primary);
+  font: var(--cpd-font-body-md-regular);
+}
+
+.notice > svg {
+  flex-shrink: 0;
+  color: var(--cpd-color-icon-secondary);
+}
+
+.refusal {
+  margin: var(--cpd-space-2x) var(--cpd-space-4x) 0;
+}
+
+.selfPreview {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  aspect-ratio: 16 / 9;
+  margin-block-end: var(--cpd-space-2x);
+  overflow: clip;
+  border-start-start-radius: var(--cpd-space-3x);
+  border-start-end-radius: var(--cpd-space-3x);
+  background: var(--cpd-color-bg-subtle-secondary);
+  color: var(--cpd-color-icon-secondary);
+}
+
+.selfPreview > video {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  /* Rounded itself too: a video can be drawn on a layer of its own, which the
+     frame's rounded clip doesn't always reach. */
+  border-radius: inherit;
+}
+
+/* Up to the menu's frame, over the padding at its top. */
+.selfPreviewPinned,
+.deviceListLeadsWithPreview {
+  margin-block-start: calc(-1 * var(--cpd-space-5x));
 }

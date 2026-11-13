@@ -18,7 +18,11 @@ import {
   type ObservableScope,
 } from "../../reactive/ObservableScope";
 import { generateItemsWithEpoch } from "../../reactive/observable";
-import { type ConnectionRole, type TransportLocator } from "./auth";
+import {
+  chooseAuthFlow,
+  type ConnectionRole,
+  type TransportLocator,
+} from "./auth";
 import { type Connection } from "./Connection";
 import { type ConnectionFactory } from "./ConnectionFactory";
 
@@ -26,22 +30,25 @@ import { type ConnectionFactory } from "./ConnectionFactory";
 export type TransportKey = string & { __transportKey: true };
 
 /**
- * The key a locator is identified by in a map or set. Locators with the same
- * key share a connection: the server name only takes part in authentication
- * for a transport with a `url`, where our homeserver asks that server for the
- * token. A JWT service is reached directly, so members of several homeservers
- * advertising the same one share a connection rather than each get their own.
+ * Converts a {@link TransportLocator} to a key suitable for identifying it in a
+ * map of connections.
  */
 export function keyFor({
   transport,
   serverName,
 }: TransportLocator): TransportKey {
-  const hasUrl = "url" in transport;
+  // Base the key on the auth flow we would use, so that we never create two
+  // connections that share the same auth details. (That would be bad, as we
+  // might then try to connect to the same SFU twice with the same participant
+  // ID, resulting in only one working connection.)
+  // TODO: This strategy will not work once `chooseAuthFlow` begins allowing for
+  // falling back from the CS API flow to the OpenID flow.
+  const flow = chooseAuthFlow(transport);
   // Serialize the fields in a consistent order
   return JSON.stringify([
-    hasUrl ? transport.url : null,
-    "livekit_service_url" in transport ? transport.livekit_service_url : null,
-    hasUrl ? serverName : null,
+    flow.kind,
+    // With the CS API flow, we additionally need to distinguish server names
+    ...(flow.kind === "csApi" ? [flow.url, serverName] : [flow.serviceUrl]),
   ]) as TransportKey;
 }
 

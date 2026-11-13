@@ -17,7 +17,7 @@ env:
 jobs:
   build_and_deploy:
     name: Build & publish docker
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write # required to upload release asset
       packages: write # needed for publishing packages to GHCR

@@ -109,4 +109,12 @@ describe("scopeStylesToRoot", () => {
       ".a .b_abc12:hover { border: 0 }",
     );
   });
+
+  it("leaves an excluded stylesheet as it is", async () => {
+    const css = "body { margin: 0 } .menu { color: red }";
+    const result = await postcss([
+      scopeStylesToRoot({ exclude: [/host\.css$/] }),
+    ]).process(css, { from: "/app/host.css" });
+    expect(result.css).toBe(css);
+  });
 });

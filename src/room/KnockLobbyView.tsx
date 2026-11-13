@@ -13,6 +13,7 @@ import { CheckIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { LobbyView } from "./LobbyView";
 import { E2eeType } from "../e2ee/e2eeType";
 import { useMuteStates } from "../state/useMuteStates";
+import { useLocalMedia } from "../useLocalMedia";
 
 interface Props {
   client: MatrixClient;
@@ -49,6 +50,7 @@ export const KnockLobbyView: FC<Props> = ({
 }): ReactNode => {
   const { t } = useTranslation();
   const muteStates = useMuteStates();
+  const media = useLocalMedia();
 
   if (muteStates === null) return null;
 
@@ -85,6 +87,7 @@ export const KnockLobbyView: FC<Props> = ({
       confineToRoom={confineToRoom}
       hideHeader={hideHeader}
       participantCount={null}
+      media={media}
       muteStates={muteStates}
       onShareClick={null}
     />

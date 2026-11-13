@@ -6,14 +6,43 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type ReactNode, useCallback } from "react";
+import { type ComponentType, type FC, type ReactNode } from "react";
 import classNames from "classnames";
 
 import { type OneOnOneMobileLayout as OneOnOneMobileLayoutModel } from "../state/layout-types.ts";
 import { type CallLayout } from "./CallLayout";
 import styles from "./OneOnOneMobileLayout.module.css";
-import { type DragCallback, useUpdateLayout } from "./Grid";
+import { type SlotProps, useUpdateLayout } from "./Grid";
 import { useBehavior } from "../useBehavior";
+import { type FloatingTile } from "../state/FloatingTile.ts";
+import {
+  type GridTileViewModel,
+  type TileViewModel,
+} from "../state/TileViewModel.ts";
+import { type Behavior } from "../state/Behavior.ts";
+
+interface PipSlotProps {
+  model: FloatingTile & { vm: GridTileViewModel; size$: Behavior<"sm" | "lg"> };
+  Slot: ComponentType<SlotProps<TileViewModel>>;
+}
+
+const PipSlot: FC<PipSlotProps> = ({ model, Slot }) => {
+  useUpdateLayout();
+  const size = useBehavior(model.size$);
+  const alignment = useBehavior(model.alignment$);
+
+  return (
+    <Slot
+      className={classNames(styles.pip)}
+      id={model.vm.id}
+      model={model.vm}
+      onDrag={model.onDrag}
+      data-size={size}
+      data-block-alignment={alignment.block}
+      data-inline-alignment={alignment.inline}
+    />
+  );
+};
 
 /**
  * An implementation of the "one-on-one" layout for mobile platforms, in which
@@ -44,30 +73,9 @@ export const makeOneOnOneMobileLayout: CallLayout<
     Slot,
   }): ReactNode {
     useUpdateLayout();
-    const pipSize = useBehavior(model.pipSize$);
-    const pipAlignment = useBehavior(model.pipAlignment$);
-    const onDragLocalTile: DragCallback = useCallback(
-      ({ xRatio, yRatio }) =>
-        model.pipAlignment$.next({
-          block: yRatio < 0.5 ? "start" : "end",
-          inline: xRatio < 0.5 ? "start" : "end",
-        }),
-      [model.pipAlignment$],
-    );
-
     return (
       <div ref={ref} className={styles.layer}>
-        {model.pip && (
-          <Slot
-            className={classNames(styles.pip)}
-            id={model.pip.id}
-            model={model.pip}
-            onDrag={onDragLocalTile}
-            data-size={pipSize}
-            data-block-alignment={pipAlignment.block}
-            data-inline-alignment={pipAlignment.inline}
-          />
-        )}
+        {model.pip && <PipSlot model={model.pip} Slot={Slot} />}
       </div>
     );
   },

@@ -16,19 +16,35 @@ host's page. It is the MatrixRTC reference implementation.
   `@media`, global `i18next` or the `widget` global — take it from a provider.
 - The change works standalone, as a widget and as a component. Say what you checked.
 - Every gate below is green before you push.
-- Hand off after the first implementation, before the quality pass. Then commit on
-  the user's word where the setup allows it, or hand them the message.
 
 ## Read before you
 
 | …                                | …                                                          |
 | -------------------------------- | ---------------------------------------------------------- |
-| start a task of any size         | [docs/agents/workflow.md](docs/agents/workflow.md)         |
 | touch call logic or a view model | [docs/agents/architecture.md](docs/agents/architecture.md) |
 | write any code                   | [docs/agents/code-style.md](docs/agents/code-style.md)     |
 | write a test, story or e2e spec  | [docs/agents/testing.md](docs/agents/testing.md)           |
 | open a PR                        | [CONTRIBUTING.md](CONTRIBUTING.md)                         |
-| implement from a feature spec    | [FEATURES_SPEC/AGENTS.md](FEATURES_SPEC/AGENTS.md)         |
+
+## Scratch files live in `agent-workspace/`
+
+Git-ignored. One kebab-case subfolder per task, matching the branch topic:
+`agent-workspace/<slug>/`.
+
+| File                        | Purpose                                                                          |
+| --------------------------- | -------------------------------------------------------------------------------- |
+| `plan.md`                   | The concrete approach — files, symbols, edit order — once direction is confirmed |
+| `commit-msg.txt`            | `git commit -F agent-workspace/<slug>/commit-msg.txt`                            |
+| `pr-body.md`                | `gh pr create --body-file agent-workspace/<slug>/pr-body.md`                     |
+| `implementation-summary.md` | What was built, decisions, trade-offs                                            |
+| `NN-prompt.md`              | Raw prompt text, numbered, when worth keeping                                    |
+
+- Nothing here is durable. The folder is ignored, so anything worth keeping is
+  promoted into the PR body or a doc before the task ends.
+- Never write scratch files to the repo root. Stray `load_test_summary.md` and
+  `config.json_` files are what this folder prevents.
+- Start `pr-body.md` from `.github/PULL_REQUEST_TEMPLATE.md` and fill every
+  section.
 
 ## Gates
 
@@ -41,6 +57,11 @@ pnpm i18n:check
 
 `knip` fails on dead code; a file deliberately inert ahead of its consumer goes in
 `knip.ts` `ignoreFiles` with a reason.
+
+Ready means every gate is green and the change is covered at the layers
+[testing.md](docs/agents/testing.md) asks for. Read the diff against
+[code-style.md](docs/agents/code-style.md) first. Re-run the whole checklist after
+any fix.
 
 ## A good PR
 

@@ -12,6 +12,7 @@ import {
   MatrixRTCSessionEvent,
   MembershipManagerEvent,
   type Transport,
+  type UnstableLivekitTransport,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { BehaviorSubject, EMPTY, Subject } from "rxjs";
 import { describe, expect, it, type Mock, vi } from "vitest";
@@ -46,10 +47,16 @@ import {
   MockRTCSession,
 } from "./utils/test";
 
-const transport: Transport = {
+const transport: UnstableLivekitTransport = {
   type: "livekit",
   livekit_service_url: "https://lk.example.org",
 };
+
+const transportWithAlias: Transport = {
+  livekit_alias: "!room:example.org",
+  ...transport,
+};
+
 const userId = "@alice:example.org";
 /** A token with the publish grant, as a homeserver issues it for its own SFU. */
 const publisherJWT = [
@@ -133,7 +140,7 @@ function setup(
     getDeviceId: () => deviceId,
     getDomain: () => "example.org",
     getSyncState: () => SyncState.Syncing,
-    _unstable_getRTCTransports: vi.fn().mockResolvedValue(homeserverTransports),
+    getRTCTransports: vi.fn().mockResolvedValue(homeserverTransports),
     _unstable_getLivekitToken: vi.fn().mockResolvedValue({ jwt: publisherJWT }),
   } as unknown as MatrixClient;
   const members$ = new BehaviorSubject<RTCMember[]>([]);
@@ -157,7 +164,7 @@ function setup(
     context: MediaBackendContext,
   ): MediaBackend => {
     const backend: MediaBackend = {
-      transportType: "livekit",
+      transportTypes: ["m.livekit", "livekit"],
       prepareLocalTransport: async () => fake.prepared.promise,
       delegateDelayedLeave: fake.delegateDelayedLeave,
       local: {
@@ -223,7 +230,7 @@ describe("createRTCParticipation", () => {
     await flushPromises();
     expect(join).toHaveBeenCalledWith(
       { userId, deviceId, memberId: legacyMemberId },
-      [transport],
+      [transportWithAlias],
       expect.objectContaining({
         manageMediaKeys: true,
         unstableSendStickyEvents: false,
@@ -319,7 +326,7 @@ describe("createRTCParticipation", () => {
     await flushPromises();
     expect(join).toHaveBeenCalledWith(
       expect.anything(),
-      [transport],
+      [transportWithAlias],
       expect.objectContaining({ delayedLeaveEventDelayMs: 7_200_000 }),
     );
     expect(fake.delegateDelayedLeave).not.toHaveBeenCalled();

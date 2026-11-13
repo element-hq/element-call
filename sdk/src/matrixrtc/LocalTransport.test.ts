@@ -31,7 +31,7 @@ function client(
 ): Parameters<typeof discoverLocalTransport>[0] {
   return {
     getDomain: () => "example.org",
-    _unstable_getRTCTransports: vi.fn().mockResolvedValue(advertised),
+    getRTCTransports: vi.fn().mockResolvedValue(advertised),
   };
 }
 
@@ -48,20 +48,20 @@ describe("discoverLocalTransport", () => {
     await expect(
       discoverLocalTransport(
         c,
-        "livekit",
+        ["m.livekit", "livekit"],
         { transport: hostTransport },
         fromBackends(),
         logger,
       ),
     ).resolves.toBe(hostTransport);
-    expect(c._unstable_getRTCTransports).not.toHaveBeenCalled();
+    expect(c.getRTCTransports).not.toHaveBeenCalled();
   });
 
   it("prefers the homeserver's transport over the host's fallback", async () => {
     await expect(
       discoverLocalTransport(
         client([homeserverTransport]),
-        "livekit",
+        ["m.livekit", "livekit"],
         { fallbackTransport: hostTransport },
         fromBackends(),
         logger,
@@ -73,7 +73,7 @@ describe("discoverLocalTransport", () => {
     await expect(
       discoverLocalTransport(
         client([{ type: "not_livekit" }]),
-        "livekit",
+        ["m.livekit", "livekit"],
         { fallbackTransport: hostTransport },
         fromBackends(),
         logger,
@@ -87,7 +87,7 @@ describe("discoverLocalTransport", () => {
     await expect(
       discoverLocalTransport(
         client([homeserverTransport]),
-        "livekit",
+        ["m.livekit", "livekit"],
         {},
         backends,
         logger,
@@ -99,7 +99,7 @@ describe("discoverLocalTransport", () => {
   it("fails naming the homeserver where there is no transport at all", async () => {
     const promise = discoverLocalTransport(
       client([]),
-      "livekit",
+      ["m.livekit", "livekit"],
       {},
       fromBackends(),
       logger,

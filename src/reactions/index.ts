@@ -7,30 +7,30 @@ Please see LICENSE in the repository root for full details.
 
 import { type RelationType } from "matrix-js-sdk";
 
-import catSoundOgg from "../sound/reactions/cat.ogg?url";
-import catSoundMp3 from "../sound/reactions/cat.mp3?url";
-import clapSoundOgg from "../sound/reactions/clap.ogg?url";
-import clapSoundMp3 from "../sound/reactions/clap.mp3?url";
-import cricketsSoundOgg from "../sound/reactions/crickets.ogg?url";
-import cricketsSoundMp3 from "../sound/reactions/crickets.mp3?url";
-import dogSoundOgg from "../sound/reactions/dog.ogg?url";
-import dogSoundMp3 from "../sound/reactions/dog.mp3?url";
-import genericSoundOgg from "../sound/reactions/generic.ogg?url";
-import genericSoundMp3 from "../sound/reactions/generic.mp3?url";
-import lightbulbSoundOgg from "../sound/reactions/lightbulb.ogg?url";
-import lightbulbSoundMp3 from "../sound/reactions/lightbulb.mp3?url";
-import partySoundOgg from "../sound/reactions/party.ogg?url";
-import partySoundMp3 from "../sound/reactions/party.mp3?url";
-import deerSoundOgg from "../sound/reactions/deer.ogg?url";
-import deerSoundMp3 from "../sound/reactions/deer.mp3?url";
-import rockSoundOgg from "../sound/reactions/rock.ogg?url";
-import rockSoundMp3 from "../sound/reactions/rock.mp3?url";
-import waveSoundOgg from "../sound/reactions/wave.ogg?url";
-import waveSoundMp3 from "../sound/reactions/wave.mp3?url";
-import baduntssSoundOgg from "../sound/reactions/baduntss.ogg?url";
-import baduntssSoundMp3 from "../sound/reactions/baduntss.mp3?url";
-import bellSoundOgg from "../sound/reactions/bell.ogg?url";
-import bellSoundMp3 from "../sound/reactions/bell.mp3?url";
+import catSoundOgg from "../sound/reactions/cat.ogg?url&no-inline";
+import catSoundMp3 from "../sound/reactions/cat.mp3?url&no-inline";
+import clapSoundOgg from "../sound/reactions/clap.ogg?url&no-inline";
+import clapSoundMp3 from "../sound/reactions/clap.mp3?url&no-inline";
+import cricketsSoundOgg from "../sound/reactions/crickets.ogg?url&no-inline";
+import cricketsSoundMp3 from "../sound/reactions/crickets.mp3?url&no-inline";
+import dogSoundOgg from "../sound/reactions/dog.ogg?url&no-inline";
+import dogSoundMp3 from "../sound/reactions/dog.mp3?url&no-inline";
+import genericSoundOgg from "../sound/reactions/generic.ogg?url&no-inline";
+import genericSoundMp3 from "../sound/reactions/generic.mp3?url&no-inline";
+import lightbulbSoundOgg from "../sound/reactions/lightbulb.ogg?url&no-inline";
+import lightbulbSoundMp3 from "../sound/reactions/lightbulb.mp3?url&no-inline";
+import partySoundOgg from "../sound/reactions/party.ogg?url&no-inline";
+import partySoundMp3 from "../sound/reactions/party.mp3?url&no-inline";
+import deerSoundOgg from "../sound/reactions/deer.ogg?url&no-inline";
+import deerSoundMp3 from "../sound/reactions/deer.mp3?url&no-inline";
+import rockSoundOgg from "../sound/reactions/rock.ogg?url&no-inline";
+import rockSoundMp3 from "../sound/reactions/rock.mp3?url&no-inline";
+import waveSoundOgg from "../sound/reactions/wave.ogg?url&no-inline";
+import waveSoundMp3 from "../sound/reactions/wave.mp3?url&no-inline";
+import baduntssSoundOgg from "../sound/reactions/baduntss.ogg?url&no-inline";
+import baduntssSoundMp3 from "../sound/reactions/baduntss.mp3?url&no-inline";
+import bellSoundOgg from "../sound/reactions/bell.ogg?url&no-inline";
+import bellSoundMp3 from "../sound/reactions/bell.mp3?url&no-inline";
 
 export const ElementCallReactionEventType = "io.element.call.reaction";
 

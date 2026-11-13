@@ -16,10 +16,10 @@ Please see LICENSE in the repository root for full details.
   align-items: center;
   gap: var(--cpd-space-3x);
   padding-block: var(--cpd-space-2x);
-  /* Centres the icon on the radio column: less the row's inset border and half
-     the icon's extra width. Checked in the MeterAlignsWithTheDeviceRows story. */
+  /* Centres the icon on the radio column: less half the icon's extra width.
+     Checked in the MeterAlignsWithTheDeviceRows story. */
   padding-inline-start: calc(
-    var(--cpd-space-4x) - var(--cpd-border-width-1) -
+    var(--cpd-space-4x) -
       (var(--meter-icon-size) - var(--device-control-size)) / 2
   );
   padding-inline-end: calc(var(--cpd-space-4x) * 2 + var(--cpd-space-2x));

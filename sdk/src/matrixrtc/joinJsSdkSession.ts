@@ -23,6 +23,7 @@ interface Options {
   encryptMedia: boolean;
   matrixRTCMode: MatrixRTCMode;
   sendNotificationType?: RTCNotificationType;
+  callIntent?: RTCCallIntent;
   applicationData?: Record<string, unknown>;
   timings: SessionTimings;
   /** The delayed leave timings to use: delegated to the SFU or not. */
@@ -35,6 +36,7 @@ interface Options {
  * @throws If the join could not be started.
  */
 export function joinJsSdkSession(
+  roomId: string,
   session: JsSdkRTCSession,
   ownMembershipIdentity: CallMembershipIdentityParts,
   transport: Transport,
@@ -42,15 +44,12 @@ export function joinJsSdkSession(
     encryptMedia,
     matrixRTCMode,
     sendNotificationType,
+    callIntent,
     applicationData,
     timings,
     delayedLeave,
   }: Options,
 ): void {
-  // The membership format carries the intent as a field of its own
-  const { "m.call.intent": intent, ...rest } = applicationData ?? {};
-  const callIntent =
-    typeof intent === "string" ? (intent as RTCCallIntent) : undefined;
   // Give up on the network as soon as either the sync has been down for the
   // grace period or the delayed leave has probably been sent, whichever is
   // sooner
@@ -58,20 +57,37 @@ export function joinJsSdkSession(
     timings.syncDisconnectGracePeriodMs,
     delayedLeave.delay_ms,
   );
-  session.join(ownMembershipIdentity, [transport], {
-    notificationType: sendNotificationType,
-    callIntent,
-    applicationData: rest,
-    manageMediaKeys: encryptMedia,
-    delayedLeaveEventRestartMs: delayedLeave.restart_ms,
-    delayedLeaveEventDelayMs: delayedLeave.delay_ms,
-    delayedLeaveEventRestartLocalTimeoutMs: delayedLeave.restart_timeout_ms,
-    networkErrorRetryMs: timings.networkErrorRetryMs,
-    makeKeyDelay: timings.waitForKeyRotationMs,
-    membershipEventExpiryMs: timings.membershipEventExpiryMs,
-    keyRotationParticipantLimit: timings.keyRotationParticipantLimit,
-    unstableSendStickyEvents: matrixRTCMode === MatrixRTCMode.Matrix_2_0,
-    maximumNetworkErrorRetryCount:
-      Math.ceil(maxWaitMs / timings.networkErrorRetryMs) + 1,
-  });
+
+  session.join(
+    ownMembershipIdentity,
+    // TODO: `livekit_alias` should be unused these days, but some Ruma-based
+    // clients still expect it to be present. Remove from `publishedTransports`
+    // as soon as https://github.com/ruma/ruma/pull/2642 and
+    // https://github.com/matrix-org/matrix-rust-sdk/pull/7335 are widely
+    // deployed.
+    [
+      {
+        ...("livekit_service_url" in transport
+          ? { livekit_alias: roomId }
+          : {}),
+        ...transport,
+      },
+    ],
+    {
+      notificationType: sendNotificationType,
+      callIntent,
+      applicationData,
+      manageMediaKeys: encryptMedia,
+      delayedLeaveEventRestartMs: delayedLeave.restart_ms,
+      delayedLeaveEventDelayMs: delayedLeave.delay_ms,
+      delayedLeaveEventRestartLocalTimeoutMs: delayedLeave.restart_timeout_ms,
+      networkErrorRetryMs: timings.networkErrorRetryMs,
+      makeKeyDelay: timings.waitForKeyRotationMs,
+      membershipEventExpiryMs: timings.membershipEventExpiryMs,
+      keyRotationParticipantLimit: timings.keyRotationParticipantLimit,
+      unstableSendStickyEvents: matrixRTCMode === MatrixRTCMode.Matrix_2_0,
+      maximumNetworkErrorRetryCount:
+        Math.ceil(maxWaitMs / timings.networkErrorRetryMs) + 1,
+    },
+  );
 }

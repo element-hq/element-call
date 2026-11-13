@@ -23,7 +23,7 @@ jobs:
     needs: build_element_call
     if: always()
     name: Publish tarball
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write # required to upload release asset
       packages: write
@@ -68,7 +68,7 @@ jobs:
   add_docker_release_note:
     needs: publish_docker
     name: Add docker release note
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Add release note
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2

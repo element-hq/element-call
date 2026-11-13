@@ -10,7 +10,6 @@ import {
   type LocalParticipant,
   type LocalTrackPublication,
   ParticipantEvent,
-  type Room as LivekitRoom,
 } from "livekit-client";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import {
@@ -28,6 +27,7 @@ import {
 
 import {
   type LocalAudioMediaTrack,
+  type LocalMedia,
   type LocalVideoMediaTrack,
   type MediaSource,
   type PublishRequest,
@@ -43,7 +43,11 @@ import { type LocalMediaBackend, MediaConnectionState } from "../api";
 import { type TransportLocator } from "./auth";
 import { type Connection } from "./Connection";
 import { type ConnectionMap } from "./ConnectionMap";
-import { createLocalLivekitMemberMedia } from "./LivekitMemberMedia";
+import {
+  createLocalLivekitMemberMedia,
+  type ParticipantSource,
+  participantSourcesEqual,
+} from "./LivekitMemberMedia";
 import { livekitSources } from "./LivekitMediaTrack";
 import { type DesiredMedia, Publisher } from "./Publisher";
 import { toMediaConnectionState } from "./connectionState";
@@ -54,6 +58,8 @@ interface Props {
   /** The transport we publish on; null until the session has found it. */
   localTransport$: Behavior<TransportLocator | null>;
   publish: PublishRequest[];
+  /** Tracks the host captured ahead of the join; the publisher takes them over. */
+  media?: LocalMedia;
   /** Read by the connection factory for the rooms it creates from now on. */
   audioOutputDeviceId$: BehaviorSubject<string | undefined>;
   encryptionSystem: EncryptionSystem;
@@ -76,6 +82,7 @@ export function createLivekitLocalMedia({
   connectionMap$,
   localTransport$,
   publish: initialRequests,
+  media,
   audioOutputDeviceId$,
   encryptionSystem,
   logger: parentLogger,
@@ -116,6 +123,7 @@ export function createLivekitLocalMedia({
       connection.livekitRoom,
       desired,
       logger.getChild(`[Publisher ${JSON.stringify(connection.transport)}]`),
+      media,
     );
     publisher$.next(publisher);
     return Promise.resolve(async (): Promise<void> => {
@@ -217,17 +225,15 @@ function participantAndRoom$(
   scope: ObservableScope,
   participant$: Behavior<LocalParticipant | null>,
   connection$: Behavior<Connection | null>,
-): Behavior<{ participant: LocalParticipant; room: LivekitRoom } | null> {
+): Behavior<ParticipantSource<LocalParticipant>> {
   return scope.behavior(
     combineLatest([participant$, connection$]).pipe(
       map(([participant, connection]) =>
         participant && connection
-          ? { participant, room: connection.livekitRoom }
+          ? { participants: [participant], room: connection.livekitRoom }
           : null,
       ),
-      distinctUntilChanged(
-        (a, b) => a?.participant === b?.participant && a?.room === b?.room,
-      ),
+      distinctUntilChanged(participantSourcesEqual),
     ),
   );
 }

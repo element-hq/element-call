@@ -6,7 +6,11 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { test, expect } from "vitest";
-import { type RTCCallIntent } from "matrix-js-sdk/lib/matrixrtc";
+import {
+  RTC_CALL_INTENT_AUDIO,
+  RTC_CALL_INTENT_VIDEO,
+  type RTCCallIntent,
+} from "matrix-js-sdk/lib/matrixrtc";
 
 import { calculateInitialMuteState } from "./initialMuteState";
 
@@ -14,10 +18,10 @@ test.each<{
   callIntent: RTCCallIntent;
   allowJoinUnmutedViaIntent: boolean;
 }>([
-  { callIntent: "audio", allowJoinUnmutedViaIntent: false },
-  { callIntent: "audio", allowJoinUnmutedViaIntent: true },
-  { callIntent: "video", allowJoinUnmutedViaIntent: false },
-  { callIntent: "video", allowJoinUnmutedViaIntent: true },
+  { callIntent: RTC_CALL_INTENT_AUDIO, allowJoinUnmutedViaIntent: false },
+  { callIntent: RTC_CALL_INTENT_AUDIO, allowJoinUnmutedViaIntent: true },
+  { callIntent: RTC_CALL_INTENT_VIDEO, allowJoinUnmutedViaIntent: false },
+  { callIntent: RTC_CALL_INTENT_VIDEO, allowJoinUnmutedViaIntent: true },
   { callIntent: "unknown", allowJoinUnmutedViaIntent: false },
   { callIntent: "unknown", allowJoinUnmutedViaIntent: true },
 ])(
@@ -29,15 +33,15 @@ test.each<{
       allowJoinUnmutedViaIntent,
     );
     expect(audioEnabled).toBe(true);
-    expect(videoEnabled).toBe(callIntent !== "audio");
+    expect(videoEnabled).toBe(callIntent !== RTC_CALL_INTENT_AUDIO);
   },
 );
 
 test.each<{
   callIntent: RTCCallIntent;
 }>([
-  { callIntent: "audio" },
-  { callIntent: "video" },
+  { callIntent: RTC_CALL_INTENT_AUDIO },
+  { callIntent: RTC_CALL_INTENT_VIDEO },
   { callIntent: "unknown" },
 ])(
   "Should always mute on start if skipping lobby and the host does not vouch for the intent (callIntent: $callIntent)",
@@ -55,8 +59,8 @@ test.each<{
 test.each<{
   callIntent: RTCCallIntent;
 }>([
-  { callIntent: "audio" },
-  { callIntent: "video" },
+  { callIntent: RTC_CALL_INTENT_AUDIO },
+  { callIntent: RTC_CALL_INTENT_VIDEO },
   { callIntent: "unknown" },
 ])(
   "Can start unmuted if skipping lobby and the host vouches for the intent (callIntent: $callIntent)",
@@ -67,6 +71,6 @@ test.each<{
       true,
     );
     expect(audioEnabled).toBe(true);
-    expect(videoEnabled).toBe(callIntent !== "audio");
+    expect(videoEnabled).toBe(callIntent !== RTC_CALL_INTENT_AUDIO);
   },
 );

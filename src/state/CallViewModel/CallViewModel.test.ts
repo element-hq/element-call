@@ -21,6 +21,7 @@ import {
   type CallMembership,
   type IRTCNotificationContent,
   MatrixRTCSessionEvent,
+  RTC_CALL_INTENT_AUDIO,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { deepCompare } from "matrix-js-sdk/lib/utils";
 
@@ -28,6 +29,8 @@ import { type Layout } from "../layout-types.ts";
 import {
   mockMatrixRoomMember,
   mockMediaDevices,
+  mockMuteStates,
+  flushPromises,
   mockRemoteParticipant,
   withTestScheduler,
   mockRtcMembership,
@@ -62,7 +65,17 @@ import {
 import { MatrixRTCMode } from "../../config/ConfigOptions.ts";
 import { initializeWidget } from "../../widget.ts";
 import { computeUrlParams } from "../../UrlParams.ts";
-import { callViewModelOptionsFromParams } from "./CallViewModel.ts";
+import {
+  callViewModelOptionsFromParams,
+  initialPublishRequests,
+} from "./CallViewModel.ts";
+import { type Handler, MuteState } from "../MuteStates.ts";
+import {
+  type LocalVideoMediaTrack,
+  type RTCParticipation,
+  type VideoProcessor,
+} from "@element-hq/matrixrtc-sdk";
+import { type BackgroundEffectsState } from "../BackgroundEffects";
 
 initializeWidget();
 
@@ -155,7 +168,7 @@ function summarizeLayout$(l$: Observable<Layout>): Observable<LayoutSummary> {
         case "grid":
           return combineLatest(
             [
-              l.spotlight?.media$ ?? constant(undefined),
+              l.spotlight?.vm.media$ ?? constant(undefined),
               ...l.grid.map((vm) => vm.media$),
             ],
             (spotlight, ...grid) => ({
@@ -167,7 +180,7 @@ function summarizeLayout$(l$: Observable<Layout>): Observable<LayoutSummary> {
         case "spotlight-landscape":
         case "spotlight-portrait":
           return combineLatest(
-            [l.spotlight.media$, ...l.grid.map((vm) => vm.media$)],
+            [l.spotlight.vm.media$, ...l.grid.map((vm) => vm.media$)],
             (spotlight, ...grid) => ({
               type: l.type,
               spotlight: spotlight.map((vm) => vm.id),
@@ -176,7 +189,7 @@ function summarizeLayout$(l$: Observable<Layout>): Observable<LayoutSummary> {
           );
         case "spotlight-expanded":
           return combineLatest(
-            [l.spotlight.media$, l.pip?.media$ ?? constant(undefined)],
+            [l.spotlight.media$, l.pip?.vm.media$ ?? constant(undefined)],
             (spotlight, pip) => ({
               type: l.type,
               spotlight: spotlight.map((vm) => vm.id),
@@ -185,7 +198,7 @@ function summarizeLayout$(l$: Observable<Layout>): Observable<LayoutSummary> {
           );
         case "one-on-one-desktop":
           return combineLatest(
-            [l.spotlight.media$, l.pip.media$],
+            [l.spotlight.media$, l.pip.vm.media$],
             (spotlight, pip) => ({
               type: l.type,
               spotlight: spotlight.id,
@@ -196,8 +209,8 @@ function summarizeLayout$(l$: Observable<Layout>): Observable<LayoutSummary> {
           return combineLatest(
             [
               l.spotlight.media$,
-              l.pip?.media$ ?? constant(undefined),
-              l.pipSize$,
+              l.pip?.vm.media$ ?? constant(undefined),
+              l.pip?.size$ ?? constant(undefined),
             ],
             (spotlight, pip, pipSize) => ({
               type: l.type,
@@ -506,7 +519,7 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
                 type: "one-on-one-mobile",
                 spotlight: [`${aliceId}:0`],
                 pip: undefined,
-                pipSize: "lg",
+                pipSize: undefined,
               },
               b: {
                 type: "one-on-one-mobile",
@@ -544,7 +557,7 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
               type: "one-on-one-mobile",
               spotlight: [`${aliceId}:0`],
               pip: undefined,
-              pipSize: "lg",
+              pipSize: undefined,
             },
           });
           // It wouldn't be clear whether Alice or Bob is the remote video tile,
@@ -592,7 +605,7 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
                 type: "one-on-one-mobile",
                 spotlight: [`${aliceId}:0`],
                 pip: undefined,
-                pipSize: "sm",
+                pipSize: undefined,
               },
               b: {
                 type: "spotlight-landscape",
@@ -791,7 +804,7 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
                 type: "one-on-one-mobile",
                 spotlight: [`${aliceId}:0`],
                 pip: undefined,
-                pipSize: "lg",
+                pipSize: undefined,
               },
               b: {
                 // In a larger window, expect the one-on-one desktop layout
@@ -1547,7 +1560,7 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
             b: expect.objectContaining({
               type: "ringing",
               userId: alice.userId,
-              intent: "audio",
+              intent: RTC_CALL_INTENT_AUDIO,
             }),
           });
           // Layout should show placeholder media for the participant we're
@@ -1593,7 +1606,7 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
             b: expect.objectContaining({
               type: "ringing",
               userId: alice.userId,
-              intent: "audio",
+              intent: RTC_CALL_INTENT_AUDIO,
             }),
           });
           // Layout should show placeholder media for the participant we're
@@ -1662,5 +1675,137 @@ describe("callViewModelOptionsFromParams", () => {
   it("carries hideScreensharing", () => {
     const params = computeUrlParams("", widgetUrl("hideScreensharing=true"));
     expect(callViewModelOptionsFromParams(params).hideScreensharing).toBe(true);
+  });
+});
+
+describe("a camera with a video processor", () => {
+  const withCallViewModel = withCallViewModelInMode(MatrixRTCMode.Matrix_2_0);
+  const processor = { name: "effect" } as VideoProcessor;
+
+  /** The handler the view model gives the camera's mute switch. */
+  const cameraHandler = (setHandler: {
+    mock: { calls: [Handler][] };
+  }): Handler => setHandler.mock.calls[1][0];
+
+  it("starts each camera track with the processor", () => {
+    const muteStates = mockMuteStates();
+    vi.spyOn(muteStates.video.enabled$, "value", "get").mockReturnValue(true);
+    expect(
+      initialPublishRequests(
+        muteStates,
+        mockMediaDevices({}),
+        {},
+        { supported: true, processor },
+      ).find((request) => request.source === "camera"),
+    ).toMatchObject({ processor });
+  });
+
+  it("leaves the camera out of the join while the processor is prepared", () => {
+    const muteStates = mockMuteStates();
+    vi.spyOn(muteStates.video.enabled$, "value", "get").mockReturnValue(true);
+    const sources = (wait?: "preparing"): string[] =>
+      initialPublishRequests(
+        muteStates,
+        mockMediaDevices({}),
+        {},
+        {
+          supported: true,
+          processor: undefined,
+          wait,
+        },
+      ).map((request) => request.source);
+    expect(sources("preparing")).not.toContain("camera");
+    expect(sources()).toContain("camera");
+  });
+
+  it("waits to make a camera track until it is known the processor builds", async () => {
+    const setHandler = vi.spyOn(MuteState.prototype, "setHandler");
+    onTestFinished(() => setHandler.mockRestore());
+    const effects$ = new BehaviorSubject<BackgroundEffectsState>({
+      supported: true,
+      processor: undefined,
+      wait: "preparing",
+    });
+    let participation: RTCParticipation | undefined;
+    withCallViewModel(
+      {},
+      (_vm, _session, { rtcParticipation }) => {
+        participation = rtcParticipation;
+      },
+      { backgroundEffectsState$: effects$ },
+    );
+    const camera = participation!.localMember$.value?.tracks$.value?.find(
+      (track) => track.source === "camera",
+    ) as LocalVideoMediaTrack;
+    const turnedOn = cameraHandler(setHandler)(true);
+    await flushPromises();
+    expect(camera.setEnabled).not.toHaveBeenCalledWith(true);
+
+    effects$.next({ supported: true, processor });
+    await turnedOn;
+    expect(camera.setEnabled).toHaveBeenCalledWith(true);
+    expect(participation!.publish).not.toHaveBeenCalled();
+  });
+
+  it("turns the camera on only once its processor is on the track", async () => {
+    const setHandler = vi.spyOn(MuteState.prototype, "setHandler");
+    onTestFinished(() => setHandler.mockRestore());
+    const effects$ = new BehaviorSubject<BackgroundEffectsState>({
+      supported: true,
+      processor: undefined,
+      wait: "preparing",
+    });
+    let participation: RTCParticipation | undefined;
+    withCallViewModel(
+      {},
+      (_vm, _session, { rtcParticipation }) => {
+        participation = rtcParticipation;
+      },
+      { backgroundEffectsState$: effects$ },
+    );
+    const camera = participation!.localMember$.value?.tracks$.value?.find(
+      (track) => track.source === "camera",
+    ) as LocalVideoMediaTrack;
+    // Attaching takes its time, as the pipeline is built on the track
+    let attached!: () => void;
+    vi.mocked(camera.setProcessor).mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        attached = resolve;
+      }),
+    );
+    const turnedOn = cameraHandler(setHandler)(true);
+    effects$.next({ supported: true, processor });
+    await flushPromises();
+    expect(camera.setProcessor).toHaveBeenCalledWith(processor);
+    expect(camera.setEnabled).not.toHaveBeenCalledWith(true);
+
+    attached();
+    await turnedOn;
+    expect(camera.setEnabled).toHaveBeenCalledWith(true);
+  });
+
+  // The SDK builds the processor on the camera's restart, before the room
+  // sees a frame, so the track is unmuted rather than published anew
+  it("turns on a camera turned off before the processor was chosen", async () => {
+    const setHandler = vi.spyOn(MuteState.prototype, "setHandler");
+    onTestFinished(() => setHandler.mockRestore());
+    const effects$ = new BehaviorSubject<BackgroundEffectsState>({
+      supported: true,
+      processor: undefined,
+    });
+    let participation: RTCParticipation | undefined;
+    withCallViewModel(
+      {},
+      (_vm, _session, { rtcParticipation }) => {
+        participation = rtcParticipation;
+      },
+      { backgroundEffectsState$: effects$ },
+    );
+    effects$.next({ supported: true, processor });
+    await cameraHandler(setHandler)(true);
+    await flushPromises();
+
+    expect(participation!.unpublish).not.toHaveBeenCalled();
+    expect(participation!.publish).not.toHaveBeenCalled();
   });
 });

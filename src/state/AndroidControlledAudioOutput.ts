@@ -22,7 +22,10 @@ import {
   type SelectedAudioOutputDevice,
 } from "./MediaDevices.ts";
 import type { ObservableScope } from "./ObservableScope.ts";
-import type { RTCCallIntent } from "matrix-js-sdk/lib/matrixrtc";
+import {
+  RTC_CALL_INTENT_AUDIO,
+  type RTCCallIntent,
+} from "matrix-js-sdk/lib/matrixrtc";
 import { type Controls, type OutputDevice } from "../controls.ts";
 import { type Behavior } from "./Behavior.ts";
 
@@ -102,7 +105,7 @@ export class AndroidControlledAudioOutput implements MediaDevice<
    * @constructor
    * @param controlledDevices$ - The list of available output devices coming from the hosting application, ordered by preference order (most preferred first).
    * @param scope - The ObservableScope to create the Behaviors in.
-   * @param initialIntent - The initial call intent (e.g. "audio" or "video") that can be used to determine the default audio routing (e.g. default to earpiece for audio calls and speaker for video calls).
+   * @param initialIntent - The initial call intent (e.g. "m.audio" or "m.video") that can be used to determine the default audio routing (e.g. default to earpiece for audio calls and speaker for video calls).
    * @param controls - The controls provided by the hosting application to control the audio routing and notify of user actions.
    */
   public constructor(
@@ -316,7 +319,7 @@ export class AndroidControlledAudioOutput implements MediaDevice<
     this.logger.debug(
       `Android routing logic intent: ${this.initialIntent} finding best default...`,
     );
-    if (this.initialIntent === "audio") {
+    if (this.initialIntent === RTC_CALL_INTENT_AUDIO) {
       const systemProposed = available[0];
       // If no headset is connected, android will route to the speaker by default,
       // but for a voice call we want to route to the earpiece instead,

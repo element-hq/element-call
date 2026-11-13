@@ -13,6 +13,7 @@ import {
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
 
+import { serverNameOfTransport } from "../../utils/serverName";
 import { isCsApiUnavailable } from "./auth";
 import * as csApi from "./auth/csApi";
 import { decodeSFUJWTPayload } from "./auth/types";
@@ -59,7 +60,7 @@ export async function findRemotePublishLivekitTransport({
       if (!isUnstableLivekitTransport(transport) || !("url" in transport))
         continue;
       const { url } = transport;
-      const serverName = membership.getTransportServerName(transport);
+      const serverName = serverNameOfTransport(transport, membership.userId);
       const key = JSON.stringify([url, serverName]);
       if (tried.has(key)) continue;
       tried.add(key);

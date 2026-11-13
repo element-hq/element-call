@@ -7,6 +7,7 @@
   padding-top: env(safe-area-inset-top);
   opacity: 1;
   transition: opacity 0.15s;
+  text-align: center;
 }
 
 /* Pseudo-element for the gradient background */
@@ -52,7 +53,7 @@
     ". . ."
     "primaryButton title secondaryButton"
     ". . .";
-  place-items: center;
+  place-items: center stretch;
   column-gap: var(--cpd-space-2x);
 }
 

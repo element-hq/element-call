@@ -133,7 +133,7 @@ async function disableLeaveDelegation(page: Page): Promise<void> {
  * Expect a certain number of video tiles to be present and visible.
  */
 async function expectVideoTilesCount(page: Page, count: number): Promise<void> {
-  await expect(page.getByTestId("videoTile")).toHaveCount(2);
+  await expect(page.getByTestId("videoTile")).toHaveCount(count);
 
   // No one should be waiting for media
   await expect(page.getByText("Waiting for media...")).not.toBeVisible({

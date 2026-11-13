@@ -31,7 +31,11 @@ interface Transport {
  */
 const shapes = {
   url: { type: "livekit", url: sfuUrl },
-  both: { type: "livekit", url: sfuUrl, livekit_service_url: serviceUrl },
+  "url+legacy": {
+    type: "livekit",
+    url: sfuUrl,
+    livekit_service_url: serviceUrl,
+  },
   legacy: null,
 } satisfies Record<string, Transport | null>;
 type Shape = keyof typeof shapes;
@@ -56,15 +60,15 @@ const cases: {
   {
     // Publishers keep the legacy participant identity that clients predating
     // MSC4195 expect, which only the JWT service assigns.
-    hostShape: "both",
-    guestShape: "both",
+    hostShape: "url+legacy",
+    guestShape: "url+legacy",
     hostFlows: ["service-legacy"],
     guestFlows: ["service-legacy"],
   },
   {
     // The MatrixRTC mode has no bearing on the choice.
-    hostShape: "both",
-    guestShape: "both",
+    hostShape: "url+legacy",
+    guestShape: "url+legacy",
     mode: "2_0",
     hostFlows: ["service-legacy"],
     guestFlows: ["service-legacy"],
@@ -72,6 +76,12 @@ const cases: {
   {
     hostShape: "url",
     guestShape: "legacy",
+    hostFlows: ["cs-api", "service-default"],
+    guestFlows: ["service-legacy", "cs-api"],
+  },
+  {
+    hostShape: "url",
+    guestShape: "url+legacy",
     hostFlows: ["cs-api", "service-default"],
     guestFlows: ["service-legacy", "cs-api"],
   },
@@ -126,47 +136,6 @@ for (const { hostShape, guestShape, mode, hostFlows, guestFlows } of cases) {
   });
 }
 
-test("Subscriber falls back to the JWT service when the homeserver lacks MSC4195", async ({
-  browser,
-  page,
-  browserName,
-}) => {
-  skipOnFirefox(browserName);
-
-  // The host starts the call with both transport shapes.
-  await advertiseTransport(page, shapes.both);
-  await page.goto("/");
-  await SpaHelpers.createCall(page, "Androl", "HelloCall", true);
-  const inviteLink = await SpaHelpers.getCallInviteLink(page);
-
-  // The guest joins but their C-S requests fail.
-  const guestContext = await browser.newContext({ reducedMotion: "reduce" });
-  const guestPage = await guestContext.newPage();
-  await rejectCsApiTokens(guestPage);
-  const guestRequests = recordAuthRequests(guestPage);
-  await SpaHelpers.joinCallFromInviteLink(guestPage, inviteLink, "Pevara");
-
-  // Wait for the call to connect and render.
-  await SpaHelpers.expectVideoTilesCount(page, 2);
-  await SpaHelpers.expectVideoTilesCount(guestPage, 2);
-
-  // The guest ran through all flows.
-  expect(flowsOf(guestRequests)).toEqual(
-    new Set<Flow>(["cs-api", "service-legacy", "service-default"]),
-  );
-
-  // The C-S token requests failed.
-  for (const request of guestRequests) {
-    expect(request.status).toBe(request.flow === "cs-api" ? 404 : 200);
-  }
-
-  // The C-S token requests preceeded the fallback request.
-  const flows = guestRequests.map((r) => r.flow);
-  expect(flows.indexOf("service-default")).toBeGreaterThan(
-    flows.indexOf("cs-api"),
-  );
-});
-
 test("Publisher shows an error when the homeserver lacks MSC4195", async ({
   page,
   browserName,
@@ -191,6 +160,38 @@ test("Publisher shows an error when the homeserver lacks MSC4195", async ({
   ).toBeVisible();
 });
 
+test("Group call with all possible transport shapes at once", async ({
+  browser,
+  page,
+  browserName,
+}) => {
+  test.slow();
+  skipOnFirefox(browserName);
+
+  // The host starts the call with a url transport.
+  await advertiseTransport(page, shapes.url);
+  await page.goto("/");
+  await SpaHelpers.createCall(page, "Alice", "HelloCall", true);
+  const inviteLink = await SpaHelpers.getCallInviteLink(page);
+
+  // The guest with a legacy transport joins.
+  const bobContext = await browser.newContext({ reducedMotion: "reduce" });
+  const bobPage = await bobContext.newPage();
+  await advertiseTransport(bobPage, shapes.legacy);
+  await SpaHelpers.joinCallFromInviteLink(bobPage, inviteLink, "Bob");
+
+  // The guest with a url+legacy transport joins.
+  const carolContext = await browser.newContext({ reducedMotion: "reduce" });
+  const carolPage = await carolContext.newPage();
+  await advertiseTransport(carolPage, shapes["url+legacy"]);
+  await SpaHelpers.joinCallFromInviteLink(carolPage, inviteLink, "Carol");
+
+  // Wait for the call to connect and render.
+  await SpaHelpers.expectVideoTilesCount(page, 3);
+  await SpaHelpers.expectVideoTilesCount(bobPage, 3);
+  await SpaHelpers.expectVideoTilesCount(carolPage, 3);
+});
+
 /**
  * Delegation follows the flow that authenticated the publisher: the homeserver
  * for a `url`-only transport, the JWT service wherever there is one.
@@ -198,7 +199,7 @@ test("Publisher shows an error when the homeserver lacks MSC4195", async ({
 const delegationCases: { shape: Shape; via: Delegation["via"] }[] = [
   { shape: "url", via: "homeserver" },
   { shape: "legacy", via: "service" },
-  { shape: "both", via: "service" },
+  { shape: "url+legacy", via: "service" },
 ];
 
 for (const { shape, via } of delegationCases) {

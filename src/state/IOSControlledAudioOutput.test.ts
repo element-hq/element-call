@@ -21,6 +21,10 @@ import {
   EARPIECE_CONFIG_ID,
   IOSControlledAudioOutput,
 } from "./IOSControlledAudioOutput";
+import {
+  RTC_CALL_INTENT_AUDIO,
+  RTC_CALL_INTENT_VIDEO,
+} from "matrix-js-sdk/lib/matrixrtc";
 
 // `vi.mock` calls are hoisted above all imports, so the static imports below
 // already see these mocks. Force the iOS platform so that the virtual earpiece
@@ -81,7 +85,7 @@ describe("Default selection", () => {
     const output = new IOSControlledAudioOutput(
       constant(false),
       testScope,
-      "audio",
+      RTC_CALL_INTENT_AUDIO,
     );
     const selected = latestSelection(output);
 
@@ -100,7 +104,7 @@ describe("Default selection", () => {
     const output = new IOSControlledAudioOutput(
       constant(false),
       testScope,
-      "video",
+      RTC_CALL_INTENT_VIDEO,
     );
     const selected = latestSelection(output);
 
@@ -113,7 +117,7 @@ describe("Default selection", () => {
     const output = new IOSControlledAudioOutput(
       constant(false),
       testScope,
-      "audio",
+      RTC_CALL_INTENT_AUDIO,
     );
     const selected = latestSelection(output);
 
@@ -130,7 +134,7 @@ describe("Explicit selection", () => {
     const output = new IOSControlledAudioOutput(
       constant(false),
       testScope,
-      "audio",
+      RTC_CALL_INTENT_AUDIO,
     );
     const selected = latestSelection(output);
 
@@ -150,7 +154,7 @@ describe("Explicit selection", () => {
     const output = new IOSControlledAudioOutput(
       constant(false),
       testScope,
-      "audio",
+      RTC_CALL_INTENT_AUDIO,
     );
     const selected = latestSelection(output);
 

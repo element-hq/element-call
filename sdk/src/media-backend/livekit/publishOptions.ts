@@ -16,7 +16,7 @@ import {
   type PublishRequest,
   type VideoCaptureSettings,
 } from "../../media-api";
-import { convertToLivekitProcessor } from "./videoProcessor";
+import { toLivekitProcessor } from "./videoProcessor";
 
 export type PublishRequestFor<S extends PublishRequest["source"]> = Extract<
   PublishRequest,
@@ -40,7 +40,7 @@ export function videoCaptureOptions({
   if (!deviceId && !processor && !capture?.resolution) return undefined;
   return {
     ...(deviceId && { deviceId }),
-    ...(processor && { processor: convertToLivekitProcessor(processor) }),
+    ...(processor && { processor: toLivekitProcessor(processor) }),
     ...(capture?.resolution && { resolution: capture.resolution }),
   };
 }

@@ -44,3 +44,7 @@ storybook-static
 
 # Nested checkout made by scripts/layered.sh
 /matrix-js-sdk/
+
+# Claude
+/.claude/*
+!/.claude/skills/

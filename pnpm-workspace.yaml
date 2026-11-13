@@ -27,7 +27,7 @@ overrides:
   # Security fixes:
   # - https://github.com/advisories/GHSA-7r86-cg39-jmmj
   # - https://github.com/advisories/GHSA-23c5-xmqv-rm74
-  "minimatch": "^10.2.3"
+  "minimatch": "^11.0.0"
   # Security fix: https://github.com/element-hq/element-call/security/dependabot/109
   "glob": "^10.5.0"
   # Security fixes:

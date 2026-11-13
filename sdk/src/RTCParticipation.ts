@@ -136,7 +136,8 @@ export function createRTCParticipation(
   // fallback: another member's SFU may let us publish (MSC4195). LiveKit only,
   // so it stays out of the backend interface
   const transportFromBackends = async (): Promise<Transport | null> =>
-    backend.transportType === "livekit"
+    backend.transportTypes.includes("m.livekit") ||
+    backend.transportTypes.includes("livekit")
       ? findRemotePublishLivekitTransport({
           client,
           // A snapshot: if nobody with a usable SFU is here yet, the user has
@@ -152,7 +153,7 @@ export function createRTCParticipation(
   const preparedTransport$ = from(
     discoverLocalTransport(
       client,
-      backend.transportType,
+      backend.transportTypes,
       options,
       transportFromBackends,
       logger,
@@ -174,14 +175,21 @@ export function createRTCParticipation(
       timings.syncDisconnectGracePeriodMs,
     ),
     joinMatrixRTC: (transport, delayedLeave) =>
-      joinJsSdkSession(jsSdkSession, ownMembershipIdentity, transport, {
-        encryptMedia: encryptionSystem.kind !== E2eeType.NONE,
-        matrixRTCMode,
-        sendNotificationType: options.sendNotificationType,
-        applicationData: options.applicationData,
-        timings,
-        delayedLeave,
-      }),
+      joinJsSdkSession(
+        room.roomId,
+        jsSdkSession,
+        ownMembershipIdentity,
+        transport,
+        {
+          encryptMedia: encryptionSystem.kind !== E2eeType.NONE,
+          matrixRTCMode,
+          sendNotificationType: options.sendNotificationType,
+          callIntent: options.callIntent,
+          applicationData: options.applicationData,
+          timings,
+          delayedLeave,
+        },
+      ),
     membershipManagerError$: fromEvent(
       jsSdkSession,
       MatrixRTCSessionEvent.MembershipManagerError,

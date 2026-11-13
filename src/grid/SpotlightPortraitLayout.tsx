@@ -43,7 +43,7 @@ export const makeSpotlightPortraitLayout: CallLayout<
           <Slot
             className={styles.slot}
             id="spotlight"
-            model={model.spotlight}
+            model={model.spotlight.vm}
           />
         </div>
       </div>
@@ -65,7 +65,7 @@ export const makeSpotlightPortraitLayout: CallLayout<
       width,
       model.grid.length,
     );
-    const withIndicators = useBehavior(model.spotlight.media$).length > 1;
+    const withIndicators = useBehavior(model.spotlight.vm.media$).length > 1;
 
     return (
       <div

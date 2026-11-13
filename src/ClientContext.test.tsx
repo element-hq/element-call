@@ -11,7 +11,11 @@ import { BrowserRouter } from "react-router-dom";
 import { type MatrixClient } from "matrix-js-sdk";
 import { type FC } from "react";
 
-import { ClientProvider, useClientState } from "./ClientContext";
+import {
+  type ClientLoader,
+  ClientProvider,
+  useClientState,
+} from "./ClientContext";
 
 const mockClient = (userId = "@alice:example.org"): MatrixClient =>
   ({
@@ -95,13 +99,13 @@ test("follows the client when the host swaps it", () => {
 
 test("finds a client of its own when the host supplies none", async () => {
   const client = mockClient();
-  vi.doMock("./utils/spa", () => ({
-    initSPA: vi.fn().mockResolvedValue({ client, passwordlessUser: true }),
-  }));
+  const loadClient = vi
+    .fn<ClientLoader>()
+    .mockResolvedValue({ client, passwordlessUser: true });
 
   const { container } = render(
     <BrowserRouter>
-      <ClientProvider>
+      <ClientProvider loadClient={loadClient}>
         <ShowClientState />
       </ClientProvider>
     </BrowserRouter>,
@@ -110,6 +114,21 @@ test("finds a client of its own when the host supplies none", async () => {
   // Nothing to show until a session has been restored or created
   expect(container.textContent).toBe("loading");
   await waitFor(() => expect(container.textContent).toBe("@alice:example.org"));
+  // Given the session store to restore from and to clear on a stale session
+  expect(loadClient).toHaveBeenCalledWith(
+    expect.any(Function),
+    expect.any(Function),
+  );
+});
 
-  vi.doUnmock("./utils/spa");
+test("has no one signed in when given neither a client nor a way to load one", async () => {
+  const { container } = render(
+    <BrowserRouter>
+      <ClientProvider>
+        <ShowClientState />
+      </ClientProvider>
+    </BrowserRouter>,
+  );
+
+  await waitFor(() => expect(container.textContent).toBe("unauthenticated"));
 });

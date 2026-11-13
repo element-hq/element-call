@@ -36,11 +36,7 @@ const configTransport: Transport = {
 
 function makeClient(): MockedObject<DiscoveryClient> {
   return {
-    getDomain: vi.fn().mockReturnValue("example.org"),
-    baseUrl: "https://matrix.example.org",
-    _unstable_getRTCTransports: vi.fn().mockResolvedValue([]),
-    getOpenIdToken: vi.fn(),
-    getDeviceId: vi.fn(),
+    getRTCTransports: vi.fn().mockResolvedValue([]),
   } as unknown as MockedObject<DiscoveryClient>;
 }
 
@@ -57,11 +53,11 @@ describe("TransportAutoDiscovery", () => {
     "prefers backend transport other app config $transports",
     async ({ transports }) => {
       const client = makeClient();
-      client._unstable_getRTCTransports.mockResolvedValue(transports);
+      client.getRTCTransports.mockResolvedValue(transports);
 
       const discovery = new TransportAutoDiscovery({
         client,
-        transportType: "livekit",
+        transportTypes: ["m.livekit", "livekit"],
         fallbackTransport: configTransport,
         logger: rootLogger,
       });
@@ -71,13 +67,33 @@ describe("TransportAutoDiscovery", () => {
       expect(discoveredTransport).toStrictEqual(backendTransport);
       expect(discoveredTransport).not.toStrictEqual(configTransport);
 
-      expect(client._unstable_getRTCTransports).toHaveBeenCalledTimes(1);
+      expect(client.getRTCTransports).toHaveBeenCalledTimes(1);
     },
   );
 
+  it("prefers a transport of an earlier type over one listed before it", async () => {
+    const mLivekit: Transport = {
+      type: "m.livekit",
+      url: "wss://sfu.example.org",
+    };
+    const client = makeClient();
+    client.getRTCTransports.mockResolvedValue([backendTransport, mLivekit]);
+
+    const discovery = new TransportAutoDiscovery({
+      client,
+      transportTypes: ["m.livekit", "livekit"],
+      fallbackTransport: configTransport,
+      logger: rootLogger,
+    });
+
+    await expect(discovery.discoverPreferredTransport()).resolves.toStrictEqual(
+      mLivekit,
+    );
+  });
+
   it("Retries limit_exceeded backend transport", async () => {
     const client = makeClient();
-    client._unstable_getRTCTransports
+    client.getRTCTransports
       .mockRejectedValueOnce(
         new MatrixError(
           {
@@ -92,7 +108,7 @@ describe("TransportAutoDiscovery", () => {
 
     const discovery = new TransportAutoDiscovery({
       client,
-      transportType: "livekit",
+      transportTypes: ["m.livekit", "livekit"],
       fallbackTransport: configTransport,
       logger: rootLogger,
     });
@@ -101,7 +117,7 @@ describe("TransportAutoDiscovery", () => {
       backendTransport,
     );
 
-    expect(client._unstable_getRTCTransports).toHaveBeenCalledTimes(2);
+    expect(client.getRTCTransports).toHaveBeenCalledTimes(2);
   });
 
   const INVALID_TEST_CASES: Array<{ transports: Transport[] }> = [
@@ -112,11 +128,11 @@ describe("TransportAutoDiscovery", () => {
     "falls back to config when backend has no (valid) livekit transports $transports",
     async ({ transports }) => {
       const client = makeClient();
-      client._unstable_getRTCTransports.mockResolvedValue(transports);
+      client.getRTCTransports.mockResolvedValue(transports);
 
       const discovery = new TransportAutoDiscovery({
         client,
-        transportType: "livekit",
+        transportTypes: ["m.livekit", "livekit"],
         fallbackTransport: configTransport,
         logger: rootLogger,
       });
@@ -129,11 +145,11 @@ describe("TransportAutoDiscovery", () => {
 
   it("returns null when backend and config are all unavailable", async () => {
     const client = makeClient();
-    client._unstable_getRTCTransports.mockResolvedValue([]);
+    client.getRTCTransports.mockResolvedValue([]);
 
     const discovery = new TransportAutoDiscovery({
       client,
-      transportType: "livekit",
+      transportTypes: ["m.livekit", "livekit"],
       fallbackTransport: undefined,
       logger: rootLogger,
     });

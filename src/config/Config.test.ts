@@ -95,6 +95,35 @@ describe("Config.initWith", () => {
     expect(Config.get().ssla).toBe("https://example.invalid/ssla");
   });
 
+  it("falls back to the defaults when fetching config.json rejects", async () => {
+    // A rejected promise is what a webview gives for a missing local file.
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(
+      new TypeError("Load failed"),
+    );
+    vi.spyOn(logger, "info").mockImplementation(() => {});
+    Reflect.set(Config, "internalInstance", undefined);
+
+    await expect(Config.init()).resolves.toBeUndefined();
+
+    expect(Config.get().media_quality).toEqual(DEFAULT_CONFIG.media_quality);
+  });
+
+  it("falls back to the defaults when config.json is not JSON", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response("<!doctype html><title>Element</title>", {
+        status: 200,
+        headers: { "content-type": "text/html" },
+      }),
+    );
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => {});
+    Reflect.set(Config, "internalInstance", undefined);
+
+    await expect(Config.init()).resolves.toBeUndefined();
+
+    expect(Config.get().media_quality).toEqual(DEFAULT_CONFIG.media_quality);
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+  });
+
   it("replaces a config initialized earlier", () => {
     Config.initWith({ ssla: "https://first.invalid/ssla" });
     Config.initWith({ ssla: "https://second.invalid/ssla" });

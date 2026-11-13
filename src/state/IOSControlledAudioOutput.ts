@@ -8,7 +8,10 @@ Please see LICENSE in the repository root for full details.
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import { combineLatest, merge, startWith, Subject, tap } from "rxjs";
 
-import type { RTCCallIntent } from "matrix-js-sdk/lib/matrixrtc";
+import {
+  RTC_CALL_INTENT_AUDIO,
+  type RTCCallIntent,
+} from "matrix-js-sdk/lib/matrixrtc";
 import {
   availableOutputDevices$ as controlledAvailableOutputDevices$,
   outputDevice$ as controlledOutputSelection$,
@@ -111,7 +114,7 @@ export class IOSControlledAudioOutput implements MediaDevice<
    * Chooses the default output device when no explicit selection (from the user
    * or the hosting application) has been made yet.
    *
-   * For voice calls (`initialIntent === "audio"`) we want to start on the
+   * For voice calls (`initialIntent === "m.audio"`) we want to start on the
    * earpiece rather than the speaker, like a regular phone call. We only
    * override when the device that would otherwise be the default is the
    * speaker: if the host already routed to a headset (e.g. Bluetooth) — which
@@ -122,7 +125,7 @@ export class IOSControlledAudioOutput implements MediaDevice<
     available: Map<string, AudioOutputDeviceLabel>,
   ): string | undefined {
     const firstId = available.keys().next().value;
-    if (this.initialIntent === "audio") {
+    if (this.initialIntent === RTC_CALL_INTENT_AUDIO) {
       const firstLabel =
         firstId !== undefined ? available.get(firstId) : undefined;
       if (firstLabel?.type === "speaker") {
