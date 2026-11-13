@@ -50,8 +50,9 @@ https://pr<N>-widget-rtc-sdk--element-call.netlify.app/widget-rtc-sdk.js
    /addwidget http://localhost:8080?widgetId=$matrix_widget_id&userId=$matrix_user_id&deviceId=$org.matrix.msc3819.matrix_device_id&baseUrl=$org.matrix.msc4039.matrix_base_url&roomId=$matrix_room_id
    ```
 
-3. Open the widget and accept the capabilities it asks for:
-   the example joins on load. Open it from a second account to see members and
+3. Open the widget, approve the capabilities it asks for and allow it to
+   verify your identity, ticking "Remember this": it asks for an OpenID token
+   more than once. The example joins on load. Open it from a second account to see members and
    data arrive.
 
 ## Building it yourself

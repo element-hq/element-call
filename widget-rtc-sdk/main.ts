@@ -46,7 +46,6 @@ import {
 const TOPIC = "matrixRTC";
 
 /** The widget actions of Element Web's that this bundle takes part in. */
-const JOIN_ACTION = "io.element.join";
 const HANGUP_ACTION = "im.vector.hangup";
 const CLOSE_ACTION = "io.element.close";
 
@@ -241,14 +240,7 @@ export async function createMatrixRTCSdk(
       ),
     );
 
-  const leave = (): void => {
-    const participation = slot.participation$.value;
-    if (participation === null) return;
-    participation.leave();
-    api.transport
-      .send(HANGUP_ACTION, {})
-      .catch(failed("Failed to notify the host that we hung up"));
-  };
+  const leave = (): void => slot.participation$.value?.leave();
 
   // The host's hang-up button
   fromEvent<CustomEvent>(api, `action:${HANGUP_ACTION}`)
@@ -267,9 +259,6 @@ export async function createMatrixRTCSdk(
           .setAlwaysOnScreen(true)
           .catch(failed("Failed to make the widget sticky"));
       const participation = slot.join(participationOptions);
-      api.transport
-        .send(JOIN_ACTION, {})
-        .catch(failed("Failed to notify the host that we joined"));
       // Once the hang-up has gone through, unstick and ask the host to close us
       participation.state$
         .pipe(

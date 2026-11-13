@@ -10,6 +10,8 @@ import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 import nodePolyfills from "vite-plugin-node-stdlib-browser";
 
+import { withoutMatrixCrypto } from "./vite.config.ts";
+
 // Config for the widget RTC SDK: a single bundle that wraps the sdk/ package for
 // a widget page. CI deploys it as the `pr<N>-widget-rtc-sdk` Netlify preview.
 export default defineConfig(({ mode }) => ({
@@ -40,5 +42,5 @@ export default defineConfig(({ mode }) => ({
       fileName: "widget-rtc-sdk",
     },
   },
-  plugins: [nodePolyfills()],
+  plugins: [nodePolyfills(), withoutMatrixCrypto()],
 }));
