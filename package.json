@@ -22,7 +22,7 @@
     "build:sdk:production": "pnpm build:sdk-target-based-on-call-view-model",
     "build:sdk:development": "pnpm build:sdk-target-based-on-call-view-model --mode development",
     "build:component": "pnpm build:component:js && pnpm build:component:types",
-    "build:component:js": "pnpm build:full --config vite-component.config.js",
+    "build:component:js": "pnpm build:full --config vite-component.config.js && node scripts/check-component-bundle.mjs",
     "build:component:types": "tsc -p component/tsconfig.build.json",
     "build:component:production": "pnpm build:component",
     "build:component:development": "pnpm build:component:js --mode development && pnpm build:component:types",

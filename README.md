@@ -275,7 +275,11 @@ API is in `component/index.tsx`, `component/api.ts` and `component/host.ts`.
 
 ##### Develop
 
-- `pnpm build:component` builds the library into `component/dist`.
+- `pnpm build:component` builds the library into `component/dist`. It ends
+  with `scripts/check-component-bundle.mjs`, which fails the build on what a
+  host must not be handed: an asset inlined as a data URL, a file referenced
+  by an absolute path, the standalone app's client store worker, or a module
+  over its size budget.
 - `pnpm dev:component` serves a test host on `https://localhost:3001`: two
   calls side by side in resizable boxes, with host messages logged at the
   bottom. It uses the development backend, `public/config.json` if present,
