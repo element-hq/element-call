@@ -37,7 +37,7 @@ export function createFunctionalMembers$(
 }
 
 function functionalMembers(matrixRoom: MatrixRoom): Set<string> {
-  const serviceMembers: unknown = matrixRoom.currentState
+  const serviceMembers: unknown = matrixRoom.getLiveTimeline().getState(EventTimeline.FORWARDS)
     .getStateEvents(UNSTABLE_ELEMENT_FUNCTIONAL_USERS.name, "")
     ?.getContent().service_members;
   return new Set(
