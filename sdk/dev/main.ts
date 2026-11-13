@@ -192,25 +192,20 @@ function listMessages(
   tile: HTMLElement,
 ): void {
   const decoder = new TextDecoder();
-  const chat$ = dataTrackByName$(scope, member.tracks$, "chat");
-  chat$.pipe(scope.bind()).subscribe((track) => {
-    tile.dataset.chat = String(track !== undefined);
-  });
-  chat$
+  dataTrackByName$(scope, member.tracks$, "chat")
     .pipe(
-      switchMap(
-        (track) =>
-          track?.data$.pipe(
-            map((payload) => ({ payload, encrypted: track.encrypted })),
-          ) ?? EMPTY,
-      ),
+      switchMap((track) => {
+        tile.dataset.chat = String(track !== undefined);
+        return (
+          track?.data$.pipe(map((payload) => ({ track, payload }))) ?? EMPTY
+        );
+      }),
       scope.bind(),
     )
-    .subscribe(({ payload, encrypted }) => {
+    .subscribe(({ track, payload }) => {
       const line = messages.appendChild(document.createElement("li"));
       line.dataset.testid = "message";
-      line.dataset.name = "chat";
-      line.dataset.encrypted = String(encrypted);
+      line.dataset.encrypted = String(track.encrypted);
       line.dataset.userId = member.userId;
       line.textContent = `${member.displayName$.value}: ${decoder.decode(payload)}`;
     });
