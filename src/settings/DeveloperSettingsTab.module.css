@@ -9,6 +9,11 @@ Please see LICENSE in the repository root for full details.
   font-size: var(--font-size-micro);
 }
 
+/* An option that depends on the one above it */
+.subOption {
+  padding-inline-start: var(--cpd-space-8x);
+}
+
 .livekit_room_box {
   border: 3px solid var(--cpd-color-bg-subtle-secondary);
   border-radius: var(--cpd-space-8x);
