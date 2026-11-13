@@ -14,7 +14,11 @@ This folder contains documentation for setup, usage, and development of Element 
 
 Entry point: [AGENTS.md](../AGENTS.md).
 
-- [Agent workflow](./agents/workflow.md)
 - [Architecture](./agents/architecture.md)
 - [Code style](./agents/code-style.md)
 - [Testing](./agents/testing.md)
+
+Opt-in skills in [`.claude/skills/`](../.claude/skills/):
+
+- `/handoff <task>` — get the first implementation back for a direction check
+  before lint, the full suite and polish.
