@@ -19,10 +19,10 @@ services:
       - ./backend/playwright_homeserver-othersite.yaml:/data/cfg/homeserver.yaml:Z
   element-web:
     # Pin to a SHA so that upstream cannot break our tests. Renovate handles regular updates.
-    image: ghcr.io/element-hq/element-web:develop@sha256:72791f0b2541208f8f7edd9c6b5a7eaf88accd8ed1f0c4db1bc62bfe18eb90fe
+    image: ghcr.io/element-hq/element-web:develop@sha256:fd1c291a228374aff127ceb6eea3c20291b233623bbbd96dcae53eca679fd9d7
   element-web-1:
     # Pin to a SHA so that upstream cannot break our tests. Renovate handles regular updates.
-    image: ghcr.io/element-hq/element-web:develop@sha256:72791f0b2541208f8f7edd9c6b5a7eaf88accd8ed1f0c4db1bc62bfe18eb90fe
+    image: ghcr.io/element-hq/element-web:develop@sha256:fd1c291a228374aff127ceb6eea3c20291b233623bbbd96dcae53eca679fd9d7
     volumes:
       # The other site opens the embedded package under test in place of the
       # copy its image bundles (the first site opens the dev server's app.
