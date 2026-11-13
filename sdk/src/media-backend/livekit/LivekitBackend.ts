@@ -106,7 +106,11 @@ export function createLivekitBackend(
     : [requestsOrMedia.requests, requestsOrMedia];
   const keyProvider = createKeyProvider(encryptionSystem, mediaKeys$, logger);
   const transports = createTransportRegistry(scope);
-  const localTransport$ = new BehaviorSubject<TransportLocator | null>(null);
+  // Undefined until the session says whether we publish here: null where
+  // another backend publishes
+  const localTransport$ = new BehaviorSubject<
+    TransportLocator | null | undefined
+  >(undefined);
   const audioOutputDeviceId$ = new BehaviorSubject<string | undefined>(
     undefined,
   );
@@ -121,9 +125,20 @@ export function createLivekitBackend(
   );
 
   // A new map, in a scope of its own, whenever the local transport changes:
-  // the publisher role sits on one connection, and which one is fixed per map
+  // the publisher role sits on one connection, and which one is fixed per map.
+  // Without a local transport the map only subscribes, for when another
+  // backend publishes; boxed so that `mapScoped` builds a map for null too.
+  // None at all while it isn't known yet: a subscriber connection to the
+  // transport we are about to publish on would only be torn down again
+  const boxedLocalTransport$ = scope.behavior(
+    localTransport$.pipe(
+      map((localTransport) =>
+        localTransport === undefined ? undefined : { localTransport },
+      ),
+    ),
+  );
   const connectionMap$ = scope.behavior<Epoch<ConnectionMap>>(
-    mapScoped(scope, localTransport$, (mapScope, localTransport) =>
+    mapScoped(scope, boxedLocalTransport$, (mapScope, { localTransport }) =>
       createConnectionMap$({
         scope: mapScope,
         connectionFactory,
@@ -138,7 +153,9 @@ export function createLivekitBackend(
   const localMedia_ = createLivekitLocalMedia({
     scope,
     connectionMap$,
-    localTransport$,
+    localTransport$: scope.behavior(
+      localTransport$.pipe(map((localTransport) => localTransport ?? null)),
+    ),
     publish,
     media,
     audioOutputDeviceId$,
@@ -146,18 +163,25 @@ export function createLivekitBackend(
     logger,
   });
 
-  // Probed once: the answer cannot change within a session
-  const homeserverSupportsDelegation = supportsDelegation(
-    `${client.baseUrl}/_matrix/client/unstable/io.element.msc4195/rtc/livekit/delegate_delayed_leave`,
-    "homeserver",
-    logger,
-  );
+  // Probed once, when first needed: the answer cannot change within a
+  // session, and a backend that only subscribes never needs it
+  let homeserverProbe: Promise<boolean> | undefined;
+  const homeserverSupportsDelegation = async (): Promise<boolean> =>
+    (homeserverProbe ??= supportsDelegation(
+      `${client.baseUrl}/_matrix/client/unstable/io.element.msc4195/rtc/livekit/delegate_delayed_leave`,
+      "homeserver",
+      logger,
+    ));
 
   const ownServerName = serverNameOf(ownMembershipIdentity.userId);
 
   const prepareLocalTransport = async (
-    transport: Transport,
+    transport: Transport | null,
   ): Promise<TransportCapabilities> => {
+    if (transport === null) {
+      localTransport$.next(null);
+      return { canDelegateDelayedLeave: false };
+    }
     if (!isUnstableLivekitTransport(transport))
       throw new MatrixRTCError(`Not a LiveKit transport: ${transport.type}`);
     const serverName = serverNameOfTransport(
@@ -182,7 +206,7 @@ export function createLivekitBackend(
               `transport ${flow.serviceUrl}`,
               logger,
             )
-          : homeserverSupportsDelegation;
+          : homeserverSupportsDelegation();
     }
     localTransport$.next(locator);
     // The membership is only sent once the publisher connection holds its
@@ -198,7 +222,7 @@ export function createLivekitBackend(
 
   const delegateLeave = async (delayId: string): Promise<void> => {
     const local = localTransport$.value;
-    if (local === null)
+    if (!local)
       throw new MatrixRTCError("No local transport to delegate the leave to");
     await delegateDelayedLeave({
       client,
