@@ -649,7 +649,7 @@ export function createCallViewModel$(
     memberUserIds$: scope.behavior(
       members$.pipe(map((members) => members.map((m) => m.userId))),
     ),
-    roomMemberUserIds$: scope.behavior(
+    humanRoomMemberUserIds$: scope.behavior(
       humanRoomMembers$.pipe(map((members) => members.map((m) => m.userId))),
     ),
     sentCallNotification$,

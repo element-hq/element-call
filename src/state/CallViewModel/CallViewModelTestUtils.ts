@@ -24,8 +24,8 @@ import {
   KnownMembership,
   type MatrixEvent,
   type RoomMember,
-  type RoomState,
   type MatrixClient,
+  UNSTABLE_ELEMENT_FUNCTIONAL_USERS,
 } from "matrix-js-sdk";
 import EventEmitter from "events";
 
@@ -39,6 +39,7 @@ import {
 import { createSentCallNotification$ } from "./CallNotificationLifecycle";
 import {
   mockConfig,
+  mockLiveTimeline,
   mockMatrixRoom,
   mockMatrixRoomMember,
   mockRTCParticipation,
@@ -157,12 +158,13 @@ export function withCallViewModel(mode: MatrixRTCMode) {
       getMembers: () => roomMembers,
       getMembersWithMembership: (membership: string) =>
         membership === KnownMembership.Join ? roomMembers : [],
-      currentState: {
-        getStateEvents: () =>
-          ({
-            getContent: () => ({ service_members: functionalMembers }),
-          }) as unknown as MatrixEvent,
-      } as unknown as RoomState,
+      getLiveTimeline: mockLiveTimeline((type, stateKey) =>
+        UNSTABLE_ELEMENT_FUNCTIONAL_USERS.matches(type) && stateKey === ""
+          ? ({
+              getContent: () => ({ service_members: functionalMembers }),
+            } as Partial<MatrixEvent> as MatrixEvent)
+          : null,
+      ),
     });
     const rtcSession = new MockRTCSession(room, []).withMemberships(
       rtcMembers$,

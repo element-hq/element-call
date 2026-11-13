@@ -24,6 +24,7 @@ import {
   vitest,
 } from "vitest";
 import {
+  type EventTimeline,
   EventType,
   MatrixEvent,
   type Room as MatrixRoom,
@@ -292,12 +293,24 @@ export function mockMatrixRoomMember(
   } as RoomMember;
 }
 
+/**
+ * A room's `getLiveTimeline`, whose forwards state looks up single state
+ * events with the given function.
+ */
+export function mockLiveTimeline(
+  getStateEvent: (type: string, stateKey: string) => MatrixEvent | null,
+): () => EventTimeline {
+  const state = {
+    getStateEvents: getStateEvent,
+  } as Partial<RoomState> as RoomState;
+  return () =>
+    ({ getState: () => state }) as Partial<EventTimeline> as EventTimeline;
+}
+
 export function mockMatrixRoom(room: Partial<MatrixRoom>): MatrixRoom {
   return {
     ...mockEmitter(),
-    currentState: {
-      getStateEvents: () => null,
-    } as unknown as RoomState,
+    getLiveTimeline: mockLiveTimeline(() => null),
     ...room,
   } as Partial<MatrixRoom> as MatrixRoom;
 }

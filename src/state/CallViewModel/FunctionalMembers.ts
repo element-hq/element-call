@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
+  EventTimeline,
   type MatrixEvent,
   type Room as MatrixRoom,
   RoomStateEvent,
@@ -16,7 +17,7 @@ import { type Behavior, type ObservableScope } from "@element-hq/matrixrtc-sdk";
 
 /**
  * The user IDs that the room marks as functional members (bots and other
- * service accounts). They are not treated as participants when deciding who
+ * service accounts). They should not be treated as participants when deciding who
  * to ring or whether the room is a DM.
  */
 export function createFunctionalMembers$(
@@ -37,8 +38,10 @@ export function createFunctionalMembers$(
 }
 
 function functionalMembers(matrixRoom: MatrixRoom): Set<string> {
-  const serviceMembers: unknown = matrixRoom.getLiveTimeline().getState(EventTimeline.FORWARDS)
-    .getStateEvents(UNSTABLE_ELEMENT_FUNCTIONAL_USERS.name, "")
+  const serviceMembers: unknown = matrixRoom
+    .getLiveTimeline()
+    .getState(EventTimeline.FORWARDS)
+    ?.getStateEvents(UNSTABLE_ELEMENT_FUNCTIONAL_USERS.name, "")
     ?.getContent().service_members;
   return new Set(
     Array.isArray(serviceMembers)
