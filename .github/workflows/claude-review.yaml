@@ -1,4 +1,4 @@
-name: Claude
+name: Claude review
 on:
   pull_request:
     types: [labeled]

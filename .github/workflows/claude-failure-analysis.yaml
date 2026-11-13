@@ -1,0 +1,69 @@
+name: Claude failure analysis
+on:
+  pull_request:
+    types: [labeled]
+
+permissions:
+  # The action exchanges the GitHub OIDC token for a short-lived Anthropic
+  # access token. GitHub API access goes through CLAUDE_GH_TOKEN instead.
+  id-token: write
+  actions: read
+
+jobs:
+  analysis:
+    name: Analyse failures
+    # Only run on labelling and skip forks.
+    if: github.event.label.name == 'Claude-Analyse-Failures' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          # We may need commit history.
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Analyse
+        uses: anthropics/claude-code-action@6fed3ca145920b639991cb756090506e1bcaf515 # v1.0.245
+        with:
+          anthropic_federation_rule_id: fdrl_01XQmWo4nka1ZTqZdsdeScyr
+          anthropic_organization_id: dfbc9a23-d636-4653-8970-035204ef60fa
+          anthropic_service_account_id: svac_018Ay5qaA7ZW8X7XsbdekqUM
+          anthropic_workspace_id: wrkspc_01Aw8LHjBS6fZysu9yqzYifW
+          # The token used here must grant read access to code, issues, and metadata as well as
+          # read and write access to pull requests.
+          github_token: ${{ secrets.CLAUDE_GH_TOKEN }}
+          use_sticky_comment: true
+          track_progress: true
+          additional_permissions: |
+            actions: read
+          prompt: |
+            One or more test jobs failed on this pull request. Find out why and
+            what would need to change to make them pass.
+
+            Use the CI tools to list the latest workflow runs for this pull request
+            and download the logs of every failed job. If no workflows failed, say
+            so and stop.
+
+            Read the commits on this branch with `git log` and `git diff` against
+            the base branch of the PR.
+
+            For each failed workflow, find out what failed and search the root cause(s).
+            Devise at least one possible resolution for each root cause.
+
+            Report your findings as PR comment. Start your message with "# Automated
+            CI failure analysis". Then add one section per root cause with:
+
+            - The affected workflows
+            - Evidence from the logs
+            - The fix proposal(s)
+
+            Be brief and concise in all your communication. Do not mention things
+            workflows that did not fail.
+
+            Use Markdown links for anything that can be navigated to on GitHub
+            such as files, commits, issues, pull requests, workflow runs and
+            jobs.
+          claude_args: |
+            --model claude-fable-5-1
+            --allowedTools "mcp__github_ci__get_ci_status,mcp__github_ci__get_workflow_run_details,mcp__github_ci__download_job_log,Bash(git log:*),Bash(git diff:*),Bash(git show:*)"
+            --max-turns 50
