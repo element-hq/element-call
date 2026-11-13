@@ -5,8 +5,7 @@ it joins a MatrixRTC slot in a Matrix room, writes and watches the memberships,
 connects to the media transport (LiveKit today), publishes the local media and
 exposes every member and their tracks as observables. It has no UI. Element
 Call's own `CallViewModel` is one consumer of it; any host can build a different
-view on top. The design is in [`SdkArchitecture.md`](./SdkArchitecture.md), what
-moved out of Element Call's `src/` in [`SdkMigration.md`](./SdkMigration.md).
+view on top. The design is in [`SdkArchitecture.md`](./SdkArchitecture.md).
 
 **Status:** first implementation. `createRTCSlot` and `slot.join()` join the
 session, connect to the transport, publish the local media and expose every

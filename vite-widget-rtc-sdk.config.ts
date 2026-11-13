@@ -10,11 +10,9 @@ import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 import nodePolyfills from "vite-plugin-node-stdlib-browser";
 
-// Config for the legacy SDK bundle that predates the sdk/ package: a single
-// bundle of Element Call's CallViewModel for a plain web page or widget. It is
-// in production use, so it keeps building on top of the sdk/ package until its
-// consumers have moved to that package directly.
-export default defineConfig(() => ({
+// Config for the widget RTC SDK: a single bundle that wraps the sdk/ package for
+// a widget page. CI deploys it as the `pr<N>-widget-rtc-sdk` Netlify preview.
+export default defineConfig(({ mode }) => ({
   worker: { format: "es" as const },
   resolve: {
     alias: {
@@ -29,13 +27,17 @@ export default defineConfig(() => ({
   // Otherwise the developer's own config.json in `public` is copied into the output
   publicDir: false,
   build: {
-    sourcemap: true,
+    // Optimised for production (`build:widget-rtc-sdk:production`): minified and
+    // without source maps, which nothing uploads for this bundle. Readable in
+    // development.
+    minify: mode === "production",
+    sourcemap: mode !== "production",
     manifest: true,
     lib: {
       formats: ["es" as const],
-      entry: "./sdk-target-based-on-call-view-model/main.ts",
-      name: "MatrixrtcSdk",
-      fileName: "matrixrtc-sdk",
+      entry: "./widget-rtc-sdk/main.ts",
+      name: "WidgetRtcSdk",
+      fileName: "widget-rtc-sdk",
     },
   },
   plugins: [nodePolyfills()],

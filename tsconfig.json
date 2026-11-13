@@ -58,7 +58,7 @@
     "./src/**/*.tsx",
     "./playwright/**/*.ts",
     "./sdk/**/*.ts",
-    "./sdk-target-based-on-call-view-model/**/*.ts",
+    "./widget-rtc-sdk/**/*.ts",
     "./component/**/*.ts",
     "./component/**/*.tsx"
   ],
