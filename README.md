@@ -271,7 +271,10 @@ API is in `component/index.tsx`, `component/api.ts` and `component/host.ts`.
   showing its own post-call and error screens.
 - Sounds, images and the MediaPipe runtime are separate files the host's
   bundler copies (webpack 5, Vite, Rollup); MediaPipe is fetched only when a
-  background effect is first used.
+  background effect is first used. To serve MediaPipe yourself (from a CDN,
+  say), point `background_effects.mediapipe_wasm_url` in the config at a
+  directory holding the `wasm` files of `@mediapipe/tasks-vision`, at the
+  version Element Call depends on.
 
 ##### Develop
 

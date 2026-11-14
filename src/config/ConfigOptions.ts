@@ -181,6 +181,17 @@ export interface ConfigOptions {
     enable_video?: boolean;
   };
 
+  background_effects?: {
+    /**
+     * Where to fetch the MediaPipe runtime behind background effects from
+     * instead of the copy Element Call ships: the URL of a directory holding
+     * `vision_wasm_internal.js` and `vision_wasm_internal.wasm`, as the `wasm`
+     * directory of the `@mediapipe/tasks-vision` package ships them, at the
+     * version Element Call depends on.
+     */
+    mediapipe_wasm_url?: string;
+  };
+
   /**
    * Grace period in milliseconds to wait before reporting the sync loop as disconnected.
    * This allows brief sync interruptions without triggering a reconnection message.
