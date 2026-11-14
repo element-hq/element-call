@@ -47,6 +47,7 @@ exports[`LobbyView > renders with AppBar android 1`] = `
         class="_preview_dd2178"
       >
         <video
+          class="_mirror_dd2178"
           disablepictureinpicture=""
           playsinline=""
           poster="/src/graphics/video-placeholder.gif"
@@ -279,6 +280,7 @@ exports[`LobbyView > renders with AppBar ios 1`] = `
         class="_preview_dd2178"
       >
         <video
+          class="_mirror_dd2178"
           disablepictureinpicture=""
           playsinline=""
           poster="/src/graphics/video-placeholder.gif"
@@ -558,6 +560,7 @@ exports[`LobbyView > renders with header and participant count 1`] = `
         class="_preview_dd2178"
       >
         <video
+          class="_mirror_dd2178"
           disablepictureinpicture=""
           playsinline=""
           poster="/src/graphics/video-placeholder.gif"

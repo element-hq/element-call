@@ -22,3 +22,14 @@ export function findDeviceByName(
   );
   return deviceInfo?.deviceId;
 }
+
+/**
+ * Whether one's own camera is shown mirrored: unless it faces away. A camera
+ * that doesn't say which way it faces, as the built-in one on a Mac, is taken
+ * to face the user.
+ */
+export function mirrors(
+  facingMode: "user" | "environment" | undefined,
+): boolean {
+  return facingMode !== "environment";
+}

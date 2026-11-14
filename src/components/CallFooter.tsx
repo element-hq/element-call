@@ -7,14 +7,11 @@ Please see LICENSE in the repository root for full details.
 
 import { type FC, type JSX, type Ref, useMemo } from "react";
 import classNames from "classnames";
-import { useTranslation } from "react-i18next";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
 import {
   EndCallButton,
-  MicButton,
-  VideoButton,
   ShareScreenButton,
   SettingsButton,
   ReactionToggleButton,
@@ -23,23 +20,13 @@ import {
   type ReactionData,
 } from "../button";
 import styles from "./CallFooter.module.css";
-import {
-  MediaMuteAndSwitchButton,
-  type MenuOptions,
-} from "./MediaMuteAndSwitchButton";
 import { type Behavior } from "../state/Behavior";
 import { type ViewModel } from "../state/ViewModel";
 import { useBehavior } from "../useBehavior";
 import { type LayoutSwitchViewModel } from "../state/LayoutSwitchViewModel";
 import { LayoutSwitch } from "../room/LayoutSwitch";
-import { type BackgroundEffectGridItem } from "./BackgroundEffectGrid";
-import { SelfPreview } from "./SelfPreview";
-import { type UnusableReason } from "../tracks/backgroundImages";
-import { type LocalVideoMediaTrack } from "@element-hq/matrixrtc-sdk";
-
-export interface BackgroundImageRefusal {
-  reason: UnusableReason | "not-kept";
-}
+import { type MediaMenuViewModel } from "./MediaMenuViewModel";
+import { MediaMenuButton } from "./MediaMenuButton";
 
 export interface AudioOutputSwitcher {
   targetOutput: string;
@@ -61,16 +48,6 @@ export interface AudioOutputSwitcher {
  */
 export type FooterSnapshot = FooterActions & FooterState;
 export interface FooterActions {
-  /** Also controls if the audioMute button is disabled */
-  toggleAudio: (() => void) | undefined;
-  /** Also controls if the videoMute button is disabled */
-  toggleVideo: (() => void) | undefined;
-  /** Undefined where background effects can't be chosen. */
-  selectBackgroundEffect: ((id: string) => void) | undefined;
-  /** Undefined where no background can be added. */
-  addBackgroundImage: ((file: File) => void) | undefined;
-  /** Removes an added background by its option id; never the one in force. */
-  removeBackgroundEffect: ((id: string) => void) | undefined;
   toggleScreenSharing: (() => void) | undefined;
   /** Also controls if the settings button is visible */
   openSettings: (() => void) | undefined;
@@ -80,22 +57,8 @@ export interface FooterActions {
 
 // we do not use any ? optional properties so that the vm type is including all fields.
 export interface FooterState {
-  audioEnabled: boolean;
-  audioBusy: boolean;
-  videoEnabled: boolean;
-  videoBusy: boolean;
-  /** The background effect in force, as its option id. */
-  backgroundEffect: string;
-  /** Every effect on offer, in the order they are shown. */
-  backgroundEffects: BackgroundEffectGridItem[];
-  /** What the user is told about effects here, if anything. */
-  backgroundEffectNotice: "unavailable" | "slow" | undefined;
-  /** Whether the first effect chosen is still being prepared. */
-  backgroundEffectSettling: boolean;
-  /** Why the last file offered couldn't be kept, if it couldn't. */
-  backgroundImageRefusal: BackgroundImageRefusal | undefined;
-  /** The camera to preview, with the effect in force; null while it is off. */
-  cameraTrack: LocalVideoMediaTrack | null;
+  audioMenuVm: MediaMenuViewModel;
+  cameraMenuVm: MediaMenuViewModel;
   showFooter: boolean;
 
   /* This is needed for WindowMode = "flat" */
@@ -122,19 +85,6 @@ export interface FooterState {
   // debug stuff
   debugTileLayout: boolean;
   tileStoreGeneration: number | undefined;
-
-  /** Providing no options `[]` or `undefined` will imply that we dont have a audio fast switcher */
-  audioOptions: MenuOptions[];
-  /** Output (speaker) devices. */
-  audioOutputOptions: MenuOptions[];
-  /** Providing no options `[]` or `undefined` will imply that we dont have a audio fast switcher */
-  videoOptions: MenuOptions[];
-  selectedAudio: string | undefined;
-  selectedAudioOutput: string | undefined;
-  selectedVideo: string | undefined;
-  selectAudioButtonOption: ((deviceId: string) => void) | undefined;
-  selectAudioOutputOption: ((deviceId: string) => void) | undefined;
-  selectVideoButtonOption: ((option: string) => void) | undefined;
 }
 
 export interface FooterProps {
@@ -150,19 +100,14 @@ export const CallFooter: FC<FooterProps> = ({
   children,
   vm,
 }) => {
-  const { t } = useTranslation();
   const asOverlay = useBehavior(vm.asOverlay$);
   const showFooter = useBehavior(vm.showFooter$);
   const hideControls = useBehavior(vm.hideControls$);
   const showModals = useBehavior(vm.showModals$);
   const layoutSwitchVm = useBehavior(vm.layoutSwitchVm$);
+  const audioMenuVm = useBehavior(vm.audioMenuVm$);
+  const cameraMenuVm = useBehavior(vm.cameraMenuVm$);
   const openSettings = useBehavior(vm.openSettings$);
-  const audioEnabled = useBehavior(vm.audioEnabled$);
-  const audioBusy = useBehavior(vm.audioBusy$);
-  const videoEnabled = useBehavior(vm.videoEnabled$);
-  const videoBusy = useBehavior(vm.videoBusy$);
-  const toggleAudio = useBehavior(vm.toggleAudio$);
-  const toggleVideo = useBehavior(vm.toggleVideo$);
   const sharingScreen = useBehavior(vm.sharingScreen$);
   const toggleScreenSharing = useBehavior(vm.toggleScreenSharing$);
   const reactionIdentifier = useBehavior(vm.reactionIdentifier$);
@@ -170,38 +115,6 @@ export const CallFooter: FC<FooterProps> = ({
   const audioOutputSwitcher = useBehavior(vm.audioOutputSwitcher$);
   const hangup = useBehavior(vm.hangup$);
   const debugTileLayout = useBehavior(vm.debugTileLayout$);
-  const videoOptions = useBehavior(vm.videoOptions$);
-  const selectedVideo = useBehavior(vm.selectedVideo$);
-  const audioOptions = useBehavior(vm.audioOptions$);
-  const selectedAudio = useBehavior(vm.selectedAudio$);
-  const selectAudioButtonOption = useBehavior(vm.selectAudioButtonOption$);
-  const audioOutputOptions = useBehavior(vm.audioOutputOptions$);
-  const selectedAudioOutput = useBehavior(vm.selectedAudioOutput$);
-  const selectAudioOutputOption = useBehavior(vm.selectAudioOutputOption$);
-  const selectVideoButtonOption = useBehavior(vm.selectVideoButtonOption$);
-  const backgroundEffect = useBehavior(vm.backgroundEffect$);
-  const selectBackgroundEffect = useBehavior(vm.selectBackgroundEffect$);
-  const backgroundEffectNotice = useBehavior(vm.backgroundEffectNotice$);
-  const backgroundEffectSettling = useBehavior(vm.backgroundEffectSettling$);
-  const addBackgroundImage = useBehavior(vm.addBackgroundImage$);
-  const removeBackgroundEffect = useBehavior(vm.removeBackgroundEffect$);
-  const cameraTrack = useBehavior(vm.cameraTrack$);
-  const refusal = useBehavior(vm.backgroundImageRefusal$);
-  const refusalMessage = useMemo(() => {
-    switch (refusal?.reason) {
-      case undefined:
-        return undefined;
-      case "not-an-image":
-        return { text: t("error.background_not_an_image") };
-      case "animated":
-        return { text: t("error.background_animated") };
-      case "undecodable":
-        return { text: t("error.background_undecodable") };
-      case "not-kept":
-        return { text: t("error.background_not_kept") };
-    }
-  }, [refusal, t]);
-  const backgroundEffects = useBehavior(vm.backgroundEffects$);
   const buttonSize = useBehavior(vm.buttonSize$);
   const showLogo = useBehavior(vm.showLogo$);
 
@@ -221,78 +134,20 @@ export const CallFooter: FC<FooterProps> = ({
     );
   }
 
-  if ((audioOptions?.length ?? 0) > 0) {
-    buttons.push(
-      <MediaMuteAndSwitchButton
-        key="audio"
-        iconsAndLabels="audio"
-        enabled={audioEnabled ?? false}
-        busy={audioBusy ?? false}
-        onMuteClick={toggleAudio}
-        data-testid="incall_mute"
-        options={audioOptions}
-        selectedOption={selectedAudio}
-        onSelect={selectAudioButtonOption}
-        outputOptions={audioOutputOptions}
-        selectedOutputOption={selectedAudioOutput}
-        onSelectOutput={selectAudioOutputOption}
-      />,
-    );
-  } else {
-    buttons.push(
-      <MicButton
-        size={buttonSize}
-        key="audio"
-        enabled={audioEnabled ?? false}
-        busy={audioBusy ?? false}
-        onClick={toggleAudio}
-        disabled={(audioBusy ?? false) || toggleAudio === undefined}
-        data-testid="incall_mute"
-      />,
-    );
-  }
-
-  if ((videoOptions?.length ?? 0) > 0) {
-    buttons.push(
-      <MediaMuteAndSwitchButton
-        key="video"
-        iconsAndLabels="video"
-        enabled={videoEnabled ?? false}
-        busy={videoBusy ?? false}
-        onMuteClick={toggleVideo}
-        options={videoOptions}
-        selectedOption={selectedVideo}
-        onSelect={selectVideoButtonOption}
-        backgroundEffects={backgroundEffects}
-        selectedBackgroundEffect={backgroundEffect}
-        onSelectBackgroundEffect={selectBackgroundEffect}
-        backgroundEffectSettling={backgroundEffectSettling}
-        onAddBackgroundImage={addBackgroundImage}
-        onRemoveBackgroundEffect={removeBackgroundEffect}
-        selfPreview={<SelfPreview track={cameraTrack} />}
-        backgroundImageRefusal={refusalMessage}
-        backgroundEffectNotice={
-          backgroundEffectNotice === "unavailable"
-            ? t("background_effects.unavailable")
-            : backgroundEffectNotice === "slow"
-              ? t("background_effects.slow")
-              : undefined
-        }
-      />,
-    );
-  } else {
-    buttons.push(
-      <VideoButton
-        size={buttonSize}
-        key="video"
-        enabled={videoEnabled ?? false}
-        busy={videoBusy ?? false}
-        onClick={toggleVideo}
-        disabled={(videoBusy ?? false) || toggleVideo === undefined}
-        data-testid="incall_videomute"
-      />,
-    );
-  }
+  buttons.push(
+    <MediaMenuButton
+      key="audio"
+      kind="audio"
+      vm={audioMenuVm}
+      size={buttonSize}
+    />,
+    <MediaMenuButton
+      key="video"
+      kind="video"
+      vm={cameraMenuVm}
+      size={buttonSize}
+    />,
+  );
 
   if (toggleScreenSharing !== undefined) {
     buttons.push(

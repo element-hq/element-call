@@ -57,7 +57,8 @@ export interface BackgroundEffectsOptions {
   supported: boolean;
   /** The effect chosen, as the setting stores it. */
   effect$: Behavior<string>;
-  /** Stores a choice, to forget one that can't be honoured. */
+  /** Saves the chosen effect. Used to reset the choice to "none" when the
+   * chosen effect can't run here. */
   setEffect: (id: EffectId) => void;
   /** The backgrounds the device keeps, undefined until it has said. */
   added$: Behavior<AddedBackground[] | undefined>;

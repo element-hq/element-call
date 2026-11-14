@@ -185,8 +185,15 @@ export function initialPublishRequests(
   return requests;
 }
 
+/**
+ * How the host wants the call to behave. Every field is optional and defaults
+ * to what standalone Element Call does, so `{}` is a working standalone call.
+ * What the call is made of — the room, the participation, the devices, the
+ * things with no sensible default — is a positional parameter of
+ * {@link createCallViewModel$} instead. A test that wants to replace behaviour
+ * mocks the dependency it comes from rather than adding an option here.
+ */
 export interface CallViewModelOptions {
-  encryptionSystem: EncryptionSystem;
   /**
    * How our tracks are captured and encoded; the browser's and LiveKit's
    * defaults otherwise.
@@ -222,17 +229,6 @@ export interface CallViewModelOptions {
    * Defaults to none sent.
    */
   sentCallNotification$?: Observable<CallNotificationWrapper | null>;
-  /**
-   * The size of the space the call is drawn in: the page when Element Call
-   * owns it, or the container a host mounted it in when it is a component.
-   * The layout — whether the call is shown full size, flat, narrow or as a
-   * picture-in-picture — follows this rather than the size of the window, so
-   * that a component shrunk by its host adapts even though the window has not
-   * changed.
-   */
-  windowSize$: Behavior<{ width: number; height: number }>;
-  /** Optional behavior overriding for the screensharing, for testing */
-  toggleScreensharing?: () => void;
 }
 
 /**
@@ -474,9 +470,19 @@ export function createCallViewModel$(
   matrixRoom: MatrixRoom,
   mediaDevices: MediaDevices,
   muteStates: MuteStates,
-  options: CallViewModelOptions,
+  encryptionSystem: EncryptionSystem,
+  /**
+   * The size of the space the call is drawn in: the page when Element Call
+   * owns it, or the container a host mounted it in when it is a component.
+   * The layout — whether the call is shown full size, flat, narrow or as a
+   * picture-in-picture — follows this rather than the size of the window, so
+   * that a component shrunk by its host adapts even though the window has not
+   * changed.
+   */
+  windowSize$: Behavior<{ width: number; height: number }>,
   handsRaisedSubject$: Observable<Record<string, RaisedHandInfo>>,
   reactionsSubject$: Observable<Record<string, ReactionInfo>>,
+  options: CallViewModelOptions = {},
 ): CallViewModel {
   const logger = rootLogger.getChild("[CallViewModel]");
   const client = matrixRoom.client;
@@ -702,7 +708,7 @@ export function createCallViewModel$(
             userId: member.userId,
             rtcBackendIdentity: member.rtcBackendIdentity,
             member,
-            encryptionSystem: options.encryptionSystem,
+            encryptionSystem,
             transport$: scope.behavior(
               member.transport$.pipe(map((transport) => transport?.raw)),
             ),
@@ -916,7 +922,7 @@ export function createCallViewModel$(
   // A guess at what the window's mode should be based on the size and shape of
   // the space we have to draw in.
   const naturalWindowMode$ = scope.behavior<WindowMode>(
-    options.windowSize$.pipe(
+    windowSize$.pipe(
       map(({ width, height }) => {
         if (height <= 400 && width <= 340) return "pip";
         // Our layouts for flat windows are better at adapting to a small width
@@ -1500,8 +1506,7 @@ export function createCallViewModel$(
    * the platform cannot capture a screen, or the host hides the button.
    */
   const toggleScreenSharing =
-    options.toggleScreensharing ??
-    (hideScreensharing || !("getDisplayMedia" in (navigator.mediaDevices ?? {}))
+    hideScreensharing || !("getDisplayMedia" in (navigator.mediaDevices ?? {}))
       ? null
       : (): void => {
           const track = screenShare$.value;
@@ -1522,7 +1527,7 @@ export function createCallViewModel$(
               e instanceof Error ? e : new Error(String(e)),
             );
           });
-        });
+        };
 
   // Tell the host and the analytics about the user's joins and leaves. The
   // participation is joined by the time the view model is built on it
