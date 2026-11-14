@@ -20,7 +20,9 @@ import { App } from "./App";
 import { init as initRageshake } from "./settings/rageshake";
 import { Initializer } from "./initializer";
 import { AppViewModel } from "./state/AppViewModel";
+import { pendingHostClientSession } from "./state/ClientSession";
 import { globalScope } from "./state/ObservableScope";
+import { StandaloneClientSession } from "./state/StandaloneClientSession";
 import { getUrlParams } from "./UrlParams";
 
 initRageshake().catch((e) => {
@@ -51,17 +53,25 @@ if (fatalError !== null) {
 Initializer.initBeforeReact()
   .then((widget) => {
     const { controlledAudioDevices, callIntent } = getUrlParams();
+    // As a widget, the client comes from the host over the widget API, and
+    // the session is the host's. Standalone, Element Call restores or creates
+    // a session of its own, which it also manages.
+    const options = { controlledAudioDevices, callIntent };
+    let vm: AppViewModel;
+    if (widget === null) {
+      const session = new StandaloneClientSession(globalScope);
+      vm = new AppViewModel(globalScope, options, session, session);
+    } else {
+      vm = new AppViewModel(
+        globalScope,
+        options,
+        pendingHostClientSession(globalScope, widget.client),
+        null,
+      );
+    }
     root.render(
       <StrictMode>
-        <App
-          vm={
-            new AppViewModel(globalScope, {
-              controlledAudioDevices,
-              callIntent,
-            })
-          }
-          widget={widget}
-        />
+        <App vm={vm} widget={widget} />
       </StrictMode>,
     );
   })

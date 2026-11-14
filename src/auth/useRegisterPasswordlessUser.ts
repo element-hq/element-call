@@ -8,8 +8,8 @@ Please see LICENSE in the repository root for full details.
 import { useCallback } from "react";
 import { secureRandomString } from "matrix-js-sdk/lib/randomstring";
 
-import { useClient } from "../ClientContext";
-import { useInteractiveRegistration } from "../auth/useInteractiveRegistration";
+import { useClientManagerIfAny } from "../ClientContext";
+import { useRegistrationTerms } from "../auth/useRegistrationTerms";
 import { generateRandomName } from "../auth/generateRandomName";
 import { useRecaptcha } from "../auth/useRecaptcha";
 import { useUrlParams } from "../UrlParams";
@@ -21,16 +21,16 @@ interface UseRegisterPasswordlessUserType {
 }
 
 export function useRegisterPasswordlessUser(): UseRegisterPasswordlessUserType {
-  const { setClient } = useClient();
+  // Null in the widget, which never registers anyone
+  const register = useClientManagerIfAny()?.register;
   const { isWidget } = useUrlParams();
-  const { privacyPolicyUrl, recaptchaKey, register } =
-    useInteractiveRegistration();
+  const { privacyPolicyUrl, recaptchaKey } = useRegistrationTerms();
   const { execute, reset, recaptchaId } = useRecaptcha(recaptchaKey);
 
   const registerPasswordlessUser = useCallback(
     async (displayName: string) => {
-      if (!setClient) {
-        throw new Error("No client context");
+      if (!register) {
+        throw new Error("This session cannot register");
       }
       if (isWidget) {
         throw new Error(
@@ -41,20 +41,20 @@ export function useRegisterPasswordlessUser(): UseRegisterPasswordlessUserType {
       try {
         const recaptchaResponse = await execute();
         const userName = generateRandomName();
-        const [client, session] = await register(
+        const { setSignedIn } = await register(
           userName,
           secureRandomString(16),
           displayName,
           recaptchaResponse,
           true,
         );
-        setClient(client, session);
+        setSignedIn();
       } catch (e) {
         reset();
         throw e;
       }
     },
-    [execute, reset, register, setClient, isWidget],
+    [execute, reset, register, isWidget],
   );
 
   return { privacyPolicyUrl, registerPasswordlessUser, recaptchaId };

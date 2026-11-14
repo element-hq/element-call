@@ -9,7 +9,12 @@ import { type FC, useCallback, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { logger } from "matrix-js-sdk/lib/logger";
 
-import { useClientLegacy } from "./ClientContext";
+import {
+  useClient,
+  useClientManagerIfAny,
+  useClientSessionState,
+} from "./ClientContext";
+import { useLeaveToHome } from "./LeaveToHomeContext";
 import { useProfile } from "./profile/useProfile";
 import { defaultSettingsTab, SettingsModal } from "./settings/SettingsModal";
 import { UserMenu } from "./UserMenu";
@@ -21,7 +26,13 @@ interface Props {
 export const UserMenuContainer: FC<Props> = ({ preventNavigation = false }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { client, logout, authenticated, passwordlessUser } = useClientLegacy();
+  const { client } = useClient();
+  const session = useClientSessionState();
+  const passwordlessUser =
+    session.state === "signedIn" && session.passwordlessUser;
+  // Absent when the session is a host's, which Element Call cannot end
+  const logout = useClientManagerIfAny()?.logout;
+  const leaveToHome = useLeaveToHome();
   const { displayName, avatarUrl } = useProfile(client);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const onDismissSettingsModal = useCallback(
@@ -43,7 +54,9 @@ export const UserMenuContainer: FC<Props> = ({ preventNavigation = false }) => {
           setSettingsModalOpen(true);
           break;
         case "logout":
-          logout?.();
+          logout?.()
+            .then(() => leaveToHome?.())
+            .catch((e) => logger.error("Failed to log out", e));
           break;
         case "login":
           navigate("/login", { state: { from: location } })?.catch((error) =>
@@ -52,7 +65,7 @@ export const UserMenuContainer: FC<Props> = ({ preventNavigation = false }) => {
           break;
       }
     },
-    [navigate, location, logout, setSettingsModalOpen],
+    [navigate, location, logout, leaveToHome, setSettingsModalOpen],
   );
 
   const userName = client?.getUserIdLocalpart() ?? "";
@@ -60,7 +73,7 @@ export const UserMenuContainer: FC<Props> = ({ preventNavigation = false }) => {
     <>
       <UserMenu
         preventNavigation={preventNavigation}
-        isAuthenticated={authenticated}
+        isAuthenticated={client !== undefined}
         isPasswordlessUser={passwordlessUser}
         avatarUrl={avatarUrl}
         onAction={onAction}

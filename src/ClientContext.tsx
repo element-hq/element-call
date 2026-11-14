@@ -5,30 +5,18 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import {
-  type FC,
-  useCallback,
-  useEffect,
-  useState,
-  createContext,
-  use,
-  useRef,
-  useMemo,
-  type JSX,
-} from "react";
-import { logger } from "matrix-js-sdk/lib/logger";
-import { type ISyncStateData, type SyncState } from "matrix-js-sdk/lib/sync";
-import { ClientEvent, type MatrixClient } from "matrix-js-sdk";
+import { type FC, useEffect, createContext, use, type JSX } from "react";
+import { type MatrixClient } from "matrix-js-sdk";
 
 import { ErrorPage } from "./FullScreenView";
-import { useHostBridge } from "./HostBridge";
-import { useLeaveToHome } from "./LeaveToHomeContext";
+import { PosthogAnalytics } from "./analytics/PosthogAnalytics";
+import { useBehavior } from "./useBehavior";
+import { constant } from "./state/Behavior";
 import {
-  PosthogAnalytics,
-  RegistrationType,
-} from "./analytics/PosthogAnalytics";
-import { useEventTarget } from "./useEvents";
-import { OpenElsewhereError } from "./RichError";
+  type ClientManager,
+  type ClientSession,
+  type ClientSessionState,
+} from "./state/ClientSession";
 
 declare global {
   interface Window {
@@ -37,380 +25,70 @@ declare global {
   }
 }
 
-export type ClientState = ValidClientState | ErrorState;
-
-export type ValidClientState = {
-  state: "valid";
-  authenticated?: AuthenticatedClient;
-  // 'Disconnected' rather than 'connected' because it tracks specifically
-  // whether the client is supposed to be connected but is not
-  disconnected: boolean;
-  supportedFeatures: {
-    reactions: boolean;
-  };
-  setClient: (client: MatrixClient, session: Session) => void;
+// Without a provider, no one is signed in and there is no session to act on
+const noClientSession: ClientSession = {
+  state$: constant({ state: "signedOut" }),
 };
 
-export type AuthenticatedClient = {
-  client: MatrixClient;
-  isPasswordlessUser: boolean;
-  changePassword: (password: string) => Promise<void>;
-  logout: () => void;
-};
-
-export type ErrorState = {
-  state: "error";
-  error: Error;
-};
-
-const ClientContext = createContext<ClientState | undefined>(undefined);
+const ClientContext = createContext<ClientSession>(noClientSession);
 
 export const ClientContextProvider = ClientContext.Provider;
 
-export const useClientState = (): ClientState | undefined => use(ClientContext);
+export const useClientSessionState = (): ClientSessionState =>
+  useBehavior(use(ClientContext).state$);
 
-export function useClient(): {
-  client?: MatrixClient;
-  setClient?: (client: MatrixClient, session: Session) => void;
-} {
-  let client;
-  let setClient;
-
-  const clientState = useClientState();
-  if (clientState?.state === "valid") {
-    client = clientState.authenticated?.client;
-    setClient = clientState.setClient;
-  }
-
-  return { client, setClient };
+export function useClient(): { client?: MatrixClient } {
+  const state = useClientSessionState();
+  return { client: state.state === "signedIn" ? state.client : undefined };
 }
 
-// Plain representation of the `ClientContext` as a helper for old components that expected an object with multiple fields.
-export function useClientLegacy(): {
-  client?: MatrixClient;
-  setClient?: (client: MatrixClient, session: Session) => void;
-  passwordlessUser: boolean;
-  loading: boolean;
-  authenticated: boolean;
-  logout?: () => void;
-  error?: Error;
-} {
-  const clientState = useClientState();
+// Null where the session is a host's: the component, and the widget
+const ClientManagerContext = createContext<ClientManager | null>(null);
 
-  let client;
-  let setClient;
-  let passwordlessUser = false;
-  let loading = true;
-  let error;
-  let authenticated = false;
-  let logout;
+export const ClientManagerProvider = ClientManagerContext.Provider;
 
-  if (clientState?.state === "valid") {
-    client = clientState.authenticated?.client;
-    setClient = clientState.setClient;
-    passwordlessUser = clientState.authenticated?.isPasswordlessUser ?? false;
-    loading = false;
-    authenticated = client !== undefined;
-    logout = clientState.authenticated?.logout;
-  } else if (clientState?.state === "error") {
-    error = clientState.error;
-    loading = false;
-  }
-
-  return {
-    client,
-    setClient,
-    passwordlessUser,
-    loading,
-    authenticated,
-    logout,
-    error,
-  };
-}
-
-const loadChannel =
-  "BroadcastChannel" in window ? new BroadcastChannel("load") : null;
-
-interface Props {
-  children: JSX.Element;
-  /**
-   * The client Element Call should use.
-   *
-   * An application hosting Element Call as a component already has a client,
-   * and owns the user's session; supplying it here means Element Call neither
-   * authenticates anyone nor manages their session. Left out, Element Call finds a client
-   * itself — from the widget API, or by restoring or creating a session of its
-   * own.
-   */
-  client?: MatrixClient;
-  /**
-   * How Element Call finds a client when none is supplied: the standalone app
-   * restores or creates a session of its own. Stable, as a hook dependency.
-   * Left out along with the client, no one is signed in.
-   *
-   * A prop, rather than this module importing `utils/spa` itself, because:
-   * - This module is in the component build, and so is everything it imports,
-   *   dynamically or not: a dynamic import becomes a chunk in the package,
-   *   not a module left out of it.
-   * - Behind `utils/spa` sits `utils/initClient` and the client store worker,
-   *   which the bundler emits as soon as it loads the import (see there).
-   * - `App.tsx`, which the component never imports, is where the standalone
-   *   app passes the loader in; the component passes nothing, having the
-   *   host's client.
-   */
-  loadClient?: ClientLoader;
+/**
+ * The manager of a session that is Element Call's own, for views that only
+ * the standalone app mounts: the login and registration pages. Throws
+ * elsewhere, as those views have no business being there.
+ */
+export function useClientManager(): ClientManager {
+  const manager = use(ClientManagerContext);
+  if (manager === null)
+    throw new Error("This view needs a session of Element Call's own");
+  return manager;
 }
 
 /**
- * Restores or creates a session of Element Call's own, kept where the given
- * functions keep it. Resolves to null when no one is signed in.
+ * The session's manager, or null where the session is a host's. For views
+ * shared with the widget, which can offer to sign out only when that is ours
+ * to do.
  */
-export type ClientLoader = (
-  loadSession: () => Session | undefined,
-  clearSession: () => void,
-) => Promise<InitResult | null>;
+export const useClientManagerIfAny = (): ClientManager | null =>
+  use(ClientManagerContext);
 
-export const ClientProvider: FC<Props> = ({ children, client, loadClient }) => {
-  const leaveToHome = useLeaveToHome();
-  const hostBridge = useHostBridge();
+interface Props {
+  children: JSX.Element;
+  /** a session from Element Call SPA, from a widget or the host (EW) */
+  session: ClientSession;
+}
 
-  // null = signed out, undefined = loading
-  const [initClientState, setInitClientState] = useState<
-    InitResult | null | undefined
-  >(
-    client === undefined
-      ? undefined
-      : // A supplied client belongs to the host, so there is no session of ours
-        // to restore and nothing to wait for.
-        { client, passwordlessUser: false },
-  );
-
-  const initializing = useRef(false);
-  useEffect(() => {
-    if (client !== undefined) {
-      // Nothing to load, but a host may hand us a different client later — on
-      // re-authenticating, say — so follow whichever one it has given us.
-      setInitClientState((current) =>
-        current?.client === client
-          ? current
-          : { client, passwordlessUser: false },
-      );
-      // Analytics still need to follow the user's choices.
-      if (PosthogAnalytics.instance.isEnabled())
-        PosthogAnalytics.instance.startListeningToSettingsChanges();
-      return;
-    }
-    // In case the component is mounted, unmounted, and remounted quickly (as
-    // React does in strict mode), we need to make sure not to doubly initialize
-    // the client.
-    if (initializing.current) return;
-    if (loadClient === undefined) {
-      setInitClientState(null);
-      return;
-    }
-    initializing.current = true;
-
-    loadClient(loadSession, clearSession)
-      .then((initResult) => {
-        setInitClientState(initResult);
-        if (PosthogAnalytics.instance.isEnabled())
-          PosthogAnalytics.instance.startListeningToSettingsChanges();
-      })
-      .catch((err) => logger.error(err))
-      .finally(() => (initializing.current = false));
-  }, [client, loadClient]);
-
-  const changePassword = useCallback(
-    async (password: string) => {
-      const session = loadSession();
-      if (!initClientState?.client || !session) {
-        return;
-      }
-
-      await initClientState.client.setPassword(
-        {
-          type: "m.login.password",
-          identifier: {
-            type: "m.id.user",
-            user: session.user_id,
-          },
-          user: session.user_id,
-          password: session.tempPassword,
-        },
-        password,
-      );
-
-      saveSession({ ...session, passwordlessUser: false });
-
-      setInitClientState({
-        ...initClientState,
-        passwordlessUser: false,
-      });
-    },
-    [initClientState],
-  );
-
-  const setClient = useCallback(
-    (client: MatrixClient, session: Session) => {
-      const oldClient = initClientState?.client;
-      if (oldClient && oldClient !== client) {
-        oldClient.stopClient();
-      }
-
-      saveSession(session);
-      setInitClientState({
-        client,
-        passwordlessUser: session.passwordlessUser,
-      });
-      if (PosthogAnalytics.instance.isEnabled())
-        PosthogAnalytics.instance.startListeningToSettingsChanges();
-    },
-    [initClientState?.client],
-  );
-
-  const logout = useCallback(async () => {
-    const client = initClientState?.client;
-    if (!client) {
-      return;
-    }
-
-    await client.logout(true);
-    await client.clearStores();
-    clearSession();
-    setInitClientState(null);
-    leaveToHome?.();
-    PosthogAnalytics.instance.logout();
-    PosthogAnalytics.instance.setRegistrationType(RegistrationType.Guest);
-  }, [leaveToHome, initClientState?.client]);
-
-  // To protect against multiple sessions writing to the same storage
-  // simultaneously, we send a broadcast message that shuts down all other
-  // running instances of the app. Element Call only has storage of its own to
-  // protect when it created the session itself; given a client — by a host, or
-  // over the widget API — it is mostly stateless.
-  const ownsSession = client === undefined;
-  useEffect(() => {
-    if (ownsSession) loadChannel?.postMessage({});
-  }, [ownsSession]);
-
-  const [alreadyOpenedErr, setAlreadyOpenedErr] = useState<Error | undefined>(
-    undefined,
-  );
-  useEventTarget(
-    loadChannel,
-    "message",
-    useCallback(() => {
-      initClientState?.client.stopClient();
-      setAlreadyOpenedErr(new OpenElsewhereError());
-    }, [initClientState?.client, setAlreadyOpenedErr]),
-  );
-
-  const [isDisconnected, setIsDisconnected] = useState(false);
-  const [supportsReactions, setSupportsReactions] = useState(false);
-
-  const state: ClientState | undefined = useMemo(() => {
-    if (alreadyOpenedErr) {
-      return { state: "error", error: alreadyOpenedErr };
-    }
-
-    if (initClientState === undefined) return undefined;
-
-    const authenticated =
-      initClientState === null
-        ? undefined
-        : {
-            client: initClientState.client,
-            isPasswordlessUser: initClientState.passwordlessUser,
-            changePassword,
-            logout,
-          };
-
-    return {
-      state: "valid",
-      authenticated,
-      setClient,
-      disconnected: isDisconnected,
-      supportedFeatures: {
-        reactions: supportsReactions,
-      },
-    };
-  }, [
-    alreadyOpenedErr,
-    changePassword,
-    initClientState,
-    logout,
-    setClient,
-    isDisconnected,
-    supportsReactions,
-  ]);
-
-  const onSync = useCallback(
-    (state: SyncState, _old: SyncState | null, data?: ISyncStateData) => {
-      setIsDisconnected(clientIsDisconnected(state, data));
-    },
-    [],
-  );
+export const ClientProvider: FC<Props> = ({ children, session }) => {
+  const state = useBehavior(session.state$);
 
   useEffect(() => {
-    if (!initClientState) {
-      return;
-    }
-
-    window.matrixclient = initClientState.client;
-    window.passwordlessUser = initClientState.passwordlessUser;
+    if (state.state !== "signedIn") return;
+    window.matrixclient = state.client;
+    window.passwordlessUser = state.passwordlessUser;
 
     if (PosthogAnalytics.hasInstance())
       PosthogAnalytics.instance.onLoginStatusChanged();
+    // Analytics follow the user's choices whoever the client belongs to
+    if (PosthogAnalytics.instance.isEnabled())
+      PosthogAnalytics.instance.startListeningToSettingsChanges();
+  }, [state]);
 
-    if (initClientState.client) {
-      initClientState.client.on(ClientEvent.Sync, onSync);
-    }
+  if (state.state === "error") return <ErrorPage error={state.error} />;
 
-    if (!hostBridge.supportsReactions)
-      logger.warn("The host does not permit reactions");
-    setSupportsReactions(hostBridge.supportsReactions);
-
-    return (): void => {
-      if (initClientState.client) {
-        initClientState.client.removeListener(ClientEvent.Sync, onSync);
-      }
-    };
-  }, [initClientState, onSync, hostBridge]);
-
-  if (alreadyOpenedErr) {
-    return <ErrorPage error={alreadyOpenedErr} />;
-  }
-
-  return <ClientContext value={state}>{children}</ClientContext>;
+  return <ClientContext value={session}>{children}</ClientContext>;
 };
-
-export type InitResult = {
-  client: MatrixClient;
-  passwordlessUser: boolean;
-};
-
-export interface Session {
-  user_id: string;
-  device_id: string;
-  access_token: string;
-  passwordlessUser: boolean;
-  tempPassword?: string;
-}
-
-const clearSession = (): void => localStorage.removeItem("matrix-auth-store");
-const saveSession = (s: Session): void =>
-  localStorage.setItem("matrix-auth-store", JSON.stringify(s));
-const loadSession = (): Session | undefined => {
-  const data = localStorage.getItem("matrix-auth-store");
-  if (!data) {
-    return undefined;
-  }
-
-  return JSON.parse(data);
-};
-
-const clientIsDisconnected = (
-  syncState: SyncState,
-  syncData?: ISyncStateData,
-): boolean =>
-  syncState === "ERROR" && syncData?.error?.name === "ConnectionError";

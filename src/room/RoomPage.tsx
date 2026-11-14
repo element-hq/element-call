@@ -12,7 +12,7 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import { Trans, useTranslation } from "react-i18next";
 import { UnknownSolidIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 
-import { useClientLegacy } from "../ClientContext";
+import { useClient, useClientSessionState } from "../ClientContext";
 import { ErrorPage, FullScreenView, LoadingPage } from "../FullScreenView";
 import { RoomAuthView } from "./RoomAuthView";
 import { CallView } from "./CallView";
@@ -42,8 +42,12 @@ export const RoomPage: FC = (): ReactNode => {
   const { registerPasswordlessUser } = useRegisterPasswordlessUser();
   const [isRegistering, setIsRegistering] = useState(false);
 
-  const { loading, authenticated, client, error, passwordlessUser } =
-    useClientLegacy();
+  const { client } = useClient();
+  const session = useClientSessionState();
+  const loading = session.state === "loading";
+  const passwordlessUser =
+    session.state === "signedIn" && session.passwordlessUser;
+  const authenticated = client !== undefined;
   const { avatarUrl, displayName: userDisplayName } = useProfile(client);
 
   const groupCallState = useLoadGroupCall(client, roomIdOrAlias, viaServers);
@@ -184,7 +188,6 @@ export const RoomPage: FC = (): ReactNode => {
   };
 
   if (loading || isRegistering) return <LoadingPage />;
-  if (error) return <ErrorPage error={error} />;
   if (!client) return <RoomAuthView />;
   // TODO: This doesn't belong here, the app routes need to be reworked
   if (!roomIdOrAlias) return <HomePage />;
