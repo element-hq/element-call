@@ -10,8 +10,7 @@ interface.
 Element Call becomes one consumer of it: `CallViewModel` keeps what makes a session
 a _call_ (ringing, auto-leave, layout, sounds, reactions, settings, the host
 bridge) and takes everything else from the client. The dependency direction is
-therefore `Element Call → sdk`, never the reverse. What moved out of Element
-Call's `src/` to get there is listed in [`SdkMigration.md`](./SdkMigration.md).
+therefore `Element Call → sdk`, never the reverse.
 
 ## The architecture
 
@@ -777,7 +776,6 @@ sdk/
   src/utils/          mapScoped, network retry, display names, test helpers
   dev/                the harness (below)
   SdkArchitecture.md  this document
-  SdkMigration.md     what moved from Element Call's src/ into the SDK
 ```
 
 The lint rule `element-call/sdk-import-boundary` keeps it that way: nothing under
