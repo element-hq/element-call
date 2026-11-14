@@ -11,6 +11,7 @@ import { type Behavior } from "../reactive/Behavior";
 import { type ObservableScope } from "../reactive/ObservableScope";
 import {
   type AudioMediaTrack,
+  type DataTrack,
   type MediaSource,
   type MediaTrack,
   type VideoMediaTrack,
@@ -27,7 +28,7 @@ export type TrackOfSource<S extends MediaSource> = S extends
 /** The member's first track of a source; undefined while there is none, or no media yet. */
 export function trackBySource$<S extends MediaSource>(
   scope: ObservableScope,
-  tracks$: Behavior<MediaTrack[] | null>,
+  tracks$: Behavior<readonly (MediaTrack | DataTrack)[] | null>,
   source: S,
 ): Behavior<TrackOfSource<S> | undefined> {
   return scope.behavior(
@@ -37,6 +38,24 @@ export function trackBySource$<S extends MediaSource>(
           tracks?.find((t) => t.source === source) as
             | TrackOfSource<S>
             | undefined,
+      ),
+      distinctUntilChanged(),
+    ),
+  );
+}
+
+/** The member's data track of this name; undefined while there is none, or no media yet. */
+export function dataTrackByName$(
+  scope: ObservableScope,
+  tracks$: Behavior<readonly (MediaTrack | DataTrack)[] | null>,
+  name: string,
+): Behavior<DataTrack | undefined> {
+  return scope.behavior(
+    tracks$.pipe(
+      map((tracks) =>
+        tracks?.find(
+          (t): t is DataTrack => t.kind === "data" && t.name === name,
+        ),
       ),
       distinctUntilChanged(),
     ),

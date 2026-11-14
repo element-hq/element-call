@@ -71,6 +71,8 @@ import {
   type RTCParticipation,
   type RTCSlot,
   type ParticipationState,
+  type DataPublishRequest,
+  type LocalTrack,
   type PublishRequest,
   type RemoteRTCMember,
   type TransportMetadata,
@@ -535,19 +537,22 @@ export function mockRTCParticipation(
     state$,
     localMember$,
     remoteMembers$,
-    publish: vi.fn(async (request: PublishRequest) =>
-      Promise.resolve(
-        request.source === "microphone"
-          ? mockAudioTrack()
-          : mockVideoTrack({ source: request.source }),
-      ),
-    ),
+    publish: vi.fn(
+      async (
+        request: PublishRequest | DataPublishRequest,
+      ): Promise<LocalTrack> => {
+        if (request.source === "data") throw new Error("Not mocked");
+        return Promise.resolve(
+          request.source === "microphone"
+            ? mockAudioTrack()
+            : mockVideoTrack({ source: request.source }),
+        );
+      },
+    ) as RTCParticipation["publish"],
     unpublish: vi.fn(async () => Promise.resolve()),
     keyRotationSuppressed$,
     connectedTransports$,
     setAudioOutputDeviceId: vi.fn(async () => Promise.resolve()),
-    sendData: vi.fn(async () => Promise.resolve()),
-    data$: NEVER,
   };
   participation$.next(participation);
   return participation;
