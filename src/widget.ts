@@ -10,6 +10,7 @@ import {
   EventType,
   createRoomWidgetClient,
   type MatrixClient,
+  UNSTABLE_ELEMENT_FUNCTIONAL_USERS,
 } from "matrix-js-sdk";
 import {
   WidgetApi,
@@ -147,6 +148,7 @@ export const initializeWidget = (
         { eventType: EventType.RoomName },
         { eventType: EventType.RoomMember },
         { eventType: EventType.RoomEncryption },
+        { eventType: UNSTABLE_ELEMENT_FUNCTIONAL_USERS.name },
         { eventType: EventType.GroupCallMemberPrefix },
       ];
 
