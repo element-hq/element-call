@@ -141,7 +141,7 @@ const roomHasCallMembershipEvents = (room: Room): boolean => {
     return true;
   }
 
-  // Check for *active* calls using sticky events.
+  // Check for recent calls using sticky events.
   for (const sticky of room._unstable_getStickyEvents()) {
     if (sticky.getType() === EventType.RTCMembership) {
       return true;
@@ -150,11 +150,9 @@ const roomHasCallMembershipEvents = (room: Room): boolean => {
 
   // Otherwise, check recent event history to see if anyone had
   // sent a call membership in here.
-  return timeline.getEvents().some(
-    (e) =>
-      // Membership events only count if both of these are true
-      e.unstableStickyInfo && e.getType() === EventType.GroupCallMemberPrefix,
-  );
+  return timeline
+    .getEvents()
+    .some((e) => e.getType() === EventType.RTCMembership);
   // Otherwise, it's *unlikely* this room was ever a call.
 };
 
