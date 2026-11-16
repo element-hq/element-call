@@ -39,7 +39,7 @@ importers:
         version: 11.7.12
       '@livekit/components-core':
         specifier: ^0.12.0
-        version: 0.12.15(livekit-client@2.23.0(@types/dom-mediacapture-record@1.0.22))(tslib@2.8.1)
+        version: 0.12.16(livekit-client@2.23.0(@types/dom-mediacapture-record@1.0.22))(tslib@2.8.1)
       '@livekit/track-processors':
         specifier: ^0.7.1
         version: 0.7.2(@types/dom-mediacapture-transform@0.1.11)(livekit-client@2.23.0(@types/dom-mediacapture-record@1.0.22))
@@ -943,9 +943,6 @@ packages:
   '@floating-ui/core@1.8.0':
     resolution: {integrity: sha512-0CIZ5itps/8x7BG8dEIhs53BvCUH2PCoogtakwRTut+Arm58sJooJ0AuZhLw2HJYIR5cMLNPBSS728sPho2khQ==}
 
-  '@floating-ui/dom@1.7.6':
-    resolution: {integrity: sha512-9gZSAI5XM36880PPMm//9dfiEngYoC6Am2izES1FF406YFsjvyBMmeJ2g4SAju3xWwtuynNRFL2s9hgxpLI5SQ==}
-
   '@floating-ui/dom@1.8.0':
     resolution: {integrity: sha512-yXSrzeHZBTZadLOlfyhCkJHNeLJnHRnRInwdZ40L7ZiaAtrBwoYlsDrX3v5zB1Utk7CLfzcOVnVVWoXEky7Ceg==}
 
@@ -1176,8 +1173,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@livekit/components-core@0.12.15':
-    resolution: {integrity: sha512-bDkK+jkPMgyT4a5lZmdcuc/hZ8fZUrXW+qQPNHVeSpXCBMzk5q9QWzx+HPtTsPJ8hnncWGfoT81RnXHBsy+Z8g==}
+  '@livekit/components-core@0.12.16':
+    resolution: {integrity: sha512-jcXuNeHKGkXgRiT4wniWRpg+TKUSoTL9da01tMxxKGmjp98zB2DVgPmk1fBZfgDVjPBF+jsZe/WkeFAbvJu4Gw==}
     engines: {node: '>=18'}
     peerDependencies:
       livekit-client: ^2.20.1
@@ -4679,10 +4676,6 @@ packages:
     resolution: {integrity: sha512-ja1E3yCr9i/0hmBVaM0bfwDjnGy8I/s6PP4DFp+yP+a+mrHO4Rm7DtmnqROTUkHIkqffC84YY7AeqX6oFk0WFg==}
     engines: {node: '>=18'}
 
-  loglevel@1.9.1:
-    resolution: {integrity: sha512-hP3I3kCrDIMuRwAwHltphhDM1r8i55H33GgqjXbrisuJhF4kRhW1dNuxsRklp4bXl8DSdLaNLuiL4A/LWRfxvg==}
-    engines: {node: '>= 0.6.0'}
-
   loglevel@1.9.2:
     resolution: {integrity: sha512-HgMmCqIJSAKqo68l0rS2AanEWfkxaZ5wNiEFb5ggm08lDs9Xl2KxBlX3PTcaD2chBM1gXAYf491/M2Rv8Jwayg==}
     engines: {node: '>= 0.6.0'}
@@ -6920,11 +6913,6 @@ snapshots:
     dependencies:
       '@floating-ui/utils': 0.2.12
 
-  '@floating-ui/dom@1.7.6':
-    dependencies:
-      '@floating-ui/core': 1.8.0
-      '@floating-ui/utils': 0.2.12
-
   '@floating-ui/dom@1.8.0':
     dependencies:
       '@floating-ui/core': 1.8.0
@@ -7158,11 +7146,11 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
 
-  '@livekit/components-core@0.12.15(livekit-client@2.23.0(@types/dom-mediacapture-record@1.0.22))(tslib@2.8.1)':
+  '@livekit/components-core@0.12.16(livekit-client@2.23.0(@types/dom-mediacapture-record@1.0.22))(tslib@2.8.1)':
     dependencies:
-      '@floating-ui/dom': 1.7.6
+      '@floating-ui/dom': 1.8.0
       livekit-client: 2.23.0(@types/dom-mediacapture-record@1.0.22)
-      loglevel: 1.9.1
+      loglevel: 1.9.2
       rxjs: 7.8.2
       tslib: 2.8.1
 
@@ -10362,8 +10350,6 @@ snapshots:
     dependencies:
       is-unicode-supported: 2.1.0
       yoctocolors: 2.2.0
-
-  loglevel@1.9.1: {}
 
   loglevel@1.9.2: {}
 
