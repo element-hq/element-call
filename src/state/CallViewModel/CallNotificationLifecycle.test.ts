@@ -316,13 +316,18 @@ test("decline event from wrong sender is ignored (times out)", () => {
 });
 
 test("declines are received from the timeline and the sticky section", () => {
-  const room = new EventEmitter();
+  const event = (eventId: string, type = EventType.RTCDecline): MatrixEvent =>
+    new MatrixEvent({ event_id: eventId, type, sender: alice.userId });
+  const room = Object.assign(new EventEmitter(), {
+    _unstable_getStickyEvents: () => [
+      event("$existing"),
+      event("$existingMembership", EventType.RTCMembership),
+    ],
+  });
   const received: string[] = [];
   const subscription = createReceivedDecline$(
     room as unknown as Room,
   ).subscribe((event) => received.push(event.getId()!));
-  const event = (eventId: string, type = EventType.RTCDecline): MatrixEvent =>
-    new MatrixEvent({ event_id: eventId, type, sender: alice.userId });
 
   const timelineArgs = [room, false, false, {}];
   room.emit(RoomEvent.Timeline, event("$timeline"), ...timelineArgs);
@@ -341,5 +346,10 @@ test("declines are received from the timeline and the sticky section", () => {
   );
   subscription.unsubscribe();
 
-  expect(received).toEqual(["$timeline", "$sticky", "$replacement"]);
+  expect(received).toEqual([
+    "$existing",
+    "$timeline",
+    "$sticky",
+    "$replacement",
+  ]);
 });

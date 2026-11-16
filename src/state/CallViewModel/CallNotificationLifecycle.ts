@@ -14,7 +14,9 @@ import {
   toStableCallIntent,
 } from "matrix-js-sdk/lib/matrixrtc";
 import {
+  defer,
   filter,
+  from,
   fromEvent,
   map,
   merge,
@@ -83,6 +85,12 @@ export function createReceivedDecline$(
       Parameters<EventTimelineSetHandlerMap[RoomEvent.Timeline]>
     >
   ).pipe(map(([event]) => event));
+  // The decline can arrive via sync before the send of our notification
+  // resolves, which is when we start listening. To guard against this, we
+  // include what is already in the sticky section.
+  const currentSticky$ = defer(() =>
+    from(matrixRoom._unstable_getStickyEvents()),
+  );
   const sticky$ = (
     fromEvent(matrixRoom, RoomStickyEventsEvent.Update) as Observable<
       Parameters<RoomStickyEventsMap[RoomStickyEventsEvent.Update]>
@@ -93,7 +101,7 @@ export function createReceivedDecline$(
       ...updated.map(({ current }) => current),
     ]),
   );
-  return merge(timeline$, sticky$).pipe(
+  return merge(currentSticky$, sticky$, timeline$).pipe(
     filter((event) => event.getType() === EventType.RTCDecline),
   );
 }
