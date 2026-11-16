@@ -19,7 +19,14 @@ import {
 } from "@element-hq/matrixrtc-sdk";
 import { SyncState } from "matrix-js-sdk/lib/sync";
 import { BehaviorSubject, map, of, switchMap } from "rxjs";
-import { ClientEvent, type RoomMember, type MatrixClient } from "matrix-js-sdk";
+import {
+  ClientEvent,
+  KnownMembership,
+  type MatrixEvent,
+  type RoomMember,
+  type MatrixClient,
+  UNSTABLE_ELEMENT_FUNCTIONAL_USERS,
+} from "matrix-js-sdk";
 import EventEmitter from "events";
 
 import type { CallMembership } from "matrix-js-sdk/lib/matrixrtc";
@@ -32,6 +39,7 @@ import {
 import { createSentCallNotification$ } from "./CallNotificationLifecycle";
 import {
   mockConfig,
+  mockLiveTimeline,
   mockMatrixRoom,
   mockMatrixRoomMember,
   mockRTCParticipation,
@@ -74,6 +82,8 @@ export interface CallViewModelInputs {
   remoteParticipants$: Behavior<Participant[]>;
   rtcMembers$: Behavior<Partial<CallMembership>[]>;
   roomMembers: RoomMember[];
+  /** The user IDs the room marks as functional members (bots). */
+  functionalMembers: string[];
   /** Whether the local transport is connected. */
   connected$: Behavior<boolean>;
   speaking: Map<Participant, Behavior<boolean>>;
@@ -100,6 +110,7 @@ export function withCallViewModel(mode: MatrixRTCMode) {
         dave,
         daveRTL,
       ],
+      functionalMembers = [],
       connected$ = constant(true),
       speaking = new Map(),
       videoEnabled = new Map(),
@@ -145,7 +156,15 @@ export function withCallViewModel(mode: MatrixRTCMode) {
         }
       })() as Partial<MatrixClient> as MatrixClient,
       getMembers: () => roomMembers,
-      getMembersWithMembership: () => roomMembers,
+      getMembersWithMembership: (membership: string) =>
+        membership === KnownMembership.Join ? roomMembers : [],
+      getLiveTimeline: mockLiveTimeline((type, stateKey) =>
+        UNSTABLE_ELEMENT_FUNCTIONAL_USERS.matches(type) && stateKey === ""
+          ? ({
+              getContent: () => ({ service_members: functionalMembers }),
+            } as Partial<MatrixEvent> as MatrixEvent)
+          : null,
+      ),
     });
     const rtcSession = new MockRTCSession(room, []).withMemberships(
       rtcMembers$,

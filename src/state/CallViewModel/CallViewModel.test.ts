@@ -568,6 +568,58 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
     });
   });
 
+  test("one-on-one mobile layout hides name tags in room with 2 members and a bot", () => {
+    withTestScheduler(({ expectObservable }) => {
+      withCallViewModel(
+        {
+          remoteParticipants$: constant([aliceParticipant]),
+          roomMembers: [local, alice, bob],
+          functionalMembers: [bob.userId],
+          rtcMembers$: constant([localRtcMember, aliceRtcMember]),
+          windowSize$: constant({ width: 380, height: 700 }), // Mobile phone
+        },
+        (vm) => {
+          expectObservable(summarizeLayout$(vm.layout$)).toBe("a", {
+            a: {
+              type: "one-on-one-mobile",
+              spotlight: [`${aliceId}:0`],
+              pip: undefined,
+              pipSize: undefined,
+            },
+          });
+          // Bob is a bot, so the room is still a DM with Alice
+          expectObservable(vm.showNameTags$).toBe("n", yesNo);
+        },
+      );
+    });
+  });
+
+  test("one-on-one mobile layout shows name tags when a bot is in the call", () => {
+    withTestScheduler(({ expectObservable }) => {
+      withCallViewModel(
+        {
+          remoteParticipants$: constant([bobParticipant]),
+          roomMembers: [local, alice, bob],
+          functionalMembers: [bob.userId],
+          rtcMembers$: constant([localRtcMember, bobRtcMember]),
+          windowSize$: constant({ width: 380, height: 700 }), // Mobile phone
+        },
+        (vm) => {
+          expectObservable(summarizeLayout$(vm.layout$)).toBe("a", {
+            a: {
+              type: "one-on-one-mobile",
+              spotlight: [`${bobId}:0`],
+              pip: undefined,
+              pipSize: undefined,
+            },
+          });
+          // The remote tile is the bot's media, which must never go unlabelled
+          expectObservable(vm.showNameTags$).toBe("y", yesNo);
+        },
+      );
+    });
+  });
+
   test("landscape mobile layouts show screen shares and group call participants", () => {
     withTestScheduler(({ behavior, expectObservable }) => {
       // Starts as a one-on-one call, then Alice shares her screen, then Bob
@@ -1623,6 +1675,47 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
               pip: `${localId}:0`,
             },
           });
+        },
+        { waitForCallPickup: true },
+      );
+    });
+  });
+
+  test("ringing picks the human recipient over a functional member listed first", () => {
+    withTestScheduler(({ behavior, schedule, expectObservable }) => {
+      withCallViewModel(
+        {
+          // Alice answers after 20ms
+          rtcMembers$: behavior("a 20ms b", {
+            a: [localRtcMember],
+            b: [localRtcMember, aliceRtcMember],
+          }),
+          // A DM with a bot, where the bot happens to come first
+          roomMembers: [bob, alice, local],
+          functionalMembers: [bob.userId],
+        },
+        (vm, rtcSession) => {
+          // Fire a ringing notification with a 30ms lifetime
+          schedule("n", {
+            n: () => {
+              rtcSession.emit(
+                MatrixRTCSessionEvent.DidSendCallNotification,
+                mockRingEvent("$notif1", 30),
+              );
+            },
+          });
+
+          // Alice, not the bot, is the recipient, and her pickup stops the ring
+          expectObservable(vm.ringingVm$).toBe("(ab) 17ms a", {
+            a: null,
+            b: expect.objectContaining({
+              type: "ringing",
+              userId: alice.userId,
+              intent: RTC_CALL_INTENT_AUDIO,
+            }),
+          });
+          // The ring was answered, so the lifetime running out must not leave
+          expectObservable(vm.autoLeave$).toBe("-");
         },
         { waitForCallPickup: true },
       );
