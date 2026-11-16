@@ -33,7 +33,7 @@ const client: Mocked<
     openID.ClientOpenIDParts
 > = {
   baseUrl: "https://matrix.example.org",
-  _unstable_getLivekitToken: vi.fn().mockResolvedValue({ jwt: csApiJWTToken }),
+  getLivekitToken: vi.fn().mockResolvedValue({ jwt: csApiJWTToken }),
   _unstable_delegateDelayedLeave: vi.fn().mockResolvedValue({}),
   getOpenIdToken: vi
     .fn()
@@ -110,7 +110,7 @@ describe("getSFUConfig", () => {
         livekitAlias: "via CS API",
       }),
     );
-    expect(client._unstable_getLivekitToken).toHaveBeenCalledWith({
+    expect(client.getLivekitToken).toHaveBeenCalledWith({
       url: urlTransport.url,
       server_name: "example.org",
       room_id: roomId,
@@ -122,11 +122,11 @@ describe("getSFUConfig", () => {
 
   it("does not fall back to OpenID with url transport", async () => {
     mockJWTService();
-    client._unstable_getLivekitToken.mockRejectedValueOnce(unsupportedError);
+    client.getLivekitToken.mockRejectedValueOnce(unsupportedError);
     await expect(
       getSFUConfig({ ...defaultParams, transport: urlTransport }),
     ).rejects.toThrow(expect.any(NoMatrix2AuthorizationService));
-    expect(client._unstable_getLivekitToken).toHaveBeenCalled();
+    expect(client.getLivekitToken).toHaveBeenCalled();
     expect(jwtServiceCalls()).toEqual([]);
   });
 
@@ -140,7 +140,7 @@ describe("getSFUConfig", () => {
         livekitAlias: "via default endpoint",
       }),
     );
-    expect(client._unstable_getLivekitToken).not.toHaveBeenCalled();
+    expect(client.getLivekitToken).not.toHaveBeenCalled();
     expect(jwtServiceCalls()).toEqual(["/get_token"]);
   });
 
@@ -157,7 +157,7 @@ describe("getSFUConfig", () => {
         livekitAlias: "via default endpoint",
       }),
     );
-    expect(client._unstable_getLivekitToken).not.toHaveBeenCalled();
+    expect(client.getLivekitToken).not.toHaveBeenCalled();
     expect(jwtServiceCalls()).toEqual(["/get_token"]);
   });
 
@@ -166,7 +166,7 @@ describe("getSFUConfig", () => {
     const error = new Error(
       "The rtc_livekit_get_token action is not supported by the client.",
     );
-    client._unstable_getLivekitToken.mockRejectedValueOnce(error);
+    client.getLivekitToken.mockRejectedValueOnce(error);
     await expect(
       getSFUConfig({ ...defaultParams, transport: urlTransport }),
     ).rejects.toThrow(error);
@@ -182,13 +182,13 @@ describe("getSFUConfig", () => {
         role: "publisher",
       }),
     ).toEqual(expect.objectContaining({ jwt: csApiJWTToken }));
-    expect(client._unstable_getLivekitToken).toHaveBeenCalled();
+    expect(client.getLivekitToken).toHaveBeenCalled();
     expect(jwtServiceCalls()).toEqual([]);
   });
 
   it("does not fall back to OpenID when publishing with url transport", async () => {
     mockJWTService();
-    client._unstable_getLivekitToken.mockRejectedValueOnce(unsupportedError);
+    client.getLivekitToken.mockRejectedValueOnce(unsupportedError);
     await expect(
       getSFUConfig({
         ...defaultParams,
@@ -196,7 +196,7 @@ describe("getSFUConfig", () => {
         role: "publisher",
       }),
     ).rejects.toThrow(expect.any(NoMatrix2AuthorizationService));
-    expect(client._unstable_getLivekitToken).toHaveBeenCalled();
+    expect(client.getLivekitToken).toHaveBeenCalled();
     expect(jwtServiceCalls()).toEqual([]);
   });
 
@@ -216,7 +216,7 @@ describe("getSFUConfig", () => {
         livekitAlias: "via legacy endpoint",
       }),
     );
-    expect(client._unstable_getLivekitToken).not.toHaveBeenCalled();
+    expect(client.getLivekitToken).not.toHaveBeenCalled();
     expect(jwtServiceCalls()).toEqual(["/sfu/get"]);
   });
 });

@@ -74,7 +74,7 @@ export interface LivekitBackendOptions {
   client: Pick<
     MatrixClient,
     | "getOpenIdToken"
-    | "_unstable_getLivekitToken"
+    | "getLivekitToken"
     | "_unstable_delegateDelayedLeave"
     | "baseUrl"
   >;

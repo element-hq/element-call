@@ -92,7 +92,7 @@ function setupTest(): void {
       matrix_server_name: "example.org",
       expires_in: 3600,
     }),
-    _unstable_getLivekitToken: vi.fn().mockResolvedValue({ jwt: testJWTToken }),
+    getLivekitToken: vi.fn().mockResolvedValue({ jwt: testJWTToken }),
   });
 
   localParticipantEventEmiter = new EventEmitter();
@@ -191,7 +191,7 @@ describe("Start connection states", () => {
 
     const deferred = Promise.withResolvers<LivekitGetTokenResponse>();
 
-    client._unstable_getLivekitToken.mockImplementation(
+    client.getLivekitToken.mockImplementation(
       async (): Promise<LivekitGetTokenResponse> => {
         return await deferred.promise;
       },
@@ -235,7 +235,7 @@ describe("Start connection states", () => {
     onTestFinished(() => s.unsubscribe());
 
     const deferredSFU = Promise.withResolvers<void>();
-    client._unstable_getLivekitToken.mockImplementation(async () => {
+    client.getLivekitToken.mockImplementation(async () => {
       await deferredSFU.promise;
       throw new MatrixError(
         {
@@ -378,7 +378,7 @@ describe("Start connection states", () => {
 
     await connection.start();
 
-    expect(client._unstable_getLivekitToken).not.toHaveBeenCalled();
+    expect(client.getLivekitToken).not.toHaveBeenCalled();
     expect(fetchMock.called(`${serviceUrl}/sfu/get`)).toBe(true);
     expect(fakeLivekitRoom.connect).toHaveBeenCalledWith(
       "wss://sfu",
