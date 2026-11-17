@@ -33,7 +33,7 @@ const urlTransport: UnstableLivekitTransport = {
 function client(): ClientGetTokenParts & ClientOpenIDParts {
   return {
     getOpenIdToken: vi.fn(),
-    _unstable_getLivekitToken: vi.fn().mockResolvedValue({ jwt: testJWTToken }),
+    getLivekitToken: vi.fn().mockResolvedValue({ jwt: testJWTToken }),
   };
 }
 

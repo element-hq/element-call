@@ -191,8 +191,8 @@ importers:
         specifier: ^1.9.1
         version: 1.9.2
       matrix-js-sdk:
-        specifier: github:matrix-org/matrix-js-sdk#1c16bcc5735e51c08f86883d365f550a3a594b9d
-        version: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/1c16bcc5735e51c08f86883d365f550a3a594b9d
+        specifier: github:matrix-org/matrix-js-sdk#6c8b1b418189919bc69fd9df5e57354e7b3c39cb
+        version: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/6c8b1b418189919bc69fd9df5e57354e7b3c39cb
       matrix-widget-api:
         specifier: ^1.18.0
         version: 1.20.0
@@ -4727,8 +4727,8 @@ packages:
   matrix-events-sdk@0.0.1:
     resolution: {integrity: sha512-1QEOsXO+bhyCroIe2/A5OwaxHvBm7EsSQ46DEDn8RBIfQwN5HWBpFvyWWR4QY0KHPPnnJdI99wgRiAl7Ad5qaA==}
 
-  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/1c16bcc5735e51c08f86883d365f550a3a594b9d:
-    resolution: {gitHosted: true, integrity: sha512-fQwy8Tnm8Dm7o8GeDaSSrKCnmIGlpvfxc3r4Jwra7N+6ZsYeD92NMgoGD5yR0uF49iphPCTROCZOxZz17W71OA==, tarball: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/1c16bcc5735e51c08f86883d365f550a3a594b9d}
+  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/6c8b1b418189919bc69fd9df5e57354e7b3c39cb:
+    resolution: {gitHosted: true, tarball: https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/6c8b1b418189919bc69fd9df5e57354e7b3c39cb}
     version: 45.1.0
     engines: {node: '>=22.0.0'}
 
@@ -10017,7 +10017,7 @@ snapshots:
 
   i18next-resources-for-ts@2.1.0:
     dependencies:
-      '@babel/runtime': 7.29.7
+      '@babel/runtime': 7.29.10
       '@swc/core': 1.16.2
       chokidar: 5.0.0
       yaml: 2.9.0
@@ -10399,7 +10399,7 @@ snapshots:
 
   matrix-events-sdk@0.0.1: {}
 
-  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/1c16bcc5735e51c08f86883d365f550a3a594b9d:
+  matrix-js-sdk@https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/6c8b1b418189919bc69fd9df5e57354e7b3c39cb:
     dependencies:
       '@babel/runtime': 8.0.8
       '@matrix-org/matrix-sdk-crypto-wasm': 18.9.2
@@ -11200,7 +11200,7 @@ snapshots:
 
   react-i18next@17.0.13(i18next@26.4.1(typescript@5.9.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.3):
     dependencies:
-      '@babel/runtime': 7.29.7
+      '@babel/runtime': 7.29.10
       html-parse-stringify: 4.0.1
       i18next: 26.4.1(typescript@5.9.3)
       react: 19.2.8
