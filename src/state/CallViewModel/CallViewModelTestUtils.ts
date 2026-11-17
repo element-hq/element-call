@@ -146,6 +146,7 @@ export function withCallViewModel(mode: MatrixRTCMode) {
       })() as Partial<MatrixClient> as MatrixClient,
       getMembers: () => roomMembers,
       getMembersWithMembership: () => roomMembers,
+      _unstable_getStickyEvents: () => [],
     });
     const rtcSession = new MockRTCSession(room, []).withMemberships(
       rtcMembers$,

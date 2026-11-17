@@ -59,7 +59,7 @@ export async function getSFUConfig({
 
 export type ClientDelegationParts = Pick<
   MatrixClient,
-  "_unstable_delegateDelayedLeave" | "baseUrl"
+  "delegateDelayedLeave" | "baseUrl"
 >;
 
 export interface DelegateDelayedLeaveParams {
@@ -87,7 +87,7 @@ export async function delegateDelayedLeave({
 }: DelegateDelayedLeaveParams): Promise<void> {
   await doNetworkOperationWithRetry(
     async () =>
-      client._unstable_delegateDelayedLeave({
+      client.delegateDelayedLeave({
         url,
         room_id: roomId,
         slot_id: slotId,

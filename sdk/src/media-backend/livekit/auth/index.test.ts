@@ -34,7 +34,7 @@ const client: Mocked<
 > = {
   baseUrl: "https://matrix.example.org",
   getLivekitToken: vi.fn().mockResolvedValue({ jwt: csApiJWTToken }),
-  _unstable_delegateDelayedLeave: vi.fn().mockResolvedValue({}),
+  delegateDelayedLeave: vi.fn().mockResolvedValue({}),
   getOpenIdToken: vi
     .fn()
     .mockResolvedValue({ access_token: "mock-openID-token" }),
@@ -245,7 +245,7 @@ describe("delegateDelayedLeave", () => {
   it("uses CS API with url transport", async () => {
     mockJWTService();
     await delegateDelayedLeave({ ...defaultParams, transport: urlTransport });
-    expect(client._unstable_delegateDelayedLeave).toHaveBeenCalledWith({
+    expect(client.delegateDelayedLeave).toHaveBeenCalledWith({
       url: urlTransport.url,
       room_id: roomId,
       slot_id: slotId,
@@ -257,13 +257,11 @@ describe("delegateDelayedLeave", () => {
 
   it("does not fall back to OpenID with url transport", async () => {
     mockJWTService();
-    client._unstable_delegateDelayedLeave.mockRejectedValueOnce(
-      unsupportedError,
-    );
+    client.delegateDelayedLeave.mockRejectedValueOnce(unsupportedError);
     await expect(
       delegateDelayedLeave({ ...defaultParams, transport: urlTransport }),
     ).rejects.toThrow();
-    expect(client._unstable_delegateDelayedLeave).toHaveBeenCalled();
+    expect(client.delegateDelayedLeave).toHaveBeenCalled();
     expect(jwtServiceCalls()).toEqual([]);
   });
 
@@ -273,7 +271,7 @@ describe("delegateDelayedLeave", () => {
       ...defaultParams,
       transport: serviceUrlTransport,
     });
-    expect(client._unstable_delegateDelayedLeave).not.toHaveBeenCalled();
+    expect(client.delegateDelayedLeave).not.toHaveBeenCalled();
     expect(delegationViaJWTService()).toEqual({
       delay_id: "delay123",
       delay_timeout: 3_600_000,
@@ -288,7 +286,7 @@ describe("delegateDelayedLeave", () => {
       ...defaultParams,
       transport: urlAndServiceUrlTransport,
     });
-    expect(client._unstable_delegateDelayedLeave).not.toHaveBeenCalled();
+    expect(client.delegateDelayedLeave).not.toHaveBeenCalled();
     expect(delegationViaJWTService()).toEqual({
       delay_id: "delay123",
       delay_timeout: 3_600_000,
