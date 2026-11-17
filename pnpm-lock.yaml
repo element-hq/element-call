@@ -16,7 +16,7 @@ overrides:
   undici: ^6.27.0
   flatted: ^3.4.2
   ws: ^8.21.0
-  dompurify: ^3.4.11
+  dompurify: ^3.4.17
 
 importers:
 
@@ -3895,8 +3895,8 @@ packages:
     resolution: {integrity: sha512-GrwoxYN+uWlzO8uhUXRl0P+kHE4GtVPfYzVLcUxPL7KNdHKj66vvlhiweIHqYYXWlw+T8iLMp42Lm67ghw4WMQ==}
     engines: {node: '>= 4'}
 
-  dompurify@3.4.12:
-    resolution: {integrity: sha512-zQvGet8Z2sWbQhCmfFz/T5QWH2oBmjnqK3qvOjaqaNLrLEF912WamU+ohnTp0TCep/MFVHpdJuCZEdFOdTnEFg==}
+  dompurify@3.4.18:
+    resolution: {integrity: sha512-ofe3wI/uNm68HInABYFJYqQxRw1EaKAjNdrFVKqjUY+UZurvNd2L/HuQe097s/4RivWiZyP6tT7aoT8atjfhwg==}
 
   domutils@2.8.0:
     resolution: {integrity: sha512-w96Cjofp72M5IIhpjgobBimYEfoPjx1Vx0BSX9P30WBdZW2WIKU0T1Bd0kz2eNZ9ikjKgHbEyKx8BB6H1L3h3A==}
@@ -9503,7 +9503,7 @@ snapshots:
     dependencies:
       domelementtype: 2.3.0
 
-  dompurify@3.4.12:
+  dompurify@3.4.18:
     optionalDependencies:
       '@types/trusted-types': 2.0.7
 
@@ -11084,7 +11084,7 @@ snapshots:
       '@posthog/core': 1.46.4
       '@posthog/types': 1.400.0
       core-js: 3.49.0
-      dompurify: 3.4.12
+      dompurify: 3.4.18
       fflate: 0.4.8
       preact: 10.29.8
       query-selector-shadow-dom: 1.0.1

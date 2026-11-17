@@ -59,4 +59,7 @@ overrides:
   # - https://github.com/element-hq/element-call/security/dependabot/196
   # - https://github.com/element-hq/element-call/security/dependabot/195
   # - https://github.com/element-hq/element-call/security/dependabot/193
-  "dompurify": "^3.4.11"
+  # - https://github.com/advisories/GHSA-cg2g-xh64-v4q7
+  # - https://github.com/advisories/GHSA-mrv2-3pqr-j5jr
+  # - https://github.com/advisories/GHSA-c6gr-qvv4-5v3f
+  "dompurify": "^3.4.17"
