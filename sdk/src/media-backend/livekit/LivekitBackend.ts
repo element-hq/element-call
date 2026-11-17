@@ -73,10 +73,7 @@ export interface LivekitBackendOptions {
    */
   client: Pick<
     MatrixClient,
-    | "getOpenIdToken"
-    | "getLivekitToken"
-    | "delegateDelayedLeave"
-    | "baseUrl"
+    "getOpenIdToken" | "getLivekitToken" | "delegateDelayedLeave" | "baseUrl"
   >;
   mediaQuality?: MediaQuality;
 }
