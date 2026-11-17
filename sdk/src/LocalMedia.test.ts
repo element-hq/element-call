@@ -152,6 +152,15 @@ describe("createLocalMedia", () => {
     });
   });
 
+  // As the built-in camera of a Mac
+  it("takes a camera that doesn't say which way it faces to face the user", async () => {
+    const media = createLocalMedia(fakeGetUserMedia());
+    const [camera] = (await media.capture([{ source: "camera" }])) as [
+      LocalVideoMediaTrack,
+    ];
+    expect(camera.facingMode$.value).toBe("user");
+  });
+
   it("releases one device and stops the rest", async () => {
     const media = createLocalMedia(fakeGetUserMedia());
     const [microphone, camera] = await media.capture([
@@ -197,6 +206,7 @@ function fakeTrack(
   const track = {
     kind,
     id: `${kind}-${nextId++}`,
+    label: "",
     enabled: true,
     stop: vi.fn(),
     getSettings: () => settings,

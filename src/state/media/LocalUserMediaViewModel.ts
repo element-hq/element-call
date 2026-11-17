@@ -24,7 +24,6 @@ import {
 import { alwaysShowSelf } from "../../settings/settings";
 import { platform } from "../../Platform";
 import { type MediaDevices } from "../MediaDevices";
-import { mirrors } from "../../utils/media";
 
 export interface LocalUserMediaViewModel extends BaseUserMediaViewModel {
   local: true;
@@ -67,7 +66,10 @@ export function createLocalUserMedia(
   return {
     ...baseUserMedia,
     local: true,
-    mirror$: scope.behavior(facingMode$.pipe(map(mirrors))),
+    // Mirror only front-facing cameras (those that face the user)
+    mirror$: scope.behavior(
+      facingMode$.pipe(map((facingMode) => facingMode === "user")),
+    ),
     alwaysShow$: alwaysShowSelf.value$,
     setAlwaysShow: alwaysShowSelf.setValue,
     switchCamera$: scope.behavior(

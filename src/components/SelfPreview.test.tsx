@@ -28,10 +28,8 @@ describe("SelfPreview", () => {
     expect(track.detach).toHaveBeenCalledExactlyOnceWith(a);
   });
 
-  it("mirrors the camera unless it faces away", () => {
-    const facingMode$ = new BehaviorSubject<"user" | "environment" | undefined>(
-      "user",
-    );
+  it("mirrors the camera while it faces the user, and only then", () => {
+    const facingMode$ = new BehaviorSubject<"user" | "environment">("user");
     const { container } = render(
       <SelfPreview track={mockVideoTrack({ facingMode$ })} />,
     );
@@ -39,9 +37,6 @@ describe("SelfPreview", () => {
     expect(video().classList.contains(styles.mirrored)).toBe(true);
     act(() => facingMode$.next("environment"));
     expect(video().classList.contains(styles.mirrored)).toBe(false);
-    // As the built-in camera of a Mac, which doesn't say
-    act(() => facingMode$.next(undefined));
-    expect(video().classList.contains(styles.mirrored)).toBe(true);
   });
 
   it("says the camera is off while there is none", () => {

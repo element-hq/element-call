@@ -18,15 +18,7 @@ import {
   TrackEvent,
   type TrackPublication,
 } from "livekit-client";
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  onTestFinished,
-  vi,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ObservableScope } from "../../reactive/ObservableScope";
 import {
@@ -233,10 +225,6 @@ describe("createLivekitMediaTrack", () => {
   ])(
     "leaves a processed camera alone unless its device changes: $deviceId",
     async ({ deviceId, switches }) => {
-      vi.stubGlobal("MediaStreamTrack", class {});
-      onTestFinished(() => {
-        vi.unstubAllGlobals();
-      });
       const camera = Object.assign(Object.create(LocalVideoTrack.prototype), {
         source: Track.Source.Camera,
         _mediaStreamTrack: {
@@ -270,6 +258,41 @@ describe("createLivekitMediaTrack", () => {
     },
   );
 
+  it("takes the facing mode of a processed camera from the camera", async () => {
+    const source = {
+      readyState: "live",
+      label: "Back Camera",
+      getSettings: () => ({ facingMode: "environment" }),
+    };
+    const camera = Object.assign(Object.create(LocalVideoTrack.prototype), {
+      source: Track.Source.Camera,
+      _mediaStreamTrack: source,
+      mediaStream: { getVideoTracks: () => [source] },
+      processor: {
+        processedTrack: { label: "", getSettings: () => ({}) },
+      },
+      restartTrack: vi.fn().mockResolvedValue(undefined),
+    }) as LocalVideoTrack;
+    const { participant, publication, room } = fakes({
+      track: camera as unknown as FakeTrack,
+    });
+    const track = createLocalLivekitMediaTrack(
+      scope,
+      Object.assign(participant, {
+        isLocal: true,
+      }) as unknown as LocalParticipant,
+      publication as unknown as TrackPublication,
+      room,
+      vi.fn(),
+    ) as LocalVideoMediaTrack;
+
+    expect(track.facingMode$.value).toBe("environment");
+    await track.switchFacingMode();
+    expect(camera.restartTrack).toHaveBeenCalledExactlyOnceWith({
+      facingMode: "user",
+    });
+  });
+
   // LiveKit stops a camera that is turned off; the processor is built when it
   // is turned on again
   it.each([
@@ -279,10 +302,6 @@ describe("createLivekitMediaTrack", () => {
     "gives a processor to a camera that $state: $takes",
     async ({ isMuted, takes }) => {
       // jsdom has none; LiveKit's facing mode checks against it
-      vi.stubGlobal("MediaStreamTrack", class {});
-      onTestFinished(() => {
-        vi.unstubAllGlobals();
-      });
       const camera = Object.assign(Object.create(LocalVideoTrack.prototype), {
         isMuted,
         _mediaStreamTrack: {

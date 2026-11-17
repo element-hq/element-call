@@ -151,12 +151,16 @@ export interface LocalAudioMediaTrack
   extends AudioMediaTrack, LocalMediaTrack {}
 
 export interface LocalVideoMediaTrack extends VideoMediaTrack, LocalMediaTrack {
-  /** For mirroring; undefined where the camera does not say which way it faces. */
+  /**
+   * For mirroring. A camera that does not say which way it faces is taken to
+   * face the user, unless it is known to film the room, as a phone used as a
+   * webcam. Undefined while there is no camera track.
+   */
   facingMode$: Behavior<"user" | "environment" | undefined>;
   /**
    * Restarts the camera facing the other way, on devices with a front and a
    * back camera, and resolves with the id of the device now in use. Does
-   * nothing where the facing mode is unknown.
+   * nothing while there is no camera track.
    */
   switchFacingMode(): Promise<string | undefined>;
   /** Background blur and the like; undefined removes the processor. */
