@@ -634,7 +634,9 @@ export type MediaSource =
   | "unknown";
 
 export type MediaStreamStats =
-  RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats | undefined;
+  | RTCInboundRtpStreamStats
+  | RTCOutboundRtpStreamStats
+  | undefined;
 
 /** One published track of a member. */
 export interface MediaTrack {
