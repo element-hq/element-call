@@ -15,6 +15,8 @@ jobs:
     # Only run on labelling and skip forks.
     if: github.event.label.name == 'Claude-Analyse-Failures' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-24.04
+    # The turn limit below is generous, so bound the job by time instead.
+    timeout-minutes: 30
     steps:
       - name: Checkout code
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -22,6 +24,33 @@ jobs:
           # We may need commit history.
           fetch-depth: 0
           persist-credentials: false
+      # Pre-download job logs and artifacts of failed runs so that Claude doesn't spend cycles on it.
+      - name: Download logs and artifacts of failed workflow runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -eu
+          dir=agent-workspace/ci-artifacts
+          mkdir -p "$dir"
+
+          for run in $(gh run list --commit "$HEAD_SHA" --status failure --json databaseId --jq '.[].databaseId'); do
+            mkdir -p "$dir/$run"
+
+            # Fetch run summary, logs of failed jobs and artifacts.
+            gh run view "$run" > "$dir/$run/run.txt"
+            gh run view "$run" --log-failed > "$dir/$run/failed-jobs.log"
+            gh run download "$run" --dir "$dir/$run" || echo "No artifacts for run $run"
+          done
+
+          # Unpack any (nested) zip archives.
+          while zips=$(find "$dir" -name '*.zip') && [ -n "$zips" ]; do
+            echo "$zips" | while IFS= read -r zip; do
+              unzip -oq "$zip" -d "${zip%.zip}" && rm "$zip"
+            done
+          done
+
+          find "$dir" -maxdepth 3 -type d
       - name: Analyse
         uses: anthropics/claude-code-action@6fed3ca145920b639991cb756090506e1bcaf515 # v1.0.245
         with:
@@ -40,15 +69,22 @@ jobs:
             One or more test jobs failed on this pull request. Find out why and
             what would need to change to make them pass.
 
-            Use the CI tools to list the latest workflow runs for this pull request
-            and download the logs of every failed job. If no workflows failed, say
-            so and stop.
+            The details, logs and artifacts of every failed workflow run have
+            already been downloaded into `agent-workspace/ci-artifacts/<run id>/`:
+
+            - `run.txt`: Textual run summary with jobs, steps and failure annotations
+            - `failed-jobs.log`: Logs of the failed jobs
+            - Any other file: Unpacked run artifacts.
+
+            If `agent-workspace/ci-artifacts` is empty, no workflow failed. Say so
+            and stop in this case.
 
             Read the commits on this branch with `git log` and `git diff` against
             the base branch of the PR.
 
-            For each failed workflow, find out what failed and search the root cause(s).
-            Devise at least one possible resolution for each root cause.
+            For each failed workflow run , find out what failed and search the
+            root cause(s). Stop investigating once direct evidence confirms a root
+            cause. Devise at least one possible resolution for each root cause.
 
             Report your findings as PR comment. Start your message with "# Automated
             CI failure analysis". Then add one section per root cause with:
@@ -63,7 +99,8 @@ jobs:
             Use Markdown links for anything that can be navigated to on GitHub
             such as files, commits, issues, pull requests, workflow runs and
             jobs.
+          # Set a generous turn limit. It's bounded by timeout-minutes above.
           claude_args: |
             --model claude-fable-5-1
-            --allowedTools "mcp__github_ci__get_ci_status,mcp__github_ci__get_workflow_run_details,mcp__github_ci__download_job_log,Bash(git log:*),Bash(git diff:*),Bash(git show:*)"
-            --max-turns 50
+            --allowedTools "mcp__github_ci__get_ci_status,mcp__github_ci__get_workflow_run_details,mcp__github_ci__download_job_log,mcp__github__list_commits,mcp__github__get_commit,mcp__github__get_file_contents,mcp__github__search_code,mcp__github__list_workflow_runs,mcp__github__get_workflow_run,mcp__github__list_pull_requests,mcp__github__get_pull_request,mcp__github__get_pull_request_files,mcp__github__list_tags,Bash(git log:*),Bash(git diff:*),Bash(git show:*),Bash(gh run list:*),Bash(gh run view:*),Bash(gh run download:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh api:*),Bash(docker:*)"
+            --max-turns 150
