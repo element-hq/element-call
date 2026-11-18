@@ -19,6 +19,7 @@ import {
   type VideoProcessor,
 } from "./media-api";
 import { constant } from "./reactive/Behavior";
+import { facingModeOf } from "./utils/facingMode";
 import { inTurn } from "./utils/processorTurns";
 
 type Source = "microphone" | "camera";
@@ -161,9 +162,7 @@ function trackConstraints(request: Request): MediaTrackConstraints {
 class CapturedTrack {
   public readonly mediaTrack: LocalAudioMediaTrack | LocalVideoMediaTrack;
   private readonly muted$ = new BehaviorSubject(false);
-  private readonly facingMode$: BehaviorSubject<
-    "user" | "environment" | undefined
-  >;
+  private readonly facingMode$: BehaviorSubject<"user" | "environment">;
   private readonly elements = new Set<HTMLMediaElement>();
   private processor: HandedOverTrack["processor"];
   /** What the processor reads frames from; a processor needs a playing element. */
@@ -306,10 +305,9 @@ class CapturedTrack {
       kind: "video",
       facingMode$: this.facingMode$,
       switchFacingMode: async () => {
-        const facingMode = this.facingMode$.value;
-        if (facingMode === undefined) return;
         await this.reacquire({
-          facingMode: facingMode === "user" ? "environment" : "user",
+          facingMode:
+            this.facingMode$.value === "user" ? "environment" : "user",
         });
         return this.track.getSettings().deviceId;
       },
@@ -324,13 +322,4 @@ function play(element: HTMLMediaElement, track: MediaStreamTrack): void {
   // nothing from play
   const playing = element.play() as Promise<void> | undefined;
   playing?.catch(() => undefined);
-}
-
-function facingModeOf(
-  track: MediaStreamTrack,
-): "user" | "environment" | undefined {
-  const { facingMode } = track.getSettings();
-  return facingMode === "user" || facingMode === "environment"
-    ? facingMode
-    : undefined;
 }

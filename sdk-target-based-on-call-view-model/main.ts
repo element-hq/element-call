@@ -128,20 +128,22 @@ export async function createMatrixRTCSdk(
       });
       vm = createCallViewModel$(
         scope,
-        participation,
-        room,
-        mediaDevices,
-        muteStates,
+        {
+          rtcParticipation: participation,
+          matrixRoom: room,
+          mediaDevices,
+          muteStates,
+          encryptionSystem,
+          // The bundle owns its page, so the body is the space it has
+          viewSize$: scope.behavior(observeElementSize$(document.body)),
+          handsRaisedSubject$: of({}),
+          reactionsSubject$: of({}),
+        },
         {
           ...callViewModelOptionsFromParams(urlParams),
-          encryptionSystem,
           capture,
           hostBridge,
-          // The bundle owns its page, so the body is the space it has
-          windowSize$: scope.behavior(observeElementSize$(document.body)),
         },
-        of({}),
-        of({}),
       );
       // Once the hang-up has gone through, unstick and ask the host to close us
       vm.leave$

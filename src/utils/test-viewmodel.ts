@@ -196,21 +196,23 @@ export function getBasicCallViewModelEnvironment(
   });
   const vm = createCallViewModel$(
     scope,
-    rtcParticipation,
-    matrixRoom,
-    mediaDevices,
-    muteStates,
     {
+      rtcParticipation,
+      matrixRoom,
+      mediaDevices,
+      muteStates,
       encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+      viewSize$: constant({ width: 1000, height: 800 }),
+      handsRaisedSubject$: handRaisedSubject$,
+      reactionsSubject$,
+    },
+    {
       sentCallNotification$: createSentCallNotification$(
         scope,
         rtcSession.asMockedSession(),
       ),
-      windowSize$: constant({ width: 1000, height: 800 }),
       ...callViewModelOptions,
     },
-    handRaisedSubject$,
-    reactionsSubject$,
   );
   const footerVm = createCallFooterViewModel(
     testScope(),
