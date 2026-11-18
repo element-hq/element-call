@@ -17,7 +17,6 @@ import {
   type HostRequest,
   nullHostBridge,
 } from "../HostBridge.ts";
-import { E2eeType } from "../e2ee/e2eeType.ts";
 import { MatrixRTCMode } from "../config/ConfigOptions.ts";
 
 it.each([[MatrixRTCMode.Compatibility], [MatrixRTCMode.Matrix_2_0]])(
@@ -41,7 +40,6 @@ it.each([[MatrixRTCMode.Compatibility], [MatrixRTCMode.Matrix_2_0]])(
         hangUp$.next({ data: {}, reply });
       },
       {
-        encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
         hostBridge,
       },
     );

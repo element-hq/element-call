@@ -11,7 +11,6 @@ import {
   roomEventSelector,
 } from "@livekit/components-core";
 import {
-  facingModeFromLocalTrack,
   type LocalParticipant,
   LocalTrack,
   LocalVideoTrack,
@@ -50,6 +49,7 @@ import {
   type VideoMediaTrack,
 } from "../../media-api";
 import { MatrixRTCError } from "../../errors";
+import { facingModeOf } from "../../utils/facingMode";
 import { toLivekitProcessor, type LivekitProcessor } from "./videoProcessor";
 
 export const mediaSources: Record<Track.Source, MediaSource> = {
@@ -231,10 +231,9 @@ export function createLocalLivekitMediaTrack(
     switchFacingMode: async () => {
       const track = videoTrack();
       if (!track) return;
-      const { facingMode } = facingModeFromLocalTrack(track);
-      if (facingMode !== "user" && facingMode !== "environment") return;
       await track.restartTrack({
-        facingMode: facingMode === "user" ? "environment" : "user",
+        facingMode:
+          facingModeOf(sourceTrack(track)) === "user" ? "environment" : "user",
       });
       return track.mediaStreamTrack.getSettings().deviceId;
     },
@@ -288,6 +287,14 @@ async function rtpStreamStats(
   return undefined;
 }
 
+/**
+ * The camera's own track. While a processor runs LiveKit's media stream track
+ * is the processed one, which says nothing of the camera.
+ */
+function sourceTrack(track: LocalVideoTrack): MediaStreamTrack {
+  return track.mediaStream?.getVideoTracks()[0] ?? track.mediaStreamTrack;
+}
+
 function facingMode$(
   scope: ObservableScope,
   track$: Behavior<Track | undefined>,
@@ -298,12 +305,7 @@ function facingMode$(
         if (!(track instanceof LocalVideoTrack)) return of(undefined);
         return fromEvent(track, TrackEvent.Restarted).pipe(
           startWith(null),
-          map(() => {
-            const { facingMode } = facingModeFromLocalTrack(track);
-            return facingMode === "user" || facingMode === "environment"
-              ? facingMode
-              : undefined;
-          }),
+          map(() => facingModeOf(sourceTrack(track))),
         );
       }),
     ),

@@ -1,0 +1,51 @@
+/*
+Copyright 2026 Element Creations Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
+.rotate {
+  animation: spinner 1.5s linear infinite;
+}
+@keyframes spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Its share of the measured call area: the menu is portalled out of the root,
+   so CSS can't size it against the call. */
+.deviceList {
+  max-block-size: var(--device-list-max-height);
+  /* The raised headings stay raised within the list, under the menu's frame. */
+  isolation: isolate;
+}
+
+/* Compound's heading rule heads each section; the design adds space below it. */
+.deviceList h3 {
+  margin-block-end: var(--cpd-space-5x);
+}
+
+/* And more above a heading that follows another section. */
+.deviceList [role="group"] + [role="group"] h3 {
+  margin-block-start: var(--cpd-space-7x);
+}
+
+/* Raised, or the positioned effect tiles scroll over the heading they sit
+   under. Compound's sticky heading is the section's aria-hidden first child. */
+.deviceList [role="group"] > [aria-hidden="true"]:first-child {
+  z-index: 1;
+}
+
+/* Radix focuses whatever the pointer is over, so the browser's ring would
+   follow the mouse. Replaced by one shown only for keyboard focus. */
+.deviceList [role^="menuitem"]:focus,
+.deviceList [role^="menuitem"]:focus-visible {
+  outline: none;
+}
+
+[data-focus-source="keyboard"] .deviceList [role^="menuitem"]:focus {
+  outline: var(--cpd-border-width-2) solid var(--cpd-color-border-focused);
+  outline-offset: calc(-1 * var(--cpd-border-width-2));
+}

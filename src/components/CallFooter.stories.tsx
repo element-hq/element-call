@@ -22,7 +22,11 @@ import { MediaDevices } from "../state/MediaDevices";
 import { globalScope } from "../state/ObservableScope";
 import { constant } from "../state/Behavior";
 import { type LayoutMode } from "../state/LayoutSwitchViewModel";
-import { shippedBackgrounds } from "../tracks/backgroundEffectCatalog";
+import {
+  type AudioMenuViewModel,
+  type CameraMenuViewModel,
+  type DeviceMenuSnapshot,
+} from "./MediaMenuViewModel";
 
 // consts for tests
 const reactionIdentifier = "@user:example.com:DEVICE";
@@ -35,10 +39,70 @@ const mediaDevices = new MediaDevices(globalScope, {
   controlledAudioDevices: false,
 });
 
+function deviceMenu(
+  device: "Microphone" | "Camera",
+  withDevices: boolean,
+): DeviceMenuSnapshot {
+  return {
+    enabled: true,
+    busy: false,
+    toggle: fn(),
+    options: withDevices
+      ? [
+          { id: "1", label: { type: "name", name: `${device} 1` } },
+          { id: "2", label: { type: "name", name: `${device} 2` } },
+        ]
+      : [],
+    selected: "1",
+    select: fn(),
+  };
+}
+
+function useAudioMenuVm(withDevices: boolean): AudioMenuViewModel {
+  const device = useStaticViewModel(deviceMenu("Microphone", withDevices));
+  const output = useStaticViewModel({
+    options: withDevices
+      ? [
+          {
+            id: "default",
+            label: { type: "default", name: "Built-in Output" } as const,
+          },
+        ]
+      : [],
+    selected: "default",
+    select: fn(),
+  });
+  return { ...device, kind: "audio", output };
+}
+
+function useCameraMenuVm(withDevices: boolean): CameraMenuViewModel {
+  const device = useStaticViewModel(deviceMenu("Camera", withDevices));
+  const backgroundEffects = useStaticViewModel({
+    selected: "none",
+    available: [
+      { id: "none", kind: "none" as const },
+      { id: "blur", kind: "blur" as const },
+    ],
+    notice: undefined,
+    settling: false,
+    imageRefusal: undefined,
+    select: fn(),
+    addImage: undefined,
+    remove: undefined,
+  });
+  return {
+    ...device,
+    kind: "video",
+    backgroundEffects,
+    cameraTrack$: constant(null),
+  };
+}
+
 /**
  * A wrapper component that is used for:
  *  - exposing the snapshot via props so the storybook documents the snapshot properties (basically unpack them form the vm)
- *  - constructing the layout switch view model
+ *  - constructing the layout switch and the menus' view models; the menus'
+ *    own states are in the AudioMenuButton and CameraMenuButton stories
  *  - Add additional react context
  * The paraeters are all params from the FooterSnapshot,
  * the Snapshot of the vm, the wrapper will create a mocked vm from it and pass it to the CallFooter.
@@ -49,15 +113,22 @@ function CallFooterStoryWrapper({
   children,
   layout,
   setLayout,
+  withDevices,
   ...vmSnapshot
-}: Omit<FooterSnapshot, "layoutSwitchVm"> & {
+}: Omit<FooterSnapshot, "layoutSwitchVm" | "audioMenuVm" | "cameraMenuVm"> & {
   children?: false | JSX.Element | JSX.Element[] | undefined;
   layout: LayoutMode | null;
   setLayout: (value: LayoutMode) => void;
+  /** Whether the menus have devices to pick, or are plain mute buttons. */
+  withDevices: boolean;
 }): ReactNode {
+  const audioMenuVm = useAudioMenuVm(withDevices);
+  const cameraMenuVm = useCameraMenuVm(withDevices);
   const vm = useStaticViewModel({
     ...vmSnapshot,
     layoutSwitchVm: layout && { layout$: constant(layout), setLayout },
+    audioMenuVm,
+    cameraMenuVm,
   });
   return (
     <MediaDevicesContext value={mediaDevices}>
@@ -102,8 +173,6 @@ const meta = {
     },
     toggleScreenSharing: fnArgType,
     openSettings: fnArgType,
-    toggleAudio: fnArgType,
-    toggleVideo: fnArgType,
     hangup: fnArgType,
   },
 } satisfies Meta<typeof CallFooterStoryWrapper>;
@@ -116,32 +185,9 @@ export const Default: Story = {
     showLogo: false,
     layout: "grid",
     setLayout: fn(),
-    audioEnabled: true,
-    audioBusy: false,
-    videoEnabled: true,
-    videoBusy: false,
+    withDevices: false,
     openSettings: fn(),
-    toggleAudio: fn(),
-    toggleVideo: fn(),
     toggleScreenSharing: fn(),
-    selectBackgroundEffect: fn(),
-    backgroundEffect: "blur",
-    backgroundEffects: [
-      { id: "none", kind: "none", removable: false },
-      { id: "blur", kind: "blur", removable: false },
-      ...shippedBackgrounds.map((background) => ({
-        id: `image:${background.id}`,
-        kind: "image" as const,
-        imageUrl: background.imagePath,
-        removable: false,
-      })),
-    ],
-    backgroundEffectNotice: undefined,
-    backgroundEffectSettling: false,
-    backgroundImageRefusal: undefined,
-    addBackgroundImage: fn(),
-    removeBackgroundEffect: fn(),
-    cameraTrack: null,
     hangup: fn(),
     buttonSize: "lg",
     showFooter: true,
@@ -154,49 +200,17 @@ export const Default: Story = {
     reactionData: undefined,
     debugTileLayout: false,
     tileStoreGeneration: undefined,
-    audioOptions: [],
-    audioOutputOptions: [],
-    videoOptions: [],
-    selectedAudio: undefined,
-    selectedAudioOutput: undefined,
-    selectedVideo: undefined,
-    selectAudioButtonOption: undefined,
-    selectAudioOutputOption: undefined,
-    selectVideoButtonOption: undefined,
   },
   parameters: {
     layout: "fullscreen",
   },
 };
 
-export const WithAudioAndVideoOptions: Story = {
-  ...Default,
-  args: {
-    ...Default.args,
-    audioEnabled: false,
-    videoEnabled: true,
-    audioOptions: [
-      { label: { type: "name", name: "Microphone 1" }, id: "1" },
-      { label: { type: "name", name: "Microphone 2" }, id: "2" },
-    ],
-    audioOutputOptions: [
-      { label: { type: "default", name: "Built-in Output" }, id: "default" },
-      { label: { type: "name", name: "Headset" }, id: "2" },
-    ],
-    videoOptions: [
-      { label: { type: "name", name: "Camera 1" }, id: "1" },
-      { label: { type: "name", name: "Camera 2" }, id: "2" },
-    ],
-    selectedAudio: "2",
-    selectedAudioOutput: "default",
-    selectedVideo: "1",
-  },
-};
-
 export const StaysWhileAMenuIsOpen: Story = {
   ...Default,
   args: {
-    ...WithAudioAndVideoOptions.args,
+    ...Default.args,
+    withDevices: true,
     // In a short window the footer overlays the call and hides itself.
     asOverlay: true,
     showFooter: true,
@@ -219,25 +233,6 @@ export const StaysWhileAMenuIsOpen: Story = {
   },
 };
 
-export const AudioBusy: Story = {
-  ...Default,
-  args: {
-    ...Default.args,
-    audioEnabled: true,
-    audioBusy: true,
-    videoEnabled: true,
-  },
-};
-
-export const VideoBusy: Story = {
-  ...Default,
-  args: {
-    ...Default.args,
-    audioEnabled: true,
-    videoEnabled: true,
-    videoBusy: true,
-  },
-};
 export const WithLogo: Story = {
   ...Default,
   args: {
@@ -246,45 +241,7 @@ export const WithLogo: Story = {
   },
 };
 
-export const AudioVideoEnabled: Story = {
-  ...Default,
-  args: {
-    ...Default.args,
-    audioEnabled: true,
-    videoEnabled: true,
-  },
-  play: async ({ args, canvasElement }) => {
-    const canvas = within(canvasElement);
-
-    const spotlightRadio = canvas.getByRole("radio", { name: "Spotlight" });
-    await userEvent.click(spotlightRadio);
-    await expect(args.setLayout).toHaveBeenCalledWith("spotlight");
-
-    const micButtonMute = canvas.getByRole("switch", {
-      name: "Mute microphone",
-    });
-    await userEvent.click(micButtonMute);
-    await expect(args.toggleAudio).toHaveBeenCalled();
-
-    const videoMuteButton = canvas.getByRole("switch", {
-      name: "Stop video",
-    });
-    await userEvent.click(videoMuteButton);
-    await expect(args.toggleVideo).toHaveBeenCalled();
-    const screenShare = canvas.getByRole("switch", {
-      name: "Share screen",
-    });
-    await userEvent.click(screenShare);
-    await expect(args.toggleScreenSharing).toHaveBeenCalled();
-    const endCall = canvas.getByRole("button", {
-      name: "End call",
-    });
-    await userEvent.click(endCall);
-    await expect(args.hangup).toHaveBeenCalled();
-  },
-};
-
-/** used to test switching to grid mode */
+/** Switching to grid, and the footer's own buttons, act. */
 export const SpotlightMode: Story = {
   ...Default,
   args: {
@@ -293,10 +250,12 @@ export const SpotlightMode: Story = {
   },
   play: async ({ args, canvasElement }) => {
     const canvas = within(canvasElement);
-
-    const spotlightRadio = canvas.getByRole("radio", { name: "Grid" });
-    await userEvent.click(spotlightRadio);
+    await userEvent.click(canvas.getByRole("radio", { name: "Grid" }));
     await expect(args.setLayout).toHaveBeenCalledWith("grid");
+    await userEvent.click(canvas.getByRole("switch", { name: "Share screen" }));
+    await expect(args.toggleScreenSharing).toHaveBeenCalled();
+    await userEvent.click(canvas.getByRole("button", { name: "End call" }));
+    await expect(args.hangup).toHaveBeenCalled();
   },
 };
 
@@ -330,34 +289,10 @@ export const Pip: Story = {
     buttonSize: "md",
     layout: null,
   },
-  play: async ({ args, canvasElement }) => {
-    const canvas = within(canvasElement);
-
+  play: async ({ canvasElement }) => {
     await expect(
-      canvas.queryByRole("radio", { name: "Spotlight" }),
+      within(canvasElement).queryByRole("radio", { name: "Spotlight" }),
     ).not.toBeInTheDocument();
-
-    const micButtonMute = canvas.getByRole("switch", {
-      name: "Mute microphone",
-    });
-    await userEvent.click(micButtonMute);
-    await expect(args.toggleAudio).toHaveBeenCalled();
-
-    const videoMuteButton = canvas.getByRole("switch", {
-      name: "Stop video",
-    });
-    await userEvent.click(videoMuteButton);
-    await expect(args.toggleVideo).toHaveBeenCalled();
-    const screenShare = canvas.getByRole("switch", {
-      name: "Share screen",
-    });
-    await userEvent.click(screenShare);
-    await expect(args.toggleScreenSharing).toHaveBeenCalled();
-    const endCall = canvas.getByRole("button", {
-      name: "End call",
-    });
-    await userEvent.click(endCall);
-    await expect(args.hangup).toHaveBeenCalled();
   },
 };
 export const NoControlsWithLogo: Story = {
@@ -375,18 +310,6 @@ export const DebugData: Story = {
     ...Default.args,
     debugTileLayout: true,
     tileStoreGeneration: 74,
-  },
-};
-
-export const UnavailableMediaDevices: Story = {
-  ...Default,
-  args: {
-    ...Default.args,
-    audioEnabled: false,
-    videoEnabled: false,
-    toggleAudio: undefined,
-    toggleVideo: undefined,
-    audioOutputSwitcher: undefined,
   },
 };
 
@@ -412,37 +335,6 @@ export const Lobby: Story = {
     ...Default.args,
     showLogo: false,
     openSettings: undefined,
-    layout: null,
-    toggleScreenSharing: undefined,
-  },
-  parameters: {
-    ...Default.parameters,
-  },
-};
-
-export const LobbyMobile: Story = {
-  ...Default,
-  args: {
-    ...Default.args,
-    showLogo: false,
-
-    layout: null,
-    toggleScreenSharing: undefined,
-  },
-  globals: {
-    viewport: { value: "mobile2", isRotated: false },
-  },
-  parameters: {
-    ...Default.parameters,
-  },
-};
-
-export const LobbyRecentButton: Story = {
-  ...Default,
-  args: {
-    ...Default.args,
-    children: <Link>Back To Recents</Link>,
-    showLogo: false,
     layout: null,
     toggleScreenSharing: undefined,
   },

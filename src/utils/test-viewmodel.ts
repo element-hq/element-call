@@ -200,17 +200,17 @@ export function getBasicCallViewModelEnvironment(
     matrixRoom,
     mediaDevices,
     muteStates,
+    { kind: E2eeType.PER_PARTICIPANT },
+    constant({ width: 1000, height: 800 }),
+    handRaisedSubject$,
+    reactionsSubject$,
     {
-      encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
       sentCallNotification$: createSentCallNotification$(
         scope,
         rtcSession.asMockedSession(),
       ),
-      windowSize$: constant({ width: 1000, height: 800 }),
       ...callViewModelOptions,
     },
-    handRaisedSubject$,
-    reactionsSubject$,
   );
   const footerVm = createCallFooterViewModel(
     testScope(),

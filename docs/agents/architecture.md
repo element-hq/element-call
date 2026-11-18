@@ -10,6 +10,11 @@
 - Owning a resource: a class taking the scope in its constructor — `MediaDevices`,
   `MuteStates`, `TileStore`, `Publisher`, `Connection`. Both styles are current;
   don't convert one to the other in passing.
+- A factory's positional parameters are what the thing is made of: required, no
+  sensible default. Its trailing `options` bag is how the host wants it to
+  behave: every field optional, each defaulting to standalone behaviour, so `{}`
+  works. A value with no default is never an option; a test seam is never an
+  option either — mock the dependency it comes from. See `createCallViewModel$`.
 - `foo$` is an observable. `Behavior<T>`, an observable with a current value, is
   the default for anything a view reads.
 
@@ -36,15 +41,15 @@ Element Call can be mounted several times inside a host's React tree, so it owns
 neither window, URL, document nor router. Each seam defaults to the old standalone
 and widget behaviour.
 
-| Never                                         | Use                                                           |
-| --------------------------------------------- | ------------------------------------------------------------- |
-| the `widget` global                           | `useHostBridge()` — `src/HostBridge.ts`                       |
-| `getUrlParams()`, `window.location`           | `useUrlParams()`                                              |
-| `useNavigate("/")`, `<Link to="/">`           | `useLeaveToHome()`, `LeaveToHomeLink`                         |
-| `document.body`                               | `useRootElement()`                                            |
-| `window.innerWidth/Height`, `useMediaQuery`   | `useRootSizeMatches()` in views, `windowSize$` in view models |
-| global `i18next`                              | the instance in `src/utils/i18n.ts`                           |
-| config or analytics reading their environment | `Config.initWith()`, `PosthogAnalytics.configure()`           |
+| Never                                         | Use                                                         |
+| --------------------------------------------- | ----------------------------------------------------------- |
+| the `widget` global                           | `useHostBridge()` — `src/HostBridge.ts`                     |
+| `getUrlParams()`, `window.location`           | `useUrlParams()`                                            |
+| `useNavigate("/")`, `<Link to="/">`           | `useLeaveToHome()`, `LeaveToHomeLink`                       |
+| `document.body`                               | `useRootElement()`                                          |
+| `window.innerWidth/Height`, `useMediaQuery`   | `useRootSizeMatches()` in views, `viewSize$` in view models |
+| global `i18next`                              | the instance in `src/utils/i18n.ts`                         |
+| config or analytics reading their environment | `Config.initWith()`, `PosthogAnalytics.configure()`         |
 
 - View models take values as options, never `getUrlParams()`
   (`callViewModelOptionsFromParams`, `CallViewModelOptions.hostBridge`).

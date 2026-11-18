@@ -190,9 +190,12 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       props.matrixRoom,
       mediaDevices,
       props.muteStates,
+      props.e2eeSystem,
+      scope.behavior(observeElementSize$(rootElement)),
+      reactionsReader.raisedHands$,
+      reactionsReader.reactions$,
       {
         ...callViewModelOptionsFromParams(urlParams),
-        encryptionSystem: props.e2eeSystem,
         capture,
         backgroundEffectsState$,
         hostBridge,
@@ -202,10 +205,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
           scope,
           props.rtcSession,
         ),
-        windowSize$: scope.behavior(observeElementSize$(rootElement)),
       },
-      reactionsReader.raisedHands$,
-      reactionsReader.reactions$,
     );
     setVm(vm);
 

@@ -57,7 +57,7 @@ export function createAppBackgroundEffects(
   return createBackgroundEffects(scope, {
     supported: supportsBackgroundProcessors(),
     effect$: backgroundEffectSetting.value$,
-    setEffect: backgroundEffectSetting.setValue,
+    clearEffect: () => backgroundEffectSetting.setValue("none"),
     added$: addedBackgrounds.added$,
     canSegment,
     pipeline: new BackgroundProcessorWrapper(transformer, "background-effect"),
