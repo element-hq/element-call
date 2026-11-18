@@ -22,7 +22,11 @@ import { MediaDevices } from "../state/MediaDevices";
 import { globalScope } from "../state/ObservableScope";
 import { constant } from "../state/Behavior";
 import { type LayoutMode } from "../state/LayoutSwitchViewModel";
-import { type MediaMenuSnapshot } from "./MediaMenuViewModel";
+import {
+  type AudioMenuViewModel,
+  type CameraMenuViewModel,
+  type DeviceMenuSnapshot,
+} from "./MediaMenuViewModel";
 
 // consts for tests
 const reactionIdentifier = "@user:example.com:DEVICE";
@@ -35,11 +39,10 @@ const mediaDevices = new MediaDevices(globalScope, {
   controlledAudioDevices: false,
 });
 
-function menu(
-  kind: "audio" | "video",
+function deviceMenu(
+  device: "Microphone" | "Camera",
   withDevices: boolean,
-): MediaMenuSnapshot {
-  const device = kind === "audio" ? "Microphone" : "Camera";
+): DeviceMenuSnapshot {
   return {
     enabled: true,
     busy: false,
@@ -52,32 +55,46 @@ function menu(
       : [],
     selected: "1",
     select: fn(),
-    outputOptions:
-      withDevices && kind === "audio"
-        ? [
-            {
-              id: "default",
-              label: { type: "default", name: "Built-in Output" },
-            },
-          ]
-        : [],
-    selectedOutput: "default",
-    selectOutput: fn(),
-    backgroundEffect: "none",
-    backgroundEffects:
-      kind === "video"
-        ? [
-            { id: "none", kind: "none" },
-            { id: "blur", kind: "blur" },
-          ]
-        : [],
-    backgroundEffectNotice: undefined,
-    backgroundEffectSettling: false,
-    backgroundImageRefusal: undefined,
-    selectBackgroundEffect: fn(),
-    addBackgroundImage: undefined,
-    removeBackgroundEffect: undefined,
-    cameraTrack: null,
+  };
+}
+
+function useAudioMenuVm(withDevices: boolean): AudioMenuViewModel {
+  const device = useStaticViewModel(deviceMenu("Microphone", withDevices));
+  const output = useStaticViewModel({
+    options: withDevices
+      ? [
+          {
+            id: "default",
+            label: { type: "default", name: "Built-in Output" } as const,
+          },
+        ]
+      : [],
+    selected: "default",
+    select: fn(),
+  });
+  return { ...device, kind: "audio", output };
+}
+
+function useCameraMenuVm(withDevices: boolean): CameraMenuViewModel {
+  const device = useStaticViewModel(deviceMenu("Camera", withDevices));
+  const backgroundEffects = useStaticViewModel({
+    selected: "none",
+    available: [
+      { id: "none", kind: "none" as const },
+      { id: "blur", kind: "blur" as const },
+    ],
+    notice: undefined,
+    settling: false,
+    imageRefusal: undefined,
+    select: fn(),
+    addImage: undefined,
+    remove: undefined,
+  });
+  return {
+    ...device,
+    kind: "video",
+    backgroundEffects,
+    cameraTrack$: constant(null),
   };
 }
 
@@ -85,7 +102,7 @@ function menu(
  * A wrapper component that is used for:
  *  - exposing the snapshot via props so the storybook documents the snapshot properties (basically unpack them form the vm)
  *  - constructing the layout switch and the menus' view models; the menus'
- *    own states are in the MediaMenuButton stories
+ *    own states are in the AudioMenuButton and CameraMenuButton stories
  *  - Add additional react context
  * The paraeters are all params from the FooterSnapshot,
  * the Snapshot of the vm, the wrapper will create a mocked vm from it and pass it to the CallFooter.
@@ -105,8 +122,8 @@ function CallFooterStoryWrapper({
   /** Whether the menus have devices to pick, or are plain mute buttons. */
   withDevices: boolean;
 }): ReactNode {
-  const audioMenuVm = useStaticViewModel(menu("audio", withDevices));
-  const cameraMenuVm = useStaticViewModel(menu("video", withDevices));
+  const audioMenuVm = useAudioMenuVm(withDevices);
+  const cameraMenuVm = useCameraMenuVm(withDevices);
   const vm = useStaticViewModel({
     ...vmSnapshot,
     layoutSwitchVm: layout && { layout$: constant(layout), setLayout },

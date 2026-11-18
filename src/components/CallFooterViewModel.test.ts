@@ -111,7 +111,9 @@ describe("createCallFooterViewModel", () => {
       const camera = vm.cameraMenuVm$.value;
       expect(audio.options$.value.length > 0).toBe(offered);
       expect(camera.options$.value.length > 0).toBe(offered);
-      expect(camera.selectBackgroundEffect$.value !== undefined).toBe(offered);
+      expect(camera.backgroundEffects.select$.value !== undefined).toBe(
+        offered,
+      );
     },
   );
 
@@ -147,7 +149,7 @@ describe("createLobbyFooterViewModel", () => {
     const camera = vm.cameraMenuVm$.value;
     expect(vm.audioMenuVm$.value.options$.value).not.toEqual([]);
     expect(camera.options$.value).not.toEqual([]);
-    expect(camera.selectBackgroundEffect$.value).toBeDefined();
+    expect(camera.backgroundEffects.select$.value).toBeDefined();
     expect(camera.cameraTrack$.value).toBe(track);
   });
 });

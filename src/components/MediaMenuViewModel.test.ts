@@ -22,7 +22,8 @@ import type { DeviceLabel } from "../state/MediaDevices";
 import {
   createAudioMenuViewModel,
   createCameraMenuViewModel,
-  type MediaMenuViewModel,
+  type AudioMenuViewModel,
+  type CameraMenuViewModel,
 } from "./MediaMenuViewModel";
 import { backgroundEffect as backgroundEffectSetting } from "../settings/settings";
 import { shippedBackgrounds } from "../tracks/backgroundEffectCatalog";
@@ -83,7 +84,7 @@ const devices = mockMediaDevices({
   },
 });
 
-function audioMenu(disableSwitcher = false): MediaMenuViewModel {
+function audioMenu(disableSwitcher = false): AudioMenuViewModel {
   return createAudioMenuViewModel(
     testScope(),
     mockMuteStates(),
@@ -102,7 +103,7 @@ function cameraMenu({
   disableSwitcher?: boolean;
   pipeline$?: Observable<BackgroundEffectsState>;
   camera$?: Observable<LocalVideoMediaTrack | null>;
-} = {}): MediaMenuViewModel {
+} = {}): CameraMenuViewModel {
   return createCameraMenuViewModel(
     testScope(),
     mockMuteStates(),
@@ -123,14 +124,14 @@ describe("createAudioMenuViewModel", () => {
   });
 
   it("lists no outputs as an empty list, which keeps the section", () => {
-    expect(audioMenu().outputOptions$.value).toEqual([]);
+    expect(audioMenu().output.options$.value).toEqual([]);
   });
 
   it.each([true, false])(
     "offers to pick an output only where the platform can route to it (%s)",
     (canRoute) => {
       outputSelectionMock.mockReturnValue(canRoute);
-      expect(audioMenu().selectOutput$.value !== undefined).toBe(canRoute);
+      expect(audioMenu().output.select$.value !== undefined).toBe(canRoute);
     },
   );
 });
@@ -144,22 +145,22 @@ describe("createCameraMenuViewModel", () => {
   it("offers effects where they run, saying where they run slowly", () => {
     modernRouteMock.mockReturnValue(true);
     const vm = cameraMenu();
-    expect(vm.selectBackgroundEffect$.value).toBeDefined();
-    expect(vm.addBackgroundImage$.value).toBeDefined();
-    expect(vm.backgroundEffectNotice$.value).toBeUndefined();
+    expect(vm.backgroundEffects.select$.value).toBeDefined();
+    expect(vm.backgroundEffects.addImage$.value).toBeDefined();
+    expect(vm.backgroundEffects.notice$.value).toBeUndefined();
 
     modernRouteMock.mockReturnValue(false);
     const slow = cameraMenu();
-    expect(slow.selectBackgroundEffect$.value).toBeDefined();
-    expect(slow.backgroundEffectNotice$.value).toBe("slow");
+    expect(slow.backgroundEffects.select$.value).toBeDefined();
+    expect(slow.backgroundEffects.notice$.value).toBe("slow");
     modernRouteMock.mockReturnValue(true);
   });
 
   it("offers nothing while the switcher is withheld", () => {
     const vm = cameraMenu({ disableSwitcher: true });
     expect(vm.options$.value).toEqual([]);
-    expect(vm.selectBackgroundEffect$.value).toBeUndefined();
-    expect(vm.backgroundEffectNotice$.value).toBe("unavailable");
+    expect(vm.backgroundEffects.select$.value).toBeUndefined();
+    expect(vm.backgroundEffects.notice$.value).toBe("unavailable");
   });
 
   it("offers nothing once the pipeline fails to build, keeping the choice", () => {
@@ -169,28 +170,28 @@ describe("createCameraMenuViewModel", () => {
       processor: undefined,
     });
     const vm = cameraMenu({ pipeline$ });
-    expect(vm.backgroundEffect$.value).toBe("blur");
+    expect(vm.backgroundEffects.selected$.value).toBe("blur");
 
     pipeline$.next({ supported: false, processor: undefined });
-    expect(vm.selectBackgroundEffect$.value).toBeUndefined();
-    expect(vm.addBackgroundImage$.value).toBeUndefined();
-    expect(vm.removeBackgroundEffect$.value).toBeUndefined();
-    expect(vm.backgroundEffectNotice$.value).toBe("unavailable");
-    expect(vm.backgroundEffect$.value).toBe("none");
+    expect(vm.backgroundEffects.select$.value).toBeUndefined();
+    expect(vm.backgroundEffects.addImage$.value).toBeUndefined();
+    expect(vm.backgroundEffects.remove$.value).toBeUndefined();
+    expect(vm.backgroundEffects.notice$.value).toBe("unavailable");
+    expect(vm.backgroundEffects.selected$.value).toBe("none");
     expect(backgroundEffectSetting.getValue()).toBe("blur");
   });
 
   it("saves the effect chosen, and none for one not on offer", () => {
     const vm = cameraMenu();
-    vm.selectBackgroundEffect$.value!("image:arc");
-    expect(vm.backgroundEffect$.value).toBe("image:arc");
-    vm.selectBackgroundEffect$.value!("image:gone");
+    vm.backgroundEffects.select$.value!("image:arc");
+    expect(vm.backgroundEffects.selected$.value).toBe("image:arc");
+    vm.backgroundEffects.select$.value!("image:gone");
     expect(backgroundEffectSetting.getValue()).toBe("none");
   });
 
   it("offers every effect in order, the added ones removable", () => {
     added$.next([{ id: "mine", url: "blob:mine" }]);
-    expect(cameraMenu().backgroundEffects$.value).toEqual([
+    expect(cameraMenu().backgroundEffects.available$.value).toEqual([
       { id: "none", kind: "none", removable: false },
       { id: "blur", kind: "blur", removable: false },
       ...shippedBackgrounds.map((background) => ({
@@ -215,9 +216,9 @@ describe("createCameraMenuViewModel", () => {
       wait: "settling",
     });
     const vm = cameraMenu({ pipeline$ });
-    expect(vm.backgroundEffectSettling$.value).toBe(true);
+    expect(vm.backgroundEffects.settling$.value).toBe(true);
     pipeline$.next({ ...pipeline$.value, wait: undefined });
-    expect(vm.backgroundEffectSettling$.value).toBe(false);
+    expect(vm.backgroundEffects.settling$.value).toBe(false);
   });
 
   it("offers adding only below the limit", () => {
@@ -228,43 +229,47 @@ describe("createCameraMenuViewModel", () => {
         url: `blob:${i}`,
       })),
     );
-    expect(vm.addBackgroundImage$.value).toBeUndefined();
+    expect(vm.backgroundEffects.addImage$.value).toBeUndefined();
     added$.next(added$.value!.slice(1));
-    expect(vm.addBackgroundImage$.value).toBeDefined();
+    expect(vm.backgroundEffects.addImage$.value).toBeDefined();
   });
 
   it("says why each refused file was refused", async () => {
     const vm = cameraMenu();
     store.add.mockRejectedValue(new UnusableImage("animated"));
-    vm.addBackgroundImage$.value!(new File(["x"], "a.gif"));
+    vm.backgroundEffects.addImage$.value!(new File(["x"], "a.gif"));
     await flushPromises();
-    const first = vm.backgroundImageRefusal$.value;
+    const first = vm.backgroundEffects.imageRefusal$.value;
     expect(first).toEqual({ reason: "animated" });
 
     // The same again is a refusal of its own, so it is shown again.
-    vm.addBackgroundImage$.value!(new File(["x"], "a.gif"));
+    vm.backgroundEffects.addImage$.value!(new File(["x"], "a.gif"));
     await flushPromises();
-    expect(vm.backgroundImageRefusal$.value).toEqual({ reason: "animated" });
-    expect(vm.backgroundImageRefusal$.value).not.toBe(first);
+    expect(vm.backgroundEffects.imageRefusal$.value).toEqual({
+      reason: "animated",
+    });
+    expect(vm.backgroundEffects.imageRefusal$.value).not.toBe(first);
 
     store.add.mockRejectedValue(new Error("quota"));
-    vm.addBackgroundImage$.value!(new File(["x"], "b.png"));
+    vm.backgroundEffects.addImage$.value!(new File(["x"], "b.png"));
     await flushPromises();
-    expect(vm.backgroundImageRefusal$.value).toEqual({ reason: "not-kept" });
+    expect(vm.backgroundEffects.imageRefusal$.value).toEqual({
+      reason: "not-kept",
+    });
 
     store.add.mockResolvedValue("kept");
-    vm.addBackgroundImage$.value!(new File(["x"], "c.png"));
+    vm.backgroundEffects.addImage$.value!(new File(["x"], "c.png"));
     await flushPromises();
-    expect(vm.backgroundImageRefusal$.value).toBeUndefined();
+    expect(vm.backgroundEffects.imageRefusal$.value).toBeUndefined();
   });
 
   it("never removes the selected background", () => {
     store.remove.mockResolvedValue();
     const vm = cameraMenu();
     backgroundEffectSetting.setValue("added:worn");
-    vm.removeBackgroundEffect$.value!("added:worn");
+    vm.backgroundEffects.remove$.value!("added:worn");
     expect(store.remove).not.toHaveBeenCalled();
-    vm.removeBackgroundEffect$.value!("added:spare");
+    vm.backgroundEffects.remove$.value!("added:spare");
     expect(store.remove).toHaveBeenCalledWith("spare");
   });
 

@@ -25,8 +25,12 @@ import { type ViewModel } from "../state/ViewModel";
 import { useBehavior } from "../useBehavior";
 import { type LayoutSwitchViewModel } from "../state/LayoutSwitchViewModel";
 import { LayoutSwitch } from "../room/LayoutSwitch";
-import { type MediaMenuViewModel } from "./MediaMenuViewModel";
-import { MediaMenuButton } from "./MediaMenuButton";
+import {
+  type AudioMenuViewModel,
+  type CameraMenuViewModel,
+} from "./MediaMenuViewModel";
+import { AudioMenuButton } from "./AudioMenuButton";
+import { CameraMenuButton } from "./CameraMenuButton";
 
 export interface AudioOutputSwitcher {
   targetOutput: string;
@@ -57,8 +61,8 @@ export interface FooterActions {
 
 // we do not use any ? optional properties so that the vm type is including all fields.
 export interface FooterState {
-  audioMenuVm: MediaMenuViewModel;
-  cameraMenuVm: MediaMenuViewModel;
+  audioMenuVm: AudioMenuViewModel;
+  cameraMenuVm: CameraMenuViewModel;
   showFooter: boolean;
 
   /* This is needed for WindowMode = "flat" */
@@ -135,18 +139,8 @@ export const CallFooter: FC<FooterProps> = ({
   }
 
   buttons.push(
-    <MediaMenuButton
-      key="audio"
-      kind="audio"
-      vm={audioMenuVm}
-      size={buttonSize}
-    />,
-    <MediaMenuButton
-      key="video"
-      kind="video"
-      vm={cameraMenuVm}
-      size={buttonSize}
-    />,
+    <AudioMenuButton key="audio" vm={audioMenuVm} size={buttonSize} />,
+    <CameraMenuButton key="video" vm={cameraMenuVm} size={buttonSize} />,
   );
 
   if (toggleScreenSharing !== undefined) {

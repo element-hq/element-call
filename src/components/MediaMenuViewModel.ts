@@ -32,13 +32,13 @@ import {
   UnusableImage,
 } from "../tracks/backgroundImages";
 import { type BackgroundEffectsState } from "../state/BackgroundEffects";
-import { type MenuOptions } from "./MediaMuteAndSwitchButton";
+import { type MenuOptions } from "./DeviceMenu";
 import { type MediaDevices } from "../state/MediaDevices";
 import { backgroundEffect as backgroundEffectSetting } from "../settings/settings";
 import { type Behavior, constant } from "../state/Behavior";
 import type { ObservableScope } from "../state/ObservableScope";
 import { type MuteStates } from "../state/MuteStates";
-import { createStaticViewModel, type ViewModel } from "../state/ViewModel";
+import { type ViewModel } from "../state/ViewModel";
 import { type BackgroundEffectGridItem } from "./BackgroundEffectGrid";
 
 export interface BackgroundImageRefusal {
@@ -47,9 +47,9 @@ export interface BackgroundImageRefusal {
 
 /**
  * A mute button with a menu to pick the device, shared by the microphone and
- * the camera. Fields that belong to the other device are left empty.
+ * the camera.
  */
-export interface MediaMenuSnapshot {
+export interface DeviceMenuSnapshot {
   /** Whether the device is on. (muted/unmuted state) */
   enabled: boolean;
   busy: boolean;
@@ -58,46 +58,47 @@ export interface MediaMenuSnapshot {
   options: MenuOptions[];
   selected: string | undefined;
   select: ((id: string) => void) | undefined;
-
-  /** Output (speaker) devices. Microphone only. */
-  outputOptions: MenuOptions[];
-  selectedOutput: string | undefined;
-  /** Undefined if the output device is not configurable. */
-  selectOutput: ((id: string) => void) | undefined;
-
-  /** The selected background effect, as its option id. Camera only. */
-  backgroundEffect: string | undefined;
-  /** Every effect on offer, in the order they are shown. */
-  backgroundEffects: BackgroundEffectGridItem[];
-  /** What the user is told about effects here, if anything. */
-  backgroundEffectNotice: "unavailable" | "slow" | undefined;
-  /** Whether the first effect chosen is still being prepared. */
-  backgroundEffectSettling: boolean;
-  /** Why the last file offered couldn't be kept, if it couldn't. */
-  backgroundImageRefusal: BackgroundImageRefusal | undefined;
-  /** Undefined where background effects can't be chosen. */
-  selectBackgroundEffect: ((id: string) => void) | undefined;
-  /** Undefined where no background can be added. */
-  addBackgroundImage: ((file: File) => void) | undefined;
-  /** Removes an added background by its option id, unless it is the selected one. */
-  removeBackgroundEffect: ((id: string) => void) | undefined;
-  /** The camera to preview, with the selected effect; null while it is off. */
-  cameraTrack: LocalVideoMediaTrack | null;
 }
 
-export type MediaMenuViewModel = ViewModel<MediaMenuSnapshot>;
+/** The output (speaker) devices in the microphone's menu. */
+export interface OutputMenuSnapshot {
+  options: MenuOptions[];
+  selected: string | undefined;
+  /** Undefined if the output device is not configurable. */
+  select: ((id: string) => void) | undefined;
+}
 
-const noBackgroundEffects = {
-  backgroundEffect: undefined,
-  backgroundEffects: [],
-  backgroundEffectNotice: undefined,
-  backgroundEffectSettling: false,
-  backgroundImageRefusal: undefined,
-  selectBackgroundEffect: undefined,
-  addBackgroundImage: undefined,
-  removeBackgroundEffect: undefined,
-  cameraTrack: null,
-} satisfies Partial<MediaMenuSnapshot>;
+/** The background effects in the camera's menu. */
+export interface BackgroundEffectsMenuSnapshot {
+  /** The selected effect, as its option id. */
+  selected: string;
+  /** Every effect on offer, in the order they are shown. */
+  available: BackgroundEffectGridItem[];
+  /** What the user is told about effects here, if anything. */
+  notice: "unavailable" | "slow" | undefined;
+  /** Whether the first effect chosen is still being prepared. */
+  settling: boolean;
+  /** Why the last file offered couldn't be kept, if it couldn't. */
+  imageRefusal: BackgroundImageRefusal | undefined;
+  /** Undefined where background effects can't be chosen. */
+  select: ((id: string) => void) | undefined;
+  /** Undefined where no background can be added. */
+  addImage: ((file: File) => void) | undefined;
+  /** Removes an added background by its option id, unless it is the selected one. */
+  remove: ((id: string) => void) | undefined;
+}
+
+export type AudioMenuViewModel = ViewModel<DeviceMenuSnapshot> & {
+  readonly kind: "audio";
+  readonly output: ViewModel<OutputMenuSnapshot>;
+};
+
+export type CameraMenuViewModel = ViewModel<DeviceMenuSnapshot> & {
+  readonly kind: "video";
+  readonly backgroundEffects: ViewModel<BackgroundEffectsMenuSnapshot>;
+  /** The camera to preview, with the selected effect; null while it is off. */
+  readonly cameraTrack$: Behavior<LocalVideoMediaTrack | null>;
+};
 
 function options$(
   disableSwitcher$: Behavior<boolean>,
@@ -126,10 +127,10 @@ export function createAudioMenuViewModel(
   muteStates: MuteStates,
   mediaDevices: MediaDevices,
   disableSwitcher$: Behavior<boolean>,
-): MediaMenuViewModel {
+): AudioMenuViewModel {
   const { audio } = muteStates;
   return {
-    ...createStaticViewModel(noBackgroundEffects),
+    kind: "audio",
     enabled$: audio.enabled$,
     busy$: audio.syncing$,
     toggle$: scope.behavior(audio.toggle$.pipe(map((t) => t ?? undefined))),
@@ -140,17 +141,19 @@ export function createAudioMenuViewModel(
       mediaDevices.audioInput.selected$.pipe(map((s) => s?.id)),
     ),
     select$: constant(mediaDevices.audioInput.select),
-    outputOptions$: scope.behavior(
-      options$(disableSwitcher$, mediaDevices.audioOutput.available$),
-    ),
-    selectedOutput$: scope.behavior(
-      mediaDevices.audioOutput.selected$.pipe(map((s) => s?.id)),
-    ),
-    selectOutput$: constant(
-      supportsAudioOutputSelection()
-        ? mediaDevices.audioOutput.select
-        : undefined,
-    ),
+    output: {
+      options$: scope.behavior(
+        options$(disableSwitcher$, mediaDevices.audioOutput.available$),
+      ),
+      selected$: scope.behavior(
+        mediaDevices.audioOutput.selected$.pipe(map((s) => s?.id)),
+      ),
+      select$: constant(
+        supportsAudioOutputSelection()
+          ? mediaDevices.audioOutput.select
+          : undefined,
+      ),
+    },
   };
 }
 
@@ -170,7 +173,7 @@ export function createCameraMenuViewModel(
   disableSwitcher$: Behavior<boolean>,
   backgroundEffectsState$: Observable<BackgroundEffectsState>,
   camera$: Observable<LocalVideoMediaTrack | null | undefined>,
-): MediaMenuViewModel {
+): CameraMenuViewModel {
   const { video } = muteStates;
   // Also false once the pipeline has failed to build this session.
   const supported$ = backgroundEffectsState$.pipe(
@@ -186,11 +189,7 @@ export function createCameraMenuViewModel(
     undefined,
   );
   return {
-    ...createStaticViewModel({
-      outputOptions: [],
-      selectedOutput: undefined,
-      selectOutput: undefined,
-    }),
+    kind: "video",
     enabled$: video.enabled$,
     busy$: video.syncing$,
     toggle$: scope.behavior(video.toggle$.pipe(map((t) => t ?? undefined))),
@@ -201,63 +200,86 @@ export function createCameraMenuViewModel(
       mediaDevices.videoInput.selected$.pipe(map((s) => s?.id)),
     ),
     select$: constant(mediaDevices.videoInput.select),
-    backgroundEffect$: scope.behavior(
-      combineLatest([backgroundEffectSetting.value$, supported$]).pipe(
-        map(([raw, supported]) =>
-          supported ? serializeEffect(parseEffect(raw)) : "none",
+    backgroundEffects: {
+      selected$: scope.behavior(
+        combineLatest([backgroundEffectSetting.value$, supported$]).pipe(
+          map(([raw, supported]) =>
+            supported ? serializeEffect(parseEffect(raw)) : "none",
+          ),
         ),
       ),
-    ),
-    selectBackgroundEffect$: scope.behavior(
-      offered$.pipe(
-        map((offered) =>
-          offered
-            ? (id: string): void =>
-                backgroundEffectSetting.setValue(
-                  serializeEffect(parseEffect(id)),
-                )
-            : undefined,
+      available$: scope.behavior(
+        addedBackgrounds.added$.pipe(
+          map((added) => backgroundEffectChoices(added ?? [])),
         ),
       ),
-    ),
-    backgroundEffects$: scope.behavior(
-      addedBackgrounds.added$.pipe(
-        map((added) => backgroundEffectChoices(added ?? [])),
-      ),
-    ),
-    backgroundEffectNotice$: scope.behavior(
-      offered$.pipe(
-        map((offered) =>
-          !offered ? "unavailable" : slow ? "slow" : undefined,
+      notice$: scope.behavior(
+        offered$.pipe(
+          map((offered) =>
+            !offered ? "unavailable" : slow ? "slow" : undefined,
+          ),
         ),
       ),
-    ),
-    backgroundEffectSettling$: scope.behavior(
-      backgroundEffectsState$.pipe(
-        map(({ wait }) => wait !== undefined),
-        distinctUntilChanged(),
+      settling$: scope.behavior(
+        backgroundEffectsState$.pipe(
+          map(({ wait }) => wait !== undefined),
+          distinctUntilChanged(),
+        ),
+        false,
       ),
-      false,
-    ),
-    // Kept and offered, not put on: that waits for the user to choose it.
-    addBackgroundImage$: scope.behavior(
-      combineLatest([offered$, addedBackgrounds.added$]).pipe(
-        map(([offered, added]) =>
-          offered && (added?.length ?? 0) < maxAddedBackgrounds
-            ? (file: File): void => {
-                refusal$.next(undefined);
-                addedBackgrounds.add(file).catch((e) => {
-                  logger.warn("Could not keep that background", e);
-                  refusal$.next({
-                    reason: e instanceof UnusableImage ? e.reason : "not-kept",
+      imageRefusal$: refusal$,
+      select$: scope.behavior(
+        offered$.pipe(
+          map((offered) =>
+            offered
+              ? (id: string): void =>
+                  backgroundEffectSetting.setValue(
+                    serializeEffect(parseEffect(id)),
+                  )
+              : undefined,
+          ),
+        ),
+      ),
+      // Kept and offered, not put on: that waits for the user to choose it.
+      addImage$: scope.behavior(
+        combineLatest([offered$, addedBackgrounds.added$]).pipe(
+          map(([offered, added]) =>
+            offered && (added?.length ?? 0) < maxAddedBackgrounds
+              ? (file: File): void => {
+                  refusal$.next(undefined);
+                  addedBackgrounds.add(file).catch((e) => {
+                    logger.warn("Could not keep that background", e);
+                    refusal$.next({
+                      reason:
+                        e instanceof UnusableImage ? e.reason : "not-kept",
+                    });
                   });
-                });
-              }
-            : undefined,
+                }
+              : undefined,
+          ),
         ),
       ),
-    ),
-    backgroundImageRefusal$: refusal$,
+      remove$: scope.behavior(
+        offered$.pipe(
+          map((offered) =>
+            offered
+              ? (optionId: string): void => {
+                  const effect = parseEffect(optionId);
+                  if (effect.kind !== "added") return;
+                  // The selected effect can't be removed: that would leave no
+                  // effect selected.
+                  if (backgroundEffectSetting.getValue() === optionId) return;
+                  addedBackgrounds
+                    .remove(effect.id)
+                    .catch((e) =>
+                      logger.warn("Could not remove that background", e),
+                    );
+                }
+              : undefined,
+          ),
+        ),
+      ),
+    },
     // Muting stops the camera, and so its light.
     // The track outlives the mute, so its mute state is checked.
     cameraTrack$: scope.behavior(
@@ -269,26 +291,6 @@ export function createCameraMenuViewModel(
         ),
       ),
       null,
-    ),
-    removeBackgroundEffect$: scope.behavior(
-      offered$.pipe(
-        map((offered) =>
-          offered
-            ? (optionId: string): void => {
-                const effect = parseEffect(optionId);
-                if (effect.kind !== "added") return;
-                // The selected effect can't be removed: that would leave no
-                // effect selected.
-                if (backgroundEffectSetting.getValue() === optionId) return;
-                addedBackgrounds
-                  .remove(effect.id)
-                  .catch((e) =>
-                    logger.warn("Could not remove that background", e),
-                  );
-              }
-            : undefined,
-        ),
-      ),
     ),
   };
 }

@@ -7,10 +7,14 @@ Please see LICENSE in the repository root for full details.
 
 import { expect, fn, userEvent, within } from "storybook/test";
 import { type JSX, type ReactNode } from "react";
+import { type LocalVideoMediaTrack } from "@element-hq/matrixrtc-sdk";
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { MediaMenuButton } from "./MediaMenuButton";
-import { type MediaMenuSnapshot } from "./MediaMenuViewModel";
+import { CameraMenuButton } from "./CameraMenuButton";
+import {
+  type BackgroundEffectsMenuSnapshot,
+  type DeviceMenuSnapshot,
+} from "./MediaMenuViewModel";
 import { useStaticViewModel } from "../state/ViewModel";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { MediaDevices } from "../state/MediaDevices";
@@ -20,17 +24,35 @@ const mediaDevices = new MediaDevices(globalScope, {
   controlledAudioDevices: false,
 });
 
+type StoryArgs = DeviceMenuSnapshot & {
+  backgroundEffects: BackgroundEffectsMenuSnapshot;
+  cameraTrack: LocalVideoMediaTrack | null;
+};
+
 /** Builds the view model from the story's args, so each field is a control. */
-function MediaMenuButtonStoryWrapper({
-  kind,
-  ...snapshot
-}: MediaMenuSnapshot & { kind: "audio" | "video" }): ReactNode {
-  const vm = useStaticViewModel(snapshot);
-  return <MediaMenuButton kind={kind} vm={vm} size="lg" />;
+function CameraMenuButtonStoryWrapper({
+  backgroundEffects,
+  cameraTrack,
+  ...device
+}: StoryArgs): ReactNode {
+  const deviceVm = useStaticViewModel(device);
+  const backgroundEffectsVm = useStaticViewModel(backgroundEffects);
+  const { cameraTrack$ } = useStaticViewModel({ cameraTrack });
+  return (
+    <CameraMenuButton
+      vm={{
+        ...deviceVm,
+        kind: "video",
+        backgroundEffects: backgroundEffectsVm,
+        cameraTrack$,
+      }}
+      size="lg"
+    />
+  );
 }
 
 const meta = {
-  component: MediaMenuButtonStoryWrapper,
+  component: CameraMenuButtonStoryWrapper,
   decorators: [
     (Story): JSX.Element => (
       <MediaDevicesContext value={mediaDevices}>
@@ -38,69 +60,41 @@ const meta = {
       </MediaDevicesContext>
     ),
   ],
-} satisfies Meta<typeof MediaMenuButtonStoryWrapper>;
+} satisfies Meta<typeof CameraMenuButtonStoryWrapper>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const empty = {
-  outputOptions: [],
-  selectedOutput: undefined,
-  selectOutput: undefined,
-  backgroundEffect: undefined,
-  backgroundEffects: [],
-  backgroundEffectNotice: undefined,
-  backgroundEffectSettling: false,
-  backgroundImageRefusal: undefined,
-  selectBackgroundEffect: undefined,
-  addBackgroundImage: undefined,
-  removeBackgroundEffect: undefined,
-  cameraTrack: null,
-} satisfies Partial<MediaMenuSnapshot>;
+const noBackgroundEffects: BackgroundEffectsMenuSnapshot = {
+  selected: "none",
+  available: [],
+  notice: undefined,
+  settling: false,
+  imageRefusal: undefined,
+  select: undefined,
+  addImage: undefined,
+  remove: undefined,
+};
 
-export const Microphone: Story = {
-  args: {
-    ...empty,
-    kind: "audio",
-    enabled: true,
-    busy: false,
-    toggle: fn(),
-    options: [
-      { id: "mic1", label: { type: "name", name: "Microphone 1" } },
-      { id: "mic2", label: { type: "name", name: "Microphone 2" } },
-    ],
-    selected: "mic1",
-    select: fn(),
-    outputOptions: [
-      { id: "default", label: { type: "default", name: "Built-in Output" } },
-    ],
-    selectedOutput: "default",
-    selectOutput: fn(),
-  },
-  play: async ({ args, canvasElement }) => {
-    await userEvent.click(
-      within(canvasElement).getByRole("switch", { name: "Mute microphone" }),
-    );
-    await expect(args.toggle).toHaveBeenCalled();
-  },
+const cameraEffects: BackgroundEffectsMenuSnapshot = {
+  ...noBackgroundEffects,
+  available: [
+    { id: "none", kind: "none" },
+    { id: "blur", kind: "blur" },
+  ],
+  select: fn(),
 };
 
 export const Camera: Story = {
   args: {
-    ...empty,
-    kind: "video",
+    cameraTrack: null,
     enabled: true,
     busy: false,
     toggle: fn(),
     options: [{ id: "cam1", label: { type: "name", name: "Camera 1" } }],
     selected: "cam1",
     select: fn(),
-    backgroundEffect: "none",
-    backgroundEffects: [
-      { id: "none", kind: "none" },
-      { id: "blur", kind: "blur" },
-    ],
-    selectBackgroundEffect: fn(),
+    backgroundEffects: cameraEffects,
   },
   play: async ({ args, canvasElement }) => {
     await userEvent.click(
@@ -128,8 +122,11 @@ async function openEffects(canvasElement: HTMLElement): Promise<HTMLElement> {
 export const CameraEffectsUnavailable: Story = {
   args: {
     ...Camera.args,
-    selectBackgroundEffect: undefined,
-    backgroundEffectNotice: "unavailable",
+    backgroundEffects: {
+      ...cameraEffects,
+      select: undefined,
+      notice: "unavailable",
+    },
   },
   play: async ({ canvasElement }) => {
     const section = await openEffects(canvasElement);
@@ -144,7 +141,7 @@ export const CameraEffectsUnavailable: Story = {
 export const CameraEffectsSlow: Story = {
   args: {
     ...Camera.args,
-    backgroundEffectNotice: "slow",
+    backgroundEffects: { ...cameraEffects, notice: "slow" },
   },
   play: async ({ canvasElement }) => {
     const section = await openEffects(canvasElement);
@@ -159,8 +156,11 @@ export const CameraEffectsSlow: Story = {
 export const CameraFileRefused: Story = {
   args: {
     ...Camera.args,
-    addBackgroundImage: fn(),
-    backgroundImageRefusal: { reason: "not-an-image" },
+    backgroundEffects: {
+      ...cameraEffects,
+      addImage: fn(),
+      imageRefusal: { reason: "not-an-image" },
+    },
   },
   play: async ({ canvasElement }) => {
     await openEffects(canvasElement);
