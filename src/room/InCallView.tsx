@@ -186,14 +186,16 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
 
     const vm = createCallViewModel$(
       scope,
-      rtcParticipation,
-      props.matrixRoom,
-      mediaDevices,
-      props.muteStates,
-      props.e2eeSystem,
-      scope.behavior(observeElementSize$(rootElement)),
-      reactionsReader.raisedHands$,
-      reactionsReader.reactions$,
+      {
+        rtcParticipation,
+        matrixRoom: props.matrixRoom,
+        mediaDevices,
+        muteStates: props.muteStates,
+        encryptionSystem: props.e2eeSystem,
+        viewSize$: scope.behavior(observeElementSize$(rootElement)),
+        handsRaisedSubject$: reactionsReader.raisedHands$,
+        reactionsSubject$: reactionsReader.reactions$,
+      },
       {
         ...callViewModelOptionsFromParams(urlParams),
         capture,

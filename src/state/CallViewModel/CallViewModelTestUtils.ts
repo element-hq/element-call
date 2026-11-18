@@ -261,14 +261,16 @@ export function withCallViewModel(mode: MatrixRTCMode) {
 
     const vm = createCallViewModel$(
       scope,
-      rtcParticipation,
-      room,
-      mediaDevices,
-      muteStates,
-      { kind: E2eeType.PER_PARTICIPANT },
-      viewSize$,
-      raisedHands$,
-      reactions$,
+      {
+        rtcParticipation,
+        matrixRoom: room,
+        mediaDevices,
+        muteStates,
+        encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+        viewSize$,
+        handsRaisedSubject$: raisedHands$,
+        reactionsSubject$: reactions$,
+      },
       {
         autoLeaveWhenOthersLeft: false,
         sentCallNotification$: createSentCallNotification$(

@@ -10,11 +10,13 @@
 - Owning a resource: a class taking the scope in its constructor — `MediaDevices`,
   `MuteStates`, `TileStore`, `Publisher`, `Connection`. Both styles are current;
   don't convert one to the other in passing.
-- A factory's positional parameters are what the thing is made of: required, no
-  sensible default. Its trailing `options` bag is how the host wants it to
-  behave: every field optional, each defaulting to standalone behaviour, so `{}`
-  works. A value with no default is never an option; a test seam is never an
-  option either — mock the dependency it comes from. See `createCallViewModel$`.
+- A factory's required parameters are what the thing is made of: no sensible
+  default. Several of them go in a props interface, so each can carry a doc
+  comment. Its trailing `options` bag is how the host wants it to behave: every
+  field optional, each defaulting to standalone behaviour, so `{}` works. A
+  value with no default is never an option; a test seam is never an option
+  either — mock the dependency it comes from. See `createCallViewModel$`, with
+  `CallViewModelProps` and `CallViewModelOptions`.
 - `foo$` is an observable. `Behavior<T>`, an observable with a current value, is
   the default for anything a view reads.
 

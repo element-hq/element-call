@@ -186,12 +186,36 @@ export function initialPublishRequests(
 }
 
 /**
+ * What the call is made of: the room, the participation, the devices, the
+ * things with no sensible default. How the host wants it to behave is in
+ * {@link CallViewModelOptions} instead.
+ */
+export interface CallViewModelProps {
+  rtcParticipation: RTCParticipation;
+  /** A call is permanently tied to a single Matrix room. */
+  matrixRoom: MatrixRoom;
+  mediaDevices: MediaDevices;
+  muteStates: MuteStates;
+  encryptionSystem: EncryptionSystem;
+  /**
+   * The size of the space the call is drawn in: the page when Element Call
+   * owns it, or the container a host mounted it in when it is a component.
+   * The layout — whether the call is shown full size, flat, narrow or as a
+   * picture-in-picture — follows this rather than the size of the window, so
+   * that a component shrunk by its host adapts even though the window has not
+   * changed.
+   */
+  viewSize$: Behavior<{ width: number; height: number }>;
+  handsRaisedSubject$: Observable<Record<string, RaisedHandInfo>>;
+  reactionsSubject$: Observable<Record<string, ReactionInfo>>;
+}
+
+/**
  * How the host wants the call to behave. Every field is optional and defaults
  * to what standalone Element Call does, so `{}` is a working standalone call.
- * What the call is made of — the room, the participation, the devices, the
- * things with no sensible default — is a positional parameter of
- * {@link createCallViewModel$} instead. A test that wants to replace behaviour
- * mocks the dependency it comes from rather than adding an option here.
+ * What the call is made of is in {@link CallViewModelProps} instead. A test
+ * that wants to replace behaviour mocks the dependency it comes from rather
+ * than adding an option here.
  */
 export interface CallViewModelOptions {
   /**
@@ -465,23 +489,16 @@ export interface CallViewModel {
  */
 export function createCallViewModel$(
   scope: ObservableScope,
-  rtcParticipation: RTCParticipation,
-  // A call is permanently tied to a single Matrix room
-  matrixRoom: MatrixRoom,
-  mediaDevices: MediaDevices,
-  muteStates: MuteStates,
-  encryptionSystem: EncryptionSystem,
-  /**
-   * The size of the space the call is drawn in: the page when Element Call
-   * owns it, or the container a host mounted it in when it is a component.
-   * The layout — whether the call is shown full size, flat, narrow or as a
-   * picture-in-picture — follows this rather than the size of the window, so
-   * that a component shrunk by its host adapts even though the window has not
-   * changed.
-   */
-  viewSize$: Behavior<{ width: number; height: number }>,
-  handsRaisedSubject$: Observable<Record<string, RaisedHandInfo>>,
-  reactionsSubject$: Observable<Record<string, ReactionInfo>>,
+  {
+    rtcParticipation,
+    matrixRoom,
+    mediaDevices,
+    muteStates,
+    encryptionSystem,
+    viewSize$,
+    handsRaisedSubject$,
+    reactionsSubject$,
+  }: CallViewModelProps,
   options: CallViewModelOptions = {},
 ): CallViewModel {
   const logger = rootLogger.getChild("[CallViewModel]");

@@ -128,15 +128,17 @@ export async function createMatrixRTCSdk(
       });
       vm = createCallViewModel$(
         scope,
-        participation,
-        room,
-        mediaDevices,
-        muteStates,
-        encryptionSystem,
-        // The bundle owns its page, so the body is the space it has
-        scope.behavior(observeElementSize$(document.body)),
-        of({}),
-        of({}),
+        {
+          rtcParticipation: participation,
+          matrixRoom: room,
+          mediaDevices,
+          muteStates,
+          encryptionSystem,
+          // The bundle owns its page, so the body is the space it has
+          viewSize$: scope.behavior(observeElementSize$(document.body)),
+          handsRaisedSubject$: of({}),
+          reactionsSubject$: of({}),
+        },
         {
           ...callViewModelOptionsFromParams(urlParams),
           capture,

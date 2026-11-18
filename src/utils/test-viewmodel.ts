@@ -196,14 +196,16 @@ export function getBasicCallViewModelEnvironment(
   });
   const vm = createCallViewModel$(
     scope,
-    rtcParticipation,
-    matrixRoom,
-    mediaDevices,
-    muteStates,
-    { kind: E2eeType.PER_PARTICIPANT },
-    constant({ width: 1000, height: 800 }),
-    handRaisedSubject$,
-    reactionsSubject$,
+    {
+      rtcParticipation,
+      matrixRoom,
+      mediaDevices,
+      muteStates,
+      encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+      viewSize$: constant({ width: 1000, height: 800 }),
+      handsRaisedSubject$: handRaisedSubject$,
+      reactionsSubject$,
+    },
     {
       sentCallNotification$: createSentCallNotification$(
         scope,
