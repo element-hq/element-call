@@ -50,9 +50,10 @@ export interface BackgroundImageRefusal {
  * the camera. Fields that belong to the other device are left empty.
  */
 export interface MediaMenuSnapshot {
+  /** Whether the device is on. (muted/unmuted state) */
   enabled: boolean;
   busy: boolean;
-  /** Also controls if the button is disabled */
+  /** Turns the device on or off. Undefined while it can't be toggled. (disable interaction state) */
   toggle: (() => void) | undefined;
   options: MenuOptions[];
   selected: string | undefined;
