@@ -107,7 +107,7 @@
   color: "e57157"
 - name: "Claude-Analyse-Failures"
   description: "Request an analysis of failing tests from Claude"
-  color: "e57157"
+  color: "4ADEC0"
 - name: "customer-retainer"
   color: "F44A5F"
 - name: "dependencies"
