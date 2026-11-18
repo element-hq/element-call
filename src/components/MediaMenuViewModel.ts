@@ -54,7 +54,6 @@ export interface MediaMenuSnapshot {
   busy: boolean;
   /** Also controls if the button is disabled */
   toggle: (() => void) | undefined;
-  /** No options leave out the menu, which is then a plain mute button. */
   options: MenuOptions[];
   selected: string | undefined;
   select: ((id: string) => void) | undefined;
@@ -62,7 +61,7 @@ export interface MediaMenuSnapshot {
   /** Output (speaker) devices. Microphone only. */
   outputOptions: MenuOptions[];
   selectedOutput: string | undefined;
-  /** Undefined where the platform can't route audio to a chosen device. */
+  /** Undefined if the output device is not configurable. */
   selectOutput: ((id: string) => void) | undefined;
 
   /** The selected background effect, as its option id. Camera only. */
@@ -146,8 +145,6 @@ export function createAudioMenuViewModel(
     selectedOutput$: scope.behavior(
       mediaDevices.audioOutput.selected$.pipe(map((s) => s?.id)),
     ),
-    // Withheld where the platform can't route audio to a chosen device, which
-    // disables the speaker section.
     selectOutput$: constant(
       supportsAudioOutputSelection()
         ? mediaDevices.audioOutput.select
