@@ -238,24 +238,34 @@ describe("createCameraMenuViewModel", () => {
     store.add.mockRejectedValue(new UnusableImage("animated"));
     vm.addBackgroundImage$.value!(new File(["x"], "a.gif"));
     await flushPromises();
-    const first = vm.backgroundImageRefusal$.value;
-    expect(first).toEqual({ reason: "animated" });
-
-    // The same again is a refusal of its own, so it is shown again.
-    vm.addBackgroundImage$.value!(new File(["x"], "a.gif"));
-    await flushPromises();
-    expect(vm.backgroundImageRefusal$.value).toEqual({ reason: "animated" });
-    expect(vm.backgroundImageRefusal$.value).not.toBe(first);
+    expect(vm.backgroundImageRefusal$.value?.reason).toBe("animated");
 
     store.add.mockRejectedValue(new Error("quota"));
     vm.addBackgroundImage$.value!(new File(["x"], "b.png"));
     await flushPromises();
-    expect(vm.backgroundImageRefusal$.value).toEqual({ reason: "not-kept" });
+    expect(vm.backgroundImageRefusal$.value?.reason).toBe("not-kept");
 
     store.add.mockResolvedValue("kept");
     vm.addBackgroundImage$.value!(new File(["x"], "c.png"));
     await flushPromises();
     expect(vm.backgroundImageRefusal$.value).toBeUndefined();
+  });
+
+  it("drops a refusal once dismissed, and only that one", async () => {
+    const vm = cameraMenu();
+    store.add.mockRejectedValue(new UnusableImage("animated"));
+    vm.addBackgroundImage$.value!(new File(["x"], "a.gif"));
+    await flushPromises();
+    const first = vm.backgroundImageRefusal$.value!;
+    first.dismiss();
+    expect(vm.backgroundImageRefusal$.value).toBeUndefined();
+
+    // The same again is a refusal of its own, which the first can't dismiss.
+    vm.addBackgroundImage$.value!(new File(["x"], "a.gif"));
+    await flushPromises();
+    expect(vm.backgroundImageRefusal$.value?.reason).toBe("animated");
+    first.dismiss();
+    expect(vm.backgroundImageRefusal$.value?.reason).toBe("animated");
   });
 
   it("never removes the selected background", () => {

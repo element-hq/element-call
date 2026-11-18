@@ -43,6 +43,8 @@ import { type BackgroundEffectGridItem } from "./BackgroundEffectGrid";
 
 export interface BackgroundImageRefusal {
   reason: UnusableReason | "not-kept";
+  /** Done with it: once read, or once the menu showing it closes. */
+  dismiss: () => void;
 }
 
 /**
@@ -181,10 +183,19 @@ export function createCameraMenuViewModel(
   const offered$ = combineLatest([disableSwitcher$, supported$]).pipe(
     map(([switcherDisabled, supported]) => !switcherDisabled && supported),
   );
-  // A new object for each refusal, so the same one twice is shown twice.
   const refusal$ = new BehaviorSubject<BackgroundImageRefusal | undefined>(
     undefined,
   );
+  const refuse = (reason: BackgroundImageRefusal["reason"]): void => {
+    const refusal: BackgroundImageRefusal = {
+      reason,
+      // A later refusal is not this one's to dismiss.
+      dismiss: () => {
+        if (refusal$.value === refusal) refusal$.next(undefined);
+      },
+    };
+    refusal$.next(refusal);
+  };
   return {
     ...createStaticViewModel({
       outputOptions: [],
@@ -248,9 +259,7 @@ export function createCameraMenuViewModel(
                 refusal$.next(undefined);
                 addedBackgrounds.add(file).catch((e) => {
                   logger.warn("Could not keep that background", e);
-                  refusal$.next({
-                    reason: e instanceof UnusableImage ? e.reason : "not-kept",
-                  });
+                  refuse(e instanceof UnusableImage ? e.reason : "not-kept");
                 });
               }
             : undefined,

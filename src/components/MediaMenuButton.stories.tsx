@@ -160,7 +160,7 @@ export const CameraFileRefused: Story = {
   args: {
     ...Camera.args,
     addBackgroundImage: fn(),
-    backgroundImageRefusal: { reason: "not-an-image" },
+    backgroundImageRefusal: { reason: "not-an-image", dismiss: fn() },
   },
   play: async ({ canvasElement }) => {
     await openEffects(canvasElement);

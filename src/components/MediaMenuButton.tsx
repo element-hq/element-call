@@ -57,19 +57,18 @@ export const MediaMenuButton: FC<Props> = ({ vm, kind, size }) => {
         return t("background_effects.slow");
     }
   }, [notice, t]);
-  // A new object for each refusal, so the same one twice is shown twice.
-  const refusalMessage = useMemo(() => {
+  const refusalText = useMemo(() => {
     switch (refusal?.reason) {
       case undefined:
         return undefined;
       case "not-an-image":
-        return { text: t("error.background_not_an_image") };
+        return t("error.background_not_an_image");
       case "animated":
-        return { text: t("error.background_animated") };
+        return t("error.background_animated");
       case "undecodable":
-        return { text: t("error.background_undecodable") };
+        return t("error.background_undecodable");
       case "not-kept":
-        return { text: t("error.background_not_kept") };
+        return t("error.background_not_kept");
     }
   }, [refusal, t]);
 
@@ -117,7 +116,8 @@ export const MediaMenuButton: FC<Props> = ({ vm, kind, size }) => {
       onAddBackgroundImage={addBackgroundImage}
       onRemoveBackgroundEffect={removeBackgroundEffect}
       selfPreview={<SelfPreview track={cameraTrack} />}
-      backgroundImageRefusal={refusalMessage}
+      backgroundImageRefusal={refusalText}
+      onDismissBackgroundImageRefusal={refusal?.dismiss}
       backgroundEffectNotice={noticeText}
     />
   );

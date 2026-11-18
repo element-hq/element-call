@@ -404,7 +404,7 @@ export const BackgroundImageRefused: Story = {
     selectedBackgroundEffect: "blur",
     backgroundEffectNotice:
       "Background effects run slowly on this platform, which may cause your video to stutter.",
-    backgroundImageRefusal: { text: "That file is not a supported image" },
+    backgroundImageRefusal: "That file is not a supported image",
   },
   decorators: [
     (Story): JSX.Element => (
