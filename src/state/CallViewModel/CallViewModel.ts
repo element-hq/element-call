@@ -479,7 +479,7 @@ export function createCallViewModel$(
    * that a component shrunk by its host adapts even though the window has not
    * changed.
    */
-  windowSize$: Behavior<{ width: number; height: number }>,
+  viewSize$: Behavior<{ width: number; height: number }>,
   handsRaisedSubject$: Observable<Record<string, RaisedHandInfo>>,
   reactionsSubject$: Observable<Record<string, ReactionInfo>>,
   options: CallViewModelOptions = {},
@@ -922,7 +922,7 @@ export function createCallViewModel$(
   // A guess at what the window's mode should be based on the size and shape of
   // the space we have to draw in.
   const naturalWindowMode$ = scope.behavior<WindowMode>(
-    windowSize$.pipe(
+    viewSize$.pipe(
       map(({ width, height }) => {
         if (height <= 400 && width <= 340) return "pip";
         // Our layouts for flat windows are better at adapting to a small width

@@ -41,15 +41,15 @@ Element Call can be mounted several times inside a host's React tree, so it owns
 neither window, URL, document nor router. Each seam defaults to the old standalone
 and widget behaviour.
 
-| Never                                         | Use                                                           |
-| --------------------------------------------- | ------------------------------------------------------------- |
-| the `widget` global                           | `useHostBridge()` — `src/HostBridge.ts`                       |
-| `getUrlParams()`, `window.location`           | `useUrlParams()`                                              |
-| `useNavigate("/")`, `<Link to="/">`           | `useLeaveToHome()`, `LeaveToHomeLink`                         |
-| `document.body`                               | `useRootElement()`                                            |
-| `window.innerWidth/Height`, `useMediaQuery`   | `useRootSizeMatches()` in views, `windowSize$` in view models |
-| global `i18next`                              | the instance in `src/utils/i18n.ts`                           |
-| config or analytics reading their environment | `Config.initWith()`, `PosthogAnalytics.configure()`           |
+| Never                                         | Use                                                         |
+| --------------------------------------------- | ----------------------------------------------------------- |
+| the `widget` global                           | `useHostBridge()` — `src/HostBridge.ts`                     |
+| `getUrlParams()`, `window.location`           | `useUrlParams()`                                            |
+| `useNavigate("/")`, `<Link to="/">`           | `useLeaveToHome()`, `LeaveToHomeLink`                       |
+| `document.body`                               | `useRootElement()`                                          |
+| `window.innerWidth/Height`, `useMediaQuery`   | `useRootSizeMatches()` in views, `viewSize$` in view models |
+| global `i18next`                              | the instance in `src/utils/i18n.ts`                         |
+| config or analytics reading their environment | `Config.initWith()`, `PosthogAnalytics.configure()`         |
 
 - View models take values as options, never `getUrlParams()`
   (`callViewModelOptionsFromParams`, `CallViewModelOptions.hostBridge`).
