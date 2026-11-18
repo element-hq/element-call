@@ -1,11 +1,13 @@
 <!doctype html>
 <html>
   <head>
-    <title>MatrixRTC Widget</title>
+    <title>Widget RTC SDK example</title>
     <meta charset="utf-8" />
     <script type="module">
-      // TODO use the url where the matrixrtc-sdk.js file from dist is hosted
-      import { createMatrixRTCSdk } from "http://localhost:8123/matrixrtc-sdk.js";
+      // The bundle a pull request's CI deploys: replace 1234 with the PR number.
+      // For a local build use the url `dist/` is served from, for example
+      // "http://localhost:8123/widget-rtc-sdk.js".
+      import { createMatrixRTCSdk } from "https://pr1234-widget-rtc-sdk--element-call.netlify.app/widget-rtc-sdk.js";
 
       try {
         window.matrixRTCSdk = await createMatrixRTCSdk(

@@ -32,9 +32,11 @@ export interface MyFixtures {
 export const widgetTest = test.extend<MyFixtures>({
   // allow per-test override: `widgetTest.use({ callType: "dm" })`
   callType: ["room", { option: true }],
-  asWidget: async ({ browser, callType }, pUse) => {
-    const brooksDisplayName = `brooks_${Date.now()}`;
-    const whistlerDisplayName = `whistler_${Date.now()}`;
+  asWidget: async ({ browser, callType }, pUse, testInfo) => {
+    // Tests in parallel workers can reach this in the same millisecond.
+    const uniqueSuffix = `${Date.now()}_${testInfo.parallelIndex}`;
+    const brooksDisplayName = `brooks_${uniqueSuffix}`;
+    const whistlerDisplayName = `whistler_${uniqueSuffix}`;
 
     // Register users
     const {

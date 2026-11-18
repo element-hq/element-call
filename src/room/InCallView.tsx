@@ -748,8 +748,7 @@ export const InCallView: FC<InCallViewProps> = ({
 
 /**
  * How the tracks are captured and encoded, from Element Call's settings and
- * configuration. Shared with the legacy SDK bundle so that a widget built from
- * it behaves like the app.
+ * configuration.
  */
 export function captureSettings(): CaptureSettings {
   const config = Config.get();
@@ -798,8 +797,7 @@ export function captureSettings(): CaptureSettings {
 /**
  * What the client needs from Element Call's configuration, settings and URL:
  * the SDK reads none of them itself. What to publish depends on the mute
- * switches and the devices, so the caller adds that. Shared with the legacy
- * SDK bundle so that a widget built from it behaves like the app.
+ * switches and the devices, so the caller adds that.
  */
 export function rtcSlotOptions(
   encryptionSystem: EncryptionSystem,

@@ -196,6 +196,50 @@ export default ({
 };
 
 /**
+ * Leaves the Matrix SDK's own end-to-end encryption out of a build that only
+ * runs as a widget: the host's client encrypts and decrypts for it, so the Rust
+ * crypto chunk and its WASM (about 10 MB) would only be shipped, never loaded.
+ * The SDK imports it dynamically, from `initRustCrypto` and `preloadRustCrypto`;
+ * here those reject instead.
+ *
+ * With `standaloneClient`, the worker behind the standalone app's sync store
+ * goes too: a second copy of the SDK with the crypto, which only a client of
+ * Element Call's own uses.
+ */
+export function withoutMatrixCrypto({
+  standaloneClient = false,
+}: { standaloneClient?: boolean } = {}): Plugin {
+  const crypto = "\0without-matrix-crypto";
+  const worker = "\0without-matrix-store-worker";
+  const unavailable =
+    "new Error('This build runs as a widget only: the host does the crypto')";
+  return {
+    name: "without-matrix-crypto",
+    enforce: "pre",
+    resolveId(source, importer): string | null {
+      if (
+        importer?.includes("matrix-js-sdk") &&
+        /(^|\/)rust-crypto\/index(\.js)?$/.test(source)
+      )
+        return crypto;
+      if (standaloneClient && source.endsWith("/IndexedDBWorker?worker"))
+        return worker;
+      return null;
+    },
+    load(id): string | null {
+      if (id === crypto)
+        return [
+          `export async function initRustCrypto() { throw ${unavailable}; }`,
+          `export async function preloadRustCrypto() { throw ${unavailable}; }`,
+        ].join("\n");
+      if (id === worker)
+        return `export default class { constructor() { throw ${unavailable}; } }`;
+      return null;
+    },
+  };
+}
+
+/**
  * Keeps a plugin's transform off MediaPipe's WASM loader. The loader is a
  * classic script that sets `self.ModuleFactory`; transformed into a module it
  * sets nothing, and the segmenter fails with "ModuleFactory not set".
