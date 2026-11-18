@@ -258,7 +258,8 @@ export function createCameraMenuViewModel(
       ),
     ),
     backgroundImageRefusal$: refusal$,
-    // None while muted: the call mutes its track rather than releasing it.
+    // Muting stops the camera, and so its light.
+    // The track outlives the mute, so its mute state is checked.
     cameraTrack$: scope.behavior(
       camera$.pipe(
         switchMap((camera) =>
