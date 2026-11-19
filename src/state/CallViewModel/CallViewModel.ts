@@ -200,8 +200,8 @@ export interface CallViewModelProps {
     | "roomId"
     | "getMembersWithMembership"
     | "_unstable_getStickyEvents"
-    | "addListener"
-    | "removeListener"
+    | "on"
+    | "off"
   >;
   client: Pick<MatrixClient, "getUserId" | "getDeviceId">;
   mediaDevices: MediaDevices;

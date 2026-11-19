@@ -75,35 +75,32 @@ export function createSentCallNotification$(
 }
 
 export function createReceivedDecline$(
-  matrixRoom: Pick<
-    MatrixRoom,
-    "_unstable_getStickyEvents" | "addListener" | "removeListener"
-  >,
+  matrixRoom: Pick<MatrixRoom, "_unstable_getStickyEvents" | "on" | "off">,
 ): Observable<MatrixEvent> {
   // A decline is sticky, so after a gappy sync it arrives only in the sticky
   // section, which never reaches the timeline. Racing for the first outcome
   // makes a decline seen in both places harmless.
-  const timeline$ = (
-    fromEvent(matrixRoom, RoomEvent.Timeline) as Observable<
-      Parameters<EventTimelineSetHandlerMap[RoomEvent.Timeline]>
-    >
-  ).pipe(map(([event]) => event));
+  const timeline$ = fromEvent(
+    matrixRoom,
+    RoomEvent.Timeline,
+    (...[event]: Parameters<EventTimelineSetHandlerMap[RoomEvent.Timeline]>) =>
+      event,
+  );
   // The decline can arrive via sync before the send of our notification
   // resolves, which is when we start listening. To guard against this, we
   // include what is already in the sticky section.
   const currentSticky$ = defer(() =>
     from(matrixRoom._unstable_getStickyEvents()),
   );
-  const sticky$ = (
-    fromEvent(matrixRoom, RoomStickyEventsEvent.Update) as Observable<
-      Parameters<RoomStickyEventsMap[RoomStickyEventsEvent.Update]>
-    >
-  ).pipe(
-    mergeMap(([added, updated]) => [
-      ...added,
-      ...updated.map(({ current }) => current),
-    ]),
-  );
+  const sticky$ = fromEvent(
+    matrixRoom,
+    RoomStickyEventsEvent.Update,
+    (
+      ...[added, updated]: Parameters<
+        RoomStickyEventsMap[RoomStickyEventsEvent.Update]
+      >
+    ) => [...added, ...updated.map(({ current }) => current)],
+  ).pipe(mergeMap((events) => events));
   return merge(currentSticky$, sticky$, timeline$).pipe(
     filter((event) => event.getType() === EventType.RTCDecline),
   );
