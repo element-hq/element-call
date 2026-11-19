@@ -34,6 +34,7 @@ const slot = createRTCSlot(
     encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
     matrixRTCMode: MatrixRTCMode.Compatibility,
   },
+  client.matrixRTC.getRoomSession(room), // the MatrixRTC session for the slot to join
 );
 const participation = slot.join({
   publish: [{ source: "microphone" }, { source: "camera" }],

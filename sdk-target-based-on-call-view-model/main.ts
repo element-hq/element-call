@@ -15,7 +15,12 @@ Please see LICENSE in the repository root for full details.
  * the package directly; this bundle goes away once the existing ones have.
  */
 
-import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
+import { type MatrixClient } from "matrix-js-sdk";
+import { type Logger, logger as rootLogger } from "matrix-js-sdk/lib/logger";
+import {
+  MatrixRTCSessionManager,
+  type SlotDescription,
+} from "matrix-js-sdk/lib/matrixrtc";
 import { EMPTY, filter, map, type Observable, of, switchMap, take } from "rxjs";
 import {
   type Behavior,
@@ -94,11 +99,15 @@ export async function createMatrixRTCSdk(
   );
   const encryptionSystem = { kind: E2eeType.PER_PARTICIPANT } as const;
   const capture = captureSettings();
-  const slot = createRTCSlot(scope, client, room, {
-    ...rtcSlotOptions(encryptionSystem),
-    application,
-    id,
-  });
+  const slot = createRTCSlot(
+    scope,
+    client,
+    room,
+    rtcSlotOptions(encryptionSystem),
+    sessionManager(scope, client, { application, id }, logger).getRoomSession(
+      room,
+    ),
+  );
   let vm: CallViewModel | undefined;
   const failed =
     (what: string) =>
@@ -191,4 +200,23 @@ export async function createMatrixRTCSdk(
       await client.sendTextMessage(room.roomId, message);
     },
   };
+}
+
+/**
+ * The js-sdk keeps one session manager per slot. The client comes with the
+ * manager for the default slot; any other slot gets a manager of its own,
+ * which lives as long as the scope.
+ */
+function sessionManager(
+  scope: ObservableScope,
+  client: MatrixClient,
+  slot: SlotDescription,
+  logger: Logger,
+): MatrixRTCSessionManager {
+  if (slot.application === "m.call" && slot.id === "ROOM")
+    return client.matrixRTC;
+  const manager = new MatrixRTCSessionManager(logger, client, slot);
+  manager.start();
+  scope.onEnd(() => manager.stop());
+  return manager;
 }

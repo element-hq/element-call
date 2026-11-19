@@ -276,6 +276,7 @@ export class MockRTCSession extends TypedEventEmitter<
     return this.joined;
   }
 
+  public slotDescription = { application: "m.call", id: "ROOM" };
   public slotId = "m.call#ROOM";
   /** The id of the delayed leave event; undefined until the manager has sent one. */
   public delayId: string | undefined = undefined;
