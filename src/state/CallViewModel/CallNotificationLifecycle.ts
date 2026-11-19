@@ -75,7 +75,10 @@ export function createSentCallNotification$(
 }
 
 export function createReceivedDecline$(
-  matrixRoom: MatrixRoom,
+  matrixRoom: Pick<
+    MatrixRoom,
+    "_unstable_getStickyEvents" | "addListener" | "removeListener"
+  >,
 ): Observable<MatrixEvent> {
   // A decline is sticky, so after a gappy sync it arrives only in the sticky
   // section, which never reaches the timeline. Racing for the first outcome

@@ -284,6 +284,7 @@ export function withCallViewModel(mode: MatrixRTCMode) {
       {
         rtcParticipation,
         matrixRoom: room,
+        client: room.client,
         mediaDevices,
         muteStates,
         encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
