@@ -31,7 +31,11 @@ import { useRootElement } from "../RootElementContext";
 import { observeElementSize$ } from "../utils/elementSize";
 import styles from "./InCallView.module.css";
 import { GridTile } from "../tile/GridTile";
-import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
+import {
+  SettingsModal,
+  type SettingsClientParts,
+  defaultSettingsTab,
+} from "../settings/SettingsModal";
 import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
 import { useWakeLock } from "../useWakeLock";
@@ -132,6 +136,10 @@ export interface ActiveCallProps extends Omit<
   InCallViewProps,
   "vm" | "footerVm" | "developerSettingsVm"
 > {
+  /** Whole, because {@link createRTCSlot} takes the whole client. */
+  client: MatrixClient;
+  /** Whole, because {@link createRTCSlot} takes the whole room. */
+  matrixRoom: MatrixRoom;
   e2eeSystem: EncryptionSystem;
   /** The tracks the lobby opened, for the join to publish. */
   media: LocalMedia;
@@ -281,13 +289,13 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
 };
 
 export interface InCallViewProps {
-  client: MatrixClient;
+  client: SettingsClientParts;
   vm: CallViewModel;
   footerVm: ViewModel<FooterSnapshot>;
   developerSettingsVm: ViewModel<DeveloperSettingsSnapshot>;
   matrixInfo: MatrixInfo;
   rtcSession: MatrixRTCSession;
-  matrixRoom: MatrixRoom;
+  matrixRoom: Pick<MatrixRoom, "roomId">;
   muteStates: MuteStates;
   onShareClick: (() => void) | null;
 }

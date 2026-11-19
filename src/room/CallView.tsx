@@ -87,8 +87,16 @@ declare global {
 }
 
 interface Props {
-  /** The client to place the call with. */
+  /**
+   * The client to place the call with. Whole, because the call's RTC slot
+   * takes the whole client.
+   */
   client: MatrixClient;
+  /**
+   * The room to call in. Whole, because the call's RTC slot takes the whole
+   * room.
+   */
+  room: Room;
   /** The call to join. */
   rtcSession: MatrixRTCSession;
   /**
@@ -149,6 +157,7 @@ interface LoadedProps extends Props {
 /** {@link CallView}, once it has the mute state everything below needs. */
 const LoadedCallView: FC<LoadedProps> = ({
   client,
+  room,
   isPasswordlessUser,
   confineToRoom,
   preload,
@@ -233,13 +242,12 @@ const LoadedCallView: FC<LoadedProps> = ({
 
   useEffect(() => {
     // Sanity check the room object
-    if (client.getRoom(rtcSession.room.roomId) !== rtcSession.room)
+    if (client.getRoom(room.roomId) !== room)
       logger.warn(
-        `We've ended up with multiple rooms for the same ID (${rtcSession.room.roomId}). This indicates a bug in the group call loading code, and may lead to incomplete room state.`,
+        `We've ended up with multiple rooms for the same ID (${room.roomId}). This indicates a bug in the group call loading code, and may lead to incomplete room state.`,
       );
-  }, [client, rtcSession.room]);
+  }, [client, room]);
 
-  const room = rtcSession.room as Room;
   const { displayName, avatarUrl } = useProfile(client);
   const roomName = useRoomName(room);
   const roomAvatar = useRoomAvatar(room);
@@ -553,7 +561,7 @@ const LoadedCallView: FC<LoadedProps> = ({
     if (isPasswordlessUser || PosthogAnalytics.instance.isEnabled()) {
       body = (
         <CallEndedView
-          endedCallId={rtcSession.room.roomId}
+          endedCallId={room.roomId}
           client={client}
           isPasswordlessUser={isPasswordlessUser}
           hideHeader={header === HeaderStyle.None}

@@ -184,6 +184,7 @@ function createCallView(
   const callView = (
     <CallView
       client={client}
+      room={room}
       isPasswordlessUser={false}
       confineToRoom={false}
       preload={options.preload ?? false}

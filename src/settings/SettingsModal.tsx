@@ -7,13 +7,13 @@ Please see LICENSE in the repository root for full details.
 
 import { type FC, type ReactNode, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { type MatrixClient } from "matrix-js-sdk";
 import { Button, Root as Form, Separator } from "@vector-im/compound-web";
 
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
 import { type Tab, TabContainer } from "../tabs/Tabs";
 import { ProfileSettingsTab } from "./ProfileSettingsTab";
+import { type ProfileClientParts } from "../profile/useProfile";
 import { FeedbackSettingsTab } from "./FeedbackSettingsTab";
 import { iosDeviceMenu$ } from "../state/MediaDevices";
 import { useMediaDevices } from "../MediaDevicesContext";
@@ -34,6 +34,7 @@ import {
 } from "../tracks/backgroundEffectCatalog";
 import {
   DeveloperSettingsTab,
+  type DeveloperSettingsClientParts,
   type DeveloperSettingsSnapshot,
   type TransportInfo,
 } from "./DeveloperSettingsTab";
@@ -53,12 +54,15 @@ type SettingsTab =
   | "more"
   | "developer";
 
+export type SettingsClientParts = ProfileClientParts &
+  DeveloperSettingsClientParts;
+
 interface Props {
   open: boolean;
   onDismiss: () => void;
   tab: SettingsTab;
   onTabChange: (tab: SettingsTab) => void;
-  client: MatrixClient;
+  client: SettingsClientParts;
   roomId?: string;
   /** The transports the client is connected to, while in a call. */
   transports?: TransportInfo[];

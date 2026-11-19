@@ -15,13 +15,18 @@ import {
 
 import { useTypedEventEmitterState } from "../useEvents";
 
+export type RoomStateParts = Pick<Room, "currentState" | "on" | "off">;
+
 /**
  * A React hook for values computed from room state.
  * @param room The room.
  * @param f A mapping from the current room state to the computed value.
  * @returns The computed value.
  */
-export function useRoomState<T>(room: Room, f: (state: RoomState) => T): T {
+export function useRoomState<T>(
+  room: RoomStateParts,
+  f: (state: RoomState) => T,
+): T {
   // TODO: matrix-js-sdk says that Room.currentState is deprecated, but it's not
   // clear how to reactively track the current state of the room without it
   const currentState = useTypedEventEmitterState(

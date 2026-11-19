@@ -104,6 +104,7 @@ export const RoomPage: FC = (): ReactNode => {
         return (
           <CallView
             client={client!}
+            room={groupCallState.rtcSession.room}
             rtcSession={groupCallState.rtcSession}
             isPasswordlessUser={passwordlessUser}
             confineToRoom={confineToRoom}

@@ -220,7 +220,8 @@ export const ElementCall: FC<ElementCallProps> = ({
   // is told that Element Call has loaded, as the widget tells its client once
   // its own initialisation is over. Once per mount, however often the pieces
   // are later swapped out.
-  const ready = container !== null && rtcSession !== null && vm !== null;
+  const ready =
+    container !== null && room !== null && rtcSession !== null && vm !== null;
   const announcedLoaded = useRef(false);
   useEffect(() => {
     if (!ready || announcedLoaded.current) return;
@@ -257,6 +258,7 @@ export const ElementCall: FC<ElementCallProps> = ({
                               >
                                 <CallView
                                   client={client}
+                                  room={room}
                                   rtcSession={rtcSession}
                                   isPasswordlessUser={false}
                                   confineToRoom={params.confineToRoom}
