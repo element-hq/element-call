@@ -68,7 +68,6 @@ import { Slider } from "../Slider";
 import { useUrlParams } from "../UrlParams";
 import {
   authenticateWithTransport,
-  type AuthenticateWithTransportParams,
   type TransportMetadata,
 } from "@element-hq/matrixrtc-sdk";
 import { useBehavior } from "../useBehavior";
@@ -119,8 +118,10 @@ export type DeveloperSettingsClientParts = Pick<
   | "getUserId"
   | "getDeviceId"
   | "getDomain"
-> &
-  AuthenticateWithTransportParams["client"];
+  // To authenticate with a transport
+  | "getLivekitToken"
+  | "getOpenIdToken"
+>;
 
 interface Props {
   client: DeveloperSettingsClientParts;

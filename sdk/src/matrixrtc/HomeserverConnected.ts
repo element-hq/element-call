@@ -17,7 +17,6 @@ import {
   startWith,
   map,
   tap,
-  type Observable,
   distinctUntilChanged,
   switchMap,
   of,
@@ -61,7 +60,15 @@ export interface HomeserverConnected {
  */
 export function createHomeserverConnected$(
   scope: ObservableScope,
-  client: NodeStyleEventEmitter & Pick<MatrixClient, "getSyncState">,
+  client: Pick<
+    MatrixClient,
+    // Whether the client is syncing
+    | "getSyncState"
+    // `on`/`off`, to listen for:
+    // - `ClientEvent.Sync`
+    | "on"
+    | "off"
+  >,
   matrixRTCSession: NodeStyleEventEmitter &
     Pick<MatrixRTCSession, "membershipStatus" | "probablyLeft">,
   gracePeriodMs?: number,
@@ -71,11 +78,13 @@ export function createHomeserverConnected$(
   const graceMs =
     gracePeriodMs ?? defaultSessionTimings.syncDisconnectGracePeriodMs;
 
-  const syncing$ = (
-    fromEvent(client, ClientEvent.Sync) as Observable<[SyncState]>
+  const syncing$ = fromEvent(
+    client,
+    ClientEvent.Sync,
+    (state: SyncState) => state,
   ).pipe(
-    startWith([client.getSyncState()]),
-    map(([state]) => state === SyncState.Syncing),
+    startWith(client.getSyncState()),
+    map((state) => state === SyncState.Syncing),
     distinctUntilChanged(),
     switchMap((isSyncing) => {
       if (isSyncing || graceMs <= 0) {
