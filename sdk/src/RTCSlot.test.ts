@@ -39,7 +39,6 @@ function setup(): {
   const client = {
     getUserId: (): string => "@alice:example.org",
     getDeviceId: (): string => "AAAA",
-    matrixRTC: { getRoomSession: (): MockRTCSession => session },
   } as unknown as MatrixClient;
   return { client, room, session };
 }
@@ -47,15 +46,27 @@ function setup(): {
 describe("createRTCSlot", () => {
   describe("status$", () => {
     it("is undefined while the room has no slot event", () => {
-      const { client, room } = setup();
-      const slot = createRTCSlot(testScope(), client, room, options);
+      const { client, room, session } = setup();
+      const slot = createRTCSlot(
+        testScope(),
+        client,
+        room,
+        options,
+        session.asMockedSession(),
+      );
       expect(slot.status$.value).toBeUndefined();
     });
 
     it("follows the slot event", () => {
       const { client, room, session } = setup();
       session.rtcSlot = { status: "open" };
-      const slot = createRTCSlot(testScope(), client, room, options);
+      const slot = createRTCSlot(
+        testScope(),
+        client,
+        room,
+        options,
+        session.asMockedSession(),
+      );
       expect(slot.status$.value).toBe("open");
 
       session.rtcSlot = { status: "closed" };

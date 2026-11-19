@@ -43,10 +43,6 @@ export { MatrixRTCError } from "./errors";
 // Slot
 
 export interface RTCSlotOptions {
-  /** The application the slot belongs to, as named in the membership. Default `m.call`. */
-  application?: string;
-  /** The application's slot in the room. Default `ROOM`. */
-  id?: string;
   /** How memberships and keys in this slot are written. Resolved by the host. */
   matrixRTCMode: MatrixRTCMode;
   encryptionSystem: EncryptionSystem;

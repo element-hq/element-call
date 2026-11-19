@@ -7,12 +7,8 @@ Please see LICENSE in the repository root for full details.
 
 import { type MatrixClient, type Room } from "matrix-js-sdk";
 import { EventType } from "matrix-js-sdk/lib/@types/event";
-import { type Logger, logger as rootLogger } from "matrix-js-sdk/lib/logger";
-import {
-  type MatrixRTCSession as JsSdkRTCSession,
-  MatrixRTCSessionManager,
-  type SlotDescription,
-} from "matrix-js-sdk/lib/matrixrtc";
+import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
+import { type MatrixRTCSession as JsSdkRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import { type MatrixEvent } from "matrix-js-sdk/lib/models/event";
 import { RoomStateEvent } from "matrix-js-sdk/lib/models/room-state";
 import {
@@ -52,31 +48,29 @@ import {
 import { createTransportRegistry } from "./matrixrtc/Transports";
 
 /**
- * Takes the whole `MatrixClient` rather than a slice of it, and finds the
- * MatrixRTC session itself. The js-sdk is the MatrixRTC implementation today;
- * when the rust-rtc crate replaces it, the SDK has to bridge the crate to the
- * js-sdk client, and only the SDK knows what that bridge needs. Holding the
- * client keeps that change inside the SDK.
+ * Takes the whole `MatrixClient` rather than a slice of it. The js-sdk is the
+ * MatrixRTC implementation today; when the rust-rtc crate replaces it, the SDK
+ * has to bridge the crate to the js-sdk client, and only the SDK knows what
+ * that bridge needs. Holding the client keeps that change inside the SDK.
+ *
+ * The session is passed separately: the caller has to pass a session from the
+ * same matrix-js-sdk copy as the SDK's. The caller owns its lifetime too, so
+ * stops it once done; ending the slot's scope does not.
  */
 export function createRTCSlot(
   scope: ObservableScope,
   client: MatrixClient,
   room: Room,
   options: RTCSlotOptions,
+  jsSdkSession: JsSdkRTCSession,
 ): RTCSlot {
   const logger = rootLogger.getChild("[RTCSlot]");
   const userId = client.getUserId();
   const deviceId = client.getDeviceId();
   if (!(userId && deviceId))
     throw new MatrixRTCError("The client has to be logged in");
-  const { application = "m.call", id = "ROOM" } = options;
+  const { application, id } = jsSdkSession.slotDescription;
 
-  const jsSdkSession = sessionManager(
-    scope,
-    client,
-    { application, id },
-    logger,
-  ).getRoomSession(room);
   const memberships$ = createMemberships$(scope, jsSdkSession);
 
   const active$ = new BehaviorSubject<ParticipationInternals | null>(null);
@@ -171,25 +165,4 @@ function slotStatus(
   session: Pick<JsSdkRTCSession, "getRtcSlot">,
 ): "open" | "closed" | undefined {
   return session.getRtcSlot()?.status;
-}
-
-/**
- * The js-sdk keeps one session manager per slot. The client comes with the
- * manager for the default slot; any other slot gets a manager of its own,
- * which lives as long as the scope.
- */
-function sessionManager(
-  scope: ObservableScope,
-  client: MatrixClient,
-  { application, id }: SlotDescription,
-  logger: Logger,
-): MatrixRTCSessionManager {
-  if (application === "m.call" && id === "ROOM") return client.matrixRTC;
-  const manager = new MatrixRTCSessionManager(logger, client, {
-    application,
-    id,
-  });
-  manager.start();
-  scope.onEnd(() => manager.stop());
-  return manager;
 }

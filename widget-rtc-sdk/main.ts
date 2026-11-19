@@ -12,12 +12,16 @@ Please see LICENSE in the repository root for full details.
  * nothing of Element Call's app.
  */
 
-import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
+import { type Logger, logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import {
   createRoomWidgetClient,
   EventType,
   type MatrixClient,
 } from "matrix-js-sdk/lib/matrix";
+import {
+  MatrixRTCSessionManager,
+  type SlotDescription,
+} from "matrix-js-sdk/lib/matrixrtc";
 import { MatrixCapabilities, WidgetApi } from "matrix-widget-api";
 import {
   EMPTY,
@@ -197,12 +201,18 @@ export async function createMatrixRTCSdk(
   if (room === null) throw new Error("No room: the url needs a joined roomId");
 
   const scope = new ObservableScope();
-  const slot = createRTCSlot(scope, client, room, {
-    encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
-    matrixRTCMode: config.matrix_rtc_mode ?? MatrixRTCMode.Compatibility,
-    application,
-    id,
-  });
+  const slot = createRTCSlot(
+    scope,
+    client,
+    room,
+    {
+      encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+      matrixRTCMode: config.matrix_rtc_mode ?? MatrixRTCMode.Compatibility,
+    },
+    sessionManager(scope, client, { application, id }, logger).getRoomSession(
+      room,
+    ),
+  );
   const session = config.matrix_rtc_session;
   const sendNotificationType = params.get("sendNotificationType");
   const participationOptions: RTCParticipationOptions = {
@@ -309,4 +319,23 @@ export async function createMatrixRTCSdk(
       await client.sendTextMessage(room.roomId, message);
     },
   };
+}
+
+/**
+ * The js-sdk keeps one session manager per slot. The client comes with the
+ * manager for the default slot; any other slot gets a manager of its own,
+ * which lives as long as the scope.
+ */
+function sessionManager(
+  scope: ObservableScope,
+  client: MatrixClient,
+  slot: SlotDescription,
+  logger: Logger,
+): MatrixRTCSessionManager {
+  if (slot.application === "m.call" && slot.id === "ROOM")
+    return client.matrixRTC;
+  const manager = new MatrixRTCSessionManager(logger, client, slot);
+  manager.start();
+  scope.onEnd(() => manager.stop());
+  return manager;
 }

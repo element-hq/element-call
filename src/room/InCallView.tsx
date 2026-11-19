@@ -177,6 +177,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       props.client,
       props.matrixRoom,
       rtcSlotOptions(props.e2eeSystem),
+      props.rtcSession,
     );
     const rtcParticipation = slot.join({
       ...rtcParticipationOptions(urlParams),
