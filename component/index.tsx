@@ -49,6 +49,7 @@ import {
   useState,
 } from "react";
 import { logger } from "matrix-js-sdk/lib/logger";
+import { MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import { I18nextProvider } from "react-i18next";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { ErrorBoundary } from "@sentry/react";
@@ -205,12 +206,29 @@ export const ElementCall: FC<ElementCallProps> = ({
   }, [controlledAudioDevices, callIntent]);
 
   const room = client.getRoom(roomId);
-  const rtcSession = useMemo(
-    () => (room === null ? null : client.matrixRTC.getRoomSession(room)),
-    [client, room],
-  );
 
-  if (rtcSession === null)
+  // A session of our own rather than `client.matrixRTC.getRoomSession`: the
+  // client is the host's, built from the host's copy of matrix-js-sdk, so the
+  // sessions its manager hands out may not be compatible with ours. Ours to
+  // stop, too: nothing else will.
+  const [rtcSession, setRtcSession] = useState<MatrixRTCSession | null>(null);
+  useEffect(() => {
+    if (room === null) return;
+    const slot = {
+      application: "m.call",
+      id: "ROOM",
+    };
+    // It is important we create a session from the js-sdk and dont inherit from
+    // the host passed client.
+    const session = MatrixRTCSession.sessionForSlot(client, room, slot);
+    setRtcSession(session);
+    return (): void => {
+      setRtcSession(null);
+      void session.stop();
+    };
+  }, [client, room]);
+
+  if (room === null)
     logger.error(
       `Element Call was asked to call in ${roomId}, which its host's client does not know about`,
     );

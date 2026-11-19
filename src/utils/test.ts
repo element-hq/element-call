@@ -610,6 +610,10 @@ export class MockRTCSession extends TypedEventEmitter<
     .fn()
     .mockResolvedValue(undefined);
 
+  public stop: ReturnType<typeof vitest.fn> = vitest
+    .fn()
+    .mockResolvedValue(undefined);
+
   public constructor(
     public readonly room: Room,
     public memberships: CallMembership[] = [],
