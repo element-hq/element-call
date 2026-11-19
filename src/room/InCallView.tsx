@@ -138,8 +138,21 @@ export interface ActiveCallProps extends Omit<
 > {
   /** Whole, because {@link createRTCSlot} takes the whole client. */
   client: MatrixClient;
-  /** Whole, because {@link createRTCSlot} takes the whole room. */
-  matrixRoom: MatrixRoom;
+  matrixRoom: Pick<
+    MatrixRoom,
+    // RTC slot and call view model
+    | "roomId"
+    // Joined and invited members, for the RTC slot and the call view model
+    | "getMembersWithMembership"
+    // Call notifications, for the call view model
+    | "_unstable_getStickyEvents"
+    // `on`/`off`, to listen for:
+    // - `RoomStateEvent.Events` (RTC slot status)
+    // - `RoomStateEvent.Members` (RTC slot and call view model members)
+    // - `RoomEvent.Timeline` and `RoomStickyEventsEvent.Update` (call notifications)
+    | "on"
+    | "off"
+  >;
   e2eeSystem: EncryptionSystem;
   /** The tracks the lobby opened, for the join to publish. */
   media: LocalMedia;

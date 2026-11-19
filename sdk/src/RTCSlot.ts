@@ -48,6 +48,8 @@ import {
 } from "./matrixrtc/Members";
 import { createTransportRegistry } from "./matrixrtc/Transports";
 
+
+
 /**
  * Takes the whole `MatrixClient` rather than a slice of it. The js-sdk is the
  * MatrixRTC implementation today; when the rust-rtc crate replaces it, the SDK
@@ -61,7 +63,11 @@ import { createTransportRegistry } from "./matrixrtc/Transports";
 export function createRTCSlot(
   scope: ObservableScope,
   client: MatrixClient,
-  room: Room,
+  //  The parts of the Matrix room a slot reads. `on` and `off` are only there for
+  //  `fromEvent`, which listens on the room for:
+  //  - `RoomStateEvent.Events`, to update the slot status;
+  //  - `RoomStateEvent.Members`, to update the members' display names and avatars.
+  room: Pick<Room, "roomId" | "getMembersWithMembership" | "on" | "off">,
   options: RTCSlotOptions,
   jsSdkSession: JsSdkRTCSession,
 ): RTCSlot {

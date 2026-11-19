@@ -51,9 +51,9 @@ export const RoomPage: FC = (): ReactNode => {
   // The page title is the page's to set, not the call's: a host embedding the
   // call has a title of its own. So it is set here, for whichever room we have
   // got as far as knowing about.
-  const roomName = useRoomName(
-    groupCallState.kind === "loaded" ? groupCallState.rtcSession.room : null,
-  );
+  const loadedRoom =
+    groupCallState.kind === "loaded" ? groupCallState.rtcSession.room : null;
+  const roomName = useRoomName(loadedRoom);
   usePageTitle(
     roomName ??
       (groupCallState.kind === "canKnock" ||
@@ -89,6 +89,18 @@ export const RoomPage: FC = (): ReactNode => {
     // During the beta, opt into analytics by default
     if (optInAnalytics === null && setOptInAnalytics) setOptInAnalytics(true);
   }, [optInAnalytics, setOptInAnalytics]);
+
+  useEffect(() => {
+    // Sanity check the room object
+    if (
+      client &&
+      loadedRoom !== null &&
+      client.getRoom(loadedRoom.roomId) !== loadedRoom
+    )
+      logger.warn(
+        `We've ended up with multiple rooms for the same ID (${loadedRoom.roomId}). This indicates a bug in the group call loading code, and may lead to incomplete room state.`,
+      );
+  }, [client, loadedRoom]);
 
   const wasInWaitForInviteState = useRef<boolean>(false);
 

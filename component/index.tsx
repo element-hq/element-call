@@ -50,6 +50,7 @@ import {
 } from "react";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
+import { type Room } from "matrix-js-sdk";
 import { I18nextProvider } from "react-i18next";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { ErrorBoundary } from "@sentry/react";
@@ -205,7 +206,41 @@ export const ElementCall: FC<ElementCallProps> = ({
     };
   }, [controlledAudioDevices, callIntent]);
 
-  const room = client.getRoom(roomId);
+  // The host's `Room`, from the host's copy of matrix-js-sdk: only the parts
+  // listed here are what we rely on.
+  // So only breaking changes in those methods/props would break Compoenent EC.
+  const room = client.getRoom(roomId) as Pick<
+    Room,
+    // Everywhere: the RTC session, analytics, e2ee keys, invite link, RTC slot,
+    // call view model
+    | "roomId"
+    // RTC session: memberships from the timeline and room state
+    | "getLiveTimeline"
+    | "hasMembershipState"
+    | "getVersion"
+    // RTC session and call view model: sticky memberships and call
+    // notifications
+    | "_unstable_getStickyEvents"
+    // Room name for the header and invite link
+    | "name"
+    // Room avatar for the header
+    | "getMxcAvatarUrl"
+    // `matrixInfo.roomAlias`
+    | "getCanonicalAlias"
+    // Room state for the avatar and join rule hooks
+    | "currentState"
+    // Joined and invited members, for the RTC slot and the call view model
+    | "getMembersWithMembership"
+    // `on`/`off`, to listen for:
+    // - the RTC session's room events
+    // - `RoomEvent.Name` (room name)
+    // - `RoomEvent.CurrentStateUpdated` (avatar and join rule hooks)
+    // - `RoomStateEvent.Events` (RTC slot status)
+    // - `RoomStateEvent.Members` (RTC slot and call view model members)
+    // - `RoomEvent.Timeline` and `RoomStickyEventsEvent.Update` (call notifications)
+    | "on"
+    | "off"
+  > | null;
 
   // A session of our own rather than `client.matrixRTC.getRoomSession`: the
   // client is the host's, built from the host's copy of matrix-js-sdk, so the
@@ -220,7 +255,7 @@ export const ElementCall: FC<ElementCallProps> = ({
     };
     // It is important we create a session from the js-sdk and dont inherit from
     // the host passed client.
-    const session = MatrixRTCSession.sessionForSlot(client, room, slot);
+    const session = new MatrixRTCSession(client, room, slot);
     setRtcSession(session);
     return (): void => {
       setRtcSession(null);

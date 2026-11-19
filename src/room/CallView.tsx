@@ -92,11 +92,32 @@ interface Props {
    * takes the whole client.
    */
   client: MatrixClient;
-  /**
-   * The room to call in. Whole, because the call's RTC slot takes the whole
-   * room.
-   */
-  room: Room;
+  /** The room to call in. */
+  room: Pick<
+    Room,
+    // Everywhere: analytics, e2ee keys, invite link, RTC slot, call view model
+    | "roomId"
+    // Room name for the header and invite link
+    | "name"
+    // Room avatar for the header
+    | "getMxcAvatarUrl"
+    // `matrixInfo.roomAlias`
+    | "getCanonicalAlias"
+    // Room state for the avatar and join rule hooks
+    | "currentState"
+    // Joined and invited members, for the RTC slot and the call view model
+    | "getMembersWithMembership"
+    // Call notifications, for the call view model
+    | "_unstable_getStickyEvents"
+    // `on`/`off`, to listen for:
+    // - `RoomEvent.Name` (room name)
+    // - `RoomEvent.CurrentStateUpdated` (avatar and join rule hooks)
+    // - `RoomStateEvent.Events` (RTC slot status)
+    // - `RoomStateEvent.Members` (RTC slot and call view model members)
+    // - `RoomEvent.Timeline` and `RoomStickyEventsEvent.Update` (call notifications)
+    | "on"
+    | "off"
+  >;
   /** The call to join. */
   rtcSession: MatrixRTCSession;
   /**
@@ -239,14 +260,6 @@ const LoadedCallView: FC<LoadedProps> = ({
       }
     },
   );
-
-  useEffect(() => {
-    // Sanity check the room object
-    if (client.getRoom(room.roomId) !== room)
-      logger.warn(
-        `We've ended up with multiple rooms for the same ID (${room.roomId}). This indicates a bug in the group call loading code, and may lead to incomplete room state.`,
-      );
-  }, [client, room]);
 
   const { displayName, avatarUrl } = useProfile(client);
   const roomName = useRoomName(room);
