@@ -77,6 +77,12 @@ export interface RTCSlot {
   join(options: RTCParticipationOptions): RTCParticipation; // Maybe MediaSession,
 }
 
+/**
+ * The slot as its participation sees it: members, status and identity, without
+ * `join` and `participation$`, which belong to whoever joins.
+ */
+export type ParticipationSlot = Omit<RTCSlot, "join" | "participation$">;
+
 // ---------------------------------------------------------------------------
 // Participation
 
@@ -162,7 +168,8 @@ export type ParticipationState =
 
 /** The span between our `join()` of a slot and our `leave()`. */
 export interface RTCParticipation {
-  readonly slot: RTCSlot;
+  /** Required slot information (no `join` fn and `participation`) */
+  readonly slot: ParticipationSlot;
   /** Sends the leave, tears the connections down and ends the participation. */
   leave(): void;
   state$: Behavior<ParticipationState>;
