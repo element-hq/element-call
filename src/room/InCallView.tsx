@@ -189,6 +189,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       {
         rtcParticipation,
         matrixRoom: props.matrixRoom,
+        client: props.client,
         mediaDevices,
         muteStates: props.muteStates,
         encryptionSystem: props.e2eeSystem,

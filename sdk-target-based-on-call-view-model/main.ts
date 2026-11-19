@@ -131,6 +131,7 @@ export async function createMatrixRTCSdk(
         {
           rtcParticipation: participation,
           matrixRoom: room,
+          client,
           mediaDevices,
           muteStates,
           encryptionSystem,

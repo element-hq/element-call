@@ -199,6 +199,7 @@ export function getBasicCallViewModelEnvironment(
     {
       rtcParticipation,
       matrixRoom,
+      client: matrixRoom.client,
       mediaDevices,
       muteStates,
       encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
