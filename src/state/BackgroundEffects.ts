@@ -33,7 +33,6 @@ import { type Behavior } from "./Behavior";
 import { type ObservableScope } from "./ObservableScope";
 import {
   type BackgroundEffect,
-  type EffectId,
   imagePathFor,
   parseEffect,
 } from "../tracks/backgroundEffectCatalog";
@@ -57,8 +56,8 @@ export interface BackgroundEffectsOptions {
   supported: boolean;
   /** The effect chosen, as the setting stores it. */
   effect$: Behavior<string>;
-  /** Stores a choice, to forget one that can't be honoured. */
-  setEffect: (id: EffectId) => void;
+  /** Resets the choice to no effect, for when the chosen one can't run here. */
+  clearEffect: () => void;
   /** The backgrounds the device keeps, undefined until it has said. */
   added$: Behavior<AddedBackground[] | undefined>;
   /** Builds a segmenter on trial, and answers whether it could. */
@@ -80,7 +79,7 @@ export function createBackgroundEffects(
   {
     supported,
     effect$,
-    setEffect,
+    clearEffect,
     added$,
     canSegment,
     pipeline,
@@ -107,7 +106,7 @@ export function createBackgroundEffects(
           added !== undefined &&
           !added.some(({ id }) => id === effect.id))
       )
-        setEffect("none");
+        clearEffect();
     });
 
   // Asked once an effect is first wanted. A browser update may fix what

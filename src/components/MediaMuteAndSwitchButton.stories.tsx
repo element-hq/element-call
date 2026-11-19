@@ -404,7 +404,7 @@ export const BackgroundImageRefused: Story = {
     selectedBackgroundEffect: "blur",
     backgroundEffectNotice:
       "Background effects run slowly on this platform, which may cause your video to stutter.",
-    backgroundImageRefusal: { text: "That file is not a supported image" },
+    backgroundImageRefusal: "That file is not a supported image",
   },
   decorators: [
     (Story): JSX.Element => (
@@ -440,7 +440,7 @@ function swatch(colour: string): string {
   )}`;
 }
 
-/** One's own backgrounds are removable, never the one in force. */
+/** One's own backgrounds are removable, unless one is the selected one. */
 export const AddedBackgroundsCanBeRemoved: Story = {
   args: {
     ...VideoUnmute.args,

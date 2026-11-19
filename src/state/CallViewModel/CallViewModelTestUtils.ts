@@ -81,7 +81,7 @@ export interface CallViewModelInputs {
   sharingScreen: Map<Participant, Behavior<boolean>>;
   mediaDevices: MediaDevices;
   initialSyncState: SyncState;
-  windowSize$: Behavior<{ width: number; height: number }>;
+  viewSize$: Behavior<{ width: number; height: number }>;
 }
 
 export const localParticipant: Participant = { identity: "" };
@@ -106,7 +106,7 @@ export function withCallViewModel(mode: MatrixRTCMode) {
       sharingScreen = new Map(),
       mediaDevices = mockMediaDevices({}),
       initialSyncState = SyncState.Syncing,
-      windowSize$ = constant({ width: 1000, height: 800 }),
+      viewSize$ = constant({ width: 1000, height: 800 }),
     }: Partial<CallViewModelInputs> = {},
     continuation: (
       vm: CallViewModel,
@@ -262,22 +262,24 @@ export function withCallViewModel(mode: MatrixRTCMode) {
 
     const vm = createCallViewModel$(
       scope,
-      rtcParticipation,
-      room,
-      mediaDevices,
-      muteStates,
       {
+        rtcParticipation,
+        matrixRoom: room,
+        mediaDevices,
+        muteStates,
         encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+        viewSize$,
+        handsRaisedSubject$: raisedHands$,
+        reactionsSubject$: reactions$,
+      },
+      {
         autoLeaveWhenOthersLeft: false,
         sentCallNotification$: createSentCallNotification$(
           scope,
           rtcSession.asMockedSession(),
         ),
-        windowSize$,
         ...options,
       },
-      raisedHands$,
-      reactions$,
     );
     void mode;
 

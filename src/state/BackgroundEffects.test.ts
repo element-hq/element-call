@@ -75,7 +75,7 @@ describe("the pipeline's state", () => {
       const effects = createBackgroundEffects(testScope(), {
         supported: true,
         effect$: behavior(effect, { n: "none", b: "blur" }),
-        setEffect: vi.fn(),
+        clearEffect: vi.fn(),
         added$: new BehaviorSubject<AddedBackground[] | undefined>([]),
         canSegment: () => cold(answer, { y: true, n: false }),
         pipeline: fakePipeline().pipeline,
@@ -110,7 +110,7 @@ describe("the pipeline's state", () => {
 describe("background effects", () => {
   let effect$: BehaviorSubject<string>;
   let added$: BehaviorSubject<AddedBackground[] | undefined>;
-  let setEffect: (raw: string) => void;
+  let clearEffect: () => void;
   let fake: ReturnType<typeof fakePipeline>;
 
   function build(
@@ -119,7 +119,7 @@ describe("background effects", () => {
     return createBackgroundEffects(testScope(), {
       supported: true,
       effect$,
-      setEffect,
+      clearEffect,
       added$,
       canSegment: () => of(true),
       pipeline: fake.pipeline,
@@ -135,7 +135,7 @@ describe("background effects", () => {
   beforeEach(() => {
     effect$ = new BehaviorSubject("none");
     added$ = new BehaviorSubject<AddedBackground[] | undefined>(undefined);
-    setEffect = vi.fn((raw: string) => effect$.next(raw));
+    clearEffect = vi.fn(() => effect$.next("none"));
     fake = fakePipeline();
   });
 
