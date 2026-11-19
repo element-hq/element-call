@@ -67,7 +67,28 @@ import { participationState } from "./participationState";
 
 /** What is needed for our own participation. */
 export interface ParticipationDeps {
-  client: MatrixClient;
+  client: Pick<
+    MatrixClient,
+    // Our own membership identity
+    | "getUserId"
+    | "getDeviceId"
+    // Local transport discovery
+    | "getDomain"
+    | "getRTCTransports"
+    // LiveKit auth: `getOpenIdToken` for the JWT service flow, `getLivekitToken`
+    // for the client-server API flow (MSC4195), `delegateDelayedLeave` and
+    // `baseUrl` for the delayed leave delegation and its probe
+    | "getOpenIdToken"
+    | "getLivekitToken"
+    | "delegateDelayedLeave"
+    | "baseUrl"
+    // Homeserver connection: whether the client is syncing
+    | "getSyncState"
+    // `on`/`off`, to listen for:
+    // - `ClientEvent.Sync` (homeserver connection)
+    | "on"
+    | "off"
+  >;
   slot: ParticipationSlot;
   jsSdkSession: JsSdkRTCSession;
   transports: TransportRegistry;
@@ -307,7 +328,13 @@ export function createRTCParticipation(
 /** The host's backend, or LiveKit configured from the participation options. */
 function createBackend(
   scope: ObservableScope,
-  client: MatrixClient,
+  client: Pick<
+    MatrixClient,
+    // LiveKit auth: `getOpenIdToken` for the JWT service flow, `getLivekitToken`
+    // for the client-server API flow (MSC4195), `delegateDelayedLeave` and
+    // `baseUrl` for the delayed leave delegation and its probe
+    "getOpenIdToken" | "getLivekitToken" | "delegateDelayedLeave" | "baseUrl"
+  >,
   { backend, mediaQuality }: RTCParticipationOptions,
   context: MediaBackendContext,
 ): MediaBackend {

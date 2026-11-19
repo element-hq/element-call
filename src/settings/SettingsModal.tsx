@@ -8,12 +8,12 @@ Please see LICENSE in the repository root for full details.
 import { type FC, type ReactNode, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Root as Form, Separator } from "@vector-im/compound-web";
+import { type MatrixClient } from "matrix-js-sdk";
 
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
 import { type Tab, TabContainer } from "../tabs/Tabs";
 import { ProfileSettingsTab } from "./ProfileSettingsTab";
-import { type ProfileClientParts } from "../profile/useProfile";
 import { FeedbackSettingsTab } from "./FeedbackSettingsTab";
 import { iosDeviceMenu$ } from "../state/MediaDevices";
 import { useMediaDevices } from "../MediaDevicesContext";
@@ -34,7 +34,6 @@ import {
 } from "../tracks/backgroundEffectCatalog";
 import {
   DeveloperSettingsTab,
-  type DeveloperSettingsClientParts,
   type DeveloperSettingsSnapshot,
   type TransportInfo,
 } from "./DeveloperSettingsTab";
@@ -54,8 +53,24 @@ type SettingsTab =
   | "more"
   | "developer";
 
-export type SettingsClientParts = ProfileClientParts &
-  DeveloperSettingsClientParts;
+export type SettingsClientParts = Pick<
+  MatrixClient,
+  // Profile and developer tabs
+  | "getUserId"
+  // Profile tab
+  | "getUser"
+  | "setDisplayName"
+  | "setAvatarUrl"
+  | "uploadContent"
+  // Developer tab
+  | "doesServerSupportUnstableFeature"
+  | "getCrypto"
+  | "getDeviceId"
+  | "getDomain"
+  // Developer tab, to authenticate with a transport
+  | "getLivekitToken"
+  | "getOpenIdToken"
+>;
 
 interface Props {
   open: boolean;

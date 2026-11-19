@@ -48,21 +48,35 @@ import {
 } from "./matrixrtc/Members";
 import { createTransportRegistry } from "./matrixrtc/Transports";
 
-
-
 /**
- * Takes the whole `MatrixClient` rather than a slice of it. The js-sdk is the
- * MatrixRTC implementation today; when the rust-rtc crate replaces it, the SDK
- * has to bridge the crate to the js-sdk client, and only the SDK knows what
- * that bridge needs. Holding the client keeps that change inside the SDK.
- *
  * The session is passed separately: the caller has to pass a session from the
  * same matrix-js-sdk copy as the SDK's. The caller owns its lifetime too, so
  * stops it once done; ending the slot's scope does not.
  */
 export function createRTCSlot(
   scope: ObservableScope,
-  client: MatrixClient,
+  client: Pick<
+    MatrixClient,
+    // Our own membership identity
+    | "getUserId"
+    | "getDeviceId"
+    // Local transport discovery
+    | "getDomain"
+    | "getRTCTransports"
+    // LiveKit auth: `getOpenIdToken` for the JWT service flow, `getLivekitToken`
+    // for the client-server API flow (MSC4195), `delegateDelayedLeave` and
+    // `baseUrl` for the delayed leave delegation and its probe
+    | "getOpenIdToken"
+    | "getLivekitToken"
+    | "delegateDelayedLeave"
+    | "baseUrl"
+    // Homeserver connection: whether the client is syncing
+    | "getSyncState"
+    // `on`/`off`, to listen for:
+    // - `ClientEvent.Sync` (homeserver connection)
+    | "on"
+    | "off"
+  >,
   //  The parts of the Matrix room a slot reads. `on` and `off` are only there for
   //  `fromEvent`, which listens on the room for:
   //  - `RoomStateEvent.Events`, to update the slot status;

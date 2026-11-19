@@ -136,8 +136,36 @@ export interface ActiveCallProps extends Omit<
   InCallViewProps,
   "vm" | "footerVm" | "developerSettingsVm"
 > {
-  /** Whole, because {@link createRTCSlot} takes the whole client. */
-  client: MatrixClient;
+  client: Pick<
+    MatrixClient,
+    // Our own identity: RTC slot, call view model, footer, settings
+    | "getUserId"
+    | "getDeviceId"
+    // Local transport discovery (RTC slot), developer settings
+    | "getDomain"
+    | "getRTCTransports"
+    // LiveKit auth (RTC slot), developer settings: `getOpenIdToken` for the JWT
+    // service flow, `getLivekitToken` for the client-server API flow (MSC4195)
+    | "getOpenIdToken"
+    | "getLivekitToken"
+    // LiveKit delayed leave delegation and its probe (RTC slot)
+    | "delegateDelayedLeave"
+    | "baseUrl"
+    // Homeserver connection (RTC slot): whether the client is syncing
+    | "getSyncState"
+    // `on`/`off`, to listen for:
+    // - `ClientEvent.Sync` (RTC slot homeserver connection)
+    | "on"
+    | "off"
+    // Profile: display name and avatar, for the settings and the call ended view
+    | "getUser"
+    | "setDisplayName"
+    | "setAvatarUrl"
+    | "uploadContent"
+    // Developer settings
+    | "doesServerSupportUnstableFeature"
+    | "getCrypto"
+  >;
   matrixRoom: Pick<
     MatrixRoom,
     // RTC slot and call view model
