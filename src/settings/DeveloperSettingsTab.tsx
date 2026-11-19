@@ -68,6 +68,7 @@ import { Slider } from "../Slider";
 import { useUrlParams } from "../UrlParams";
 import {
   authenticateWithTransport,
+  type AuthenticateWithTransportParams,
   type TransportMetadata,
 } from "@element-hq/matrixrtc-sdk";
 import { useBehavior } from "../useBehavior";
@@ -111,8 +112,18 @@ const KeyRotationStatus: FC<{ info: KeyRotationInfo }> = ({ info }) => (
   </p>
 );
 
+export type DeveloperSettingsClientParts = Pick<
+  MatrixClient,
+  | "doesServerSupportUnstableFeature"
+  | "getCrypto"
+  | "getUserId"
+  | "getDeviceId"
+  | "getDomain"
+> &
+  AuthenticateWithTransportParams["client"];
+
 interface Props {
-  client: MatrixClient;
+  client: DeveloperSettingsClientParts;
   roomId?: string;
   /** The transports the client is connected to, while in a call. */
   transports?: TransportInfo[];

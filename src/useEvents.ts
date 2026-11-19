@@ -43,7 +43,7 @@ export function useTypedEventEmitter<
   Arguments extends ListenerMap<Events>,
   T extends Events,
 >(
-  emitter: TypedEventEmitter<Events, Arguments>,
+  emitter: Pick<TypedEventEmitter<Events, Arguments>, "on" | "off">,
   eventType: T,
   listener: Listener<Events, Arguments, T>,
 ): void {
@@ -66,7 +66,7 @@ export function useTypedEventEmitterState<
   T extends Events,
   State,
 >(
-  emitter: TypedEventEmitter<Events, Arguments>,
+  emitter: Pick<TypedEventEmitter<Events, Arguments>, "on" | "off">,
   eventType: T,
   getState: () => State,
 ): State {

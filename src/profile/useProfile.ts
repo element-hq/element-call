@@ -37,7 +37,12 @@ interface UseProfile extends ProfileLoadState {
   saveProfile: ProfileSaveCallback;
 }
 
-export function useProfile(client: MatrixClient | undefined): UseProfile {
+export type ProfileClientParts = Pick<
+  MatrixClient,
+  "getUserId" | "getUser" | "setDisplayName" | "setAvatarUrl" | "uploadContent"
+>;
+
+export function useProfile(client: ProfileClientParts | undefined): UseProfile {
   const [{ success, loading, displayName, avatarUrl, error }, setState] =
     useState<ProfileLoadState>(() => {
       let user: User | undefined = undefined;

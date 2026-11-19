@@ -7,10 +7,10 @@ Please see LICENSE in the repository root for full details.
 
 import { useCallback } from "react";
 
-import type { JoinRule, Room } from "matrix-js-sdk";
-import { useRoomState } from "./useRoomState";
+import type { JoinRule } from "matrix-js-sdk";
+import { type RoomStateParts, useRoomState } from "./useRoomState";
 
-export function useJoinRule(room: Room): JoinRule {
+export function useJoinRule(room: RoomStateParts): JoinRule {
   return useRoomState(
     room,
     useCallback((state) => state.getJoinRule(), []),

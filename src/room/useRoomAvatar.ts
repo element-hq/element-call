@@ -8,9 +8,11 @@ Please see LICENSE in the repository root for full details.
 import { useCallback } from "react";
 import { type Room } from "matrix-js-sdk";
 
-import { useRoomState } from "./useRoomState";
+import { type RoomStateParts, useRoomState } from "./useRoomState";
 
-export function useRoomAvatar(room: Room): string | null {
+export function useRoomAvatar(
+  room: RoomStateParts & Pick<Room, "getMxcAvatarUrl">,
+): string | null {
   return useRoomState(
     room,
     useCallback(() => room.getMxcAvatarUrl(), [room]),
