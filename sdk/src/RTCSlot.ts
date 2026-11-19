@@ -24,6 +24,7 @@ import {
 import { ObservableScope } from "./reactive/ObservableScope";
 import { generateItems } from "./reactive/observable";
 import {
+  type ParticipationSlot,
   type RTCMember,
   type RTCParticipation,
   type RTCParticipationOptions,
@@ -67,9 +68,9 @@ export function createRTCSlot(
   const logger = rootLogger.getChild("[RTCSlot]");
   const userId = client.getUserId();
   const deviceId = client.getDeviceId();
+  const roomId = room.roomId;
   if (!(userId && deviceId))
     throw new MatrixRTCError("The client has to be logged in");
-  const { application, id } = jsSdkSession.slotDescription;
 
   const memberships$ = createMemberships$(scope, jsSdkSession);
 
@@ -120,44 +121,50 @@ export function createRTCSlot(
     ),
   );
 
-  const slot: RTCSlot = {
-    roomId: room.roomId,
-    application,
-    id,
+  const participationSlot: ParticipationSlot = {
+    roomId,
     status$,
     members$,
+    ...jsSdkSession.slotDescription,
+  };
+
+  const join = (
+    participationOptions: RTCParticipationOptions,
+  ): RTCParticipation => {
+    if (active$.value !== null)
+      throw new MatrixRTCError(
+        "Already in this slot: leave the participation before joining again",
+      );
+    const participationScope = new ObservableScope();
+    participationScopes.add(participationScope);
+    const internals = createRTCParticipation(
+      participationScope,
+      {
+        client,
+        slot: participationSlot,
+        jsSdkSession,
+        transports,
+        slotOptions: options,
+        logger,
+      },
+      participationOptions,
+    );
+    participationScope.onEnd(() => {
+      participationScopes.delete(participationScope);
+      if (active$.value === internals) active$.next(null);
+    });
+    active$.next(internals);
+    return internals.participation;
+  };
+
+  const slot = {
+    join,
     participation$: scope.behavior(
       active$.pipe(map((active) => active?.participation ?? null)),
     ),
-    join: (participationOptions: RTCParticipationOptions): RTCParticipation => {
-      if (active$.value !== null)
-        throw new MatrixRTCError(
-          "Already in this slot: leave the participation before joining again",
-        );
-      const participationScope = new ObservableScope();
-      participationScopes.add(participationScope);
-      const internals = createRTCParticipation(
-        participationScope,
-        {
-          client,
-          room,
-          slot,
-          jsSdkSession,
-          members$,
-          transports,
-          slotOptions: options,
-          logger,
-        },
-        participationOptions,
-      );
-      participationScope.onEnd(() => {
-        participationScopes.delete(participationScope);
-        if (active$.value === internals) active$.next(null);
-      });
-      active$.next(internals);
-      return internals.participation;
-    },
+    ...participationSlot,
   };
+
   return slot;
 }
 

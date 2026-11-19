@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type MatrixClient, type Room } from "matrix-js-sdk";
+import { type MatrixClient } from "matrix-js-sdk";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import {
   type MatrixRTCSession as JsSdkRTCSession,
@@ -30,19 +30,17 @@ import {
 
 import { defaultSessionTimings, MatrixRTCMode } from "./config";
 import { E2eeType } from "./encryption";
-import { type Behavior } from "./reactive/Behavior";
 import { type ObservableScope } from "./reactive/ObservableScope";
 import { generateItems } from "./reactive/observable";
 import { mapScoped } from "./utils/mapScoped";
 import {
+  type ParticipationSlot,
   type DataMessage,
   type LocalRTCMember,
   type ParticipationState,
   type RemoteRTCMember,
-  type RTCMember,
   type RTCParticipation,
   type RTCParticipationOptions,
-  type RTCSlot,
   type RTCSlotOptions,
 } from "./api";
 import {
@@ -67,13 +65,11 @@ import { createKeyRotationSuppressed$ } from "./matrixrtc/JsRtcSessionBehaviors"
 import { type TransportRegistry } from "./matrixrtc/Transports";
 import { participationState } from "./participationState";
 
-/** What the slot lends a participation. */
+/** What is needed for our own participation. */
 export interface ParticipationDeps {
   client: MatrixClient;
-  room: Room;
-  slot: RTCSlot;
+  slot: ParticipationSlot;
   jsSdkSession: JsSdkRTCSession;
-  members$: Behavior<RTCMember[]>;
   transports: TransportRegistry;
   slotOptions: Pick<RTCSlotOptions, "matrixRTCMode" | "encryptionSystem">;
   logger: Logger;
@@ -94,16 +90,18 @@ export function createRTCParticipation(
   scope: ObservableScope,
   {
     client,
-    room,
     slot,
     jsSdkSession,
-    members$,
     transports,
     slotOptions: { matrixRTCMode, encryptionSystem },
     logger: parentLogger,
   }: ParticipationDeps,
   options: RTCParticipationOptions,
 ): ParticipationInternals {
+  const { roomId, members$ } = slot;
+  // The full `{application}#{id}`, which the auth service and the other
+  // members key the media room on
+  const slotId = jsSdkSession.slotId;
   const logger = parentLogger.getChild("[RTCParticipation]");
   const userId = client.getUserId()!;
   const deviceId = client.getDeviceId()!;
@@ -122,8 +120,8 @@ export function createRTCParticipation(
   };
 
   const backend = createBackend(scope, client, options, {
-    roomId: room.roomId,
-    slotId: jsSdkSession.slotId,
+    roomId,
+    slotId,
     ownMembershipIdentity,
     publish: options.publish,
     encryptionSystem,
@@ -144,8 +142,8 @@ export function createRTCParticipation(
           // to come back later rather than wait in a half-working lobby
           memberships: jsSdkSession.memberships,
           ownMembershipIdentity,
-          roomId: room.roomId,
-          slotId: jsSdkSession.slotId,
+          roomId,
+          slotId,
           logger,
         })
       : null;
@@ -175,21 +173,15 @@ export function createRTCParticipation(
       timings.syncDisconnectGracePeriodMs,
     ),
     joinMatrixRTC: (transport, delayedLeave) =>
-      joinJsSdkSession(
-        room.roomId,
-        jsSdkSession,
-        ownMembershipIdentity,
-        transport,
-        {
-          encryptMedia: encryptionSystem.kind !== E2eeType.NONE,
-          matrixRTCMode,
-          sendNotificationType: options.sendNotificationType,
-          callIntent: options.callIntent,
-          applicationData: options.applicationData,
-          timings,
-          delayedLeave,
-        },
-      ),
+      joinJsSdkSession(roomId, jsSdkSession, ownMembershipIdentity, transport, {
+        encryptMedia: encryptionSystem.kind !== E2eeType.NONE,
+        matrixRTCMode,
+        sendNotificationType: options.sendNotificationType,
+        callIntent: options.callIntent,
+        applicationData: options.applicationData,
+        timings,
+        delayedLeave,
+      }),
     membershipManagerError$: fromEvent(
       jsSdkSession,
       MatrixRTCSessionEvent.MembershipManagerError,

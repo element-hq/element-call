@@ -22,7 +22,6 @@ import {
   type ParticipationState,
   type RTCMember,
   type RTCParticipationOptions,
-  type RTCSlot,
   type TransportMetadata,
 } from "./api";
 import { defaultSessionTimings, MatrixRTCMode } from "./config";
@@ -191,10 +190,14 @@ function setup(
     scope,
     {
       client,
-      room,
-      slot: {} as RTCSlot,
+      slot: {
+        roomId: room.roomId,
+        application: "m.call",
+        id: "ROOM",
+        status$: constant(undefined),
+        members$: scope.behavior(members$),
+      },
       jsSdkSession: mockedSession,
-      members$: scope.behavior(members$),
       transports: { get: metadata, connected$: constant([]) },
       slotOptions: {
         matrixRTCMode: MatrixRTCMode.Compatibility,

@@ -526,14 +526,21 @@ export interface MockParticipationInputs {
  */
 export function mockRTCParticipation(
   scope: ObservableScope,
+  inputs: MockParticipationInputs = {},
+): RTCParticipation {
+  return mockSlotWithParticipation(scope, inputs).participation;
+}
+
+function mockSlotWithParticipation(
+  scope: ObservableScope,
   {
     localMember$ = constant(null),
     remoteMembers$ = constant([]),
     state$ = constant<ParticipationState>({ kind: "connected" }),
     keyRotationSuppressed$ = constant(false),
     connectedTransports$ = constant([]),
-  }: MockParticipationInputs = {},
-): RTCParticipation {
+  }: MockParticipationInputs,
+): { slot: RTCSlot; participation: RTCParticipation } {
   const members$ = scope.behavior<RTCMember[]>(
     combineLatest([localMember$, remoteMembers$], (local, remote) =>
       local === null ? remote : [local, ...remote],
@@ -570,7 +577,7 @@ export function mockRTCParticipation(
     data$: NEVER,
   };
   participation$.next(participation);
-  return participation;
+  return { slot, participation };
 }
 
 /** The slot of a `mockRTCParticipation`, whose `join()` returns that participation. */
@@ -578,7 +585,7 @@ export function mockRTCSlot(
   scope: ObservableScope,
   inputs: MockParticipationInputs = {},
 ): RTCSlot {
-  return mockRTCParticipation(scope, inputs).slot;
+  return mockSlotWithParticipation(scope, inputs).slot;
 }
 
 export function mockConfig(
