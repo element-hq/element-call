@@ -132,6 +132,7 @@ export const initializeWidget = (
         ElementCallReactionEventType,
         EventType.RTCDecline,
         EventType.RTCMembership,
+        "m.rtc.member",
       ];
 
       const sendState = [

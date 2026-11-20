@@ -5,7 +5,7 @@
     "schedule:monthly",
     ":enableVulnerabilityAlertsWithLabel(security)"
   ],
-  "addLabels": ["dependencies"],
+  "labels": ["dependencies"],
   "minimumReleaseAge": "5 days",
   "packageRules": [
     {
@@ -16,7 +16,8 @@
     {
       "groupName": "GitHub Actions",
       "matchDepTypes": ["action"],
-      "pinDigests": true
+      "pinDigests": true,
+      "labels": ["PR-Task"]
     },
     {
       "description": "Disable Renovate for packages we want to monitor ourselves",
@@ -69,7 +70,8 @@
       "matchUpdateTypes": ["digest"],
       "schedule": ["* 0-3 * * *"],
       "minimumReleaseAge": null,
-      "automerge": true
+      "automerge": true,
+      "labels": ["PR-Task"]
     }
   ],
   "semanticCommits": "disabled",
