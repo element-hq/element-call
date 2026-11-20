@@ -92,7 +92,7 @@ export interface ParticipationDeps {
   slot: ParticipationSlot;
   jsSdkSession: JsSdkRTCSession;
   transports: TransportRegistry;
-  slotOptions: Pick<RTCSlotOptions, "matrixRTCMode" | "encryptionSystem">;
+  slotOptions: RTCSlotOptions;
   logger: Logger;
 }
 
@@ -114,11 +114,12 @@ export function createRTCParticipation(
     slot,
     jsSdkSession,
     transports,
-    slotOptions: { matrixRTCMode, encryptionSystem },
+    slotOptions: { encryptionSystem },
     logger: parentLogger,
   }: ParticipationDeps,
   options: RTCParticipationOptions,
 ): ParticipationInternals {
+  const { matrixRTCMode } = options;
   const { roomId, members$ } = slot;
   // The full `{application}#{id}`, which the auth service and the other
   // members key the media room on

@@ -495,6 +495,7 @@ export function mockRTCMember(
     userId: membership.userId,
     deviceId: membership.deviceId,
     memberId: membership.memberId,
+    matrixEventId$: constant(membership.eventId),
     displayName$: constant(member.rawDisplayName ?? membership.userId),
     avatarUrl$: constant(member.getMxcAvatarUrl()),
     transport$: constant(transport),

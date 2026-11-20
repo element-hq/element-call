@@ -43,8 +43,6 @@ export { MatrixRTCError } from "./errors";
 // Slot
 
 export interface RTCSlotOptions {
-  /** How memberships and keys in this slot are written. Resolved by the host. */
-  matrixRTCMode: MatrixRTCMode;
   encryptionSystem: EncryptionSystem;
 }
 
@@ -97,6 +95,12 @@ export interface RTCParticipationOptions {
    * before the first connection exists.
    */
   publish: PublishRequest[] | LocalMedia;
+  /**
+   * How our membership and keys are written: the member id and whether the
+   * membership is a sticky event. Resolved by the host. Others' memberships
+   * are read whatever their mode.
+   */
+  matrixRTCMode: MatrixRTCMode;
   /**
    * LEGACY
    *
@@ -292,6 +296,12 @@ export interface RTCMember {
   deviceId: string;
   /** The membership's own id; what the Matrix 2.0 identity is derived from. */
   memberId: string;
+  /**
+   * The Matrix event currently carrying the membership, which events about
+   * it (reactions, raised hands) relate to. Changes when the membership is
+   * sent again while the member stays the same.
+   */
+  matrixEventId$: Behavior<string>;
   /** Which transport this member is on; undefined when the membership has none. */
   transport$: Behavior<TransportMetadata | undefined>;
   /** What the member's application says about itself, e.g. `intent`. */

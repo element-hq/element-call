@@ -85,6 +85,7 @@ function member(
     rtcBackendIdentity: overrides.memberId,
     backendIdentities: [overrides.memberId],
     deviceId: "DEV",
+    matrixEventId$: constant(`$${overrides.memberId}`),
     transport$: constant(metadata(transport)),
     applicationData$: constant({}),
     displayName$: constant(overrides.userId),
@@ -110,7 +111,6 @@ interface FakeBackend {
 
 function setup(
   options: Partial<RTCParticipationOptions> = {},
-  slotOptions: { matrixRTCMode?: MatrixRTCMode } = {},
   {
     homeserverTransports = [transport],
     memberships = [],
@@ -199,14 +199,15 @@ function setup(
       },
       jsSdkSession: mockedSession,
       transports: { get: metadata, connected$: constant([]) },
-      slotOptions: {
-        matrixRTCMode: MatrixRTCMode.Compatibility,
-        encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
-        ...slotOptions,
-      },
+      slotOptions: { encryptionSystem: { kind: E2eeType.PER_PARTICIPANT } },
       logger,
     },
-    { publish: [], backend: backendFactory, ...options },
+    {
+      publish: [],
+      matrixRTCMode: MatrixRTCMode.Compatibility,
+      backend: backendFactory,
+      ...options,
+    },
   );
   const states: ParticipationState[] = [];
   participation.state$.subscribe((state) => states.push(state));
@@ -257,7 +258,6 @@ describe("createRTCParticipation", () => {
       fociPreferred: [{ type: "livekit", url: "wss://sfu.example.org" }],
     });
     const { join, fake } = setup(
-      {},
       {},
       { homeserverTransports: [], memberships: [bobOnSfu] },
     );
@@ -352,7 +352,7 @@ describe("createRTCParticipation", () => {
     });
     compatibility.scope.end();
 
-    const matrix2 = setup({}, { matrixRTCMode: MatrixRTCMode.Matrix_2_0 });
+    const matrix2 = setup({ matrixRTCMode: MatrixRTCMode.Matrix_2_0 });
     const { memberId } = matrix2.fake.context.ownMembershipIdentity;
     expect(memberId).not.toBe(legacyMemberId);
     expect(memberId).toMatch(/^[0-9a-f-]{36}$/);

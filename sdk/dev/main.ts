@@ -74,14 +74,12 @@ async function start(
       scope,
       client,
       room,
-      {
-        encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
-        matrixRTCMode: MatrixRTCMode.Compatibility,
-      },
+      { encryptionSystem: { kind: E2eeType.PER_PARTICIPANT } },
       client.matrixRTC.getRoomSession(room),
     );
     const rtcParticipation = slot.join({
       publish: [{ source: "microphone" }, { source: "camera" }],
+      matrixRTCMode: MatrixRTCMode.Compatibility,
     });
     rtcParticipation.state$.pipe(scope.bind()).subscribe((state) => {
       status.textContent =

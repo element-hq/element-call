@@ -344,6 +344,7 @@ describe("createLivekitBackend", () => {
         userId: "@bob:example.org",
         deviceId: "DEV000",
         memberId: legacyId,
+        matrixEventId$: constant("$bob"),
         transport$: constant({
           type: "livekit",
           id: JSON.stringify(transport),
