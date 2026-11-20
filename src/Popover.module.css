@@ -1,0 +1,57 @@
+/*
+Copyright 2026 Element Creations Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
+.popover {
+  position: relative;
+  border-radius: var(--cpd-space-3x);
+  background: var(--cpd-color-bg-canvas-default);
+  box-shadow: var(--big-drop-shadow);
+  padding: var(--cpd-space-5x);
+  box-sizing: border-box;
+  inline-size: 310px;
+  max-inline-size: 90vw;
+
+  /* Draw an internal border */
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: var(--cpd-border-width-1) solid
+      var(--cpd-color-border-interactive-secondary);
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
+  transition:
+    opacity 180ms,
+    transform 180ms;
+
+  &[data-starting-style] {
+    opacity: 0;
+    @media (prefers-reduced-motion: no-preference) {
+      transform: translate(0, var(--cpd-space-3x));
+    }
+  }
+
+  &[data-ending-style] {
+    transition-duration: 110ms;
+    opacity: 0;
+    @media (prefers-reduced-motion: no-preference) {
+      transform: translate(0, var(--cpd-space-2x));
+    }
+  }
+
+  p {
+    font: var(--cpd-font-body-sm-regular);
+    color: var(--cpd-color-text-secondary);
+    margin-block-end: var(--cpd-space-4x);
+  }
+}
+
+.title {
+  margin-block-end: var(--cpd-space-2x);
+}
