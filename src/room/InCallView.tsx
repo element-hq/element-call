@@ -217,16 +217,6 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
   useEffect(() => {
     rootLogger.info("START CALL VIEW SCOPE");
     const scope = new ObservableScope();
-    const reactionsReader = new ReactionsReader(
-      scope,
-      props.rtcSession,
-      props.matrixRoom,
-      props.client,
-    );
-    const { autoLeaveWhenOthersLeft, waitForCallPickup, sendNotificationType } =
-      urlParams;
-
-    const capture = captureSettings();
     const slot = createRTCSlot(
       scope,
       props.client,
@@ -234,6 +224,16 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       rtcSlotOptions(props.e2eeSystem),
       props.rtcSession,
     );
+    const reactionsReader = new ReactionsReader(
+      scope,
+      slot.members$,
+      props.matrixRoom,
+      props.client,
+    );
+    const { autoLeaveWhenOthersLeft, waitForCallPickup, sendNotificationType } =
+      urlParams;
+
+    const capture = captureSettings();
     const rtcParticipation = slot.join({
       ...rtcParticipationOptions(urlParams),
       // Without a lobby nothing was captured and the join captures itself
@@ -335,7 +335,6 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
   return (
     <ReactionsSenderProvider
       vm={vm}
-      rtcSession={props.rtcSession}
       room={props.matrixRoom}
       client={props.client}
     >

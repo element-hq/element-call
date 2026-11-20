@@ -17,7 +17,8 @@ import {
   SyncState,
 } from "matrix-js-sdk";
 
-import { E2eeType } from "@element-hq/matrixrtc-sdk";
+import { E2eeType, type RTCMember } from "@element-hq/matrixrtc-sdk";
+import { type Behavior } from "../state/Behavior";
 import {
   type CallViewModel,
   createCallViewModel$,
@@ -53,9 +54,11 @@ export function getBasicRTCSession(
   initialRtcMemberships: CallMembership[] = [localRtcMember, aliceRtcMember],
 ): {
   rtcSession: MockRTCSession;
-  room: Room;
+  matrixRoom: Room;
   client: MatrixClient;
   rtcMemberships$: BehaviorSubject<CallMembership[]>;
+  /** The memberships as the slot's members. */
+  members$: Behavior<RTCMember[]>;
 } {
   const matrixRoomId = "!myRoomId:example.com";
   const matrixRoomMembers = new Map(members.map((p) => [p.userId, p]));
@@ -124,11 +127,29 @@ export function getBasicRTCSession(
     rtcMemberships$,
   );
 
+  const members$ = testScope().behavior(
+    rtcMemberships$.pipe(
+      map((memberships) =>
+        memberships.map((membership) => {
+          const inputs = {
+            membership,
+            roomMember: matrixRoomMembers.get(membership.userId),
+          };
+          return membership.userId === localRtcMember.userId &&
+            membership.deviceId === localRtcMember.deviceId
+            ? mockRTCMember(true, inputs)
+            : mockRTCMember(false, inputs);
+        }),
+      ),
+    ),
+  );
+
   return {
     rtcSession: fakeRtcSession,
     matrixRoom,
     client,
     rtcMemberships$,
+    members$,
   };
 }
 
