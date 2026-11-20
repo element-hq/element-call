@@ -15,7 +15,7 @@ import {
   afterAll,
 } from "vitest";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
+import { type Statistics } from "matrix-js-sdk/lib/matrixrtc";
 
 import { PosthogAnalytics } from "./PosthogAnalytics";
 import {
@@ -34,16 +34,14 @@ const defaultTotals = {
   roomEventEncryptionKeysReceivedTotalAge: 500,
 };
 
-function createMockRtcSession(overrides?: {
+function createMockStatistics(overrides?: {
   counters?: Partial<typeof defaultCounters>;
   totals?: Partial<typeof defaultTotals>;
-}): MatrixRTCSession {
+}): Statistics {
   return {
-    statistics: {
-      counters: { ...defaultCounters, ...overrides?.counters },
-      totals: { ...defaultTotals, ...overrides?.totals },
-    },
-  } as unknown as MatrixRTCSession;
+    counters: { ...defaultCounters, ...overrides?.counters },
+    totals: { ...defaultTotals, ...overrides?.totals },
+  } as Statistics;
 }
 
 describe("CallEnded", () => {
@@ -65,9 +63,9 @@ describe("CallEnded", () => {
   it("warns if startTime is missing when track is called", () => {
     const warnSpy = vi.spyOn(logger, "warn");
     const tracker = new CallEndedTracker();
-    const mockSession = createMockRtcSession();
+    const statistics = createMockStatistics();
 
-    tracker.track("test-call-id", 2, false, mockSession);
+    tracker.track("test-call-id", 2, false, statistics);
 
     expect(warnSpy).toHaveBeenCalledWith(
       "[PosthogEvents] Failed to send posthog callEnded event due to missing startTime",
@@ -77,11 +75,11 @@ describe("CallEnded", () => {
 
   it("tracks event with correct properties when startTime is set", () => {
     const tracker = new CallEndedTracker();
-    const mockSession = createMockRtcSession();
+    const statistics = createMockStatistics();
 
     tracker.cacheStartCall(new Date(Date.now() - 60000));
     tracker.cacheParticipantCountChanged(5);
-    tracker.track("test-call-id", 3, true, mockSession);
+    tracker.track("test-call-id", 3, true, statistics);
 
     expect(PosthogAnalytics.instance.trackEvent).toHaveBeenCalledWith(
       {
@@ -105,13 +103,13 @@ describe("CallEnded", () => {
 
   it("tracks maxParticipantsCount correctly across multiple changes", () => {
     const tracker = new CallEndedTracker();
-    const mockSession = createMockRtcSession();
+    const statistics = createMockStatistics();
 
     tracker.cacheStartCall(new Date());
     tracker.cacheParticipantCountChanged(3);
     tracker.cacheParticipantCountChanged(7);
     tracker.cacheParticipantCountChanged(2);
-    tracker.track("test-call-id", 1, false, mockSession);
+    tracker.track("test-call-id", 1, false, statistics);
 
     expect(PosthogAnalytics.instance.trackEvent).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -123,12 +121,12 @@ describe("CallEnded", () => {
 
   it("computes roomEventEncryptionKeysReceivedAverageAge as 0 when no keys received", () => {
     const tracker = new CallEndedTracker();
-    const mockSession = createMockRtcSession({
+    const statistics = createMockStatistics({
       counters: { roomEventEncryptionKeysReceived: 0 },
     });
 
     tracker.cacheStartCall(new Date());
-    tracker.track("test-call-id", 1, false, mockSession);
+    tracker.track("test-call-id", 1, false, statistics);
 
     expect(PosthogAnalytics.instance.trackEvent).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -140,13 +138,13 @@ describe("CallEnded", () => {
 
   it("computes roomEventEncryptionKeysReceivedAverageAge correctly when keys are received", () => {
     const tracker = new CallEndedTracker();
-    const mockSession = createMockRtcSession({
+    const statistics = createMockStatistics({
       counters: { roomEventEncryptionKeysReceived: 4 },
       totals: { roomEventEncryptionKeysReceivedTotalAge: 200 },
     });
 
     tracker.cacheStartCall(new Date());
-    tracker.track("test-call-id", 1, false, mockSession);
+    tracker.track("test-call-id", 1, false, statistics);
 
     expect(PosthogAnalytics.instance.trackEvent).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -158,10 +156,10 @@ describe("CallEnded", () => {
 
   it("passes send_instantly option correctly", () => {
     const tracker = new CallEndedTracker();
-    const mockSession = createMockRtcSession();
+    const statistics = createMockStatistics();
 
     tracker.cacheStartCall(new Date());
-    tracker.track("test-call-id", 1, false, mockSession);
+    tracker.track("test-call-id", 1, false, statistics);
 
     expect(PosthogAnalytics.instance.trackEvent).toHaveBeenCalledWith(
       expect.anything(),
@@ -171,14 +169,14 @@ describe("CallEnded", () => {
 
   it("includes per-reason reconnecting counts in CallEnded", () => {
     const tracker = new CallEndedTracker();
-    const mockSession = createMockRtcSession();
+    const statistics = createMockStatistics();
 
     tracker.cacheStartCall(new Date());
     tracker.cacheReconnecting("sync");
     tracker.cacheReconnecting("sync");
     tracker.cacheReconnecting("livekit");
     tracker.cacheReconnecting("membership");
-    tracker.track("test-call-id", 1, false, mockSession);
+    tracker.track("test-call-id", 1, false, statistics);
 
     expect(PosthogAnalytics.instance.trackEvent).toHaveBeenCalledWith(
       expect.objectContaining({

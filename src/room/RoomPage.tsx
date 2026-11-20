@@ -118,6 +118,8 @@ export const RoomPage: FC = (): ReactNode => {
             client={client!}
             room={groupCallState.room}
             rtcSession={groupCallState.rtcSession}
+            sentCallNotification$={groupCallState.sentCallNotification$}
+            statistics={groupCallState.rtcSession.statistics}
             isPasswordlessUser={passwordlessUser}
             confineToRoom={confineToRoom}
             preload={preload}

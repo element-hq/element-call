@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { describe, expect, test } from "vitest";
 import { ConnectionError } from "livekit-client";
+import { UnsupportedStickyEventsEndpointError } from "matrix-js-sdk";
 import {
   ErrorCode as RTCErrorCode,
   FailToGetOpenIdToken as RTCFailToGetOpenIdToken,
@@ -32,10 +33,10 @@ import {
   InsufficientCapacityError,
   LivekitConnectionError,
   MatrixRTCTransportMissingError,
-  MembershipManagerError,
   NoMatrix2AuthorizationService,
   PeerConnectionTimeoutError,
   SFURoomCreationRestrictedError,
+  StickyEventsRequiredError,
   UnknownCallError,
 } from "./errors";
 
@@ -43,17 +44,6 @@ import {
 // rather than the global one, so each needs to come out translated rather than
 // as a raw key.
 describe("localised errors", () => {
-  test("MembershipManagerError describes the failure and keeps its cause", () => {
-    const cause = new Error("the underlying problem");
-    const error = new MembershipManagerError(cause);
-
-    expect(error.code).toBe(ErrorCode.INTERNAL_MEMBERSHIP_MANAGER);
-    expect(error.category).toBe(ErrorCategory.SYSTEM_FAILURE);
-    expect(error.localisedTitle).not.toContain("error.");
-    expect(error.localisedMessage).not.toContain("error.");
-    expect(error.cause).toBe(cause);
-  });
-
   test("NoMatrix2AuthorizationService is a configuration problem", () => {
     const cause = new Error("404");
     const error = new NoMatrix2AuthorizationService(cause);
@@ -100,8 +90,22 @@ describe("fromMatrixRTCError", () => {
     {
       name: "membership manager failure",
       input: new RTCMembershipManagerError(cause),
-      expected: MembershipManagerError,
-      code: ErrorCode.INTERNAL_MEMBERSHIP_MANAGER,
+      expected: ConnectionLostError,
+      code: ErrorCode.CONNECTION_LOST_ERROR,
+    },
+    {
+      name: "membership manager stopped by missing sticky events",
+      // The membership manager's scheduler wraps the original error
+      input: new RTCMembershipManagerError(
+        new Error("The MembershipManager shut down", {
+          cause: new UnsupportedStickyEventsEndpointError(
+            "Server does not support the sticky events",
+            "sendStickyEvent",
+          ),
+        }),
+      ),
+      expected: StickyEventsRequiredError,
+      code: ErrorCode.STICKY_EVENTS_NOT_SUPPORTED,
     },
     {
       name: "OpenID token failure",
@@ -169,7 +173,9 @@ describe("fromMatrixRTCError", () => {
   });
 
   test("keeps the SDK error's cause for reporting", () => {
-    const error = fromMatrixRTCError(new RTCMembershipManagerError(cause));
+    const error = fromMatrixRTCError(
+      new RTCNoMatrix2AuthorizationService(cause),
+    );
 
     expect(error.cause).toBe(cause);
   });

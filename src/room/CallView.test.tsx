@@ -19,16 +19,8 @@ import {
   vitest,
 } from "vitest";
 import { render, waitFor, screen, act } from "@testing-library/react";
-import {
-  type MatrixClient,
-  JoinRule,
-  type RoomState,
-  UnsupportedStickyEventsEndpointError,
-} from "matrix-js-sdk";
-import {
-  MatrixRTCSessionEvent,
-  type MatrixRTCSession,
-} from "matrix-js-sdk/lib/matrixrtc";
+import { type MatrixClient, JoinRule, type RoomState } from "matrix-js-sdk";
+import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import { BrowserRouter } from "react-router-dom";
 import userEvent, {
   PointerEventsCheckLevel,
@@ -36,7 +28,7 @@ import userEvent, {
 import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-container";
 import { useState } from "react";
 import { TooltipProvider } from "@vector-im/compound-web";
-import { Subject } from "rxjs";
+import { NEVER, Subject } from "rxjs";
 import { Room as LivekitRoom } from "livekit-client";
 
 import { prefetchSounds } from "../soundUtils";
@@ -53,7 +45,6 @@ import {
   testScope,
 } from "../utils/test";
 import { CallView } from "./CallView";
-import { GroupCallErrorBoundary } from "./GroupCallErrorBoundary";
 import {
   type HostBridge,
   HostBridgeProvider,
@@ -61,7 +52,10 @@ import {
   nullHostBridge,
 } from "../HostBridge";
 import { type JoinCallData } from "../widget";
-import { MatrixRTCTransportMissingError } from "../utils/errors";
+import {
+  ConnectionLostError,
+  MatrixRTCTransportMissingError,
+} from "../utils/errors";
 import {
   BackgroundEffectsProvider,
   createAppBackgroundEffects,
@@ -146,7 +140,6 @@ function createCallView(
   hostBridge: HostBridge,
   joined = true,
   options: {
-    withErrorBoundary?: boolean;
     /** Wait for the host to say when to join, rather than joining at once. */
     preload?: boolean;
   } = {},
@@ -170,6 +163,7 @@ function createCallView(
     client,
     roomId,
     getMember: (userId) => roomMembers.get(userId) ?? null,
+    getMembersWithMembership: () => [carol],
     getMxcAvatarUrl: () => null,
     getCanonicalAlias: () => null,
     currentState: {
@@ -181,18 +175,6 @@ function createCallView(
     constant([localRtcMember]),
   );
   rtcSession.joined = joined;
-  const callView = (
-    <CallView
-      client={client}
-      room={room}
-      isPasswordlessUser={false}
-      confineToRoom={false}
-      preload={options.preload ?? false}
-      // Straight into the (mocked) call, past the lobby
-      skipLobby
-      rtcSession={rtcSession.asMockedSession()}
-    />
-  );
   const { getByText } = render(
     <BrowserRouter>
       <HostBridgeProvider value={hostBridge}>
@@ -201,13 +183,18 @@ function createCallView(
             <BackgroundEffectsProvider
               effects={createAppBackgroundEffects(testScope())}
             >
-              {options.withErrorBoundary ? (
-                <GroupCallErrorBoundary recoveryActionHandler={vi.fn()}>
-                  {callView}
-                </GroupCallErrorBoundary>
-              ) : (
-                callView
-              )}
+              <CallView
+                client={client}
+                room={room}
+                isPasswordlessUser={false}
+                confineToRoom={false}
+                preload={options.preload ?? false}
+                // Straight into the (mocked) call, past the lobby
+                skipLobby
+                rtcSession={rtcSession.asMockedSession()}
+                sentCallNotification$={NEVER}
+                statistics={rtcSession.asMockedSession().statistics}
+              />
             </BackgroundEffectsProvider>
           </MediaDevicesContext>
         </TooltipProvider>
@@ -372,52 +359,28 @@ test.skip("CallView shows errors that occur during joining", async () => {
   screen.getByText("Call is not supported");
 });
 
-test("translates wrapped UnsupportedStickyEventsEndpointError to the StickyEventsRequiredError screen", async () => {
-  // Mirror the shape the SDK emits: the MembershipManager scheduler wraps
-  // the original UnsupportedStickyEventsEndpointError in a generic Error
-  // but preserves the original on `.cause`.
-  const stickyError = new UnsupportedStickyEventsEndpointError(
-    "Server does not support the sticky events",
-    "sendStickyEvent",
+test("user can reconnect after losing the connection", async () => {
+  // What the call throws once the view model reports the connection lost
+  (ActiveCall as MockedFunction<typeof ActiveCall>).mockImplementation(
+    ({ onLeft }) => {
+      const [error, setError] = useState<Error | null>(null);
+      if (error !== null) throw error;
+      return (
+        <div>
+          <button onClick={() => onLeft("user")}>Leave</button>
+          <button onClick={() => setError(new ConnectionLostError())}>
+            LoseConnection
+          </button>
+        </div>
+      );
+    },
   );
-  const wrappedError = new Error(
-    "The MembershipManager shut down because of the end condition: " +
-      String(stickyError),
-    { cause: stickyError },
-  );
-
-  const { rtcSession } = createCallView(nullHostBridge, true, {
-    withErrorBoundary: true,
-  });
-
-  await act(() =>
-    rtcSession.emit(MatrixRTCSessionEvent.MembershipManagerError, wrappedError),
-  );
-
-  await screen.findByText("Homeserver does not support Matrix 2.0 calls");
-});
-
-test("falls back to ConnectionLostError for unrecognised membership manager errors", async () => {
-  const { rtcSession } = createCallView(nullHostBridge, true, {
-    withErrorBoundary: true,
-  });
-
-  await act(() =>
-    rtcSession.emit(
-      MatrixRTCSessionEvent.MembershipManagerError,
-      new Error("something else broke"),
-    ),
-  );
-
-  await screen.findByText("Connection lost");
-});
-
-test("user can reconnect after a membership manager error", async () => {
   const user = userEvent.setup();
-  const { rtcSession } = createCallView(nullHostBridge, true);
-  await act(() =>
-    rtcSession.emit(MatrixRTCSessionEvent.MembershipManagerError, undefined),
-  );
+  createCallView(nullHostBridge, true);
+  await user.click(screen.getByRole("button", { name: "LoseConnection" }));
+  await screen.findByText("Connection lost");
+  // Never joined, so there was no call to leave
+  expect(playSound).not.toHaveBeenCalled();
   // XXX: Wrapping the following click in act() shouldn't be necessary (the
   // async state update should be processed automatically by the waitFor call),
   // and yet here we are.

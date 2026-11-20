@@ -41,7 +41,6 @@ import {
 import {
   captureSettings,
   rtcParticipationOptions,
-  rtcSlotOptions,
 } from "../src/room/InCallView";
 import { createWidgetHostBridge } from "../src/HostBridge";
 import { MediaDevices } from "../src/state/MediaDevices";
@@ -103,7 +102,7 @@ export async function createMatrixRTCSdk(
     scope,
     client,
     room,
-    rtcSlotOptions(encryptionSystem),
+    { encryptionSystem },
     sessionManager(scope, client, { application, id }, logger).getRoomSession(
       room,
     ),
