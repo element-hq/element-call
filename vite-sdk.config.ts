@@ -54,6 +54,7 @@ export default defineConfig(({ mode }) => {
           "matrix-js-sdk/lib/models/relations-container",
           "matrix-js-sdk/lib/models/room",
           "matrix-js-sdk/lib/models/room-state",
+          "matrix-js-sdk/lib/models/room-sticky-events",
           "matrix-js-sdk/lib/models/typed-event-emitter",
           "matrix-js-sdk/lib/randomstring",
           "matrix-js-sdk/lib/sync",
