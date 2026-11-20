@@ -211,8 +211,19 @@ export function createLocalLivekitMediaTrack(
       await room.switchActiveDevice(
         base.kind === "audio" ? "audioinput" : "videoinput",
         deviceId,
-        false,
       );
+      // Asked of the track again rather than taken from LiveKit's answer,
+      // which compares against the processed track too. A muted track is
+      // stopped and takes the device on turning on again
+      const now = publication.track;
+      const deviceNow =
+        now instanceof LocalTrack && !now.isMuted
+          ? await now.getDeviceId(false)
+          : undefined;
+      if (deviceNow !== undefined && deviceNow !== deviceId)
+        throw new MatrixRTCError(
+          `The ${base.source} is on another device than the one asked for`,
+        );
     },
   };
   if (base.kind === "audio") return { ...base, ...local };
