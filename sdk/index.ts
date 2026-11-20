@@ -61,6 +61,14 @@ export {
   createLivekitBackend,
   type LivekitBackendOptions,
 } from "./src/media-backend/livekit/LivekitBackend";
+// Join with `transport: { type: FULL_MESH_TRANSPORT_TYPE }` to publish on full mesh
+export {
+  createFullMeshBackend,
+  FULL_MESH_TRANSPORT_TYPE,
+  type FullMeshBackendOptions,
+} from "./src/media-backend/full-mesh/FullMeshBackend";
+// For a widget host to allow the full mesh signalling
+export { signallingEventTypes as fullMeshSignallingEventTypes } from "./src/media-backend/full-mesh/signalling";
 // Tracks for a lobby, captured ahead of the join and handed to it
 export { createLocalMedia } from "./src/LocalMedia";
 // For a host whose processor is a livekit-client one, such as @livekit/track-processors
