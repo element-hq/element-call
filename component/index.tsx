@@ -232,6 +232,8 @@ export const ElementCall: FC<ElementCallProps> = ({
     | "currentState"
     // Joined and invited members, for the RTC slot and the call view model
     | "getMembersWithMembership"
+    // Raised hands already in the room, for the reactions reader
+    | "relations"
     // `on`/`off`, to listen for:
     // - the RTC session's room events
     // - `RoomEvent.Name` (room name)
@@ -239,6 +241,8 @@ export const ElementCall: FC<ElementCallProps> = ({
     // - `RoomStateEvent.Events` (RTC slot status)
     // - `RoomStateEvent.Members` (RTC slot and call view model members)
     // - `RoomEvent.Timeline` and `RoomStickyEventsEvent.Update` (call notifications)
+    // - `RoomEvent.Timeline`, `RoomEvent.Redaction` and
+    //   `RoomEvent.LocalEchoUpdated` (reactions and raised hands)
     | "on"
     | "off"
   > | null;

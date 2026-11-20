@@ -53,7 +53,8 @@ export function getBasicRTCSession(
   initialRtcMemberships: CallMembership[] = [localRtcMember, aliceRtcMember],
 ): {
   rtcSession: MockRTCSession;
-  matrixRoom: Room;
+  room: Room;
+  client: MatrixClient;
   rtcMemberships$: BehaviorSubject<CallMembership[]>;
 } {
   const matrixRoomId = "!myRoomId:example.com";
@@ -61,36 +62,37 @@ export function getBasicRTCSession(
 
   const roomEmitter = new EventEmitter();
   const clientEmitter = new EventEmitter();
+  const client = {
+    getUserId: () => localRtcMember.userId,
+    getDeviceId: () => localRtcMember.deviceId,
+    getSyncState: () => SyncState.Syncing,
+    getDomain: () => "example.com",
+    getAccessToken: () => "fake-token",
+    sendEvent: vitest.fn().mockResolvedValue({ event_id: "$fake:event" }),
+    redactEvent: vitest.fn().mockResolvedValue({ event_id: "$fake:event" }),
+    decryptEventIfNeeded: vitest.fn().mockResolvedValue(undefined),
+    on: vitest
+      .fn()
+      .mockImplementation(
+        (eventName: string, fn: (...args: unknown[]) => void) => {
+          clientEmitter.on(eventName, fn);
+        },
+      ),
+    emit: (eventName: string, ...args: unknown[]) =>
+      clientEmitter.emit(eventName, ...args),
+    off: vitest
+      .fn()
+      .mockImplementation(
+        (eventName: string, fn: (...args: unknown[]) => void) => {
+          clientEmitter.off(eventName, fn);
+        },
+      ),
+  } as Partial<MatrixClient> as MatrixClient;
   const matrixRoom = mockMatrixRoom({
     relations: {
       getChildEventsForEvent: vitest.fn(),
     } as Partial<RelationsContainer> as RelationsContainer,
-    client: {
-      getUserId: () => localRtcMember.userId,
-      getDeviceId: () => localRtcMember.deviceId,
-      getSyncState: () => SyncState.Syncing,
-      getDomain: () => "example.com",
-      getAccessToken: () => "fake-token",
-      sendEvent: vitest.fn().mockResolvedValue({ event_id: "$fake:event" }),
-      redactEvent: vitest.fn().mockResolvedValue({ event_id: "$fake:event" }),
-      decryptEventIfNeeded: vitest.fn().mockResolvedValue(undefined),
-      on: vitest
-        .fn()
-        .mockImplementation(
-          (eventName: string, fn: (...args: unknown[]) => void) => {
-            clientEmitter.on(eventName, fn);
-          },
-        ),
-      emit: (eventName: string, ...args: unknown[]) =>
-        clientEmitter.emit(eventName, ...args),
-      off: vitest
-        .fn()
-        .mockImplementation(
-          (eventName: string, fn: (...args: unknown[]) => void) => {
-            clientEmitter.off(eventName, fn);
-          },
-        ),
-    } as Partial<MatrixClient> as MatrixClient,
+    client,
     getMember: (userId) => matrixRoomMembers.get(userId) ?? null,
     getMembers: () => Array.from(matrixRoomMembers.values()),
     getMembersWithMembership: () => Array.from(matrixRoomMembers.values()),
@@ -125,6 +127,7 @@ export function getBasicRTCSession(
   return {
     rtcSession: fakeRtcSession,
     matrixRoom,
+    client,
     rtcMemberships$,
   };
 }
@@ -146,13 +149,13 @@ export function getBasicCallViewModelEnvironment(
   developerSettingsVm: ViewModel<DeveloperSettingsSnapshot>;
   rtcMemberships$: BehaviorSubject<CallMembership[]>;
   rtcSession: MockRTCSession;
+  matrixRoom: Room;
+  client: MatrixClient;
   handRaisedSubject$: BehaviorSubject<Record<string, RaisedHandInfo>>;
   reactionsSubject$: BehaviorSubject<Record<string, ReactionInfo>>;
 } {
-  const { rtcSession, matrixRoom, rtcMemberships$ } = getBasicRTCSession(
-    members,
-    initialRtcMemberships,
-  );
+  const { rtcSession, matrixRoom, client, rtcMemberships$ } =
+    getBasicRTCSession(members, initialRtcMemberships);
   const handRaisedSubject$ = new BehaviorSubject({});
   const reactionsSubject$ = new BehaviorSubject({});
 
@@ -199,7 +202,7 @@ export function getBasicCallViewModelEnvironment(
     {
       rtcParticipation,
       matrixRoom,
-      client: matrixRoom.client,
+      client,
       mediaDevices,
       muteStates,
       encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
@@ -230,6 +233,8 @@ export function getBasicCallViewModelEnvironment(
     developerSettingsVm: createDeveloperSettingsTabViewModel(testScope(), vm),
     rtcMemberships$,
     rtcSession,
+    matrixRoom,
+    client,
     handRaisedSubject$: handRaisedSubject$,
     reactionsSubject$: reactionsSubject$,
   };

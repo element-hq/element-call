@@ -137,7 +137,7 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
 } {
   const mediaDevices = args.mediaDevices ?? mockMediaDevices({});
   const muteState = mockMuteStates();
-  const { vm, footerVm, developerSettingsVm, rtcSession } =
+  const { vm, footerVm, developerSettingsVm, rtcSession, matrixRoom, client } =
     getBasicCallViewModelEnvironment(
       [local, alice],
       undefined,
@@ -146,8 +146,6 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
     );
 
   rtcSession.joined = true;
-  const room = rtcSession.room;
-  const client = room.client;
 
   const inCallView = (
     <InCallView
@@ -158,7 +156,7 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
       footerVm={footerVm}
       developerSettingsVm={developerSettingsVm}
       matrixInfo={matrixInfo}
-      matrixRoom={room}
+      matrixRoom={matrixRoom}
       onShareClick={null}
     />
   );
@@ -171,6 +169,8 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
         <ReactionsSenderProvider
           vm={vm}
           rtcSession={rtcSession.asMockedSession()}
+          room={matrixRoom}
+          client={client}
         >
           <TooltipProvider>{content}</TooltipProvider>
         </ReactionsSenderProvider>

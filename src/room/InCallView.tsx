@@ -153,8 +153,13 @@ export interface ActiveCallProps extends Omit<
     | "baseUrl"
     // Homeserver connection (RTC slot): whether the client is syncing
     | "getSyncState"
+    // Reactions and raised hands: sending, lowering, and decrypting
+    | "sendEvent"
+    | "redactEvent"
+    | "decryptEventIfNeeded"
     // `on`/`off`, to listen for:
     // - `ClientEvent.Sync` (RTC slot homeserver connection)
+    // - `MatrixEventEvent.Decrypted` (reactions once decrypted)
     | "on"
     | "off"
     // Profile: display name and avatar, for the settings and the call ended view
@@ -174,10 +179,14 @@ export interface ActiveCallProps extends Omit<
     | "getMembersWithMembership"
     // Call notifications, for the call view model
     | "_unstable_getStickyEvents"
+    // Raised hands already in the room, for the reactions reader
+    | "relations"
     // `on`/`off`, to listen for:
     // - `RoomStateEvent.Events` (RTC slot status)
     // - `RoomStateEvent.Members` (RTC slot and call view model members)
     // - `RoomEvent.Timeline` and `RoomStickyEventsEvent.Update` (call notifications)
+    // - `RoomEvent.Timeline`, `RoomEvent.Redaction` and
+    //   `RoomEvent.LocalEchoUpdated` (reactions and raised hands)
     | "on"
     | "off"
   >;
@@ -208,7 +217,12 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
   useEffect(() => {
     rootLogger.info("START CALL VIEW SCOPE");
     const scope = new ObservableScope();
-    const reactionsReader = new ReactionsReader(scope, props.rtcSession);
+    const reactionsReader = new ReactionsReader(
+      scope,
+      props.rtcSession,
+      props.matrixRoom,
+      props.client,
+    );
     const { autoLeaveWhenOthersLeft, waitForCallPickup, sendNotificationType } =
       urlParams;
 
@@ -319,7 +333,12 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
   if (developerSettingsVm === null) return null;
 
   return (
-    <ReactionsSenderProvider vm={vm} rtcSession={props.rtcSession}>
+    <ReactionsSenderProvider
+      vm={vm}
+      rtcSession={props.rtcSession}
+      room={props.matrixRoom}
+      client={props.client}
+    >
       <InCallView
         {...props}
         vm={vm}

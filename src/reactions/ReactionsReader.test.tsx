@@ -31,7 +31,7 @@ afterEach(() => {
 });
 
 test("handles a hand raised reaction", () => {
-  const { rtcSession } = getBasicRTCSession([local, alice]);
+  const { rtcSession, matrixRoom, client } = getBasicRTCSession([local, alice]);
   const reactionEventId = "$my_event_id:example.org";
   const localTimestamp = new Date();
   withTestScheduler(({ schedule, expectObservable }) => {
@@ -39,14 +39,16 @@ test("handles a hand raised reaction", () => {
       const { raisedHands$ } = new ReactionsReader(
         testScope(),
         rtcSession.asMockedSession(),
+        matrixRoom,
+        client,
       );
       schedule("ab", {
         a: () => {},
         b: () => {
-          rtcSession.room.emit(
+          matrixRoom.emit(
             MatrixRoomEvent.Timeline,
             new MatrixEvent({
-              room_id: rtcSession.room.roomId,
+              room_id: matrixRoom.roomId,
               event_id: reactionEventId,
               sender: localRtcMember.userId,
               type: EventType.Reaction,
@@ -58,7 +60,7 @@ test("handles a hand raised reaction", () => {
                 },
               },
             }),
-            rtcSession.room,
+            matrixRoom,
             undefined,
             false,
             {} as IRoomTimelineData,
@@ -80,7 +82,7 @@ test("handles a hand raised reaction", () => {
 });
 
 test("handles a redaction", () => {
-  const { rtcSession } = getBasicRTCSession([local, alice]);
+  const { rtcSession, matrixRoom, client } = getBasicRTCSession([local, alice]);
   const reactionEventId = "$my_event_id:example.org";
   const localTimestamp = new Date();
   withTestScheduler(({ schedule, expectObservable }) => {
@@ -88,14 +90,16 @@ test("handles a redaction", () => {
       const { raisedHands$ } = new ReactionsReader(
         testScope(),
         rtcSession.asMockedSession(),
+        matrixRoom,
+        client,
       );
       schedule("abc", {
         a: () => {},
         b: () => {
-          rtcSession.room.emit(
+          matrixRoom.emit(
             MatrixRoomEvent.Timeline,
             new MatrixEvent({
-              room_id: rtcSession.room.roomId,
+              room_id: matrixRoom.roomId,
               event_id: reactionEventId,
               sender: localRtcMember.userId,
               type: EventType.Reaction,
@@ -107,23 +111,23 @@ test("handles a redaction", () => {
                 },
               },
             }),
-            rtcSession.room,
+            matrixRoom,
             undefined,
             false,
             {} as IRoomTimelineData,
           );
         },
         c: () => {
-          rtcSession.room.emit(
+          matrixRoom.emit(
             MatrixRoomEvent.Redaction,
             new MatrixEvent({
-              room_id: rtcSession.room.roomId,
+              room_id: matrixRoom.roomId,
               event_id: reactionEventId,
               sender: localRtcMember.userId,
               type: EventType.RoomRedaction,
               redacts: reactionEventId,
             }),
-            rtcSession.room,
+            matrixRoom,
             undefined,
           );
         },
@@ -144,7 +148,7 @@ test("handles a redaction", () => {
 });
 
 test("handles waiting for event decryption", () => {
-  const { rtcSession } = getBasicRTCSession([local, alice]);
+  const { rtcSession, matrixRoom, client } = getBasicRTCSession([local, alice]);
   const reactionEventId = "$my_event_id:example.org";
   const localTimestamp = new Date();
   withTestScheduler(({ schedule, expectObservable }) => {
@@ -152,12 +156,14 @@ test("handles waiting for event decryption", () => {
       const { raisedHands$ } = new ReactionsReader(
         testScope(),
         rtcSession.asMockedSession(),
+        matrixRoom,
+        client,
       );
       schedule("abc", {
         a: () => {},
         b: () => {
           const encryptedEvent = new MatrixEvent({
-            room_id: rtcSession.room.roomId,
+            room_id: matrixRoom.roomId,
             event_id: reactionEventId,
             sender: localRtcMember.userId,
             type: EventType.Reaction,
@@ -171,20 +177,20 @@ test("handles waiting for event decryption", () => {
           });
           // Should ignore encrypted events that are still encrypting
           encryptedEvent["decryptionPromise"] = Promise.resolve();
-          rtcSession.room.emit(
+          matrixRoom.emit(
             MatrixRoomEvent.Timeline,
             encryptedEvent,
-            rtcSession.room,
+            matrixRoom,
             undefined,
             false,
             {} as IRoomTimelineData,
           );
         },
         c: () => {
-          rtcSession.room.client.emit(
+          client.emit(
             MatrixEventEvent.Decrypted,
             new MatrixEvent({
-              room_id: rtcSession.room.roomId,
+              room_id: matrixRoom.roomId,
               event_id: reactionEventId,
               sender: localRtcMember.userId,
               type: EventType.Reaction,
@@ -214,7 +220,7 @@ test("handles waiting for event decryption", () => {
 });
 
 test("hands rejecting events without a proper membership", () => {
-  const { rtcSession } = getBasicRTCSession([local, alice]);
+  const { rtcSession, matrixRoom, client } = getBasicRTCSession([local, alice]);
   const reactionEventId = "$my_event_id:example.org";
   const localTimestamp = new Date();
   withTestScheduler(({ schedule, expectObservable }) => {
@@ -222,14 +228,16 @@ test("hands rejecting events without a proper membership", () => {
       const { raisedHands$ } = new ReactionsReader(
         testScope(),
         rtcSession.asMockedSession(),
+        matrixRoom,
+        client,
       );
       schedule("ab", {
         a: () => {},
         b: () => {
-          rtcSession.room.emit(
+          matrixRoom.emit(
             MatrixRoomEvent.Timeline,
             new MatrixEvent({
-              room_id: rtcSession.room.roomId,
+              room_id: matrixRoom.roomId,
               event_id: reactionEventId,
               sender: localRtcMember.userId,
               type: EventType.Reaction,
@@ -241,7 +249,7 @@ test("hands rejecting events without a proper membership", () => {
                 },
               },
             }),
-            rtcSession.room,
+            matrixRoom,
             undefined,
             false,
             {} as IRoomTimelineData,
@@ -256,7 +264,7 @@ test("hands rejecting events without a proper membership", () => {
 });
 
 test("handles a reaction", () => {
-  const { rtcSession } = getBasicRTCSession([local, alice]);
+  const { rtcSession, matrixRoom, client } = getBasicRTCSession([local, alice]);
   const reactionEventId = "$my_event_id:example.org";
   const reaction = ReactionSet[1];
 
@@ -268,14 +276,16 @@ test("handles a reaction", () => {
       const { reactions$ } = new ReactionsReader(
         testScope(),
         rtcSession.asMockedSession(),
+        matrixRoom,
+        client,
       );
       schedule(`abc`, {
         a: () => {},
         b: () => {
-          rtcSession.room.emit(
+          matrixRoom.emit(
             MatrixRoomEvent.Timeline,
             new MatrixEvent({
-              room_id: rtcSession.room.roomId,
+              room_id: matrixRoom.roomId,
               event_id: reactionEventId,
               sender: localRtcMember.userId,
               type: ElementCallReactionEventType,
@@ -287,7 +297,7 @@ test("handles a reaction", () => {
                 },
               },
             }),
-            rtcSession.room,
+            matrixRoom,
             undefined,
             false,
             {} as IRoomTimelineData,
@@ -316,7 +326,7 @@ test("handles a reaction", () => {
 });
 
 test("ignores bad reaction events", () => {
-  const { rtcSession } = getBasicRTCSession([local, alice]);
+  const { rtcSession, room, client } = getBasicRTCSession([local, alice]);
   const reactionEventId = "$my_event_id:example.org";
   const reaction = ReactionSet[1];
 
@@ -327,30 +337,32 @@ test("ignores bad reaction events", () => {
       const { reactions$ } = new ReactionsReader(
         testScope(),
         rtcSession.asMockedSession(),
+        room,
+        client,
       );
       schedule("ab", {
         a: () => {},
         b: () => {
           // Missing content
-          rtcSession.room.emit(
+          room.emit(
             MatrixRoomEvent.Timeline,
             new MatrixEvent({
-              room_id: rtcSession.room.roomId,
+              room_id: room.roomId,
               event_id: reactionEventId,
               sender: localRtcMember.userId,
               type: ElementCallReactionEventType,
               content: {},
             }),
-            rtcSession.room,
+            room,
             undefined,
             false,
             {} as IRoomTimelineData,
           );
           // Wrong relates event
-          rtcSession.room.emit(
+          room.emit(
             MatrixRoomEvent.Timeline,
             new MatrixEvent({
-              room_id: rtcSession.room.roomId,
+              room_id: room.roomId,
               event_id: reactionEventId,
               sender: localRtcMember.userId,
               type: ElementCallReactionEventType,
@@ -362,16 +374,16 @@ test("ignores bad reaction events", () => {
                 },
               },
             }),
-            rtcSession.room,
+            room,
             undefined,
             false,
             {} as IRoomTimelineData,
           );
           // Wrong rtc member event
-          rtcSession.room.emit(
+          room.emit(
             MatrixRoomEvent.Timeline,
             new MatrixEvent({
-              room_id: rtcSession.room.roomId,
+              room_id: room.roomId,
               event_id: reactionEventId,
               sender: aliceRtcMember.userId,
               type: ElementCallReactionEventType,
@@ -383,16 +395,16 @@ test("ignores bad reaction events", () => {
                 },
               },
             }),
-            rtcSession.room,
+            room,
             undefined,
             false,
             {} as IRoomTimelineData,
           );
           // No emoji
-          rtcSession.room.emit(
+          room.emit(
             MatrixRoomEvent.Timeline,
             new MatrixEvent({
-              room_id: rtcSession.room.roomId,
+              room_id: room.roomId,
               event_id: reactionEventId,
               sender: localRtcMember.userId,
               type: ElementCallReactionEventType,
@@ -403,16 +415,16 @@ test("ignores bad reaction events", () => {
                 },
               },
             }),
-            rtcSession.room,
+            room,
             undefined,
             false,
             {} as IRoomTimelineData,
           );
           // Invalid emoji
-          rtcSession.room.emit(
+          room.emit(
             MatrixRoomEvent.Timeline,
             new MatrixEvent({
-              room_id: rtcSession.room.roomId,
+              room_id: room.roomId,
               event_id: reactionEventId,
               sender: localRtcMember.userId,
               type: ElementCallReactionEventType,
@@ -424,7 +436,7 @@ test("ignores bad reaction events", () => {
                 },
               },
             }),
-            rtcSession.room,
+            room,
             undefined,
             false,
             {} as IRoomTimelineData,
@@ -439,7 +451,7 @@ test("ignores bad reaction events", () => {
 });
 
 test("that reactions cannot be spammed", () => {
-  const { rtcSession } = getBasicRTCSession([local, alice]);
+  const { rtcSession, matrixRoom, client } = getBasicRTCSession([local, alice]);
   const reactionEventId = "$my_event_id:example.org";
   const reactionA = ReactionSet[1];
   const reactionB = ReactionSet[2];
@@ -452,14 +464,16 @@ test("that reactions cannot be spammed", () => {
       const { reactions$ } = new ReactionsReader(
         testScope(),
         rtcSession.asMockedSession(),
+        matrixRoom,
+        client,
       );
       schedule("abcd", {
         a: () => {},
         b: () => {
-          rtcSession.room.emit(
+          matrixRoom.emit(
             MatrixRoomEvent.Timeline,
             new MatrixEvent({
-              room_id: rtcSession.room.roomId,
+              room_id: matrixRoom.roomId,
               event_id: reactionEventId,
               sender: localRtcMember.userId,
               type: ElementCallReactionEventType,
@@ -471,17 +485,17 @@ test("that reactions cannot be spammed", () => {
                 },
               },
             }),
-            rtcSession.room,
+            matrixRoom,
             undefined,
             false,
             {} as IRoomTimelineData,
           );
         },
         c: () => {
-          rtcSession.room.emit(
+          matrixRoom.emit(
             MatrixRoomEvent.Timeline,
             new MatrixEvent({
-              room_id: rtcSession.room.roomId,
+              room_id: matrixRoom.roomId,
               event_id: reactionEventId,
               sender: localRtcMember.userId,
               type: ElementCallReactionEventType,
@@ -493,7 +507,7 @@ test("that reactions cannot be spammed", () => {
                 },
               },
             }),
-            rtcSession.room,
+            matrixRoom,
             undefined,
             false,
             {} as IRoomTimelineData,
