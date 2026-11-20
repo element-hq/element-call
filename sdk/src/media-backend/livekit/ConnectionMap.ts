@@ -108,8 +108,11 @@ export class ConnectionMap {
 interface Props {
   scope: ObservableScope;
   connectionFactory: ConnectionFactory;
-  /** The transport we publish on; the one connection with the publisher role. */
-  localTransport: TransportLocator;
+  /**
+   * The transport we publish on; the one connection with the publisher role.
+   * Null for a backend that only subscribes, while another backend publishes.
+   */
+  localTransport: TransportLocator | null;
   /** Every transport some member is on, deduplicated against the local one. */
   remoteTransports$: Behavior<Epoch<TransportLocator[]>>;
   logger: Logger;
@@ -135,7 +138,11 @@ export function createConnectionMap$({
     scope.behavior(
       remoteTransports$.pipe(
         mapEpoch((remoteTransports) =>
-          removeDuplicateTransports([localTransport, ...remoteTransports]),
+          removeDuplicateTransports(
+            localTransport
+              ? [localTransport, ...remoteTransports]
+              : remoteTransports,
+          ),
         ),
         tap((transports) =>
           logger.debug("localAndRemoteTransports$ = ", transports),
@@ -143,7 +150,7 @@ export function createConnectionMap$({
       ),
     );
 
-  const localTransportKey = keyFor(localTransport);
+  const localTransportKey = localTransport && keyFor(localTransport);
 
   const connections$ = scope.behavior(
     localAndRemoteTransports$.pipe(

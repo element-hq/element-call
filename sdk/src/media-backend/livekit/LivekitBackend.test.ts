@@ -475,6 +475,38 @@ describe("createLivekitBackend", () => {
       ]);
     });
 
+    it("connects nowhere until it knows whether it publishes", async () => {
+      const b = backend();
+      const media = b.mediaFor(testScope(), bob(bothTransport, [legacyId]));
+      await flushPromises();
+      expect(media.tracks$.value).toBeNull();
+      // A subscriber connection now would be replaced by the publisher one
+      expect(connections).toHaveLength(0);
+
+      fetchMock.post(homeserverEndpoint, 404);
+      fetchMock.post(`${exampleServiceUrl}/delegate_delayed_leave`, 404);
+      await b.prepareLocalTransport(bothTransport);
+      await flushPromises();
+      expect(connections.map((c) => c.connection.role)).toEqual(["publisher"]);
+    });
+
+    it("only subscribes once told that another backend publishes", async () => {
+      const b = backend();
+      b.mediaFor(testScope(), bob(bothTransport, [legacyId]));
+      await flushPromises();
+      expect(connections).toHaveLength(0);
+
+      await expect(b.prepareLocalTransport(null)).resolves.toEqual({
+        canDelegateDelayedLeave: false,
+      });
+      await flushPromises();
+      expect(connections.map((c) => c.connection.role)).toEqual(["subscriber"]);
+      expect(connections[0].connection.transport).toEqual(bothTransport);
+      await expect(b.delegateDelayedLeave("id")).rejects.toThrow(
+        "No local transport",
+      );
+    });
+
     it("has no media for a member without a transport, and opens no connection", async () => {
       const b = await prepared();
       const media = b.mediaFor(testScope(), {
