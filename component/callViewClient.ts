@@ -42,12 +42,18 @@ export function createCallViewClient(
     getSyncState: host.getSyncState.bind(host),
     // `on`/`off`, to listen for:
     // - `ClientEvent.Sync` (RTC slot homeserver connection)
+    // - `MatrixEventEvent.Decrypted` (reactions once decrypted)
     on: host.on.bind(host),
     off: host.off.bind(host),
     // The host's store, which only its sync fills
     getUser: host.getUser.bind(host),
     // The device's crypto: there must never be a second one
     getCrypto: host.getCrypto.bind(host),
+    // Reactions and raised hands: the host's crypto encrypts and decrypts them,
+    // and its room gets the local echo
+    sendEvent: host.sendEvent.bind(host),
+    redactEvent: host.redactEvent.bind(host),
+    decryptEventIfNeeded: host.decryptEventIfNeeded.bind(host),
 
     // Credentials, static, we can use own
     getUserId: own.getUserId.bind(own),

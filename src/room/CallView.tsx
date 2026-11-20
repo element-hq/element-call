@@ -105,8 +105,13 @@ interface Props {
     | "baseUrl"
     // Homeserver connection (RTC slot): whether the client is syncing
     | "getSyncState"
+    // Reactions and raised hands: sending, lowering, and decrypting
+    | "sendEvent"
+    | "redactEvent"
+    | "decryptEventIfNeeded"
     // `on`/`off`, to listen for:
     // - `ClientEvent.Sync` (RTC slot homeserver connection)
+    // - `MatrixEventEvent.Decrypted` (reactions once decrypted)
     | "on"
     | "off"
     // Profile: display name and avatar, for the settings and the call ended view
@@ -135,12 +140,16 @@ interface Props {
     | "getMembersWithMembership"
     // Call notifications, for the call view model
     | "_unstable_getStickyEvents"
+    // Raised hands already in the room, for the reactions reader
+    | "relations"
     // `on`/`off`, to listen for:
     // - `RoomEvent.Name` (room name)
     // - `RoomEvent.CurrentStateUpdated` (avatar and join rule hooks)
     // - `RoomStateEvent.Events` (RTC slot status)
     // - `RoomStateEvent.Members` (RTC slot and call view model members)
     // - `RoomEvent.Timeline` and `RoomStickyEventsEvent.Update` (call notifications)
+    // - `RoomEvent.Timeline`, `RoomEvent.Redaction` and
+    //   `RoomEvent.LocalEchoUpdated` (reactions and raised hands)
     | "on"
     | "off"
   >;

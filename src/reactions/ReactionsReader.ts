@@ -11,7 +11,12 @@ import {
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { type MatrixEvent, MatrixEventEvent } from "matrix-js-sdk";
+import {
+  type MatrixClient,
+  type MatrixEvent,
+  MatrixEventEvent,
+  type Room,
+} from "matrix-js-sdk";
 import { type ReactionEventContent } from "matrix-js-sdk/lib/types";
 import {
   RelationType,
@@ -58,6 +63,28 @@ export class ReactionsReader {
   public constructor(
     private readonly scope: ObservableScope,
     private readonly rtcSession: MatrixRTCSession,
+    private readonly room: Pick<
+      Room,
+      // To ignore events from other rooms
+      | "roomId"
+      // The raised hands already in the room, as reactions to memberships
+      | "relations"
+      // `on`/`off`, to listen for:
+      // - `RoomEvent.Timeline` (new reactions)
+      // - `RoomEvent.Redaction` (lowered hands)
+      // - `RoomEvent.LocalEchoUpdated` (the real id of our own reactions)
+      | "on"
+      | "off"
+    >,
+    private readonly client: Pick<
+      MatrixClient,
+      // Reactions that arrived encrypted
+      | "decryptEventIfNeeded"
+      // `on`/`off`, to listen for:
+      // - `MatrixEventEvent.Decrypted` (reactions once decrypted)
+      | "on"
+      | "off"
+    >,
   ) {
     // Hide reactions after a given time.
     this.reactionsSubject$
@@ -76,47 +103,26 @@ export class ReactionsReader {
     // TODO: Convert this class to the functional reactive style and get rid of
     // all this manual setup and teardown for event listeners
 
-    this.rtcSession.room.on(MatrixRoomEvent.Timeline, this.handleReactionEvent);
+    this.room.on(MatrixRoomEvent.Timeline, this.handleReactionEvent);
     this.scope.onEnd(() =>
-      this.rtcSession.room.off(
-        MatrixRoomEvent.Timeline,
-        this.handleReactionEvent,
-      ),
+      this.room.off(MatrixRoomEvent.Timeline, this.handleReactionEvent),
     );
 
-    this.rtcSession.room.on(
-      MatrixRoomEvent.Redaction,
-      this.handleReactionEvent,
-    );
+    this.room.on(MatrixRoomEvent.Redaction, this.handleReactionEvent);
     this.scope.onEnd(() =>
-      this.rtcSession.room.off(
-        MatrixRoomEvent.Redaction,
-        this.handleReactionEvent,
-      ),
+      this.room.off(MatrixRoomEvent.Redaction, this.handleReactionEvent),
     );
 
-    this.rtcSession.room.client.on(
-      MatrixEventEvent.Decrypted,
-      this.handleReactionEvent,
-    );
+    this.client.on(MatrixEventEvent.Decrypted, this.handleReactionEvent);
     this.scope.onEnd(() =>
-      this.rtcSession.room.client.off(
-        MatrixEventEvent.Decrypted,
-        this.handleReactionEvent,
-      ),
+      this.client.off(MatrixEventEvent.Decrypted, this.handleReactionEvent),
     );
 
     // We listen for a local echo to get the real event ID, as timeline events
     // may still be sending.
-    this.rtcSession.room.on(
-      MatrixRoomEvent.LocalEchoUpdated,
-      this.handleReactionEvent,
-    );
+    this.room.on(MatrixRoomEvent.LocalEchoUpdated, this.handleReactionEvent);
     this.scope.onEnd(() =>
-      this.rtcSession.room.off(
-        MatrixRoomEvent.LocalEchoUpdated,
-        this.handleReactionEvent,
-      ),
+      this.room.off(MatrixRoomEvent.LocalEchoUpdated, this.handleReactionEvent),
     );
 
     this.rtcSession.on(
@@ -145,7 +151,7 @@ export class ReactionsReader {
     membershipEventId: string,
     expectedSender: string,
   ): MatrixEvent | undefined {
-    const relations = this.rtcSession.room.relations.getChildEventsForEvent(
+    const relations = this.room.relations.getChildEventsForEvent(
       membershipEventId,
       RelationType.Annotation,
       EventType.Reaction,
@@ -235,9 +241,8 @@ export class ReactionsReader {
    * @param event The incoming matrix event, which may or may not be decrypted.
    */
   private handleReactionEvent = (event: MatrixEvent): void => {
-    const room = this.rtcSession.room;
     // Decrypted events might come from a different room
-    if (event.getRoomId() !== room.roomId) return;
+    if (event.getRoomId() !== this.room.roomId) return;
     // Skip any events that are still sending.
     if (event.isSending()) return;
 
@@ -246,7 +251,7 @@ export class ReactionsReader {
     // Skip any event without a sender or event ID.
     if (!sender || !reactionEventId) return;
 
-    room.client
+    this.client
       .decryptEventIfNeeded(event)
       .catch((e) => logger.warn(`Failed to decrypt ${event.getId()}`, e));
     if (event.isBeingDecrypted() || event.isDecryptionFailure()) return;

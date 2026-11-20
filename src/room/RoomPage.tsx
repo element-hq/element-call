@@ -52,7 +52,7 @@ export const RoomPage: FC = (): ReactNode => {
   // call has a title of its own. So it is set here, for whichever room we have
   // got as far as knowing about.
   const loadedRoom =
-    groupCallState.kind === "loaded" ? groupCallState.rtcSession.room : null;
+    groupCallState.kind === "loaded" ? groupCallState.room : null;
   const roomName = useRoomName(loadedRoom);
   usePageTitle(
     roomName ??
@@ -116,7 +116,7 @@ export const RoomPage: FC = (): ReactNode => {
         return (
           <CallView
             client={client!}
-            room={groupCallState.rtcSession.room}
+            room={groupCallState.room}
             rtcSession={groupCallState.rtcSession}
             isPasswordlessUser={passwordlessUser}
             confineToRoom={confineToRoom}
