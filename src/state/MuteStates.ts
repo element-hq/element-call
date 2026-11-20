@@ -88,22 +88,23 @@ export class MuteState<Label, Selected> {
           };
         }
 
-        // Assume the default value only once devices are actually connected.
-        // Under a handler the default is asked of it like any other request,
-        // so that what follows the switch acts on it. Devices that come back
-        // then stay off: the user may have turned them off
-        const handled = this.handler$.value !== defaultHandler;
-        const wanted =
-          this.enabledByDefault && !(handled && this.devicesConnectedBefore);
+        // defaultHander = no-op hanlder = "no actual device handler available"
+        const handlerAttached = this.handler$.value !== defaultHandler;
+        const deviceCameBackInCall = handlerAttached && this.devicesConnectedBefore;
         this.devicesConnectedBefore = true;
-        let enabled = handled ? false : wanted;
+        const initialWanted = deviceCameBackInCall ? false : this.enabledByDefault;
+        // Set the flag. A marker, that we reached this code before.
+        // With a handler attached we start off and let the sync below actually call
+        // the handler, so the switch shows "on" only once the track is really there.
+        // Without one (lobby) enabled = initialWanted -> no call to handler.
+        let enabled = handlerAttached ? false : initialWanted;
         const set$ = new Subject<boolean>();
         const toggle$ = new Subject<void>();
         const syncing$ = new BehaviorSubject(false);
         const desired$ = merge(set$, toggle$.pipe(map(() => !enabled)));
         const enabled$ = new Observable<boolean>((subscriber) => {
           subscriber.next(enabled);
-          let latestDesired = wanted;
+          let latestDesired = initialWanted;
 
           const sync = async (): Promise<void> => {
             if (enabled === latestDesired) {
