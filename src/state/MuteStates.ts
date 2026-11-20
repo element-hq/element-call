@@ -92,11 +92,11 @@ export class MuteState<Label, Selected> {
         const handlerAttached = this.handler$.value !== defaultHandler;
         const deviceCameBackInCall =
           handlerAttached && this.devicesConnectedBefore;
+        // Set the flag. A marker, that we reached this code before.
         this.devicesConnectedBefore = true;
         const initialWanted = deviceCameBackInCall
           ? false
           : this.enabledByDefault;
-        // Set the flag. A marker, that we reached this code before.
         // With a handler attached we start off and let the sync below actually call
         // the handler, so the switch shows "on" only once the track is really there.
         // Without one (lobby) enabled = initialWanted -> no call to handler.
