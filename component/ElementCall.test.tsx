@@ -39,6 +39,18 @@ function mockClient(knownRoom: Room | null = room): MatrixClient {
   return {
     ...mockEmitter(),
     getRoom: (id: string) => (id === roomId ? knownRoom : null),
+    // What the call view's client is made from
+    baseUrl: "https://matrix.example.org",
+    getUserId: () => "@alice:example.org",
+    getDeviceId: () => "DEVICE",
+    getAccessToken: () => "token",
+    getSyncState: () => null,
+    getUser: () => null,
+    getCrypto: () => undefined,
+    setDisplayName: vi.fn(),
+    setAvatarUrl: vi.fn(),
+    uploadContent: vi.fn(),
+    doesServerSupportUnstableFeature: vi.fn(),
   } as unknown as MatrixClient;
 }
 
