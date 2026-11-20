@@ -6,7 +6,14 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, useEffect, useState, type ReactNode, useRef } from "react";
+import {
+  type FC,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+  useRef,
+} from "react";
 import { type MatrixError } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { Trans, useTranslation } from "react-i18next";
@@ -27,6 +34,7 @@ import { Link } from "../button/Link";
 import { ErrorView } from "../ErrorView";
 import { usePageTitle } from "../usePageTitle";
 import { useRoomName } from "./useRoomName";
+import { createCallMatrixBackend } from "../CallMatrixBackend";
 
 export const RoomPage: FC = (): ReactNode => {
   const urlParams = useUrlParams();
@@ -53,6 +61,11 @@ export const RoomPage: FC = (): ReactNode => {
   // got as far as knowing about.
   const loadedRoom =
     groupCallState.kind === "loaded" ? groupCallState.room : null;
+  const backend = useMemo(
+    () =>
+      client && loadedRoom ? createCallMatrixBackend(client, loadedRoom) : null,
+    [client, loadedRoom],
+  );
   const roomName = useRoomName(loadedRoom);
   usePageTitle(
     roomName ??
@@ -115,8 +128,7 @@ export const RoomPage: FC = (): ReactNode => {
       case "loaded":
         return (
           <CallView
-            client={client!}
-            room={groupCallState.room}
+            backend={backend!}
             rtcSession={groupCallState.rtcSession}
             isPasswordlessUser={passwordlessUser}
             confineToRoom={confineToRoom}

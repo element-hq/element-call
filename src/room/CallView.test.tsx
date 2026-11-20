@@ -19,7 +19,7 @@ import {
   vitest,
 } from "vitest";
 import { render, waitFor, screen, act } from "@testing-library/react";
-import { type MatrixClient, JoinRule, type RoomState } from "matrix-js-sdk";
+import { type MatrixClient, JoinRule } from "matrix-js-sdk";
 import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import { BrowserRouter } from "react-router-dom";
 import userEvent, {
@@ -45,6 +45,7 @@ import {
   testScope,
 } from "../utils/test";
 import { CallView } from "./CallView";
+import { type CallMatrixBackend } from "../CallMatrixBackend";
 import {
   type HostBridge,
   HostBridgeProvider,
@@ -148,6 +149,7 @@ function createCallView(
   getByText: ReturnType<typeof render>["getByText"];
 } {
   const client = {
+    ...mockEmitter(),
     getUser: () => null,
     getUserId: () => localRtcMember.userId,
     getDeviceId: () => localRtcMember.deviceId,
@@ -165,11 +167,7 @@ function createCallView(
     getMember: (userId) => roomMembers.get(userId) ?? null,
     getMembersWithMembership: () => [carol],
     getMxcAvatarUrl: () => null,
-    getCanonicalAlias: () => null,
-    currentState: {
-      ...mockEmitter(),
-      getJoinRule: () => JoinRule.Invite,
-    } as Partial<RoomState> as RoomState,
+    getJoinRule: () => JoinRule.Invite,
   });
   const rtcSession = new MockRTCSession(room, []).withMemberships(
     constant([localRtcMember]),
@@ -184,8 +182,14 @@ function createCallView(
               effects={createAppBackgroundEffects(testScope())}
             >
               <CallView
-                client={client}
-                room={room}
+                backend={
+                  {
+                    ...client,
+                    ...room,
+                    clientEmitter: client,
+                    roomEmitter: room,
+                  } as unknown as CallMatrixBackend
+                }
                 isPasswordlessUser={false}
                 confineToRoom={false}
                 preload={options.preload ?? false}

@@ -20,6 +20,7 @@ import { EMPTY, filter, map, type Observable, of, switchMap, take } from "rxjs";
 import {
   type Behavior,
   createRTCSlot,
+  createSdkMatrixBackend,
   E2eeType,
   type LocalRTCMember,
   ObservableScope,
@@ -93,7 +94,7 @@ export async function createMatrixRTCSdk(
   );
   const encryptionSystem = { kind: E2eeType.PER_PARTICIPANT } as const;
   const capture = captureSettings();
-  const slot = createRTCSlot(scope, client, room, {
+  const slot = createRTCSlot(scope, createSdkMatrixBackend(client, room), {
     encryptionSystem,
     slotDescription: { application, id },
   });

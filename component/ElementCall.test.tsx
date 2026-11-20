@@ -33,7 +33,17 @@ const roomId = "!room:example.org";
 let room: Room;
 
 beforeEach(() => {
-  room = mockMatrixRoom({ roomId });
+  // What the call's backend takes from the room
+  room = mockMatrixRoom({
+    roomId,
+    getMembersWithMembership: vi.fn(),
+    getLiveTimeline: vi.fn(),
+    getVersion: vi.fn(),
+    hasMembershipState: vi.fn(),
+    _unstable_getStickyEvents: vi.fn(),
+    getMxcAvatarUrl: vi.fn(),
+    getJoinRule: vi.fn(),
+  });
 });
 
 afterEach(() => {
@@ -45,7 +55,7 @@ test("calls in the room, leaving the session to the call", async () => {
 
   await screen.findByText("call");
   const props = callView.mock.lastCall?.[0];
-  expect(props).toMatchObject({ room });
+  expect(props).toMatchObject({ backend: { roomId } });
   expect(props).not.toHaveProperty("rtcSession");
 });
 

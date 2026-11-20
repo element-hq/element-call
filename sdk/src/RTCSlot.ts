@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type MatrixClient, type Room } from "matrix-js-sdk";
+import { type MatrixClient } from "matrix-js-sdk";
 import { EventType } from "matrix-js-sdk/lib/@types/event";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import {
@@ -54,6 +54,11 @@ import {
   membershipKeys,
 } from "./matrixrtc/Members";
 import { createTransportRegistry } from "./matrixrtc/Transports";
+import {
+  type createSdkMatrixBackend,
+  type SdkMatrixBackend,
+  withEmitter,
+} from "./SdkMatrixBackend";
 
 const ROOM_CALL_SLOT: SlotDescription = { application: "m.call", id: "ROOM" };
 
@@ -63,62 +68,7 @@ const ROOM_CALL_SLOT: SlotDescription = { application: "m.call", id: "ROOM" };
  */
 export function createRTCSlot(
   scope: ObservableScope,
-  client: Pick<
-    MatrixClient,
-    // Our own membership identity
-    | "getUserId"
-    | "getDeviceId"
-    // The session: memberships, delayed leave events, sticky events, and the
-    // media keys sent to device and received in room events
-    | "fetchCapabilities"
-    | "getCachedCapabilities"
-    | "sendEvent"
-    | "sendStateEvent"
-    | "_unstable_sendDelayedStateEvent"
-    | "_unstable_updateDelayedEvent"
-    | "_unstable_cancelScheduledDelayedEvent"
-    | "_unstable_restartScheduledDelayedEvent"
-    | "_unstable_sendScheduledDelayedEvent"
-    | "_unstable_sendStickyEvent"
-    | "_unstable_sendStickyDelayedEvent"
-    | "cancelPendingEvent"
-    | "encryptAndSendToDevice"
-    | "decryptEventIfNeeded"
-    // Local transport discovery
-    | "getDomain"
-    | "getRTCTransports"
-    // LiveKit auth: `getOpenIdToken` for the JWT service flow, `getLivekitToken`
-    // for the client-server API flow (MSC4195), `delegateDelayedLeave` and
-    // `baseUrl` for the delayed leave delegation and its probe
-    | "getOpenIdToken"
-    | "getLivekitToken"
-    | "delegateDelayedLeave"
-    | "baseUrl"
-    // Homeserver connection: whether the client is syncing
-    | "getSyncState"
-    // `on`/`off`, to listen for:
-    // - `ClientEvent.Sync` (homeserver connection)
-    // - `ClientEvent.ToDeviceEvent` (the session's media keys)
-    | "on"
-    | "off"
-  >,
-  //  The parts of the Matrix room a slot reads. `on` and `off` are there for
-  //  `fromEvent`, which listens on the room for:
-  //  - `RoomStateEvent.Events`, to update the slot status;
-  //  - `RoomStateEvent.Members`, to update the members' display names and avatars;
-  //  and for the session, which follows the memberships in the room's state,
-  //  timeline and sticky events.
-  room: Pick<
-    Room,
-    | "roomId"
-    | "getMembersWithMembership"
-    | "getLiveTimeline"
-    | "getVersion"
-    | "hasMembershipState"
-    | "_unstable_getStickyEvents"
-    | "on"
-    | "off"
-  >,
+  backend: SdkMatrixBackend,
   options: RTCSlotOptions,
   /**
    * @deprecated A session the caller owns and stops, in place of the slot's
@@ -143,6 +93,10 @@ export function createRTCSlot(
   // SDK propery independent of the rtcSession
   statistics: Statistics;
 } {
+  // STOP GAP: the slot is still written against a client and a room. Both
+  // are refactored along with the backend.
+  const client = withEmitter(backend, backend.clientEmitter);
+  const room = withEmitter(backend, backend.roomEmitter);
   const logger = rootLogger.getChild("[RTCSlot]");
   const userId = client.getUserId();
   const deviceId = client.getDeviceId();
@@ -265,11 +219,21 @@ export function createRTCSlot(
 
 function createJsSdkSession(
   scope: ObservableScope,
-  client: ConstructorParameters<typeof JsMatrixRTCSession>[0],
+  client: Pick<
+    MatrixClient,
+    keyof Parameters<typeof createSdkMatrixBackend>[0]
+  >,
   room: ConstructorParameters<typeof JsMatrixRTCSession>[1],
   slotDescription: SlotDescription,
 ): JsMatrixRTCSession {
-  const session = new JsMatrixRTCSession(client, room, slotDescription);
+  const session = new JsMatrixRTCSession(
+    // The session's type also asks for `cancelPendingEvent`,
+    // `_unstable_updateDelayedEvent` and `decryptEventIfNeeded`, which it
+    // never calls
+    client as ConstructorParameters<typeof JsMatrixRTCSession>[0],
+    room,
+    slotDescription,
+  );
   scope.onEnd(() => void session.stop());
   return session;
 }

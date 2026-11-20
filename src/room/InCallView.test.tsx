@@ -84,7 +84,6 @@ const matrixInfo = {
   avatarUrl: "",
   roomId: "",
   roomName: "",
-  roomAlias: null,
   roomAvatar: null,
   e2eeSystem: { kind: E2eeType.NONE },
 } satisfies MatrixInfo;

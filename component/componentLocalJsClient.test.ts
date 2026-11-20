@@ -13,35 +13,7 @@ import {
   SyncState,
 } from "matrix-js-sdk";
 
-import { createCallViewClient } from "./callViewClient";
-
-function mockHost(): MatrixClient & { token: string } {
-  const host = {
-    token: "first",
-    baseUrl: "https://matrix.example.org",
-    getUserId: (): string => "@alice:example.org",
-    getDeviceId: (): string => "DEVICE",
-    getAccessToken: (): string => host.token,
-    getSyncState: vi.fn(() => SyncState.Syncing),
-    on: vi.fn(),
-    off: vi.fn(),
-    getUser: vi.fn(() => null),
-    getCrypto: vi.fn(() => undefined),
-    sendEvent: vi.fn(),
-    sendStateEvent: vi.fn(),
-    _unstable_sendStickyEvent: vi.fn(),
-    _unstable_sendStickyDelayedEvent: vi.fn(),
-    cancelPendingEvent: vi.fn(),
-    encryptAndSendToDevice: vi.fn(),
-    redactEvent: vi.fn(),
-    decryptEventIfNeeded: vi.fn(),
-    setDisplayName: vi.fn(),
-    setAvatarUrl: vi.fn(),
-    uploadContent: vi.fn(),
-    doesServerSupportUnstableFeature: vi.fn(),
-  };
-  return host as unknown as MatrixClient & { token: string };
-}
+import { createComponentLocalJsClient } from "./componentLocalJsClient";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -49,7 +21,7 @@ afterEach(() => {
 
 test("reads the host's live state from the host's client", () => {
   const host = mockHost();
-  const client = createCallViewClient(host);
+  const client = createComponentLocalJsClient(host);
   const listener = (): void => {};
 
   expect(client.getSyncState()).toBe(SyncState.Syncing);
@@ -67,7 +39,7 @@ test("reads the host's live state from the host's client", () => {
 
 test("sends the RTC session's encrypted events with the host's crypto", async () => {
   const host = mockHost();
-  const client = createCallViewClient(host);
+  const client = createComponentLocalJsClient(host);
 
   await client._unstable_sendStickyEvent(
     "!room:example.org",
@@ -83,7 +55,7 @@ test("sends the RTC session's encrypted events with the host's crypto", async ()
 });
 
 test("takes its credentials from the host", () => {
-  const client = createCallViewClient(mockHost());
+  const client = createComponentLocalJsClient(mockHost());
 
   expect(client.getUserId()).toBe("@alice:example.org");
   expect(client.getDeviceId()).toBe("DEVICE");
@@ -102,7 +74,7 @@ test("makes requests with whichever token the host holds now", async () => {
   );
   vi.stubGlobal("fetch", fetch);
   const host = mockHost();
-  const client = createCallViewClient(host);
+  const client = createComponentLocalJsClient(host);
   // As if the host had refreshed its token after we were created
   host.token = "refreshed";
 
@@ -117,3 +89,30 @@ test("makes requests with whichever token the host holds now", async () => {
     "Bearer refreshed",
   );
 });
+
+function mockHost(): MatrixClient & { token: string } {
+  const host = {
+    token: "first",
+    baseUrl: "https://matrix.example.org",
+    getUserId: (): string => "@alice:example.org",
+    getDeviceId: (): string => "DEVICE",
+    getAccessToken: (): string => host.token,
+    getSyncState: vi.fn(() => SyncState.Syncing),
+    on: vi.fn(),
+    off: vi.fn(),
+    getUser: vi.fn(() => null),
+    getCrypto: vi.fn(() => undefined),
+    sendEvent: vi.fn(),
+    sendStateEvent: vi.fn(),
+    _unstable_sendStickyEvent: vi.fn(),
+    _unstable_sendStickyDelayedEvent: vi.fn(),
+    encryptAndSendToDevice: vi.fn(),
+    redactEvent: vi.fn(),
+    decryptEventIfNeeded: vi.fn(),
+    setDisplayName: vi.fn(),
+    setAvatarUrl: vi.fn(),
+    uploadContent: vi.fn(),
+    doesServerSupportUnstableFeature: vi.fn(),
+  };
+  return host as unknown as MatrixClient & { token: string };
+}

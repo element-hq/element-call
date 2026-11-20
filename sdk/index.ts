@@ -58,6 +58,11 @@ export * from "./src/media-backend/api";
 export { trackBySource$, type TrackOfSource } from "./src/utils/tracks";
 export { createRTCSlot } from "./src/RTCSlot";
 export {
+  createSdkMatrixBackend,
+  type SdkMatrixBackend,
+  withEmitter,
+} from "./src/SdkMatrixBackend";
+export {
   createLivekitBackend,
   type LivekitBackendOptions,
 } from "./src/media-backend/livekit/LivekitBackend";

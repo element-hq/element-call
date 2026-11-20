@@ -19,6 +19,7 @@ nothing in Element Call's `src/`.
 ```ts
 import {
   createRTCSlot,
+  createSdkMatrixBackend,
   E2eeType,
   MatrixRTCMode,
   ObservableScope,
@@ -28,8 +29,10 @@ import {
 const scope = new ObservableScope();
 const slot = createRTCSlot(
   scope,
-  client, // a matrix-js-sdk MatrixClient, logged in and syncing
-  room, // the matrix-js-sdk Room, from client.getRoom() once the join has synced
+  createSdkMatrixBackend(
+    client, // a matrix-js-sdk MatrixClient, logged in and syncing
+    room, // the matrix-js-sdk Room, from client.getRoom() once the join has synced
+  ),
   { encryptionSystem: { kind: E2eeType.PER_PARTICIPANT } }, // the room's call, m.call#ROOM
 );
 const participation = slot.join({

@@ -21,6 +21,7 @@ import {
 } from "matrix-js-sdk/lib/matrixrtc";
 
 import { createRTCSlot } from "./RTCSlot";
+import { type SdkMatrixBackend } from "./SdkMatrixBackend";
 import { ObservableScope } from "./reactive/ObservableScope";
 import { type RTCSlotOptions } from "./api";
 import { E2eeType } from "./encryption";
@@ -52,23 +53,33 @@ function setup(): {
   } as unknown as Room;
   const session = new MockRTCSession(room);
   const client = {
+    ...mockEmitter(),
     getUserId: (): string => "@alice:example.org",
     getDeviceId: (): string => "AAAA",
   } as unknown as MatrixClient;
   return { client, room, session };
 }
 
+function backendOf(client: MatrixClient, room: Room): SdkMatrixBackend {
+  return {
+    ...client,
+    ...room,
+    clientEmitter: client,
+    roomEmitter: room,
+  } as unknown as SdkMatrixBackend;
+}
+
 describe("createRTCSlot", () => {
   describe("session", () => {
     it("joins the room's call slot by default", () => {
       const { client, room } = setup();
-      const slot = createRTCSlot(testScope(), client, room, options);
+      const slot = createRTCSlot(testScope(), backendOf(client, room), options);
       expect(slot).toMatchObject({ application: "m.call", id: "ROOM" });
     });
 
     it("joins the slot the options name", () => {
       const { client, room } = setup();
-      const slot = createRTCSlot(testScope(), client, room, {
+      const slot = createRTCSlot(testScope(), backendOf(client, room), {
         ...options,
         slotDescription: { application: "io.element.example", id: "" },
       });
@@ -79,7 +90,7 @@ describe("createRTCSlot", () => {
       const { client, room } = setup();
       const off = vi.spyOn(room, "off");
       const scope = new ObservableScope();
-      createRTCSlot(scope, client, room, options);
+      createRTCSlot(scope, backendOf(client, room), options);
 
       scope.end();
       await vi.waitFor(() =>
@@ -95,7 +106,7 @@ describe("createRTCSlot", () => {
       const given = session.asMockedSession();
       given.stop = vi.fn();
       const scope = new ObservableScope();
-      createRTCSlot(scope, client, room, options, given);
+      createRTCSlot(scope, backendOf(client, room), options, given);
 
       scope.end();
       expect(given.stop).not.toHaveBeenCalled();
@@ -105,8 +116,7 @@ describe("createRTCSlot", () => {
       const { client, room, session } = setup();
       const slot = createRTCSlot(
         testScope(),
-        client,
-        room,
+        backendOf(client, room),
         options,
         session.asMockedSession(),
       );
@@ -130,8 +140,7 @@ describe("createRTCSlot", () => {
       const { client, room, session } = setup();
       const slot = createRTCSlot(
         testScope(),
-        client,
-        room,
+        backendOf(client, room),
         options,
         session.asMockedSession(),
       );
@@ -143,8 +152,7 @@ describe("createRTCSlot", () => {
       session.rtcSlot = { status: "open" };
       const slot = createRTCSlot(
         testScope(),
-        client,
-        room,
+        backendOf(client, room),
         options,
         session.asMockedSession(),
       );
@@ -168,8 +176,7 @@ describe("createRTCSlot", () => {
       session.memberships = [first];
       const slot = createRTCSlot(
         testScope(),
-        client,
-        room,
+        backendOf(client, room),
         options,
         session.asMockedSession(),
       );

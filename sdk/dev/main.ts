@@ -16,6 +16,7 @@ import { combineLatest, type Observable, of, switchMap } from "rxjs";
 import {
   type AudioMediaTrack,
   createRTCSlot,
+  createSdkMatrixBackend,
   E2eeType,
   type LocalRTCMember,
   MatrixRTCMode,
@@ -70,7 +71,7 @@ async function start(
     const room = await joinRoom(client, roomIdOrAlias);
 
     const scope = new ObservableScope();
-    const slot = createRTCSlot(scope, client, room, {
+    const slot = createRTCSlot(scope, createSdkMatrixBackend(client, room), {
       encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
     });
     const rtcParticipation = slot.join({
