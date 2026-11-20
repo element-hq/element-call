@@ -163,6 +163,7 @@ export const initializeWidget = (
         EventType.CallSDPStreamMetadataChangedPrefix,
         EventType.CallReplaces,
         EventType.CallEncryptionKeysPrefix,
+        "m.rtc.encryption_key",
       ];
 
       const client = createRoomWidgetClient(
