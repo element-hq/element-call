@@ -33,20 +33,13 @@ import {
   CloseIcon,
   EndCallIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
-import { type Observable } from "rxjs";
 
 import { useUrlParams } from "../UrlParams";
-import {
-  type CallNotificationWrapper,
-  observeSentCallNotification$,
-} from "../state/CallViewModel/CallNotificationLifecycle";
 
 export type GroupCallLoaded = {
   kind: "loaded";
   room: Room;
   rtcSession: MatrixRTCSession;
-  /** The call notifications `rtcSession` sends with our join. */
-  sentCallNotification$: Observable<CallNotificationWrapper>;
 };
 
 export type GroupCallLoadFailed = {
@@ -378,12 +371,7 @@ export const useLoadGroupCall = (
       waitForClientSyncing()
         .then(fetchOrCreateGroupCall)
         .then(({ room, rtcSession }) =>
-          setState({
-            kind: "loaded",
-            room,
-            rtcSession,
-            sentCallNotification$: observeSentCallNotification$(rtcSession),
-          }),
+          setState({ kind: "loaded", room, rtcSession }),
         )
         .then(observeMyMembership)
         .catch((error) => setState({ kind: "failed", error }));

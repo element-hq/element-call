@@ -28,7 +28,7 @@ import userEvent, {
 import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-container";
 import { useState } from "react";
 import { TooltipProvider } from "@vector-im/compound-web";
-import { NEVER, Subject } from "rxjs";
+import { Subject } from "rxjs";
 import { Room as LivekitRoom } from "livekit-client";
 
 import { prefetchSounds } from "../soundUtils";
@@ -192,8 +192,6 @@ function createCallView(
                 // Straight into the (mocked) call, past the lobby
                 skipLobby
                 rtcSession={rtcSession.asMockedSession()}
-                sentCallNotification$={NEVER}
-                statistics={rtcSession.asMockedSession().statistics}
               />
             </BackgroundEffectsProvider>
           </MediaDevicesContext>

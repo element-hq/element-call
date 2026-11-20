@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { type MatrixClient, type Room } from "matrix-js-sdk";
 import { EventType } from "matrix-js-sdk/lib/@types/event";
 import { type MatrixEvent } from "matrix-js-sdk/lib/models/event";
@@ -13,10 +13,15 @@ import {
   type RoomState,
   RoomStateEvent,
 } from "matrix-js-sdk/lib/models/room-state";
+import { RoomStickyEventsEvent } from "matrix-js-sdk/lib/models/room-sticky-events";
 
-import { MatrixRTCSessionEvent } from "matrix-js-sdk/lib/matrixrtc";
+import {
+  MatrixRTCSessionEvent,
+  type MatrixRTCSessionEventHandlerMap,
+} from "matrix-js-sdk/lib/matrixrtc";
 
 import { createRTCSlot } from "./RTCSlot";
+import { ObservableScope } from "./reactive/ObservableScope";
 import { type RTCSlotOptions } from "./api";
 import { E2eeType } from "./encryption";
 import {
@@ -39,6 +44,11 @@ function setup(): {
     ...mockEmitter(),
     roomId: "!room:example.org",
     getMembersWithMembership: (): [] => [],
+    // An empty room, for a session of the slot's own
+    getLiveTimeline: () => ({ getState: (): undefined => undefined }),
+    hasMembershipState: (): boolean => false,
+    getVersion: (): string => "11",
+    _unstable_getStickyEvents: (): [] => [],
   } as unknown as Room;
   const session = new MockRTCSession(room);
   const client = {
@@ -49,6 +59,72 @@ function setup(): {
 }
 
 describe("createRTCSlot", () => {
+  describe("session", () => {
+    it("joins the room's call slot by default", () => {
+      const { client, room } = setup();
+      const slot = createRTCSlot(testScope(), client, room, options);
+      expect(slot).toMatchObject({ application: "m.call", id: "ROOM" });
+    });
+
+    it("joins the slot the options name", () => {
+      const { client, room } = setup();
+      const slot = createRTCSlot(testScope(), client, room, {
+        ...options,
+        slotDescription: { application: "io.element.example", id: "" },
+      });
+      expect(slot).toMatchObject({ application: "io.element.example", id: "" });
+    });
+
+    it("stops its own session when the scope ends", async () => {
+      const { client, room } = setup();
+      const off = vi.spyOn(room, "off");
+      const scope = new ObservableScope();
+      createRTCSlot(scope, client, room, options);
+
+      scope.end();
+      await vi.waitFor(() =>
+        expect(off).toHaveBeenCalledWith(
+          RoomStickyEventsEvent.Update,
+          expect.any(Function),
+        ),
+      );
+    });
+
+    it("leaves a session it is given to its caller", () => {
+      const { client, room, session } = setup();
+      const given = session.asMockedSession();
+      given.stop = vi.fn();
+      const scope = new ObservableScope();
+      createRTCSlot(scope, client, room, options, given);
+
+      scope.end();
+      expect(given.stop).not.toHaveBeenCalled();
+    });
+
+    it("has the session's statistics and sent call notifications", () => {
+      const { client, room, session } = setup();
+      const slot = createRTCSlot(
+        testScope(),
+        client,
+        room,
+        options,
+        session.asMockedSession(),
+      );
+      expect(slot.statistics).toBe(session.statistics);
+
+      const sent: unknown[] = [];
+      slot.sentCallNotification$.subscribe((n) => sent.push(n));
+      const notification = { event_id: "$notification" };
+      session.emit(
+        MatrixRTCSessionEvent.DidSendCallNotification,
+        notification as Parameters<
+          MatrixRTCSessionEventHandlerMap[MatrixRTCSessionEvent.DidSendCallNotification]
+        >[0],
+      );
+      expect(sent).toEqual([notification]);
+    });
+  });
+
   describe("status$", () => {
     it("is undefined while the room has no slot event", () => {
       const { client, room, session } = setup();

@@ -80,12 +80,6 @@ import { type CallNotificationWrapper } from "../state/CallViewModel/CallNotific
  */
 export const MUTE_PARTICIPANT_COUNT = 8;
 
-declare global {
-  interface Window {
-    rtcSession?: MatrixRTCSession;
-  }
-}
-
 interface Props {
   /** The client to place the call with. */
   client: Pick<
@@ -93,6 +87,20 @@ interface Props {
     // Our own identity: RTC slot, call view model, footer, settings
     | "getUserId"
     | "getDeviceId"
+    // The RTC slot's session: memberships, delayed leave events, sticky events
+    // and media keys
+    | "fetchCapabilities"
+    | "getCachedCapabilities"
+    | "sendStateEvent"
+    | "_unstable_sendDelayedStateEvent"
+    | "_unstable_updateDelayedEvent"
+    | "_unstable_cancelScheduledDelayedEvent"
+    | "_unstable_restartScheduledDelayedEvent"
+    | "_unstable_sendScheduledDelayedEvent"
+    | "_unstable_sendStickyEvent"
+    | "_unstable_sendStickyDelayedEvent"
+    | "cancelPendingEvent"
+    | "encryptAndSendToDevice"
     // Local transport discovery (RTC slot), developer settings
     | "getDomain"
     | "getRTCTransports"
@@ -105,12 +113,14 @@ interface Props {
     | "baseUrl"
     // Homeserver connection (RTC slot): whether the client is syncing
     | "getSyncState"
-    // Reactions and raised hands: sending, lowering, and decrypting
+    // Reactions, raised hands and the RTC slot's session: sending, lowering,
+    // and decrypting
     | "sendEvent"
     | "redactEvent"
     | "decryptEventIfNeeded"
     // `on`/`off`, to listen for:
     // - `ClientEvent.Sync` (RTC slot homeserver connection)
+    // - `ClientEvent.ToDeviceEvent` (RTC slot session media keys)
     // - `MatrixEventEvent.Decrypted` (reactions once decrypted)
     | "on"
     | "off"
@@ -138,11 +148,17 @@ interface Props {
     | "currentState"
     // Joined and invited members, for the RTC slot and the call view model
     | "getMembersWithMembership"
-    // Call notifications, for the call view model
+    // The RTC slot's session: memberships from the timeline and room state
+    | "getLiveTimeline"
+    | "hasMembershipState"
+    | "getVersion"
+    // Sticky memberships for the RTC slot's session, and call notifications
+    // for the call view model
     | "_unstable_getStickyEvents"
     // Raised hands already in the room, for the reactions reader
     | "relations"
     // `on`/`off`, to listen for:
+    // - the RTC slot session's room events
     // - `RoomEvent.Name` (room name)
     // - `RoomEvent.CurrentStateUpdated` (avatar and join rule hooks)
     // - `RoomStateEvent.Events` (RTC slot status)
@@ -153,15 +169,16 @@ interface Props {
     | "on"
     | "off"
   >;
-  /** The call to join, which the RTC slot is built on. */
-  rtcSession: MatrixRTCSession;
   /**
-   * The call notifications the session sends with our join, so the call can
-   * show it ringing: `observeSentCallNotification$(rtcSession)`.
+   * The call to join, which the RTC slot is built on.
+   * Passing undefined -> the SDK will create a inner RTCSession (or in the future a rust equivalent)
+   * @deprecated: It should not get its rtcSession from here.
+   * The goal is that the RTC session is fully encapsulated inside the SDK (`createRTCSlot`)
+   * We keep this as a fallback for the SPA. In that mode we currently expect to manage Our
+   * own rtcSession with `useLoadGroupCall`. This is an open TODO. Until then we have this
+   * alternative.
    */
-  sentCallNotification$: Observable<CallNotificationWrapper>;
-  /** The session's media key statistics, reported when the call ends. */
-  statistics: Statistics;
+  rtcSession?: MatrixRTCSession;
   /**
    * Whether the user is signed in as a guest, and so should be offered the
    * chance to create an account when the call ends.
@@ -192,7 +209,10 @@ interface Props {
  * whatever is hosting it — the standalone app's own shell, or an application
  * embedding Element Call as a component. Both render this.
  */
-export const CallView: FC<Props> = ({ rtcSession, ...props }): ReactNode => {
+export const CallView: FC<Props> = ({
+  rtcSession: externalRtcSession,
+  ...props
+}): ReactNode => {
   // Whether the user is in the call is the call's own business, not its host's.
   // Held here rather than below so that it survives the mute state being
   // rebuilt.
@@ -200,10 +220,13 @@ export const CallView: FC<Props> = ({ rtcSession, ...props }): ReactNode => {
   const muteStates = useMuteStates();
   const e2eeSystem = useRoomEncryptionSystem(props.room.roomId);
 
+  const { client, room } = props;
+
   // One slot for every join of this call: leaving and joining again, to
   // reconnect or from the lobby, happens on the same one
-  const [slot, setSlot] = useState<RTCSlot | null>(null);
-  const { client, room } = props;
+  const [slot, setSlot] = useState<ReturnType<typeof createRTCSlot> | null>(
+    null,
+  );
   useEffect(() => {
     const scope = new ObservableScope();
     setSlot(
@@ -212,24 +235,19 @@ export const CallView: FC<Props> = ({ rtcSession, ...props }): ReactNode => {
         client,
         room,
         { encryptionSystem: e2eeSystem },
-        rtcSession,
+        externalRtcSession,
       ),
     );
     return (): void => scope.end();
-  }, [client, room, e2eeSystem, rtcSession]);
-
-  useEffect(() => {
-    window.rtcSession = rtcSession;
-    return (): void => {
-      delete window.rtcSession;
-    };
-  }, [rtcSession]);
+  }, [client, room, e2eeSystem, externalRtcSession]);
 
   if (muteStates === null || slot === null) return null;
 
   return (
     <LoadedCallView
       {...props}
+      sentCallNotification$={slot.sentCallNotification$}
+      statistics={slot.statistics}
       slot={slot}
       e2eeSystem={e2eeSystem}
       joined={joined}
@@ -243,9 +261,9 @@ export const CallView: FC<Props> = ({ rtcSession, ...props }): ReactNode => {
 // We only rely on our sdk abstraction (+ client and +room but only a
 // smaller list of callbacks.)
 interface LoadedProps extends Omit<Props, "rtcSession" | "client" | "room"> {
-  // Narrower than `Props.client`: the `slot` already has what only it needs,
-  // `getRTCTransports`, `delegateDelayedLeave`, `baseUrl`, `getSyncState` and
-  // `ClientEvent.Sync`
+  // Narrower than `Props.client`: the `slot` already has what only it and its
+  // session need, `getRTCTransports`, `delegateDelayedLeave`, `baseUrl`,
+  // `getSyncState`, `ClientEvent.Sync`, and the session's sending
   client: Pick<
     MatrixClient,
     | "getUserId"
@@ -267,9 +285,9 @@ interface LoadedProps extends Omit<Props, "rtcSession" | "client" | "room"> {
     | "on"
     | "off"
   >;
-  // Narrower than `Props.room` only in what it listens for: the `slot` already
-  // follows `RoomStateEvent.Events` for its status, and `RoomStateEvent.Members`
-  // for its own members
+  // Narrower than `Props.room`: the `slot` already follows
+  // `RoomStateEvent.Events` for its status, `RoomStateEvent.Members` for its
+  // own members, and the timeline its session reads the memberships from
   room: Pick<
     Room,
     | "roomId"
@@ -290,6 +308,13 @@ interface LoadedProps extends Omit<Props, "rtcSession" | "client" | "room"> {
     | "on"
     | "off"
   >;
+  /**
+   * The call notifications the session sends with our join, so the call can
+   * show it ringing: the slot's `sentCallNotification$`.
+   */
+  sentCallNotification$: Observable<CallNotificationWrapper>;
+  /** The session's media key statistics, reported when the call ends. */
+  statistics: Statistics;
   slot: RTCSlot;
   e2eeSystem: EncryptionSystem;
   joined: boolean;

@@ -49,7 +49,6 @@ import {
   useState,
 } from "react";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import { type Room } from "matrix-js-sdk";
 import { I18nextProvider } from "react-i18next";
 import { TooltipProvider } from "@vector-im/compound-web";
@@ -61,7 +60,6 @@ import LanguageDetector from "i18next-browser-languagedetector";
 
 import EN from "../locales/en/app.json";
 import { CallView } from "../src/room/CallView";
-import { observeSentCallNotification$ } from "../src/state/CallViewModel/CallNotificationLifecycle";
 import { ErrorPage } from "../src/FullScreenView";
 import { ClientProvider } from "../src/ClientContext";
 import { HostBridgeProvider } from "../src/HostBridge";
@@ -250,31 +248,6 @@ export const ElementCall: FC<ElementCallProps> = ({
 
   const callViewClient = useMemo(() => createCallViewClient(client), [client]);
 
-  // A session of our own rather than `client.matrixRTC.getRoomSession`: the
-  // client is the host's, built from the host's copy of matrix-js-sdk, so the
-  // sessions its manager hands out may not be compatible with ours. Ours to
-  // stop, too: nothing else will.
-  const [rtcSession, setRtcSession] = useState<MatrixRTCSession | null>(null);
-  useEffect(() => {
-    if (room === null) return;
-    const slot = {
-      application: "m.call",
-      id: "ROOM",
-    };
-    // It is important we create a session from the js-sdk and dont inherit from
-    // the host passed client.
-    const session = new MatrixRTCSession(client, room, slot);
-    setRtcSession(session);
-    return (): void => {
-      setRtcSession(null);
-      void session.stop();
-    };
-  }, [client, room]);
-  const sentCallNotification$ = useMemo(
-    () => rtcSession && observeSentCallNotification$(rtcSession),
-    [rtcSession],
-  );
-
   if (room === null)
     logger.error(
       `Element Call was asked to call in ${roomId}, which its host's client does not know about`,
@@ -285,12 +258,7 @@ export const ElementCall: FC<ElementCallProps> = ({
   // is told that Element Call has loaded, as the widget tells its client once
   // its own initialisation is over. Once per mount, however often the pieces
   // are later swapped out.
-  const ready =
-    container !== null &&
-    room !== null &&
-    rtcSession !== null &&
-    sentCallNotification$ !== null &&
-    vm !== null;
+  const ready = container !== null && room !== null && vm !== null;
   const announcedLoaded = useRef(false);
   useEffect(() => {
     if (!ready || announcedLoaded.current) return;
@@ -328,9 +296,6 @@ export const ElementCall: FC<ElementCallProps> = ({
                                 <CallView
                                   client={callViewClient}
                                   room={room}
-                                  rtcSession={rtcSession}
-                                  sentCallNotification$={sentCallNotification$}
-                                  statistics={rtcSession.statistics}
                                   isPasswordlessUser={false}
                                   confineToRoom={params.confineToRoom}
                                   preload={params.preload}

@@ -70,13 +70,9 @@ async function start(
     const room = await joinRoom(client, roomIdOrAlias);
 
     const scope = new ObservableScope();
-    const slot = createRTCSlot(
-      scope,
-      client,
-      room,
-      { encryptionSystem: { kind: E2eeType.PER_PARTICIPANT } },
-      client.matrixRTC.getRoomSession(room),
-    );
+    const slot = createRTCSlot(scope, client, room, {
+      encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
+    });
     const rtcParticipation = slot.join({
       publish: [{ source: "microphone" }, { source: "camera" }],
       matrixRTCMode: MatrixRTCMode.Compatibility,
