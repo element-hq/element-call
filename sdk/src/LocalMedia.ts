@@ -147,6 +147,10 @@ type SourceConstraints = Partial<Record<Source, MediaTrackConstraints>>;
 /**
  * Opens the devices asked for. Where one of them is gone, as a remembered
  * choice that was unplugged, the browser picks instead.
+ *
+ * This is needed because we use `exact` device ids: an exact request for a
+ * device that no longer exists fails, where a preferred one would have opened
+ * another device. Without the retry here a stale choice would open nothing.
  */
 async function open(
   getUserMedia: GetUserMedia,
@@ -175,8 +179,10 @@ async function open(
 
 /** The constraints a request means to the browser. */
 function trackConstraints(request: Request): MediaTrackConstraints {
-  // Exact: a device merely preferred is passed over for the default one
-  // where the browser weighs it against nothing else
+  // THE FIX for "cannot switch cameras in Chrome" (#4479), first capture.
+  // `exact` makes the browser open this device or fail. A plain
+  // `deviceId: "abc"` is only a wish, and Chromium ignores the wish and
+  // opens its default device.
   const device = request.deviceId && {
     deviceId: { exact: request.deviceId },
   };
@@ -222,6 +228,8 @@ class CapturedTrack {
     // The device actually in use, so that a backend asked for it again
     // recognises it rather than restarting the track
     const { deviceId } = track.getSettings();
+    // `exact` here too: the call reopens the camera with these constraints
+    // after a mute, and must get the same device again, not the default one
     const constraints = {
       ...this.constraints,
       ...(deviceId && { deviceId: { exact: deviceId } }),
@@ -286,7 +294,14 @@ class CapturedTrack {
     for (const element of this.elements) play(element, this.shown());
   }
 
-  /** Opens the device the selector names in place of the current one, which is kept where that fails. */
+  /**
+   * Replace the current with the one from the selector. On fail, keep current.
+   *
+   * The old `deviceId` and `facingMode` are removed before the new selector
+   * is applied. This is needed because we use `exact` device ids: if the old
+   * exact id stayed, asking for a new facing mode could not leave the deviceId.
+   * "flip camera" would do nothing.
+   */
   private async reacquire(
     selector: Pick<MediaTrackConstraints, "deviceId" | "facingMode">,
   ): Promise<void> {
@@ -338,6 +353,10 @@ class CapturedTrack {
       },
       setDevice: async (deviceId: string): Promise<void> => {
         if (this.track.getSettings().deviceId === deviceId) return;
+        // THE FIX for "cannot switch cameras in Chrome" (#4479), switching in
+        // the lobby. With a plain `{ deviceId }` Chromium reopened the same
+        // camera, so the preview only flashed. `exact` opens the one picked,
+        // or rejects and leaves the current camera running.
         await this.reacquire({ deviceId: { exact: deviceId } });
       },
     };

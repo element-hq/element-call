@@ -208,13 +208,18 @@ export function createLocalLivekitMediaTrack(
         (await current.getDeviceId(false)) === deviceId
       )
         return;
+      // THE FIX for "cannot switch cameras in Chrome" (#4479), switching in
+      // the call. No third argument: LiveKit then asks for the device with
+      // `exact`. Passing `false` there made it a wish, which Chromium ignores
+      // by reopening its default device.
       await room.switchActiveDevice(
         base.kind === "audio" ? "audioinput" : "videoinput",
         deviceId,
       );
-      // Asked of the track again rather than taken from LiveKit's answer,
-      // which compares against the processed track too. A muted track is
-      // stopped and takes the device on turning on again
+      // A check that the switch really happened, so that a failure is an
+      // error and not silence. Asked of the track again rather than taken
+      // from LiveKit's answer, which compares against the processed track
+      // too. A muted track is stopped and takes the device on turning on again
       const now = publication.track;
       const deviceNow =
         now instanceof LocalTrack && !now.isMuted
