@@ -12,6 +12,21 @@ import { TestHelpers } from "./test-helpers.ts";
 
 widgetTest.use({ callType: "dm" });
 
+// The bug from issue #4403, in a real call between two users in Element Web.
+// 1. Brooks' browser is made slow: it lists its camera and microphone only
+//    after the call is on screen.
+// 2. Brooks starts a video call in a DM. A DM call has no lobby.
+// 3. Whistler picks up.
+// 4. Brooks' camera button shows "on".
+// 5. Whistler must see two videos: their own and the one brooks sends.
+// Before the fix whistler saw only their own video.
+//
+// What it guards: the unit tests only check the mute button's own logic. This
+// test checks the whole chain: button, call, SFU, and what the other person
+// really sees. The bug depends on timing (camera listed before or after the
+// call opens), so the normal DM call tests pass by luck most of the time.
+// This test forces the bad timing every run, so a regression shows up always
+// and not only sometimes.
 widgetTest(
   "Publishes a camera the browser lists only once the call is on screen",
   async ({ asWidget, browserName }) => {
@@ -53,6 +68,11 @@ widgetTest(
 /**
  * Holds the device list back in the widget until the call view shows a tile,
  * as a browser that is slow to answer does. Call before the widget loads.
+ *
+ * How: it replaces the browser's `enumerateDevices` with one that waits. It
+ * checks every 50ms whether a video tile is on the page, waits half a second
+ * more, and only then gives the real list. Element Web itself (the outer
+ * page) is left alone; only the call inside the iframe is slowed down.
  */
 async function listDevicesOnlyInTheCall(page: Page): Promise<void> {
   await page.addInitScript(() => {

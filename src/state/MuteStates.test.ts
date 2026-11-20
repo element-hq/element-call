@@ -170,6 +170,18 @@ describe("MuteState", () => {
     expect(syncingValues.at(-1)).toBe(false);
   });
 
+  // The bug from issue #4403: we join a call without a lobby, and the browser
+  // tells us about the camera only after the call has started.
+  // 1. Start with no camera, with the camera set to be on by default.
+  // 2. Set a handler, like the call does when it starts.
+  // 3. The camera shows up.
+  // The handler must be called with "on", so the call publishes the camera,
+  // and the button must show "on" only after the handler is done.
+  //
+  // What it guards: the button and the real camera must never disagree. In
+  // the bug the button jumped to "on" by itself and nobody told the call, so
+  // the other side saw "Waiting for media". If someone changes how the
+  // default is applied and forgets the handler again, this test fails.
   test("asks the handler for the default of a device listed after it was set", async () => {
     const available$ = new BehaviorSubject(new Map<string, DeviceLabel>());
     const muteState = new MuteState(
@@ -192,6 +204,18 @@ describe("MuteState", () => {
     expect(muteState.syncing$.value).toBe(false);
   });
 
+  // A camera that is unplugged and plugged back in during a call.
+  // 1. Start with a camera, on by default, and set a handler.
+  // 2. The camera goes away, then comes back.
+  // The handler is told "off" when the camera goes away and is not called
+  // again. The camera stays off: we must not turn on a camera that the user
+  // may have turned off before.
+  //
+  // What it guards: a privacy problem the fix for #4403 could cause. The fix
+  // sends the default "on" to the handler. If it did that every time a
+  // camera shows up, replugging a camera (or leaving earpiece mode) would
+  // start sending video without the user asking. This test fails if the
+  // default is ever applied a second time during a call.
   test("leaves a device that comes back under a handler off", async () => {
     const available$ = new BehaviorSubject(aCamera);
     const muteState = new MuteState(
@@ -212,6 +236,15 @@ describe("MuteState", () => {
     expect(muteState.enabled$.value).toBe(false);
   });
 
+  // The lobby case, which must keep working as before: no handler is set.
+  // 1. Start with no camera, with the camera set to be on by default.
+  // 2. The camera shows up.
+  // The button shows "on" right away, with no waiting.
+  //
+  // What it guards: the lobby and the join read the button's value at once
+  // to decide which devices to open. If the fix for #4403 made the default
+  // wait for a handler here too, the value would be "off" for a moment and
+  // the lobby would open no camera. This test fails if that happens.
   test("assumes the default at once where no handler is set", () => {
     const available$ = new BehaviorSubject(new Map<string, DeviceLabel>());
     const muteState = new MuteState(
@@ -226,10 +259,12 @@ describe("MuteState", () => {
     expect(muteState.enabled$.value).toBe(true);
   });
 
+  // A device list with one camera in it.
   const aCamera = new Map<string, DeviceLabel>([
     ["fbac11", { type: "name", name: "HD Camera" }],
   ]);
 
+  // A fake camera whose device list the test can change while it runs.
   function aDevice(
     available$: BehaviorSubject<Map<string, DeviceLabel>>,
   ): MediaDevice<DeviceLabel, SelectedDevice> {
