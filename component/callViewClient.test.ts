@@ -1,0 +1,89 @@
+/*
+Copyright 2026 Element Creations Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE in the repository root for full details.
+*/
+
+import { afterEach, expect, test, vi } from "vitest";
+import { ClientEvent, type MatrixClient, SyncState } from "matrix-js-sdk";
+
+import { createCallViewClient } from "./callViewClient";
+
+function mockHost(): MatrixClient & { token: string } {
+  const host = {
+    token: "first",
+    baseUrl: "https://matrix.example.org",
+    getUserId: (): string => "@alice:example.org",
+    getDeviceId: (): string => "DEVICE",
+    getAccessToken: (): string => host.token,
+    getSyncState: vi.fn(() => SyncState.Syncing),
+    on: vi.fn(),
+    off: vi.fn(),
+    getUser: vi.fn(() => null),
+    getCrypto: vi.fn(() => undefined),
+    setDisplayName: vi.fn(),
+    setAvatarUrl: vi.fn(),
+    uploadContent: vi.fn(),
+    doesServerSupportUnstableFeature: vi.fn(),
+  };
+  return host as unknown as MatrixClient & { token: string };
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+test("reads the host's live state from the host's client", () => {
+  const host = mockHost();
+  const client = createCallViewClient(host);
+  const listener = (): void => {};
+
+  expect(client.getSyncState()).toBe(SyncState.Syncing);
+  client.on(ClientEvent.Sync, listener);
+  client.off(ClientEvent.Sync, listener);
+  client.getUser("@bob:example.org");
+  client.getCrypto();
+
+  expect(host.getSyncState).toHaveBeenCalledOnce();
+  expect(host.on).toHaveBeenCalledWith(ClientEvent.Sync, listener);
+  expect(host.off).toHaveBeenCalledWith(ClientEvent.Sync, listener);
+  expect(host.getUser).toHaveBeenCalledWith("@bob:example.org");
+  expect(host.getCrypto).toHaveBeenCalledOnce();
+});
+
+test("takes its credentials from the host", () => {
+  const client = createCallViewClient(mockHost());
+
+  expect(client.getUserId()).toBe("@alice:example.org");
+  expect(client.getDeviceId()).toBe("DEVICE");
+  expect(client.getDomain()).toBe("example.org");
+  expect(client.baseUrl).toBe("https://matrix.example.org");
+});
+
+test("makes requests with whichever token the host holds now", async () => {
+  const fetch = vi.fn(
+    async () =>
+      await Promise.resolve(
+        new Response(JSON.stringify({ access_token: "openid" }), {
+          headers: { "Content-Type": "application/json" },
+        }),
+      ),
+  );
+  vi.stubGlobal("fetch", fetch);
+  const host = mockHost();
+  const client = createCallViewClient(host);
+  // As if the host had refreshed its token after we were created
+  host.token = "refreshed";
+
+  await client.getOpenIdToken();
+
+  expect(fetch).toHaveBeenCalledOnce();
+  const [url, init] = fetch.mock.calls[0] as unknown as [URL, RequestInit];
+  expect(url.toString()).toBe(
+    "https://matrix.example.org/_matrix/client/v3/user/%40alice%3Aexample.org/openid/request_token",
+  );
+  expect(new Headers(init.headers).get("Authorization")).toBe(
+    "Bearer refreshed",
+  );
+});

@@ -86,6 +86,7 @@ import styles from "./ElementCall.module.css";
 import { useComponentHostBridge } from "./host";
 import { CallPortalRoot } from "./CallPortalRoot";
 import { type ElementCallProps } from "./api";
+import { createCallViewClient } from "./callViewClient";
 import { supportedLanguages, translationsBackend } from "./localization";
 
 // The languages Element Call can be shown in
@@ -242,6 +243,8 @@ export const ElementCall: FC<ElementCallProps> = ({
     | "off"
   > | null;
 
+  const callViewClient = useMemo(() => createCallViewClient(client), [client]);
+
   // A session of our own rather than `client.matrixRTC.getRoomSession`: the
   // client is the host's, built from the host's copy of matrix-js-sdk, so the
   // sessions its manager hands out may not be compatible with ours. Ours to
@@ -310,7 +313,7 @@ export const ElementCall: FC<ElementCallProps> = ({
                                 effects={vm.backgroundEffects}
                               >
                                 <CallView
-                                  client={client}
+                                  client={callViewClient}
                                   room={room}
                                   rtcSession={rtcSession}
                                   isPasswordlessUser={false}
