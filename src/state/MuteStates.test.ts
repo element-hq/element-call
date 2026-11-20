@@ -169,6 +169,76 @@ describe("MuteState", () => {
     expect(syncingValues).toContain(true);
     expect(syncingValues.at(-1)).toBe(false);
   });
+
+  test("asks the handler for the default of a device listed after it was set", async () => {
+    const available$ = new BehaviorSubject(new Map<string, DeviceLabel>());
+    const muteState = new MuteState(
+      testScope,
+      aDevice(available$),
+      true,
+      constant(false),
+    );
+    const handler = vi.fn(async (desired: boolean) => Promise.resolve(desired));
+    muteState.setHandler(handler);
+    expect(muteState.enabled$.value).toBe(false);
+
+    available$.next(aCamera);
+    // On only once the handler has acted on it
+    expect(muteState.enabled$.value).toBe(false);
+    await flushPromises();
+
+    expect(handler).toHaveBeenLastCalledWith(true);
+    expect(muteState.enabled$.value).toBe(true);
+    expect(muteState.syncing$.value).toBe(false);
+  });
+
+  test("leaves a device that comes back under a handler off", async () => {
+    const available$ = new BehaviorSubject(aCamera);
+    const muteState = new MuteState(
+      testScope,
+      aDevice(available$),
+      true,
+      constant(false),
+    );
+    expect(muteState.enabled$.value).toBe(true);
+    const handler = vi.fn(async (desired: boolean) => Promise.resolve(desired));
+    muteState.setHandler(handler);
+
+    available$.next(new Map());
+    available$.next(aCamera);
+    await flushPromises();
+
+    expect(handler.mock.calls).toEqual([[false]]);
+    expect(muteState.enabled$.value).toBe(false);
+  });
+
+  test("assumes the default at once where no handler is set", () => {
+    const available$ = new BehaviorSubject(new Map<string, DeviceLabel>());
+    const muteState = new MuteState(
+      testScope,
+      aDevice(available$),
+      true,
+      constant(false),
+    );
+
+    available$.next(aCamera);
+
+    expect(muteState.enabled$.value).toBe(true);
+  });
+
+  const aCamera = new Map<string, DeviceLabel>([
+    ["fbac11", { type: "name", name: "HD Camera" }],
+  ]);
+
+  function aDevice(
+    available$: BehaviorSubject<Map<string, DeviceLabel>>,
+  ): MediaDevice<DeviceLabel, SelectedDevice> {
+    return {
+      available$,
+      selected$: constant({ id: "fbac11" }),
+      select(): void {},
+    } as unknown as MediaDevice<DeviceLabel, SelectedDevice>;
+  }
 });
 
 describe("MuteStates", () => {

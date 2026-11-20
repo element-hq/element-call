@@ -53,6 +53,8 @@ export class MuteState<Label, Selected> {
     this.handler$.next(defaultHandler);
   }
 
+  private devicesConnectedBefore = false;
+
   private readonly canControlDevices$ = combineLatest([
     this.device.available$,
     this.forceMute$,
@@ -86,15 +88,22 @@ export class MuteState<Label, Selected> {
           };
         }
 
-        // Assume the default value only once devices are actually connected
-        let enabled = this.enabledByDefault;
+        // Assume the default value only once devices are actually connected.
+        // Under a handler the default is asked of it like any other request,
+        // so that what follows the switch acts on it. Devices that come back
+        // then stay off: the user may have turned them off
+        const handled = this.handler$.value !== defaultHandler;
+        const wanted =
+          this.enabledByDefault && !(handled && this.devicesConnectedBefore);
+        this.devicesConnectedBefore = true;
+        let enabled = handled ? false : wanted;
         const set$ = new Subject<boolean>();
         const toggle$ = new Subject<void>();
         const syncing$ = new BehaviorSubject(false);
         const desired$ = merge(set$, toggle$.pipe(map(() => !enabled)));
         const enabled$ = new Observable<boolean>((subscriber) => {
           subscriber.next(enabled);
-          let latestDesired = this.enabledByDefault;
+          let latestDesired = wanted;
 
           const sync = async (): Promise<void> => {
             if (enabled === latestDesired) {
@@ -120,16 +129,19 @@ export class MuteState<Label, Selected> {
             }
           };
 
+          const startSync = (): void => {
+            syncing$.next(true);
+            sync().catch((err) => {
+              // TODO: better error handling
+              logger.error("MuteState: handler error", err);
+            });
+          };
+
           const s = desired$.subscribe((desired) => {
             latestDesired = desired;
-            if (syncing$.value === false) {
-              syncing$.next(true);
-              sync().catch((err) => {
-                // TODO: better error handling
-                logger.error("MuteState: handler error", err);
-              });
-            }
+            if (syncing$.value === false) startSync();
           });
+          if (enabled !== latestDesired) startSync();
           return (): void => {
             s.unsubscribe();
             syncing$.complete();
