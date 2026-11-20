@@ -24,7 +24,7 @@ describe("createLocalMedia", () => {
     ]);
 
     expect(getUserMedia).toHaveBeenCalledExactlyOnceWith({
-      audio: { deviceId: "mic" },
+      audio: { deviceId: { exact: "mic" } },
       video: { width: 640, height: 480, frameRate: undefined },
     });
     expect(tracks.map((t) => t.source)).toEqual(["microphone", "camera"]);
@@ -124,7 +124,7 @@ describe("createLocalMedia", () => {
     await camera.setDevice("other");
 
     expect(getUserMedia).toHaveBeenLastCalledWith({
-      video: { deviceId: "other" },
+      video: { deviceId: { exact: "other" } },
     });
     expect(first.stop).toHaveBeenCalled();
     expect(processor.restart).toHaveBeenCalledOnce();
@@ -133,7 +133,53 @@ describe("createLocalMedia", () => {
     expect(input).toBe(vi.mocked(processor.init).mock.calls[0][1]);
     expect(tracksOn(element)).toEqual([processor.output]);
     expect(media.takeTracks().get("camera")?.constraints).toEqual({
-      deviceId: "other",
+      deviceId: { exact: "other" },
+    });
+  });
+
+  it("opens the browser's choice where the device asked for is gone", async () => {
+    const getUserMedia = vi.mocked(fakeGetUserMedia());
+    getUserMedia.mockRejectedValueOnce(overconstrained());
+    const media = createLocalMedia(getUserMedia);
+
+    const tracks = await media.capture([
+      { source: "microphone", deviceId: "unplugged" },
+      { source: "camera", deviceId: "cam" },
+    ]);
+
+    expect(getUserMedia).toHaveBeenLastCalledWith({ audio: {}, video: {} });
+    expect(tracks.map((t) => t.source)).toEqual(["microphone", "camera"]);
+  });
+
+  it("keeps the camera it has where another cannot be opened", async () => {
+    const getUserMedia = vi.mocked(fakeGetUserMedia());
+    const media = createLocalMedia(getUserMedia);
+    const [camera] = await media.capture([
+      { source: "camera", deviceId: "cam" },
+    ]);
+    const first = trackBehind(camera);
+    getUserMedia.mockRejectedValueOnce(overconstrained());
+
+    await expect(camera.setDevice("unplugged")).rejects.toThrow();
+
+    expect(first.stop).not.toHaveBeenCalled();
+    expect(media.takeTracks().get("camera")).toMatchObject({
+      track: first,
+      constraints: { deviceId: { exact: "cam" } },
+    });
+  });
+
+  it("lets go of the device it was opened on to face the other way", async () => {
+    const getUserMedia = fakeGetUserMedia({ facingMode: "user" });
+    const media = createLocalMedia(getUserMedia);
+    const [camera] = (await media.capture([
+      { source: "camera", deviceId: "front" },
+    ])) as [LocalVideoMediaTrack];
+
+    await camera.switchFacingMode();
+
+    expect(getUserMedia).toHaveBeenLastCalledWith({
+      video: { facingMode: "environment" },
     });
   });
 
@@ -225,6 +271,10 @@ function fakeGetUserMedia(videoSettings?: MediaTrackSettings): GetUserMedia {
       new FakeMediaStream(tracks) as unknown as MediaStream,
     );
   });
+}
+
+function overconstrained(): Error {
+  return Object.assign(new Error("deviceId"), { name: "OverconstrainedError" });
 }
 
 function fakeProcessor(): VideoProcessor & { output: MediaStreamTrack } {
