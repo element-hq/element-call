@@ -166,12 +166,7 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
   const renderResult = render(
     <BrowserRouter>
       <MediaDevicesContext value={mediaDevices}>
-        <ReactionsSenderProvider
-          vm={vm}
-          rtcSession={rtcSession.asMockedSession()}
-          room={matrixRoom}
-          client={client}
-        >
+        <ReactionsSenderProvider vm={vm} room={matrixRoom} client={client}>
           <TooltipProvider>{content}</TooltipProvider>
         </ReactionsSenderProvider>
       </MediaDevicesContext>

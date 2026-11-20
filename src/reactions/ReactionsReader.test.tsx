@@ -23,22 +23,120 @@ import {
   localRtcMember,
 } from "../utils/test-fixtures";
 import { getBasicRTCSession } from "../utils/test-viewmodel";
-import { testScope, withTestScheduler } from "../utils/test";
+import { mockRtcMembership, testScope, withTestScheduler } from "../utils/test";
 import { ElementCallReactionEventType, ReactionSet } from ".";
 
 afterEach(() => {
   vitest.useRealTimers();
 });
 
-test("handles a hand raised reaction", () => {
-  const { rtcSession, matrixRoom, client } = getBasicRTCSession([local, alice]);
+function raiseLocalHand(
+  matrixRoom: ReturnType<typeof getBasicRTCSession>["matrixRoom"],
+  reactionEventId: string,
+  localTimestamp: Date,
+): void {
+  matrixRoom.emit(
+    MatrixRoomEvent.Timeline,
+    new MatrixEvent({
+      room_id: matrixRoom.roomId,
+      event_id: reactionEventId,
+      sender: localRtcMember.userId,
+      type: EventType.Reaction,
+      origin_server_ts: localTimestamp.getTime(),
+      content: {
+        "m.relates_to": { event_id: localRtcMember.eventId, key: "🖐️" },
+      },
+    }),
+    matrixRoom,
+    undefined,
+    false,
+    {} as IRoomTimelineData,
+  );
+}
+
+test("lowers the hand of a member who leaves", () => {
+  const { members$, matrixRoom, client, rtcMemberships$ } = getBasicRTCSession([
+    local,
+    alice,
+  ]);
   const reactionEventId = "$my_event_id:example.org";
   const localTimestamp = new Date();
   withTestScheduler(({ schedule, expectObservable }) => {
     renderHook(() => {
       const { raisedHands$ } = new ReactionsReader(
         testScope(),
-        rtcSession.asMockedSession(),
+        members$,
+        matrixRoom,
+        client,
+      );
+      schedule("abc", {
+        a: () => {},
+        b: () => raiseLocalHand(matrixRoom, reactionEventId, localTimestamp),
+        c: () => rtcMemberships$.next([aliceRtcMember]),
+      });
+      expectObservable(raisedHands$).toBe("abc", {
+        a: {},
+        b: {
+          [`${localRtcMember.userId}:${localRtcMember.deviceId}`]: {
+            reactionEventId,
+            membershipEventId: localRtcMember.eventId,
+            time: localTimestamp,
+          },
+        },
+        c: {},
+      });
+    });
+  });
+});
+
+test("lowers the hand of a member whose membership is sent again", () => {
+  const { members$, matrixRoom, client, rtcMemberships$ } = getBasicRTCSession([
+    local,
+    alice,
+  ]);
+  const reactionEventId = "$my_event_id:example.org";
+  const localTimestamp = new Date();
+  const resent = mockRtcMembership(
+    localRtcMember.userId,
+    localRtcMember.deviceId,
+  );
+  withTestScheduler(({ schedule, expectObservable }) => {
+    renderHook(() => {
+      const { raisedHands$ } = new ReactionsReader(
+        testScope(),
+        members$,
+        matrixRoom,
+        client,
+      );
+      schedule("abc", {
+        a: () => {},
+        b: () => raiseLocalHand(matrixRoom, reactionEventId, localTimestamp),
+        c: () => rtcMemberships$.next([resent, aliceRtcMember]),
+      });
+      expectObservable(raisedHands$).toBe("abc", {
+        a: {},
+        b: {
+          [`${localRtcMember.userId}:${localRtcMember.deviceId}`]: {
+            reactionEventId,
+            membershipEventId: localRtcMember.eventId,
+            time: localTimestamp,
+          },
+        },
+        c: {},
+      });
+    });
+  });
+});
+
+test("handles a hand raised reaction", () => {
+  const { members$, matrixRoom, client } = getBasicRTCSession([local, alice]);
+  const reactionEventId = "$my_event_id:example.org";
+  const localTimestamp = new Date();
+  withTestScheduler(({ schedule, expectObservable }) => {
+    renderHook(() => {
+      const { raisedHands$ } = new ReactionsReader(
+        testScope(),
+        members$,
         matrixRoom,
         client,
       );
@@ -82,14 +180,14 @@ test("handles a hand raised reaction", () => {
 });
 
 test("handles a redaction", () => {
-  const { rtcSession, matrixRoom, client } = getBasicRTCSession([local, alice]);
+  const { members$, matrixRoom, client } = getBasicRTCSession([local, alice]);
   const reactionEventId = "$my_event_id:example.org";
   const localTimestamp = new Date();
   withTestScheduler(({ schedule, expectObservable }) => {
     renderHook(() => {
       const { raisedHands$ } = new ReactionsReader(
         testScope(),
-        rtcSession.asMockedSession(),
+        members$,
         matrixRoom,
         client,
       );
@@ -148,14 +246,14 @@ test("handles a redaction", () => {
 });
 
 test("handles waiting for event decryption", () => {
-  const { rtcSession, matrixRoom, client } = getBasicRTCSession([local, alice]);
+  const { members$, matrixRoom, client } = getBasicRTCSession([local, alice]);
   const reactionEventId = "$my_event_id:example.org";
   const localTimestamp = new Date();
   withTestScheduler(({ schedule, expectObservable }) => {
     renderHook(() => {
       const { raisedHands$ } = new ReactionsReader(
         testScope(),
-        rtcSession.asMockedSession(),
+        members$,
         matrixRoom,
         client,
       );
@@ -220,14 +318,14 @@ test("handles waiting for event decryption", () => {
 });
 
 test("hands rejecting events without a proper membership", () => {
-  const { rtcSession, matrixRoom, client } = getBasicRTCSession([local, alice]);
+  const { members$, matrixRoom, client } = getBasicRTCSession([local, alice]);
   const reactionEventId = "$my_event_id:example.org";
   const localTimestamp = new Date();
   withTestScheduler(({ schedule, expectObservable }) => {
     renderHook(() => {
       const { raisedHands$ } = new ReactionsReader(
         testScope(),
-        rtcSession.asMockedSession(),
+        members$,
         matrixRoom,
         client,
       );
@@ -264,7 +362,7 @@ test("hands rejecting events without a proper membership", () => {
 });
 
 test("handles a reaction", () => {
-  const { rtcSession, matrixRoom, client } = getBasicRTCSession([local, alice]);
+  const { members$, matrixRoom, client } = getBasicRTCSession([local, alice]);
   const reactionEventId = "$my_event_id:example.org";
   const reaction = ReactionSet[1];
 
@@ -275,7 +373,7 @@ test("handles a reaction", () => {
     renderHook(() => {
       const { reactions$ } = new ReactionsReader(
         testScope(),
-        rtcSession.asMockedSession(),
+        members$,
         matrixRoom,
         client,
       );
@@ -326,7 +424,11 @@ test("handles a reaction", () => {
 });
 
 test("ignores bad reaction events", () => {
-  const { rtcSession, room, client } = getBasicRTCSession([local, alice]);
+  const {
+    members$,
+    matrixRoom: room,
+    client,
+  } = getBasicRTCSession([local, alice]);
   const reactionEventId = "$my_event_id:example.org";
   const reaction = ReactionSet[1];
 
@@ -336,7 +438,7 @@ test("ignores bad reaction events", () => {
     renderHook(() => {
       const { reactions$ } = new ReactionsReader(
         testScope(),
-        rtcSession.asMockedSession(),
+        members$,
         room,
         client,
       );
@@ -451,7 +553,7 @@ test("ignores bad reaction events", () => {
 });
 
 test("that reactions cannot be spammed", () => {
-  const { rtcSession, matrixRoom, client } = getBasicRTCSession([local, alice]);
+  const { members$, matrixRoom, client } = getBasicRTCSession([local, alice]);
   const reactionEventId = "$my_event_id:example.org";
   const reactionA = ReactionSet[1];
   const reactionB = ReactionSet[2];
@@ -463,7 +565,7 @@ test("that reactions cannot be spammed", () => {
     renderHook(() => {
       const { reactions$ } = new ReactionsReader(
         testScope(),
-        rtcSession.asMockedSession(),
+        members$,
         matrixRoom,
         client,
       );

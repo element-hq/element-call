@@ -19,14 +19,15 @@ import {
   useMemo,
   type JSX,
 } from "react";
-import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import { logger } from "matrix-js-sdk/lib/logger";
 
-import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
 import { useClientState } from "../ClientContext";
 import { ElementCallReactionEventType, type ReactionOption } from ".";
 import { type CallViewModel } from "../state/CallViewModel/CallViewModel";
 import { useBehavior } from "../useBehavior";
+import { constant } from "../state/Behavior";
+
+const noMembershipEvent$ = constant(undefined);
 
 interface ReactionsSenderContextType {
   supportsReactions: boolean;
@@ -51,18 +52,16 @@ export const useReactionsSender = (): ReactionsSenderContextType => {
  */
 export const ReactionsSenderProvider = ({
   children,
-  rtcSession,
   room,
   client,
   vm,
 }: {
   children: ReactNode;
-  rtcSession: MatrixRTCSession;
   /** The room the reactions are sent in. */
   room: Pick<Room, "roomId">;
   client: Pick<
     MatrixClient,
-    // Our own membership, which the reactions relate to
+    // Our own identity, which reactions and raised hands are keyed by
     | "getUserId"
     | "getDeviceId"
     // Sending reactions and raising a hand
@@ -70,22 +69,17 @@ export const ReactionsSenderProvider = ({
     // Lowering a hand
     | "redactEvent"
   >;
+  /** Our own membership, which the reactions relate to, and the current reactions. */
   vm: CallViewModel;
 }): JSX.Element => {
-  const memberships = useMatrixRTCSessionMemberships(rtcSession);
   const clientState = useClientState();
   const supportsReactions =
     clientState?.state === "valid" && clientState.supportedFeatures.reactions;
-  const myUserId = client.getUserId();
-  const myDeviceId = client.getDeviceId();
-  const myMembershipIdentifier = `${myUserId}:${myDeviceId}`;
+  const myMembershipIdentifier = `${client.getUserId()}:${client.getDeviceId()}`;
 
-  const myMembershipEvent = useMemo(
-    () =>
-      memberships.find(
-        (m) => m.userId === myUserId && m.deviceId === myDeviceId,
-      )?.eventId,
-    [memberships, myUserId, myDeviceId],
+  const localMember = useBehavior(vm.localMember$);
+  const myMembershipEvent = useBehavior(
+    localMember?.matrixEventId$ ?? noMembershipEvent$,
   );
 
   const reactions = useBehavior(vm.reactions$);
