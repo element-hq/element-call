@@ -14,6 +14,7 @@ Please see LICENSE in the repository root for full details.
 import {
   type RTCCallIntent,
   type RTCNotificationType,
+  type SlotDescription,
   type Transport,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type Observable } from "rxjs";
@@ -44,6 +45,8 @@ export { MatrixRTCError } from "./errors";
 
 export interface RTCSlotOptions {
   encryptionSystem: EncryptionSystem;
+  /** Which slot of the room to join. Defaults to the room's call, `m.call#ROOM`. */
+  slotDescription?: SlotDescription;
 }
 
 /**

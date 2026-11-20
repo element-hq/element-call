@@ -6,7 +6,12 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { afterEach, expect, test, vi } from "vitest";
-import { ClientEvent, type MatrixClient, SyncState } from "matrix-js-sdk";
+import {
+  ClientEvent,
+  EventType,
+  type MatrixClient,
+  SyncState,
+} from "matrix-js-sdk";
 
 import { createCallViewClient } from "./callViewClient";
 
@@ -23,6 +28,11 @@ function mockHost(): MatrixClient & { token: string } {
     getUser: vi.fn(() => null),
     getCrypto: vi.fn(() => undefined),
     sendEvent: vi.fn(),
+    sendStateEvent: vi.fn(),
+    _unstable_sendStickyEvent: vi.fn(),
+    _unstable_sendStickyDelayedEvent: vi.fn(),
+    cancelPendingEvent: vi.fn(),
+    encryptAndSendToDevice: vi.fn(),
     redactEvent: vi.fn(),
     decryptEventIfNeeded: vi.fn(),
     setDisplayName: vi.fn(),
@@ -53,6 +63,23 @@ test("reads the host's live state from the host's client", () => {
   expect(host.off).toHaveBeenCalledWith(ClientEvent.Sync, listener);
   expect(host.getUser).toHaveBeenCalledWith("@bob:example.org");
   expect(host.getCrypto).toHaveBeenCalledOnce();
+});
+
+test("sends the RTC session's encrypted events with the host's crypto", async () => {
+  const host = mockHost();
+  const client = createCallViewClient(host);
+
+  await client._unstable_sendStickyEvent(
+    "!room:example.org",
+    1000,
+    null,
+    EventType.RTCMembership,
+    { slot_id: "m.call#ROOM", msc4354_sticky_key: "key" },
+  );
+  await client.encryptAndSendToDevice("m.room.encrypted", [], {});
+
+  expect(host._unstable_sendStickyEvent).toHaveBeenCalledOnce();
+  expect(host.encryptAndSendToDevice).toHaveBeenCalledOnce();
 });
 
 test("takes its credentials from the host", () => {

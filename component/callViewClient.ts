@@ -38,38 +38,76 @@ export function createCallViewClient(
   });
 
   return {
-    // The host's sync loop
+    // Own has no sync loop: `syncApi?.getSyncState() ?? null` is always null
     getSyncState: host.getSyncState.bind(host),
-    // `on`/`off`, to listen for:
-    // - `ClientEvent.Sync` (RTC slot homeserver connection)
-    // - `MatrixEventEvent.Decrypted` (reactions once decrypted)
+    // Only the syncing host emits `Sync`, `ToDeviceEvent` and `Decrypted`
     on: host.on.bind(host),
+    // The same emitter as `on`
     off: host.off.bind(host),
-    // The host's store, which only its sync fills
+    // `this.store.getUser`: own's store is empty, only the host's sync fills it
     getUser: host.getUser.bind(host),
-    // The device's crypto: there must never be a second one
+    // Own never inits crypto, and a second one on the device would corrupt it
     getCrypto: host.getCrypto.bind(host),
-    // Reactions and raised hands: the host's crypto encrypts and decrypts them,
-    // and its room gets the local echo
+    // Own has no rooms: `encryptEventIfNeeded`'s `if (!room) return` skips E2EE
     sendEvent: host.sendEvent.bind(host),
+    // Not encrypted, but the local echo goes to `getRoom()`: only the host's
     redactEvent: host.redactEvent.bind(host),
+    // `attemptDecryption` only runs `if (this.getCrypto())`: a no-op on own
     decryptEventIfNeeded: host.decryptEventIfNeeded.bind(host),
+    // Like `sendEvent`: on own, `if (!room) return` sends it in plaintext
+    _unstable_sendStickyEvent: host._unstable_sendStickyEvent.bind(host),
+    // Like `sendEvent`: delayed, but still `encryptEventIfNeeded(event, room)`
+    _unstable_sendStickyDelayedEvent:
+      host._unstable_sendStickyDelayedEvent.bind(host),
+    // Pending events live in the sender's `eventsBeingEncrypted` and room
+    cancelPendingEvent: host.cancelPendingEvent.bind(host),
+    // `if (!this.cryptoBackend) throw`: own has no crypto
+    encryptAndSendToDevice: host.encryptAndSendToDevice.bind(host),
 
-    // Credentials, static, we can use own
+    // Static: own was created with the host's user id
     getUserId: own.getUserId.bind(own),
+    // Static: own was created with the host's device id
     getDeviceId: own.getDeviceId.bind(own),
+    // Static: derived from the user id
     getDomain: own.getDomain.bind(own),
+    // Static: own was created with the host's base URL
     baseUrl: own.baseUrl,
-    // Requests we really want our own client version for!
+    // MSC4143 stable or unstable prefix, picked by /versions: ours knows both
     getRTCTransports: own.getRTCTransports.bind(own),
+    // Plain HTTP with the copied credentials, like the other LiveKit auth
     getOpenIdToken: own.getOpenIdToken.bind(own),
+    // MSC4195 stable or `io.element.msc4195` prefix: an older host may lack it
     getLivekitToken: own.getLivekitToken.bind(own),
+    // MSC4195, like `getLivekitToken`: an older host may lack it
     delegateDelayedLeave: own.delegateDelayedLeave.bind(own),
+    // Plain HTTP into own's cache, which `getCachedCapabilities` reads
+    fetchCapabilities: own.fetchCapabilities.bind(own),
+    // Has to be the client whose cache `fetchCapabilities` filled
+    getCachedCapabilities: own.getCachedCapabilities.bind(own),
+    // Straight to `scheduleDelayedEvent`: no room, no crypto, plain HTTP
+    _unstable_sendDelayedStateEvent:
+      own._unstable_sendDelayedStateEvent.bind(own),
+    // Plain POST by delay id; deprecated, but the session's Pick asks for it
+    _unstable_updateDelayedEvent: own._unstable_updateDelayedEvent.bind(own),
+    // Plain POST `/delayed_events/{id}/cancel`; newer API an old host may lack
+    _unstable_cancelScheduledDelayedEvent:
+      own._unstable_cancelScheduledDelayedEvent.bind(own),
+    // Plain POST by the server's delay id: restarts the host's sticky leave too
+    _unstable_restartScheduledDelayedEvent:
+      own._unstable_restartScheduledDelayedEvent.bind(own),
+    // Plain POST `/delayed_events/{id}/send`; newer API an old host may lack
+    _unstable_sendScheduledDelayedEvent:
+      own._unstable_sendScheduledDelayedEvent.bind(own),
 
-    // Save requests we do not expect to change.
+    // Plain HTTP, either client works; a stable API, so the host's
+    sendStateEvent: host.sendStateEvent.bind(host),
+    // Updates the `User` in the host's store, which `useProfile` listens to
     setDisplayName: host.setDisplayName.bind(host),
+    // Like `setDisplayName`: updates the `User` in the host's store
     setAvatarUrl: host.setAvatarUrl.bind(host),
+    // Plain HTTP, either client works; a stable API, so the host's
     uploadContent: host.uploadContent.bind(host),
+    // Reads the host's /versions, which it has already fetched
     doesServerSupportUnstableFeature:
       host.doesServerSupportUnstableFeature.bind(host),
   };

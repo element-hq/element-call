@@ -30,8 +30,7 @@ const slot = createRTCSlot(
   scope,
   client, // a matrix-js-sdk MatrixClient, logged in and syncing
   room, // the matrix-js-sdk Room, from client.getRoom() once the join has synced
-  { encryptionSystem: { kind: E2eeType.PER_PARTICIPANT } },
-  client.matrixRTC.getRoomSession(room), // the MatrixRTC session for the slot to join
+  { encryptionSystem: { kind: E2eeType.PER_PARTICIPANT } }, // the room's call, m.call#ROOM
 );
 const participation = slot.join({
   publish: [{ source: "microphone" }, { source: "camera" }],
