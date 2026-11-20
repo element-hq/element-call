@@ -205,10 +205,7 @@ export async function createMatrixRTCSdk(
     scope,
     client,
     room,
-    {
-      encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
-      matrixRTCMode: config.matrix_rtc_mode ?? MatrixRTCMode.Compatibility,
-    },
+    { encryptionSystem: { kind: E2eeType.PER_PARTICIPANT } },
     sessionManager(scope, client, { application, id }, logger).getRoomSession(
       room,
     ),
@@ -218,6 +215,7 @@ export async function createMatrixRTCSdk(
   const participationOptions: RTCParticipationOptions = {
     // A data-only participation: nothing is published
     publish: [],
+    matrixRTCMode: config.matrix_rtc_mode ?? MatrixRTCMode.Compatibility,
     sendNotificationType:
       sendNotificationType === "ring" || sendNotificationType === "notification"
         ? sendNotificationType

@@ -63,15 +63,28 @@ export type CallNotificationWrapper = {
   event_id: string;
 } & IRTCNotificationContent;
 
+/**
+ * The call notifications the session sends with our join: what a host hands
+ * the call as `sentCallNotification$`.
+ */
+export function observeSentCallNotification$(
+  matrixRTCSession: Pick<MatrixRTCSession, "on" | "off">,
+): Observable<CallNotificationWrapper> {
+  return fromEvent(
+    matrixRTCSession,
+    MatrixRTCSessionEvent.DidSendCallNotification,
+    (notification: CallNotificationWrapper) => notification,
+  );
+}
+
 export function createSentCallNotification$(
   scope: ObservableScope,
-  matrixRTCSession: MatrixRTCSession,
+  sentCallNotification$: Observable<CallNotificationWrapper>,
 ): Behavior<CallNotificationWrapper | null> {
-  const sentCallNotification$ = scope.behavior(
-    fromEvent(matrixRTCSession, MatrixRTCSessionEvent.DidSendCallNotification),
+  return scope.behavior<CallNotificationWrapper | null>(
+    sentCallNotification$,
     null,
-  ) as Behavior<CallNotificationWrapper | null>;
-  return sentCallNotification$;
+  );
 }
 
 export function createReceivedDecline$(

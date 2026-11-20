@@ -61,6 +61,7 @@ import LanguageDetector from "i18next-browser-languagedetector";
 
 import EN from "../locales/en/app.json";
 import { CallView } from "../src/room/CallView";
+import { observeSentCallNotification$ } from "../src/state/CallViewModel/CallNotificationLifecycle";
 import { ErrorPage } from "../src/FullScreenView";
 import { ClientProvider } from "../src/ClientContext";
 import { HostBridgeProvider } from "../src/HostBridge";
@@ -269,6 +270,10 @@ export const ElementCall: FC<ElementCallProps> = ({
       void session.stop();
     };
   }, [client, room]);
+  const sentCallNotification$ = useMemo(
+    () => rtcSession && observeSentCallNotification$(rtcSession),
+    [rtcSession],
+  );
 
   if (room === null)
     logger.error(
@@ -281,7 +286,11 @@ export const ElementCall: FC<ElementCallProps> = ({
   // its own initialisation is over. Once per mount, however often the pieces
   // are later swapped out.
   const ready =
-    container !== null && room !== null && rtcSession !== null && vm !== null;
+    container !== null &&
+    room !== null &&
+    rtcSession !== null &&
+    sentCallNotification$ !== null &&
+    vm !== null;
   const announcedLoaded = useRef(false);
   useEffect(() => {
     if (!ready || announcedLoaded.current) return;
@@ -320,6 +329,8 @@ export const ElementCall: FC<ElementCallProps> = ({
                                   client={callViewClient}
                                   room={room}
                                   rtcSession={rtcSession}
+                                  sentCallNotification$={sentCallNotification$}
+                                  statistics={rtcSession.statistics}
                                   isPasswordlessUser={false}
                                   confineToRoom={params.confineToRoom}
                                   preload={params.preload}

@@ -18,7 +18,7 @@ import {
   type ReactNode,
 } from "react";
 import useMeasure from "react-use-measure";
-import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
+import { type Observable } from "rxjs";
 import classNames from "classnames";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import { useTranslation } from "react-i18next";
@@ -74,9 +74,8 @@ import { ReactionsAudioRenderer } from "./ReactionAudioRenderer";
 import { ReactionsOverlay } from "./ReactionsOverlay";
 import { CallEventAudioRenderer } from "./CallEventAudioRenderer";
 import {
-  createRTCSlot,
   type RTCParticipationOptions,
-  type RTCSlotOptions,
+  type RTCSlot,
   constant,
 } from "@element-hq/matrixrtc-sdk";
 import {
@@ -98,7 +97,10 @@ import {
   screenShareResolution,
 } from "../settings/settings";
 import { Config } from "../config/Config";
-import { createSentCallNotification$ } from "../state/CallViewModel/CallNotificationLifecycle.ts";
+import {
+  type CallNotificationWrapper,
+  createSentCallNotification$,
+} from "../state/CallViewModel/CallNotificationLifecycle.ts";
 import { ReactionsReader } from "../reactions/ReactionsReader";
 import { MemberAudioRenderer } from "../tracks/MemberAudioRenderer.tsx";
 import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
@@ -138,28 +140,21 @@ export interface ActiveCallProps extends Omit<
 > {
   client: Pick<
     MatrixClient,
-    // Our own identity: RTC slot, call view model, footer, settings
+    // Our own identity: call view model, footer, settings
     | "getUserId"
     | "getDeviceId"
-    // Local transport discovery (RTC slot), developer settings
+    // Developer settings: the local transport and authenticating with it,
+    // `getOpenIdToken` for the JWT service flow, `getLivekitToken` for the
+    // client-server API flow (MSC4195)
     | "getDomain"
-    | "getRTCTransports"
-    // LiveKit auth (RTC slot), developer settings: `getOpenIdToken` for the JWT
-    // service flow, `getLivekitToken` for the client-server API flow (MSC4195)
     | "getOpenIdToken"
     | "getLivekitToken"
-    // LiveKit delayed leave delegation and its probe (RTC slot)
-    | "delegateDelayedLeave"
-    | "baseUrl"
-    // Homeserver connection (RTC slot): whether the client is syncing
-    | "getSyncState"
     // Reactions and raised hands: sending, lowering, and decrypting
     | "sendEvent"
     | "redactEvent"
     | "decryptEventIfNeeded"
-    // `on`/`off`, to listen for:
-    // - `ClientEvent.Sync` (RTC slot homeserver connection)
-    // - `MatrixEventEvent.Decrypted` (reactions once decrypted)
+    // `on`/`off`, to listen for `MatrixEventEvent.Decrypted` (reactions once
+    // decrypted)
     | "on"
     | "off"
     // Profile: display name and avatar, for the settings and the call ended view
@@ -173,23 +168,26 @@ export interface ActiveCallProps extends Omit<
   >;
   matrixRoom: Pick<
     MatrixRoom,
-    // RTC slot and call view model
+    // Call view model and reactions
     | "roomId"
-    // Joined and invited members, for the RTC slot and the call view model
+    // Joined and invited members, for the call view model
     | "getMembersWithMembership"
     // Call notifications, for the call view model
     | "_unstable_getStickyEvents"
     // Raised hands already in the room, for the reactions reader
     | "relations"
     // `on`/`off`, to listen for:
-    // - `RoomStateEvent.Events` (RTC slot status)
-    // - `RoomStateEvent.Members` (RTC slot and call view model members)
+    // - `RoomStateEvent.Members` (call view model members)
     // - `RoomEvent.Timeline` and `RoomStickyEventsEvent.Update` (call notifications)
     // - `RoomEvent.Timeline`, `RoomEvent.Redaction` and
     //   `RoomEvent.LocalEchoUpdated` (reactions and raised hands)
     | "on"
     | "off"
   >;
+  /** The slot to join; the call leaves it again when it ends. */
+  slot: RTCSlot;
+  /** The call notifications sent with our join, so the call can show it ringing. */
+  sentCallNotification$: Observable<CallNotificationWrapper>;
   e2eeSystem: EncryptionSystem;
   /** The tracks the lobby opened, for the join to publish. */
   media: LocalMedia;
@@ -217,16 +215,9 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
   useEffect(() => {
     rootLogger.info("START CALL VIEW SCOPE");
     const scope = new ObservableScope();
-    const slot = createRTCSlot(
-      scope,
-      props.client,
-      props.matrixRoom,
-      rtcSlotOptions(props.e2eeSystem),
-      props.rtcSession,
-    );
     const reactionsReader = new ReactionsReader(
       scope,
-      slot.members$,
+      props.slot.members$,
       props.matrixRoom,
       props.client,
     );
@@ -234,7 +225,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       urlParams;
 
     const capture = captureSettings();
-    const rtcParticipation = slot.join({
+    const rtcParticipation = props.slot.join({
       ...rtcParticipationOptions(urlParams),
       // Without a lobby nothing was captured and the join captures itself
       publish:
@@ -270,7 +261,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
         waitForCallPickup: waitForCallPickup && sendNotificationType === "ring",
         sentCallNotification$: createSentCallNotification$(
           scope,
-          props.rtcSession,
+          props.sentCallNotification$,
         ),
       },
     );
@@ -279,10 +270,13 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     vm.leave$.pipe(scope.bind()).subscribe(props.onLeft);
 
     return (): void => {
+      // The slot outlives the call, and joins again only once this has left
+      rtcParticipation.leave();
       scope.end();
     };
   }, [
-    props.rtcSession,
+    props.slot,
+    props.sentCallNotification$,
     props.matrixRoom,
     props.muteStates,
     props.e2eeSystem,
@@ -316,7 +310,6 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       scope.end();
     };
   }, [
-    props.rtcSession,
     props.matrixRoom,
     props.muteStates,
     props.e2eeSystem,
@@ -354,7 +347,6 @@ export interface InCallViewProps {
   footerVm: ViewModel<FooterSnapshot>;
   developerSettingsVm: ViewModel<DeveloperSettingsSnapshot>;
   matrixInfo: MatrixInfo;
-  rtcSession: MatrixRTCSession;
   matrixRoom: Pick<MatrixRoom, "roomId">;
   muteStates: MuteStates;
   onShareClick: (() => void) | null;
@@ -866,16 +858,10 @@ export function captureSettings(): CaptureSettings {
 }
 
 /**
- * What the client needs from Element Call's configuration, settings and URL:
+ * What the join needs from Element Call's configuration, settings and URL:
  * the SDK reads none of them itself. What to publish depends on the mute
  * switches and the devices, so the caller adds that.
  */
-export function rtcSlotOptions(
-  encryptionSystem: EncryptionSystem,
-): RTCSlotOptions {
-  return { encryptionSystem };
-}
-
 export function rtcParticipationOptions(
   urlParams: ReturnType<typeof useUrlParams>,
 ): Omit<RTCParticipationOptions, "publish"> {

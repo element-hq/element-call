@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { type DisconnectReason } from "livekit-client";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
+import { type Statistics } from "matrix-js-sdk/lib/matrixrtc";
 
 import {
   type IPosthogEvent,
@@ -80,7 +80,7 @@ export class CallEndedTracker {
     callId: string,
     callParticipantsNow: number,
     sendInstantly: boolean,
-    rtcSession: MatrixRTCSession,
+    statistics: Statistics,
   ): void {
     if (this.cache.startTime) {
       PosthogAnalytics.instance.trackEvent<CallEnded>(
@@ -91,14 +91,13 @@ export class CallEndedTracker {
           callParticipantsOnLeave: callParticipantsNow,
           callDuration: (Date.now() - this.cache.startTime.getTime()) / 1000,
           roomEventEncryptionKeysSent:
-            rtcSession.statistics.counters.roomEventEncryptionKeysSent,
+            statistics.counters.roomEventEncryptionKeysSent,
           roomEventEncryptionKeysReceived:
-            rtcSession.statistics.counters.roomEventEncryptionKeysReceived,
+            statistics.counters.roomEventEncryptionKeysReceived,
           roomEventEncryptionKeysReceivedAverageAge:
-            rtcSession.statistics.counters.roomEventEncryptionKeysReceived > 0
-              ? rtcSession.statistics.totals
-                  .roomEventEncryptionKeysReceivedTotalAge /
-                rtcSession.statistics.counters.roomEventEncryptionKeysReceived
+            statistics.counters.roomEventEncryptionKeysReceived > 0
+              ? statistics.totals.roomEventEncryptionKeysReceivedTotalAge /
+                statistics.counters.roomEventEncryptionKeysReceived
               : 0,
           callReconnectingCount: this.cache.reconnectingCount,
           callReconnectingCountSync: this.cache.reconnectingCountByReason.sync,

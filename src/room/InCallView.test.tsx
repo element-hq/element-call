@@ -15,7 +15,7 @@ import {
   vi,
 } from "vitest";
 import { act, render, type RenderResult } from "@testing-library/react";
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject, NEVER } from "rxjs";
 import { BrowserRouter } from "react-router-dom";
 import { TooltipProvider } from "@vector-im/compound-web";
 import userEvent from "@testing-library/user-event";
@@ -25,7 +25,6 @@ import {
   mockMediaDevices,
   mockMuteStates,
   mockRtcMembership,
-  type MockRTCSession,
   mockRTCSlot,
   mockRTCMember,
   testScope,
@@ -44,7 +43,7 @@ import { ReactionsSenderProvider } from "../reactions/useReactionsSender";
 import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { MemberAudioRenderer } from "../tracks/MemberAudioRenderer";
 import type * as MatrixRTCSdk from "@element-hq/matrixrtc-sdk";
-import { constant, type ObservableScope } from "@element-hq/matrixrtc-sdk";
+import { constant, type RTCSlot } from "@element-hq/matrixrtc-sdk";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { type MediaDevices as ECMediaDevices } from "../state/MediaDevices";
 import { AppBar } from "../AppBar";
@@ -73,12 +72,6 @@ vi.mock("../tile/GridTile");
 vi.mock("../tile/SpotlightTile");
 vi.mock("../e2ee/sharedKeyManagement");
 vi.mock("../tracks/MemberAudioRenderer");
-// ActiveCall builds the slot itself; the view is what these tests are about
-const createRTCSlotMock = vi.hoisted(() => vi.fn());
-vi.mock("@element-hq/matrixrtc-sdk", async (importOriginal) => ({
-  ...(await importOriginal<typeof MatrixRTCSdk>()),
-  createRTCSlot: createRTCSlotMock,
-}));
 vi.mock("react-use-measure", () => ({
   default: (): [() => void, object] => [(): void => {}, {}],
 }));
@@ -98,25 +91,27 @@ const matrixInfo = {
 
 let useRoomEncryptionSystemMock: MockedFunction<typeof useRoomEncryptionSystem>;
 
+// The view is what these tests are about, so the slot is a stand-in
+function mockSlot(): RTCSlot {
+  return mockRTCSlot(testScope(), {
+    localMember$: constant(
+      mockRTCMember(true, {
+        membership: localRtcMember,
+        tracks$: constant([]),
+      }),
+    ),
+    remoteMembers$: constant([
+      mockRTCMember(false, {
+        membership: aliceRtcMember,
+        tracks$: constant([]),
+      }),
+    ]),
+  });
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
 
-  createRTCSlotMock.mockImplementation((scope: ObservableScope) =>
-    mockRTCSlot(scope, {
-      localMember$: constant(
-        mockRTCMember(true, {
-          membership: localRtcMember,
-          tracks$: constant([]),
-        }),
-      ),
-      remoteMembers$: constant([
-        mockRTCMember(false, {
-          membership: aliceRtcMember,
-          tracks$: constant([]),
-        }),
-      ]),
-    }),
-  );
   // MemberAudioRenderer is tested separately.
   (
     MemberAudioRenderer as MockedFunction<typeof MemberAudioRenderer>
@@ -132,12 +127,11 @@ interface CreateInCallViewArgs {
   withAppBar?: boolean;
 }
 function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
-  rtcSession: MockRTCSession;
   vm: CallViewModel;
 } {
   const mediaDevices = args.mediaDevices ?? mockMediaDevices({});
   const muteState = mockMuteStates();
-  const { vm, footerVm, developerSettingsVm, rtcSession, matrixRoom, client } =
+  const { vm, footerVm, developerSettingsVm, matrixRoom, client } =
     getBasicCallViewModelEnvironment(
       [local, alice],
       undefined,
@@ -145,12 +139,9 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
       args.callViewModelOptions,
     );
 
-  rtcSession.joined = true;
-
   const inCallView = (
     <InCallView
       client={client}
-      rtcSession={rtcSession.asMockedSession()}
       muteStates={muteState}
       vm={vm}
       footerVm={footerVm}
@@ -174,7 +165,6 @@ function createInCallView(args: CreateInCallViewArgs = {}): RenderResult & {
   );
   return {
     ...renderResult,
-    rtcSession,
     vm,
   };
 }
@@ -238,35 +228,51 @@ function fakeLocalMedia(): MatrixRTCSdk.LocalMedia {
   };
 }
 
+function renderActiveCall(slot: RTCSlot): RenderResult {
+  const { matrixRoom } = getBasicRTCSession([local, alice]);
+  return render(
+    <BrowserRouter>
+      <MediaDevicesContext value={mockMediaDevices({})}>
+        <BackgroundEffectsProvider
+          effects={createAppBackgroundEffects(testScope())}
+        >
+          <TooltipProvider>
+            <ActiveCall
+              client={matrixRoom.client}
+              slot={slot}
+              sentCallNotification$={NEVER}
+              matrixRoom={matrixRoom}
+              muteStates={mockMuteStates()}
+              matrixInfo={matrixInfo}
+              onShareClick={null}
+              e2eeSystem={{ kind: E2eeType.NONE }}
+              media={fakeLocalMedia()}
+              onLeft={(): void => {}}
+            />
+          </TooltipProvider>
+        </BackgroundEffectsProvider>
+      </MediaDevicesContext>
+    </BrowserRouter>,
+  );
+}
+
 describe("ActiveCall", () => {
   it("creates the view models and renders the call", async () => {
-    const mediaDevices = mockMediaDevices({});
-    const { rtcSession, matrixRoom } = getBasicRTCSession([local, alice]);
-    const { findByTestId } = render(
-      <BrowserRouter>
-        <MediaDevicesContext value={mediaDevices}>
-          <BackgroundEffectsProvider
-            effects={createAppBackgroundEffects(testScope())}
-          >
-            <TooltipProvider>
-              <ActiveCall
-                client={matrixRoom.client}
-                rtcSession={rtcSession.asMockedSession()}
-                matrixRoom={matrixRoom}
-                muteStates={mockMuteStates()}
-                matrixInfo={matrixInfo}
-                onShareClick={null}
-                e2eeSystem={{ kind: E2eeType.NONE }}
-                media={fakeLocalMedia()}
-                onLeft={(): void => {}}
-              />
-            </TooltipProvider>
-          </BackgroundEffectsProvider>
-        </MediaDevicesContext>
-      </BrowserRouter>,
-    );
+    const { findByTestId } = renderActiveCall(mockSlot());
     // Rendering at all proves ActiveCall created all of its view models
     expect(await findByTestId("incall_leave")).toBeVisible();
+  });
+
+  it("leaves the slot once gone, so that the next call can join it", async () => {
+    const slot = mockSlot();
+    const { findByTestId, unmount } = renderActiveCall(slot);
+    await findByTestId("incall_leave");
+    expect(slot.join).toHaveBeenCalled();
+    const participation = slot.participation$.value!;
+    expect(participation.leave).not.toHaveBeenCalled();
+
+    unmount();
+    expect(participation.leave).toHaveBeenCalled();
   });
 
   it("lays the call out for the size of its root element", async () => {
@@ -291,7 +297,7 @@ describe("ActiveCall", () => {
 
     try {
       const mediaDevices = mockMediaDevices({});
-      const { rtcSession, matrixRoom } = getBasicRTCSession([local, alice]);
+      const { matrixRoom } = getBasicRTCSession([local, alice]);
       const { findByTestId, container } = render(
         <BrowserRouter>
           <RootElementProvider value={root}>
@@ -302,7 +308,8 @@ describe("ActiveCall", () => {
                 <TooltipProvider>
                   <ActiveCall
                     client={matrixRoom.client}
-                    rtcSession={rtcSession.asMockedSession()}
+                    slot={mockSlot()}
+                    sentCallNotification$={NEVER}
                     matrixRoom={matrixRoom}
                     muteStates={mockMuteStates()}
                     matrixInfo={matrixInfo}

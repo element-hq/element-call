@@ -40,7 +40,10 @@ import { type RaisedHandInfo, type ReactionInfo } from "../reactions";
 import { constant } from "@element-hq/matrixrtc-sdk";
 import { map } from "rxjs";
 import { createCallFooterViewModel } from "../components/CallFooterViewModel";
-import { createSentCallNotification$ } from "../state/CallViewModel/CallNotificationLifecycle";
+import {
+  createSentCallNotification$,
+  observeSentCallNotification$,
+} from "../state/CallViewModel/CallNotificationLifecycle";
 import { HeaderStyle } from "../UrlParams";
 import { type FooterSnapshot } from "../components/CallFooter";
 import { type ViewModel } from "../state/ViewModel";
@@ -234,7 +237,7 @@ export function getBasicCallViewModelEnvironment(
     {
       sentCallNotification$: createSentCallNotification$(
         scope,
-        rtcSession.asMockedSession(),
+        observeSentCallNotification$(rtcSession.asMockedSession()),
       ),
       ...callViewModelOptions,
     },

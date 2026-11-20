@@ -13,21 +13,23 @@ import {
   useMemo,
   useState,
 } from "react";
-import {
-  type MatrixClient,
-  JoinRule,
-  type Room,
-  UnsupportedStickyEventsEndpointError,
-} from "matrix-js-sdk";
+import { type MatrixClient, JoinRule, type Room } from "matrix-js-sdk";
 import {
   Room as LivekitRoom,
   isE2EESupported as isE2EESupportedBrowser,
 } from "livekit-client";
 import { logger } from "matrix-js-sdk/lib/logger";
 import {
-  MatrixRTCSessionEvent,
   type MatrixRTCSession,
+  type Statistics,
 } from "matrix-js-sdk/lib/matrixrtc";
+import { type Observable } from "rxjs";
+import {
+  createRTCSlot,
+  type EncryptionSystem,
+  MembershipManagerError as RTCMembershipManagerError,
+  type RTCSlot,
+} from "@element-hq/matrixrtc-sdk";
 
 import { type JoinCallData } from "../widget";
 import { LobbyView } from "./LobbyView";
@@ -39,7 +41,6 @@ import { findDeviceByName } from "../utils/media";
 import { ActiveCall } from "./InCallView";
 import { type MuteStates } from "../state/MuteStates";
 import { useMediaDevices } from "../MediaDevicesContext";
-import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
 import {
   saveKeyForRoom,
   useRoomEncryptionSystem,
@@ -57,14 +58,11 @@ import {
 } from "./CallEventAudioRenderer";
 import { useLatest } from "../useLatest";
 import {
-  ConnectionLostError,
   E2EENotSupportedError,
   ElementCallError,
-  StickyEventsRequiredError,
   UnknownCallError,
 } from "../utils/errors.ts";
 import { GroupCallErrorBoundary } from "./GroupCallErrorBoundary.tsx";
-import { useTypedEventEmitter } from "../useEvents";
 import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
 import { useAppBarTitle } from "../AppBar.tsx";
 import { useBehavior } from "../useBehavior.ts";
@@ -73,6 +71,8 @@ import { useHostBridge } from "../HostBridge.ts";
 import { useMuteStates } from "../state/useMuteStates.ts";
 import { useLeaveToHome } from "../LeaveToHomeContext.ts";
 import { useLocalMedia } from "../useLocalMedia.ts";
+import { ObservableScope } from "../state/ObservableScope.ts";
+import { type CallNotificationWrapper } from "../state/CallViewModel/CallNotificationLifecycle.ts";
 
 /**
  * If there already are this many participants in the call, we automatically mute
@@ -153,8 +153,15 @@ interface Props {
     | "on"
     | "off"
   >;
-  /** The call to join. */
+  /** The call to join, which the RTC slot is built on. */
   rtcSession: MatrixRTCSession;
+  /**
+   * The call notifications the session sends with our join, so the call can
+   * show it ringing: `observeSentCallNotification$(rtcSession)`.
+   */
+  sentCallNotification$: Observable<CallNotificationWrapper>;
+  /** The session's media key statistics, reported when the call ends. */
+  statistics: Statistics;
   /**
    * Whether the user is signed in as a guest, and so should be offered the
    * chance to create an account when the call ends.
@@ -185,18 +192,46 @@ interface Props {
  * whatever is hosting it — the standalone app's own shell, or an application
  * embedding Element Call as a component. Both render this.
  */
-export const CallView: FC<Props> = (props): ReactNode => {
+export const CallView: FC<Props> = ({ rtcSession, ...props }): ReactNode => {
   // Whether the user is in the call is the call's own business, not its host's.
   // Held here rather than below so that it survives the mute state being
   // rebuilt.
   const [joined, setJoined] = useState(false);
   const muteStates = useMuteStates();
+  const e2eeSystem = useRoomEncryptionSystem(props.room.roomId);
 
-  if (muteStates === null) return null;
+  // One slot for every join of this call: leaving and joining again, to
+  // reconnect or from the lobby, happens on the same one
+  const [slot, setSlot] = useState<RTCSlot | null>(null);
+  const { client, room } = props;
+  useEffect(() => {
+    const scope = new ObservableScope();
+    setSlot(
+      createRTCSlot(
+        scope,
+        client,
+        room,
+        { encryptionSystem: e2eeSystem },
+        rtcSession,
+      ),
+    );
+    return (): void => scope.end();
+  }, [client, room, e2eeSystem, rtcSession]);
+
+  useEffect(() => {
+    window.rtcSession = rtcSession;
+    return (): void => {
+      delete window.rtcSession;
+    };
+  }, [rtcSession]);
+
+  if (muteStates === null || slot === null) return null;
 
   return (
     <LoadedCallView
       {...props}
+      slot={slot}
+      e2eeSystem={e2eeSystem}
       joined={joined}
       setJoined={setJoined}
       muteStates={muteStates}
@@ -204,13 +239,80 @@ export const CallView: FC<Props> = (props): ReactNode => {
   );
 };
 
-interface LoadedProps extends Props {
+// Here we do not pass the rtcSession anymore. This is a huge step!!
+// We only rely on our sdk abstraction (+ client and +room but only a
+// smaller list of callbacks.)
+interface LoadedProps extends Omit<Props, "rtcSession" | "client" | "room"> {
+  // Narrower than `Props.client`: the `slot` already has what only it needs,
+  // `getRTCTransports`, `delegateDelayedLeave`, `baseUrl`, `getSyncState` and
+  // `ClientEvent.Sync`
+  client: Pick<
+    MatrixClient,
+    | "getUserId"
+    | "getDeviceId"
+    | "getDomain"
+    | "getOpenIdToken"
+    | "getLivekitToken"
+    | "sendEvent"
+    | "redactEvent"
+    | "decryptEventIfNeeded"
+    | "getUser"
+    | "setDisplayName"
+    | "setAvatarUrl"
+    | "uploadContent"
+    | "doesServerSupportUnstableFeature"
+    | "getCrypto"
+    // `on`/`off`, to listen for `MatrixEventEvent.Decrypted` (reactions once
+    // decrypted)
+    | "on"
+    | "off"
+  >;
+  // Narrower than `Props.room` only in what it listens for: the `slot` already
+  // follows `RoomStateEvent.Events` for its status, and `RoomStateEvent.Members`
+  // for its own members
+  room: Pick<
+    Room,
+    | "roomId"
+    | "name"
+    | "getMxcAvatarUrl"
+    | "getCanonicalAlias"
+    | "currentState"
+    | "getMembersWithMembership"
+    | "_unstable_getStickyEvents"
+    | "relations"
+    // `on`/`off`, to listen for:
+    // - `RoomEvent.Name` (room name)
+    // - `RoomEvent.CurrentStateUpdated` (avatar and join rule hooks)
+    // - `RoomStateEvent.Members` (call view model members)
+    // - `RoomEvent.Timeline` and `RoomStickyEventsEvent.Update` (call notifications)
+    // - `RoomEvent.Timeline`, `RoomEvent.Redaction` and
+    //   `RoomEvent.LocalEchoUpdated` (reactions and raised hands)
+    | "on"
+    | "off"
+  >;
+  slot: RTCSlot;
+  e2eeSystem: EncryptionSystem;
   joined: boolean;
   setJoined: (value: boolean) => void;
   muteStates: MuteStates;
 }
 
-/** {@link CallView}, once it has the mute state everything below needs. */
+/**
+ * Whether our membership is live in the slot: seen in the room, and not taken
+ * down by the membership manager stopping. Leaving the call only makes sense
+ * then; an error before the join, or one that ended the membership, leaves
+ * nothing to leave.
+ */
+function isInCall(slot: RTCSlot): boolean {
+  const participation = slot.participation$.value;
+  if (participation?.localMember$.value == null) return false;
+  const state = participation.state$.value;
+  return !(
+    state.kind === "failed" && state.error instanceof RTCMembershipManagerError
+  );
+}
+
+/** {@link CallView}, once it has the slot and mute state everything below needs. */
 const LoadedCallView: FC<LoadedProps> = ({
   client,
   room,
@@ -218,7 +320,10 @@ const LoadedCallView: FC<LoadedProps> = ({
   confineToRoom,
   preload,
   skipLobby,
-  rtcSession,
+  slot,
+  sentCallNotification$,
+  statistics,
+  e2eeSystem,
   joined,
   setJoined,
   muteStates,
@@ -227,7 +332,7 @@ const LoadedCallView: FC<LoadedProps> = ({
   const [externalError, setExternalError] = useState<ElementCallError | null>(
     null,
   );
-  const memberships = useMatrixRTCSessionMemberships(rtcSession);
+  const members = useBehavior(slot.members$);
   const rootElement = useRootElement();
   const hostBridge = useHostBridge();
   // A host that can close us is a host that decides when we stop existing, so
@@ -246,7 +351,7 @@ const LoadedCallView: FC<LoadedProps> = ({
   );
   // This should use `useEffectEvent` (only available in experimental versions)
   useEffect(() => {
-    if (memberships.length >= MUTE_PARTICIPANT_COUNT)
+    if (members.length >= MUTE_PARTICIPANT_COUNT)
       muteStates.audio.setEnabled$.value?.(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -268,39 +373,10 @@ const LoadedCallView: FC<LoadedProps> = ({
     };
   }, [rootElement]);
 
-  useEffect(() => {
-    window.rtcSession = rtcSession;
-    return (): void => {
-      delete window.rtcSession;
-    };
-  }, [rtcSession]);
-
-  // TODO move this into the callViewModel LocalMembership.ts
-  // We might actually not need this at all. Since we get into fatalError on those errors already?
-  useTypedEventEmitter(
-    rtcSession,
-    MatrixRTCSessionEvent.MembershipManagerError,
-    (error) => {
-      // When matrix_rtc_mode=matrix_2_0 is in effect but the homeserver does
-      // not advertise MSC4354 (sticky events), the SDK throws an
-      // `UnsupportedStickyEventsEndpointError`. The MembershipManager
-      // scheduler wraps it and exposes the original via `.cause`.
-      if (
-        error instanceof Error &&
-        error.cause instanceof UnsupportedStickyEventsEndpointError
-      ) {
-        setExternalError(new StickyEventsRequiredError());
-      } else {
-        setExternalError(new ConnectionLostError());
-      }
-    },
-  );
-
   const { displayName, avatarUrl } = useProfile(client);
   const roomName = useRoomName(room);
   const roomAvatar = useRoomAvatar(room);
   const { returnToLobby, password: passwordFromUrl, header } = useUrlParams();
-  const e2eeSystem = useRoomEncryptionSystem(room.roomId);
 
   // Save the password once we start the groupCallView
   useEffect(() => {
@@ -324,8 +400,8 @@ const LoadedCallView: FC<LoadedProps> = ({
 
   // Count each member only once, regardless of how many devices they use
   const participantCount = useMemo(
-    () => new Set<string>(memberships.map((m) => m.userId!)).size,
-    [memberships],
+    () => new Set<string>(members.map((m) => m.userId)).size,
+    [members],
   );
 
   const mediaDevices = useMediaDevices();
@@ -333,27 +409,24 @@ const LoadedCallView: FC<LoadedProps> = ({
   // Opened by the lobby, published by the call: one capture for both
   const media = useLocalMedia();
 
-  const enterRTCSessionOrError = useCallback(
-    async (rtcSession: MatrixRTCSession): Promise<void> => {
-      try {
-        setJoined(true);
-        // TODO-MULTI-SFU what to do with error handling now that we don't use this function?
-        // @BillCarsonFr
-      } catch (e) {
-        if (e instanceof ElementCallError) {
-          setExternalError(e);
-        } else {
-          logger.error(`Unknown Error while entering RTC session`, e);
-          const error = new UnknownCallError(
-            e instanceof Error ? e : new Error("Unknown error", { cause: e }),
-          );
-          setExternalError(error);
-        }
+  const enterRTCSessionOrError = useCallback(async (): Promise<void> => {
+    try {
+      setJoined(true);
+      // TODO-MULTI-SFU what to do with error handling now that we don't use this function?
+      // @BillCarsonFr
+    } catch (e) {
+      if (e instanceof ElementCallError) {
+        setExternalError(e);
+      } else {
+        logger.error(`Unknown Error while entering RTC session`, e);
+        const error = new UnknownCallError(
+          e instanceof Error ? e : new Error("Unknown error", { cause: e }),
+        );
+        setExternalError(error);
       }
-      return Promise.resolve();
-    },
-    [setJoined],
-  );
+    }
+    return Promise.resolve();
+  }, [setJoined]);
 
   useEffect(() => {
     const defaultDeviceSetup = async ({
@@ -416,7 +489,6 @@ const LoadedCallView: FC<LoadedProps> = ({
     }
   }, [
     hostBridge,
-    rtcSession,
     preload,
     skipLobby,
     mediaDevices,
@@ -463,9 +535,9 @@ const LoadedCallView: FC<LoadedProps> = ({
         const sendInstantly = hostControlsLifetime;
         PosthogAnalytics.instance.eventCallEnded.track(
           room.roomId,
-          rtcSession.memberships.length,
+          slot.members$.value.length,
           sendInstantly,
-          rtcSession,
+          statistics,
         );
         // Unfortunately the PostHog library provides no way to await the
         // tracking of an event, but we don't really want it to hold up our
@@ -511,7 +583,8 @@ const LoadedCallView: FC<LoadedProps> = ({
       hostBridge,
       hostControlsLifetime,
       room.roomId,
-      rtcSession,
+      slot,
+      statistics,
       isPasswordlessUser,
       confineToRoom,
       returnToLobby,
@@ -525,7 +598,7 @@ const LoadedCallView: FC<LoadedProps> = ({
       hostBridge.setAlwaysOnScreen(true).catch((e) => {
         logger.error("Error calling setAlwaysOnScreen(true)", e);
       });
-  }, [hostBridge, joined, rtcSession]);
+  }, [hostBridge, joined]);
 
   const joinRule = useJoinRule(room);
 
@@ -586,7 +659,8 @@ const LoadedCallView: FC<LoadedProps> = ({
         <ActiveCall
           client={client}
           matrixInfo={matrixInfo}
-          rtcSession={rtcSession as MatrixRTCSession}
+          slot={slot}
+          sentCallNotification$={sentCallNotification$}
           matrixRoom={room}
           onLeft={onLeft}
           media={media}
@@ -626,7 +700,7 @@ const LoadedCallView: FC<LoadedProps> = ({
     // Left, and the host decides what happens next:
     body = returnToLobby ? lobbyView : null;
   } else if (preload || skipLobby) {
-    // The RTC session is not joined to yet (`isJoined`), but enterRTCSessionOrError should have been called.
+    // Not in the call yet: waiting for the host to say when, or about to join
     body = null;
   } else {
     body = lobbyView;
@@ -638,16 +712,16 @@ const LoadedCallView: FC<LoadedProps> = ({
         setExternalError(null);
         if (action == "reconnect") {
           setLeft(false);
-          await enterRTCSessionOrError(rtcSession).catch((e) => {
+          await enterRTCSessionOrError().catch((e) => {
             logger.error("Error re-entering RTC session", e);
           });
         }
       }}
       onError={(_error) => {
-        if (rtcSession.isJoined()) onLeft("error");
+        if (isInCall(slot)) onLeft("error");
         // If there is an error we need to be dismissible again. This is done in
-        // `onLeft` as well; we need it here explicitly in case
-        // rtcSession.isJoined is false.
+        // `onLeft` as well; we need it here explicitly in case we were not in
+        // the call.
         void hostBridge.setAlwaysOnScreen(false);
       }}
     >
