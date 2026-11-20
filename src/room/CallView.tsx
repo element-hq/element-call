@@ -29,6 +29,7 @@ import {
   type EncryptionSystem,
   MembershipManagerError as RTCMembershipManagerError,
   type RTCSlot,
+  withEmitter,
 } from "@element-hq/matrixrtc-sdk";
 
 import { type JoinCallData } from "../widget";
@@ -73,6 +74,7 @@ import { useLeaveToHome } from "../LeaveToHomeContext.ts";
 import { useLocalMedia } from "../useLocalMedia.ts";
 import { ObservableScope } from "../state/ObservableScope.ts";
 import { type CallNotificationWrapper } from "../state/CallViewModel/CallNotificationLifecycle.ts";
+import { type CallMatrixBackend } from "../CallMatrixBackend.ts";
 
 /**
  * If there already are this many participants in the call, we automatically mute
@@ -81,94 +83,8 @@ import { type CallNotificationWrapper } from "../state/CallViewModel/CallNotific
 export const MUTE_PARTICIPANT_COUNT = 8;
 
 interface Props {
-  /** The client to place the call with. */
-  client: Pick<
-    MatrixClient,
-    // Our own identity: RTC slot, call view model, footer, settings
-    | "getUserId"
-    | "getDeviceId"
-    // The RTC slot's session: memberships, delayed leave events, sticky events
-    // and media keys
-    | "fetchCapabilities"
-    | "getCachedCapabilities"
-    | "sendStateEvent"
-    | "_unstable_sendDelayedStateEvent"
-    | "_unstable_updateDelayedEvent"
-    | "_unstable_cancelScheduledDelayedEvent"
-    | "_unstable_restartScheduledDelayedEvent"
-    | "_unstable_sendScheduledDelayedEvent"
-    | "_unstable_sendStickyEvent"
-    | "_unstable_sendStickyDelayedEvent"
-    | "cancelPendingEvent"
-    | "encryptAndSendToDevice"
-    // Local transport discovery (RTC slot), developer settings
-    | "getDomain"
-    | "getRTCTransports"
-    // LiveKit auth (RTC slot), developer settings: `getOpenIdToken` for the JWT
-    // service flow, `getLivekitToken` for the client-server API flow (MSC4195)
-    | "getOpenIdToken"
-    | "getLivekitToken"
-    // LiveKit delayed leave delegation and its probe (RTC slot)
-    | "delegateDelayedLeave"
-    | "baseUrl"
-    // Homeserver connection (RTC slot): whether the client is syncing
-    | "getSyncState"
-    // Reactions, raised hands and the RTC slot's session: sending, lowering,
-    // and decrypting
-    | "sendEvent"
-    | "redactEvent"
-    | "decryptEventIfNeeded"
-    // `on`/`off`, to listen for:
-    // - `ClientEvent.Sync` (RTC slot homeserver connection)
-    // - `ClientEvent.ToDeviceEvent` (RTC slot session media keys)
-    // - `MatrixEventEvent.Decrypted` (reactions once decrypted)
-    | "on"
-    | "off"
-    // Profile: display name and avatar, for the settings and the call ended view
-    | "getUser"
-    | "setDisplayName"
-    | "setAvatarUrl"
-    | "uploadContent"
-    // Developer settings
-    | "doesServerSupportUnstableFeature"
-    | "getCrypto"
-  >;
-  /** The room to call in. */
-  room: Pick<
-    Room,
-    // Everywhere: analytics, e2ee keys, invite link, RTC slot, call view model
-    | "roomId"
-    // Room name for the header and invite link
-    | "name"
-    // Room avatar for the header
-    | "getMxcAvatarUrl"
-    // `matrixInfo.roomAlias`
-    | "getCanonicalAlias"
-    // Room state for the avatar and join rule hooks
-    | "currentState"
-    // Joined and invited members, for the RTC slot and the call view model
-    | "getMembersWithMembership"
-    // The RTC slot's session: memberships from the timeline and room state
-    | "getLiveTimeline"
-    | "hasMembershipState"
-    | "getVersion"
-    // Sticky memberships for the RTC slot's session, and call notifications
-    // for the call view model
-    | "_unstable_getStickyEvents"
-    // Raised hands already in the room, for the reactions reader
-    | "relations"
-    // `on`/`off`, to listen for:
-    // - the RTC slot session's room events
-    // - `RoomEvent.Name` (room name)
-    // - `RoomEvent.CurrentStateUpdated` (avatar and join rule hooks)
-    // - `RoomStateEvent.Events` (RTC slot status)
-    // - `RoomStateEvent.Members` (RTC slot and call view model members)
-    // - `RoomEvent.Timeline` and `RoomStickyEventsEvent.Update` (call notifications)
-    // - `RoomEvent.Timeline`, `RoomEvent.Redaction` and
-    //   `RoomEvent.LocalEchoUpdated` (reactions and raised hands)
-    | "on"
-    | "off"
-  >;
+  /** The client and room to place the call with and in. */
+  backend: CallMatrixBackend;
   /**
    * The call to join, which the RTC slot is built on.
    * Passing undefined -> the SDK will create a inner RTCSession (or in the future a rust equivalent)
@@ -210,17 +126,27 @@ interface Props {
  * embedding Element Call as a component. Both render this.
  */
 export const CallView: FC<Props> = ({
+  backend,
   rtcSession: externalRtcSession,
   ...props
 }): ReactNode => {
+  // STOP GAP: what is below is still written against a client and a room.
+  // Both are refactored along with the backend.
+  const client = useMemo(
+    () => withEmitter(backend, backend.clientEmitter),
+    [backend],
+  );
+  const room = useMemo(
+    () => withEmitter(backend, backend.roomEmitter),
+    [backend],
+  );
+
   // Whether the user is in the call is the call's own business, not its host's.
   // Held here rather than below so that it survives the mute state being
   // rebuilt.
   const [joined, setJoined] = useState(false);
   const muteStates = useMuteStates();
-  const e2eeSystem = useRoomEncryptionSystem(props.room.roomId);
-
-  const { client, room } = props;
+  const e2eeSystem = useRoomEncryptionSystem(backend.roomId);
 
   // One slot for every join of this call: leaving and joining again, to
   // reconnect or from the lobby, happens on the same one
@@ -232,20 +158,21 @@ export const CallView: FC<Props> = ({
     setSlot(
       createRTCSlot(
         scope,
-        client,
-        room,
+        backend,
         { encryptionSystem: e2eeSystem },
         externalRtcSession,
       ),
     );
     return (): void => scope.end();
-  }, [client, room, e2eeSystem, externalRtcSession]);
+  }, [backend, e2eeSystem, externalRtcSession]);
 
   if (muteStates === null || slot === null) return null;
 
   return (
     <LoadedCallView
       {...props}
+      client={client}
+      room={room}
       sentCallNotification$={slot.sentCallNotification$}
       statistics={slot.statistics}
       slot={slot}
@@ -260,7 +187,7 @@ export const CallView: FC<Props> = ({
 // Here we do not pass the rtcSession anymore. This is a huge step!!
 // We only rely on our sdk abstraction (+ client and +room but only a
 // smaller list of callbacks.)
-interface LoadedProps extends Omit<Props, "rtcSession" | "client" | "room"> {
+interface LoadedProps extends Omit<Props, "rtcSession" | "backend"> {
   // Narrower than `Props.client`: the `slot` already has what only it and its
   // session need, `getRTCTransports`, `delegateDelayedLeave`, `baseUrl`,
   // `getSyncState`, `ClientEvent.Sync`, and the session's sending
@@ -293,14 +220,14 @@ interface LoadedProps extends Omit<Props, "rtcSession" | "client" | "room"> {
     | "roomId"
     | "name"
     | "getMxcAvatarUrl"
-    | "getCanonicalAlias"
-    | "currentState"
+    | "getJoinRule"
     | "getMembersWithMembership"
     | "_unstable_getStickyEvents"
     | "relations"
     // `on`/`off`, to listen for:
     // - `RoomEvent.Name` (room name)
-    // - `RoomEvent.CurrentStateUpdated` (avatar and join rule hooks)
+    // - `RoomStateEvent.Update` and `RoomEvent.CurrentStateUpdated` (avatar
+    //   and join rule hooks)
     // - `RoomStateEvent.Members` (call view model members)
     // - `RoomEvent.Timeline` and `RoomStickyEventsEvent.Update` (call notifications)
     // - `RoomEvent.Timeline`, `RoomEvent.Redaction` and
@@ -417,7 +344,6 @@ const LoadedCallView: FC<LoadedProps> = ({
       avatarUrl: avatarUrl!,
       roomId: room.roomId,
       roomName,
-      roomAlias: room.getCanonicalAlias(),
       roomAvatar,
       e2eeSystem,
     };

@@ -49,7 +49,6 @@ import {
   useState,
 } from "react";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { type Room } from "matrix-js-sdk";
 import { I18nextProvider } from "react-i18next";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { ErrorBoundary } from "@sentry/react";
@@ -85,8 +84,9 @@ import styles from "./ElementCall.module.css";
 import { useComponentHostBridge } from "./host";
 import { CallPortalRoot } from "./CallPortalRoot";
 import { type ElementCallProps } from "./api";
-import { createCallViewClient } from "./callViewClient";
+import { createComponentLocalJsClient } from "./componentLocalJsClient";
 import { supportedLanguages, translationsBackend } from "./localization";
+import { createCallMatrixBackend } from "../src/CallMatrixBackend";
 
 // The languages Element Call can be shown in
 export { supportedLanguages } from "./localization";
@@ -206,47 +206,13 @@ export const ElementCall: FC<ElementCallProps> = ({
     };
   }, [controlledAudioDevices, callIntent]);
 
-  // The host's `Room`, from the host's copy of matrix-js-sdk: only the parts
-  // listed here are what we rely on.
-  // So only breaking changes in those methods/props would break Compoenent EC.
-  const room = client.getRoom(roomId) as Pick<
-    Room,
-    // Everywhere: the RTC session, analytics, e2ee keys, invite link, RTC slot,
-    // call view model
-    | "roomId"
-    // RTC session: memberships from the timeline and room state
-    | "getLiveTimeline"
-    | "hasMembershipState"
-    | "getVersion"
-    // RTC session and call view model: sticky memberships and call
-    // notifications
-    | "_unstable_getStickyEvents"
-    // Room name for the header and invite link
-    | "name"
-    // Room avatar for the header
-    | "getMxcAvatarUrl"
-    // `matrixInfo.roomAlias`
-    | "getCanonicalAlias"
-    // Room state for the avatar and join rule hooks
-    | "currentState"
-    // Joined and invited members, for the RTC slot and the call view model
-    | "getMembersWithMembership"
-    // Raised hands already in the room, for the reactions reader
-    | "relations"
-    // `on`/`off`, to listen for:
-    // - the RTC session's room events
-    // - `RoomEvent.Name` (room name)
-    // - `RoomEvent.CurrentStateUpdated` (avatar and join rule hooks)
-    // - `RoomStateEvent.Events` (RTC slot status)
-    // - `RoomStateEvent.Members` (RTC slot and call view model members)
-    // - `RoomEvent.Timeline` and `RoomStickyEventsEvent.Update` (call notifications)
-    // - `RoomEvent.Timeline`, `RoomEvent.Redaction` and
-    //   `RoomEvent.LocalEchoUpdated` (reactions and raised hands)
-    | "on"
-    | "off"
-  > | null;
-
-  const callViewClient = useMemo(() => createCallViewClient(client), [client]);
+  const room = client.getRoom(roomId);
+  const backend = useMemo(
+    () =>
+      room &&
+      createCallMatrixBackend(createComponentLocalJsClient(client), room),
+    [client, room],
+  );
 
   if (room === null)
     logger.error(
@@ -258,7 +224,7 @@ export const ElementCall: FC<ElementCallProps> = ({
   // is told that Element Call has loaded, as the widget tells its client once
   // its own initialisation is over. Once per mount, however often the pieces
   // are later swapped out.
-  const ready = container !== null && room !== null && vm !== null;
+  const ready = container !== null && backend !== null && vm !== null;
   const announcedLoaded = useRef(false);
   useEffect(() => {
     if (!ready || announcedLoaded.current) return;
@@ -288,14 +254,17 @@ export const ElementCall: FC<ElementCallProps> = ({
                     >
                       <Decoration>
                         <TooltipProvider>
+                          {/* The host's own client: what reads it through
+                          the context (avatars, the encryption system,
+                          rageshakes, the disconnected banner) uses only its
+                          stable methods. */}
                           <ClientProvider client={client}>
                             <MediaDevicesContext value={vm.mediaDevices}>
                               <BackgroundEffectsProvider
                                 effects={vm.backgroundEffects}
                               >
                                 <CallView
-                                  client={callViewClient}
-                                  room={room}
+                                  backend={backend}
                                   isPasswordlessUser={false}
                                   confineToRoom={params.confineToRoom}
                                   preload={params.preload}

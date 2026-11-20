@@ -15,9 +15,7 @@ export function useRoomAvatar(
     Room,
     // The avatar itself
     | "getMxcAvatarUrl"
-    // Room state, and `on`/`off` for `RoomEvent.CurrentStateUpdated`, for
-    // `useRoomState`
-    | "currentState"
+    // `on`/`off` for its changes, for `useRoomState`
     | "on"
     | "off"
   >,

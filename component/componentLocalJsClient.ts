@@ -5,10 +5,8 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type ComponentProps } from "react";
 import { createClient, type MatrixClient } from "matrix-js-sdk";
-
-import { type CallView } from "../src/room/CallView";
+import type { createCallMatrixBackend } from "../src/CallMatrixBackend";
 
 /**
  * The client for Element Call in Component mode.
@@ -19,9 +17,9 @@ import { type CallView } from "../src/room/CallView";
  * This creates a new client that does use the hosts token and "stable"
  * methods but uses the ElementCall Components js-sdk's client impl for anything else.
  */
-export function createCallViewClient(
+export function createComponentLocalJsClient(
   host: MatrixClient,
-): ComponentProps<typeof CallView>["client"] {
+): Parameters<typeof createCallMatrixBackend>[0] {
   const own = createClient({
     baseUrl: host.baseUrl,
     userId: host.getUserId() ?? undefined,
@@ -59,8 +57,6 @@ export function createCallViewClient(
     // Like `sendEvent`: delayed, but still `encryptEventIfNeeded(event, room)`
     _unstable_sendStickyDelayedEvent:
       host._unstable_sendStickyDelayedEvent.bind(host),
-    // Pending events live in the sender's `eventsBeingEncrypted` and room
-    cancelPendingEvent: host.cancelPendingEvent.bind(host),
     // `if (!this.cryptoBackend) throw`: own has no crypto
     encryptAndSendToDevice: host.encryptAndSendToDevice.bind(host),
 
@@ -87,8 +83,6 @@ export function createCallViewClient(
     // Straight to `scheduleDelayedEvent`: no room, no crypto, plain HTTP
     _unstable_sendDelayedStateEvent:
       own._unstable_sendDelayedStateEvent.bind(own),
-    // Plain POST by delay id; deprecated, but the session's Pick asks for it
-    _unstable_updateDelayedEvent: own._unstable_updateDelayedEvent.bind(own),
     // Plain POST `/delayed_events/{id}/cancel`; newer API an old host may lack
     _unstable_cancelScheduledDelayedEvent:
       own._unstable_cancelScheduledDelayedEvent.bind(own),

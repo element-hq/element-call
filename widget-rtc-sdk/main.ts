@@ -32,6 +32,7 @@ import {
 import {
   type Behavior,
   createRTCSlot,
+  createSdkMatrixBackend,
   type DelayedLeaveTimings,
   E2eeType,
   type LocalRTCMember,
@@ -197,7 +198,7 @@ export async function createMatrixRTCSdk(
   if (room === null) throw new Error("No room: the url needs a joined roomId");
 
   const scope = new ObservableScope();
-  const slot = createRTCSlot(scope, client, room, {
+  const slot = createRTCSlot(scope, createSdkMatrixBackend(client, room), {
     encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
     slotDescription: { application, id },
   });
