@@ -143,7 +143,10 @@ export interface LocalMediaTrack {
    * from the request where the device could not be used.
    */
   setEnabled(enabled: boolean): Promise<boolean>;
-  /** Captures from another device. Rejects for a screen share, which has none. */
+  /**
+   * Captures from another device. Rejects where that device cannot be opened,
+   * leaving the track on the one it had, and for a screen share, which has none.
+   */
   setDevice(deviceId: string): Promise<void>;
 }
 

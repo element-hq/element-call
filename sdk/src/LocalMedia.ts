@@ -78,11 +78,14 @@ export function createLocalMedia(
         );
       bySource.set(request.source, request);
     }
-    const constraints: MediaStreamConstraints = {};
-    for (const request of bySource.values())
-      constraints[request.source === "microphone" ? "audio" : "video"] =
-        trackConstraints(request);
-    const stream = await getUserMedia(constraints);
+    const { stream, constraints } = await open(getUserMedia, {
+      microphone: bySource.has("microphone")
+        ? trackConstraints(bySource.get("microphone")!)
+        : undefined,
+      camera: bySource.has("camera")
+        ? trackConstraints(bySource.get("camera")!)
+        : undefined,
+    });
     const captured: CapturedTrack[] = [];
     for (const track of stream.getTracks()) {
       const source: Source = track.kind === "audio" ? "microphone" : "camera";
@@ -91,7 +94,7 @@ export function createLocalMedia(
       const captured_ = new CapturedTrack(
         source,
         track,
-        trackConstraints(request),
+        constraints[source]!,
         getUserMedia,
       );
       capturedTracks.set(source, captured_);
@@ -139,9 +142,50 @@ export function createLocalMedia(
   };
 }
 
+type SourceConstraints = Partial<Record<Source, MediaTrackConstraints>>;
+
+/**
+ * Opens the devices asked for. Where one of them is gone, as a remembered
+ * choice that was unplugged, the browser picks instead.
+ *
+ * This is needed because we use `exact` device ids: an exact request for a
+ * device that no longer exists fails, where a preferred one would have opened
+ * another device. Without the retry here a stale choice would open nothing.
+ */
+async function open(
+  getUserMedia: GetUserMedia,
+  constraints: SourceConstraints,
+): Promise<{ stream: MediaStream; constraints: SourceConstraints }> {
+  const streamOf = async (wanted: SourceConstraints): Promise<MediaStream> =>
+    getUserMedia({
+      ...(wanted.microphone && { audio: wanted.microphone }),
+      ...(wanted.camera && { video: wanted.camera }),
+    });
+  try {
+    return { stream: await streamOf(constraints), constraints };
+  } catch (e) {
+    if (!(e instanceof Error) || e.name !== "OverconstrainedError") throw e;
+    const anyDevice: SourceConstraints = {
+      ...(constraints.microphone && {
+        microphone: { ...constraints.microphone, deviceId: undefined },
+      }),
+      ...(constraints.camera && {
+        camera: { ...constraints.camera, deviceId: undefined },
+      }),
+    };
+    return { stream: await streamOf(anyDevice), constraints: anyDevice };
+  }
+}
+
 /** The constraints a request means to the browser. */
 function trackConstraints(request: Request): MediaTrackConstraints {
-  const device = request.deviceId && { deviceId: request.deviceId };
+  // THE FIX for "cannot switch cameras in Chrome" (#4479), first capture.
+  // `exact` makes the browser open this device or fail. A plain
+  // `deviceId: "abc"` is only a wish, and Chromium ignores the wish and
+  // opens its default device.
+  const device = request.deviceId && {
+    deviceId: { exact: request.deviceId },
+  };
   if (request.source === "microphone") return { ...device, ...request.capture };
   const resolution = request.capture?.resolution;
   return {
@@ -184,7 +228,12 @@ class CapturedTrack {
     // The device actually in use, so that a backend asked for it again
     // recognises it rather than restarting the track
     const { deviceId } = track.getSettings();
-    const constraints = { ...this.constraints, ...(deviceId && { deviceId }) };
+    // `exact` here too: the call reopens the camera with these constraints
+    // after a mute, and must get the same device again, not the default one
+    const constraints = {
+      ...this.constraints,
+      ...(deviceId && { deviceId: { exact: deviceId } }),
+    };
     this.finish();
     return { track, constraints, muted: this.muted$.value, processor };
   }
@@ -245,12 +294,28 @@ class CapturedTrack {
     for (const element of this.elements) play(element, this.shown());
   }
 
-  private async reacquire(constraints: MediaTrackConstraints): Promise<void> {
+  /**
+   * Replace the current with the one from the selector. On fail, keep current.
+   *
+   * The old `deviceId` and `facingMode` are removed before the new selector
+   * is applied. This is needed because we use `exact` device ids: if the old
+   * exact id stayed, asking for a new facing mode could not leave the deviceId.
+   * "flip camera" would do nothing.
+   */
+  private async reacquire(
+    selector: Pick<MediaTrackConstraints, "deviceId" | "facingMode">,
+  ): Promise<void> {
     this.live();
-    this.constraints = { ...this.constraints, ...constraints };
-    const stream = await this.getUserMedia({
-      [this.track.kind]: this.constraints,
-    });
+    const constraints = {
+      ...this.constraints,
+      // One selects the device at a time: a facing mode cannot move a track
+      // off a device it is pinned to
+      deviceId: undefined,
+      facingMode: undefined,
+      ...selector,
+    };
+    const stream = await this.getUserMedia({ [this.track.kind]: constraints });
+    this.constraints = constraints;
     this.track.stop();
     this.track = stream.getTracks()[0];
     this.track.enabled = !this.muted$.value;
@@ -288,7 +353,11 @@ class CapturedTrack {
       },
       setDevice: async (deviceId: string): Promise<void> => {
         if (this.track.getSettings().deviceId === deviceId) return;
-        await this.reacquire({ deviceId });
+        // THE FIX for "cannot switch cameras in Chrome" (#4479), switching in
+        // the lobby. With a plain `{ deviceId }` Chromium reopened the same
+        // camera, so the preview only flashed. `exact` opens the one picked,
+        // or rejects and leaves the current camera running.
+        await this.reacquire({ deviceId: { exact: deviceId } });
       },
     };
     if (this.source === "microphone")
