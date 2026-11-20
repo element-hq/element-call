@@ -14,14 +14,19 @@ import {
   RoomStateEvent,
 } from "matrix-js-sdk/lib/models/room-state";
 
+import { MatrixRTCSessionEvent } from "matrix-js-sdk/lib/matrixrtc";
+
 import { createRTCSlot } from "./RTCSlot";
 import { type RTCSlotOptions } from "./api";
-import { MatrixRTCMode } from "./config";
 import { E2eeType } from "./encryption";
-import { mockEmitter, MockRTCSession, testScope } from "./utils/test";
+import {
+  mockEmitter,
+  mockRtcMembership,
+  MockRTCSession,
+  testScope,
+} from "./utils/test";
 
 const options: RTCSlotOptions = {
-  matrixRTCMode: MatrixRTCMode.Compatibility,
   encryptionSystem: { kind: E2eeType.NONE },
 };
 
@@ -77,6 +82,31 @@ describe("createRTCSlot", () => {
         null,
       );
       expect(slot.status$.value).toBe("closed");
+    });
+  });
+
+  describe("members$", () => {
+    it("keeps the member when its membership is sent again, with the new event id", () => {
+      const { client, room, session } = setup();
+      const first = mockRtcMembership("@bob:example.org", "BOB");
+      session.memberships = [first];
+      const slot = createRTCSlot(
+        testScope(),
+        client,
+        room,
+        options,
+        session.asMockedSession(),
+      );
+      const [bob] = slot.members$.value;
+      expect(bob.matrixEventId$.value).toBe(first.eventId);
+
+      const resent = mockRtcMembership("@bob:example.org", "BOB");
+      session.memberships = [resent];
+      session.emit(MatrixRTCSessionEvent.MembershipsChanged, [first], [resent]);
+      expect(slot.members$.value).toHaveLength(1);
+      expect(slot.members$.value[0]).toBe(bob);
+      expect(bob.matrixEventId$.value).toBe(resent.eventId);
+      expect(resent.eventId).not.toBe(first.eventId);
     });
   });
 });

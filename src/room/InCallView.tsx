@@ -876,15 +876,7 @@ export function captureSettings(): CaptureSettings {
 export function rtcSlotOptions(
   encryptionSystem: EncryptionSystem,
 ): RTCSlotOptions {
-  return {
-    encryptionSystem,
-    // matrix_rtc_mode in config.json overrides the user's Developer Settings
-    // choice. We merely sample the current mode here, so the user would need
-    // to manually rejoin to switch to a different one.
-    matrixRTCMode:
-      (Config.get().matrix_rtc_mode as MatrixRTCMode | undefined) ??
-      matrixRTCModeSetting.value$.value,
-  };
+  return { encryptionSystem };
 }
 
 export function rtcParticipationOptions(
@@ -893,6 +885,12 @@ export function rtcParticipationOptions(
   const config = Config.get();
   const session = config.matrix_rtc_session;
   return {
+    // matrix_rtc_mode in config.json overrides the user's Developer Settings
+    // choice. We merely sample the current mode here, so the user would need
+    // to manually rejoin to switch to a different one.
+    matrixRTCMode:
+      (config.matrix_rtc_mode as MatrixRTCMode | undefined) ??
+      matrixRTCModeSetting.value$.value,
     sendNotificationType: urlParams.sendNotificationType,
     callIntent: urlParams.callIntent,
     timings: {
