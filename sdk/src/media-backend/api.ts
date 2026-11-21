@@ -125,8 +125,15 @@ export interface MediaBackend {
    * session found it; the backend does whatever has to succeed before it is
    * advertised in the membership. Rejects with the error the session reports
    * as fatal. Called once per session.
+   *
+   * `null` tells the backend that the local member publishes on another
+   * backend: it only subscribes from then on. Until either call, a backend
+   * that would connect for its publisher connects nowhere, so that it doesn't
+   * subscribe to a transport it is about to publish on.
    */
-  prepareLocalTransport(transport: Transport): Promise<TransportCapabilities>;
+  prepareLocalTransport(
+    transport: Transport | null,
+  ): Promise<TransportCapabilities>;
 
   /**
    * Hands the delayed leave event to the backend, which restarts it from
