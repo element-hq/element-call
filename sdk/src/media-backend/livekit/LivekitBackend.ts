@@ -58,7 +58,6 @@ import {
   ResolvedConnection,
 } from "./ConnectionFactory";
 import { toMediaConnectionState } from "./connectionState";
-import { createDataChannel$ } from "./DataChannel";
 import { createKeyProvider } from "./KeyProvider";
 import {
   createLivekitMemberMedia,
@@ -260,7 +259,12 @@ export function createLivekitBackend(
           `${member.rtcBackendIdentity}: LiveKit participant missing on ${transportString}`,
         );
     });
-    return createLivekitMemberMedia(memberScope, source$, encryptionSystem);
+    return createLivekitMemberMedia(
+      memberScope,
+      source$,
+      encryptionSystem,
+      logger,
+    );
   };
 
   const connections$ = scope.behavior<BackendConnection[]>(
@@ -273,12 +277,6 @@ export function createLivekitBackend(
     ),
   );
 
-  const { data$, sendData } = createDataChannel$({
-    scope,
-    connectionMap$,
-    connection$: localMedia_.connection$,
-  });
-
   return {
     transportTypes: ["m.livekit", "livekit"],
     prepareLocalTransport,
@@ -287,8 +285,6 @@ export function createLivekitBackend(
     mediaFor,
     connections$,
     setAudioOutputDeviceId: localMedia_.setAudioOutputDeviceId,
-    sendData,
-    data$,
   };
 }
 

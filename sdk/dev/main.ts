@@ -12,12 +12,22 @@ Please see LICENSE in the repository root for full details.
  */
 
 import { logger } from "matrix-js-sdk/lib/logger";
-import { combineLatest, type Observable, of, switchMap } from "rxjs";
+import {
+  combineLatest,
+  EMPTY,
+  map,
+  type Observable,
+  of,
+  switchMap,
+} from "rxjs";
 import {
   type AudioMediaTrack,
   createRTCSlot,
+  dataTrackByName$,
   E2eeType,
+  type LocalAudioMediaTrack,
   type LocalRTCMember,
+  type LocalVideoMediaTrack,
   MatrixRTCMode,
   ObservableScope,
   type RemoteRTCMember,
@@ -82,7 +92,7 @@ async function start(
         state.kind === "failed" ? `Error: ${state.error.message}` : state.kind;
     });
     showMembers(scope, rtcParticipation);
-    showMessages(scope, rtcParticipation);
+    showMessages(rtcParticipation);
 
     toggle(buttons.microphone, async (enabled) =>
       setPublished(rtcParticipation, "microphone", enabled),
@@ -120,10 +130,11 @@ async function setPublished(
   enabled: boolean,
 ): Promise<boolean> {
   const track = rtcParticipation.localMember$.value?.tracks$.value?.find(
-    (t) => t.source === source,
+    (t): t is LocalAudioMediaTrack | LocalVideoMediaTrack =>
+      t.source === source,
   );
   if (track && source === "screenShare") {
-    if (!enabled) await rtcParticipation.unpublish(source);
+    if (!enabled) await rtcParticipation.unpublish(track);
     return enabled;
   }
   if (track) return track.setEnabled(enabled);
@@ -145,30 +156,58 @@ function toggle(
   };
 }
 
-/** Sends what the form holds on the "chat" topic, and lists what arrives. */
-function showMessages(
-  scope: ObservableScope,
-  rtcParticipation: RTCParticipation,
-): void {
+/**
+ * Publishes our "chat" data track with the join, so that the others hear the
+ * first message, and sends what the form holds on it. What arrives is listed
+ * per member, in `memberTile`.
+ */
+function showMessages(rtcParticipation: RTCParticipation): void {
+  const encoder = new TextEncoder();
+  const chat = rtcParticipation.publish({ source: "data", name: "chat" });
+  chat.catch((e: unknown) => {
+    status.textContent = `Error: ${e}`;
+  });
   dataForm.hidden = false;
   dataForm.onsubmit = (event): void => {
     event.preventDefault();
     const text = new FormData(dataForm).get("text") as string;
-    rtcParticipation.sendData("chat", text).then(
-      () => dataForm.reset(),
-      (e: unknown) => {
-        status.textContent = `Error: ${e}`;
-      },
-    );
+    chat
+      .then(async (track) => track.send(encoder.encode(text)))
+      .then(
+        () => dataForm.reset(),
+        (e: unknown) => {
+          status.textContent = `Error: ${e}`;
+        },
+      );
   };
-  rtcParticipation.data$
-    .pipe(scope.bind())
-    .subscribe(({ member, topic, text }) => {
+}
+
+/**
+ * Lists what a remote member sends on its "chat" data track, and marks its
+ * tile while it has one.
+ */
+function listMessages(
+  scope: ObservableScope,
+  member: RemoteRTCMember,
+  tile: HTMLElement,
+): void {
+  const decoder = new TextDecoder();
+  dataTrackByName$(scope, member.tracks$, "chat")
+    .pipe(
+      switchMap((track) => {
+        tile.dataset.chat = String(track !== undefined);
+        return (
+          track?.data$.pipe(map((payload) => ({ track, payload }))) ?? EMPTY
+        );
+      }),
+      scope.bind(),
+    )
+    .subscribe(({ track, payload }) => {
       const line = messages.appendChild(document.createElement("li"));
       line.dataset.testid = "message";
-      line.dataset.topic = topic;
+      line.dataset.encrypted = String(track.encrypted);
       line.dataset.userId = member.userId;
-      line.textContent = `${member.displayName$.value}: ${text}`;
+      line.textContent = `${member.displayName$.value}: ${decoder.decode(payload)}`;
     });
 }
 
@@ -218,12 +257,14 @@ function memberTile(
     tile.appendChild(document.createElement("video")),
   );
   // Our own microphone would only echo
-  if (!member.local)
+  if (!member.local) {
     render(
       scope,
       trackBySource$(scope, member.tracks$, "microphone"),
       tile.appendChild(document.createElement("audio")),
     );
+    listMessages(scope, member, tile);
+  }
   return tile;
 }
 

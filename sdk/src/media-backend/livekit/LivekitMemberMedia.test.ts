@@ -6,9 +6,12 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { EventEmitter } from "events";
+import { logger } from "matrix-js-sdk/lib/logger";
 import {
   ParticipantEvent,
+  type RemoteDataTrack,
   type RemoteParticipant,
+  RoomEvent,
   type Room as LivekitRoom,
   Track,
   type TrackPublication,
@@ -27,6 +30,7 @@ describe("createLivekitMemberMedia", () => {
       testScope(),
       constant({ participants: [participant], room }),
       { kind: E2eeType.NONE },
+      logger,
     );
     expect(media.tracks$.value).toEqual([]);
 
@@ -54,6 +58,7 @@ describe("createLivekitMemberMedia", () => {
       testScope(),
       constant({ participants: [participant], room }),
       { kind: E2eeType.NONE },
+      logger,
     );
     emitter.emit(
       ParticipantEvent.TrackPublished,
@@ -84,6 +89,44 @@ function publish(
   publications.set(trackSid, publication as unknown as TrackPublication);
   return publication;
 }
+
+describe("a member's data tracks", () => {
+  it("follow the room's data track events, after the media", () => {
+    const { participant, publications, room, emitter } = fakes();
+    const media = createLivekitMemberMedia(
+      testScope(),
+      constant({ participants: [participant], room }),
+      { kind: E2eeType.NONE },
+      logger,
+    );
+    const camera = publish(publications, "TR_1", Track.Source.Camera);
+    emitter.emit(ParticipantEvent.TrackPublished, camera);
+
+    const chat = {
+      info: { sid: "DT_1", name: "reliable:chat", usesE2ee: true },
+      publisherIdentity: participant.identity,
+    } as unknown as RemoteDataTrack;
+    (room as unknown as EventEmitter).emit(RoomEvent.DataTrackPublished, chat);
+    const [video, data] = media.tracks$.value!;
+    expect(video.source).toBe("camera");
+    expect(data).toMatchObject({
+      kind: "data",
+      name: "chat",
+      reliable: true,
+      encrypted: true,
+    });
+
+    // An unrelated media event keeps the same object
+    emitter.emit(ParticipantEvent.TrackMuted, camera);
+    expect(media.tracks$.value![1]).toBe(data);
+
+    (room as unknown as EventEmitter).emit(
+      RoomEvent.DataTrackUnpublished,
+      "DT_1",
+    );
+    expect(media.tracks$.value).toEqual([video]);
+  });
+});
 
 function fakes(): {
   participant: RemoteParticipant;
