@@ -15,7 +15,7 @@ import {
 import { Avatar as CompoundAvatar } from "@vector-im/compound-web";
 import { type MatrixClient } from "matrix-js-sdk";
 
-import { useClientState } from "./ClientContext";
+import { useClient } from "./ClientContext";
 import { useHostBridge } from "./HostBridge";
 
 export enum Size {
@@ -74,7 +74,7 @@ export const Avatar: FC<Props> = ({
   style,
   ...props
 }) => {
-  const clientState = useClientState();
+  const { client } = useClient();
   const hostBridge = useHostBridge();
 
   const sizePx = useMemo(
@@ -87,7 +87,7 @@ export const Avatar: FC<Props> = ({
 
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
 
-  // In theory, a change in `clientState` or `sizePx` could run extra media
+  // In theory, a change in `client` or `sizePx` could run extra media
   // downloads, but in practice they should be stable long before this code runs.
   useEffect(() => {
     if (!src) {
@@ -99,12 +99,8 @@ export const Avatar: FC<Props> = ({
 
     if (hostBridge.downloadMedia) {
       blob = hostBridge.downloadMedia(src);
-    } else if (
-      clientState?.state === "valid" &&
-      clientState.authenticated?.client &&
-      sizePx
-    ) {
-      blob = getAvatarFromServer(clientState.authenticated.client, src, sizePx);
+    } else if (client && sizePx) {
+      blob = getAvatarFromServer(client, src, sizePx);
     } else {
       setAvatarUrl(undefined);
       return;
@@ -133,7 +129,7 @@ export const Avatar: FC<Props> = ({
         URL.revokeObjectURL(objectUrl);
       }
     };
-  }, [clientState, hostBridge, src, sizePx]);
+  }, [client, hostBridge, src, sizePx]);
 
   return (
     <CompoundAvatar

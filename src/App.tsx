@@ -23,14 +23,13 @@ import {
 import * as Sentry from "@sentry/react";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { type MatrixClient } from "matrix-js-sdk";
 import { I18nextProvider } from "react-i18next";
 
 import { HomePage } from "./home/HomePage";
 import { LoginPage } from "./auth/LoginPage";
 import { RegisterPage } from "./auth/RegisterPage";
 import { RoomPage } from "./room/RoomPage";
-import { type ClientLoader, ClientProvider } from "./ClientContext";
+import { ClientManagerProvider, ClientProvider } from "./ClientContext";
 import { ErrorPage, LoadingPage } from "./FullScreenView";
 import { Initializer } from "./initializer";
 import { type WidgetHelpers } from "./widget";
@@ -56,16 +55,6 @@ import { useInitial } from "./useInitial";
 import { LeaveToHomeProvider } from "./LeaveToHomeContext";
 
 const SentryRoute = Sentry.withSentryReactRouterV7Routing(Route);
-
-// Element Call's own session, for when no host supplies a client.
-// - Passed in here, not imported by ClientProvider: this module is only in the
-//   app builds, so the client setup and the store worker behind it stay out of
-//   the component package (see the `loadClient` prop).
-// - Imported on demand, as it was before, so that a widget, which gets its
-//   client from the host, never downloads it.
-// - Module-level, so that the provider's effect sees one stable loader.
-const loadStandaloneClient: ClientLoader = async (...args) =>
-  (await import("./utils/spa")).initSPA(...args);
 
 interface SimpleProviderProps {
   children: JSX.Element;
@@ -141,22 +130,9 @@ export const App: FC<Props> = ({ vm, widget }) => {
       .catch(logger.error);
   });
 
-  // As a widget, the client comes from the host over the widget API. Standalone,
-  // Element Call finds one itself, so there is nothing to wait for here.
-  const [widgetClient, setWidgetClient] = useState<MatrixClient | undefined>(
-    undefined,
-  );
-  useEffect(() => {
-    if (widget === null) return;
-    widget.client
-      .then(setWidgetClient)
-      .catch((e) => logger.error("Failed to obtain the host's client", e));
-  }, [widget]);
-  const clientReady = widget === null || widgetClient !== undefined;
-
-  const content =
-    loaded && clientReady ? (
-      <ClientProvider client={widgetClient} loadClient={loadStandaloneClient}>
+  const content = loaded ? (
+    <ClientProvider session={vm.clientSession}>
+      <ClientManagerProvider value={vm.clientManager}>
         <MediaDevicesContext value={vm.mediaDevices}>
           <BackgroundEffectsProvider effects={vm.backgroundEffects}>
             <Sentry.ErrorBoundary
@@ -171,10 +147,11 @@ export const App: FC<Props> = ({ vm, widget }) => {
             </Sentry.ErrorBoundary>
           </BackgroundEffectsProvider>
         </MediaDevicesContext>
-      </ClientProvider>
-    ) : (
-      <LoadingPage />
-    );
+      </ClientManagerProvider>
+    </ClientProvider>
+  ) : (
+    <LoadingPage />
+  );
 
   return (
     <I18nextProvider i18n={i18n}>

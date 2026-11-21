@@ -18,7 +18,7 @@ import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
-import { useClientState } from "../ClientContext";
+import { useHostBridge } from "../HostBridge";
 import { ElementCallReactionEventType, type ReactionOption } from ".";
 import { type CallViewModel } from "../state/CallViewModel/CallViewModel";
 import { useBehavior } from "../useBehavior";
@@ -54,9 +54,7 @@ export const ReactionsSenderProvider = ({
   vm: CallViewModel;
 }): JSX.Element => {
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
-  const clientState = useClientState();
-  const supportsReactions =
-    clientState?.state === "valid" && clientState.supportedFeatures.reactions;
+  const { supportsReactions } = useHostBridge();
   const room = rtcSession.room;
   const myUserId = room.client.getUserId();
   const myDeviceId = room.client.getDeviceId();

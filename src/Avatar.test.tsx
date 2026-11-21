@@ -12,6 +12,7 @@ import { type FC, type PropsWithChildren } from "react";
 
 import { ClientContextProvider } from "./ClientContext";
 import { Avatar } from "./Avatar";
+import { hostClientSession } from "./state/ClientSession";
 import { mockMatrixRoomMember, mockRtcMembership } from "./utils/test";
 import {
   type HostBridge,
@@ -26,22 +27,7 @@ const TestComponent: FC<
   }>
 > = ({ client, hostBridge = nullHostBridge, children }) => {
   return (
-    <ClientContextProvider
-      value={{
-        state: "valid",
-        disconnected: false,
-        supportedFeatures: {
-          reactions: true,
-        },
-        setClient: vi.fn(),
-        authenticated: {
-          client,
-          isPasswordlessUser: true,
-          changePassword: vi.fn(),
-          logout: vi.fn(),
-        },
-      }}
-    >
+    <ClientContextProvider value={hostClientSession(client)}>
       <HostBridgeProvider value={hostBridge}>{children}</HostBridgeProvider>
     </ClientContextProvider>
   );
