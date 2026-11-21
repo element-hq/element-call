@@ -30,6 +30,9 @@ import {
 } from "@element-hq/matrixrtc-sdk";
 import type * as MatrixRTCSdk from "@element-hq/matrixrtc-sdk";
 import { exampleTransport, mockConfig } from "../utils/test";
+import { GroupCallErrorBoundary } from "../room/GroupCallErrorBoundary";
+import { LeaveToHomeProvider } from "../LeaveToHomeContext";
+import { ElementCallError, ErrorCode } from "../utils/errors";
 
 // Mock url params hook to avoid environment-dependent snapshot churn.
 vi.mock("../UrlParams", () => ({
@@ -491,6 +494,40 @@ describe("DeveloperSettingsTab", () => {
           screen.queryByText(/Media key rotation:/),
         ).not.toBeInTheDocument(),
       );
+    });
+  });
+  describe("throw test error", () => {
+    it("throws an ElementCallError that the error boundary shows", async () => {
+      const user = userEvent.setup();
+      const client = createMockMatrixClient();
+      const onError = vi.fn();
+
+      render(
+        <LeaveToHomeProvider value={vi.fn()}>
+          <GroupCallErrorBoundary
+            onError={onError}
+            recoveryActionHandler={vi.fn()}
+          >
+            <TooltipProvider>
+              <DeveloperSettingsTab
+                client={client}
+                env={{} as unknown as ImportMetaEnv}
+                vm={outOfCallDeveloperSettingsTabViewModel}
+              />
+            </TooltipProvider>
+          </GroupCallErrorBoundary>
+        </LeaveToHomeProvider>,
+      );
+
+      await user.click(
+        screen.getByRole("button", { name: "Throw test error" }),
+      );
+
+      expect(await screen.findByText("Something went wrong")).toBeVisible();
+      expect(onError).toHaveBeenCalledOnce();
+      const error = onError.mock.calls[0][0] as unknown;
+      expect(error).toBeInstanceOf(ElementCallError);
+      expect((error as ElementCallError).code).toBe(ErrorCode.UNKNOWN_ERROR);
     });
   });
 });
