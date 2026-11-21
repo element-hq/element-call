@@ -2,5 +2,13 @@
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
   "printWidth": 80,
   "sortPackageJson": false,
-  "ignorePatterns": ["pnpm-lock.yaml", "node_modules", "dist"]
+  "ignorePatterns": [
+    "pnpm-lock.yaml",
+    "node_modules",
+    "dist",
+    ".agents",
+    ".claude",
+    "agent-workspace",
+    "tools/oxlint/anti-slop"
+  ]
 }

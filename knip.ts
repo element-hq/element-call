@@ -19,7 +19,12 @@ export default {
       "vite-component-dev.config.ts",
     ],
   },
-  entry: ["src/main.tsx", "eslint/index.js", "i18next.config.ts"],
+  entry: [
+    "src/main.tsx",
+    "eslint/index.js",
+    "tools/oxlint/anti-slop/index.ts",
+    "i18next.config.ts",
+  ],
   ignoreBinaries: [
     // This is deprecated, so Knip doesn't actually recognize it as a globally
     // installed binary. TODO We should switch to Compose v2:
@@ -33,7 +38,14 @@ export default {
     // Deliberately added prior to any component or business logic
     // implementation
     "src/state/ServiceInterruptionsViewModel.ts",
+    // Agent skills installed by the skills CLI, not project source
+    ".agents/**",
   ],
+  ignoreIssues: {
+    // Vendored anti-slop plugin: upstream owns its exports, and effect/ stays
+    // unregistered until this repo depends on effect
+    "tools/oxlint/anti-slop/**": ["files", "exports", "types"],
+  },
   ignoreDependencies: [
     // Used in CSS
     "normalize.css",
