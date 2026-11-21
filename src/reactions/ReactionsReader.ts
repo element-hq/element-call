@@ -5,20 +5,28 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import {
-  type CallMembership,
-  MatrixRTCSessionEvent,
-  type MatrixRTCSession,
-} from "matrix-js-sdk/lib/matrixrtc";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { type MatrixEvent, MatrixEventEvent } from "matrix-js-sdk";
+import {
+  type MatrixClient,
+  type MatrixEvent,
+  MatrixEventEvent,
+  type Room,
+} from "matrix-js-sdk";
 import { type ReactionEventContent } from "matrix-js-sdk/lib/types";
 import {
   RelationType,
   EventType,
   RoomEvent as MatrixRoomEvent,
 } from "matrix-js-sdk";
-import { BehaviorSubject, delay } from "rxjs";
+import {
+  BehaviorSubject,
+  combineLatest,
+  delay,
+  map,
+  of,
+  switchMap,
+} from "rxjs";
+import { type RTCMember } from "@element-hq/matrixrtc-sdk";
 
 import {
   ElementCallReactionEventType,
@@ -29,13 +37,20 @@ import {
   type ReactionInfo,
 } from ".";
 import { type ObservableScope } from "../state/ObservableScope";
+import { type Behavior } from "../state/Behavior";
 
 export const REACTION_ACTIVE_TIME_MS = 3000;
 
+/** A member's membership event, which its reactions relate to. */
+interface MembershipEvent {
+  userId: string;
+  deviceId: string;
+  eventId: string;
+}
+
 /**
- * Listens for reactions from a RTCSession and populates subjects
- * for consumption by the CallViewModel.
- * @param rtcSession
+ * Listens for reactions to the slot members' memberships and populates
+ * subjects for consumption by the CallViewModel.
  */
 export class ReactionsReader {
   private readonly raisedHandsSubject$ = new BehaviorSubject<
@@ -55,9 +70,33 @@ export class ReactionsReader {
    */
   public readonly reactions$ = this.reactionsSubject$.asObservable();
 
+  private memberships: MembershipEvent[] = [];
+
   public constructor(
     private readonly scope: ObservableScope,
-    private readonly rtcSession: MatrixRTCSession,
+    members$: Behavior<RTCMember[]>,
+    private readonly room: Pick<
+      Room,
+      // To ignore events from other rooms
+      | "roomId"
+      // The raised hands already in the room, as reactions to memberships
+      | "relations"
+      // `on`/`off`, to listen for:
+      // - `RoomEvent.Timeline` (new reactions)
+      // - `RoomEvent.Redaction` (lowered hands)
+      // - `RoomEvent.LocalEchoUpdated` (the real id of our own reactions)
+      | "on"
+      | "off"
+    >,
+    private readonly client: Pick<
+      MatrixClient,
+      // Reactions that arrived encrypted
+      | "decryptEventIfNeeded"
+      // `on`/`off`, to listen for:
+      // - `MatrixEventEvent.Decrypted` (reactions once decrypted)
+      | "on"
+      | "off"
+    >,
   ) {
     // Hide reactions after a given time.
     this.reactionsSubject$
@@ -76,62 +115,44 @@ export class ReactionsReader {
     // TODO: Convert this class to the functional reactive style and get rid of
     // all this manual setup and teardown for event listeners
 
-    this.rtcSession.room.on(MatrixRoomEvent.Timeline, this.handleReactionEvent);
+    this.room.on(MatrixRoomEvent.Timeline, this.handleReactionEvent);
     this.scope.onEnd(() =>
-      this.rtcSession.room.off(
-        MatrixRoomEvent.Timeline,
-        this.handleReactionEvent,
-      ),
+      this.room.off(MatrixRoomEvent.Timeline, this.handleReactionEvent),
     );
 
-    this.rtcSession.room.on(
-      MatrixRoomEvent.Redaction,
-      this.handleReactionEvent,
-    );
+    this.room.on(MatrixRoomEvent.Redaction, this.handleReactionEvent);
     this.scope.onEnd(() =>
-      this.rtcSession.room.off(
-        MatrixRoomEvent.Redaction,
-        this.handleReactionEvent,
-      ),
+      this.room.off(MatrixRoomEvent.Redaction, this.handleReactionEvent),
     );
 
-    this.rtcSession.room.client.on(
-      MatrixEventEvent.Decrypted,
-      this.handleReactionEvent,
-    );
+    this.client.on(MatrixEventEvent.Decrypted, this.handleReactionEvent);
     this.scope.onEnd(() =>
-      this.rtcSession.room.client.off(
-        MatrixEventEvent.Decrypted,
-        this.handleReactionEvent,
-      ),
+      this.client.off(MatrixEventEvent.Decrypted, this.handleReactionEvent),
     );
 
     // We listen for a local echo to get the real event ID, as timeline events
     // may still be sending.
-    this.rtcSession.room.on(
-      MatrixRoomEvent.LocalEchoUpdated,
-      this.handleReactionEvent,
-    );
+    this.room.on(MatrixRoomEvent.LocalEchoUpdated, this.handleReactionEvent);
     this.scope.onEnd(() =>
-      this.rtcSession.room.off(
-        MatrixRoomEvent.LocalEchoUpdated,
-        this.handleReactionEvent,
-      ),
+      this.room.off(MatrixRoomEvent.LocalEchoUpdated, this.handleReactionEvent),
     );
 
-    this.rtcSession.on(
-      MatrixRTCSessionEvent.MembershipsChanged,
-      this.onMembershipsChanged,
-    );
-    this.scope.onEnd(() =>
-      this.rtcSession.off(
-        MatrixRTCSessionEvent.MembershipsChanged,
-        this.onMembershipsChanged,
-      ),
-    );
-
-    // Run this once to ensure we have fetched the state from the call.
-    this.onMembershipsChanged([]);
+    members$
+      .pipe(
+        switchMap((members) =>
+          members.length === 0
+            ? of([])
+            : combineLatest(
+                members.map(({ userId, deviceId, matrixEventId$ }) =>
+                  matrixEventId$.pipe(
+                    map((eventId) => ({ userId, deviceId, eventId })),
+                  ),
+                ),
+              ),
+        ),
+        this.scope.bind(),
+      )
+      .subscribe(this.onMembershipsChanged);
   }
 
   /**
@@ -145,7 +166,7 @@ export class ReactionsReader {
     membershipEventId: string,
     expectedSender: string,
   ): MatrixEvent | undefined {
-    const relations = this.rtcSession.room.relations.getChildEventsForEvent(
+    const relations = this.room.relations.getChildEventsForEvent(
       membershipEventId,
       RelationType.Annotation,
       EventType.Reaction,
@@ -162,22 +183,23 @@ export class ReactionsReader {
   /**
    * Will remove any hand raises by old members, and look for any
    * existing hand raises by new members.
-   * @param oldMemberships Any members who have left the call.
+   * @param memberships The membership events of everyone in the call now.
    */
-  private onMembershipsChanged = (oldMemberships: CallMembership[]): void => {
+  private onMembershipsChanged = (memberships: MembershipEvent[]): void => {
+    this.memberships = memberships;
     // Remove any raised hands for users no longer joined to the call.
+    const present = new Set(
+      memberships.map((m) => `${m.userId}:${m.deviceId}`),
+    );
     for (const identifier of Object.keys(this.raisedHandsSubject$.value).filter(
-      (rhId) => oldMemberships.find((u) => u.userId == rhId),
+      (rhId) => !present.has(rhId),
     )) {
       this.removeRaisedHand(identifier);
     }
 
     // For each member in the call, check to see if a reaction has
     // been raised and adjust.
-    for (const m of this.rtcSession.memberships) {
-      if (!m.userId || !m.eventId) {
-        continue;
-      }
+    for (const m of memberships) {
       const identifier = `${m.userId}:${m.deviceId}`;
       if (
         this.raisedHandsSubject$.value[identifier] &&
@@ -235,9 +257,8 @@ export class ReactionsReader {
    * @param event The incoming matrix event, which may or may not be decrypted.
    */
   private handleReactionEvent = (event: MatrixEvent): void => {
-    const room = this.rtcSession.room;
     // Decrypted events might come from a different room
-    if (event.getRoomId() !== room.roomId) return;
+    if (event.getRoomId() !== this.room.roomId) return;
     // Skip any events that are still sending.
     if (event.isSending()) return;
 
@@ -246,7 +267,7 @@ export class ReactionsReader {
     // Skip any event without a sender or event ID.
     if (!sender || !reactionEventId) return;
 
-    room.client
+    this.client
       .decryptEventIfNeeded(event)
       .catch((e) => logger.warn(`Failed to decrypt ${event.getId()}`, e));
     if (event.isBeingDecrypted() || event.isDecryptionFailure()) return;
@@ -255,7 +276,7 @@ export class ReactionsReader {
       const content: ECallReactionEventContent = event.getContent();
 
       const membershipEventId = content?.["m.relates_to"]?.event_id;
-      const membershipEvent = this.rtcSession.memberships.find(
+      const membershipEvent = this.memberships.find(
         (e) => e.eventId === membershipEventId && e.userId === sender,
       );
       // Check to see if this reaction was made to a membership event (and the
@@ -315,7 +336,7 @@ export class ReactionsReader {
 
       // Check to see if this reaction was made to a membership event (and the
       // sender of the reaction matches the membership)
-      const membershipEvent = this.rtcSession.memberships.find(
+      const membershipEvent = this.memberships.find(
         (e) => e.eventId === membershipEventId && e.userId === sender,
       );
       if (!membershipEvent) {

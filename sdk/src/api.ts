@@ -14,6 +14,7 @@ Please see LICENSE in the repository root for full details.
 import {
   type RTCCallIntent,
   type RTCNotificationType,
+  type SlotDescription,
   type Transport,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type Observable } from "rxjs";
@@ -43,13 +44,9 @@ export { MatrixRTCError } from "./errors";
 // Slot
 
 export interface RTCSlotOptions {
-  /** The application the slot belongs to, as named in the membership. Default `m.call`. */
-  application?: string;
-  /** The application's slot in the room. Default `ROOM`. */
-  id?: string;
-  /** How memberships and keys in this slot are written. Resolved by the host. */
-  matrixRTCMode: MatrixRTCMode;
   encryptionSystem: EncryptionSystem;
+  /** Which slot of the room to join. Defaults to the room's call, `m.call#ROOM`. */
+  slotDescription?: SlotDescription;
 }
 
 /**
@@ -81,6 +78,12 @@ export interface RTCSlot {
   join(options: RTCParticipationOptions): RTCParticipation; // Maybe MediaSession,
 }
 
+/**
+ * The slot as its participation sees it: members, status and identity, without
+ * `join` and `participation$`, which belong to whoever joins.
+ */
+export type ParticipationSlot = Omit<RTCSlot, "join" | "participation$">;
+
 // ---------------------------------------------------------------------------
 // Participation
 
@@ -95,6 +98,12 @@ export interface RTCParticipationOptions {
    * before the first connection exists.
    */
   publish: PublishRequest[] | LocalMedia;
+  /**
+   * How our membership and keys are written: the member id and whether the
+   * membership is a sticky event. Resolved by the host. Others' memberships
+   * are read whatever their mode.
+   */
+  matrixRTCMode: MatrixRTCMode;
   /**
    * LEGACY
    *
@@ -166,7 +175,8 @@ export type ParticipationState =
 
 /** The span between our `join()` of a slot and our `leave()`. */
 export interface RTCParticipation {
-  readonly slot: RTCSlot;
+  /** Required slot information (no `join` fn and `participation`) */
+  readonly slot: ParticipationSlot;
   /** Sends the leave, tears the connections down and ends the participation. */
   leave(): void;
   state$: Behavior<ParticipationState>;
@@ -289,6 +299,12 @@ export interface RTCMember {
   deviceId: string;
   /** The membership's own id; what the Matrix 2.0 identity is derived from. */
   memberId: string;
+  /**
+   * The Matrix event currently carrying the membership, which events about
+   * it (reactions, raised hands) relate to. Changes when the membership is
+   * sent again while the member stays the same.
+   */
+  matrixEventId$: Behavior<string>;
   /** Which transport this member is on; undefined when the membership has none. */
   transport$: Behavior<TransportMetadata | undefined>;
   /** What the member's application says about itself, e.g. `intent`. */

@@ -28,6 +28,7 @@ import {
 } from "@element-hq/matrixrtc-sdk";
 import {
   KnownMembership,
+  type MatrixClient,
   type Room as MatrixRoom,
   type RoomMember,
   RoomStateEvent,
@@ -193,7 +194,15 @@ export function initialPublishRequests(
 export interface CallViewModelProps {
   rtcParticipation: RTCParticipation;
   /** A call is permanently tied to a single Matrix room. */
-  matrixRoom: MatrixRoom;
+  matrixRoom: Pick<
+    MatrixRoom,
+    | "roomId"
+    | "getMembersWithMembership"
+    | "_unstable_getStickyEvents"
+    | "on"
+    | "off"
+  >;
+  client: Pick<MatrixClient, "getUserId" | "getDeviceId">;
   mediaDevices: MediaDevices;
   muteStates: MuteStates;
   encryptionSystem: EncryptionSystem;
@@ -492,6 +501,7 @@ export function createCallViewModel$(
   {
     rtcParticipation,
     matrixRoom,
+    client,
     mediaDevices,
     muteStates,
     encryptionSystem,
@@ -502,7 +512,6 @@ export function createCallViewModel$(
   options: CallViewModelOptions = {},
 ): CallViewModel {
   const logger = rootLogger.getChild("[CallViewModel]");
-  const client = matrixRoom.client;
   const userId = client.getUserId();
   const deviceId = client.getDeviceId();
   if (!(userId && deviceId))
@@ -1646,7 +1655,9 @@ function isPermissionDenied(e: unknown): boolean {
 }
 
 /** The members a call can be with: those in the room and those invited. */
-function roomMembers(room: MatrixRoom): RoomMember[] {
+function roomMembers(
+  room: Pick<MatrixRoom, "getMembersWithMembership">,
+): RoomMember[] {
   return room
     .getMembersWithMembership(KnownMembership.Join)
     .concat(room.getMembersWithMembership(KnownMembership.Invite));

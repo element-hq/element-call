@@ -20,6 +20,7 @@ import { EMPTY, filter, map, type Observable, of, switchMap, take } from "rxjs";
 import {
   type Behavior,
   createRTCSlot,
+  createSdkMatrixBackend,
   E2eeType,
   type LocalRTCMember,
   ObservableScope,
@@ -36,7 +37,6 @@ import {
 import {
   captureSettings,
   rtcParticipationOptions,
-  rtcSlotOptions,
 } from "../src/room/InCallView";
 import { createWidgetHostBridge } from "../src/HostBridge";
 import { MediaDevices } from "../src/state/MediaDevices";
@@ -94,10 +94,9 @@ export async function createMatrixRTCSdk(
   );
   const encryptionSystem = { kind: E2eeType.PER_PARTICIPANT } as const;
   const capture = captureSettings();
-  const slot = createRTCSlot(scope, client, room, {
-    ...rtcSlotOptions(encryptionSystem),
-    application,
-    id,
+  const slot = createRTCSlot(scope, createSdkMatrixBackend(client, room), {
+    encryptionSystem,
+    slotDescription: { application, id },
   });
   let vm: CallViewModel | undefined;
   const failed =
@@ -131,6 +130,7 @@ export async function createMatrixRTCSdk(
         {
           rtcParticipation: participation,
           matrixRoom: room,
+          client,
           mediaDevices,
           muteStates,
           encryptionSystem,

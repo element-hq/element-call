@@ -475,6 +475,7 @@ export function mockRTCMember(
     userId: membership.userId,
     deviceId: membership.deviceId,
     memberId: membership.memberId,
+    matrixEventId$: constant(membership.eventId),
     displayName$: constant(member.rawDisplayName ?? membership.userId),
     avatarUrl$: constant(member.getMxcAvatarUrl()),
     transport$: constant(transport),
@@ -506,14 +507,21 @@ export interface MockParticipationInputs {
  */
 export function mockRTCParticipation(
   scope: ObservableScope,
+  inputs: MockParticipationInputs = {},
+): RTCParticipation {
+  return mockSlotWithParticipation(scope, inputs).participation;
+}
+
+function mockSlotWithParticipation(
+  scope: ObservableScope,
   {
     localMember$ = constant(null),
     remoteMembers$ = constant([]),
     state$ = constant<ParticipationState>({ kind: "connected" }),
     keyRotationSuppressed$ = constant(false),
     connectedTransports$ = constant([]),
-  }: MockParticipationInputs = {},
-): RTCParticipation {
+  }: MockParticipationInputs,
+): { slot: RTCSlot; participation: RTCParticipation } {
   const members$ = scope.behavior<RTCMember[]>(
     combineLatest([localMember$, remoteMembers$], (local, remote) =>
       local === null ? remote : [local, ...remote],
@@ -550,7 +558,7 @@ export function mockRTCParticipation(
     data$: NEVER,
   };
   participation$.next(participation);
-  return participation;
+  return { slot, participation };
 }
 
 /** The slot of a `mockRTCParticipation`, whose `join()` returns that participation. */
@@ -558,7 +566,7 @@ export function mockRTCSlot(
   scope: ObservableScope,
   inputs: MockParticipationInputs = {},
 ): RTCSlot {
-  return mockRTCParticipation(scope, inputs).slot;
+  return mockSlotWithParticipation(scope, inputs).slot;
 }
 
 export function mockConfig(
@@ -603,6 +611,10 @@ export class MockRTCSession extends TypedEventEmitter<
     .fn()
     .mockResolvedValue(undefined);
 
+  public stop: ReturnType<typeof vitest.fn> = vitest
+    .fn()
+    .mockResolvedValue(undefined);
+
   public constructor(
     public readonly room: Room,
     public memberships: CallMembership[] = [],
@@ -613,6 +625,13 @@ export class MockRTCSession extends TypedEventEmitter<
   public joined = true;
   public isJoined(): boolean {
     return this.joined;
+  }
+
+  public slotDescription = { application: "m.call", id: "ROOM" };
+  /** The slot event's content; undefined while the room has none. */
+  public rtcSlot: ReturnType<MatrixRTCSession["getRtcSlot"]> = undefined;
+  public getRtcSlot(): ReturnType<MatrixRTCSession["getRtcSlot"]> {
+    return this.rtcSlot;
   }
 
   public isKeyRotationSuppressed = false;

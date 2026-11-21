@@ -5,13 +5,10 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { test, expect } from "vitest";
+import { test, expect, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import { axe } from "vitest-axe";
-import {
-  RTC_CALL_INTENT_AUDIO,
-  type MatrixRTCSession,
-} from "matrix-js-sdk/lib/matrixrtc";
+import { RTC_CALL_INTENT_AUDIO } from "matrix-js-sdk/lib/matrixrtc";
 import { BehaviorSubject } from "rxjs";
 
 import { GridTile } from "./GridTile";
@@ -36,25 +33,18 @@ global.IntersectionObserver = class MockIntersectionObserver {
   public disconnect(): void {}
 } as unknown as typeof IntersectionObserver;
 
-const fakeRtcSession = {
-  on: () => {},
-  off: () => {},
-  room: {
-    on: () => {},
-    off: () => {},
-    client: {
-      getUserId: () => null,
-      getDeviceId: () => null,
-      on: () => {},
-      off: () => {},
-    },
-  },
-  memberships: [],
-} as unknown as MatrixRTCSession;
+const fakeRoom = { roomId: "!room:example.org" };
+const fakeClient = {
+  getUserId: () => null,
+  getDeviceId: () => null,
+  sendEvent: vi.fn(),
+  redactEvent: vi.fn(),
+};
 
 const callVm = {
   reactions$: constant({}),
   handsRaised$: constant({}),
+  localMember$: constant(null),
 } as Partial<CallViewModel> as CallViewModel;
 
 test("GridTile displays remote media", async () => {
@@ -68,7 +58,7 @@ test("GridTile displays remote media", async () => {
   );
 
   const { container } = render(
-    <ReactionsSenderProvider vm={callVm} rtcSession={fakeRtcSession}>
+    <ReactionsSenderProvider vm={callVm} room={fakeRoom} client={fakeClient}>
       <GridTile
         vm={new GridTileViewModel(constant(vm))}
         onOpenProfile={() => {}}
@@ -99,7 +89,7 @@ test("GridTile displays local media", async () => {
   );
 
   const { container } = render(
-    <ReactionsSenderProvider vm={callVm} rtcSession={fakeRtcSession}>
+    <ReactionsSenderProvider vm={callVm} room={fakeRoom} client={fakeClient}>
       <GridTile
         vm={new GridTileViewModel(constant(vm))}
         onOpenProfile={() => {}}
@@ -132,7 +122,7 @@ test("GridTile displays ringing media", async () => {
   });
 
   const { container } = render(
-    <ReactionsSenderProvider vm={callVm} rtcSession={fakeRtcSession}>
+    <ReactionsSenderProvider vm={callVm} room={fakeRoom} client={fakeClient}>
       <GridTile
         vm={new GridTileViewModel(constant(vm))}
         onOpenProfile={() => {}}

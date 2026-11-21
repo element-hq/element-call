@@ -10,9 +10,11 @@ import { useCallback } from "react";
 import type { JoinRule, Room } from "matrix-js-sdk";
 import { useRoomState } from "./useRoomState";
 
-export function useJoinRule(room: Room): JoinRule {
+export function useJoinRule(
+  room: Pick<Room, "getJoinRule" | "on" | "off">,
+): JoinRule {
   return useRoomState(
     room,
-    useCallback((state) => state.getJoinRule(), []),
+    useCallback(() => room.getJoinRule(), [room]),
   );
 }

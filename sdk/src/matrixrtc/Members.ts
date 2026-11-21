@@ -57,6 +57,12 @@ export function createRTCMember(
     userId,
     deviceId,
     memberId,
+    matrixEventId$: scope.behavior(
+      membership$.pipe(
+        map((membership) => membership.eventId),
+        distinctUntilChanged(),
+      ),
+    ),
     displayName$: scope.behavior(
       metadata
         .createDisplayNameBehavior$(scope, userId)

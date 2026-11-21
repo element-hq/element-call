@@ -71,7 +71,6 @@ export const KnockLobbyView: FC<Props> = ({
         userId: client.getUserId() ?? "",
         displayName: profile.displayName,
         avatarUrl: profile.avatarUrl,
-        roomAlias: null,
         roomId: roomSummary.room_id,
         roomName: roomSummary.name ?? "",
         roomAvatar: roomSummary.avatar_url ?? null,

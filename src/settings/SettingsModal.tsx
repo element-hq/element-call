@@ -7,8 +7,8 @@ Please see LICENSE in the repository root for full details.
 
 import { type FC, type ReactNode, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { type MatrixClient } from "matrix-js-sdk";
 import { Button, Root as Form, Separator } from "@vector-im/compound-web";
+import { type MatrixClient } from "matrix-js-sdk";
 
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
@@ -53,12 +53,31 @@ type SettingsTab =
   | "more"
   | "developer";
 
+export type SettingsClientParts = Pick<
+  MatrixClient,
+  // Profile and developer tabs
+  | "getUserId"
+  // Profile tab
+  | "getUser"
+  | "setDisplayName"
+  | "setAvatarUrl"
+  | "uploadContent"
+  // Developer tab
+  | "doesServerSupportUnstableFeature"
+  | "getCrypto"
+  | "getDeviceId"
+  | "getDomain"
+  // Developer tab, to authenticate with a transport
+  | "getLivekitToken"
+  | "getOpenIdToken"
+>;
+
 interface Props {
   open: boolean;
   onDismiss: () => void;
   tab: SettingsTab;
   onTabChange: (tab: SettingsTab) => void;
-  client: MatrixClient;
+  client: SettingsClientParts;
   roomId?: string;
   /** The transports the client is connected to, while in a call. */
   transports?: TransportInfo[];

@@ -84,7 +84,9 @@ import styles from "./ElementCall.module.css";
 import { useComponentHostBridge } from "./host";
 import { CallPortalRoot } from "./CallPortalRoot";
 import { type ElementCallProps } from "./api";
+import { createComponentLocalJsClient } from "./componentLocalJsClient";
 import { supportedLanguages, translationsBackend } from "./localization";
+import { createCallMatrixBackend } from "../src/CallMatrixBackend";
 
 // The languages Element Call can be shown in
 export { supportedLanguages } from "./localization";
@@ -205,12 +207,14 @@ export const ElementCall: FC<ElementCallProps> = ({
   }, [controlledAudioDevices, callIntent]);
 
   const room = client.getRoom(roomId);
-  const rtcSession = useMemo(
-    () => (room === null ? null : client.matrixRTC.getRoomSession(room)),
+  const backend = useMemo(
+    () =>
+      room &&
+      createCallMatrixBackend(createComponentLocalJsClient(client), room),
     [client, room],
   );
 
-  if (rtcSession === null)
+  if (room === null)
     logger.error(
       `Element Call was asked to call in ${roomId}, which its host's client does not know about`,
     );
@@ -220,7 +224,7 @@ export const ElementCall: FC<ElementCallProps> = ({
   // is told that Element Call has loaded, as the widget tells its client once
   // its own initialisation is over. Once per mount, however often the pieces
   // are later swapped out.
-  const ready = container !== null && rtcSession !== null && vm !== null;
+  const ready = container !== null && backend !== null && vm !== null;
   const announcedLoaded = useRef(false);
   useEffect(() => {
     if (!ready || announcedLoaded.current) return;
@@ -250,14 +254,17 @@ export const ElementCall: FC<ElementCallProps> = ({
                     >
                       <Decoration>
                         <TooltipProvider>
+                          {/* The host's own client: what reads it through
+                          the context (avatars, the encryption system,
+                          rageshakes, the disconnected banner) uses only its
+                          stable methods. */}
                           <ClientProvider client={client}>
                             <MediaDevicesContext value={vm.mediaDevices}>
                               <BackgroundEffectsProvider
                                 effects={vm.backgroundEffects}
                               >
                                 <CallView
-                                  client={client}
-                                  rtcSession={rtcSession}
+                                  backend={backend}
                                   isPasswordlessUser={false}
                                   confineToRoom={params.confineToRoom}
                                   preload={params.preload}

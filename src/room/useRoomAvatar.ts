@@ -10,7 +10,16 @@ import { type Room } from "matrix-js-sdk";
 
 import { useRoomState } from "./useRoomState";
 
-export function useRoomAvatar(room: Room): string | null {
+export function useRoomAvatar(
+  room: Pick<
+    Room,
+    // The avatar itself
+    | "getMxcAvatarUrl"
+    // `on`/`off` for its changes, for `useRoomState`
+    | "on"
+    | "off"
+  >,
+): string | null {
   return useRoomState(
     room,
     useCallback(() => room.getMxcAvatarUrl(), [room]),

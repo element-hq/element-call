@@ -5,12 +5,14 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type MatrixClient, type Room } from "matrix-js-sdk";
+import { type MatrixClient } from "matrix-js-sdk";
 import { EventType } from "matrix-js-sdk/lib/@types/event";
-import { type Logger, logger as rootLogger } from "matrix-js-sdk/lib/logger";
+import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import {
-  type MatrixRTCSession as JsSdkRTCSession,
-  MatrixRTCSessionManager,
+  type Statistics,
+  MatrixRTCSession as JsMatrixRTCSession,
+  MatrixRTCSessionEvent,
+  type IRTCNotificationContent,
   type SlotDescription,
 } from "matrix-js-sdk/lib/matrixrtc";
 import { type MatrixEvent } from "matrix-js-sdk/lib/models/event";
@@ -20,6 +22,7 @@ import {
   filter,
   fromEvent,
   map,
+  type Observable,
   of,
   startWith,
   switchMap,
@@ -28,6 +31,7 @@ import {
 import { ObservableScope } from "./reactive/ObservableScope";
 import { generateItems } from "./reactive/observable";
 import {
+  type ParticipationSlot,
   type RTCMember,
   type RTCParticipation,
   type RTCParticipationOptions,
@@ -50,33 +54,64 @@ import {
   membershipKeys,
 } from "./matrixrtc/Members";
 import { createTransportRegistry } from "./matrixrtc/Transports";
+import {
+  type createSdkMatrixBackend,
+  type SdkMatrixBackend,
+  withEmitter,
+} from "./SdkMatrixBackend";
+
+const ROOM_CALL_SLOT: SlotDescription = { application: "m.call", id: "ROOM" };
 
 /**
- * Takes the whole `MatrixClient` rather than a slice of it, and finds the
- * MatrixRTC session itself. The js-sdk is the MatrixRTC implementation today;
- * when the rust-rtc crate replaces it, the SDK has to bridge the crate to the
- * js-sdk client, and only the SDK knows what that bridge needs. Holding the
- * client keeps that change inside the SDK.
+ * The slot runs on a matrix-js-sdk session of its own, from the SDK's copy of
+ * matrix-js-sdk rather than the client's, and stops it when the scope ends.
  */
 export function createRTCSlot(
   scope: ObservableScope,
-  client: MatrixClient,
-  room: Room,
+  backend: SdkMatrixBackend,
   options: RTCSlotOptions,
-): RTCSlot {
+  /**
+   * @deprecated A session the caller owns and stops, in place of the slot's
+   * own; `options.slotDescription` is then the session's. Only for the
+   * standalone app, which still takes its session from its client's session
+   * manager.
+   */
+  externalJsSdkSession?: JsMatrixRTCSession,
+): RTCSlot & {
+  // STOP GAP: This should be its own external machine. It is call
+  // specific and should not live inside the sdk/rtc-slot.
+  // We only put it here today, to make sure the rtcSession is fully
+  // hidden inside the sdk.
+  // Next step. disable sending call notificaitons in the sdk, write a new
+  // notification sender in EC directly on client + room.
+  sentCallNotification$: Observable<
+    {
+      event_id: string;
+    } & IRTCNotificationContent
+  >;
+  // STOP GAP: the same as above. Has to live here. but should become a native
+  // SDK propery independent of the rtcSession
+  statistics: Statistics;
+} {
+  // STOP GAP: the slot is still written against a client and a room. Both
+  // are refactored along with the backend.
+  const client = withEmitter(backend, backend.clientEmitter);
+  const room = withEmitter(backend, backend.roomEmitter);
   const logger = rootLogger.getChild("[RTCSlot]");
   const userId = client.getUserId();
   const deviceId = client.getDeviceId();
+  const roomId = room.roomId;
   if (!(userId && deviceId))
     throw new MatrixRTCError("The client has to be logged in");
-  const { application = "m.call", id = "ROOM" } = options;
 
-  const jsSdkSession = sessionManager(
-    scope,
-    client,
-    { application, id },
-    logger,
-  ).getRoomSession(room);
+  const jsSdkSession =
+    externalJsSdkSession ??
+    createJsSdkSession(
+      scope,
+      client,
+      room,
+      options.slotDescription ?? ROOM_CALL_SLOT,
+    );
   const memberships$ = createMemberships$(scope, jsSdkSession);
 
   const active$ = new BehaviorSubject<ParticipationInternals | null>(null);
@@ -126,70 +161,85 @@ export function createRTCSlot(
     ),
   );
 
-  const slot: RTCSlot = {
-    roomId: room.roomId,
-    application,
-    id,
+  const participationSlot: ParticipationSlot = {
+    roomId,
     status$,
     members$,
+    ...jsSdkSession.slotDescription,
+  };
+
+  const join = (
+    participationOptions: RTCParticipationOptions,
+  ): RTCParticipation => {
+    if (active$.value !== null)
+      throw new MatrixRTCError(
+        "Already in this slot: leave the participation before joining again",
+      );
+    const participationScope = new ObservableScope();
+    participationScopes.add(participationScope);
+    const internals = createRTCParticipation(
+      participationScope,
+      {
+        client,
+        slot: participationSlot,
+        jsSdkSession,
+        transports,
+        slotOptions: options,
+        logger,
+      },
+      participationOptions,
+    );
+    participationScope.onEnd(() => {
+      participationScopes.delete(participationScope);
+      if (active$.value === internals) active$.next(null);
+    });
+    active$.next(internals);
+    return internals.participation;
+  };
+
+  const slot = {
+    join,
     participation$: scope.behavior(
       active$.pipe(map((active) => active?.participation ?? null)),
     ),
-    join: (participationOptions: RTCParticipationOptions): RTCParticipation => {
-      if (active$.value !== null)
-        throw new MatrixRTCError(
-          "Already in this slot: leave the participation before joining again",
-        );
-      const participationScope = new ObservableScope();
-      participationScopes.add(participationScope);
-      const internals = createRTCParticipation(
-        participationScope,
-        {
-          client,
-          room,
-          slot,
-          jsSdkSession,
-          members$,
-          transports,
-          slotOptions: options,
-          logger,
-        },
-        participationOptions,
-      );
-      participationScope.onEnd(() => {
-        participationScopes.delete(participationScope);
-        if (active$.value === internals) active$.next(null);
-      });
-      active$.next(internals);
-      return internals.participation;
-    },
+    ...participationSlot,
   };
-  return slot;
+
+  return {
+    ...slot,
+    sentCallNotification$: fromEvent(
+      jsSdkSession,
+      MatrixRTCSessionEvent.DidSendCallNotification,
+      (notification: { event_id: string } & IRTCNotificationContent) =>
+        notification,
+    ),
+    statistics: jsSdkSession.statistics,
+  };
+}
+
+function createJsSdkSession(
+  scope: ObservableScope,
+  client: Pick<
+    MatrixClient,
+    keyof Parameters<typeof createSdkMatrixBackend>[0]
+  >,
+  room: ConstructorParameters<typeof JsMatrixRTCSession>[1],
+  slotDescription: SlotDescription,
+): JsMatrixRTCSession {
+  const session = new JsMatrixRTCSession(
+    // The session's type also asks for `cancelPendingEvent`,
+    // `_unstable_updateDelayedEvent` and `decryptEventIfNeeded`, which it
+    // never calls
+    client as ConstructorParameters<typeof JsMatrixRTCSession>[0],
+    room,
+    slotDescription,
+  );
+  scope.onEnd(() => void session.stop());
+  return session;
 }
 
 function slotStatus(
-  session: Pick<JsSdkRTCSession, "getRtcSlot">,
+  session: Pick<JsMatrixRTCSession, "getRtcSlot">,
 ): "open" | "closed" | undefined {
   return session.getRtcSlot()?.status;
-}
-
-/**
- * The js-sdk keeps one session manager per slot. The client comes with the
- * manager for the default slot; any other slot gets a manager of its own,
- * which lives as long as the scope.
- */
-function sessionManager(
-  scope: ObservableScope,
-  client: MatrixClient,
-  { application, id }: SlotDescription,
-  logger: Logger,
-): MatrixRTCSessionManager {
-  if (application === "m.call" && id === "ROOM") return client.matrixRTC;
-  const manager = new MatrixRTCSessionManager(logger, client, {
-    application,
-    id,
-  });
-  manager.start();
-  scope.onEnd(() => manager.stop());
-  return manager;
 }
