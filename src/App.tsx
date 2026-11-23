@@ -29,7 +29,7 @@ import { HomePage } from "./home/HomePage";
 import { LoginPage } from "./auth/LoginPage";
 import { RegisterPage } from "./auth/RegisterPage";
 import { RoomPage } from "./room/RoomPage";
-import { ClientManagerProvider, ClientProvider } from "./ClientContext";
+import { ClientProvider } from "./ClientContext";
 import { ErrorPage, LoadingPage } from "./FullScreenView";
 import { Initializer } from "./initializer";
 import { type WidgetHelpers } from "./widget";
@@ -132,22 +132,37 @@ export const App: FC<Props> = ({ vm, widget }) => {
 
   const content = loaded ? (
     <ClientProvider session={vm.clientSession}>
-      <ClientManagerProvider value={vm.clientManager}>
-        <MediaDevicesContext value={vm.mediaDevices}>
-          <BackgroundEffectsProvider effects={vm.backgroundEffects}>
-            <Sentry.ErrorBoundary
-              fallback={(error) => <ErrorPage error={error} />}
-            >
-              <Routes>
-                <SentryRoute path="/" element={<HomePage />} />
-                <SentryRoute path="/login" element={<LoginPage />} />
-                <SentryRoute path="/register" element={<RegisterPage />} />
-                <SentryRoute path="*" element={<RoomPage />} />
-              </Routes>
-            </Sentry.ErrorBoundary>
-          </BackgroundEffectsProvider>
-        </MediaDevicesContext>
-      </ClientManagerProvider>
+      <MediaDevicesContext value={vm.mediaDevices}>
+        <BackgroundEffectsProvider effects={vm.backgroundEffects}>
+          <Sentry.ErrorBoundary
+            fallback={(error) => <ErrorPage error={error} />}
+          >
+            <Routes>
+              <SentryRoute
+                path="/"
+                element={<HomePage clientManager={vm.clientManager} />}
+              />
+              {/* A host's session is signed in to by the host, never here */}
+              {vm.clientManager !== null && (
+                <>
+                  <SentryRoute
+                    path="/login"
+                    element={<LoginPage clientManager={vm.clientManager} />}
+                  />
+                  <SentryRoute
+                    path="/register"
+                    element={<RegisterPage clientManager={vm.clientManager} />}
+                  />
+                </>
+              )}
+              <SentryRoute
+                path="*"
+                element={<RoomPage clientManager={vm.clientManager} />}
+              />
+            </Routes>
+          </Sentry.ErrorBoundary>
+        </BackgroundEffectsProvider>
+      </MediaDevicesContext>
     </ClientProvider>
   ) : (
     <LoadingPage />

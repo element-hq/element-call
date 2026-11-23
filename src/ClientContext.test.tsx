@@ -6,21 +6,14 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { expect, test, vi } from "vitest";
-import { act, render, renderHook } from "@testing-library/react";
+import { act, render } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import { type MatrixClient } from "matrix-js-sdk";
 import { type FC } from "react";
 import { BehaviorSubject } from "rxjs";
 
+import { ClientProvider, useClientSessionState } from "./ClientContext";
 import {
-  ClientManagerProvider,
-  ClientProvider,
-  useClientManager,
-  useClientManagerIfAny,
-  useClientSessionState,
-} from "./ClientContext";
-import {
-  type ClientManager,
   type ClientSession,
   type ClientSessionState,
   hostClientSession,
@@ -119,30 +112,4 @@ test("shows the session's error in place of its children", () => {
   // The error page, not the children
   expect(container.textContent).not.toContain("error");
   expect(container.textContent).toContain("Something went wrong");
-});
-
-test("hands the session's manager to views that need one", () => {
-  const manager: ClientManager = {
-    login: vi.fn(),
-    register: vi.fn(),
-    logout: vi.fn(),
-  };
-  const { result } = renderHook(
-    () => [useClientManager(), useClientManagerIfAny()],
-    {
-      wrapper: ({ children }) => (
-        <ClientManagerProvider value={manager}>
-          <>{children}</>
-        </ClientManagerProvider>
-      ),
-    },
-  );
-  expect(result.current).toEqual([manager, manager]);
-});
-
-test("has no manager for a host's session", () => {
-  // The component and the widget provide none; a view that insists on one is
-  // in the wrong build
-  expect(renderHook(() => useClientManagerIfAny()).result.current).toBeNull();
-  expect(() => renderHook(() => useClientManager())).toThrow();
 });

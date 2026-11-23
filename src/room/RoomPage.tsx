@@ -27,8 +27,14 @@ import { Link } from "../button/Link";
 import { ErrorView } from "../ErrorView";
 import { usePageTitle } from "../usePageTitle";
 import { useRoomName } from "./useRoomName";
+import { type ClientManager } from "../state/ClientSession";
 
-export const RoomPage: FC = (): ReactNode => {
+interface Props {
+  /** Null where the session is a host's and not ours to manage. */
+  clientManager: ClientManager | null;
+}
+
+export const RoomPage: FC<Props> = ({ clientManager }): ReactNode => {
   const urlParams = useUrlParams();
   const { confineToRoom, preload, header, displayName, skipLobby } = urlParams;
   const { t } = useTranslation();
@@ -39,7 +45,8 @@ export const RoomPage: FC = (): ReactNode => {
     logger.error("No room specified");
   }
 
-  const { registerPasswordlessUser } = useRegisterPasswordlessUser();
+  const { registerPasswordlessUser } =
+    useRegisterPasswordlessUser(clientManager);
   const [isRegistering, setIsRegistering] = useState(false);
 
   const client = useClient();
@@ -188,8 +195,8 @@ export const RoomPage: FC = (): ReactNode => {
   };
 
   if (loading || isRegistering) return <LoadingPage />;
-  if (!client) return <RoomAuthView />;
+  if (!client) return <RoomAuthView clientManager={clientManager} />;
   // TODO: This doesn't belong here, the app routes need to be reworked
-  if (!roomIdOrAlias) return <HomePage />;
+  if (!roomIdOrAlias) return <HomePage clientManager={clientManager} />;
   return groupCallView();
 };

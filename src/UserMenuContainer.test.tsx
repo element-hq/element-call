@@ -13,7 +13,7 @@ import { type MatrixClient } from "matrix-js-sdk";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { BehaviorSubject } from "rxjs";
 
-import { ClientManagerProvider, ClientProvider } from "./ClientContext";
+import { ClientProvider } from "./ClientContext";
 import { LeaveToHomeProvider } from "./LeaveToHomeContext";
 import {
   type ClientManager,
@@ -85,9 +85,7 @@ function renderMenu(
       <TooltipProvider>
         <LeaveToHomeProvider value={leaveToHome}>
           <ClientProvider session={session}>
-            <ClientManagerProvider value={manager}>
-              <UserMenuContainer />
-            </ClientManagerProvider>
+            <UserMenuContainer logout={manager?.logout} />
           </ClientProvider>
         </LeaveToHomeProvider>
       </TooltipProvider>

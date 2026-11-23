@@ -13,7 +13,10 @@ import { BehaviorSubject } from "rxjs";
 
 import { HomePage } from "./HomePage";
 import { ClientContextProvider } from "../ClientContext";
-import { type ClientSessionState } from "../state/ClientSession";
+import {
+  type ClientManager,
+  type ClientSessionState,
+} from "../state/ClientSession";
 
 vi.mock("./RegisteredView", () => ({
   RegisteredView: ({ client }: { client: MatrixClient }) => (
@@ -49,13 +52,27 @@ test("invites a signed-out user to start a call", () => {
   expect(screen.getByText("unauthenticated")).toBeVisible();
 });
 
-function renderHome(state: ClientSessionState): void {
+test("cannot sign in to a host's session that is signed out", () => {
+  vi.spyOn(console, "error").mockImplementation(() => {});
+  renderHome({ state: "signedOut" }, null);
+  expect(screen.getByText("Something went wrong")).toBeVisible();
+  expect(screen.queryByText("unauthenticated")).toBeNull();
+});
+
+function renderHome(
+  state: ClientSessionState,
+  manager: ClientManager | null = {
+    login: vi.fn(),
+    register: vi.fn(),
+    logout: vi.fn(),
+  },
+): void {
   render(
     <BrowserRouter>
       <ClientContextProvider
         value={{ state$: new BehaviorSubject<ClientSessionState>(state) }}
       >
-        <HomePage />
+        <HomePage clientManager={manager} />
       </ClientContextProvider>
     </BrowserRouter>,
   );

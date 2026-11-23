@@ -13,7 +13,6 @@ import { MemoryRouter, useLocation } from "react-router-dom";
 import { type MatrixClient } from "matrix-js-sdk";
 
 import { UnauthenticatedView } from "./UnauthenticatedView";
-import { ClientManagerProvider } from "../ClientContext";
 import { type ClientManager } from "../state/ClientSession";
 import { computeUrlParams, UrlParamsProvider } from "../UrlParams";
 import type * as matrixUtils from "../utils/matrix";
@@ -126,10 +125,8 @@ function renderView(manager: ClientManager): void {
   render(
     <MemoryRouter initialEntries={["/"]}>
       <UrlParamsProvider value={computeUrlParams()}>
-        <ClientManagerProvider value={manager}>
-          <UnauthenticatedView />
-          <WhereAmI />
-        </ClientManagerProvider>
+        <UnauthenticatedView clientManager={manager} />
+        <WhereAmI />
       </UrlParamsProvider>
     </MemoryRouter>,
   );

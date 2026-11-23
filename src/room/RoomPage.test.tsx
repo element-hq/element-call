@@ -93,7 +93,7 @@ function renderRoom(
         <ClientContextProvider
           value={{ state$: new BehaviorSubject<ClientSessionState>(state) }}
         >
-          <RoomPage />
+          <RoomPage clientManager={null} />
         </ClientContextProvider>
       </UrlParamsProvider>
     </MemoryRouter>,

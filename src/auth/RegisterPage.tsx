@@ -22,11 +22,8 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import { Button, Text } from "@vector-im/compound-web";
 
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
-import {
-  useClient,
-  useClientManager,
-  useClientSessionState,
-} from "../ClientContext";
+import { useClient, useClientSessionState } from "../ClientContext";
+import { type ClientManager } from "../state/ClientSession";
 import { useRegistrationTerms } from "./useRegistrationTerms";
 import styles from "./LoginPage.module.css";
 import Logo from "../icons/LogoLarge.svg?react";
@@ -37,7 +34,11 @@ import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { Config } from "../config/Config";
 import { ExternalLink, Link } from "../button/Link";
 
-export const RegisterPage: FC = () => {
+interface Props {
+  clientManager: ClientManager;
+}
+
+export const RegisterPage: FC<Props> = ({ clientManager }) => {
   const { t } = useTranslation();
   usePageTitle(t("action.register"));
 
@@ -47,7 +48,7 @@ export const RegisterPage: FC = () => {
     session.state === "signedIn" && session.passwordlessUser;
   const client = useClient();
   const authenticated = client !== undefined;
-  const { register } = useClientManager();
+  const { register } = clientManager;
 
   const confirmPasswordRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();

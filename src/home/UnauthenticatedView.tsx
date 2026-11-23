@@ -12,7 +12,7 @@ import { Button, Heading, Text } from "@vector-im/compound-web";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { useNavigate } from "react-router-dom";
 
-import { useClientManager } from "../ClientContext";
+import { type ClientManager } from "../state/ClientSession";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
 import { UserMenuContainer } from "../UserMenuContainer";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
@@ -36,8 +36,12 @@ import { useOptInAnalytics } from "../settings/settings";
 import { ExternalLink, Link } from "../button/Link";
 import { useUrlParams } from "../UrlParams";
 
-export const UnauthenticatedView: FC = () => {
-  const { register } = useClientManager();
+interface Props {
+  clientManager: ClientManager;
+}
+
+export const UnauthenticatedView: FC<Props> = ({ clientManager }) => {
+  const { register } = clientManager;
   const { header } = useUrlParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
@@ -137,7 +141,7 @@ export const UnauthenticatedView: FC = () => {
               <HeaderLogo />
             </LeftNav>
             <RightNav hideMobile>
-              <UserMenuContainer />
+              <UserMenuContainer logout={clientManager.logout} />
             </RightNav>
           </Header>
         )}

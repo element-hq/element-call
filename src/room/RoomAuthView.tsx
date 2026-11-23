@@ -17,17 +17,23 @@ import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { Form } from "../form/Form";
 import { UserMenuContainer } from "../UserMenuContainer";
 import { useRegisterPasswordlessUser } from "../auth/useRegisterPasswordlessUser";
+import { type ClientManager } from "../state/ClientSession";
 import { Config } from "../config/Config";
 import { ExternalLink, Link } from "../button/Link";
 import { useUrlParams } from "../UrlParams";
 
-export const RoomAuthView: FC = () => {
+interface Props {
+  /** Null where the session is a host's and not ours to manage. */
+  clientManager: ClientManager | null;
+}
+
+export const RoomAuthView: FC<Props> = ({ clientManager }) => {
   const { header } = useUrlParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
 
   const { registerPasswordlessUser, recaptchaId } =
-    useRegisterPasswordlessUser();
+    useRegisterPasswordlessUser(clientManager);
 
   const onSubmit = useCallback(
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -61,7 +67,10 @@ export const RoomAuthView: FC = () => {
             <HeaderLogo />
           </LeftNav>
           <RightNav>
-            <UserMenuContainer preventNavigation />
+            <UserMenuContainer
+              preventNavigation
+              logout={clientManager?.logout}
+            />
           </RightNav>
         </Header>
       )}

@@ -38,12 +38,14 @@ import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { E2eeType } from "../e2ee/e2eeType";
 import { useOptInAnalytics } from "../settings/settings";
 import { useUrlParams } from "../UrlParams";
+import { type ClientManager } from "../state/ClientSession";
 
 interface Props {
   client: MatrixClient;
+  clientManager: ClientManager | null;
 }
 
-export const RegisteredView: FC<Props> = ({ client }) => {
+export const RegisteredView: FC<Props> = ({ client, clientManager }) => {
   const { header } = useUrlParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
@@ -122,7 +124,7 @@ export const RegisteredView: FC<Props> = ({ client }) => {
               <HeaderLogo />
             </LeftNav>
             <RightNav>
-              <UserMenuContainer />
+              <UserMenuContainer logout={clientManager?.logout} />
             </RightNav>
           </Header>
         )}

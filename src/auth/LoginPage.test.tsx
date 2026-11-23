@@ -13,7 +13,6 @@ import { MemoryRouter, useLocation } from "react-router-dom";
 import { type MatrixClient } from "matrix-js-sdk";
 
 import { LoginPage } from "./LoginPage";
-import { ClientManagerProvider } from "../ClientContext";
 import { type ClientManager } from "../state/ClientSession";
 import { Config } from "../config/Config";
 
@@ -69,10 +68,8 @@ const WhereAmI: FC = () => <span>at {useLocation().pathname}</span>;
 function renderLogin(manager: ClientManager): void {
   render(
     <MemoryRouter initialEntries={["/login"]}>
-      <ClientManagerProvider value={manager}>
-        <LoginPage />
-        <WhereAmI />
-      </ClientManagerProvider>
+      <LoginPage clientManager={manager} />
+      <WhereAmI />
     </MemoryRouter>,
   );
 }

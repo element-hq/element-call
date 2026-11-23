@@ -11,7 +11,6 @@ import { type FC, type PropsWithChildren } from "react";
 import { type MatrixClient } from "matrix-js-sdk";
 
 import { useRegisterPasswordlessUser } from "./useRegisterPasswordlessUser";
-import { ClientManagerProvider } from "../ClientContext";
 import { type ClientManager } from "../state/ClientSession";
 import { computeUrlParams, UrlParamsProvider } from "../UrlParams";
 
@@ -44,8 +43,8 @@ test("registers a user under a random name and signs them in", async () => {
     setSignedIn,
   });
 
-  const { result } = renderHook(() => useRegisterPasswordlessUser(), {
-    wrapper: wrapper(manager, false),
+  const { result } = renderHook(() => useRegisterPasswordlessUser(manager), {
+    wrapper: wrapper(false),
   });
   await result.current.registerPasswordlessUser("Alice");
 
@@ -67,8 +66,8 @@ test("resets the captcha when registration fails", async () => {
   const manager = mockManager();
   vi.mocked(manager.register).mockRejectedValue(new Error("Nope"));
 
-  const { result } = renderHook(() => useRegisterPasswordlessUser(), {
-    wrapper: wrapper(manager, false),
+  const { result } = renderHook(() => useRegisterPasswordlessUser(manager), {
+    wrapper: wrapper(false),
   });
 
   await expect(
@@ -78,8 +77,8 @@ test("resets the captcha when registration fails", async () => {
 });
 
 test("cannot register on a session that is not ours", async () => {
-  const { result } = renderHook(() => useRegisterPasswordlessUser(), {
-    wrapper: wrapper(null, false),
+  const { result } = renderHook(() => useRegisterPasswordlessUser(null), {
+    wrapper: wrapper(false),
   });
 
   await expect(
@@ -89,8 +88,8 @@ test("cannot register on a session that is not ours", async () => {
 
 test("never registers as a widget", async () => {
   const manager = mockManager();
-  const { result } = renderHook(() => useRegisterPasswordlessUser(), {
-    wrapper: wrapper(manager, true),
+  const { result } = renderHook(() => useRegisterPasswordlessUser(manager), {
+    wrapper: wrapper(true),
   });
 
   await expect(
@@ -103,14 +102,9 @@ function mockManager(): ClientManager {
   return { login: vi.fn(), register: vi.fn(), logout: vi.fn() };
 }
 
-function wrapper(
-  manager: ClientManager | null,
-  isWidget: boolean,
-): FC<PropsWithChildren> {
+function wrapper(isWidget: boolean): FC<PropsWithChildren> {
   const params = { ...computeUrlParams(), isWidget };
   return ({ children }) => (
-    <UrlParamsProvider value={params}>
-      <ClientManagerProvider value={manager}>{children}</ClientManagerProvider>
-    </UrlParamsProvider>
+    <UrlParamsProvider value={params}>{children}</UrlParamsProvider>
   );
 }

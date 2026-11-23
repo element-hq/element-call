@@ -12,9 +12,15 @@ import { useClientSessionState } from "../ClientContext";
 import { ErrorPage, LoadingPage } from "../FullScreenView";
 import { UnauthenticatedView } from "./UnauthenticatedView";
 import { RegisteredView } from "./RegisteredView";
+import { type ClientManager } from "../state/ClientSession";
 import { usePageTitle } from "../usePageTitle";
 
-export const HomePage: FC = () => {
+interface Props {
+  /** Null where the session is a host's and not ours to manage. */
+  clientManager: ClientManager | null;
+}
+
+export const HomePage: FC<Props> = ({ clientManager }) => {
   const { t } = useTranslation();
   usePageTitle(t("common.home"));
 
@@ -26,8 +32,15 @@ export const HomePage: FC = () => {
     case "error":
       return <ErrorPage error={session.error} />;
     case "signedIn":
-      return <RegisteredView client={session.client} />;
+      return (
+        <RegisteredView client={session.client} clientManager={clientManager} />
+      );
     case "signedOut":
-      return <UnauthenticatedView />;
+      // A host's session cannot be signed in to from here
+      return clientManager === null ? (
+        <ErrorPage error={new Error("Signed out of the host's session")} />
+      ) : (
+        <UnauthenticatedView clientManager={clientManager} />
+      );
   }
 };

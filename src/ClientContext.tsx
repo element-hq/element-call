@@ -13,7 +13,6 @@ import { PosthogAnalytics } from "./analytics/PosthogAnalytics";
 import { useBehavior } from "./useBehavior";
 import { constant } from "./state/Behavior";
 import {
-  type ClientManager,
   type ClientSession,
   type ClientSessionState,
 } from "./state/ClientSession";
@@ -41,31 +40,6 @@ export function useClient(): MatrixClient | undefined {
   const state = useClientSessionState();
   return state.state === "signedIn" ? state.client : undefined;
 }
-
-// Null where the session is a host's: the component, and the widget
-const ClientManagerContext = createContext<ClientManager | null>(null);
-
-export const ClientManagerProvider = ClientManagerContext.Provider;
-
-/**
- * The manager of a session that is Element Call's own, for views that only
- * the standalone app mounts: the login and registration pages. Throws
- * elsewhere, as those views have no business being there.
- */
-export function useClientManager(): ClientManager {
-  const manager = use(ClientManagerContext);
-  if (manager === null)
-    throw new Error("This view needs a session of Element Call's own");
-  return manager;
-}
-
-/**
- * The session's manager, or null where the session is a host's. For views
- * shared with the widget, which can offer to sign out only when that is ours
- * to do.
- */
-export const useClientManagerIfAny = (): ClientManager | null =>
-  use(ClientManagerContext);
 
 interface Props {
   children: JSX.Element;

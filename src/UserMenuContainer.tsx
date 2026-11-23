@@ -9,11 +9,8 @@ import { type FC, useCallback, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { logger } from "matrix-js-sdk/lib/logger";
 
-import {
-  useClient,
-  useClientManagerIfAny,
-  useClientSessionState,
-} from "./ClientContext";
+import { useClient, useClientSessionState } from "./ClientContext";
+import { type ClientManager } from "./state/ClientSession";
 import { useLeaveToHome } from "./LeaveToHomeContext";
 import { useProfile } from "./profile/useProfile";
 import { defaultSettingsTab, SettingsModal } from "./settings/SettingsModal";
@@ -21,17 +18,20 @@ import { UserMenu } from "./UserMenu";
 
 interface Props {
   preventNavigation?: boolean;
+  /** Absent when the session is a host's, which Element Call cannot end. */
+  logout?: ClientManager["logout"];
 }
 
-export const UserMenuContainer: FC<Props> = ({ preventNavigation = false }) => {
+export const UserMenuContainer: FC<Props> = ({
+  preventNavigation = false,
+  logout,
+}) => {
   const location = useLocation();
   const navigate = useNavigate();
   const client = useClient();
   const session = useClientSessionState();
   const passwordlessUser =
     session.state === "signedIn" && session.passwordlessUser;
-  // Absent when the session is a host's, which Element Call cannot end
-  const logout = useClientManagerIfAny()?.logout;
   const leaveToHome = useLeaveToHome();
   const { displayName, avatarUrl } = useProfile(client);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);

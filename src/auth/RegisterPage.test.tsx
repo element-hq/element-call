@@ -14,7 +14,7 @@ import { type MatrixClient } from "matrix-js-sdk";
 import { BehaviorSubject } from "rxjs";
 
 import { RegisterPage } from "./RegisterPage";
-import { ClientContextProvider, ClientManagerProvider } from "../ClientContext";
+import { ClientContextProvider } from "../ClientContext";
 import {
   type ClientManager,
   type ClientSessionState,
@@ -123,10 +123,8 @@ function renderRegister(
       <ClientContextProvider
         value={{ state$: new BehaviorSubject<ClientSessionState>(state) }}
       >
-        <ClientManagerProvider value={manager}>
-          <RegisterPage />
-          <WhereAmI />
-        </ClientManagerProvider>
+        <RegisterPage clientManager={manager} />
+        <WhereAmI />
       </ClientContextProvider>
     </MemoryRouter>,
   );

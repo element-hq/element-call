@@ -49,7 +49,7 @@ export interface ClientSession {
 
 /**
  * What can be done with a client created in EC (SPA). Widget and host client
- * wont have this, see useClientManager and useClientManagerIfAny
+ * wont have this, so views take it as a `ClientManager | null` prop.
  */
 export interface ClientManager {
   /** Signs in to the homeserver with a password, ending any current session. */

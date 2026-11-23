@@ -11,7 +11,7 @@ import { Trans, useTranslation } from "react-i18next";
 import { Button } from "@vector-im/compound-web";
 
 import Logo from "../icons/LogoLarge.svg?react";
-import { useClientManager } from "../ClientContext";
+import { type ClientManager } from "../state/ClientSession";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import styles from "./LoginPage.module.css";
 import { usePageTitle } from "../usePageTitle";
@@ -19,11 +19,15 @@ import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { Config } from "../config/Config";
 import { Link } from "../button/Link";
 
-export const LoginPage: FC = () => {
+interface Props {
+  clientManager: ClientManager;
+}
+
+export const LoginPage: FC<Props> = ({ clientManager }) => {
   const { t } = useTranslation();
   usePageTitle(t("login_title"));
 
-  const { login } = useClientManager();
+  const { login } = clientManager;
   const homeserver = Config.defaultHomeserverUrl(); // TODO: Make this configurable
   const usernameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
