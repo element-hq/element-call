@@ -13,7 +13,7 @@ import { type LocalVideoMediaTrack, type VideoProcessor } from "./media-api";
 describe("createLocalMedia", () => {
   it("opens the microphone and the camera in one request", async () => {
     const getUserMedia = fakeGetUserMedia();
-    const media = createLocalMedia(getUserMedia);
+    const media = createLocalMedia({ getUserMedia });
 
     const tracks = await media.capture([
       { source: "microphone", deviceId: "mic" },
@@ -37,7 +37,7 @@ describe("createLocalMedia", () => {
 
   it("opens a camera asked for without a resolution at the one a backend captures at", async () => {
     const getUserMedia = fakeGetUserMedia();
-    const media = createLocalMedia(getUserMedia);
+    const media = createLocalMedia({ getUserMedia });
 
     await media.capture([{ source: "camera" }]);
 
@@ -46,9 +46,23 @@ describe("createLocalMedia", () => {
     });
   });
 
+  it("opens the camera at the resolution of the media quality it is given", async () => {
+    const getUserMedia = fakeGetUserMedia();
+    const media = createLocalMedia({
+      mediaQuality: { video: { max_resolution: 360 } },
+      getUserMedia,
+    });
+
+    await media.capture([{ source: "camera" }]);
+
+    expect(getUserMedia).toHaveBeenCalledExactlyOnceWith({
+      video: { width: 640, height: 360, frameRate: 20 },
+    });
+  });
+
   it("joins an identical capture still in flight rather than opening the devices again", async () => {
     const getUserMedia = fakeGetUserMedia();
-    const media = createLocalMedia(getUserMedia);
+    const media = createLocalMedia({ getUserMedia });
     const requests = [{ source: "camera" as const }];
 
     const [first, second] = await Promise.all([
@@ -63,7 +77,7 @@ describe("createLocalMedia", () => {
 
   it("shows the processor's output, initialised once", async () => {
     const processor = fakeProcessor();
-    const media = createLocalMedia(fakeGetUserMedia());
+    const media = createLocalMedia({ getUserMedia: fakeGetUserMedia() });
     const [camera] = await media.capture([{ source: "camera", processor }]);
     const element = document.createElement("video");
 
@@ -76,7 +90,7 @@ describe("createLocalMedia", () => {
   it("hands the tracks over as they are: no second capture, no second init", async () => {
     const getUserMedia = fakeGetUserMedia();
     const processor = fakeProcessor();
-    const media = createLocalMedia(getUserMedia);
+    const media = createLocalMedia({ getUserMedia });
     const [microphone, camera] = await media.capture([
       { source: "microphone" },
       { source: "camera", processor },
@@ -100,7 +114,7 @@ describe("createLocalMedia", () => {
   });
 
   it("finishes a handed-over track", async () => {
-    const media = createLocalMedia(fakeGetUserMedia());
+    const media = createLocalMedia({ getUserMedia: fakeGetUserMedia() });
     const [camera] = await media.capture([{ source: "camera" }]);
     const element = document.createElement("video");
     camera.attach(element);
@@ -113,7 +127,7 @@ describe("createLocalMedia", () => {
   });
 
   it("mutes by disabling the track and hands the mute over", async () => {
-    const media = createLocalMedia(fakeGetUserMedia());
+    const media = createLocalMedia({ getUserMedia: fakeGetUserMedia() });
     const [microphone] = await media.capture([{ source: "microphone" }]);
 
     await expect(microphone.setEnabled(false)).resolves.toBe(false);
@@ -126,7 +140,7 @@ describe("createLocalMedia", () => {
   it("switches the device by opening it anew", async () => {
     const getUserMedia = fakeGetUserMedia();
     const processor = fakeProcessor();
-    const media = createLocalMedia(getUserMedia);
+    const media = createLocalMedia({ getUserMedia });
     const [camera] = await media.capture([{ source: "camera", processor }]);
     const first = trackBehind(camera);
     const element = document.createElement("video");
@@ -168,7 +182,7 @@ describe("createLocalMedia", () => {
     "lets only a device that is gone off the one asked for: $gone",
     async ({ gone, audio, video }) => {
       const getUserMedia = without(gone, fakeGetUserMedia());
-      const media = createLocalMedia(getUserMedia);
+      const media = createLocalMedia({ getUserMedia });
 
       const tracks = await media.capture([
         { source: "microphone", deviceId: "mic" },
@@ -182,7 +196,7 @@ describe("createLocalMedia", () => {
 
   it("asks twice for a single device that is gone", async () => {
     const getUserMedia = without(["cam"], fakeGetUserMedia());
-    const media = createLocalMedia(getUserMedia);
+    const media = createLocalMedia({ getUserMedia });
 
     await media.capture([{ source: "camera", deviceId: "cam" }]);
 
@@ -197,7 +211,7 @@ describe("createLocalMedia", () => {
       ["cam"],
       fakeGetUserMedia({ deviceId: "built-in" }),
     );
-    const media = createLocalMedia(getUserMedia);
+    const media = createLocalMedia({ getUserMedia });
 
     await media.capture([{ source: "camera", deviceId: "cam" }]);
 
@@ -209,7 +223,7 @@ describe("createLocalMedia", () => {
   it("takes a refusal that is not an Error for a device that is gone", async () => {
     const getUserMedia = vi.mocked(fakeGetUserMedia());
     getUserMedia.mockRejectedValueOnce({ name: "OverconstrainedError" });
-    const media = createLocalMedia(getUserMedia);
+    const media = createLocalMedia({ getUserMedia });
 
     await media.capture([{ source: "camera", deviceId: "cam" }]);
 
@@ -222,7 +236,7 @@ describe("createLocalMedia", () => {
     const getUserMedia = vi.mocked(fakeGetUserMedia());
     const denied = Object.assign(new Error(), { name: "NotAllowedError" });
     getUserMedia.mockRejectedValueOnce(denied);
-    const media = createLocalMedia(getUserMedia);
+    const media = createLocalMedia({ getUserMedia });
 
     await expect(
       media.capture([{ source: "camera", deviceId: "cam" }]),
@@ -233,7 +247,9 @@ describe("createLocalMedia", () => {
 
   it("rejects where no device opens at all", async () => {
     const refusal = overconstrained();
-    const media = createLocalMedia(vi.fn().mockRejectedValue(refusal));
+    const media = createLocalMedia({
+      getUserMedia: vi.fn().mockRejectedValue(refusal),
+    });
 
     await expect(
       media.capture([{ source: "camera", deviceId: "cam" }]),
@@ -242,7 +258,7 @@ describe("createLocalMedia", () => {
 
   it("keeps the camera it has where another cannot be opened", async () => {
     const getUserMedia = vi.mocked(fakeGetUserMedia());
-    const media = createLocalMedia(getUserMedia);
+    const media = createLocalMedia({ getUserMedia });
     const [camera] = await media.capture([
       { source: "camera", deviceId: "cam" },
     ]);
@@ -260,7 +276,7 @@ describe("createLocalMedia", () => {
 
   it("lets go of the device it was opened on to face the other way", async () => {
     const getUserMedia = fakeGetUserMedia({ facingMode: "user" });
-    const media = createLocalMedia(getUserMedia);
+    const media = createLocalMedia({ getUserMedia });
     const [camera] = (await media.capture([
       { source: "camera", deviceId: "front" },
     ])) as [LocalVideoMediaTrack];
@@ -274,7 +290,7 @@ describe("createLocalMedia", () => {
 
   it("reports the facing mode and switches it", async () => {
     const getUserMedia = fakeGetUserMedia({ facingMode: "user" });
-    const media = createLocalMedia(getUserMedia);
+    const media = createLocalMedia({ getUserMedia });
     const [camera] = (await media.capture([{ source: "camera" }])) as [
       LocalVideoMediaTrack,
     ];
@@ -289,7 +305,7 @@ describe("createLocalMedia", () => {
 
   // As the built-in camera of a Mac
   it("takes a camera that doesn't say which way it faces to face the user", async () => {
-    const media = createLocalMedia(fakeGetUserMedia());
+    const media = createLocalMedia({ getUserMedia: fakeGetUserMedia() });
     const [camera] = (await media.capture([{ source: "camera" }])) as [
       LocalVideoMediaTrack,
     ];
@@ -297,7 +313,7 @@ describe("createLocalMedia", () => {
   });
 
   it("releases one device and stops the rest", async () => {
-    const media = createLocalMedia(fakeGetUserMedia());
+    const media = createLocalMedia({ getUserMedia: fakeGetUserMedia() });
     const [microphone, camera] = await media.capture([
       { source: "microphone" },
       { source: "camera" },
@@ -314,7 +330,7 @@ describe("createLocalMedia", () => {
   });
 
   it("refuses a screen share", async () => {
-    const media = createLocalMedia(fakeGetUserMedia());
+    const media = createLocalMedia({ getUserMedia: fakeGetUserMedia() });
     await expect(media.capture([{ source: "screenShare" }])).rejects.toThrow(
       "screen share",
     );

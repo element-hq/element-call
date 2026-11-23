@@ -99,3 +99,37 @@ export const defaultMediaQuality = {
     max_framerate: 30,
   },
 } as const satisfies MediaQuality;
+
+export interface CaptureResolution {
+  width: number;
+  height: number;
+  frameRate: number;
+}
+
+/**
+ * What a camera is captured at for a media quality. A lobby that opens the
+ * camera ahead of the join asks for this, so that the track it hands over is
+ * the one the backend would have captured.
+ */
+export function cameraCaptureResolution(
+  mediaQuality?: MediaQuality,
+): CaptureResolution {
+  const height =
+    mediaQuality?.video?.max_resolution ??
+    defaultMediaQuality.video.max_resolution;
+  return (
+    captureResolutions.find((resolution) => height <= resolution.height) ??
+    captureResolutions.at(-1)!
+  );
+}
+
+/** Lowest first; a height between two takes the higher. */
+const captureResolutions: CaptureResolution[] = [
+  { width: 320, height: 180, frameRate: 20 },
+  { width: 640, height: 360, frameRate: 20 },
+  { width: 960, height: 540, frameRate: 25 },
+  { width: 1280, height: 720, frameRate: 30 },
+  { width: 1920, height: 1080, frameRate: 30 },
+  { width: 2560, height: 1440, frameRate: 30 },
+  { width: 3840, height: 2160, frameRate: 30 },
+];
