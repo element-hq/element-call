@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { type ClientManager, type ClientSession } from "./ClientSession";
 import { type AudioOutputOptions, MediaDevices } from "./MediaDevices";
 import { type ObservableScope } from "./ObservableScope";
-import { createAppBackgroundEffects } from "../tracks/BackgroundEffectsContext";
+import { createAppBackgroundEffects$ } from "../tracks/BackgroundEffectsContext";
 
 /**
  * The top-level state holder for the application.
@@ -18,7 +18,7 @@ export class AppViewModel {
     this.scope,
     this.audioOutputOptions,
   );
-  public readonly backgroundEffects = createAppBackgroundEffects(this.scope);
+  public readonly backgroundEffects = createAppBackgroundEffects$(this.scope);
 
   // TODO: Move more application logic here. The CallViewModel, at the very
   // least, ought to be accessible from this object.

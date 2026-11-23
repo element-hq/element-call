@@ -75,7 +75,7 @@ export interface BackgroundEffects {
 }
 
 /** Switches the pipeline as the choice changes, for as long as the scope lasts. */
-export function createBackgroundEffects(
+export function createBackgroundEffects$(
   scope: ObservableScope,
   {
     supported,

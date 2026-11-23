@@ -12,7 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   BackgroundEffectsProvider,
   useBackgroundEffects,
-  createAppBackgroundEffects,
+  createAppBackgroundEffects$,
 } from "./BackgroundEffectsContext";
 import {
   type BackgroundEffects,
@@ -70,7 +70,7 @@ describe("BackgroundEffectsProvider", () => {
   let effects: BackgroundEffects | undefined;
   const surface = (): ReturnType<typeof createElement> =>
     createElement(BackgroundEffectsProvider, {
-      effects: (effects ??= createAppBackgroundEffects(testScope())),
+      effects: (effects ??= createAppBackgroundEffects$(testScope())),
       children: createElement(Surface),
     });
   const blur = async (on: boolean): Promise<void> => {

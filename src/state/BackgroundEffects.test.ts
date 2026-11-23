@@ -11,7 +11,7 @@ import { type BackgroundProcessorWrapper } from "@livekit/track-processors";
 
 import {
   type BackgroundEffects,
-  createBackgroundEffects,
+  createBackgroundEffects$,
   type BackgroundEffectsOptions,
   type BackgroundEffectsState,
 } from "./BackgroundEffects";
@@ -72,7 +72,7 @@ describe("the pipeline's state", () => {
       const transformer = {
         onFirstFrame: undefined as (() => void) | undefined,
       };
-      const effects = createBackgroundEffects(testScope(), {
+      const effects = createBackgroundEffects$(testScope(), {
         supported: true,
         effect$: behavior(effect, { n: "none", b: "blur" }),
         setEffect: vi.fn(),
@@ -116,7 +116,7 @@ describe("background effects", () => {
   function build(
     options: Partial<BackgroundEffectsOptions> = {},
   ): BackgroundEffects {
-    return createBackgroundEffects(testScope(), {
+    return createBackgroundEffects$(testScope(), {
       supported: true,
       effect$,
       setEffect,
