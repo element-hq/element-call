@@ -53,6 +53,7 @@ import {
 } from "./HostBridge";
 import { useInitial } from "./useInitial";
 import { LeaveToHomeProvider } from "./LeaveToHomeContext";
+import { DisconnectedProvider } from "./DisconnectedContext";
 
 const SentryRoute = Sentry.withSentryReactRouterV7Routing(Route);
 
@@ -131,39 +132,43 @@ export const App: FC<Props> = ({ vm, widget }) => {
   });
 
   const content = loaded ? (
-    <ClientProvider session={vm.clientSession}>
-      <MediaDevicesContext value={vm.mediaDevices}>
-        <BackgroundEffectsProvider effects={vm.backgroundEffects}>
-          <Sentry.ErrorBoundary
-            fallback={(error) => <ErrorPage error={error} />}
-          >
-            <Routes>
-              <SentryRoute
-                path="/"
-                element={<HomePage clientManager={vm.clientManager} />}
-              />
-              {/* A host's session is signed in to by the host, never here */}
-              {vm.clientManager !== null && (
-                <>
-                  <SentryRoute
-                    path="/login"
-                    element={<LoginPage clientManager={vm.clientManager} />}
-                  />
-                  <SentryRoute
-                    path="/register"
-                    element={<RegisterPage clientManager={vm.clientManager} />}
-                  />
-                </>
-              )}
-              <SentryRoute
-                path="*"
-                element={<RoomPage clientManager={vm.clientManager} />}
-              />
-            </Routes>
-          </Sentry.ErrorBoundary>
-        </BackgroundEffectsProvider>
-      </MediaDevicesContext>
-    </ClientProvider>
+    <DisconnectedProvider value={vm.disconnected$}>
+      <ClientProvider session={vm.clientSession}>
+        <MediaDevicesContext value={vm.mediaDevices}>
+          <BackgroundEffectsProvider effects={vm.backgroundEffects}>
+            <Sentry.ErrorBoundary
+              fallback={(error) => <ErrorPage error={error} />}
+            >
+              <Routes>
+                <SentryRoute
+                  path="/"
+                  element={<HomePage clientManager={vm.clientManager} />}
+                />
+                {/* A host's session is signed in to by the host, never here */}
+                {vm.clientManager !== null && (
+                  <>
+                    <SentryRoute
+                      path="/login"
+                      element={<LoginPage clientManager={vm.clientManager} />}
+                    />
+                    <SentryRoute
+                      path="/register"
+                      element={
+                        <RegisterPage clientManager={vm.clientManager} />
+                      }
+                    />
+                  </>
+                )}
+                <SentryRoute
+                  path="*"
+                  element={<RoomPage clientManager={vm.clientManager} />}
+                />
+              </Routes>
+            </Sentry.ErrorBoundary>
+          </BackgroundEffectsProvider>
+        </MediaDevicesContext>
+      </ClientProvider>
+    </DisconnectedProvider>
   ) : (
     <LoadingPage />
   );

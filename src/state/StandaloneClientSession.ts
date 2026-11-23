@@ -82,7 +82,7 @@ export function createStandaloneClientSession$(
 
   const restoring$ = new BehaviorSubject<boolean>(true);
   restore()
-    .then((clientData)=> clientData$.next(clientData))
+    .then((clientData) => clientData$.next(clientData))
     .catch((e) => {
       logger.error("Failed to restore the session", e);
       error$.next(e);
@@ -164,7 +164,7 @@ export function createStandaloneClientSession$(
     },
   };
 
-  async function restore(): Promise<ClientData|undefined> {
+  async function restore(): Promise<ClientData | undefined> {
     // The homeserver to restore against is in the config, which is loaded
     // concurrently with this
     await Config.init();
