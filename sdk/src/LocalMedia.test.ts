@@ -35,6 +35,17 @@ describe("createLocalMedia", () => {
     ]);
   });
 
+  it("opens a camera asked for without a resolution at the one a backend captures at", async () => {
+    const getUserMedia = fakeGetUserMedia();
+    const media = createLocalMedia(getUserMedia);
+
+    await media.capture([{ source: "camera" }]);
+
+    expect(getUserMedia).toHaveBeenCalledExactlyOnceWith({
+      video: { width: 1280, height: 720, frameRate: 30 },
+    });
+  });
+
   it("joins an identical capture still in flight rather than opening the devices again", async () => {
     const getUserMedia = fakeGetUserMedia();
     const media = createLocalMedia(getUserMedia);
@@ -76,7 +87,7 @@ describe("createLocalMedia", () => {
     expect(taken.get("microphone")?.track).toBe(trackBehind(microphone));
     expect(taken.get("camera")).toEqual({
       track: trackBehind(camera),
-      constraints: {},
+      constraints: at720p(),
       muted: false,
       processor: { processor, processedTrack: processor.output },
     });
@@ -124,7 +135,7 @@ describe("createLocalMedia", () => {
     await camera.setDevice("other");
 
     expect(getUserMedia).toHaveBeenLastCalledWith({
-      video: { deviceId: { exact: "other" } },
+      video: at720p({ deviceId: { exact: "other" } }),
     });
     expect(first.stop).toHaveBeenCalled();
     expect(processor.restart).toHaveBeenCalledOnce();
@@ -132,26 +143,26 @@ describe("createLocalMedia", () => {
     expect(restartedOn).not.toBe(first);
     expect(input).toBe(vi.mocked(processor.init).mock.calls[0][1]);
     expect(tracksOn(element)).toEqual([processor.output]);
-    expect(media.takeTracks().get("camera")?.constraints).toEqual({
-      deviceId: { exact: "other" },
-    });
+    expect(media.takeTracks().get("camera")?.constraints).toEqual(
+      at720p({ deviceId: { exact: "other" } }),
+    );
   });
 
   it.each([
     {
       gone: ["mic"],
       audio: { deviceId: { ideal: "mic" } },
-      video: { deviceId: { exact: "cam" } },
+      video: at720p({ deviceId: { exact: "cam" } }),
     },
     {
       gone: ["cam"],
       audio: { deviceId: { exact: "mic" } },
-      video: { deviceId: { ideal: "cam" } },
+      video: at720p({ deviceId: { ideal: "cam" } }),
     },
     {
       gone: ["mic", "cam"],
       audio: { deviceId: { ideal: "mic" } },
-      video: { deviceId: { ideal: "cam" } },
+      video: at720p({ deviceId: { ideal: "cam" } }),
     },
   ])(
     "lets only a device that is gone off the one asked for: $gone",
@@ -176,8 +187,8 @@ describe("createLocalMedia", () => {
     await media.capture([{ source: "camera", deviceId: "cam" }]);
 
     expect(vi.mocked(getUserMedia).mock.calls).toEqual([
-      [{ video: { deviceId: { exact: "cam" } } }],
-      [{ video: { deviceId: { ideal: "cam" } } }],
+      [{ video: at720p({ deviceId: { exact: "cam" } }) }],
+      [{ video: at720p({ deviceId: { ideal: "cam" } }) }],
     ]);
   });
 
@@ -190,9 +201,9 @@ describe("createLocalMedia", () => {
 
     await media.capture([{ source: "camera", deviceId: "cam" }]);
 
-    expect(media.takeTracks().get("camera")?.constraints).toEqual({
-      deviceId: { exact: "built-in" },
-    });
+    expect(media.takeTracks().get("camera")?.constraints).toEqual(
+      at720p({ deviceId: { exact: "built-in" } }),
+    );
   });
 
   it("takes a refusal that is not an Error for a device that is gone", async () => {
@@ -203,7 +214,7 @@ describe("createLocalMedia", () => {
     await media.capture([{ source: "camera", deviceId: "cam" }]);
 
     expect(getUserMedia).toHaveBeenLastCalledWith({
-      video: { deviceId: { ideal: "cam" } },
+      video: at720p({ deviceId: { ideal: "cam" } }),
     });
   });
 
@@ -257,7 +268,7 @@ describe("createLocalMedia", () => {
     await camera.switchFacingMode();
 
     expect(getUserMedia).toHaveBeenLastCalledWith({
-      video: { facingMode: "environment" },
+      video: at720p({ facingMode: "environment" }),
     });
   });
 
@@ -272,7 +283,7 @@ describe("createLocalMedia", () => {
     await camera.switchFacingMode();
 
     expect(getUserMedia).toHaveBeenLastCalledWith({
-      video: { facingMode: "environment" },
+      video: at720p({ facingMode: "environment" }),
     });
   });
 
@@ -349,6 +360,13 @@ function fakeGetUserMedia(videoSettings?: MediaTrackSettings): GetUserMedia {
       new FakeMediaStream(tracks) as unknown as MediaStream,
     );
   });
+}
+
+/** Camera constraints with the resolution a request without one is opened at. */
+function at720p(
+  constraints: MediaTrackConstraints = {},
+): MediaTrackConstraints {
+  return { ...constraints, width: 1280, height: 720, frameRate: 30 };
 }
 
 /** A browser these devices are unplugged from: asked for one of them exactly, it refuses. */

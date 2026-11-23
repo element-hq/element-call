@@ -213,16 +213,21 @@ function trackConstraints(request: Request): MediaTrackConstraints {
     deviceId: { exact: request.deviceId },
   };
   if (request.source === "microphone") return { ...device, ...request.capture };
-  const resolution = request.capture?.resolution;
+  const resolution = request.capture?.resolution ?? defaultCameraResolution;
   return {
     ...device,
-    ...(resolution && {
-      width: resolution.width,
-      height: resolution.height,
-      frameRate: resolution.frameRate,
-    }),
+    width: resolution.width,
+    height: resolution.height,
+    frameRate: resolution.frameRate,
   };
 }
+
+/**
+ * What a backend captures a camera at where the host configures no media
+ * quality (`defaultMediaQuality`): left to the browser, a camera opened here
+ * would be published at a lower resolution than one the backend opens.
+ */
+const defaultCameraResolution = { width: 1280, height: 720, frameRate: 30 };
 
 /**
  * Internal Class that is the owner of the tracks.
