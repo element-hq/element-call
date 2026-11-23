@@ -4,12 +4,17 @@
 
 - Call logic lives in `src/state/`. A component that derives call state is
   misplaced logic.
-- Composing behaviors: a factory taking `(scope, ...deps$)`, returning named
-  behaviors plus callbacks. Copy `src/state/LayoutSwitchViewModel.ts`. Prefer this
-  for anything new.
-- Owning a resource: a class taking the scope in its constructor — `MediaDevices`,
-  `MuteStates`, `TileStore`, `Publisher`, `Connection`. Both styles are current;
-  don't convert one to the other in passing.
+- New state is a `create<Thing>$(scope, …)` factory returning an interface of
+  named behaviors plus callbacks — `createCallViewModel$`,
+  `createCallNotificationLifecycle$`, the SDK's `createLocalMembership$`. Prefer
+  it to a class for anything new, including something that owns a resource.
+- Inside the factory, mutable state is a local `BehaviorSubject` exposed through
+  `scope.behavior(…)`, a resource is released in `scope.onEnd`, and the returned
+  object comes before the helpers it calls, which are `function` declarations
+  beneath it.
+- Older resource owners are classes taking the scope in their constructor —
+  `MediaDevices`, `MuteStates`, `TileStore`, `Publisher`, `Connection`. Convert
+  one only when that is the task, never in passing.
 - A factory's required parameters are what the thing is made of: no sensible
   default. Several of them go in a props interface, so each can carry a doc
   comment. Its trailing `options` bag is how the host wants it to behave: every
