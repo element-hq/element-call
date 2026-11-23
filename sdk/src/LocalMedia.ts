@@ -146,35 +146,61 @@ type SourceConstraints = Partial<Record<Source, MediaTrackConstraints>>;
 
 /**
  * Opens the devices asked for. Where one of them is gone, as a remembered
- * choice that was unplugged, the browser picks instead.
- *
- * This is needed because we use `exact` device ids: an exact request for a
- * device that no longer exists fails, where a preferred one would have opened
- * another device. Without the retry here a stale choice would open nothing.
+ * choice that was unplugged, that source opens on another device and the
+ * other source keeps the device picked: an exact request for a device that no
+ * longer exists would otherwise open nothing.
  */
 async function open(
   getUserMedia: GetUserMedia,
   constraints: SourceConstraints,
 ): Promise<{ stream: MediaStream; constraints: SourceConstraints }> {
-  const streamOf = async (wanted: SourceConstraints): Promise<MediaStream> =>
-    getUserMedia({
-      ...(wanted.microphone && { audio: wanted.microphone }),
-      ...(wanted.camera && { video: wanted.camera }),
-    });
-  try {
-    return { stream: await streamOf(constraints), constraints };
-  } catch (e) {
-    if (!(e instanceof Error) || e.name !== "OverconstrainedError") throw e;
-    const anyDevice: SourceConstraints = {
-      ...(constraints.microphone && {
-        microphone: { ...constraints.microphone, deviceId: undefined },
-      }),
-      ...(constraints.camera && {
-        camera: { ...constraints.camera, deviceId: undefined },
-      }),
-    };
-    return { stream: await streamOf(anyDevice), constraints: anyDevice };
+  let refusal: unknown;
+  for (const attempt of attempts(constraints)) {
+    try {
+      const stream = await getUserMedia({
+        ...(attempt.microphone && { audio: attempt.microphone }),
+        ...(attempt.camera && { video: attempt.camera }),
+      });
+      return { stream, constraints: attempt };
+    } catch (e) {
+      if (!isOverconstrained(e)) throw e;
+      refusal ??= e;
+    }
   }
+  throw refusal;
+}
+
+/**
+ * As asked, then with one source let off its device, then both: the refusal
+ * does not say which of the two devices is gone.
+ */
+function attempts(wanted: SourceConstraints): SourceConstraints[] {
+  const { microphone, camera } = wanted;
+  const camera_ = camera && relaxed(camera);
+  const microphone_ = microphone && relaxed(microphone);
+  return [
+    wanted,
+    ...(camera_ ? [{ ...wanted, camera: camera_ }] : []),
+    ...(microphone_ ? [{ ...wanted, microphone: microphone_ }] : []),
+    ...(camera_ && microphone_
+      ? [{ microphone: microphone_, camera: camera_ }]
+      : []),
+  ];
+}
+
+/** The same request with its device preferred, not required; nothing where it requires none. */
+function relaxed(
+  constraints: MediaTrackConstraints,
+): MediaTrackConstraints | undefined {
+  const { deviceId } = constraints;
+  if (typeof deviceId !== "object" || Array.isArray(deviceId)) return undefined;
+  if (deviceId.exact === undefined) return undefined;
+  return { ...constraints, deviceId: { ideal: deviceId.exact } };
+}
+
+/** By name: the refusal is not an `Error` in every browser. */
+function isOverconstrained(e: unknown): boolean {
+  return (e as { name?: unknown } | null)?.name === "OverconstrainedError";
 }
 
 /** The constraints a request means to the browser. */
