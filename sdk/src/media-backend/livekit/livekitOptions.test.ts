@@ -8,6 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { describe, expect, it } from "vitest";
 import { VideoPresets, type VideoPreset } from "livekit-client";
 
+import { cameraCaptureResolution } from "../../config";
 import { buildLiveKitOptions } from "./livekitOptions";
 
 describe("buildLiveKitOptions", () => {
@@ -107,6 +108,33 @@ describe("buildLiveKitOptions", () => {
       expect(opts.videoCaptureDefaults?.resolution).toEqual(preset.resolution);
     }
   });
+
+  it.each([
+    undefined,
+    90,
+    180,
+    240,
+    360,
+    480,
+    540,
+    720,
+    1080,
+    1440,
+    2160,
+    4320,
+  ])(
+    "captures at what a lobby opens the camera at ahead of the join: %s",
+    (height) => {
+      const mediaQuality =
+        height === undefined
+          ? undefined
+          : { video: { max_resolution: height } };
+
+      expect(
+        buildLiveKitOptions(mediaQuality).videoCaptureDefaults?.resolution,
+      ).toMatchObject(cameraCaptureResolution(mediaQuality));
+    },
+  );
 
   it("screen share layers fall back to max_framerate, then 30", () => {
     const fromMax = buildLiveKitOptions({

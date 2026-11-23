@@ -7,6 +7,11 @@ Please see LICENSE in the repository root for full details.
 
 import { BehaviorSubject, type Observable, of } from "rxjs";
 
+import {
+  cameraCaptureResolution,
+  type CaptureResolution,
+  type MediaQuality,
+} from "./config";
 import { MatrixRTCError } from "./errors";
 import {
   type HandedOverTrack,
@@ -28,15 +33,28 @@ export type GetUserMedia = (
   constraints: MediaStreamConstraints,
 ) => Promise<MediaStream>;
 
+export interface LocalMediaOptions {
+  /**
+   * The media quality the join is given. A camera asked for without a
+   * resolution is opened at the one this means, as the backend opens it at
+   * the join; left to the browser it would be published at a lower one.
+   */
+  mediaQuality?: MediaQuality;
+  /** In place of the browser's, for a test. */
+  getUserMedia?: GetUserMedia;
+}
+
 /**
  * Local media on the browser's devices alone, for a lobby ahead of a join:
  * no backend is involved, so whichever backend joins can take the tracks
  * over. Activity and level are not measured; stats are none.
  */
-export function createLocalMedia(
-  getUserMedia: GetUserMedia = async (constraints) =>
+export function createLocalMedia({
+  mediaQuality,
+  getUserMedia = async (constraints) =>
     navigator.mediaDevices.getUserMedia(constraints),
-): LocalMedia {
+}: LocalMediaOptions = {}): LocalMedia {
+  const cameraResolution = cameraCaptureResolution(mediaQuality);
   const capturedTracks = new Map<Source, CapturedTrack>();
   const requests = new Map<Source, Request>();
   const tracks$ = new BehaviorSubject<
@@ -80,10 +98,10 @@ export function createLocalMedia(
     }
     const { stream, constraints } = await open(getUserMedia, {
       microphone: bySource.has("microphone")
-        ? trackConstraints(bySource.get("microphone")!)
+        ? trackConstraints(bySource.get("microphone")!, cameraResolution)
         : undefined,
       camera: bySource.has("camera")
-        ? trackConstraints(bySource.get("camera")!)
+        ? trackConstraints(bySource.get("camera")!, cameraResolution)
         : undefined,
     });
     const captured: CapturedTrack[] = [];
@@ -204,7 +222,10 @@ function isOverconstrained(e: unknown): boolean {
 }
 
 /** The constraints a request means to the browser. */
-function trackConstraints(request: Request): MediaTrackConstraints {
+function trackConstraints(
+  request: Request,
+  cameraResolution: CaptureResolution,
+): MediaTrackConstraints {
   // THE FIX for "cannot switch cameras in Chrome" (#4479), first capture.
   // `exact` makes the browser open this device or fail. A plain
   // `deviceId: "abc"` is only a wish, and Chromium ignores the wish and
@@ -213,7 +234,7 @@ function trackConstraints(request: Request): MediaTrackConstraints {
     deviceId: { exact: request.deviceId },
   };
   if (request.source === "microphone") return { ...device, ...request.capture };
-  const resolution = request.capture?.resolution ?? defaultCameraResolution;
+  const resolution = request.capture?.resolution ?? cameraResolution;
   return {
     ...device,
     width: resolution.width,
@@ -221,13 +242,6 @@ function trackConstraints(request: Request): MediaTrackConstraints {
     frameRate: resolution.frameRate,
   };
 }
-
-/**
- * What a backend captures a camera at where the host configures no media
- * quality (`defaultMediaQuality`): left to the browser, a camera opened here
- * would be published at a lower resolution than one the backend opens.
- */
-const defaultCameraResolution = { width: 1280, height: 720, frameRate: 30 };
 
 /**
  * Internal Class that is the owner of the tracks.
