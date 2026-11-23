@@ -137,18 +137,96 @@ describe("createLocalMedia", () => {
     });
   });
 
-  it("opens the browser's choice where the device asked for is gone", async () => {
-    const getUserMedia = vi.mocked(fakeGetUserMedia());
-    getUserMedia.mockRejectedValueOnce(overconstrained());
+  it.each([
+    {
+      gone: ["mic"],
+      audio: { deviceId: { ideal: "mic" } },
+      video: { deviceId: { exact: "cam" } },
+    },
+    {
+      gone: ["cam"],
+      audio: { deviceId: { exact: "mic" } },
+      video: { deviceId: { ideal: "cam" } },
+    },
+    {
+      gone: ["mic", "cam"],
+      audio: { deviceId: { ideal: "mic" } },
+      video: { deviceId: { ideal: "cam" } },
+    },
+  ])(
+    "lets only a device that is gone off the one asked for: $gone",
+    async ({ gone, audio, video }) => {
+      const getUserMedia = without(gone, fakeGetUserMedia());
+      const media = createLocalMedia(getUserMedia);
+
+      const tracks = await media.capture([
+        { source: "microphone", deviceId: "mic" },
+        { source: "camera", deviceId: "cam" },
+      ]);
+
+      expect(getUserMedia).toHaveBeenLastCalledWith({ audio, video });
+      expect(tracks.map((t) => t.source)).toEqual(["microphone", "camera"]);
+    },
+  );
+
+  it("asks twice for a single device that is gone", async () => {
+    const getUserMedia = without(["cam"], fakeGetUserMedia());
     const media = createLocalMedia(getUserMedia);
 
-    const tracks = await media.capture([
-      { source: "microphone", deviceId: "unplugged" },
-      { source: "camera", deviceId: "cam" },
-    ]);
+    await media.capture([{ source: "camera", deviceId: "cam" }]);
 
-    expect(getUserMedia).toHaveBeenLastCalledWith({ audio: {}, video: {} });
-    expect(tracks.map((t) => t.source)).toEqual(["microphone", "camera"]);
+    expect(vi.mocked(getUserMedia).mock.calls).toEqual([
+      [{ video: { deviceId: { exact: "cam" } } }],
+      [{ video: { deviceId: { ideal: "cam" } } }],
+    ]);
+  });
+
+  it("hands over the device that opened in place of the one that is gone", async () => {
+    const getUserMedia = without(
+      ["cam"],
+      fakeGetUserMedia({ deviceId: "built-in" }),
+    );
+    const media = createLocalMedia(getUserMedia);
+
+    await media.capture([{ source: "camera", deviceId: "cam" }]);
+
+    expect(media.takeTracks().get("camera")?.constraints).toEqual({
+      deviceId: { exact: "built-in" },
+    });
+  });
+
+  it("takes a refusal that is not an Error for a device that is gone", async () => {
+    const getUserMedia = vi.mocked(fakeGetUserMedia());
+    getUserMedia.mockRejectedValueOnce({ name: "OverconstrainedError" });
+    const media = createLocalMedia(getUserMedia);
+
+    await media.capture([{ source: "camera", deviceId: "cam" }]);
+
+    expect(getUserMedia).toHaveBeenLastCalledWith({
+      video: { deviceId: { ideal: "cam" } },
+    });
+  });
+
+  it("does not ask again where the device is there and refused", async () => {
+    const getUserMedia = vi.mocked(fakeGetUserMedia());
+    const denied = Object.assign(new Error(), { name: "NotAllowedError" });
+    getUserMedia.mockRejectedValueOnce(denied);
+    const media = createLocalMedia(getUserMedia);
+
+    await expect(
+      media.capture([{ source: "camera", deviceId: "cam" }]),
+    ).rejects.toBe(denied);
+
+    expect(getUserMedia).toHaveBeenCalledOnce();
+  });
+
+  it("rejects where no device opens at all", async () => {
+    const refusal = overconstrained();
+    const media = createLocalMedia(vi.fn().mockRejectedValue(refusal));
+
+    await expect(
+      media.capture([{ source: "camera", deviceId: "cam" }]),
+    ).rejects.toBe(refusal);
   });
 
   it("keeps the camera it has where another cannot be opened", async () => {
@@ -270,6 +348,22 @@ function fakeGetUserMedia(videoSettings?: MediaTrackSettings): GetUserMedia {
     return Promise.resolve(
       new FakeMediaStream(tracks) as unknown as MediaStream,
     );
+  });
+}
+
+/** A browser these devices are unplugged from: asked for one of them exactly, it refuses. */
+function without(gone: string[], getUserMedia: GetUserMedia): GetUserMedia {
+  return vi.fn(async (constraints: MediaStreamConstraints) => {
+    for (const wanted of [constraints.audio, constraints.video]) {
+      const deviceId = typeof wanted === "object" ? wanted.deviceId : undefined;
+      const exact =
+        typeof deviceId === "object" && !Array.isArray(deviceId)
+          ? deviceId.exact
+          : undefined;
+      if (typeof exact === "string" && gone.includes(exact))
+        throw overconstrained();
+    }
+    return getUserMedia(constraints);
   });
 }
 
