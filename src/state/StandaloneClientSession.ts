@@ -7,7 +7,16 @@ Please see LICENSE in the repository root for full details.
 
 import { type MatrixClient, MatrixError } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { BehaviorSubject } from "rxjs";
+import {
+  BehaviorSubject,
+  combineLatest,
+  fromEvent,
+  map,
+  merge,
+  Subject,
+  take,
+  takeUntil,
+} from "rxjs";
 
 import {
   PosthogAnalytics,
@@ -31,6 +40,13 @@ import {
 import { type ObservableScope } from "./ObservableScope";
 
 const SESSION_KEY = "matrix-auth-store";
+// One shared object, so that the behavior's reference check drops repeats
+const LOADING: ClientSessionState = { state: "loading" };
+
+interface ClientData {
+  client: MatrixClient;
+  passwordlessUser: boolean;
+}
 
 /**
  * A client session for the SPA: restored from storage on creation, and
@@ -45,34 +61,56 @@ const SESSION_KEY = "matrix-auth-store";
 export function createStandaloneClientSession$(
   scope: ObservableScope,
 ): ClientSession & ClientManager {
-  const state$ = new BehaviorSubject<ClientSessionState>({ state: "loading" });
-  const client = (): MatrixClient | undefined => {
-    const { value } = state$;
-    return value.state === "signedIn" ? value.client : undefined;
-  };
+  // If we have a working client
+  const clientData$ = new BehaviorSubject<ClientData | undefined>(undefined);
+  // Any hard error that will not make it possible to use the app. (reflected in state$)
+  const error$ = new Subject<Error>();
 
   // To protect against multiple sessions writing to the same storage
   // simultaneously, we send a broadcast message that shuts down all other
   // running instances of the app.
-  const loadChannel =
-    "BroadcastChannel" in window ? new BroadcastChannel("load") : null;
-  loadChannel?.postMessage({});
-  const onOpenedElsewhere = (): void => {
-    client()?.stopClient();
-    state$.next({ state: "error", error: new OpenElsewhereError() });
-  };
-  loadChannel?.addEventListener("message", onOpenedElsewhere);
-  scope.onEnd(() =>
-    loadChannel?.removeEventListener("message", onOpenedElsewhere),
+  if ("BroadcastChannel" in window) {
+    const loadChannel = new BroadcastChannel("load");
+    loadChannel.postMessage({});
+    fromEvent(loadChannel, "message")
+      .pipe(scope.bind())
+      .subscribe(() => {
+        clientData$.value?.client.stopClient();
+        error$.next(new OpenElsewhereError());
+      });
+  }
+
+  const restoring$ = new BehaviorSubject<boolean>(true);
+  restore()
+    .then((clientData)=> clientData$.next(clientData))
+    .catch((e) => {
+      logger.error("Failed to restore the session", e);
+      error$.next(e);
+    })
+    .finally(() => restoring$.next(false));
+
+  const state$ = scope.behavior<ClientSessionState>(
+    merge(
+      combineLatest([restoring$, clientData$]).pipe(
+        map(([restoring, clientData]): ClientSessionState => {
+          if (restoring) {
+            return LOADING;
+          }
+          return clientData
+            ? { state: "signedIn", ...clientData }
+            : { state: "signedOut" };
+        }),
+        takeUntil(error$),
+      ),
+      error$.pipe(
+        take(1),
+        map((error): ClientSessionState => ({ state: "error", error })),
+      ),
+    ),
   );
 
-  restore().catch((e) => {
-    logger.error("Failed to restore the session", e);
-    state$.next({ state: "error", error: e });
-  });
-
   return {
-    state$: scope.behavior(state$),
+    state$,
     login: async (homeserver, username, password): Promise<MatrixClient> => {
       const session: StoredSession = {
         ...(await loginWithPassword(homeserver, username, password)),
@@ -109,22 +147,24 @@ export function createStandaloneClientSession$(
       return { client, setSignedIn: (): void => signIn(client, session) };
     },
     logout: async (): Promise<void> => {
-      const current = client();
+      const current = clientData$.value?.client;
       if (!current) {
-        logger.warn("[StandaloneClientSession] Calling logout but with no curent client.")
-        return
-      };
+        logger.warn(
+          "[StandaloneClientSession] Calling logout but with no current client.",
+        );
+        return;
+      }
 
       await current.logout(true);
       await current.clearStores();
       clearSession();
-      state$.next({ state: "signedOut" });
+      clientData$.next(undefined);
       PosthogAnalytics.instance.logout();
       PosthogAnalytics.instance.setRegistrationType(RegistrationType.Guest);
     },
   };
 
-  async function restore(): Promise<void> {
+  async function restore(): Promise<ClientData|undefined> {
     // The homeserver to restore against is in the config, which is loaded
     // concurrently with this
     await Config.init();
@@ -132,27 +172,24 @@ export function createStandaloneClientSession$(
       const session = loadSession();
       if (session === undefined) {
         logger.log("No session stored; continuing without a client");
-        state$.next({ state: "signedOut" });
         return;
       }
 
       logger.log("Using a standalone client");
-      const client = await initClient(
-        {
-          baseUrl: Config.defaultHomeserverUrl()!,
-          accessToken: session.access_token,
-          userId: session.user_id,
-          deviceId: session.device_id,
-          fallbackICEServerAllowed,
-          livekitServiceURL: Config.get().livekit?.livekit_service_url,
-        },
-        true,
-      );
-      state$.next({
-        state: "signedIn",
-        client,
+      return {
+        client: await initClient(
+          {
+            baseUrl: Config.defaultHomeserverUrl()!,
+            accessToken: session.access_token,
+            userId: session.user_id,
+            deviceId: session.device_id,
+            fallbackICEServerAllowed,
+            livekitServiceURL: Config.get().livekit?.livekit_service_url,
+          },
+          true,
+        ),
         passwordlessUser: session.passwordlessUser,
-      });
+      };
     } catch (e) {
       // Whatever went wrong, the stored session is not to be tried again
       clearSession();
@@ -160,7 +197,6 @@ export function createStandaloneClientSession$(
         logger.log(
           "The session from local store is invalid; continuing without a client",
         );
-        state$.next({ state: "signedOut" });
         return;
       }
       throw e;
@@ -176,7 +212,7 @@ export function createStandaloneClientSession$(
   ): Promise<MatrixClient> {
     // To not confuse the rust crypto sessions we need to log out the old
     // client before initializing the new one
-    await client()?.logout(true);
+    await clientData$.value?.client.logout(true);
     return initClient(
       {
         baseUrl: homeserver,
@@ -190,8 +226,7 @@ export function createStandaloneClientSession$(
 
   function signIn(client: MatrixClient, session: StoredSession): void {
     saveSession(session);
-    state$.next({
-      state: "signedIn",
+    clientData$.next({
       client,
       passwordlessUser: session.passwordlessUser,
     });
