@@ -43,7 +43,7 @@ export function useClient(): MatrixClient | undefined {
 
 interface Props {
   children: JSX.Element;
-  /** a session from Element Call SPA, from a widget or the host (EW) */
+  /** A session from Element Call SPA, a widget, or the host (EW). */
   session: ClientSession;
 }
 
