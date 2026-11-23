@@ -110,7 +110,10 @@ export function createStandaloneClientSession$(
     },
     logout: async (): Promise<void> => {
       const current = client();
-      if (!current) return;
+      if (!current) {
+        logger.warn("[StandaloneClientSession] Calling logout but with no curent client.")
+        return
+      };
 
       await current.logout(true);
       await current.clearStores();
