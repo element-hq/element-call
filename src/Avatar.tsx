@@ -74,7 +74,7 @@ export const Avatar: FC<Props> = ({
   style,
   ...props
 }) => {
-  const { client } = useClient();
+  const client = useClient();
   const hostBridge = useHostBridge();
 
   const sizePx = useMemo(

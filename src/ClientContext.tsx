@@ -37,9 +37,9 @@ export const ClientContextProvider = ClientContext.Provider;
 export const useClientSessionState = (): ClientSessionState =>
   useBehavior(use(ClientContext).state$);
 
-export function useClient(): { client?: MatrixClient } {
+export function useClient(): MatrixClient | undefined {
   const state = useClientSessionState();
-  return { client: state.state === "signedIn" ? state.client : undefined };
+  return state.state === "signedIn" ? state.client : undefined;
 }
 
 // Null where the session is a host's: the component, and the widget

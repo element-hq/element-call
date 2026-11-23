@@ -90,7 +90,7 @@ export function getKeyForRoom(roomId: string): string | null {
 export { type EncryptionSystem } from "@element-hq/matrixrtc-sdk";
 
 export function useRoomEncryptionSystem(roomId: string): EncryptionSystem {
-  const { client } = useClient();
+  const client = useClient();
   const { roomId: paramsRoomId, password } = useUrlParams();
 
   const [storedPassword] = useRoomSharedKey(

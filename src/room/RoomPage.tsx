@@ -42,7 +42,7 @@ export const RoomPage: FC = (): ReactNode => {
   const { registerPasswordlessUser } = useRegisterPasswordlessUser();
   const [isRegistering, setIsRegistering] = useState(false);
 
-  const { client } = useClient();
+  const client = useClient();
   const session = useClientSessionState();
   const loading = session.state === "loading";
   const passwordlessUser =

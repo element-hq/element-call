@@ -34,7 +34,7 @@ export const DisconnectedBanner: FC<Props> = ({
   ...rest
 }) => {
   const { t } = useTranslation();
-  const { client } = useClient();
+  const client = useClient();
   // Tagged with the client it describes, so that a swapped client does not
   // inherit the old one's verdict before its first sync
   const [disconnected, setDisconnected] = useState<

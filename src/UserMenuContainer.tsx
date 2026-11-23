@@ -26,7 +26,7 @@ interface Props {
 export const UserMenuContainer: FC<Props> = ({ preventNavigation = false }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { client } = useClient();
+  const client = useClient();
   const session = useClientSessionState();
   const passwordlessUser =
     session.state === "signedIn" && session.passwordlessUser;

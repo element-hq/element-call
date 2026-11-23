@@ -45,7 +45,7 @@ export const RegisterPage: FC = () => {
   const loading = session.state === "loading";
   const passwordlessUser =
     session.state === "signedIn" && session.passwordlessUser;
-  const { client } = useClient();
+  const client = useClient();
   const authenticated = client !== undefined;
   const { register } = useClientManager();
 
