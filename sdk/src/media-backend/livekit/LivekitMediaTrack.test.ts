@@ -210,7 +210,11 @@ describe("createLivekitMediaTrack", () => {
     await expect(track.setEnabled(false)).resolves.toBe(false);
     expect(setEnabled).toHaveBeenCalledWith("microphone", false);
     await track.setDevice("mic-2");
-    expect(switchActiveDevice).toHaveBeenCalledWith("audioinput", "mic-2");
+    expect(switchActiveDevice).toHaveBeenCalledWith(
+      "audioinput",
+      "mic-2",
+      true,
+    );
   });
 
   // LiveKit's media stream track is the processed one while a processor runs,
@@ -253,36 +257,61 @@ describe("createLivekitMediaTrack", () => {
 
       await track.setDevice(deviceId);
       expect(switchActiveDevice.mock.calls).toEqual(
-        switches ? [["videoinput", deviceId]] : [],
+        switches ? [["videoinput", deviceId, true]] : [],
       );
     },
   );
 
-  it("rejects where the camera did not move to the device asked for", async () => {
-    const camera = Object.assign(Object.create(LocalVideoTrack.prototype), {
-      source: Track.Source.Camera,
-      _mediaStreamTrack: {
-        readyState: "live",
-        label: "",
-        getSettings: () => ({ deviceId: "cam-1" }),
-      },
-    }) as LocalVideoTrack;
-    const { participant, publication, room } = fakes({
-      track: camera as unknown as FakeTrack,
-    });
-    const track = createLocalLivekitMediaTrack(
-      scope,
-      Object.assign(participant, {
-        isLocal: true,
-      }) as unknown as LocalParticipant,
-      publication as unknown as TrackPublication,
-      Object.assign(room, {
-        switchActiveDevice: vi.fn().mockResolvedValue(true),
-      }),
-      vi.fn(),
-    );
+  it("rejects where the camera did not move to the device asked for, and returns to the one it had", async () => {
+    const switchActiveDevice = vi.fn().mockResolvedValue(true);
+    const track = localCameraOn(scope, "cam-1", switchActiveDevice);
 
     await expect(track.setDevice("cam-2")).rejects.toThrow("another device");
+
+    expect(switchActiveDevice.mock.calls).toEqual([
+      ["videoinput", "cam-2", true],
+      ["videoinput", "cam-1", true],
+    ]);
+  });
+
+  it("returns to the device it had where the one asked for does not open", async () => {
+    const gone = new Error("gone");
+    const switchActiveDevice = vi
+      .fn()
+      .mockRejectedValueOnce(gone)
+      .mockResolvedValue(true);
+    const track = localCameraOn(scope, "cam-1", switchActiveDevice);
+
+    await expect(track.setDevice("cam-2")).rejects.toBe(gone);
+
+    expect(switchActiveDevice).toHaveBeenLastCalledWith(
+      "videoinput",
+      "cam-1",
+      true,
+    );
+  });
+
+  it("reports the switch that failed where the return fails too", async () => {
+    const gone = new Error("gone");
+    const switchActiveDevice = vi
+      .fn()
+      .mockRejectedValueOnce(gone)
+      .mockRejectedValue(new Error("busy"));
+    const track = localCameraOn(scope, "cam-1", switchActiveDevice);
+
+    await expect(track.setDevice("cam-2")).rejects.toBe(gone);
+  });
+
+  // It is stopped, and opens the device LiveKit remembers on turning on
+  it("does not return a camera that is off to its device", async () => {
+    const switchActiveDevice = vi.fn().mockRejectedValue(new Error("gone"));
+    const track = localCameraOn(scope, "cam-1", switchActiveDevice, {
+      isMuted: true,
+    });
+
+    await expect(track.setDevice("cam-2")).rejects.toThrow("gone");
+
+    expect(switchActiveDevice).toHaveBeenCalledOnce();
   });
 
   it("takes the facing mode of a processed camera from the camera", async () => {
@@ -381,6 +410,36 @@ function fakeTrack(): FakeTrack {
     setWebAudioPlugins: vi.fn(),
     getRTCStatsReport: vi.fn().mockResolvedValue(undefined),
   }) as FakeTrack;
+}
+
+/** Our own camera, open on a device, in a room whose device switch the test decides. */
+function localCameraOn(
+  scope: ObservableScope,
+  deviceId: string,
+  switchActiveDevice: LivekitRoom["switchActiveDevice"],
+  state: { isMuted?: boolean } = {},
+): LocalVideoMediaTrack {
+  const camera = Object.assign(Object.create(LocalVideoTrack.prototype), {
+    source: Track.Source.Camera,
+    _mediaStreamTrack: {
+      readyState: "live",
+      label: "",
+      getSettings: () => ({ deviceId }),
+    },
+    ...state,
+  }) as LocalVideoTrack;
+  const { participant, publication, room } = fakes({
+    track: camera as unknown as FakeTrack,
+  });
+  return createLocalLivekitMediaTrack(
+    scope,
+    Object.assign(participant, {
+      isLocal: true,
+    }) as unknown as LocalParticipant,
+    publication as unknown as TrackPublication,
+    Object.assign(room, { switchActiveDevice }),
+    vi.fn(),
+  ) as LocalVideoMediaTrack;
 }
 
 function fakes({
