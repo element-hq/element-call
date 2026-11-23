@@ -24,13 +24,13 @@ export class AppViewModel {
   // least, ought to be accessible from this object.
 
   /**
-   * @param clientSession Where the client comes from. SPA js-sdk, EW host, widget
+   * @param clientSession Where the client comes from. SPA js-sdk, EW host, widget.
+   * @param clientManager Null where the session is a host's and not ours to manage.
    */
   public constructor(
     private readonly scope: ObservableScope,
     private readonly audioOutputOptions: AudioOutputOptions,
     public readonly clientSession: ClientSession,
-    /** Null where the session is a host's and not ours to manage. */
     public readonly clientManager: ClientManager | null,
   ) {}
 }
