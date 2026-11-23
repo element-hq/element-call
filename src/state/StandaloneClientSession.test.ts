@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { type MatrixClient, MatrixError, type User } from "matrix-js-sdk";
 
-import { StandaloneClientSession } from "./StandaloneClientSession";
+import { createStandaloneClientSession$ } from "./StandaloneClientSession";
 import { type StoredSession } from "./ClientSession";
 import { initClient } from "../utils/initClient";
 import {
@@ -74,7 +74,7 @@ test("restores the stored session once the config is loaded", async () => {
   const client = mockClient();
   vi.mocked(initClient).mockResolvedValue(client);
 
-  const clientSession = new StandaloneClientSession(testScope());
+  const clientSession = createStandaloneClientSession$(testScope());
   expect(clientSession.state$.value).toEqual({ state: "loading" });
 
   await flushPromises();
@@ -97,7 +97,7 @@ test("restores the stored session once the config is loaded", async () => {
 });
 
 test("has no one signed in when there is no session to restore", async () => {
-  const clientSession = new StandaloneClientSession(testScope());
+  const clientSession = createStandaloneClientSession$(testScope());
   await flushPromises();
   expect(initClient).not.toHaveBeenCalled();
   expect(clientSession.state$.value).toEqual({ state: "signedOut" });
@@ -108,7 +108,7 @@ test("drops a session the homeserver no longer knows", async () => {
   vi.mocked(initClient).mockRejectedValue(
     new MatrixError({ errcode: "M_UNKNOWN_TOKEN", error: "Unknown token" }),
   );
-  const clientSession = new StandaloneClientSession(testScope());
+  const clientSession = createStandaloneClientSession$(testScope());
   await flushPromises();
   expect(storedSession()).toBeNull();
   expect(clientSession.state$.value).toEqual({ state: "signedOut" });
@@ -118,7 +118,7 @@ test("drops the session and reports any other error", async () => {
   storeSession();
   const error = new Error("offline");
   vi.mocked(initClient).mockRejectedValue(error);
-  const clientSession = new StandaloneClientSession(testScope());
+  const clientSession = createStandaloneClientSession$(testScope());
   await flushPromises();
   expect(storedSession()).toBeNull();
   // An error page rather than a spinner that never ends
@@ -129,7 +129,7 @@ test("logs in with a password, ending the session it had", async () => {
   storeSession();
   const restored = mockClient();
   vi.mocked(initClient).mockResolvedValueOnce(restored);
-  const clientSession = new StandaloneClientSession(testScope());
+  const clientSession = createStandaloneClientSession$(testScope());
   await flushPromises();
 
   const client = mockClient();
@@ -165,7 +165,7 @@ test("logs in with a password, ending the session it had", async () => {
 });
 
 test("registers a passwordless account, signing in only when asked", async () => {
-  const clientSession = new StandaloneClientSession(testScope());
+  const clientSession = createStandaloneClientSession$(testScope());
   await flushPromises();
 
   const client = mockClient();
@@ -202,7 +202,7 @@ test("registers a passwordless account, signing in only when asked", async () =>
 });
 
 test("registers an account with a password of its own", async () => {
-  const clientSession = new StandaloneClientSession(testScope());
+  const clientSession = createStandaloneClientSession$(testScope());
   await flushPromises();
   vi.mocked(registerWithPassword).mockResolvedValue(credentials);
   vi.mocked(initClient).mockResolvedValue(mockClient());
@@ -223,7 +223,7 @@ test("logs out, clearing the client's stores and the stored session", async () =
   storeSession();
   const client = mockClient();
   vi.mocked(initClient).mockResolvedValue(client);
-  const clientSession = new StandaloneClientSession(testScope());
+  const clientSession = createStandaloneClientSession$(testScope());
   await flushPromises();
 
   const analyticsLogout = vi.spyOn(PosthogAnalytics.instance, "logout");
@@ -242,7 +242,7 @@ test("claims exclusive use of storage from other instances of the app", () => {
   // The channel is created with the session, so spy on the prototype rather
   // than trying to replace the global.
   const postMessage = vi.spyOn(BroadcastChannel.prototype, "postMessage");
-  new StandaloneClientSession(testScope());
+  createStandaloneClientSession$(testScope());
   expect(postMessage).toHaveBeenCalled();
 });
 
@@ -250,7 +250,7 @@ test("stops when another instance of the app claims storage", async () => {
   storeSession();
   const client = mockClient();
   vi.mocked(initClient).mockResolvedValue(client);
-  const clientSession = new StandaloneClientSession(testScope());
+  const clientSession = createStandaloneClientSession$(testScope());
   await flushPromises();
 
   new BroadcastChannel("load").postMessage({});

@@ -22,7 +22,7 @@ import { Initializer } from "./initializer";
 import { AppViewModel } from "./state/AppViewModel";
 import { pendingHostClientSession } from "./state/ClientSession";
 import { globalScope } from "./state/ObservableScope";
-import { StandaloneClientSession } from "./state/StandaloneClientSession";
+import { createStandaloneClientSession$ } from "./state/StandaloneClientSession";
 import { getUrlParams } from "./UrlParams";
 
 initRageshake().catch((e) => {
@@ -59,7 +59,7 @@ Initializer.initBeforeReact()
     const options = { controlledAudioDevices, callIntent };
     let vm: AppViewModel;
     if (widget === null) {
-      const session = new StandaloneClientSession(globalScope);
+      const session = createStandaloneClientSession$(globalScope);
       vm = new AppViewModel(globalScope, options, session, session);
     } else {
       vm = new AppViewModel(
