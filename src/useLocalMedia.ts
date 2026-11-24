@@ -8,6 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { useEffect } from "react";
 import { createLocalMedia, type LocalMedia } from "@element-hq/matrixrtc-sdk";
 
+import { Config } from "./config/Config";
 import { useInitial } from "./useInitial";
 
 /**
@@ -15,7 +16,11 @@ import { useInitial } from "./useInitial";
  * the component where the join never comes.
  */
 export function useLocalMedia(): LocalMedia {
-  const media = useInitial(() => createLocalMedia());
+  const media = useInitial(() =>
+    // The quality the join is given, so that a camera opened in the lobby has
+    // the same resolution as one opened by a join without a lobby.
+    createLocalMedia({ mediaQuality: Config.get().media_quality }),
+  );
   useEffect(() => (): void => media.stop(), [media]);
   return media;
 }

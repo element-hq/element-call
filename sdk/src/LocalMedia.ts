@@ -7,6 +7,11 @@ Please see LICENSE in the repository root for full details.
 
 import { BehaviorSubject, type Observable, of } from "rxjs";
 
+import {
+  cameraCaptureResolution,
+  type CaptureResolution,
+  type MediaQuality,
+} from "./config";
 import { MatrixRTCError } from "./errors";
 import {
   type HandedOverTrack,
@@ -28,15 +33,28 @@ export type GetUserMedia = (
   constraints: MediaStreamConstraints,
 ) => Promise<MediaStream>;
 
+export interface LocalMediaOptions {
+  /**
+   * The media quality the join is given. A camera asked for without a
+   * resolution is opened at the one this means, as the backend opens it at
+   * the join; left to the browser it would be published at a lower one.
+   */
+  mediaQuality?: MediaQuality;
+  /** In place of the browser's, for a test. */
+  getUserMedia?: GetUserMedia;
+}
+
 /**
  * Local media on the browser's devices alone, for a lobby ahead of a join:
  * no backend is involved, so whichever backend joins can take the tracks
  * over. Activity and level are not measured; stats are none.
  */
-export function createLocalMedia(
-  getUserMedia: GetUserMedia = async (constraints) =>
+export function createLocalMedia({
+  mediaQuality,
+  getUserMedia = async (constraints) =>
     navigator.mediaDevices.getUserMedia(constraints),
-): LocalMedia {
+}: LocalMediaOptions = {}): LocalMedia {
+  const cameraResolution = cameraCaptureResolution(mediaQuality);
   const capturedTracks = new Map<Source, CapturedTrack>();
   const requests = new Map<Source, Request>();
   const tracks$ = new BehaviorSubject<
@@ -80,10 +98,10 @@ export function createLocalMedia(
     }
     const { stream, constraints } = await open(getUserMedia, {
       microphone: bySource.has("microphone")
-        ? trackConstraints(bySource.get("microphone")!)
+        ? trackConstraints(bySource.get("microphone")!, cameraResolution)
         : undefined,
       camera: bySource.has("camera")
-        ? trackConstraints(bySource.get("camera")!)
+        ? trackConstraints(bySource.get("camera")!, cameraResolution)
         : undefined,
     });
     const captured: CapturedTrack[] = [];
@@ -146,39 +164,68 @@ type SourceConstraints = Partial<Record<Source, MediaTrackConstraints>>;
 
 /**
  * Opens the devices asked for. Where one of them is gone, as a remembered
- * choice that was unplugged, the browser picks instead.
- *
- * This is needed because we use `exact` device ids: an exact request for a
- * device that no longer exists fails, where a preferred one would have opened
- * another device. Without the retry here a stale choice would open nothing.
+ * choice that was unplugged, that source opens on another device and the
+ * other source keeps the device picked: an exact request for a device that no
+ * longer exists would otherwise open nothing.
  */
 async function open(
   getUserMedia: GetUserMedia,
   constraints: SourceConstraints,
 ): Promise<{ stream: MediaStream; constraints: SourceConstraints }> {
-  const streamOf = async (wanted: SourceConstraints): Promise<MediaStream> =>
-    getUserMedia({
-      ...(wanted.microphone && { audio: wanted.microphone }),
-      ...(wanted.camera && { video: wanted.camera }),
-    });
-  try {
-    return { stream: await streamOf(constraints), constraints };
-  } catch (e) {
-    if (!(e instanceof Error) || e.name !== "OverconstrainedError") throw e;
-    const anyDevice: SourceConstraints = {
-      ...(constraints.microphone && {
-        microphone: { ...constraints.microphone, deviceId: undefined },
-      }),
-      ...(constraints.camera && {
-        camera: { ...constraints.camera, deviceId: undefined },
-      }),
-    };
-    return { stream: await streamOf(anyDevice), constraints: anyDevice };
+  let refusal: unknown;
+  for (const attempt of attempts(constraints)) {
+    try {
+      const stream = await getUserMedia({
+        ...(attempt.microphone && { audio: attempt.microphone }),
+        ...(attempt.camera && { video: attempt.camera }),
+      });
+      return { stream, constraints: attempt };
+    } catch (e) {
+      if (!isOverconstrained(e)) throw e;
+      refusal ??= e;
+    }
   }
+  throw refusal;
+}
+
+/**
+ * As asked, then with one source let off its device, then both: the refusal
+ * does not say which of the two devices is gone.
+ */
+function attempts(wanted: SourceConstraints): SourceConstraints[] {
+  const { microphone, camera } = wanted;
+  const camera_ = camera && relaxed(camera);
+  const microphone_ = microphone && relaxed(microphone);
+  return [
+    wanted,
+    ...(camera_ ? [{ ...wanted, camera: camera_ }] : []),
+    ...(microphone_ ? [{ ...wanted, microphone: microphone_ }] : []),
+    ...(camera_ && microphone_
+      ? [{ microphone: microphone_, camera: camera_ }]
+      : []),
+  ];
+}
+
+/** The same request with its device preferred, not required; nothing where it requires none. */
+function relaxed(
+  constraints: MediaTrackConstraints,
+): MediaTrackConstraints | undefined {
+  const { deviceId } = constraints;
+  if (typeof deviceId !== "object" || Array.isArray(deviceId)) return undefined;
+  if (deviceId.exact === undefined) return undefined;
+  return { ...constraints, deviceId: { ideal: deviceId.exact } };
+}
+
+/** By name: the refusal is not an `Error` in every browser. */
+function isOverconstrained(e: unknown): boolean {
+  return (e as { name?: unknown } | null)?.name === "OverconstrainedError";
 }
 
 /** The constraints a request means to the browser. */
-function trackConstraints(request: Request): MediaTrackConstraints {
+function trackConstraints(
+  request: Request,
+  cameraResolution: CaptureResolution,
+): MediaTrackConstraints {
   // THE FIX for "cannot switch cameras in Chrome" (#4479), first capture.
   // `exact` makes the browser open this device or fail. A plain
   // `deviceId: "abc"` is only a wish, and Chromium ignores the wish and
@@ -187,14 +234,12 @@ function trackConstraints(request: Request): MediaTrackConstraints {
     deviceId: { exact: request.deviceId },
   };
   if (request.source === "microphone") return { ...device, ...request.capture };
-  const resolution = request.capture?.resolution;
+  const resolution = request.capture?.resolution ?? cameraResolution;
   return {
     ...device,
-    ...(resolution && {
-      width: resolution.width,
-      height: resolution.height,
-      frameRate: resolution.frameRate,
-    }),
+    width: resolution.width,
+    height: resolution.height,
+    frameRate: resolution.frameRate,
   };
 }
 
