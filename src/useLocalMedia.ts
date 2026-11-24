@@ -17,8 +17,8 @@ import { useInitial } from "./useInitial";
  */
 export function useLocalMedia(): LocalMedia {
   const media = useInitial(() =>
-    // The quality the join is given, so that a camera opened in the lobby hast
-    // the same resolution as one with a join without a lobby.
+    // The quality the join is given, so that a camera opened in the lobby has
+    // the same resolution as one opened by a join without a lobby.
     createLocalMedia({ mediaQuality: Config.get().media_quality }),
   );
   useEffect(() => (): void => media.stop(), [media]);
