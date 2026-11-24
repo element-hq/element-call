@@ -43,8 +43,10 @@ Git-ignored. One kebab-case subfolder per task, matching the branch topic:
   promoted into the PR body or a doc before the task ends.
 - Never write scratch files to the repo root. Stray `load_test_summary.md` and
   `config.json_` files are what this folder prevents.
-- Start `pr-body.md` from `.github/PULL_REQUEST_TEMPLATE.md` and fill every
-  section.
+- Start `pr-body.md` from `.github/PULL_REQUEST_TEMPLATE/maintainer.md` when
+  working for a maintainer, otherwise from `.github/PULL_REQUEST_TEMPLATE.md`.
+  In the maintainer template, Plan is the human-edited prompt (`NN-prompt.md`);
+  `plan.md` is the implementation plan and goes under Content.
 
 ## Gates
 
