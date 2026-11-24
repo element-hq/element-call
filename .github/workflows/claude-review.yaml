@@ -44,12 +44,13 @@ jobs:
                  that still deliver value?
 
             2. Commits:
-               
+
                - Is the work split into self-contained commits of reasonable size?
                - Are the commits arranged in a sensible order?
                - Have required refactorings been split out into separate commits?
                - Is the history free of "wip", checkpoint and fixup-style commits
                  which only correct an earlier commit in the same PR?
+               - Are SDK and Element Call changes split into separate commits?
 
             3. Code:
 
@@ -60,6 +61,27 @@ jobs:
                - Don't check anything that is already validated via other GitHub
                  workflows like linting, formatting or tests passing.
 
+            4. Code style:
+
+               - Does the change follow docs/agents/code-style.md and
+                 docs/agents/architecture.md?
+               - Does it use the right React/RxJS/TS primitive for the job (prop vs.
+                 context, view model vs. component state, …)?
+               - Is it consistent with how the codebase already solves similar
+                 problems, rather than introducing a different tool or pattern?
+
+            5. Repo architecture:
+
+               - Does each change live in the right layer, MatrixRTC/media logic
+                 in `sdk/`, app/UI/host concerns in Element Call (`src/`)?
+               - Is the SDK free of Element Call specifics (UI, config, widget
+                 or host assumptions)?
+               - Does Element Call consume the SDK through its public API rather
+                 than reimplementing or reaching into SDK internals?
+               - Are changes to any `api.ts` (public and internal) documented in
+                 the PR description? If not, summarize them in the final review
+                 comment.
+
             Read the commits themselves with `git log` and `git diff` against
             the base branch of the PR.
 
@@ -68,9 +90,9 @@ jobs:
             "🟠 medium" or "🔴 high". Devise at least one possible resolution for each
             finding.
 
-            Report the graded findings and resolutions from the "Code" angle as inline
-            comments. Add a footer "_-- Finding from automated review_" to each inline
-            comment.
+            Report the graded findings and resolutions from the "Code" and "Code style"
+            angles as inline comments. Add a footer "_-- Finding from automated review_"
+            to each inline comment.
 
             Finally, report your overall result as PR comment. Start your message with
             "# Automated review". Then add one section per review angle with:
