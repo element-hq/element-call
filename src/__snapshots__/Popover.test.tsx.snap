@@ -1,0 +1,40 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Popover renders > button 1`] = `
+<button
+  aria-controls="_r_0_"
+  aria-expanded="true"
+  aria-haspopup="dialog"
+  data-base-ui-click-trigger=""
+  data-popup-open=""
+  id="base-ui-_r_1_"
+  tabindex="0"
+  type="button"
+>
+  Open popover
+</button>
+`;
+
+exports[`Popover renders > popover 1`] = `
+<div
+  aria-labelledby="base-ui-_r_4_"
+  class="_popover_8e8188"
+  data-align="center"
+  data-base-ui-focusable=""
+  data-open=""
+  data-side="bottom"
+  id="_r_0_"
+  role="dialog"
+  tabindex="-1"
+>
+  <h3
+    class="_typography_6v6n8_153 _font-body-lg-semibold_6v6n8_74 _title_8e8188"
+    id="base-ui-_r_4_"
+  >
+    Example
+  </h3>
+  <p>
+    This is an example of a popover.
+  </p>
+</div>
+`;
