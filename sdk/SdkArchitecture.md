@@ -132,7 +132,10 @@ upstream paused until then. A lobby that wants them earlier captures them with
 hands the media to `join()` as `publish`: the tracks are moved, not shared — they
 leave the lobby's `tracks$`, their objects are finished, and the backend
 publishes the very same device tracks and the processor already running on them,
-so nothing is captured or initialised again at the join. The upstream flows
+so nothing is captured or initialised again at the join. Given the media quality
+the join is given, it opens the camera at the resolution the backend captures
+at, so that a join through a lobby publishes what a join without one does. The
+upstream flows
 exactly while the membership is `joined`: a sync outage pauses it, and `leave()`
 pauses it for good and sends the leave.
 

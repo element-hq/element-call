@@ -203,32 +203,35 @@ export function createLocalLivekitMediaTrack(
       // of the camera track itself: with a processor on, LiveKit's media
       // stream track is the processed one, which names no device
       const current = publication.track;
-      if (
-        current instanceof LocalTrack &&
-        (await current.getDeviceId(false)) === deviceId
-      )
-        return;
-      // THE FIX for "cannot switch cameras in Chrome" (#4479), switching in
-      // the call. No third argument: LiveKit then asks for the device with
-      // `exact`. Passing `false` there made it a wish, which Chromium ignores
-      // by reopening its default device.
-      await room.switchActiveDevice(
-        base.kind === "audio" ? "audioinput" : "videoinput",
-        deviceId,
-      );
-      // A check that the switch really happened, so that a failure is an
-      // error and not silence. Asked of the track again rather than taken
-      // from LiveKit's answer, which compares against the processed track
-      // too. A muted track is stopped and takes the device on turning on again
-      const now = publication.track;
-      const deviceNow =
-        now instanceof LocalTrack && !now.isMuted
-          ? await now.getDeviceId(false)
+      const previous =
+        current instanceof LocalTrack
+          ? await current.getDeviceId(false)
           : undefined;
-      if (deviceNow !== undefined && deviceNow !== deviceId)
-        throw new MatrixRTCError(
-          `The ${base.source} is on another device than the one asked for`,
-        );
+      if (previous === deviceId) return;
+      const kind = base.kind === "audio" ? "audioinput" : "videoinput";
+      try {
+        // Exact: asked for as a preference, the browser may open another
+        // device that fits the rest of the constraints better
+        await room.switchActiveDevice(kind, deviceId, true);
+        // A check that the switch really happened, so that a failure is an
+        // error and not silence. Asked of the track again rather than taken
+        // from LiveKit's answer, which compares against the processed track
+        // too. A muted track is stopped and takes the device on turning on again
+        const deviceNow = await openDevice(publication.track);
+        if (deviceNow !== undefined && deviceNow !== deviceId)
+          throw new MatrixRTCError(
+            `The ${base.source} is on another device than the one asked for`,
+          );
+      } catch (e) {
+        // LiveKit stops the track before it opens the device asked for, so a
+        // switch that fails leaves nothing running
+        if (previous !== undefined && !isMuted(publication.track))
+          // The failed switch is the error to report, not this one
+          await room
+            .switchActiveDevice(kind, previous, true)
+            .catch(() => undefined);
+        throw e;
+      }
     },
   };
   if (base.kind === "audio") return { ...base, ...local };
@@ -268,6 +271,19 @@ export function createLocalLivekitMediaTrack(
       else if (current) await track.stopProcessor();
     },
   };
+}
+
+/** The device a local track captures from; none while it is muted. */
+async function openDevice(
+  track: Track | undefined,
+): Promise<string | undefined> {
+  return track instanceof LocalTrack && !isMuted(track)
+    ? track.getDeviceId(false)
+    : undefined;
+}
+
+function isMuted(track: Track | undefined): boolean {
+  return track instanceof LocalTrack && track.isMuted;
 }
 
 /** The track behind a publication; a remote one arrives on subscription. */
