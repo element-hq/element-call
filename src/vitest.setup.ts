@@ -53,6 +53,13 @@ window.matchMedia = global.matchMedia = (): MediaQueryList =>
     removeEventListener: () => {},
   }) as Partial<MediaQueryList> as MediaQueryList;
 
+// Disable animations. jsdom computes `animation-name` from our stylesheets but
+// never runs an animation, so anything that waits for `animationend` before
+// unmounting (Radix dialogs, for one) would stay mounted forever.
+const noAnimations = document.createElement("style");
+noAnimations.textContent = "* { animation: none !important; }";
+document.head.appendChild(noAnimations);
+
 // jsdom does no layout and has no ResizeObserver. The call view observes the
 // size of its root element; this one reports nothing, so that element stays at
 // whatever size jsdom says it is unless a test says otherwise.
