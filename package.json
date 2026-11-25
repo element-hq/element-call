@@ -51,7 +51,7 @@
     "build-storybook": "storybook build"
   },
   "devDependencies": {
-    "@codecov/vite-plugin": "^1.3.0",
+    "@codecov/vite-plugin": "^2.0.0",
     "@fontsource/inconsolata": "^5.1.0",
     "@fontsource/inter": "^5.1.0",
     "@formatjs/intl-durationformat": "^0.10.0",
