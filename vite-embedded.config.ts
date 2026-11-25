@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { defineConfig, mergeConfig } from "vite";
 
-import fullConfig from "./vite.config.ts";
+import fullConfig, { withoutMatrixCrypto } from "./vite.config.ts";
 
 const base = "./";
 
@@ -18,6 +18,7 @@ export default defineConfig((env) =>
     defineConfig({
       base, // Use relative URLs to allow the app to be hosted under any path
       publicDir: false, // Don't serve the public directory which only contains the favicon
+      plugins: [withoutMatrixCrypto({ withoutStoreWorker: true })],
     }),
   ),
 );
