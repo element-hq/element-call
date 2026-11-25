@@ -22,6 +22,12 @@ const PASSWORD = "foobarbaz1!";
 export const HOST1 = "https://app.m.localhost/#/welcome";
 export const HOST2 = "https://app.othersite.m.localhost/#/welcome";
 
+/**
+ * Where the widget RTC SDK's example widget is served (`pnpm dev:widget-rtc-sdk`):
+ * `widget-rtc-sdk/index.html`, running the bundle from source.
+ */
+export const WIDGET_RTC_SDK_URL = "https://localhost:3003";
+
 export type RtcMode = "compat" | "2_0";
 
 export class TestHelpers {

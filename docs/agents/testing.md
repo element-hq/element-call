@@ -60,4 +60,5 @@ pnpm backend                # Synapse + LiveKit, required for e2e
 pnpm test:playwright        # or :open
 pnpm dev:component          # component harness, port 3001
 pnpm dev:sdk                # SDK harness, port 3002
+pnpm dev:widget-rtc-sdk     # widget RTC SDK example widget, port 3003
 ```

@@ -13,6 +13,7 @@ import { fileURLToPath } from "node:url";
 
 import { COMPONENT_HARNESS_URL } from "./playwright/component/harness.ts";
 import { SDK_HARNESS_URL } from "./playwright/sdk/harness.ts";
+import { WIDGET_RTC_SDK_URL } from "./playwright/widget/test-helpers.ts";
 
 const baseURL = process.env.USE_DOCKER
   ? "http://localhost:8080"
@@ -176,6 +177,21 @@ export default defineConfig({
       // dev server for the same reason as the component's.
       command: "pnpm dev:sdk",
       url: SDK_HARNESS_URL,
+      reuseExistingServer: !process.env.CI,
+      ignoreHTTPSErrors: true,
+      gracefulShutdown: {
+        signal: "SIGTERM",
+        timeout: 500,
+      },
+    },
+    {
+      // The widget RTC SDK's example widget, which Element Web opens as a
+      // widget. Bundled rather than from the dev server: Firefox now and then
+      // stalls on the dev server's hundreds of module requests.
+      command:
+        "pnpm exec vite build --config vite-widget-rtc-sdk-dev.config.ts && " +
+        "pnpm exec vite preview --config vite-widget-rtc-sdk-dev.config.ts",
+      url: WIDGET_RTC_SDK_URL,
       reuseExistingServer: !process.env.CI,
       ignoreHTTPSErrors: true,
       gracefulShutdown: {

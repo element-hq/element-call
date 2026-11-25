@@ -15,6 +15,7 @@ export default {
       "vite-sdk.config.ts",
       "vite-sdk-dev.config.ts",
       "vite-widget-rtc-sdk.config.ts",
+      "vite-widget-rtc-sdk-dev.config.ts",
       "vite-component.config.ts",
       "vite-component-dev.config.ts",
     ],
