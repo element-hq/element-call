@@ -20,16 +20,16 @@ To get started run
 
 ```
 pnpm install
-pnpm build:sdk-target-based-on-call-view-model
+pnpm build:widget-rtc-sdk
 ```
 
 in the repository root. (`pnpm build:sdk` builds the `sdk/` package instead.)
 
-CI's `sdk` package (`build:sdk:production`, `build:sdk:development`, the
-`build-output-sdk` artifact and the `pr<N>-sdk` Netlify preview) is still this
-bundle, not the `sdk/` package, until its consumers have moved over.
+CI's `widget-rtc-sdk` package (`build:widget-rtc-sdk:production`,
+`build:widget-rtc-sdk:development`, the `build-output-widget-rtc-sdk` artifact and
+the `pr<N>-widget-rtc-sdk` Netlify preview) is this bundle, not the `sdk/` package.
 
-It will create `dist` containing the compiled js file, `matrixrtc-sdk.js`.
+It will create `dist` containing the compiled js file, `widget-rtc-sdk.js`.
 
 This file needs to be hosted. Locally (via `npx serve -l 81234 --cors`) or on a remote server.
 

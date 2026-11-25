@@ -33,9 +33,9 @@ export default defineConfig(() => ({
     manifest: true,
     lib: {
       formats: ["es" as const],
-      entry: "./sdk-target-based-on-call-view-model/main.ts",
-      name: "MatrixrtcSdk",
-      fileName: "matrixrtc-sdk",
+      entry: "./widget-rtc-sdk/main.ts",
+      name: "WidgetRtcSdk",
+      fileName: "widget-rtc-sdk",
     },
   },
   plugins: [nodePolyfills()],

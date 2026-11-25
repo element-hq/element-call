@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 /**
  * LEGACY, in production use
  *
- * The entrypoint of `pnpm build:sdk-target-based-on-call-view-model`, a
+ * The entrypoint of `pnpm build:widget-rtc-sdk`, a
  * bundle for widgets that exposes `createMatrixRTCSdk`: join a slot and
  * exchange realtime data, with the `@element-hq/matrixrtc-sdk` package and
  * Element Call's call view model doing the work underneath. New consumers use

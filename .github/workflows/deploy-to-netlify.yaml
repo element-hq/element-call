@@ -17,7 +17,7 @@ on:
       package:
         required: true
         type: string
-        description: Which package to deploy - 'full', 'embedded', 'sdk', or 'storybook'
+        description: Which package to deploy - 'full', 'embedded', 'widget-rtc-sdk', or 'storybook'
       artifact_run_id:
         required: false
         type: string
@@ -82,7 +82,7 @@ jobs:
         with:
           publish-dir: webapp
           deploy-message: "Deploy from GitHub Actions"
-          alias: ${{ inputs.package == 'sdk' && format('pr{0}-sdk', inputs.pr_number) || inputs.package == 'storybook' && format('pr{0}-storybook', inputs.pr_number) || format('pr{0}', inputs.pr_number) }}
+          alias: ${{ inputs.package == 'widget-rtc-sdk' && format('pr{0}-widget-rtc-sdk', inputs.pr_number) || inputs.package == 'storybook' && format('pr{0}-storybook', inputs.pr_number) || format('pr{0}', inputs.pr_number) }}
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
