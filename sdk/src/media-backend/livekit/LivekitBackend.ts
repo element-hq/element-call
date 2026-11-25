@@ -47,12 +47,7 @@ import {
   type TransportLocator,
 } from "./auth";
 import { type Connection } from "./Connection";
-import {
-  ConnectionMap,
-  createConnectionMap$,
-  keyFor,
-  type TransportKey,
-} from "./ConnectionMap";
+import { ConnectionMap, createConnectionMap$ } from "./ConnectionMap";
 import {
   LivekitConnectionFactory,
   ResolvedConnection,
@@ -219,7 +214,9 @@ export function createLivekitBackend(
               }
             : undefined;
         }),
-        distinctUntilChanged((a, b) => (a && keyFor(a)) === (b && keyFor(b))),
+        distinctUntilChanged(
+          (a, b) => (a && registryKeyFor(a)) === (b && registryKeyFor(b)),
+        ),
       ),
     );
     transports.follow(memberScope, locator$);
@@ -325,6 +322,19 @@ function backendConnection$(
   );
 }
 
+/**
+ * The key used for a transport locator in the transport registry.
+ *
+ * Note that this is *not* the key used for folding locators into connections.
+ */
+function registryKeyFor({ transport, serverName }: TransportLocator): string {
+  return JSON.stringify([
+    "url" in transport ? transport.url : null,
+    "livekit_service_url" in transport ? transport.livekit_service_url : null,
+    serverName,
+  ]);
+}
+
 export interface TransportRegistry {
   /** Keeps a member's transport registered for as long as its scope lives. */
   follow(
@@ -344,7 +354,7 @@ export function createTransportRegistry(
   scope: ObservableScope,
 ): TransportRegistry {
   const counts = new Map<
-    TransportKey,
+    string,
     { locator: TransportLocator; count: number }
   >();
   const transports = new BehaviorSubject<TransportLocator[]>([]);
@@ -352,7 +362,7 @@ export function createTransportRegistry(
     transports.next([...counts.values()].map(({ locator }) => locator));
 
   const register = (locator: TransportLocator): (() => void) => {
-    const key = keyFor(locator);
+    const key = registryKeyFor(locator);
     const entry = counts.get(key) ?? { locator, count: 0 };
     entry.count++;
     if (entry.count === 1) {
