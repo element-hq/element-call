@@ -1,68 +1,91 @@
-# SDK mode (LEGACY)
+# Widget RTC SDK
 
-> Superseded by the `sdk/` package (`@element-hq/matrixrtc-sdk`) and its harness in
-> `sdk/dev`; see `sdk/SdkArchitecture.md`. This bundle is in production use, so it
-> keeps building as a thin layer over that package until its consumers have moved
-> to the package directly. It will then be removed. Its members are the package's
-> `RTCMember`s now, in place of its own wrapper around the raw membership.
+A single JavaScript bundle for widget pages: it connects to the host (for
+example Element Web) over the widget API and wraps the `sdk/` package
+(`@element-hq/matrixrtc-sdk`) to join a MatrixRTC slot and exchange realtime
+data. A widget needs no Matrix login of its own: the host's client does the
+talking. It uses nothing of Element Call's app; a page that is not a widget
+uses the `sdk/` package directly (see `sdk/README.md`).
 
-EC can be build in sdk mode. This will result in a compiled js file that can be imported in very simple webapps.
+```ts
+import { createMatrixRTCSdk } from "<bundle url>/widget-rtc-sdk.js";
 
-It allows to use matrixRTC in combination with livekit without relying on element call.
+const sdk = await createMatrixRTCSdk("com.example.my-app"); // the rtc application
+sdk.join();
+sdk.connected$.subscribe((connected) => console.info({ connected }));
+sdk.remoteMembers$.subscribe((members) => console.info(members));
+sdk.data$.subscribe(({ rtcBackendIdentity, data }) =>
+  console.info(rtcBackendIdentity, JSON.parse(data)),
+);
+await sdk.sendData({ hello: "world" });
+sdk.leave();
+```
 
-This is done by instantiating the call view model and exposing some useful behaviors (observables) and methods.
+`createMatrixRTCSdk(application = "m.call", id = "", sticky = false)` takes the
+slot's application and id, and whether to ask the host to keep the widget on
+screen while joined. The participation publishes no media; `sendData` and
+`data$` carry JSON over the `matrixRTC` data channel topic. When the
+participation has left, the widget asks the host to close it.
 
-This folder contains an example index.html file that showcases the sdk in use (hosted on localhost:8123 with a webserver allowing cors (for example `npx serve -l 81234 --cors`)) as a godot engine HTML export template.
+If the widget page has a `config.json` beside it, the bundle reads Element
+Call's `matrix_rtc_mode`, `livekit.livekit_service_url`,
+`sync_disconnect_grace_period_ms` and `matrix_rtc_session` from it.
 
-## Getting started
+## Using a pull request's build
 
-To get started run
+CI builds the bundle for every pull request and deploys it to Netlify as
+`pr<N>-widget-rtc-sdk`, so a widget can import it without building anything:
+
+```
+https://pr<N>-widget-rtc-sdk--element-call.netlify.app/widget-rtc-sdk.js
+```
+
+1. Host a page that imports it. `index.html` in this folder is one: set the
+   PR number in its import and serve the folder, for example with
+   `npx serve -l 8080`.
+2. Add the page as a widget in a room in Element Web (see
+   [Widget url](#widget-url)):
+
+   ```
+   /addwidget http://localhost:8080?widgetId=$matrix_widget_id&userId=$matrix_user_id&deviceId=$org.matrix.msc3819.matrix_device_id&baseUrl=$org.matrix.msc4039.matrix_base_url&roomId=$matrix_room_id
+   ```
+
+3. Open the widget and accept the capabilities it asks for:
+   the example joins on load. Open it from a second account to see members and
+   data arrive.
+
+## Building it yourself
 
 ```
 pnpm install
 pnpm build:widget-rtc-sdk
 ```
 
-in the repository root. (`pnpm build:sdk` builds the `sdk/` package instead.)
+in the repository root writes the bundle to `dist/`, entry `widget-rtc-sdk.js`.
+Serve it with CORS, so a page on another origin can import it (for example
+`npx serve -l 8123 --cors dist`), and point the page's import at
+`http://localhost:8123/widget-rtc-sdk.js`.
 
-CI's `widget-rtc-sdk` package (`build:widget-rtc-sdk:production`,
-`build:widget-rtc-sdk:development`, the `build-output-widget-rtc-sdk` artifact and
-the `pr<N>-widget-rtc-sdk` Netlify preview) is this bundle, not the `sdk/` package.
+`build:widget-rtc-sdk:production` (what CI deploys) minifies and leaves out
+source maps; `build:widget-rtc-sdk:development` does neither.
 
-It will create `dist` containing the compiled js file, `widget-rtc-sdk.js`.
+## Widget url
 
-This file needs to be hosted. Locally (via `npx serve -l 81234 --cors`) or on a remote server.
-
-Now you just need to add the widget to element web via:
-
-```
-/addwidget http://localhost:3000?widgetId=$matrix_widget_id&userId=$matrix_user_id&deviceId=$org.matrix.msc3819.matrix_device_id&baseUrl=$org.matrix.msc4039.matrix_base_url&roomId=$matrix_room_id
-```
-
-## Widgets
-
-The sdk mode is particularly interesting to be used in widgets. In widgets you do not need to pay attention to matrix login/cs api ...
-To create a widget see the example `index.html` file in this folder. And add it to EW via:
-`/addwidget <widgetUrl>` (see **url parameters** for more details on `<widgetUrl>`)
-
-### url parameters
-
-The url parameters are needed to pass initial data to the widget. They will automatically be used
-by the matrixRTCSdk to start the postmessage widget api (communication between the client (e.g. Element Web) and the widget)
+The host fills the widget url's parameters in when it opens the widget; the
+bundle reads them, from the query or from a query in the fragment, to start the
+widget API:
 
 ```
 widgetId = $matrix_widget_id
 userId = $matrix_user_id
 deviceId = $org.matrix.msc3819.matrix_device_id
 baseUrl = $org.matrix.msc4039.matrix_base_url
+roomId = $matrix_room_id
 ```
 
-`parentUrl = // will be inserted automatically`
+`parentUrl` is added by the host. `sendNotificationType` (`ring` or
+`notification`) optionally notifies the room on join.
 
-Full template use as `<widgetUrl>`:
-
-```
-http://localhost:3000?widgetId=$matrix_widget_id&userId=$matrix_user_id&deviceId=$org.matrix.msc3819.matrix_device_id&baseUrl=$org.matrix.msc4039.matrix_base_url&roomId=$matrix_room_id
-```
-
-the `$` prefixed variables will be replaced by EW on widget instantiation. (e.g. `$matrix_user_id` -> `@user:example.com` (url encoding will also be applied automatically by EW) -> `%40user%3Aexample.com`)
+The `$` prefixed variables are replaced by Element Web when it opens the widget
+(for example `$matrix_user_id` becomes `@user:example.com`, url encoded as
+`%40user%3Aexample.com`).
