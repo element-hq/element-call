@@ -46,6 +46,11 @@ The issue is where we resolve all of that **before** anyone writes code.
 5. **Open a PR.** Link to the issue in your PR description and satisfy the checklist
    in the PR template.
 
+Maintainers use the simpler
+[maintainer template](.github/PULL_REQUEST_TEMPLATE/maintainer.md) instead:
+`gh pr create --template maintainer.md`, or add `&template=maintainer.md` to the
+compare URL.
+
 ## Code Quality
 
 Element Call moves fast and the codebase must stay clean and maintainable.
