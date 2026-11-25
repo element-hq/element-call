@@ -133,8 +133,12 @@ function connectWidget(
     EventType.CallEncryptionKeysPrefix,
     EventType.RTCDecline,
     EventType.RTCMembership,
+    "m.rtc.member",
   ];
-  const sendRecvToDevice = [EventType.CallEncryptionKeysPrefix];
+  const sendRecvToDevice = [
+    EventType.CallEncryptionKeysPrefix,
+    "m.rtc.encryption_key",
+  ];
   const client = createRoomWidgetClient(
     api,
     {
