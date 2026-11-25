@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import {
   ConnectionState as LivekitConnectionState,
+  type LocalDataTrack as LivekitLocalDataTrack,
   type LocalParticipant,
   type LocalTrack,
   type LocalTrackPublication,
@@ -28,6 +29,10 @@ import { type Connection, type ConnectionState } from "./Connection";
 import { ConnectionMap } from "./ConnectionMap";
 import { createLivekitLocalMedia } from "./LocalMedia";
 import { exampleTransport } from "./test";
+import {
+  type LocalAudioMediaTrack,
+  type LocalDataTrack,
+} from "../../media-api";
 
 const localTransport: TransportLocator = {
   transport: exampleTransport,
@@ -270,9 +275,8 @@ describe("createLivekitLocalMedia", () => {
     media.setPublishing(true);
     await flushPromises();
 
-    await expect(media.tracks$.value![0].setEnabled(false)).resolves.toBe(
-      false,
-    );
+    const microphone = media.tracks$.value![0] as LocalAudioMediaTrack;
+    await expect(microphone.setEnabled(false)).resolves.toBe(false);
     expect(first.participant.setMicrophoneEnabled).toHaveBeenLastCalledWith(
       false,
     );
@@ -293,10 +297,16 @@ describe("createLivekitLocalMedia", () => {
     await flushPromises();
     await media.publish({ source: "screenShare" });
 
-    await media.unpublish("screenShareAudio");
+    await media.unpublish({
+      kind: "audio",
+      source: "screenShareAudio",
+    } as LocalAudioMediaTrack);
     expect(participant.setScreenShareEnabled).toHaveBeenLastCalledWith(false);
 
-    await media.unpublish("microphone");
+    await media.unpublish({
+      kind: "audio",
+      source: "microphone",
+    } as LocalAudioMediaTrack);
     expect(participant.unpublishTrack).toHaveBeenCalledOnce();
     expect(media.tracks$.value).toEqual([]);
   });
@@ -385,6 +395,116 @@ function fakeLocalTrack(source: Track.Source): LocalTrack {
   return t as unknown as LocalTrack;
 }
 
+describe("local data tracks", () => {
+  function joined(): ReturnType<typeof setup> & FakeConnection {
+    const fixture = setup();
+    const fake = fakeConnection();
+    fixture.connectionMap$.next(mapOf(fake.connection));
+    fixture.localTransport$.next(localTransport);
+    return { ...fixture, ...fake };
+  }
+
+  it("publishes on LiveKit only once publishing is allowed, and again on a new connection", async () => {
+    const { media, participant, connectionMap$ } = joined();
+    let published = false;
+    const publishing = media
+      .publish({ source: "data", name: "chat" })
+      .then((track) => {
+        published = true;
+        return track;
+      });
+    await flushPromises();
+    expect(participant.publishDataTrack).not.toHaveBeenCalled();
+    expect(published).toBe(false);
+    // Listed from the request on, like a media publication
+    const listed = media.tracks$.value!.find((t) => t.kind === "data");
+    expect(listed).toMatchObject({ name: "chat", reliable: true });
+
+    media.setPublishing(true);
+    const chat = await publishing;
+    expect(chat).toBe(listed);
+    expect(participant.publishDataTrack).toHaveBeenCalledWith({
+      name: "reliable:chat",
+    });
+
+    const next = fakeConnection();
+    connectionMap$.next(mapOf(next.connection));
+    await flushPromises();
+    expect(next.participant.publishDataTrack).toHaveBeenCalledWith({
+      name: "reliable:chat",
+    });
+    // The host's object outlives the connection
+    expect(media.tracks$.value).toContain(chat);
+  });
+
+  it("sends reliable data as a byte stream and lossy data as frames, replaying what was sent", async () => {
+    const { media, participant } = joined();
+    media.setPublishing(true);
+    const chat = await media.publish({ source: "data", name: "chat" });
+    const cursors = await media.publish({
+      source: "data",
+      name: "cursors",
+      reliable: false,
+    });
+    await flushPromises();
+    const sent: Uint8Array[] = [];
+    chat.data$.subscribe((p) => sent.push(p));
+
+    await chat.send(new Uint8Array([1]));
+    expect(participant.sendBytes).toHaveBeenCalledWith(new Uint8Array([1]), {
+      topic: "reliable:chat",
+    });
+    expect(sent).toEqual([new Uint8Array([1])]);
+
+    await cursors.send(new Uint8Array([2]));
+    const livekitCursors = await vi.mocked(participant.publishDataTrack).mock
+      .results[1].value;
+    expect(livekitCursors.tryPush).toHaveBeenCalledWith({
+      payload: new Uint8Array([2]),
+    });
+  });
+
+  it("rejects a second track of the same name, or one LiveKit refuses", async () => {
+    const { media, participant } = joined();
+    media.setPublishing(true);
+    await media.publish({ source: "data", name: "chat" });
+    await expect(
+      media.publish({ source: "data", name: "chat", reliable: false }),
+    ).rejects.toThrow("published already");
+
+    vi.mocked(participant.publishDataTrack).mockRejectedValueOnce(
+      new Error("DuplicateName"),
+    );
+    await expect(
+      media.publish({ source: "data", name: "cursors" }),
+    ).rejects.toThrow("DuplicateName");
+    expect(
+      media.tracks$.value!.filter((t) => t.kind === "data").map((t) => t.name),
+    ).toEqual(["chat"]);
+  });
+
+  it("finishes a track on unpublish", async () => {
+    const { media, participant } = joined();
+    media.setPublishing(true);
+    const chat: LocalDataTrack = await media.publish({
+      source: "data",
+      name: "chat",
+    });
+    await flushPromises();
+    let completed = false;
+    chat.data$.subscribe({ complete: () => (completed = true) });
+
+    await media.unpublish(chat);
+    await flushPromises();
+    const livekitChat = await vi.mocked(participant.publishDataTrack).mock
+      .results[0].value;
+    expect(livekitChat.unpublish).toHaveBeenCalled();
+    expect(completed).toBe(true);
+    expect(media.tracks$.value).not.toContain(chat);
+    await expect(chat.send(new Uint8Array([1]))).rejects.toThrow("unpublished");
+  });
+});
+
 /**
  * The slice of a local participant the publisher and the local tracks use:
  * enabling a source publishes a fake track at once, muting an existing one
@@ -442,6 +562,14 @@ function fakeLocalParticipant(): LocalParticipant {
 
   const participant = {
     ...emitter,
+    publishDataTrack: vi.fn(async ({ name }: { name: string }) =>
+      Promise.resolve({
+        name,
+        tryPush: vi.fn(async () => Promise.resolve()),
+        unpublish: vi.fn(async () => Promise.resolve()),
+      } as unknown as LivekitLocalDataTrack),
+    ),
+    sendBytes: vi.fn(async () => Promise.resolve({})),
     identity: "@alice:example.org:DEVICE",
     isLocal: true,
     isSpeaking: false,

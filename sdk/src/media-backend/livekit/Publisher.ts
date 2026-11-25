@@ -72,9 +72,11 @@ export class Publisher {
     private readonly media?: LocalMedia,
   ) {
     this.room = room;
-    room.setE2EEEnabled(room.options.e2ee !== undefined)?.catch((e: Error) => {
-      this.logger.error("Failed to enable E2EE on the room", e);
-    });
+    room
+      .setE2EEEnabled(room.options.encryption !== undefined)
+      ?.catch((e: Error) => {
+        this.logger.error("Failed to enable E2EE on the room", e);
+      });
     this.onLocalTrackPublished = this.onLocalTrackPublished.bind(this);
     room.localParticipant.on(
       ParticipantEvent.LocalTrackPublished,

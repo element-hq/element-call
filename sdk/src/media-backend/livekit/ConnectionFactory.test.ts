@@ -77,6 +77,7 @@ describe("LivekitConnectionFactory", () => {
       resolution: expect.objectContaining({ height: 720 }),
     });
     expect(options.audioOutput).toEqual({ deviceId: undefined });
+    expect(options.encryption).toBeUndefined();
     expect(options.e2ee).toBeUndefined();
   });
 

@@ -55,7 +55,11 @@ export {
 export * from "./src/api";
 export * from "./src/media-api";
 export * from "./src/media-backend/api";
-export { trackBySource$, type TrackOfSource } from "./src/utils/tracks";
+export {
+  dataTrackByName$,
+  trackBySource$,
+  type TrackOfSource,
+} from "./src/utils/tracks";
 export { createRTCSlot } from "./src/RTCSlot";
 export {
   createLivekitBackend,

@@ -14,11 +14,10 @@ import {
   type Transport,
   type UnstableLivekitTransport,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { BehaviorSubject, EMPTY, Subject } from "rxjs";
+import { BehaviorSubject, EMPTY } from "rxjs";
 import { describe, expect, it, type Mock, vi } from "vitest";
 
 import {
-  type DataMessage,
   type ParticipationState,
   type RTCMember,
   type RTCParticipationOptions,
@@ -29,13 +28,16 @@ import { defaultSessionTimings, MatrixRTCMode } from "./config";
 import { E2eeType } from "./encryption";
 import { MatrixRTCError } from "./errors";
 import {
-  type DataPacket,
   type MediaBackend,
   type MediaBackendContext,
   MediaConnectionState,
   type MediaKey,
 } from "./media-backend/api";
-import { type MemberMedia } from "./media-api";
+import {
+  type LocalDataTrack,
+  type LocalVideoMediaTrack,
+  type MemberMedia,
+} from "./media-api";
 import { constant } from "./reactive/Behavior";
 import { ObservableScope } from "./reactive/ObservableScope";
 import { createRTCParticipation } from "./RTCParticipation";
@@ -103,7 +105,6 @@ interface FakeBackend {
   context: MediaBackendContext;
   prepared: PromiseWithResolvers<{ canDelegateDelayedLeave: boolean }>;
   connectionState$: BehaviorSubject<MediaConnectionState | Error>;
-  data$: Subject<DataPacket>;
   setPublishing: Mock<(publish: boolean) => void>;
   delegateDelayedLeave: Mock<(delayId: string) => Promise<void>>;
   mediaFor: Mock<(scope: ObservableScope, member: RTCMember) => MemberMedia>;
@@ -151,7 +152,6 @@ function setup(
     connectionState$: new BehaviorSubject<MediaConnectionState | Error>(
       MediaConnectionState.Initialized,
     ),
-    data$: new Subject<DataPacket>(),
     setPublishing: vi.fn(),
     delegateDelayedLeave: vi.fn(async () => Promise.resolve()),
     mediaFor: vi.fn(() => ({
@@ -179,8 +179,6 @@ function setup(
       mediaFor: fake.mediaFor,
       connections$: constant([]),
       setAudioOutputDeviceId: vi.fn(),
-      sendData: vi.fn(),
-      data$: fake.data$,
     };
     fake.context = context;
     fake.backend = backend;
@@ -414,27 +412,30 @@ describe("createRTCParticipation", () => {
     scope.end();
   });
 
-  it("delivers data from a member with its member and drops the rest", () => {
-    const { participation, members$, fake, scope } = setup();
-    members$.next([
-      member({
-        userId: "@bob:example.org",
-        memberId: "bob-member",
-        backendIdentities: ["bob-hashed", "bob-member"],
-      }),
-    ]);
-    const messages: DataMessage[] = [];
-    participation.data$.subscribe((message) => messages.push(message));
+  it("hands publications to the backend, data tracks too", async () => {
+    const { participation, fake, scope } = setup();
+    const chat = { kind: "data", name: "chat" } as LocalDataTrack;
+    const screenShare = {
+      kind: "video",
+      source: "screenShare",
+    } as LocalVideoMediaTrack;
 
-    fake.data$.next({ senderId: "bob-hashed", topic: "chat", text: "hi" });
-    fake.data$.next({ senderId: "stranger", topic: "chat", text: "boo" });
-
-    expect(messages).toHaveLength(1);
-    expect(messages[0]).toMatchObject({
-      topic: "chat",
-      text: "hi",
-      member: { memberId: "bob-member" },
+    await participation.publish({ source: "data", name: "chat" });
+    await participation.publish({ source: "camera" });
+    expect(fake.backend.local.publish).toHaveBeenNthCalledWith(1, {
+      source: "data",
+      name: "chat",
     });
+    expect(fake.backend.local.publish).toHaveBeenNthCalledWith(2, {
+      source: "camera",
+    });
+    await participation.unpublish(chat);
+    await participation.unpublish(screenShare);
+    expect(fake.backend.local.unpublish).toHaveBeenNthCalledWith(1, chat);
+    expect(fake.backend.local.unpublish).toHaveBeenNthCalledWith(
+      2,
+      screenShare,
+    );
     scope.end();
   });
 
