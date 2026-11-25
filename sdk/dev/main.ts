@@ -205,6 +205,7 @@ function listMessages(
     .subscribe(({ track, payload }) => {
       const line = messages.appendChild(document.createElement("li"));
       line.dataset.testid = "message";
+      line.dataset.name = track.name;
       line.dataset.encrypted = String(track.encrypted);
       line.dataset.userId = member.userId;
       line.textContent = `${member.displayName$.value}: ${decoder.decode(payload)}`;
