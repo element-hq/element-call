@@ -113,7 +113,7 @@
     "oxfmt": "^0.79.0",
     "oxlint": "^1.70.0",
     "oxlint-tsgolint": "^0.25.0",
-    "pako": "^2.0.4",
+    "pako": "^3.0.3",
     "postcss": "^8.4.41",
     "postcss-preset-env": "^10.0.0",
     "postcss-selector-parser": "^7.1.1",
