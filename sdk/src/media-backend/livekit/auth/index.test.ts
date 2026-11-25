@@ -173,6 +173,25 @@ describe("getSFUConfig", () => {
     expect(jwtServiceCalls()).toEqual([]);
   });
 
+  it("recognises a not found that a widget host relays", async () => {
+    mockJWTService();
+    // The widget API's WidgetApiResponseError arrives in a minified build.
+    const relayed = Object.assign(new Error("Unrecognized request"), {
+      name: "n",
+      data: {
+        matrix_api_error: {
+          http_status: 404,
+          response: { errcode: "M_UNRECOGNIZED" },
+        },
+      },
+    });
+    client.getLivekitToken.mockRejectedValueOnce(relayed);
+    await expect(
+      getSFUConfig({ ...defaultParams, transport: urlTransport }),
+    ).rejects.toThrow(expect.any(NoMatrix2AuthorizationService));
+    expect(jwtServiceCalls()).toEqual([]);
+  });
+
   it("uses CS API when publishing with url transport", async () => {
     mockJWTService();
     expect(

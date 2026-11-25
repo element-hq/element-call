@@ -12,7 +12,7 @@ Please see LICENSE in the repository root for full details.
  * choice between them where a transport carries both.
  */
 
-import { ConnectionError, MatrixError } from "matrix-js-sdk";
+import { MatrixError } from "matrix-js-sdk";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
@@ -28,29 +28,59 @@ export type * from "./types";
 
 /**
  * Whether an error means the homeserver does not implement the MSC4195
- * endpoints. The MSC says `M_NOT_FOUND`; a homeserver without support answers
- * with whatever it uses for unknown routes (Synapse: 404 with
- * `M_UNRECOGNIZED`), so any 404 counts.
+ * endpoints. Such a homeserver answers with whatever it uses for unknown
+ * routes (Synapse: 404 with `M_UNRECOGNIZED`), so any 404 counts.
  */
-function isEndpointUnsupported(e: unknown): boolean {
+export function isCsApiUnavailable(e: unknown): boolean {
+  const answer = unwrapErrorDetails(e);
   return (
-    e instanceof MatrixError &&
-    (e.httpStatus === 404 ||
-      e.errcode === "M_NOT_FOUND" ||
-      e.errcode === "M_UNRECOGNIZED")
+    answer !== undefined &&
+    (answer.status === 404 ||
+      answer.errcode === "M_NOT_FOUND" ||
+      answer.errcode === "M_UNRECOGNIZED")
   );
 }
 
 /**
- * Whether an error means the MSC4195 client-server API cannot be used from
- * here: the homeserver does not implement it, or the request never reached
- * the homeserver because a widget host does not expose the endpoint
- * (MSC4533), which the widget API reports as a plain error. A connection
- * error is neither: the endpoint may well exist.
+ * Tries to unwrap the details from an unknown error object, regardless of whether
+ * it came from the Widget API or not.
  */
-export function isCsApiUnavailable(e: unknown): boolean {
-  if (isEndpointUnsupported(e)) return true;
-  return !(e instanceof MatrixError) && !(e instanceof ConnectionError);
+function unwrapErrorDetails(
+  e: unknown,
+): { status?: number; errcode?: string } | undefined {
+  // If the error is an instance of `MatrixError`, take its details directly.
+  if (e instanceof MatrixError) {
+    return { status: e.httpStatus, errcode: e.errcode };
+  }
+
+  // If the error originated from the widget API, try to extract the bundled
+  // Matrix API error. We identify the widget's `WidgetApiResponseError` by
+  // the shape of its payload to avoid making the SDK dependent on the widget
+  // API. This isn't great, but we'll drop this branch anyway once we eliminate
+  // usage.
+  if (e instanceof Error && "data" in e) {
+    const relayed = (
+      e as {
+        data?: {
+          matrix_api_error?: {
+            http_status?: unknown;
+            response?: { errcode?: unknown };
+          };
+        };
+      }
+    ).data?.matrix_api_error;
+    if (typeof relayed === "object" && relayed !== null) {
+      const { http_status: status, response } = relayed;
+      const errcode = response?.errcode;
+      return {
+        status: typeof status === "number" ? status : undefined,
+        errcode: typeof errcode === "string" ? errcode : undefined,
+      };
+    }
+  }
+
+  // We're not able to extract any details from this error.
+  return undefined;
 }
 
 export interface GetSFUConfigParams {
@@ -101,7 +131,7 @@ export async function getSFUConfig({
         slotId,
       });
     } catch (e) {
-      if (isEndpointUnsupported(e)) {
+      if (isCsApiUnavailable(e)) {
         logger.error(
           `Homeserver does not support the MSC4195 get_token endpoint, cannot get token for transport ${flow.url}`,
         );
@@ -152,7 +182,7 @@ export async function delegateDelayedLeave({
         delayId,
       });
     } catch (e) {
-      if (isEndpointUnsupported(e))
+      if (isCsApiUnavailable(e))
         logger.error(
           "Server misconfigured: transport contains a 'url' field but server does not support the MSC4195 delegate_delayed_leave endpoint",
         );
