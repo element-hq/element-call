@@ -65,22 +65,14 @@ jobs:
 
                - Does the change follow docs/agents/code-style.md and
                  docs/agents/architecture.md?
-               - Does it use the right React/RxJS/TS primitive for the job (prop vs.
-                 context, view model vs. component state, …)?
-               - Is it consistent with how the codebase already solves similar
-                 problems, rather than introducing a different tool or pattern?
 
             5. Repo architecture:
 
-               - Does each change live in the right layer, MatrixRTC/media logic
-                 in `sdk/`, app/UI/host concerns in Element Call (`src/`)?
-               - Is the SDK free of Element Call specifics (UI, config, widget
-                 or host assumptions)?
-               - Does Element Call consume the SDK through its public API rather
-                 than reimplementing or reaching into SDK internals?
-               - Are changes to any `api.ts` (public and internal) documented in
-                 the PR description? If not, summarize them in the final review
-                 comment.
+               - Does the change follow "Element Call on the SDK" in
+                 docs/agents/architecture.md and, where it touches `sdk/`,
+                 sdk/SdkArchitecture.md?
+               - If an `api.ts` changed and the PR description does not document
+                 it, summarize the change in the final review comment.
 
             Read the commits themselves with `git log` and `git diff` against
             the base branch of the PR.
