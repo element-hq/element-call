@@ -20,10 +20,14 @@ Please see LICENSE in the repository root for full details.
  * not (see src/utils/initClient.ts). This fails the build on each of those.
  */
 
+import { existsSync } from "node:fs";
 import { readdir, readFile, stat } from "node:fs/promises";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 
 const dist = "component/dist";
+
+/** The client store worker, whose chunk is named after this file. */
+const workerSource = "src/IndexedDBWorker.ts";
 
 /** The longest data URL a chunk may carry: enough for an icon, not a sound. */
 const inlineLimit = 16 * 1024;
@@ -34,19 +38,19 @@ const inlineLimit = 16 * 1024;
  */
 const moduleBudget = 4 * 1024 * 1024;
 
-/**
- * The modules a host bundles: the entry points and their chunks, at the top of
- * the package. What sits under `assets/` is fetched as it is, by URL.
- */
-async function modules() {
-  const names = await readdir(dist);
-  return names.filter((name) => name.endsWith(".js")).map((n) => join(dist, n));
-}
-
 const problems = [];
 
-for (const name of await readdir(join(dist, "assets")))
-  if (name.includes("IndexedDBWorker"))
+// A rename would otherwise turn the worker check off without a word.
+if (!existsSync(workerSource))
+  problems.push(
+    `${workerSource} is gone, so the check for the client store worker ` +
+      `cannot recognise its chunk. Point \`workerSource\` in ` +
+      `scripts/check-component-bundle.mjs at the worker's new name.`,
+  );
+const workerName = basename(workerSource, ".ts");
+
+for (const name of await assets())
+  if (name.includes(workerName))
     problems.push(
       `${dist}/assets/${name}: the standalone app's client store worker is ` +
         `in the package. Something the component reaches imports the worker; ` +
@@ -57,8 +61,10 @@ for (const name of await readdir(join(dist, "assets")))
 for (const file of await modules()) {
   const code = await readFile(file, "utf8");
 
-  for (const [, type, payload] of code.matchAll(
-    /data:([a-z0-9/.+-]*);base64,([A-Za-z0-9+/=]*)/g,
+  // Up to the closing quote rather than the end of the base64 alphabet, since
+  // SVGs are inlined URL-encoded rather than as base64.
+  for (const [, , type, payload] of code.matchAll(
+    /(["'`])data:([a-z0-9/.+-]*)(?:;base64)?,(.*?)\1/g,
   ))
     if (payload.length > inlineLimit)
       problems.push(
@@ -79,7 +85,7 @@ for (const file of await modules()) {
 const moduleSize = (await stat(join(dist, "element-call.js"))).size;
 if (moduleSize > moduleBudget)
   problems.push(
-    `${dist}/element-call.js is ${Math.round(moduleSize / 1024 / 1024)} MB, ` +
+    `${dist}/element-call.js is ${(moduleSize / 1024 / 1024).toFixed(1)} MB, ` +
       `over its ${moduleBudget / 1024 / 1024} MB budget. Something large ` +
       `has been bundled into the module that a host would rather fetch when ` +
       `it is needed.`,
@@ -89,4 +95,23 @@ if (problems.length > 0) {
   console.error(`The component build is not fit to publish:\n`);
   for (const problem of problems) console.error(`  ${problem}\n`);
   process.exit(1);
+}
+
+/** The files under `assets/`, none if the build emitted no such directory. */
+async function assets() {
+  try {
+    return await readdir(join(dist, "assets"));
+  } catch (e) {
+    if (e.code === "ENOENT") return [];
+    throw e;
+  }
+}
+
+/**
+ * The modules a host bundles: the entry points and their chunks, at the top of
+ * the package. What sits under `assets/` is fetched as it is, by URL.
+ */
+async function modules() {
+  const names = await readdir(dist);
+  return names.filter((name) => name.endsWith(".js")).map((n) => join(dist, n));
 }
