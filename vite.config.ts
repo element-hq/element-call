@@ -201,16 +201,9 @@ export default ({
  * crypto chunk and its WASM (about 10 MB) would only be shipped, never loaded.
  * The SDK imports it dynamically, from `initRustCrypto` and `preloadRustCrypto`;
  * here those reject instead.
- *
- * With `standaloneClient`, the worker behind the standalone app's sync store
- * goes too: a second copy of the SDK with the crypto, which only a client of
- * Element Call's own uses.
  */
-export function withoutMatrixCrypto({
-  standaloneClient = false,
-}: { standaloneClient?: boolean } = {}): Plugin {
+export function withoutMatrixCrypto(): Plugin {
   const crypto = "\0without-matrix-crypto";
-  const worker = "\0without-matrix-store-worker";
   const unavailable =
     "new Error('This build runs as a widget only: the host does the crypto')";
   return {
@@ -222,8 +215,6 @@ export function withoutMatrixCrypto({
         /(^|\/)rust-crypto\/index(\.js)?$/.test(source)
       )
         return crypto;
-      if (standaloneClient && source.endsWith("/IndexedDBWorker?worker"))
-        return worker;
       return null;
     },
     load(id): string | null {
@@ -232,8 +223,6 @@ export function withoutMatrixCrypto({
           `export async function initRustCrypto() { throw ${unavailable}; }`,
           `export async function preloadRustCrypto() { throw ${unavailable}; }`,
         ].join("\n");
-      if (id === worker)
-        return `export default class { constructor() { throw ${unavailable}; } }`;
       return null;
     },
   };

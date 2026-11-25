@@ -84,6 +84,11 @@ export default defineConfig({
       testMatch: "**/widget/embedded/build.setup.ts",
     },
     {
+      // Builds the widget RTC SDK's example widget for its preview server
+      name: "build-widget-rtc-sdk",
+      testMatch: "**/widget/widget-rtc-sdk.setup.ts",
+    },
+    {
       name: "chromium",
       testIgnore: ["**/mobile/**", "**/widget/**"],
       use: desktopChrome,
@@ -92,13 +97,13 @@ export default defineConfig({
       // Element Call as a widget in Element Web, on Chromium. This uses its
       // own project so that it can be sharded on CI.
       name: "widget",
-      dependencies: ["build-embedded"],
+      dependencies: ["build-embedded", "build-widget-rtc-sdk"],
       testMatch: "**/widget/**/*.@(spec|test).ts",
       use: desktopChrome,
     },
     {
       name: "firefox",
-      dependencies: ["build-embedded"],
+      dependencies: ["build-embedded", "build-widget-rtc-sdk"],
       testIgnore: "**/mobile/**",
       use: {
         ...devices["Desktop Firefox"],
@@ -187,11 +192,14 @@ export default defineConfig({
     {
       // The widget RTC SDK's example widget, which Element Web opens as a
       // widget. Bundled rather than from the dev server: Firefox now and then
-      // stalls on the dev server's hundreds of module requests.
+      // stalls on the dev server's hundreds of module requests. Servers start
+      // before any project, so the build-widget-rtc-sdk project fills the
+      // directory later and only the projects that open the widget wait for
+      // it. Until then there is no page, hence the port rather than the url.
       command:
-        "pnpm exec vite build --config vite-widget-rtc-sdk-dev.config.ts && " +
+        "mkdir -p dist-widget-rtc-sdk-example && " +
         "pnpm exec vite preview --config vite-widget-rtc-sdk-dev.config.ts",
-      url: WIDGET_RTC_SDK_URL,
+      port: Number(new URL(WIDGET_RTC_SDK_URL).port),
       reuseExistingServer: !process.env.CI,
       ignoreHTTPSErrors: true,
       gracefulShutdown: {
