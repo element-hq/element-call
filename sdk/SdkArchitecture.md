@@ -650,7 +650,9 @@ export type MediaSource =
   | "unknown";
 
 export type MediaStreamStats =
-  RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats | undefined;
+  | RTCInboundRtpStreamStats
+  | RTCOutboundRtpStreamStats
+  | undefined;
 
 /** One published track of a member. */
 export interface MediaTrack {
@@ -752,7 +754,9 @@ export interface LocalDataTrack extends DataTrack {
 
 export type Track = AudioMediaTrack | VideoMediaTrack | DataTrack;
 export type LocalTrack =
-  LocalAudioMediaTrack | LocalVideoMediaTrack | LocalDataTrack;
+  | LocalAudioMediaTrack
+  | LocalVideoMediaTrack
+  | LocalDataTrack;
 
 export type EncryptionError = "MissingKey" | "InvalidKey";
 
