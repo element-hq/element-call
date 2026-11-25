@@ -41,7 +41,11 @@ import {
   type ConnectionOpts,
 } from "./Connection.ts";
 import { ObservableScope } from "../../reactive/ObservableScope";
-import { type ClientGetTokenParts, type ClientOpenIDParts } from "./auth";
+import {
+  type ClientGetTokenParts,
+  type ClientOpenIDParts,
+  CsApiSupport,
+} from "./auth";
 import { LivekitConnectionError, MatrixRTCError } from "../../errors";
 import { testJWTToken } from "../../utils/test-fixtures";
 import { ownMemberMock } from "../../utils/test";
@@ -72,6 +76,7 @@ const transport: UnstableLivekitTransport = {
 function connectionOpts(): ConnectionOpts {
   return {
     client,
+    csApiSupport: new CsApiSupport(),
     roomId: ROOM_ID,
     slotId: SLOT_ID,
     role: "subscriber",

@@ -12,11 +12,7 @@ import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/En
 import { combineLatest, map, of, switchMap, tap } from "rxjs";
 
 import { type Behavior } from "../../reactive/Behavior";
-import {
-  Epoch,
-  mapEpoch,
-  type ObservableScope,
-} from "../../reactive/ObservableScope";
+import { Epoch, type ObservableScope } from "../../reactive/ObservableScope";
 import { generateItemsWithEpoch } from "../../reactive/observable";
 import {
   chooseAuthFlow,
@@ -32,18 +28,18 @@ export type TransportKey = string & { __transportKey: true };
 /**
  * Converts a {@link TransportLocator} to a key suitable for identifying it in a
  * map of connections.
+ 
+ * @param csApiUsable - The session's {@link CsApiSupport.usable}.
  */
-export function keyFor({
-  transport,
-  serverName,
-}: TransportLocator): TransportKey {
+export function keyFor(
+  { transport, serverName }: TransportLocator,
+  csApiUsable: boolean,
+): TransportKey {
   // Base the key on the auth flow we would use, so that we never create two
   // connections that share the same auth details. (That would be bad, as we
   // might then try to connect to the same SFU twice with the same participant
   // ID, resulting in only one working connection.)
-  // TODO: This strategy will not work once `chooseAuthFlow` begins allowing for
-  // falling back from the CS API flow to the OpenID flow.
-  const flow = chooseAuthFlow(transport);
+  const flow = chooseAuthFlow(transport, csApiUsable);
   // Serialize the fields in a consistent order
   return JSON.stringify([
     flow.kind,
@@ -54,11 +50,12 @@ export function keyFor({
 
 function removeDuplicateTransports(
   transports: TransportLocator[],
+  csApiUsable: boolean,
 ): TransportLocator[] {
   // The first locator wins, so the local one stays first in the list
   const map = new Map<TransportKey, TransportLocator>();
   for (const transport of transports) {
-    const key = keyFor(transport);
+    const key = keyFor(transport, csApiUsable);
     if (!map.has(key)) map.set(key, transport);
   }
   return [...map.values()];
@@ -71,10 +68,20 @@ export class ConnectionMap {
     { connection: Connection; participants: RemoteParticipant[] }
   >();
 
-  public constructor(private readonly logger?: Logger) {}
+  /**
+   * @param csApiUsable - The session's {@link CsApiSupport.usable}.
+   */
+  public constructor(
+    private readonly csApiUsable = true,
+    private readonly logger?: Logger,
+  ) {}
+
+  private keyFor(transport: TransportLocator): TransportKey {
+    return keyFor(transport, this.csApiUsable);
+  }
 
   public add(connection: Connection, participants: RemoteParticipant[]): void {
-    const key = keyFor(connection);
+    const key = this.keyFor(connection);
     const existing = this.map.get(key);
     if (!existing) {
       this.map.set(key, { connection, participants });
@@ -95,13 +102,13 @@ export class ConnectionMap {
   public getConnectionForTransport(
     transport: TransportLocator,
   ): Connection | null {
-    return this.map.get(keyFor(transport))?.connection ?? null;
+    return this.map.get(this.keyFor(transport))?.connection ?? null;
   }
 
   public getParticipantsForTransport(
     transport: TransportLocator,
   ): RemoteParticipant[] {
-    return this.map.get(keyFor(transport))?.participants ?? [];
+    return this.map.get(this.keyFor(transport))?.participants ?? [];
   }
 }
 
@@ -112,6 +119,8 @@ interface Props {
   localTransport: TransportLocator;
   /** Every transport some member is on, deduplicated against the local one. */
   remoteTransports$: Behavior<Epoch<TransportLocator[]>>;
+  /** The session's {@link CsApiSupport.usable$} which the connection keys follow. */
+  csApiUsable$: Behavior<boolean>;
   logger: Logger;
   ownMembershipIdentity: CallMembershipIdentityParts;
 }
@@ -120,43 +129,53 @@ interface Props {
  * One connection per transport in use by one or more session members, with
  * the remote participants each one sees. The connections start as they are
  * created and stop as their transport drops out of the list.
+ *
+ * If the client-server API turns out not to be usable, those transports that
+ * can fall back to using the OpenID flow will change key. Their connections
+ * are then replaced with new connections through the JWT service or fold into
+ * existing connections through the JWT service.
  */
 export function createConnectionMap$({
   scope,
   connectionFactory,
   localTransport,
   remoteTransports$,
+  csApiUsable$,
   logger: parentLogger,
   ownMembershipIdentity,
 }: Props): Behavior<Epoch<ConnectionMap>> {
   const logger = parentLogger.getChild("[ConnectionMap]");
 
-  const localAndRemoteTransports$: Behavior<Epoch<TransportLocator[]>> =
-    scope.behavior(
-      remoteTransports$.pipe(
-        mapEpoch((remoteTransports) =>
-          removeDuplicateTransports([localTransport, ...remoteTransports]),
-        ),
-        tap((transports) =>
-          logger.debug("localAndRemoteTransports$ = ", transports),
-        ),
+  const localAndRemoteTransports$ = scope.behavior(
+    combineLatest(
+      [remoteTransports$, csApiUsable$],
+      (remoteTransports, csApiUsable) =>
+        remoteTransports.mapInner((remote) => ({
+          transports: removeDuplicateTransports(
+            [localTransport, ...remote],
+            csApiUsable,
+          ),
+          csApiUsable,
+        })),
+    ).pipe(
+      tap(({ value }) =>
+        logger.debug("localAndRemoteTransports$ = ", value.transports),
       ),
-    );
-
-  const localTransportKey = keyFor(localTransport);
+    ),
+  );
 
   const connections$ = scope.behavior(
     localAndRemoteTransports$.pipe(
       generateItemsWithEpoch(
         "ConnectionMap connections$",
-        function* (transports) {
+        function* ({ transports, csApiUsable }) {
+          const localTransportKey = keyFor(localTransport, csApiUsable);
           for (const transport of transports) {
+            const key = keyFor(transport, csApiUsable);
             const role: ConnectionRole =
-              keyFor(transport) === localTransportKey
-                ? "publisher"
-                : "subscriber";
+              key === localTransportKey ? "publisher" : "subscriber";
             // The locator is an object, so a stable key stands in for it
-            yield { keys: [role, keyFor(transport)], data: transport };
+            yield { keys: [role, key], data: transport };
           }
         },
         (scope, locator$, role, _key) => {
@@ -178,10 +197,13 @@ export function createConnectionMap$({
   );
 
   return scope.behavior(
+    // The connections are regenerated in the same tick as the answer they are
+    // keyed under changes. So the two are always in step here.
     connections$.pipe(
       switchMap(({ value: connections, epoch }) => {
+        const csApiUsable = csApiUsable$.value;
         if (connections.length === 0)
-          return of(new Epoch(new ConnectionMap(), epoch));
+          return of(new Epoch(new ConnectionMap(csApiUsable), epoch));
         return combineLatest(
           connections.map((connection) =>
             connection.remoteParticipants$.pipe(
@@ -189,7 +211,7 @@ export function createConnectionMap$({
             ),
           ),
           (...list) => {
-            const map = new ConnectionMap(logger);
+            const map = new ConnectionMap(csApiUsable, logger);
             for (const item of list)
               map.add(item.connection, item.participants);
             return new Epoch(map, epoch);

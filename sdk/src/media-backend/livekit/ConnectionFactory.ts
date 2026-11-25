@@ -27,6 +27,7 @@ import {
   type ClientGetTokenParts,
   type ClientOpenIDParts,
   type ConnectionRole,
+  type CsApiSupport,
   type SFUConfig,
 } from "./auth";
 import { Connection, type ConnectionOpts } from "./Connection";
@@ -102,6 +103,7 @@ function resolvedTransport(config: SFUConfig): ResolvedTransport {
 export class LivekitConnectionFactory implements ConnectionFactory {
   public constructor(
     private readonly client: ClientGetTokenParts & ClientOpenIDParts,
+    private readonly csApiSupport: CsApiSupport,
     private readonly roomId: string,
     private readonly slotId: string,
     private readonly publish: PublishRequest[],
@@ -126,6 +128,7 @@ export class LivekitConnectionFactory implements ConnectionFactory {
         transport,
         serverName,
         client: this.client,
+        csApiSupport: this.csApiSupport,
         scope,
         livekitRoomFactory: () =>
           new LivekitRoom(

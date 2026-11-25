@@ -70,6 +70,6 @@ export {
 } from "./src/media-backend/livekit/videoProcessor";
 // For a developer panel to check a transport before using it
 export {
-  getSFUConfig as authenticateWithTransport,
-  type GetSFUConfigParams as AuthenticateWithTransportParams,
+  authenticateWithTransport,
+  type AuthenticateWithTransportParams,
 } from "./src/media-backend/livekit/auth";

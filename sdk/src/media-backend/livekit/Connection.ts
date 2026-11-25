@@ -33,6 +33,7 @@ import {
   type ClientGetTokenParts,
   type ClientOpenIDParts,
   type ConnectionRole,
+  type CsApiSupport,
   getSFUConfig,
   type SFUConfig,
 } from "./auth";
@@ -58,6 +59,8 @@ export interface ConnectionOpts {
   serverName: string;
   /** The Matrix client, for the token exchange. */
   client: ClientGetTokenParts & ClientOpenIDParts;
+  /** The session's knowledge of whether the client-server API is usable. */
+  csApiSupport: CsApiSupport;
   /** The Matrix room the session is in. */
   roomId: string;
   /** The MatrixRTC slot the session is in. */
@@ -134,6 +137,7 @@ export class Connection {
   protected stopped = false;
 
   private readonly client: ClientGetTokenParts & ClientOpenIDParts;
+  private readonly csApiSupport: CsApiSupport;
   private readonly roomId: string;
   private readonly slotId: string;
   private readonly logger: Logger;
@@ -161,6 +165,7 @@ export class Connection {
     this.transport = transport;
     this.serverName = serverName;
     this.client = client;
+    this.csApiSupport = opts.csApiSupport;
 
     this.remoteParticipants$ = scope.behavior(
       // Only tracks remote participants
@@ -403,6 +408,7 @@ export class Connection {
   protected async getSFUConfig(): Promise<SFUConfig> {
     return await getSFUConfig({
       client: this.client,
+      csApiSupport: this.csApiSupport,
       membership: this.ownMembershipIdentity,
       role: this.role,
       transport: this.transport,

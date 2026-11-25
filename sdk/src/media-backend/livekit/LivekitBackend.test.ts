@@ -168,6 +168,7 @@ describe("createLivekitBackend", () => {
     participants$: BehaviorSubject<RemoteParticipant[]>;
     state$: BehaviorSubject<ConnectionState>;
   }[];
+  let csApiSupport: auth.CsApiSupport;
   const connected: ConnectionState = {
     state: "authenticated",
     livekitState: LivekitConnectionState.Connected,
@@ -176,7 +177,8 @@ describe("createLivekitBackend", () => {
   /** Stands in for the factory: connections whose state and participants the test drives. */
   function stubFactory(initialState: ConnectionState): void {
     vi.spyOn(connectionFactory, "LivekitConnectionFactory").mockImplementation(
-      function (this: unknown) {
+      function (this: unknown, _client, support) {
+        csApiSupport = support;
         return {
           createConnection: (
             scope: ObservableScope,
@@ -231,12 +233,11 @@ describe("createLivekitBackend", () => {
   }
 
   // Delegation goes through whichever service authenticates us as a
-  // publisher: the JWT service wherever the transport names one, the
-  // homeserver for a `url` alone
+  // publisher.
   it.each([
     ["a JWT service that delegates", exampleTransport, 401, true],
     ["a JWT service that does not", exampleTransport, 404, false],
-    ["the JWT service over the homeserver", bothTransport, 401, true],
+    ["the homeserver over the JWT service", bothTransport, 404, true],
     ["the homeserver", urlTransport, 404, true],
   ])(
     "prepares the local transport for delegation through %s",
@@ -252,7 +253,7 @@ describe("createLivekitBackend", () => {
       // Only the service that issued the publisher's token is asked.
       expect(
         fetchMock.called(`${exampleServiceUrl}/delegate_delayed_leave`),
-      ).toBe("livekit_service_url" in transport);
+      ).toBe(transport === exampleTransport);
       expect(connections).toHaveLength(1);
       expect(connections[0].connection.role).toBe("publisher");
       expect(connections[0].connection.transport).toEqual(transport);
@@ -300,6 +301,41 @@ describe("createLivekitBackend", () => {
     const error = new NoMatrix2AuthorizationService(new Error("404"));
     connections[0].state$.next({ state: "error", error });
     await expect(preparing).rejects.toBe(error);
+  });
+
+  it("moves the publisher to the JWT service where the CS API is found missing", async () => {
+    fetchMock.post(`${exampleServiceUrl}/delegate_delayed_leave`, 401);
+    const delegate = vi.spyOn(auth, "delegateDelayedLeave").mockResolvedValue();
+    stubFactory({ state: "authenticating" });
+
+    const b = backend();
+    let prepared = false;
+    const preparing = b.prepareLocalTransport(bothTransport).then((c) => {
+      prepared = true;
+      return c;
+    });
+    await flushPromises();
+    expect(connections).toHaveLength(1);
+
+    // Simulate the first connection reporting that its token request found no API.
+    csApiSupport.ruleOut();
+    expect(connections).toHaveLength(2);
+    expect(connections[1].connection.role).toBe("publisher");
+    expect(connections[1].connection.transport).toEqual(bothTransport);
+
+    // The replaced connection winding down is not the preparation failing.
+    connections[0].state$.next({ state: "stopped" });
+    await flushPromises();
+    expect(prepared).toBe(false);
+
+    connections[1].state$.next(connected);
+    expect(await preparing).toEqual({ canDelegateDelayedLeave: true });
+    expect(
+      fetchMock.called(`${exampleServiceUrl}/delegate_delayed_leave`),
+    ).toBe(true);
+
+    await b.delegateDelayedLeave("delay-1");
+    expect(delegate.mock.calls[0][0].csApiSupport.usable).toBe(false);
   });
 
   it("delegates the leave through the flow that authenticated the publisher", async () => {

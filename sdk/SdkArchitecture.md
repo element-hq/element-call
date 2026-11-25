@@ -586,33 +586,46 @@ without one, LiveKit is built from the LiveKit-flavoured client options.
 
 A LiveKit transport comes in three shapes while MSC4195 settles: an SFU `url`,
 a JWT service `livekit_service_url`, or both. `media-backend/livekit/auth/`
-fronts the two flows and chooses between them per connection, from the shape
-and from the role we take on the transport:
+fronts the two flows and chooses between them from the shape, preferring the
+client-server API wherever the transport names a `url`:
 
-| Transport                  | Publisher                                  | Subscriber                                                                                                             |
-| -------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| `url` only                 | client-server API `get_token`, no fallback | client-server API `get_token`, no fallback                                                                             |
-| `livekit_service_url` only | JWT service `/sfu/get` (legacy identity)   | JWT service `/get_token` (hashed identity)                                                                             |
-| both                       | JWT service `/sfu/get` (legacy identity)   | client-server API, falling back to the JWT service `/get_token` where the homeserver, or a widget host, has no MSC4195 |
+| Transport                  | Publisher                                                        | Subscriber                                                         |
+| -------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `url` only                 | client-server API `get_token`, no fallback                       | client-server API `get_token`, no fallback                         |
+| `livekit_service_url` only | JWT service `/sfu/get` (legacy identity)                         | JWT service `/get_token` (hashed identity)                         |
+| both                       | client-server API, else JWT service `/sfu/get` (legacy identity) | client-server API, else JWT service `/get_token` (hashed identity) |
 
-A publisher on a transport with a service URL keeps the legacy
-`<user_id>:<device_id>` identity, because clients predating MSC4195 match a
-membership against that and nothing else; a subscriber is matched by nobody and
-takes the more private hashed identity. A publisher never falls back: a
-homeserver that advertises a `url` without implementing MSC4195 is misconfigured
-and fails with `NoMatrix2AuthorizationService`, so the admin hears about it.
-The MatrixRTC mode plays no part in the choice. The delayed leave is delegated
-through the same flow that issued the publisher's token, so that the identity
-the service watches for on the SFU is the one we publish under. A homeserver
-that issued the token is assumed to delegate. Only a JWT service is probed,
-before the join.
+A member whose transport names both is matched against either identity (since
+Element Call 0.28.1), so a publisher may take either flow. On the JWT service
+a publisher uses `/sfu/get`, the only endpoint that assigns the legacy
+`<user_id>:<device_id>` identity. A subscriber is matched by nobody and takes
+the hashed one.
+
+The JWT service stands in only where our homeserver has no MSC4195 endpoints.
+The backend learns that from a token request answered with a 404,
+`M_NOT_FOUND` or `M_UNRECOGNIZED` (`isEndpointUnsupported`) and holds it for
+the session in `CsApiSupport`. If that request fails, the re-keying described
+below gets its transport a token through the JWT service. A transport with a
+`url` alone has no fallback and fails with `NoMatrix2AuthorizationService`.
+The MatrixRTC mode plays no part in the choice.
+
+The delayed leave is delegated through the flow that issued the publisher's
+token, so that the service watches for the identity we publish under. A
+homeserver that issued the token is assumed to delegate. Only a JWT service is
+probed, before the join.
 
 The client-server API needs the name of the homeserver the transport belongs to:
 our own homeserver asks that server for the token, over federation where it is
 not ours. The backend derives it from the member's user id, and from our own for
-the local transport, and keys its connections on the transport plus the server
-name where the transport has a `url`. A JWT service is reached directly, so
-members of several homeservers advertising the same one share a connection.
+the local transport. A JWT service is reached directly, so members of several
+homeservers advertising the same one share a connection.
+
+Connections are keyed on the flow and what it authenticates against: the `url`
+plus the server name for the client-server API, the service URL for the JWT
+service. Transports with the same key would get us the same identity on the
+same SFU, so they share a connection. A transport naming both shares with the
+`url` transports of its homeserver, and is re-keyed onto the JWT service's
+connection once the API is found missing, at most once per session.
 
 ## Media: `tracks$` and `MediaTrack`
 

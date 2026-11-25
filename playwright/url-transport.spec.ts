@@ -58,20 +58,20 @@ const cases: {
     guestFlows: ["cs-api"],
   },
   {
-    // Publishers keep the legacy participant identity that clients predating
-    // MSC4195 expect, which only the JWT service assigns.
+    // The client-server API is preferred wherever a transport names a url.
+    // Clients since 0.28.1 match such a publisher by either identity.
     hostShape: "url+legacy",
     guestShape: "url+legacy",
-    hostFlows: ["service-legacy"],
-    guestFlows: ["service-legacy"],
+    hostFlows: ["cs-api"],
+    guestFlows: ["cs-api"],
   },
   {
     // The MatrixRTC mode has no bearing on the choice.
     hostShape: "url+legacy",
     guestShape: "url+legacy",
     mode: "2_0",
-    hostFlows: ["service-legacy"],
-    guestFlows: ["service-legacy"],
+    hostFlows: ["cs-api"],
+    guestFlows: ["cs-api"],
   },
   {
     hostShape: "url",
@@ -80,10 +80,12 @@ const cases: {
     guestFlows: ["service-legacy", "cs-api"],
   },
   {
+    // Both reach the SFU through the client-server API, under one identity
+    // each, so one connection serves the own and the other's transport.
     hostShape: "url",
     guestShape: "url+legacy",
-    hostFlows: ["cs-api", "service-default"],
-    guestFlows: ["service-legacy", "cs-api"],
+    hostFlows: ["cs-api"],
+    guestFlows: ["cs-api"],
   },
 ];
 
@@ -160,6 +162,50 @@ test("Publisher shows an error when the homeserver lacks MSC4195", async ({
   ).toBeVisible();
 });
 
+test("Falls back to the JWT service for a url+legacy transport when the homeserver lacks MSC4195", async ({
+  browser,
+  page,
+  browserName,
+}) => {
+  skipOnFirefox(browserName);
+
+  // The host starts the call; its C-S requests fail.
+  await advertiseTransport(page, shapes["url+legacy"]);
+  await rejectCsApiTokens(page);
+  const hostRequests = recordAuthRequests(page);
+  await page.goto("/");
+  await SpaHelpers.createCall(page, "Androl", "HelloCall", true);
+  const inviteLink = await SpaHelpers.getCallInviteLink(page);
+
+  // The guest joins, and its C-S requests fail as well.
+  const guestContext = await browser.newContext({ reducedMotion: "reduce" });
+  const guestPage = await guestContext.newPage();
+  await advertiseTransport(guestPage, shapes["url+legacy"]);
+  await rejectCsApiTokens(guestPage);
+  const guestRequests = recordAuthRequests(guestPage);
+  await SpaHelpers.joinCallFromInviteLink(guestPage, inviteLink, "Pevara");
+
+  // The call connects all the same.
+  await SpaHelpers.expectVideoTilesCount(page, 2);
+  await SpaHelpers.expectVideoTilesCount(guestPage, 2);
+
+  for (const requests of [hostRequests, guestRequests]) {
+    // Each published through the JWT service, under the legacy identity, and
+    // subscribes to the other over that same connection.
+    expect(flowsOf(requests)).toEqual(
+      new Set<Flow>(["cs-api", "service-legacy"]),
+    );
+    for (const request of requests) {
+      if (request.flow === "cs-api") {
+        expect(request.status).toBe(404);
+      } else {
+        expect(request.status).toBe(200);
+        expect(request.identity).toMatch(legacyIdentity);
+      }
+    }
+  }
+});
+
 test("Group call with all possible transport shapes at once", async ({
   browser,
   page,
@@ -193,13 +239,12 @@ test("Group call with all possible transport shapes at once", async ({
 });
 
 /**
- * Delegation follows the flow that authenticated the publisher: the homeserver
- * for a `url`-only transport, the JWT service wherever there is one.
+ * Delegation follows the flow that authenticated the publisher.
  */
 const delegationCases: { shape: Shape; via: Delegation["via"] }[] = [
   { shape: "url", via: "homeserver" },
   { shape: "legacy", via: "service" },
-  { shape: "url+legacy", via: "service" },
+  { shape: "url+legacy", via: "homeserver" },
 ];
 
 for (const { shape, via } of delegationCases) {

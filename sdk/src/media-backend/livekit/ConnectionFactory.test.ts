@@ -18,7 +18,11 @@ import { type PublishRequest } from "../../media-api";
 import { constant } from "../../reactive/Behavior";
 import { ownMemberMock, testScope } from "../../utils/test";
 import { testJWTToken } from "../../utils/test-fixtures";
-import { type ClientGetTokenParts, type ClientOpenIDParts } from "./auth";
+import {
+  type ClientGetTokenParts,
+  type ClientOpenIDParts,
+  CsApiSupport,
+} from "./auth";
 import {
   LivekitConnectionFactory,
   type ResolvedConnection,
@@ -50,6 +54,7 @@ function create(
 ): { connection: ResolvedConnection; options: RoomOptions } {
   const factory = new LivekitConnectionFactory(
     client(),
+    new CsApiSupport(),
     "!room:example.org",
     "m.call#ROOM",
     publish,

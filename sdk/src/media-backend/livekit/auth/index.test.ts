@@ -5,7 +5,15 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { afterEach, describe, expect, it, type Mocked, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  type Mocked,
+  vi,
+} from "vitest";
 import fetchMock from "fetch-mock";
 import { MatrixError } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
@@ -20,7 +28,13 @@ import {
 } from "../../../utils/test-fixtures";
 import type * as csApi from "./csApi";
 import type * as openID from "./openID";
-import { chooseAuthFlow, delegateDelayedLeave, getSFUConfig } from ".";
+import {
+  authenticateWithTransport,
+  chooseAuthFlow,
+  CsApiSupport,
+  delegateDelayedLeave,
+  getSFUConfig,
+} from ".";
 
 const aliceId = `${aliceUserId}:${aliceDeviceId}`;
 const csApiJWTToken = createJWTToken(aliceId, "via CS API");
@@ -50,6 +64,12 @@ const roomId = "!room:example.org";
 const slotId = "m.call#ROOM";
 
 const unsupportedError = new MatrixError({ errcode: "M_UNSUPPORTED" }, 404);
+
+/** The session's state. Fresh for every test. */
+let csApiSupport: CsApiSupport;
+beforeEach(() => {
+  csApiSupport = new CsApiSupport();
+});
 
 const urlTransport: UnstableLivekitTransport = {
   type: "livekit",
@@ -98,6 +118,9 @@ describe("getSFUConfig", () => {
     roomId,
     slotId,
     logger,
+    get csApiSupport(): CsApiSupport {
+      return csApiSupport;
+    },
   };
 
   it("uses CS API with url transport", async () => {
@@ -144,36 +167,85 @@ describe("getSFUConfig", () => {
     expect(jwtServiceCalls()).toEqual(["/get_token"]);
   });
 
-  it("uses OpenID when subscribing with url + livekit_service_url transport", async () => {
+  it.each(["subscriber", "publisher"] as const)(
+    "prefers CS API as %s with url + livekit_service_url transport",
+    async (role) => {
+      mockJWTService();
+      expect(
+        await getSFUConfig({
+          ...defaultParams,
+          transport: urlAndServiceUrlTransport,
+          role,
+        }),
+      ).toEqual(
+        expect.objectContaining({
+          jwt: csApiJWTToken,
+          livekitAlias: "via CS API",
+        }),
+      );
+      expect(client.getLivekitToken).toHaveBeenCalled();
+      expect(jwtServiceCalls()).toEqual([]);
+      expect(csApiSupport.usable).toBe(true);
+    },
+  );
+
+  it("rules the CS API out and fails with url + livekit_service_url transport where the homeserver lacks the endpoint", async () => {
     mockJWTService();
-    expect(
-      await getSFUConfig({
+    client.getLivekitToken.mockRejectedValueOnce(unsupportedError);
+    await expect(
+      getSFUConfig({
         ...defaultParams,
         transport: urlAndServiceUrlTransport,
       }),
-    ).toEqual(
-      expect.objectContaining({
-        jwt: defaultJWTToken,
-        livekitAlias: "via default endpoint",
-      }),
-    );
+    ).rejects.toThrow(expect.any(NoMatrix2AuthorizationService));
+    expect(jwtServiceCalls()).toEqual([]);
+    expect(csApiSupport.usable).toBe(false);
+  });
+
+  it("goes straight to OpenID once the CS API has been found missing", async () => {
+    mockJWTService();
+    client.getLivekitToken.mockRejectedValueOnce(unsupportedError);
+    await expect(
+      getSFUConfig({ ...defaultParams, transport: urlTransport }),
+    ).rejects.toThrow(expect.any(NoMatrix2AuthorizationService));
+    client.getLivekitToken.mockClear();
+
+    await getSFUConfig({
+      ...defaultParams,
+      transport: urlAndServiceUrlTransport,
+    });
     expect(client.getLivekitToken).not.toHaveBeenCalled();
     expect(jwtServiceCalls()).toEqual(["/get_token"]);
   });
 
-  it("surfaces the widget host's refusal with url transport", async () => {
+  it("does not rule the CS API out where the homeserver refuses the request", async () => {
     mockJWTService();
-    const error = new Error(
-      "The rtc_livekit_get_token action is not supported by the client.",
-    );
-    client.getLivekitToken.mockRejectedValueOnce(error);
+    const forbidden = new MatrixError({ errcode: "M_FORBIDDEN" }, 403);
+    client.getLivekitToken.mockRejectedValueOnce(forbidden);
     await expect(
-      getSFUConfig({ ...defaultParams, transport: urlTransport }),
-    ).rejects.toThrow(error);
+      getSFUConfig({ ...defaultParams, transport: urlAndServiceUrlTransport }),
+    ).rejects.toThrow(forbidden);
     expect(jwtServiceCalls()).toEqual([]);
+    expect(csApiSupport.usable).toBe(true);
   });
 
-  it("recognises a not found that a widget host relays", async () => {
+  it("rules the CS API out for another homeserver's transport", async () => {
+    mockJWTService();
+    client.getLivekitToken.mockRejectedValueOnce(
+      new MatrixError({ errcode: "M_UNRECOGNIZED" }, 404),
+    );
+    await expect(
+      getSFUConfig({
+        ...defaultParams,
+        serverName: "elsewhere.org",
+        transport: urlAndServiceUrlTransport,
+      }),
+    ).rejects.toThrow(expect.any(NoMatrix2AuthorizationService));
+    expect(jwtServiceCalls()).toEqual([]);
+    expect(csApiSupport.usable).toBe(false);
+  });
+
+  it("rules the CS API out where a widget host relays the homeserver's not found", async () => {
     mockJWTService();
     // The widget API's WidgetApiResponseError arrives in a minified build.
     const relayed = Object.assign(new Error("Unrecognized request"), {
@@ -187,9 +259,28 @@ describe("getSFUConfig", () => {
     });
     client.getLivekitToken.mockRejectedValueOnce(relayed);
     await expect(
-      getSFUConfig({ ...defaultParams, transport: urlTransport }),
+      getSFUConfig({
+        ...defaultParams,
+        transport: urlAndServiceUrlTransport,
+      }),
     ).rejects.toThrow(expect.any(NoMatrix2AuthorizationService));
     expect(jwtServiceCalls()).toEqual([]);
+    expect(csApiSupport.usable).toBe(false);
+  });
+
+  it.each([
+    ["a token that does not decode", { jwt: "not a token" }],
+    ["an error of our own", new TypeError("oops")],
+  ])("does not judge the CS API by %s", async (_what, outcome) => {
+    mockJWTService();
+    if (outcome instanceof Error)
+      client.getLivekitToken.mockRejectedValueOnce(outcome);
+    else client.getLivekitToken.mockResolvedValueOnce(outcome);
+    await expect(
+      getSFUConfig({ ...defaultParams, transport: urlAndServiceUrlTransport }),
+    ).rejects.toThrow();
+    expect(jwtServiceCalls()).toEqual([]);
+    expect(csApiSupport.usable).toBe(true);
   });
 
   it("uses CS API when publishing with url transport", async () => {
@@ -218,25 +309,71 @@ describe("getSFUConfig", () => {
     expect(client.getLivekitToken).toHaveBeenCalled();
     expect(jwtServiceCalls()).toEqual([]);
   });
+});
 
-  it("uses the legacy OpenID endpoint when publishing with url + livekit_service_url transport", async () => {
+describe("authenticateWithTransport", () => {
+  const defaultParams = {
+    client,
+    membership,
+    serverName: "example.org",
+    role: "subscriber" as const,
+    roomId,
+    slotId,
+    logger,
+  };
+
+  it("uses CS API with url + livekit_service_url transport", async () => {
     mockJWTService();
-    // Subscribers predating MSC4195 expect a legacy participant identity from
-    // anyone advertising a membership, which only the JWT service assigns
     expect(
-      await getSFUConfig({
+      await authenticateWithTransport({
         ...defaultParams,
         transport: urlAndServiceUrlTransport,
-        role: "publisher",
       }),
-    ).toEqual(
-      expect.objectContaining({
-        jwt: legacyJWTToken,
-        livekitAlias: "via legacy endpoint",
+    ).toEqual(expect.objectContaining({ jwt: csApiJWTToken }));
+    expect(jwtServiceCalls()).toEqual([]);
+  });
+
+  it.each([
+    ["subscriber", "/get_token", defaultJWTToken],
+    ["publisher", "/sfu/get", legacyJWTToken],
+  ] as const)(
+    "falls back to OpenID as %s where the homeserver lacks the endpoint",
+    async (role, endpoint, jwt) => {
+      mockJWTService();
+      client.getLivekitToken.mockRejectedValueOnce(unsupportedError);
+      expect(
+        await authenticateWithTransport({
+          ...defaultParams,
+          transport: urlAndServiceUrlTransport,
+          role,
+        }),
+      ).toEqual(expect.objectContaining({ jwt }));
+      expect(client.getLivekitToken).toHaveBeenCalledTimes(1);
+      expect(jwtServiceCalls()).toEqual([endpoint]);
+    },
+  );
+
+  it("does not fall back with url transport", async () => {
+    mockJWTService();
+    client.getLivekitToken.mockRejectedValueOnce(unsupportedError);
+    await expect(
+      authenticateWithTransport({ ...defaultParams, transport: urlTransport }),
+    ).rejects.toThrow(expect.any(NoMatrix2AuthorizationService));
+    expect(client.getLivekitToken).toHaveBeenCalledTimes(1);
+    expect(jwtServiceCalls()).toEqual([]);
+  });
+
+  it("does not fall back where the homeserver refuses the request", async () => {
+    mockJWTService();
+    const forbidden = new MatrixError({ errcode: "M_FORBIDDEN" }, 403);
+    client.getLivekitToken.mockRejectedValueOnce(forbidden);
+    await expect(
+      authenticateWithTransport({
+        ...defaultParams,
+        transport: urlAndServiceUrlTransport,
       }),
-    );
-    expect(client.getLivekitToken).not.toHaveBeenCalled();
-    expect(jwtServiceCalls()).toEqual(["/sfu/get"]);
+    ).rejects.toThrow(forbidden);
+    expect(jwtServiceCalls()).toEqual([]);
   });
 });
 
@@ -249,6 +386,9 @@ describe("delegateDelayedLeave", () => {
     delayId: "delay123",
     delayTimeoutMs: 3_600_000,
     logger,
+    get csApiSupport(): CsApiSupport {
+      return csApiSupport;
+    },
   };
 
   /** The delay fields the JWT service was handed, if any. */
@@ -298,9 +438,32 @@ describe("delegateDelayedLeave", () => {
     });
   });
 
-  it("uses OpenID with url + livekit_service_url transport", async () => {
+  it("uses CS API with url + livekit_service_url transport", async () => {
+    mockJWTService();
+    await delegateDelayedLeave({
+      ...defaultParams,
+      transport: urlAndServiceUrlTransport,
+    });
+    expect(client.delegateDelayedLeave).toHaveBeenCalled();
+    expect(jwtServiceCalls()).toEqual([]);
+  });
+
+  it("does not fall back to OpenID with url + livekit_service_url transport", async () => {
+    mockJWTService();
+    client.delegateDelayedLeave.mockRejectedValueOnce(unsupportedError);
+    await expect(
+      delegateDelayedLeave({
+        ...defaultParams,
+        transport: urlAndServiceUrlTransport,
+      }),
+    ).rejects.toThrow();
+    expect(jwtServiceCalls()).toEqual([]);
+  });
+
+  it("uses OpenID with url + livekit_service_url transport when the token came from there", async () => {
     mockJWTService();
     // Must match the flow that got the token, so the identities line up
+    csApiSupport.ruleOut();
     await delegateDelayedLeave({
       ...defaultParams,
       transport: urlAndServiceUrlTransport,
@@ -315,22 +478,36 @@ describe("delegateDelayedLeave", () => {
 });
 
 describe("chooseAuthFlow", () => {
+  const viaCsApi = { kind: "csApi", url: urlTransport.url };
+  const viaOpenID = { kind: "openID", serviceUrl };
   it.each([
-    ["url", urlTransport, { kind: "csApi", url: urlTransport.url }],
-    [
-      "livekit_service_url",
-      serviceUrlTransport,
-      { kind: "openID", serviceUrl },
-    ],
-    [
-      "url + livekit_service_url",
-      urlAndServiceUrlTransport,
-      { kind: "openID", serviceUrl },
-    ],
+    ["url", urlTransport, true, viaCsApi],
+    ["url", urlTransport, false, viaCsApi],
+    ["livekit_service_url", serviceUrlTransport, true, viaOpenID],
+    ["livekit_service_url", serviceUrlTransport, false, viaOpenID],
+    ["url + livekit_service_url", urlAndServiceUrlTransport, true, viaCsApi],
+    ["url + livekit_service_url", urlAndServiceUrlTransport, false, viaOpenID],
   ] as const)(
-    "chooses the flow for a %s transport as %s",
-    (_shape, transport, flow) => {
-      expect(chooseAuthFlow(transport)).toEqual(flow);
+    "chooses the flow for a %s transport with the CS API usable: %s",
+    (_shape, transport, csApiUsable, flow) => {
+      expect(chooseAuthFlow(transport, csApiUsable)).toEqual(flow);
     },
   );
+});
+
+describe("CsApiSupport", () => {
+  it("counts the API as usable until it is found missing", () => {
+    expect(csApiSupport.usable).toBe(true);
+    csApiSupport.ruleOut();
+    expect(csApiSupport.usable).toBe(false);
+    expect(csApiSupport.usable$.value).toBe(false);
+  });
+
+  it("reports the change once however often the API is found missing", () => {
+    const seen: boolean[] = [];
+    csApiSupport.usable$.subscribe((usable) => seen.push(usable));
+    csApiSupport.ruleOut();
+    csApiSupport.ruleOut();
+    expect(seen).toEqual([true, false]);
+  });
 });

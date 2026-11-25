@@ -43,6 +43,7 @@ import {
 } from "../api";
 import {
   chooseAuthFlow,
+  CsApiSupport,
   delegateDelayedLeave,
   type TransportLocator,
 } from "./auth";
@@ -102,8 +103,13 @@ export function createLivekitBackend(
   const audioOutputDeviceId$ = new BehaviorSubject<string | undefined>(
     undefined,
   );
+  // Track whether the client-server API authentication flow is supported
+  // per session. We need to infer this from the first authentication request
+  // because the MSC doesn't define an unstable feature flag.
+  const csApiSupport = new CsApiSupport();
   const connectionFactory = new LivekitConnectionFactory(
     client,
+    csApiSupport,
     roomId,
     slotId,
     publish,
@@ -121,6 +127,7 @@ export function createLivekitBackend(
         connectionFactory,
         localTransport,
         remoteTransports$: transports.transports$,
+        csApiUsable$: csApiSupport.usable$,
         logger,
         ownMembershipIdentity,
       }),
@@ -165,7 +172,7 @@ export function createLivekitBackend(
     }
     // Now that we are authenticated, check which flow was used so that we can
     // use the same flow for delegation.
-    const flow = chooseAuthFlow(transport);
+    const flow = chooseAuthFlow(transport, csApiSupport.usable);
     if (flow.kind === "csApi") {
       // If the client-server authentication endpoint is available, the delegation
       // endpoint is available, too. Both have been released together in lk-jwt-service.
@@ -188,6 +195,7 @@ export function createLivekitBackend(
       throw new MatrixRTCError("No local transport to delegate the leave to");
     await delegateDelayedLeave({
       client,
+      csApiSupport,
       membership: ownMembershipIdentity,
       transport: local.transport,
       roomId,
