@@ -7,10 +7,15 @@ on:
       - labeled
   push:
     branches: [main]
+
+permissions: {}
+
 jobs:
   build_full_element_call:
     # Use the full package vite build
-    uses: ./.github/workflows/build-element-call.yaml
+    permissions:
+      contents: read
+    uses: $/.github/workflows/build-element-call.yaml
     with:
       package: full
       vite_app_version: ${{ github.event.release.tag_name || github.sha }}
@@ -26,6 +31,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     needs: build_full_element_call
     runs-on: ubuntu-24.04
+    permissions: {}
     steps:
       - name: Deploy to call.element.dev
         uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6
@@ -50,8 +56,10 @@ jobs:
       contents: write
       packages: write
       id-token: write
-    uses: ./.github/workflows/build-and-publish-docker.yaml
-    secrets: inherit
+    uses: $/.github/workflows/build-and-publish-docker.yaml
+    secrets:
+      TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+      TS_AUDIENCE: ${{ secrets.TS_AUDIENCE }}
     with:
       artifact_run_id: ${{ github.run_id }}
       docker_tags: |
@@ -60,7 +68,9 @@ jobs:
         type=raw,value=latest-ci_{{date 'X' }}
   build_embedded_element_call:
     # Use the embedded package vite build
-    uses: ./.github/workflows/build-element-call.yaml
+    permissions:
+      contents: read
+    uses: $/.github/workflows/build-element-call.yaml
     with:
       package: embedded
       vite_app_version: ${{ github.event.release.tag_name || github.sha }}
@@ -77,7 +87,9 @@ jobs:
     # package (build:sdk:production, sdk-target-based-on-call-view-model/), not
     # the package itself. The name is shared with pr-deploy.yaml, which always
     # runs from main, so it stays until the bundle's consumers have moved over.
-    uses: ./.github/workflows/build-element-call.yaml
+    permissions:
+      contents: read
+    uses: $/.github/workflows/build-element-call.yaml
     with:
       package: sdk
       vite_app_version: ${{ github.event.release.tag_name || github.sha }}
@@ -93,6 +105,8 @@ jobs:
     name: Build Storybook
     if: contains(github.event.pull_request.labels.*.name, 'storybook build')
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
@@ -101,7 +115,7 @@ jobs:
       - name: Enable Corepack
         run: corepack enable
       - name: pnpm cache
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           cache: "pnpm"
           node-version-file: ".node-version"
