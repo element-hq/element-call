@@ -28,7 +28,7 @@
 
       sdk.data$.subscribe((data) => {
         const child = document.createElement("p");
-        child.innerHTML = JSON.stringify(data);
+        child.textContent = JSON.stringify(data);
         div.appendChild(child);
       });
 
@@ -42,7 +42,7 @@
         for (const m of members) {
           console.info("member", m);
           const child = document.createElement("p");
-          child.innerHTML = m;
+          child.textContent = m;
           div.appendChild(child);
         }
       });
