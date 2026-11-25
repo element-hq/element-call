@@ -50,3 +50,4 @@ Uncomment the markdown table below and fill in the last line:
 - [ ] Visible changes without a story include screenshots or a video.
 - [ ] Checked standalone, as a widget and as a component.
 - [ ] Linter and other CI checks pass.
+- [ ] Claude review has been run at least once (assign the Claude-Review label)
