@@ -2,6 +2,7 @@ node_modules
 .DS_Store
 .env
 dist
+dist-embedded
 dist-ssr
 *.local
 *.bkp
