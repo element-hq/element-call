@@ -276,7 +276,11 @@ export async function createMatrixRTCSdk(
         });
     },
     leave,
-    stop: (): void => scope.end(),
+    stop: (): void => {
+      scope.end();
+      client.stopClient();
+      api.transport.stop();
+    },
     connected$: over(
       (p) => p.state$.pipe(map((state) => state.kind === "connected")),
       false,
