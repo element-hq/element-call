@@ -21,6 +21,18 @@ rejected and why — never add one silently. Extend or parameterise before forki
 and extract shared logic into a hook both callers use before copying it; if you
 copy, the PR says so.
 
+The same holds for tools and patterns: solve a problem the way the codebase
+already solves it. A new library or pattern is a decision the PR body names, not a
+side effect.
+
+## Pick the primitive the job needs
+
+- Call state lives in a view model; `useState` holds only what the view alone
+  cares about — an open menu, a hover.
+- A prop by default. Context is for what a whole mounted instance shares — the
+  host bridge, the root element, URL params — not for skipping a level of props.
+- A `Behavior` for anything with a current value, a plain observable for events.
+
 ## Ordering
 
 - **Newspaper order.** Headline first, detail down. A file opens with what it
