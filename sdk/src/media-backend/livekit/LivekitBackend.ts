@@ -69,7 +69,7 @@ import { createLivekitLocalMedia } from "./LocalMedia";
 export interface LivekitBackendOptions {
   /**
    * `getOpenIdToken` for the JWT service flow, the MSC4195 methods for the
-   * client-server API flow, `baseUrl` for the delegation probe and handover.
+   * client-server API flow, `baseUrl` for the delegation handover.
    */
   client: Pick<
     MatrixClient,
@@ -143,13 +143,6 @@ export function createLivekitBackend(
     logger,
   });
 
-  // Probed once: the answer cannot change within a session
-  const homeserverSupportsDelegation = supportsDelegation(
-    `${client.baseUrl}/_matrix/client/unstable/io.element.msc4195/rtc/livekit/delegate_delayed_leave`,
-    "homeserver",
-    logger,
-  );
-
   const ownServerName = serverNameOf(ownMembershipIdentity.userId);
 
   const prepareLocalTransport = async (
@@ -162,35 +155,36 @@ export function createLivekitBackend(
       ownMembershipIdentity.userId,
     );
     const locator: TransportLocator = { transport, serverName };
-    let canDelegate: Promise<boolean>;
-    if (serverName !== ownServerName) {
-      // Our homeserver only takes over leaves for its own SFUs
-      logger.info(
-        `Publishing on a remote SFU of ${serverName}, delegation is not possible`,
-      );
-      canDelegate = Promise.resolve(false);
-    } else {
-      // Check for support using the same auth flow that we intend to use later
-      const flow = chooseAuthFlow(transport);
-      canDelegate =
-        flow.kind === "openID"
-          ? supportsDelegation(
-              `${flow.serviceUrl}/delegate_delayed_leave`,
-              `transport ${flow.serviceUrl}`,
-              logger,
-            )
-          : homeserverSupportsDelegation;
-    }
     localTransport$.next(locator);
     // The membership is only sent once the publisher connection holds its
     // token, so that the LiveKit room exists before anyone subscribes to it:
     // a subscriber lacks the permission to create it and would fail without
     // retrying
-    const [, canDelegateDelayedLeave] = await Promise.all([
-      authenticated(localMedia_.connection$),
-      canDelegate,
-    ]);
-    return { canDelegateDelayedLeave };
+    await authenticated(localMedia_.connection$);
+    if (serverName !== ownServerName) {
+      // Our homeserver only takes over leaves for its own SFUs
+      logger.info(
+        `Publishing on a remote SFU of ${serverName}, delegation is not possible`,
+      );
+      return { canDelegateDelayedLeave: false };
+    }
+    // Now that we are authenticated, check which flow was used so that we can
+    // use the same flow for delegation.
+    const flow = chooseAuthFlow(transport);
+    if (flow.kind === "csApi") {
+      // If the client-server authentication endpoint is available, the delegation
+      // endpoint is available, too. Both have been released together in lk-jwt-service.
+      return { canDelegateDelayedLeave: true };
+    }
+    // The OpenID flow was used but the lk-jwt-instance may still predate delegation. Check
+    // if the delegation endpoint is supported.
+    return {
+      canDelegateDelayedLeave: await supportsDelegation(
+        `${flow.serviceUrl}/delegate_delayed_leave`,
+        `transport ${flow.serviceUrl}`,
+        logger,
+      ),
+    };
   };
 
   const delegateLeave = async (delayId: string): Promise<void> => {

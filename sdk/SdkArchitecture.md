@@ -121,10 +121,10 @@ LiveKit participants.
 The session discovers the transport from the homeserver and the backend prepares
 it, both before `join()`, so that the membership can name it and the first frames
 go out as soon as the state event is sent. Preparing is the backend's own
-business: for LiveKit the token exchange for the publisher connection, and the
-probe that decides whether the service that issued the token can take over the
-delayed leave, which picks the delayed leave timings the join uses. The join
-waits for the publisher to hold its token, so that the LiveKit room exists
+business: for LiveKit the token exchange for the publisher connection, and
+with it whether that service can take over the delayed leave (assumed for a homeserver
+probed for a JWT service), which picks the delayed leave timings the join uses. The
+join waits for the publisher to hold its token, so that the LiveKit room exists
 before a subscriber, who lacks the permission to create it, asks for a token
 of its own. The tracks are created once the membership is `joined`, with their
 upstream paused until then. A lobby that wants them earlier captures them with
@@ -603,8 +603,9 @@ homeserver that advertises a `url` without implementing MSC4195 is misconfigured
 and fails with `NoMatrix2AuthorizationService`, so the admin hears about it.
 The MatrixRTC mode plays no part in the choice. The delayed leave is delegated
 through the same flow that issued the publisher's token, so that the identity
-the service watches for on the SFU is the one we publish under, and the
-delegation probe before the join asks only that service.
+the service watches for on the SFU is the one we publish under. A homeserver
+that issued the token is assumed to delegate. Only a JWT service is probed,
+before the join.
 
 The client-server API needs the name of the homeserver the transport belongs to:
 our own homeserver asks that server for the token, over federation where it is

@@ -228,10 +228,9 @@ for (const { shape, via } of delegationCases) {
     await SpaHelpers.expectVideoTilesCount(page, 2);
     await SpaHelpers.expectVideoTilesCount(guestPage, 2);
 
-    // The guest handed its delayed leave over, after probing for delegation
-    // support with bodiless requests, which count as supported unless they
-    // 404. The homeserver is always probed; the JWT service only when there
-    // is one.
+    // The guest handed its delayed leave over. A JWT service is first probed
+    // for delegation support with a bodiless request, which counts as
+    // supported unless it 404s. A homeserver that issued the token is not.
     await expect
       .poll(() => delegations.at(-1))
       .toEqual({
@@ -241,7 +240,9 @@ for (const { shape, via } of delegationCases) {
         ...(via === "homeserver" && { sfuUrl }),
       });
     const probes = delegations.slice(0, -1);
-    expect(probes.some((probe) => probe.via === via)).toBe(true);
+    expect(probes.map((probe) => probe.via)).toEqual(
+      via === "service" ? ["service"] : [],
+    );
     for (const probe of probes) {
       expect(probe.status).toBeGreaterThanOrEqual(400);
       expect(probe.status).not.toBe(404);

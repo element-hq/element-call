@@ -148,7 +148,6 @@ describe("toMediaConnectionState", () => {
 
 describe("createLivekitBackend", () => {
   const homeserver = "https://matrix.example.org";
-  const homeserverEndpoint = `${homeserver}/_matrix/client/unstable/io.element.msc4195/rtc/livekit/delegate_delayed_leave`;
   const urlTransport: UnstableLivekitTransport = {
     type: "livekit",
     url: "wss://sfu.example.org",
@@ -235,14 +234,13 @@ describe("createLivekitBackend", () => {
   // publisher: the JWT service wherever the transport names one, the
   // homeserver for a `url` alone
   it.each([
-    ["the JWT service", exampleTransport, 404, 401, true],
-    ["the JWT service, and only it", bothTransport, 401, 404, false],
-    ["the homeserver", urlTransport, 401, 404, true],
-    ["neither", exampleTransport, 404, 404, false],
+    ["a JWT service that delegates", exampleTransport, 401, true],
+    ["a JWT service that does not", exampleTransport, 404, false],
+    ["the JWT service over the homeserver", bothTransport, 401, true],
+    ["the homeserver", urlTransport, 404, true],
   ])(
-    "prepares the local transport and asks %s about delegation",
-    async (_name, transport, homeserverStatus, serviceStatus, expected) => {
-      fetchMock.post(homeserverEndpoint, homeserverStatus);
+    "prepares the local transport for delegation through %s",
+    async (_name, transport, serviceStatus, expected) => {
       fetchMock.post(
         `${exampleServiceUrl}/delegate_delayed_leave`,
         serviceStatus,
@@ -251,6 +249,10 @@ describe("createLivekitBackend", () => {
       const capabilities = await backend().prepareLocalTransport(transport);
 
       expect(capabilities).toEqual({ canDelegateDelayedLeave: expected });
+      // Only the service that issued the publisher's token is asked.
+      expect(
+        fetchMock.called(`${exampleServiceUrl}/delegate_delayed_leave`),
+      ).toBe("livekit_service_url" in transport);
       expect(connections).toHaveLength(1);
       expect(connections[0].connection.role).toBe("publisher");
       expect(connections[0].connection.transport).toEqual(transport);
@@ -259,9 +261,8 @@ describe("createLivekitBackend", () => {
   );
 
   it("prepares a remote SFU's transport on its homeserver, where delegation is not possible", async () => {
-    // Our own homeserver would delegate, so only the SFU being remote can
-    // explain delegation being skipped
-    fetchMock.post(homeserverEndpoint, 401);
+    // A token through the homeserver means delegation, unless the SFU is
+    // another homeserver's.
     const remoteTransport: UnstableLivekitTransport = {
       type: "livekit",
       url: "wss://sfu.sample.com",
@@ -276,7 +277,6 @@ describe("createLivekitBackend", () => {
   });
 
   it("waits for the publisher connection to hold its token before the join", async () => {
-    fetchMock.post(homeserverEndpoint, 404);
     fetchMock.post(`${exampleServiceUrl}/delegate_delayed_leave`, 404);
     stubFactory({ state: "authenticating" });
 
@@ -293,7 +293,6 @@ describe("createLivekitBackend", () => {
   });
 
   it("fails the preparation with the publisher connection's error", async () => {
-    fetchMock.post(homeserverEndpoint, 404);
     fetchMock.post(`${exampleServiceUrl}/delegate_delayed_leave`, 404);
     stubFactory({ state: "authenticating" });
     const preparing = backend().prepareLocalTransport(exampleTransport);
@@ -304,7 +303,6 @@ describe("createLivekitBackend", () => {
   });
 
   it("delegates the leave through the flow that authenticated the publisher", async () => {
-    fetchMock.post(homeserverEndpoint, 401);
     const delegate = vi.spyOn(auth, "delegateDelayedLeave").mockResolvedValue();
     const b = backend();
     await expect(b.delegateDelayedLeave("delay-1")).rejects.toThrow(
@@ -359,7 +357,6 @@ describe("createLivekitBackend", () => {
     async function prepared(): Promise<
       ReturnType<typeof createLivekitBackend>
     > {
-      fetchMock.post(homeserverEndpoint, 404);
       fetchMock.post(`${exampleServiceUrl}/delegate_delayed_leave`, 404);
       const b = backend();
       await b.prepareLocalTransport(bothTransport);
