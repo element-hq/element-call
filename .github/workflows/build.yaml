@@ -73,7 +73,7 @@ jobs:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   build_widget_rtc_sdk:
-    # The CallViewModel bundle for widget pages (widget-rtc-sdk/), not the sdk/
+    # The widget wrapper around the sdk/ package (widget-rtc-sdk/), not the
     # package itself. Deployed by pr-deploy.yaml as the pr<N>-widget-rtc-sdk preview.
     uses: ./.github/workflows/build-element-call.yaml
     with:
