@@ -10,30 +10,27 @@ import { type FC, type HTMLAttributes, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import styles from "./DisconnectedBanner.module.css";
-import { type ValidClientState, useClientState } from "./ClientContext";
+import { useDisconnected } from "./DisconnectedContext";
 
 interface Props extends HTMLAttributes<HTMLElement> {
   children?: ReactNode;
   className?: string;
 }
 
+/**
+ * Shown while the signed-in client is supposed to be connected but is not.
+ */
 export const DisconnectedBanner: FC<Props> = ({
   children,
   className,
   ...rest
 }) => {
   const { t } = useTranslation();
-  const clientState = useClientState();
-  let shouldShowBanner = false;
-
-  if (clientState?.state === "valid") {
-    const validClientState = clientState as ValidClientState;
-    shouldShowBanner = validClientState.disconnected;
-  }
+  const disconnected = useDisconnected();
 
   return (
     <>
-      {shouldShowBanner && (
+      {disconnected && (
         <div className={classNames(styles.banner, className)} {...rest}>
           {children}
           {t("disconnected_banner")}

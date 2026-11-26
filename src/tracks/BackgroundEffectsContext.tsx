@@ -22,7 +22,7 @@ import { type ObservableScope } from "../state/ObservableScope";
 import {
   type BackgroundEffects,
   type BackgroundEffectsState,
-  createBackgroundEffects,
+  createBackgroundEffects$,
 } from "../state/BackgroundEffects";
 import { useBehavior } from "../useBehavior";
 
@@ -48,13 +48,13 @@ export function useBackgroundEffectsState$(): Behavior<BackgroundEffectsState> {
  * and teardowns take their turns through the SDK, which runs one operation
  * at a time on a processor.
  */
-export function createAppBackgroundEffects(
+export function createAppBackgroundEffects$(
   scope: ObservableScope,
 ): BackgroundEffects {
   const transformer = new BackgroundEffectTransformer({
     backgroundDisabled: true,
   });
-  return createBackgroundEffects(scope, {
+  return createBackgroundEffects$(scope, {
     supported: supportsBackgroundProcessors(),
     effect$: backgroundEffectSetting.value$,
     clearEffect: () => backgroundEffectSetting.setValue("none"),

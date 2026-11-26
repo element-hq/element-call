@@ -11,21 +11,23 @@ import { Trans, useTranslation } from "react-i18next";
 import { Button } from "@vector-im/compound-web";
 
 import Logo from "../icons/LogoLarge.svg?react";
-import { useClient } from "../ClientContext";
+import { type ClientManager } from "../state/ClientSession";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import styles from "./LoginPage.module.css";
-import { useInteractiveLogin } from "./useInteractiveLogin";
 import { usePageTitle } from "../usePageTitle";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { Config } from "../config/Config";
 import { Link } from "../button/Link";
 
-export const LoginPage: FC = () => {
+interface Props {
+  clientManager: ClientManager;
+}
+
+export const LoginPage: FC<Props> = ({ clientManager }) => {
   const { t } = useTranslation();
   usePageTitle(t("login_title"));
 
-  const { client, setClient } = useClient();
-  const login = useInteractiveLogin(client);
+  const { login } = clientManager;
   const homeserver = Config.defaultHomeserverUrl(); // TODO: Make this configurable
   const usernameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
@@ -46,15 +48,8 @@ export const LoginPage: FC = () => {
         setLoading(false);
         return;
       }
-
       login(homeserver, usernameRef.current.value, passwordRef.current.value)
-        .then(async ([client, session]) => {
-          if (!setClient) {
-            return;
-          }
-
-          setClient(client, session);
-
+        .then(async () => {
           const locationState = location.state;
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
@@ -72,7 +67,7 @@ export const LoginPage: FC = () => {
           setLoading(false);
         });
     },
-    [login, location, navigate, homeserver, setClient],
+    [login, location, navigate, homeserver],
   );
   // we need to limit the length of the homserver name to not cover the whole loginview input with the string.
   let shortendHomeserverName = Config.defaultServerName()?.slice(0, 25);

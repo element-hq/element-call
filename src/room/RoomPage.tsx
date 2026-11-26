@@ -12,7 +12,7 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import { Trans, useTranslation } from "react-i18next";
 import { UnknownSolidIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 
-import { useClientLegacy } from "../ClientContext";
+import { useClient, useClientSessionState } from "../ClientContext";
 import { ErrorPage, FullScreenView, LoadingPage } from "../FullScreenView";
 import { RoomAuthView } from "./RoomAuthView";
 import { CallView } from "./CallView";
@@ -27,8 +27,14 @@ import { Link } from "../button/Link";
 import { ErrorView } from "../ErrorView";
 import { usePageTitle } from "../usePageTitle";
 import { useRoomName } from "./useRoomName";
+import { type ClientManager } from "../state/ClientSession";
 
-export const RoomPage: FC = (): ReactNode => {
+interface Props {
+  /** Null where the session is a host's and not ours to manage. */
+  clientManager: ClientManager | null;
+}
+
+export const RoomPage: FC<Props> = ({ clientManager }): ReactNode => {
   const urlParams = useUrlParams();
   const { confineToRoom, preload, header, displayName, skipLobby } = urlParams;
   const { t } = useTranslation();
@@ -39,11 +45,16 @@ export const RoomPage: FC = (): ReactNode => {
     logger.error("No room specified");
   }
 
-  const { registerPasswordlessUser } = useRegisterPasswordlessUser();
+  const { registerPasswordlessUser } =
+    useRegisterPasswordlessUser(clientManager);
   const [isRegistering, setIsRegistering] = useState(false);
 
-  const { loading, authenticated, client, error, passwordlessUser } =
-    useClientLegacy();
+  const client = useClient();
+  const session = useClientSessionState();
+  const loading = session.state === "loading";
+  const passwordlessUser =
+    session.state === "signedIn" && session.passwordlessUser;
+  const authenticated = client !== undefined;
   const { avatarUrl, displayName: userDisplayName } = useProfile(client);
 
   const groupCallState = useLoadGroupCall(client, roomIdOrAlias, viaServers);
@@ -184,9 +195,8 @@ export const RoomPage: FC = (): ReactNode => {
   };
 
   if (loading || isRegistering) return <LoadingPage />;
-  if (error) return <ErrorPage error={error} />;
-  if (!client) return <RoomAuthView />;
+  if (!client) return <RoomAuthView clientManager={clientManager} />;
   // TODO: This doesn't belong here, the app routes need to be reworked
-  if (!roomIdOrAlias) return <HomePage />;
+  if (!roomIdOrAlias) return <HomePage clientManager={clientManager} />;
   return groupCallView();
 };

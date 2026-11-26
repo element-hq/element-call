@@ -22,8 +22,9 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import { Button, Text } from "@vector-im/compound-web";
 
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
-import { useClientLegacy } from "../ClientContext";
-import { useInteractiveRegistration } from "./useInteractiveRegistration";
+import { useClient, useClientSessionState } from "../ClientContext";
+import { type ClientManager } from "../state/ClientSession";
+import { useRegistrationTerms } from "./useRegistrationTerms";
 import styles from "./LoginPage.module.css";
 import Logo from "../icons/LogoLarge.svg?react";
 import { LoadingPage } from "../FullScreenView";
@@ -33,12 +34,21 @@ import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { Config } from "../config/Config";
 import { ExternalLink, Link } from "../button/Link";
 
-export const RegisterPage: FC = () => {
+interface Props {
+  clientManager: ClientManager;
+}
+
+export const RegisterPage: FC<Props> = ({ clientManager }) => {
   const { t } = useTranslation();
   usePageTitle(t("action.register"));
 
-  const { loading, authenticated, passwordlessUser, client, setClient } =
-    useClientLegacy();
+  const session = useClientSessionState();
+  const loading = session.state === "loading";
+  const passwordlessUser =
+    session.state === "signedIn" && session.passwordlessUser;
+  const client = useClient();
+  const authenticated = client !== undefined;
+  const { register } = clientManager;
 
   const confirmPasswordRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
@@ -47,7 +57,7 @@ export const RegisterPage: FC = () => {
   const [error, setError] = useState<Error>();
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
-  const { recaptchaKey, register } = useInteractiveRegistration(client);
+  const { recaptchaKey } = useRegistrationTerms();
   const { execute, reset, recaptchaId } = useRecaptcha(recaptchaKey);
 
   const onSubmitRegisterForm = useCallback(
@@ -64,7 +74,7 @@ export const RegisterPage: FC = () => {
         setRegistering(true);
 
         const recaptchaResponse = await execute();
-        const [newClient, session] = await register(
+        const { client: newClient, setSignedIn } = await register(
           userName,
           password,
           userName,
@@ -95,7 +105,7 @@ export const RegisterPage: FC = () => {
           }
         }
 
-        setClient?.(newClient, session);
+        setSignedIn();
         PosthogAnalytics.instance.eventSignup.cacheSignupEnd(new Date());
       };
 
@@ -117,16 +127,7 @@ export const RegisterPage: FC = () => {
           reset();
         });
     },
-    [
-      register,
-      location,
-      navigate,
-      passwordlessUser,
-      reset,
-      execute,
-      client,
-      setClient,
-    ],
+    [register, location, navigate, passwordlessUser, reset, execute, client],
   );
 
   useEffect(() => {

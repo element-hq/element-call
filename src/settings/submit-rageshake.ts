@@ -142,7 +142,7 @@ export function useSubmitRageshake(
   error?: Error;
   available: boolean;
 } {
-  const { client } = useClient();
+  const client = useClient();
 
   const [{ sending, sent, error }, setState] = useState<{
     sending: boolean;
@@ -332,7 +332,7 @@ export function useRageshakeRequest(): (
   roomId: string,
   rageshakeRequestId: string,
 ) => void {
-  const { client } = useClient();
+  const client = useClient();
 
   const sendRageshakeRequest = useCallback(
     (roomId: string, rageshakeRequestId: string) => {
@@ -355,7 +355,7 @@ export function useRageshakeRequestModal(
 ): ComponentProps<typeof RageshakeRequestModal> {
   const [open, setOpen] = useState(false);
   const onDismiss = useCallback(() => setOpen(false), [setOpen]);
-  const { client } = useClient();
+  const client = useClient();
   const [rageshakeRequestId, setRageshakeRequestId] = useState<string>();
 
   useEffect(() => {

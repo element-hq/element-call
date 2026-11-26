@@ -5,6 +5,8 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
+// *Do not* import any client stores in this module, to keep the component
+// build lean.
 import { ClientEvent, Preset, Visibility } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { secureRandomBase64Url } from "matrix-js-sdk/lib/randomstring";
@@ -17,11 +19,6 @@ import {
   type EncryptionSystem,
   saveKeyForRoom,
 } from "../e2ee/sharedKeyManagement";
-
-// Shared with the component, which reaches this module for the room URLs. So
-// nothing in here may import the client store worker: the bundler emits the
-// worker file on loading the import, used or not. The one function that needs
-// it, `initClient`, lives in `./initClient` for that reason.
 
 export const fallbackICEServerAllowed =
   import.meta.env.VITE_FALLBACK_STUN_ALLOWED === "true";

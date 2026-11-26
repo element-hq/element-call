@@ -18,7 +18,7 @@ import {
 vi.mock("../ClientContext", () => {
   const room = { hasEncryptionStateEvent: (): boolean => false };
   const client = { getRoom: (): typeof room => room };
-  return { useClient: (): { client: typeof client } => ({ client }) };
+  return { useClient: (): typeof client => client };
 });
 
 const roomId = "!room:example.org";

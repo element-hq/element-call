@@ -64,7 +64,7 @@ import { type JoinCallData } from "../widget";
 import { MatrixRTCTransportMissingError } from "../utils/errors";
 import {
   BackgroundEffectsProvider,
-  createAppBackgroundEffects,
+  createAppBackgroundEffects$,
 } from "../tracks/BackgroundEffectsContext";
 import { MediaDevicesContext } from "../MediaDevicesContext";
 import { constant } from "../state/Behavior";
@@ -198,7 +198,7 @@ function createCallView(
         <TooltipProvider>
           <MediaDevicesContext value={mockMediaDevices({})}>
             <BackgroundEffectsProvider
-              effects={createAppBackgroundEffects(testScope())}
+              effects={createAppBackgroundEffects$(testScope())}
             >
               {options.withErrorBoundary ? (
                 <GroupCallErrorBoundary recoveryActionHandler={vi.fn()}>

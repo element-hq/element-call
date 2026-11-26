@@ -51,7 +51,7 @@ import { AppBar } from "../AppBar";
 import { type MatrixInfo } from "./VideoPreview";
 import {
   BackgroundEffectsProvider,
-  createAppBackgroundEffects,
+  createAppBackgroundEffects$,
 } from "../tracks/BackgroundEffectsContext";
 import { initializeWidget } from "../widget";
 import { RootElementProvider } from "../RootElementContext";
@@ -251,7 +251,7 @@ describe("ActiveCall", () => {
       <BrowserRouter>
         <MediaDevicesContext value={mediaDevices}>
           <BackgroundEffectsProvider
-            effects={createAppBackgroundEffects(testScope())}
+            effects={createAppBackgroundEffects$(testScope())}
           >
             <TooltipProvider>
               <ActiveCall
@@ -302,7 +302,7 @@ describe("ActiveCall", () => {
           <RootElementProvider value={root}>
             <MediaDevicesContext value={mediaDevices}>
               <BackgroundEffectsProvider
-                effects={createAppBackgroundEffects(testScope())}
+                effects={createAppBackgroundEffects$(testScope())}
               >
                 <TooltipProvider>
                   <ActiveCall
