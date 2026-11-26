@@ -13,6 +13,7 @@ import { fileURLToPath } from "node:url";
 
 import { COMPONENT_HARNESS_URL } from "./playwright/component/harness.ts";
 import { SDK_HARNESS_URL } from "./playwright/sdk/harness.ts";
+import { WIDGET_RTC_SDK_URL } from "./playwright/widget/test-helpers.ts";
 
 const baseURL = process.env.USE_DOCKER
   ? "http://localhost:8080"
@@ -83,6 +84,11 @@ export default defineConfig({
       testMatch: "**/widget/embedded/build.setup.ts",
     },
     {
+      // Builds the widget RTC SDK's example widget for its preview server
+      name: "build-widget-rtc-sdk",
+      testMatch: "**/widget/widget-rtc-sdk.setup.ts",
+    },
+    {
       name: "chromium",
       testIgnore: ["**/mobile/**", "**/widget/**"],
       use: desktopChrome,
@@ -93,12 +99,21 @@ export default defineConfig({
       name: "widget",
       dependencies: ["build-embedded"],
       testMatch: "**/widget/**/*.@(spec|test).ts",
+      testIgnore: "**/widget/widget-rtc-sdk.spec.ts",
+      use: desktopChrome,
+    },
+    {
+      // The widget RTC SDK's example widget in Element Web. CI does not run
+      // this project; see widget-rtc-sdk/README.md for running it by hand.
+      name: "widget-rtc-sdk",
+      dependencies: ["build-widget-rtc-sdk"],
+      testMatch: "**/widget/widget-rtc-sdk.spec.ts",
       use: desktopChrome,
     },
     {
       name: "firefox",
       dependencies: ["build-embedded"],
-      testIgnore: "**/mobile/**",
+      testIgnore: ["**/mobile/**", "**/widget/widget-rtc-sdk.spec.ts"],
       use: {
         ...devices["Desktop Firefox"],
         ignoreHTTPSErrors: true,
@@ -176,6 +191,24 @@ export default defineConfig({
       // dev server for the same reason as the component's.
       command: "pnpm dev:sdk",
       url: SDK_HARNESS_URL,
+      reuseExistingServer: !process.env.CI,
+      ignoreHTTPSErrors: true,
+      gracefulShutdown: {
+        signal: "SIGTERM",
+        timeout: 500,
+      },
+    },
+    {
+      // The widget RTC SDK's example widget, which Element Web opens as a
+      // widget. Bundled rather than from the dev server: Firefox now and then
+      // stalls on the dev server's hundreds of module requests. Servers start
+      // before any project, so the build-widget-rtc-sdk project fills the
+      // directory later and only the projects that open the widget wait for
+      // it. Until then there is no page, hence the port rather than the url.
+      command:
+        "mkdir -p dist-widget-rtc-sdk-example && " +
+        "pnpm exec vite preview --config vite-widget-rtc-sdk-dev.config.ts",
+      port: Number(new URL(WIDGET_RTC_SDK_URL).port),
       reuseExistingServer: !process.env.CI,
       ignoreHTTPSErrors: true,
       gracefulShutdown: {
