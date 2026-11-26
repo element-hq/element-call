@@ -5,8 +5,9 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
+import { EMPTY } from "rxjs";
 import { describe, expect, it, vi } from "vitest";
-import { type MatrixClient, type Room } from "matrix-js-sdk";
+import { type MatrixClient, type Room, SyncState } from "matrix-js-sdk";
 import { EventType } from "matrix-js-sdk/lib/@types/event";
 import { type MatrixEvent } from "matrix-js-sdk/lib/models/event";
 import {
@@ -23,8 +24,12 @@ import {
 import { createRTCSlot } from "./RTCSlot";
 import { type SdkMatrixBackend } from "./SdkMatrixBackend";
 import { ObservableScope } from "./reactive/ObservableScope";
-import { type RTCSlotOptions } from "./api";
+import { type RTCParticipationOptions, type RTCSlotOptions } from "./api";
+import { MatrixRTCMode } from "./config";
 import { E2eeType } from "./encryption";
+import { MatrixRTCError } from "./errors";
+import { type MediaBackend, MediaConnectionState } from "./media-backend/api";
+import { constant } from "./reactive/Behavior";
 import {
   mockEmitter,
   mockRtcMembership,
@@ -67,6 +72,29 @@ function backendOf(client: MatrixClient, room: Room): SdkMatrixBackend {
     clientEmitter: client,
     roomEmitter: room,
   } as unknown as SdkMatrixBackend;
+}
+
+/** A media backend whose transport never gets ready: a participation on it stays waiting. */
+function idleBackend(): MediaBackend {
+  return {
+    transportTypes: ["livekit"],
+    prepareLocalTransport: async () => new Promise(() => {}),
+    delegateDelayedLeave: vi.fn(),
+    local: {
+      connectionState$: constant(MediaConnectionState.Initialized),
+      setPublishing: vi.fn(),
+      publishError$: constant(null),
+      publish: vi.fn(),
+      unpublish: vi.fn(),
+      tracks$: constant(null),
+      encryptionError$: EMPTY,
+    },
+    mediaFor: vi.fn(),
+    connections$: constant([]),
+    setAudioOutputDeviceId: vi.fn(),
+    sendData: vi.fn(),
+    data$: EMPTY,
+  };
 }
 
 describe("createRTCSlot", () => {
@@ -166,6 +194,47 @@ describe("createRTCSlot", () => {
         null,
       );
       expect(slot.status$.value).toBe("closed");
+    });
+  });
+
+  describe("join", () => {
+    it("holds one participation at a time, and is free again once it has left", () => {
+      const { client, room, session } = setup();
+      const slot = createRTCSlot(
+        testScope(),
+        backendOf(
+          {
+            ...client,
+            getDomain: (): string => "example.org",
+            getSyncState: (): SyncState => SyncState.Syncing,
+            getRTCTransports: vi.fn().mockResolvedValue([]),
+          } as unknown as MatrixClient,
+          room,
+        ),
+        options,
+        session.asMockedSession(),
+      );
+      const joinOptions: RTCParticipationOptions = {
+        publish: [],
+        matrixRTCMode: MatrixRTCMode.Compatibility,
+        backend: idleBackend,
+      };
+      expect(slot.participation$.value).toBeNull();
+
+      const participation = slot.join(joinOptions);
+      expect(slot.participation$.value).toBe(participation);
+      expect(participation.slot).toMatchObject({
+        roomId: room.roomId,
+        application: "m.call",
+        id: "ROOM",
+      });
+      expect(() => slot.join(joinOptions)).toThrow(MatrixRTCError);
+
+      participation.leave();
+      expect(slot.participation$.value).toBeNull();
+      const again = slot.join(joinOptions);
+      expect(slot.participation$.value).toBe(again);
+      again.leave();
     });
   });
 
