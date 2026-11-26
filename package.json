@@ -19,6 +19,8 @@
     "build:sdk": "pnpm build:sdk:js && pnpm build:sdk:types",
     "build:sdk:js": "pnpm build:full --config vite-sdk.config.js",
     "build:sdk:types": "tsc -p sdk/tsconfig.build.json",
+    "build:sdk:production": "pnpm build:sdk",
+    "build:sdk:development": "pnpm build:sdk:js --mode development && pnpm build:sdk:types",
     "build:widget-rtc-sdk": "pnpm build:full --config vite-widget-rtc-sdk.config.js",
     "build:widget-rtc-sdk:production": "pnpm build:widget-rtc-sdk",
     "build:widget-rtc-sdk:development": "pnpm build:widget-rtc-sdk --mode development",

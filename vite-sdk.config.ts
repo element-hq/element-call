@@ -22,6 +22,9 @@ export default defineConfig(({ mode }) => {
       // Into the package directory, so that `sdk/package.json` describes what
       // sits next to it and the directory can be installed as a package
       outDir: "sdk/dist",
+      // Minified for production (`build:sdk`, `build:sdk:production`), readable
+      // in development (`build:sdk:development`). Source maps in both, as for
+      // the component: they ship with the package for the host to debug with.
       minify: mode === "production",
       sourcemap: true,
       lib: {
