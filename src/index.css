@@ -22,7 +22,8 @@ and their fonts, where a host embedding the component supplies its own. The
 @import url("@fontsource/inconsolata/400.css");
 @import url("@fontsource/inconsolata/700.css");
 
-@import url("@vector-im/compound-design-tokens/assets/web/css/compound-design-tokens.css") layer(compound);
+@import url("@vector-im/compound-design-tokens/assets/web/css/compound-design-tokens.css")
+layer(compound);
 @import url("@vector-im/compound-web/dist/style.css") layer(compound.components);
 
 body {

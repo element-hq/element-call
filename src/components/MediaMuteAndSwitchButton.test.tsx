@@ -437,7 +437,7 @@ describe("MediaMuteAndSwitchButton", () => {
     }
   });
 
-  test("a refusal can be dismissed and does not outlive the menu", async () => {
+  test("a refusal is dismissed when closed, or with the menu", async () => {
     const user = userEvent.setup();
     // jsdom lays nothing out, so has nothing to scroll.
     const scroll = Element.prototype.scrollIntoView;
@@ -445,7 +445,8 @@ describe("MediaMuteAndSwitchButton", () => {
     onTestFinished(() => {
       Element.prototype.scrollIntoView = scroll;
     });
-    const menu = (refusal?: { text: string }): JSX.Element =>
+    const onDismiss = vi.fn();
+    const menu = (refusal?: string): JSX.Element =>
       withProviders(
         <MediaMuteAndSwitchButton
           iconsAndLabels="video"
@@ -457,28 +458,22 @@ describe("MediaMuteAndSwitchButton", () => {
           onSelectBackgroundEffect={vi.fn()}
           onAddBackgroundImage={vi.fn()}
           backgroundImageRefusal={refusal}
+          onDismissBackgroundImageRefusal={onDismiss}
         />,
       );
     const { rerender, getByRole } = render(menu());
     await user.click(getByRole("button", { name: "Camera" }));
 
-    rerender(menu({ text: "That file is not a supported image" }));
+    rerender(menu("That file is not a supported image"));
     expect(
       screen.getByText("That file is not a supported image"),
     ).toBeVisible();
     screen.getByRole("menuitemradio", { name: "Blur", checked: true });
     await user.click(screen.getByRole("button", { name: "Close" }));
-    expect(screen.queryByText("That file is not a supported image")).toBeNull();
-
-    // The next refusal is shown, even if it says the same.
-    rerender(menu({ text: "That file is not a supported image" }));
-    expect(
-      screen.getByText("That file is not a supported image"),
-    ).toBeVisible();
+    expect(onDismiss).toHaveBeenCalledTimes(1);
 
     await user.keyboard("{Escape}");
-    await user.click(getByRole("button", { name: "Camera" }));
-    expect(screen.queryByText("That file is not a supported image")).toBeNull();
+    expect(onDismiss).toHaveBeenCalledTimes(2);
   });
 
   test("offers the background effects in a phone's drawer", async () => {

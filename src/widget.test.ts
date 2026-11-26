@@ -71,6 +71,7 @@ describe("widget", () => {
       ElementCallReactionEventType,
       EventType.RTCDecline,
       EventType.RTCMembership,
+      "m.rtc.member",
     ];
 
     const sendState = [
@@ -105,6 +106,7 @@ describe("widget", () => {
       EventType.CallSDPStreamMetadataChangedPrefix,
       EventType.CallReplaces,
       EventType.CallEncryptionKeysPrefix,
+      "m.rtc.encryption_key",
     ];
 
     expect(createRoomWidgetClientSpy.mock.calls[0][1]).toStrictEqual({

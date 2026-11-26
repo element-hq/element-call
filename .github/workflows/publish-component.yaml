@@ -73,9 +73,10 @@ jobs:
       - name: Enable Corepack
         run: corepack enable
       - name: Setup node
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         # No dependency cache: a release build must not restore one another workflow could have poisoned
         with:
+          package-manager-cache: false
           node-version-file: .node-version
           registry-url: "https://registry.npmjs.org"
       # Layered like build-element-call.yaml, so a PR paired with a matrix-js-sdk branch
@@ -112,8 +113,10 @@ jobs:
     if: ${{ needs.versioning.outputs.DRY_RUN == 'false' }}
     name: Update release notes
     runs-on: ubuntu-24.04
-    # Shared with publish-embedded-packages.yaml, which appends to the same release: two
-    # appends at once would each write back the body without the other's section
+    # Shared with publish.yaml and publish-embedded-packages.yaml, which append to the same
+    # release. GitHub lets only one job wait per group, so if all three arrive at once the
+    # waiting one is cancelled: re-run it. To mitigate this, the append exits early when its
+    # heading already exists.
     concurrency:
       group: release-notes-${{ github.event.release.tag_name || github.run_id }}
       cancel-in-progress: false
@@ -121,10 +124,20 @@ jobs:
       contents: write # to update release notes
     steps:
       - name: Add release notes
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
-        with:
-          append_body: true
-          body: |
+        run: |
+          gh release view "$RELEASE_TAG" --json body --jq .body > release-body.md
+          if grep -qF "$HEADING" release-body.md; then
+            echo "Section already present, nothing to add"
+            exit 0
+          fi
+          printf '%s\n' "$NOTES" >> release-body.md
+          gh release edit "$RELEASE_TAG" --notes-file release-body.md
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          HEADING: "## React component (experimental)"
+          NOTES: |
 
             ## React component (experimental)
 

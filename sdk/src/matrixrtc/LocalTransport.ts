@@ -22,7 +22,7 @@ import { TransportAutoDiscovery } from "./TransportAutoDiscovery";
  * @throws {MatrixRTCTransportMissingError} where none of these exists.
  */
 export async function discoverLocalTransport(
-  client: Pick<MatrixClient, "getDomain" | "_unstable_getRTCTransports">,
+  client: Pick<MatrixClient, "getDomain" | "getRTCTransports">,
   transportTypes: readonly string[],
   {
     transport: override,

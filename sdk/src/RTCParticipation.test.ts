@@ -140,8 +140,8 @@ function setup(
     getDeviceId: () => deviceId,
     getDomain: () => "example.org",
     getSyncState: () => SyncState.Syncing,
-    _unstable_getRTCTransports: vi.fn().mockResolvedValue(homeserverTransports),
-    _unstable_getLivekitToken: vi.fn().mockResolvedValue({ jwt: publisherJWT }),
+    getRTCTransports: vi.fn().mockResolvedValue(homeserverTransports),
+    getLivekitToken: vi.fn().mockResolvedValue({ jwt: publisherJWT }),
   } as unknown as MatrixClient;
   const members$ = new BehaviorSubject<RTCMember[]>([]);
 

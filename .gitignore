@@ -2,6 +2,7 @@ node_modules
 .DS_Store
 .env
 dist
+/dist-widget-rtc-sdk-example
 dist-ssr
 *.local
 *.bkp
@@ -44,3 +45,7 @@ storybook-static
 
 # Nested checkout made by scripts/layered.sh
 /matrix-js-sdk/
+
+# Claude
+/.claude/*
+!/.claude/skills/

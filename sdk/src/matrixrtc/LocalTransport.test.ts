@@ -31,7 +31,7 @@ function client(
 ): Parameters<typeof discoverLocalTransport>[0] {
   return {
     getDomain: () => "example.org",
-    _unstable_getRTCTransports: vi.fn().mockResolvedValue(advertised),
+    getRTCTransports: vi.fn().mockResolvedValue(advertised),
   };
 }
 
@@ -54,7 +54,7 @@ describe("discoverLocalTransport", () => {
         logger,
       ),
     ).resolves.toBe(hostTransport);
-    expect(c._unstable_getRTCTransports).not.toHaveBeenCalled();
+    expect(c.getRTCTransports).not.toHaveBeenCalled();
   });
 
   it("prefers the homeserver's transport over the host's fallback", async () => {

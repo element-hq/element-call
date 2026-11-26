@@ -160,8 +160,8 @@ describe("createLivekitBackend", () => {
   const client = {
     baseUrl: homeserver,
     getOpenIdToken: vi.fn(),
-    _unstable_getLivekitToken: vi.fn(),
-    _unstable_delegateDelayedLeave: vi.fn(),
+    getLivekitToken: vi.fn(),
+    delegateDelayedLeave: vi.fn(),
   };
   /** The connections the stubbed factory handed out, with their participants to drive. */
   let connections: {

@@ -1,4 +1,4 @@
-name: Claude
+name: Claude review
 on:
   pull_request:
     types: [labeled]
@@ -44,12 +44,13 @@ jobs:
                  that still deliver value?
 
             2. Commits:
-               
+
                - Is the work split into self-contained commits of reasonable size?
                - Are the commits arranged in a sensible order?
                - Have required refactorings been split out into separate commits?
                - Is the history free of "wip", checkpoint and fixup-style commits
                  which only correct an earlier commit in the same PR?
+               - Are SDK and Element Call changes split into separate commits?
 
             3. Code:
 
@@ -60,6 +61,19 @@ jobs:
                - Don't check anything that is already validated via other GitHub
                  workflows like linting, formatting or tests passing.
 
+            4. Code style:
+
+               - Does the change follow docs/agents/code-style.md and
+                 docs/agents/architecture.md?
+
+            5. Repo architecture:
+
+               - Does the change follow "Element Call on the SDK" in
+                 docs/agents/architecture.md and, where it touches `sdk/`,
+                 sdk/SdkArchitecture.md?
+               - If an `api.ts` changed and the PR description does not document
+                 it, summarize the change in the final review comment.
+
             Read the commits themselves with `git log` and `git diff` against
             the base branch of the PR.
 
@@ -68,9 +82,9 @@ jobs:
             "🟠 medium" or "🔴 high". Devise at least one possible resolution for each
             finding.
 
-            Report the graded findings and resolutions from the "Code" angle as inline
-            comments. Add a footer "_-- Finding from automated review_" to each inline
-            comment.
+            Report the graded findings and resolutions from the "Code" and "Code style"
+            angles as inline comments. Add a footer "_-- Finding from automated review_"
+            to each inline comment.
 
             Finally, report your overall result as PR comment. Start your message with
             "# Automated review". Then add one section per review angle with:

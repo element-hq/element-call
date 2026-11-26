@@ -186,13 +186,18 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
 
     const vm = createCallViewModel$(
       scope,
-      rtcParticipation,
-      props.matrixRoom,
-      mediaDevices,
-      props.muteStates,
+      {
+        rtcParticipation,
+        matrixRoom: props.matrixRoom,
+        mediaDevices,
+        muteStates: props.muteStates,
+        encryptionSystem: props.e2eeSystem,
+        viewSize$: scope.behavior(observeElementSize$(rootElement)),
+        handsRaisedSubject$: reactionsReader.raisedHands$,
+        reactionsSubject$: reactionsReader.reactions$,
+      },
       {
         ...callViewModelOptionsFromParams(urlParams),
-        encryptionSystem: props.e2eeSystem,
         capture,
         backgroundEffectsState$,
         hostBridge,
@@ -202,10 +207,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
           scope,
           props.rtcSession,
         ),
-        windowSize$: scope.behavior(observeElementSize$(rootElement)),
       },
-      reactionsReader.raisedHands$,
-      reactionsReader.reactions$,
     );
     setVm(vm);
 
@@ -748,8 +750,7 @@ export const InCallView: FC<InCallViewProps> = ({
 
 /**
  * How the tracks are captured and encoded, from Element Call's settings and
- * configuration. Shared with the legacy SDK bundle so that a widget built from
- * it behaves like the app.
+ * configuration.
  */
 export function captureSettings(): CaptureSettings {
   const config = Config.get();
@@ -798,8 +799,7 @@ export function captureSettings(): CaptureSettings {
 /**
  * What the client needs from Element Call's configuration, settings and URL:
  * the SDK reads none of them itself. What to publish depends on the mute
- * switches and the devices, so the caller adds that. Shared with the legacy
- * SDK bundle so that a widget built from it behaves like the app.
+ * switches and the devices, so the caller adds that.
  */
 export function rtcSlotOptions(
   encryptionSystem: EncryptionSystem,

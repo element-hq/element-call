@@ -7,10 +7,15 @@ on:
         type: string
         required: false
         description: The matrix-js-sdk commit to build against instead of the locked one
+
+permissions: {}
+
 jobs:
   lint:
     name: Lint, format & type check
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
@@ -21,7 +26,7 @@ jobs:
       - name: Enable Corepack
         run: corepack enable
       - name: pnpm cache
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           cache: "pnpm"
           node-version-file: ".node-version"
@@ -41,3 +46,5 @@ jobs:
         run: "pnpm run lint:types"
       - name: Dead code analysis
         run: "pnpm run lint:knip"
+      - name: Component externals
+        run: "pnpm run lint:externals"

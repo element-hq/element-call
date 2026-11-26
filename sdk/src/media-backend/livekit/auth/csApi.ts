@@ -20,10 +20,7 @@ function isNetworkError(e: unknown): boolean {
   return e instanceof HTTPError || e instanceof ConnectionError;
 }
 
-export type ClientGetTokenParts = Pick<
-  MatrixClient,
-  "_unstable_getLivekitToken"
->;
+export type ClientGetTokenParts = Pick<MatrixClient, "getLivekitToken">;
 
 export interface GetSFUConfigParams {
   client: ClientGetTokenParts;
@@ -48,7 +45,7 @@ export async function getSFUConfig({
 }: GetSFUConfigParams): Promise<SFUConfig> {
   const res = await doNetworkOperationWithRetry(
     async () =>
-      client._unstable_getLivekitToken({
+      client.getLivekitToken({
         url,
         server_name: serverName,
         room_id: roomId,
@@ -62,7 +59,7 @@ export async function getSFUConfig({
 
 export type ClientDelegationParts = Pick<
   MatrixClient,
-  "_unstable_delegateDelayedLeave" | "baseUrl"
+  "delegateDelayedLeave" | "baseUrl"
 >;
 
 export interface DelegateDelayedLeaveParams {
@@ -90,7 +87,7 @@ export async function delegateDelayedLeave({
 }: DelegateDelayedLeaveParams): Promise<void> {
   await doNetworkOperationWithRetry(
     async () =>
-      client._unstable_delegateDelayedLeave({
+      client.delegateDelayedLeave({
         url,
         room_id: roomId,
         slot_id: slotId,

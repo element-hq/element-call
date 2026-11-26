@@ -11,6 +11,8 @@ on:
   push:
     branches: [main]
 
+permissions: {}
+
 jobs:
   versioning:
     name: Versioning
@@ -62,7 +64,9 @@ jobs:
 
   build_element_call:
     needs: versioning
-    uses: ./.github/workflows/build-element-call.yaml
+    permissions:
+      contents: read
+    uses: $/.github/workflows/build-element-call.yaml
     with:
       vite_app_version: embedded-${{ needs.versioning.outputs.PREFIXED_VERSION }}
       package: embedded
@@ -97,11 +101,11 @@ jobs:
         run: find ${FILENAME_PREFIX} -type f -print0 | sort -z | xargs -0 sha256sum | tee ${FILENAME_PREFIX}.sha256
       - name: Upload
         if: ${{ needs.versioning.outputs.DRY_RUN == 'false' }}
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
-        with:
-          files: |
-            ${{ env.FILENAME_PREFIX }}.tar.gz
-            ${{ env.FILENAME_PREFIX }}.sha256
+        run: gh release upload "$RELEASE_TAG" "${FILENAME_PREFIX}.tar.gz" "${FILENAME_PREFIX}.sha256" --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
 
   publish_npm:
     needs: [build_element_call, versioning]
@@ -129,8 +133,10 @@ jobs:
 
       # n.b. We don't enable corepack here because we are using plain npm
       - name: Setup node
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        # No dependency cache: a release build must not restore one another workflow could have poisoned
         with:
+          package-manager-cache: false
           node-version-file: .node-version
           registry-url: "https://registry.npmjs.org"
 
@@ -283,8 +289,10 @@ jobs:
     if: always()
     name: Update release notes
     runs-on: ubuntu-24.04
-    # Shared with publish-component.yaml, which appends to the same release: two appends
-    # at once would each write back the body without the other's section
+    # Shared with publish.yaml and publish-component.yaml, which append to the same
+    # release. GitHub lets only one job wait per group, so if all three arrive at once the
+    # waiting one is cancelled: re-run it. To mitigate this, the append exits early when its
+    # heading already exists.
     concurrency:
       group: release-notes-${{ github.event.release.tag_name || github.run_id }}
       cancel-in-progress: false
@@ -302,10 +310,20 @@ jobs:
           NEEDS_PUBLISH_IOS_OUTPUTS_ARTIFACT_VERSION: ${{ needs.publish_ios.outputs.ARTIFACT_VERSION }}
       - name: Add release notes
         if: ${{ needs.versioning.outputs.DRY_RUN == 'false' }}
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
-        with:
-          append_body: true
-          body: |
+        run: |
+          gh release view "$RELEASE_TAG" --json body --jq .body > release-body.md
+          if grep -qF "$HEADING" release-body.md; then
+            echo "Section already present, nothing to add"
+            exit 0
+          fi
+          printf '%s\n' "$NOTES" >> release-body.md
+          gh release edit "$RELEASE_TAG" --notes-file release-body.md
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          HEADING: "## Embedded packages"
+          NOTES: |
 
             ## Embedded packages
 

@@ -11,7 +11,6 @@ import {
   roomEventSelector,
 } from "@livekit/components-core";
 import {
-  facingModeFromLocalTrack,
   type LocalParticipant,
   LocalTrack,
   LocalVideoTrack,
@@ -50,6 +49,7 @@ import {
   type VideoMediaTrack,
 } from "../../media-api";
 import { MatrixRTCError } from "../../errors";
+import { facingModeOf } from "../../utils/facingMode";
 import { toLivekitProcessor, type LivekitProcessor } from "./videoProcessor";
 
 export const mediaSources: Record<Track.Source, MediaSource> = {
@@ -203,16 +203,35 @@ export function createLocalLivekitMediaTrack(
       // of the camera track itself: with a processor on, LiveKit's media
       // stream track is the processed one, which names no device
       const current = publication.track;
-      if (
-        current instanceof LocalTrack &&
-        (await current.getDeviceId(false)) === deviceId
-      )
-        return;
-      await room.switchActiveDevice(
-        base.kind === "audio" ? "audioinput" : "videoinput",
-        deviceId,
-        false,
-      );
+      const previous =
+        current instanceof LocalTrack
+          ? await current.getDeviceId(false)
+          : undefined;
+      if (previous === deviceId) return;
+      const kind = base.kind === "audio" ? "audioinput" : "videoinput";
+      try {
+        // Exact: asked for as a preference, the browser may open another
+        // device that fits the rest of the constraints better
+        await room.switchActiveDevice(kind, deviceId, true);
+        // A check that the switch really happened, so that a failure is an
+        // error and not silence. Asked of the track again rather than taken
+        // from LiveKit's answer, which compares against the processed track
+        // too. A muted track is stopped and takes the device on turning on again
+        const deviceNow = await openDevice(publication.track);
+        if (deviceNow !== undefined && deviceNow !== deviceId)
+          throw new MatrixRTCError(
+            `The ${base.source} is on another device than the one asked for`,
+          );
+      } catch (e) {
+        // LiveKit stops the track before it opens the device asked for, so a
+        // switch that fails leaves nothing running
+        if (previous !== undefined && !isMuted(publication.track))
+          // The failed switch is the error to report, not this one
+          await room
+            .switchActiveDevice(kind, previous, true)
+            .catch(() => undefined);
+        throw e;
+      }
     },
   };
   if (base.kind === "audio") return { ...base, ...local };
@@ -231,10 +250,9 @@ export function createLocalLivekitMediaTrack(
     switchFacingMode: async () => {
       const track = videoTrack();
       if (!track) return;
-      const { facingMode } = facingModeFromLocalTrack(track);
-      if (facingMode !== "user" && facingMode !== "environment") return;
       await track.restartTrack({
-        facingMode: facingMode === "user" ? "environment" : "user",
+        facingMode:
+          facingModeOf(sourceTrack(track)) === "user" ? "environment" : "user",
       });
       return track.mediaStreamTrack.getSettings().deviceId;
     },
@@ -253,6 +271,19 @@ export function createLocalLivekitMediaTrack(
       else if (current) await track.stopProcessor();
     },
   };
+}
+
+/** The device a local track captures from; none while it is muted. */
+async function openDevice(
+  track: Track | undefined,
+): Promise<string | undefined> {
+  return track instanceof LocalTrack && !isMuted(track)
+    ? track.getDeviceId(false)
+    : undefined;
+}
+
+function isMuted(track: Track | undefined): boolean {
+  return track instanceof LocalTrack && track.isMuted;
 }
 
 /** The track behind a publication; a remote one arrives on subscription. */
@@ -288,6 +319,14 @@ async function rtpStreamStats(
   return undefined;
 }
 
+/**
+ * The camera's own track. While a processor runs LiveKit's media stream track
+ * is the processed one, which says nothing of the camera.
+ */
+function sourceTrack(track: LocalVideoTrack): MediaStreamTrack {
+  return track.mediaStream?.getVideoTracks()[0] ?? track.mediaStreamTrack;
+}
+
 function facingMode$(
   scope: ObservableScope,
   track$: Behavior<Track | undefined>,
@@ -298,12 +337,7 @@ function facingMode$(
         if (!(track instanceof LocalVideoTrack)) return of(undefined);
         return fromEvent(track, TrackEvent.Restarted).pipe(
           startWith(null),
-          map(() => {
-            const { facingMode } = facingModeFromLocalTrack(track);
-            return facingMode === "user" || facingMode === "environment"
-              ? facingMode
-              : undefined;
-          }),
+          map(() => facingModeOf(sourceTrack(track))),
         );
       }),
     ),

@@ -4,12 +4,24 @@
 
 - Call logic lives in `src/state/`. A component that derives call state is
   misplaced logic.
-- Composing behaviors: a factory taking `(scope, ...deps$)`, returning named
-  behaviors plus callbacks. Copy `src/state/LayoutSwitchViewModel.ts`. Prefer this
-  for anything new.
-- Owning a resource: a class taking the scope in its constructor — `MediaDevices`,
-  `MuteStates`, `TileStore`, `Publisher`, `Connection`. Both styles are current;
-  don't convert one to the other in passing.
+- New state is a `create<Thing>$(scope, …)` factory returning an interface of
+  named behaviors plus callbacks — `createCallViewModel$`,
+  `createCallNotificationLifecycle$`, the SDK's `createLocalMembership$`. Prefer
+  it to a class for anything new, including something that owns a resource.
+- Inside the factory, mutable state is a local `BehaviorSubject` exposed through
+  `scope.behavior(…)`, a resource is released in `scope.onEnd`, and the returned
+  object comes before the helpers it calls, which are `function` declarations
+  beneath it.
+- Older resource owners are classes taking the scope in their constructor —
+  `MediaDevices`, `MuteStates`, `TileStore`, `Publisher`, `Connection`. Convert
+  one only when that is the task, never in passing.
+- A factory's required parameters are what the thing is made of: no sensible
+  default. Several of them go in a props interface, so each can carry a doc
+  comment. Its trailing `options` bag is how the host wants it to behave: every
+  field optional, each defaulting to standalone behaviour, so `{}` works. A
+  value with no default is never an option; a test seam is never an option
+  either — mock the dependency it comes from. See `createCallViewModel$`, with
+  `CallViewModelProps` and `CallViewModelOptions`.
 - `foo$` is an observable. `Behavior<T>`, an observable with a current value, is
   the default for anything a view reads.
 
@@ -36,15 +48,15 @@ Element Call can be mounted several times inside a host's React tree, so it owns
 neither window, URL, document nor router. Each seam defaults to the old standalone
 and widget behaviour.
 
-| Never                                         | Use                                                           |
-| --------------------------------------------- | ------------------------------------------------------------- |
-| the `widget` global                           | `useHostBridge()` — `src/HostBridge.ts`                       |
-| `getUrlParams()`, `window.location`           | `useUrlParams()`                                              |
-| `useNavigate("/")`, `<Link to="/">`           | `useLeaveToHome()`, `LeaveToHomeLink`                         |
-| `document.body`                               | `useRootElement()`                                            |
-| `window.innerWidth/Height`, `useMediaQuery`   | `useRootSizeMatches()` in views, `windowSize$` in view models |
-| global `i18next`                              | the instance in `src/utils/i18n.ts`                           |
-| config or analytics reading their environment | `Config.initWith()`, `PosthogAnalytics.configure()`           |
+| Never                                         | Use                                                         |
+| --------------------------------------------- | ----------------------------------------------------------- |
+| the `widget` global                           | `useHostBridge()` — `src/HostBridge.ts`                     |
+| `getUrlParams()`, `window.location`           | `useUrlParams()`                                            |
+| `useNavigate("/")`, `<Link to="/">`           | `useLeaveToHome()`, `LeaveToHomeLink`                       |
+| `document.body`                               | `useRootElement()`                                          |
+| `window.innerWidth/Height`, `useMediaQuery`   | `useRootSizeMatches()` in views, `viewSize$` in view models |
+| global `i18next`                              | the instance in `src/utils/i18n.ts`                         |
+| config or analytics reading their environment | `Config.initWith()`, `PosthogAnalytics.configure()`         |
 
 - View models take values as options, never `getUrlParams()`
   (`callViewModelOptionsFromParams`, `CallViewModelOptions.hostBridge`).
@@ -66,6 +78,27 @@ and widget behaviour.
   `AudioOutput`. Intent presets set it on non-desktop; standalone leaves it off.
 - URL params are a published contract: change one, update `docs/url_params.md`.
 
+## Element Call on the SDK
+
+`sdk/` is `@element-hq/matrixrtc-sdk`; its design is
+[`sdk/SdkArchitecture.md`](../../sdk/SdkArchitecture.md). Read it before touching
+`sdk/`.
+
+- MatrixRTC and media logic lives in `sdk/`; UI, configuration, settings and host
+  concerns stay in `src/`. The dependency points Element Call → SDK, never back:
+  `element-call/sdk-import-boundary` rejects `src/`, React, i18n or Compound
+  under `sdk/`.
+- The SDK assumes no host — no widget, URL params or config file. It is designed for any
+  matrix rtc application/type. What only makes sense for a call stays in `CallViewModel`;
+  the SDK doc lists it under [Call-specific things kept out of the client](../../sdk/SdkArchitecture.md#call-specific-things-kept-out-of-the-client).
+- Element Call imports the SDK from `@element-hq/matrixrtc-sdk` only — never a
+  path into `sdk/src/`, never a copy of what the SDK already does. Missing
+  something? Extend the SDK's API.
+- Every `api.ts` is a contract: `sdk/src/api.ts`, `sdk/src/media-api.ts`, the
+  internal `sdk/src/media-backend/api.ts` and `component/api.ts`. A PR that
+  changes one lists the change in its body.
+- SDK and Element Call changes go in separate commits.
+
 ## Build targets
 
 Code that builds in only one is a bug.
@@ -75,12 +108,12 @@ Code that builds in only one is a bug.
 - `build:sdk` — `@element-hq/matrixrtc-sdk`, sources in `sdk/`, entry `sdk/index.ts`.
   Packaged exactly like the component (own pnpm project, run pnpm from the repo
   root, types from `sdk/tsconfig.build.json`, externals checked by
-  `pnpm lint:externals`). Interface only so far; the design is `sdk-plan.md`.
-- `build:sdk-target-based-on-call-view-model` — the SDK demo that predates the
-  package, one bundle of the `CallViewModel`; entry
-  `sdk-target-based-on-call-view-model/main.ts`. CI's `sdk` package
-  (`build:sdk:production` / `build:sdk:development`, the Netlify `-sdk` preview)
-  is still this bundle, not `build:sdk`.
+  `pnpm lint:externals`).
+- `build:widget-rtc-sdk` — a single bundle for widget pages that wraps the
+  `sdk/` package and the widget API, nothing of `src/`; entry
+  `widget-rtc-sdk/main.ts`. CI builds it as the `widget-rtc-sdk` package
+  (`build:widget-rtc-sdk:production` / `:development`) and deploys it as the
+  `pr<N>-widget-rtc-sdk` Netlify preview.
 - `build:component` — `@element-hq/element-call-component`, sources in `component/`
   (its own pnpm project; run pnpm from the repo root). Host API is in the README;
   `pnpm lint:externals` rejects an import of a `react` / `react-dom` /

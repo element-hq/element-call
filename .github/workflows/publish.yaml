@@ -7,9 +7,13 @@ on:
 env:
   VERSION: ${{ github.event.release.tag_name }}
 
+permissions: {}
+
 jobs:
   build_element_call:
-    uses: ./.github/workflows/build-element-call.yaml
+    permissions:
+      contents: read
+    uses: $/.github/workflows/build-element-call.yaml
     with:
       package: full
       vite_app_version: ${{ github.event.release.tag_name }} # Using ${{ env.VERSION }} here doesn't work
@@ -42,11 +46,10 @@ jobs:
       - name: Create Checksum
         run: find ${FILENAME_PREFIX} -type f -print0 | sort -z | xargs -0 sha256sum | tee ${FILENAME_PREFIX}.sha256
       - name: Upload
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
-        with:
-          files: |
-            ${{ env.FILENAME_PREFIX }}.tar.gz
-            ${{ env.FILENAME_PREFIX }}.sha256
+        run: gh release upload "$VERSION" "${FILENAME_PREFIX}.tar.gz" "${FILENAME_PREFIX}.sha256" --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
 
   publish_docker:
     needs: build_element_call
@@ -56,8 +59,10 @@ jobs:
       contents: write
       packages: write
       id-token: write
-    uses: ./.github/workflows/build-and-publish-docker.yaml
-    secrets: inherit
+    uses: $/.github/workflows/build-and-publish-docker.yaml
+    secrets:
+      TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+      TS_AUDIENCE: ${{ secrets.TS_AUDIENCE }}
     with:
       artifact_run_id: ${{ github.event.workflow_run.id || github.run_id }}
       docker_tags: |
@@ -69,12 +74,30 @@ jobs:
     needs: publish_docker
     name: Add docker release note
     runs-on: ubuntu-24.04
+    # Shared with publish-component.yaml and publish-embedded-packages.yaml, which append
+    # to the same release. GitHub lets only one job wait per group, so if all three arrive at once the
+    # waiting one is cancelled: re-run it. To mitigate this, the append exits early when its
+    # heading already exists.
+    concurrency:
+      group: release-notes-${{ github.event.release.tag_name || github.run_id }}
+      cancel-in-progress: false
+    permissions:
+      contents: write # to update release notes
     steps:
       - name: Add release note
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
-        with:
-          append_body: true
-          body: |
+        run: |
+          gh release view "$VERSION" --json body --jq .body > release-body.md
+          if grep -qF "$HEADING" release-body.md; then
+            echo "Section already present, nothing to add"
+            exit 0
+          fi
+          printf '\n%s\n' "$NOTES" >> release-body.md
+          gh release edit "$VERSION" --notes-file release-body.md
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          HEADING: "## Docker full package"
+          NOTES: |
             ## Docker full package
             Element Call is available as a Docker image from the [GitHub Container Registry](https://github.com/element-hq/element-call/pkgs/container/element-call).
 

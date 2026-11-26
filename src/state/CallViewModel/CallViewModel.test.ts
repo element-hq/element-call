@@ -36,7 +36,6 @@ import {
   mockRtcMembership,
   testScope,
 } from "../../utils/test.ts";
-import { E2eeType } from "../../e2ee/e2eeType.ts";
 import {
   alice,
   aliceId,
@@ -506,7 +505,7 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
           videoEnabled: new Map([
             [localParticipant, behavior(videoInputMarbles, yesNo)],
           ]),
-          windowSize$: constant({ width: 380, height: 700 }), // Mobile phone in portrait
+          viewSize$: constant({ width: 380, height: 700 }), // Mobile phone in portrait
         },
         (vm) => {
           schedule(tapScreenInputMarbles, { a: () => vm.tapScreen() });
@@ -548,7 +547,7 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
           // Both Alice and Bob are with us in the room
           roomMembers: [local, alice, bob],
           rtcMembers$: constant([localRtcMember, aliceRtcMember]),
-          windowSize$: constant({ width: 380, height: 700 }), // Mobile phone
+          viewSize$: constant({ width: 380, height: 700 }), // Mobile phone
         },
         (vm) => {
           // Uses one-on-one mobile layout
@@ -576,7 +575,7 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
           roomMembers: [local, alice, bob],
           functionalMembers: [bob.userId],
           rtcMembers$: constant([localRtcMember, aliceRtcMember]),
-          windowSize$: constant({ width: 380, height: 700 }), // Mobile phone
+          viewSize$: constant({ width: 380, height: 700 }), // Mobile phone
         },
         (vm) => {
           expectObservable(summarizeLayout$(vm.layout$)).toBe("a", {
@@ -602,7 +601,7 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
           roomMembers: [local, alice, bob],
           functionalMembers: [bob.userId],
           rtcMembers$: constant([localRtcMember, bobRtcMember]),
-          windowSize$: constant({ width: 380, height: 700 }), // Mobile phone
+          viewSize$: constant({ width: 380, height: 700 }), // Mobile phone
         },
         (vm) => {
           expectObservable(summarizeLayout$(vm.layout$)).toBe("a", {
@@ -647,7 +646,7 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
           sharingScreen: new Map([
             [aliceParticipant, behavior(aliceSharingInputMarbles, yesNo)],
           ]),
-          windowSize$: constant({ width: 700, height: 380 }), // Mobile phone in landscape
+          viewSize$: constant({ width: 700, height: 380 }), // Mobile phone in landscape
         },
         (vm) => {
           expectObservable(summarizeLayout$(vm.layout$)).toBe(
@@ -835,13 +834,13 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
 
   test("layout reacts to window size", () => {
     withTestScheduler(({ behavior, expectObservable }) => {
-      const windowSizeInputMarbles = "abc";
+      const viewSizeInputMarbles = "abc";
       const expectedLayoutMarbles = " abc";
       withCallViewModel(
         {
           remoteParticipants$: constant([aliceParticipant]),
           rtcMembers$: constant([localRtcMember, aliceRtcMember]),
-          windowSize$: behavior(windowSizeInputMarbles, {
+          viewSize$: behavior(viewSizeInputMarbles, {
             a: { width: 380, height: 700 }, // Start very narrow, like a phone
             b: { width: 1000, height: 800 }, // Go to normal desktop window size
             c: { width: 200, height: 180 }, // Go to PiP size
@@ -1518,7 +1517,6 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
         },
         {
           autoLeaveWhenOthersLeft: true,
-          encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
         },
       );
     });
@@ -1536,7 +1534,6 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
         },
         {
           autoLeaveWhenOthersLeft: true,
-          encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
         },
       );
     });
@@ -1554,7 +1551,6 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
         },
         {
           autoLeaveWhenOthersLeft: false,
-          encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
         },
       );
     });
@@ -1584,7 +1580,6 @@ describe.each(modes)("CallViewModel (%s mode)", (mode) => {
         },
         {
           autoLeaveWhenOthersLeft: true,
-          encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
         },
       );
     });

@@ -7,6 +7,11 @@ Please see LICENSE in the repository root for full details.
 
 import { BehaviorSubject, type Observable, of } from "rxjs";
 
+import {
+  cameraCaptureResolution,
+  type CaptureResolution,
+  type MediaQuality,
+} from "./config";
 import { MatrixRTCError } from "./errors";
 import {
   type HandedOverTrack,
@@ -19,6 +24,7 @@ import {
   type VideoProcessor,
 } from "./media-api";
 import { constant } from "./reactive/Behavior";
+import { facingModeOf } from "./utils/facingMode";
 import { inTurn } from "./utils/processorTurns";
 
 type Source = "microphone" | "camera";
@@ -27,15 +33,28 @@ export type GetUserMedia = (
   constraints: MediaStreamConstraints,
 ) => Promise<MediaStream>;
 
+export interface LocalMediaOptions {
+  /**
+   * The media quality the join is given. A camera asked for without a
+   * resolution is opened at the one this means, as the backend opens it at
+   * the join; left to the browser it would be published at a lower one.
+   */
+  mediaQuality?: MediaQuality;
+  /** In place of the browser's, for a test. */
+  getUserMedia?: GetUserMedia;
+}
+
 /**
  * Local media on the browser's devices alone, for a lobby ahead of a join:
  * no backend is involved, so whichever backend joins can take the tracks
  * over. Activity and level are not measured; stats are none.
  */
-export function createLocalMedia(
-  getUserMedia: GetUserMedia = async (constraints) =>
+export function createLocalMedia({
+  mediaQuality,
+  getUserMedia = async (constraints) =>
     navigator.mediaDevices.getUserMedia(constraints),
-): LocalMedia {
+}: LocalMediaOptions = {}): LocalMedia {
+  const cameraResolution = cameraCaptureResolution(mediaQuality);
   const capturedTracks = new Map<Source, CapturedTrack>();
   const requests = new Map<Source, Request>();
   const tracks$ = new BehaviorSubject<
@@ -77,11 +96,14 @@ export function createLocalMedia(
         );
       bySource.set(request.source, request);
     }
-    const constraints: MediaStreamConstraints = {};
-    for (const request of bySource.values())
-      constraints[request.source === "microphone" ? "audio" : "video"] =
-        trackConstraints(request);
-    const stream = await getUserMedia(constraints);
+    const { stream, constraints } = await open(getUserMedia, {
+      microphone: bySource.has("microphone")
+        ? trackConstraints(bySource.get("microphone")!, cameraResolution)
+        : undefined,
+      camera: bySource.has("camera")
+        ? trackConstraints(bySource.get("camera")!, cameraResolution)
+        : undefined,
+    });
     const captured: CapturedTrack[] = [];
     for (const track of stream.getTracks()) {
       const source: Source = track.kind === "audio" ? "microphone" : "camera";
@@ -90,7 +112,7 @@ export function createLocalMedia(
       const captured_ = new CapturedTrack(
         source,
         track,
-        trackConstraints(request),
+        constraints[source]!,
         getUserMedia,
       );
       capturedTracks.set(source, captured_);
@@ -138,18 +160,86 @@ export function createLocalMedia(
   };
 }
 
+type SourceConstraints = Partial<Record<Source, MediaTrackConstraints>>;
+
+/**
+ * Opens the devices asked for. Where one of them is gone, as a remembered
+ * choice that was unplugged, that source opens on another device and the
+ * other source keeps the device picked: an exact request for a device that no
+ * longer exists would otherwise open nothing.
+ */
+async function open(
+  getUserMedia: GetUserMedia,
+  constraints: SourceConstraints,
+): Promise<{ stream: MediaStream; constraints: SourceConstraints }> {
+  let refusal: unknown;
+  for (const attempt of attempts(constraints)) {
+    try {
+      const stream = await getUserMedia({
+        ...(attempt.microphone && { audio: attempt.microphone }),
+        ...(attempt.camera && { video: attempt.camera }),
+      });
+      return { stream, constraints: attempt };
+    } catch (e) {
+      if (!isOverconstrained(e)) throw e;
+      refusal ??= e;
+    }
+  }
+  throw refusal;
+}
+
+/**
+ * As asked, then with one source let off its device, then both: the refusal
+ * does not say which of the two devices is gone.
+ */
+function attempts(wanted: SourceConstraints): SourceConstraints[] {
+  const { microphone, camera } = wanted;
+  const camera_ = camera && relaxed(camera);
+  const microphone_ = microphone && relaxed(microphone);
+  return [
+    wanted,
+    ...(camera_ ? [{ ...wanted, camera: camera_ }] : []),
+    ...(microphone_ ? [{ ...wanted, microphone: microphone_ }] : []),
+    ...(camera_ && microphone_
+      ? [{ microphone: microphone_, camera: camera_ }]
+      : []),
+  ];
+}
+
+/** The same request with its device preferred, not required; nothing where it requires none. */
+function relaxed(
+  constraints: MediaTrackConstraints,
+): MediaTrackConstraints | undefined {
+  const { deviceId } = constraints;
+  if (typeof deviceId !== "object" || Array.isArray(deviceId)) return undefined;
+  if (deviceId.exact === undefined) return undefined;
+  return { ...constraints, deviceId: { ideal: deviceId.exact } };
+}
+
+/** By name: the refusal is not an `Error` in every browser. */
+function isOverconstrained(e: unknown): boolean {
+  return (e as { name?: unknown } | null)?.name === "OverconstrainedError";
+}
+
 /** The constraints a request means to the browser. */
-function trackConstraints(request: Request): MediaTrackConstraints {
-  const device = request.deviceId && { deviceId: request.deviceId };
+function trackConstraints(
+  request: Request,
+  cameraResolution: CaptureResolution,
+): MediaTrackConstraints {
+  // THE FIX for "cannot switch cameras in Chrome" (#4479), first capture.
+  // `exact` makes the browser open this device or fail. A plain
+  // `deviceId: "abc"` is only a wish, and Chromium ignores the wish and
+  // opens its default device.
+  const device = request.deviceId && {
+    deviceId: { exact: request.deviceId },
+  };
   if (request.source === "microphone") return { ...device, ...request.capture };
-  const resolution = request.capture?.resolution;
+  const resolution = request.capture?.resolution ?? cameraResolution;
   return {
     ...device,
-    ...(resolution && {
-      width: resolution.width,
-      height: resolution.height,
-      frameRate: resolution.frameRate,
-    }),
+    width: resolution.width,
+    height: resolution.height,
+    frameRate: resolution.frameRate,
   };
 }
 
@@ -161,9 +251,7 @@ function trackConstraints(request: Request): MediaTrackConstraints {
 class CapturedTrack {
   public readonly mediaTrack: LocalAudioMediaTrack | LocalVideoMediaTrack;
   private readonly muted$ = new BehaviorSubject(false);
-  private readonly facingMode$: BehaviorSubject<
-    "user" | "environment" | undefined
-  >;
+  private readonly facingMode$: BehaviorSubject<"user" | "environment">;
   private readonly elements = new Set<HTMLMediaElement>();
   private processor: HandedOverTrack["processor"];
   /** What the processor reads frames from; a processor needs a playing element. */
@@ -185,7 +273,12 @@ class CapturedTrack {
     // The device actually in use, so that a backend asked for it again
     // recognises it rather than restarting the track
     const { deviceId } = track.getSettings();
-    const constraints = { ...this.constraints, ...(deviceId && { deviceId }) };
+    // `exact` here too: the call reopens the camera with these constraints
+    // after a mute, and must get the same device again, not the default one
+    const constraints = {
+      ...this.constraints,
+      ...(deviceId && { deviceId: { exact: deviceId } }),
+    };
     this.finish();
     return { track, constraints, muted: this.muted$.value, processor };
   }
@@ -246,12 +339,28 @@ class CapturedTrack {
     for (const element of this.elements) play(element, this.shown());
   }
 
-  private async reacquire(constraints: MediaTrackConstraints): Promise<void> {
+  /**
+   * Replace the current with the one from the selector. On fail, keep current.
+   *
+   * The old `deviceId` and `facingMode` are removed before the new selector
+   * is applied. This is needed because we use `exact` device ids: if the old
+   * exact id stayed, asking for a new facing mode could not leave the deviceId.
+   * "flip camera" would do nothing.
+   */
+  private async reacquire(
+    selector: Pick<MediaTrackConstraints, "deviceId" | "facingMode">,
+  ): Promise<void> {
     this.live();
-    this.constraints = { ...this.constraints, ...constraints };
-    const stream = await this.getUserMedia({
-      [this.track.kind]: this.constraints,
-    });
+    const constraints = {
+      ...this.constraints,
+      // One selects the device at a time: a facing mode cannot move a track
+      // off a device it is pinned to
+      deviceId: undefined,
+      facingMode: undefined,
+      ...selector,
+    };
+    const stream = await this.getUserMedia({ [this.track.kind]: constraints });
+    this.constraints = constraints;
     this.track.stop();
     this.track = stream.getTracks()[0];
     this.track.enabled = !this.muted$.value;
@@ -289,7 +398,11 @@ class CapturedTrack {
       },
       setDevice: async (deviceId: string): Promise<void> => {
         if (this.track.getSettings().deviceId === deviceId) return;
-        await this.reacquire({ deviceId });
+        // THE FIX for "cannot switch cameras in Chrome" (#4479), switching in
+        // the lobby. With a plain `{ deviceId }` Chromium reopened the same
+        // camera, so the preview only flashed. `exact` opens the one picked,
+        // or rejects and leaves the current camera running.
+        await this.reacquire({ deviceId: { exact: deviceId } });
       },
     };
     if (this.source === "microphone")
@@ -306,10 +419,9 @@ class CapturedTrack {
       kind: "video",
       facingMode$: this.facingMode$,
       switchFacingMode: async () => {
-        const facingMode = this.facingMode$.value;
-        if (facingMode === undefined) return;
         await this.reacquire({
-          facingMode: facingMode === "user" ? "environment" : "user",
+          facingMode:
+            this.facingMode$.value === "user" ? "environment" : "user",
         });
         return this.track.getSettings().deviceId;
       },
@@ -324,13 +436,4 @@ function play(element: HTMLMediaElement, track: MediaStreamTrack): void {
   // nothing from play
   const playing = element.play() as Promise<void> | undefined;
   playing?.catch(() => undefined);
-}
-
-function facingModeOf(
-  track: MediaStreamTrack,
-): "user" | "environment" | undefined {
-  const { facingMode } = track.getSettings();
-  return facingMode === "user" || facingMode === "environment"
-    ? facingMode
-    : undefined;
 }

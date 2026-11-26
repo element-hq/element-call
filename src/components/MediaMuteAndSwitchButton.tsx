@@ -85,10 +85,12 @@ export interface MediaMuteAndSwitchButtonProps {
   backgroundEffectSettling?: boolean;
   /** Called with the file chosen from the add tile. Omit to leave it out. */
   onAddBackgroundImage?: (file: File) => void;
-  /** Removes a removable effect, never the one in force. */
+  /** Removes a removable effect, unless it is the selected one. */
   onRemoveBackgroundEffect?: (id: string) => void;
-  /** Why the last file offered couldn't be used; a new object each time. */
-  backgroundImageRefusal?: { text: string };
+  /** Why the last file offered couldn't be used, if it couldn't. */
+  backgroundImageRefusal?: string;
+  /** Called as the refusal is closed, or the menu showing it. */
+  onDismissBackgroundImageRefusal?: () => void;
   /** The user's own camera, shown at the top of the camera menu. */
   selfPreview?: ReactNode;
   /**
@@ -135,6 +137,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   onAddBackgroundImage,
   onRemoveBackgroundEffect,
   backgroundImageRefusal,
+  onDismissBackgroundImageRefusal,
   selfPreview,
   onSelect,
 }) => {
@@ -149,20 +152,18 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
   // elsewhere; it is held open until the picker is done.
   const choosingFile = useRef(false);
   const fileInput = useRef<HTMLInputElement | null>(null);
-  // A refusal is about the attempt that caused it: shown until dismissed or
-  // until the menu closes, and again for the next one.
-  const [seenRefusal, setSeenRefusal] = useState<object>();
-  const refusal =
-    backgroundImageRefusal !== seenRefusal ? backgroundImageRefusal : undefined;
   const onOpenChange = useCallback(
     (open: boolean): void => {
       if (!open && choosingFile.current) return;
       setMenuOpen(open);
-      // Drop a request that never arrived.
-      if (!open) setPlannedSelection(null);
-      if (!open) setSeenRefusal(backgroundImageRefusal);
+      if (!open) {
+        // Drop a request that never arrived.
+        setPlannedSelection(null);
+        // A refusal is about the attempt that caused it.
+        onDismissBackgroundImageRefusal?.();
+      }
     },
-    [backgroundImageRefusal],
+    [onDismissBackgroundImageRefusal],
   );
   // Scrolled to as it appears, as the list may be scrolled away from it.
   const scrollIntoView = useCallback((element: HTMLElement | null): void => {
@@ -512,7 +513,7 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
                 removeLabel={t("action.remove")}
               />
               {/* In the list, so the menu grows no taller for it. */}
-              {refusal !== undefined && (
+              {backgroundImageRefusal !== undefined && (
                 <div
                   ref={scrollIntoView}
                   role="none"
@@ -520,12 +521,12 @@ export const MediaMuteAndSwitchButton: FC<MediaMuteAndSwitchButtonProps> = ({
                 >
                   <Alert
                     type="critical"
-                    title={refusal.text}
-                    onClose={(): void => setSeenRefusal(refusal)}
+                    title={backgroundImageRefusal}
+                    onClose={onDismissBackgroundImageRefusal}
                   />
                 </div>
               )}
-              {refusal === undefined &&
+              {backgroundImageRefusal === undefined &&
                 backgroundEffectNotice !== undefined && (
                   <div id={noticeId} role="none" className={styles.notice}>
                     <InfoIcon width={20} height={20} />

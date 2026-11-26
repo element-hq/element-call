@@ -133,6 +133,7 @@ export const initializeWidget = (
         ElementCallReactionEventType,
         EventType.RTCDecline,
         EventType.RTCMembership,
+        "m.rtc.member",
       ];
 
       const sendState = [
@@ -164,6 +165,7 @@ export const initializeWidget = (
         EventType.CallSDPStreamMetadataChangedPrefix,
         EventType.CallReplaces,
         EventType.CallEncryptionKeysPrefix,
+        "m.rtc.encryption_key",
       ];
 
       const client = createRoomWidgetClient(

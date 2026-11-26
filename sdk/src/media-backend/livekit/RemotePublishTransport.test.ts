@@ -84,7 +84,7 @@ describe("findRemotePublishLivekitTransport", () => {
 
   beforeEach(() => {
     client = {
-      _unstable_getLivekitToken: vi
+      getLivekitToken: vi
         .fn()
         .mockResolvedValue({ jwt: jwtWithPublishGrant(true) }),
     };
@@ -92,8 +92,8 @@ describe("findRemotePublishLivekitTransport", () => {
 
   it("publishes on the oldest member's SFU with its server_name", async () => {
     await expect(find([carol, bob])).resolves.toEqual(bobsTransport);
-    expect(client._unstable_getLivekitToken).toHaveBeenCalledTimes(1);
-    expect(client._unstable_getLivekitToken).toHaveBeenCalledWith({
+    expect(client.getLivekitToken).toHaveBeenCalledTimes(1);
+    expect(client.getLivekitToken).toHaveBeenCalledWith({
       url: "wss://sfu.bob.com",
       server_name: "bob.com",
       room_id: "!room:example.org",
@@ -103,70 +103,68 @@ describe("findRemotePublishLivekitTransport", () => {
   });
 
   it("asks about an SFU once however many members are on it", async () => {
-    client._unstable_getLivekitToken.mockResolvedValue({
+    client.getLivekitToken.mockResolvedValue({
       jwt: jwtWithPublishGrant(false),
     });
 
     await expect(find([dave, bobsLaptop, bob])).resolves.toBeNull();
-    expect(client._unstable_getLivekitToken).toHaveBeenCalledTimes(1);
+    expect(client.getLivekitToken).toHaveBeenCalledTimes(1);
   });
 
   it("skips our own membership", async () => {
     await expect(find([ourselves, bob])).resolves.toEqual(bobsTransport);
-    expect(client._unstable_getLivekitToken).toHaveBeenCalledTimes(1);
+    expect(client.getLivekitToken).toHaveBeenCalledTimes(1);
   });
 
   it("ignores members publishing through a legacy JWT service", async () => {
     await expect(find([legacyErin, bob])).resolves.toEqual(bobsTransport);
-    expect(client._unstable_getLivekitToken).toHaveBeenCalledTimes(1);
+    expect(client.getLivekitToken).toHaveBeenCalledTimes(1);
   });
 
   it("moves on when a homeserver does not let us publish", async () => {
-    client._unstable_getLivekitToken.mockImplementation(
-      async ({ server_name }) =>
-        Promise.resolve({
-          jwt: jwtWithPublishGrant(server_name === "carol.com"),
-        }),
+    client.getLivekitToken.mockImplementation(async ({ server_name }) =>
+      Promise.resolve({
+        jwt: jwtWithPublishGrant(server_name === "carol.com"),
+      }),
     );
 
     await expect(find([bob, carol])).resolves.toEqual(carolsTransport);
-    expect(client._unstable_getLivekitToken).toHaveBeenCalledTimes(2);
+    expect(client.getLivekitToken).toHaveBeenCalledTimes(2);
   });
 
   it("moves on when a homeserver refuses to issue a token", async () => {
-    client._unstable_getLivekitToken.mockImplementation(
-      async ({ server_name }) =>
-        server_name === "bob.com"
-          ? Promise.reject(
-              new MatrixError(
-                { errcode: "M_FORBIDDEN", error: "Not joined" },
-                403,
-              ),
-            )
-          : Promise.resolve({ jwt: jwtWithPublishGrant(true) }),
+    client.getLivekitToken.mockImplementation(async ({ server_name }) =>
+      server_name === "bob.com"
+        ? Promise.reject(
+            new MatrixError(
+              { errcode: "M_FORBIDDEN", error: "Not joined" },
+              403,
+            ),
+          )
+        : Promise.resolve({ jwt: jwtWithPublishGrant(true) }),
     );
 
     await expect(find([bob, carol])).resolves.toEqual(carolsTransport);
   });
 
   it("finds nothing once all candidates are exhausted", async () => {
-    client._unstable_getLivekitToken.mockResolvedValue({
+    client.getLivekitToken.mockResolvedValue({
       jwt: jwtWithPublishGrant(false),
     });
 
     await expect(find([bob, carol])).resolves.toBeNull();
-    expect(client._unstable_getLivekitToken).toHaveBeenCalledTimes(2);
+    expect(client.getLivekitToken).toHaveBeenCalledTimes(2);
   });
 
   it("gives up immediately if our homeserver lacks the CS API", async () => {
-    client._unstable_getLivekitToken.mockRejectedValue(csApiMissing);
+    client.getLivekitToken.mockRejectedValue(csApiMissing);
 
     await expect(find([bob, carol])).resolves.toBeNull();
-    expect(client._unstable_getLivekitToken).toHaveBeenCalledTimes(1);
+    expect(client.getLivekitToken).toHaveBeenCalledTimes(1);
   });
 
   it("finds nothing where there are no other members", async () => {
     await expect(find([ourselves])).resolves.toBeNull();
-    expect(client._unstable_getLivekitToken).not.toHaveBeenCalled();
+    expect(client.getLivekitToken).not.toHaveBeenCalled();
   });
 });

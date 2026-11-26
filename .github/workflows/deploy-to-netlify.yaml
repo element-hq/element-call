@@ -17,7 +17,7 @@ on:
       package:
         required: true
         type: string
-        description: Which package to deploy - 'full', 'embedded', 'sdk', or 'storybook'
+        description: Which package to deploy - 'full', 'embedded', 'widget-rtc-sdk', or 'storybook'
       artifact_run_id:
         required: false
         type: string
@@ -64,25 +64,27 @@ jobs:
         run: curl -s https://raw.githubusercontent.com/element-hq/element-call/main/config/netlify_redirects > webapp/_redirects
 
       - name: Add config file
-        # Not needed for storybook deployments
-        if: inputs.package != 'storybook'
-        run: |
-          if [ "${INPUTS_PACKAGE}" = "full" ]; then
-            curl -s "https://raw.githubusercontent.com/${INPUTS_PR_HEAD_FULL_NAME}/${INPUTS_PR_HEAD_REF}/config/config_netlify_preview.json" > webapp/config.json
-          else
-            curl -s "https://raw.githubusercontent.com/${INPUTS_PR_HEAD_FULL_NAME}/${INPUTS_PR_HEAD_REF}/config/config_netlify_preview_sdk.json" > webapp/config.json
-          fi
+        # Only the app reads a config.json beside it. A widget gets everything
+        # about the homeserver from its host.
+        if: inputs.package == 'full'
+        run: curl -s "https://raw.githubusercontent.com/${INPUTS_PR_HEAD_FULL_NAME}/${INPUTS_PR_HEAD_REF}/config/config_netlify_preview.json" > webapp/config.json
         env:
-          INPUTS_PACKAGE: ${{ inputs.package }}
           INPUTS_PR_HEAD_FULL_NAME: ${{ inputs.pr_head_full_name }}
           INPUTS_PR_HEAD_REF: ${{ inputs.pr_head_ref }}
+      - name: Add headers file
+        # A widget page on another origin imports the widget RTC SDK bundle as a
+        # module, which the browser only allows with CORS
+        if: inputs.package == 'widget-rtc-sdk'
+        run: |
+          printf '/*\n  Access-Control-Allow-Origin: *\n' > webapp/_headers
+
       - name: ☁️ Deploy to Netlify
         id: netlify
         uses: nwtgck/actions-netlify@4cbaf4c08f1a7bfa537d6113472ef4424e4eb654 # v3.0
         with:
           publish-dir: webapp
           deploy-message: "Deploy from GitHub Actions"
-          alias: ${{ inputs.package == 'sdk' && format('pr{0}-sdk', inputs.pr_number) || inputs.package == 'storybook' && format('pr{0}-storybook', inputs.pr_number) || format('pr{0}', inputs.pr_number) }}
+          alias: ${{ inputs.package == 'widget-rtc-sdk' && format('pr{0}-widget-rtc-sdk', inputs.pr_number) || inputs.package == 'storybook' && format('pr{0}-storybook', inputs.pr_number) || format('pr{0}', inputs.pr_number) }}
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
