@@ -110,8 +110,12 @@ export interface Props {
   scope: ObservableScope;
   /** The user ids of the session's members, ours included. */
   memberUserIds$: Behavior<string[]>;
-  /** The user ids of the room's members, ours included. */
-  roomMemberUserIds$: Behavior<string[]>;
+  /**
+   * The user ids of the room's human members, ours included. Functional
+   * members (bots) must be excluded: the ring recipient is the first one that
+   * is not us.
+   */
+  humanRoomMemberUserIds$: Behavior<string[]>;
   sentCallNotification$: Observable<CallNotificationWrapper | null>;
   receivedDecline$: Observable<MatrixEvent>;
   options: { waitForCallPickup?: boolean; autoLeaveWhenOthersLeft?: boolean };
@@ -121,7 +125,7 @@ export interface Props {
 export function createCallNotificationLifecycle$({
   scope,
   memberUserIds$,
-  roomMemberUserIds$,
+  humanRoomMemberUserIds$,
   sentCallNotification$,
   receivedDecline$,
   options,
@@ -153,8 +157,7 @@ export function createCallNotificationLifecycle$({
       ),
       switchMap((notificationEvent) => {
         // We assume that there is only one other user in the room when ringing
-        // TODO: Respect io.element.functional_members
-        const recipient = roomMemberUserIds$.value.find(
+        const recipient = humanRoomMemberUserIds$.value.find(
           (userId) => userId !== localUser.userId,
         );
         if (recipient === undefined) {
