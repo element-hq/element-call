@@ -10,6 +10,38 @@ import type { createCallMatrixBackend } from "../src/CallMatrixBackend";
 import { adoptingHostErrors } from "./hostErrors";
 
 /**
+ * Everything the component calls on the host's client. Part of the public
+ * `client` prop (see api.ts), so that a host whose js-sdk lacks one of these
+ * fails to type-check.
+ *
+ * STOP GAP until the host passes an interface of our own instead of its
+ * `MatrixClient`.
+ */
+export type HostClientPart = Pick<
+  MatrixClient,
+  | "baseUrl"
+  | "getUserId"
+  | "getDeviceId"
+  | "getAccessToken"
+  | "getSyncState"
+  | "on"
+  | "off"
+  | "getUser"
+  | "getCrypto"
+  | "sendEvent"
+  | "redactEvent"
+  | "decryptEventIfNeeded"
+  | "_unstable_sendStickyEvent"
+  | "_unstable_sendStickyDelayedEvent"
+  | "encryptAndSendToDevice"
+  | "sendStateEvent"
+  | "setDisplayName"
+  | "setAvatarUrl"
+  | "uploadContent"
+  | "doesServerSupportUnstableFeature"
+>;
+
+/**
  * The client for Element Call in Component mode.
  * We do get the full host client but we dont want to use it as it
  * might use older versions of methods were we expect changes. (f.ex. getLivekitToken)
@@ -19,7 +51,7 @@ import { adoptingHostErrors } from "./hostErrors";
  * methods but uses the ElementCall Components js-sdk's client impl for anything else.
  */
 export function createComponentLocalJsClient(
-  host: MatrixClient,
+  host: HostClientPart,
 ): Parameters<typeof createCallMatrixBackend>[0] {
   const own = createClient({
     baseUrl: host.baseUrl,

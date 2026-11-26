@@ -248,10 +248,12 @@ the build (`allowBuilds` in its `pnpm-workspace.yaml`).
 1. Provide the externals yourself: `react`, `react-dom`,
    `@vector-im/compound-web`, `@vector-im/compound-design-tokens`, and
    Compound's stylesheet. The component bundles its own `matrix-js-sdk`; the
-   host's client can be on any version that has the methods it wraps.
+   host's client and room can be on any version that has what the `client`
+   and `room` props pick from them, which the host's type check enforces.
 2. Import `@element-hq/element-call-component/style.css`.
 3. Await `initializeElementCall(config)` once before rendering.
-4. Render the component with `client`, `roomId` and an `intent`; optionally
+4. Render the component with `client`, `room` (from that client) and an
+   `intent`; optionally
    pass `config`, `hostBridge`, `language` and `theme` (both can change
    mid-call). Control it through the `ref` handle (`join`, `hangUp`,
    `setDeviceMute`).

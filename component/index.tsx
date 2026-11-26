@@ -11,7 +11,7 @@ Please see LICENSE in the repository root for full details.
  * Element Call as a React component, for an application that wants to show a
  * call inside itself rather than in an iframe.
  *
- * The host supplies the client and says which room to call in; Element Call
+ * The host supplies the client and the room to call in; Element Call
  * supplies the call. Everything it would otherwise take from the page it is on
  * — the URL, the document body, a Matrix session of its own — comes from the
  * host instead, or is confined to the container it is mounted in.
@@ -150,7 +150,7 @@ const Decoration: FC<{ children: JSX.Element }> = ({ children }) => {
 
 export const ElementCall: FC<ElementCallProps> = ({
   client,
-  roomId,
+  room,
   intent = UserIntent.JoinExistingCall,
   config,
   hostBridge: suppliedHostBridge,
@@ -181,6 +181,7 @@ export const ElementCall: FC<ElementCallProps> = ({
   // to be stable for as long as its contents are. A host writing `config`
   // inline would otherwise tear the call down on every render.
   const stableConfig = useStableValue(config);
+  const { roomId } = room;
   const params = useMemo(
     (): UrlParams => ({
       ...componentProperties,
@@ -206,25 +207,17 @@ export const ElementCall: FC<ElementCallProps> = ({
     };
   }, [controlledAudioDevices, callIntent]);
 
-  const room = client.getRoom(roomId);
   const backend = useMemo(
-    () =>
-      room &&
-      createCallMatrixBackend(createComponentLocalJsClient(client), room),
+    () => createCallMatrixBackend(createComponentLocalJsClient(client), room),
     [client, room],
   );
-
-  if (room === null)
-    logger.error(
-      `Element Call was asked to call in ${roomId}, which its host's client does not know about`,
-    );
 
   // Everything the call needs is in hand once these exist, and the first
   // render with them is where the call itself appears: the moment the host
   // is told that Element Call has loaded, as the widget tells its client once
   // its own initialisation is over. Once per mount, however often the pieces
   // are later swapped out.
-  const ready = container !== null && backend !== null && vm !== null;
+  const ready = container !== null && vm !== null;
   const announcedLoaded = useRef(false);
   useEffect(() => {
     if (!ready || announcedLoaded.current) return;

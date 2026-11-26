@@ -25,10 +25,12 @@ Please see LICENSE in the repository root for full details.
  */
 
 import type { Ref } from "react";
-import type { MatrixClient } from "matrix-js-sdk";
+import type { Room } from "matrix-js-sdk";
 
 import type { UrlProperties } from "../src/UrlParams";
 import type { ElementCallHandle, ElementCallHostBridge } from "./host";
+import type { HostClientPart } from "./componentLocalJsClient";
+import type { SuppliedClient } from "../src/ClientContext";
 import {
   BackgroundStyle,
   configurationForIntent,
@@ -69,14 +71,44 @@ export {
 export type ElementCallConfiguration = Partial<UrlConfiguration> &
   Partial<Pick<UrlProperties, "background">>;
 
+/**
+ * Everything Element Call reads of the host's room. Listed here rather than
+ * taken from the call's backend, whose types a host cannot resolve.
+ *
+ * STOP GAP until the host passes an interface of our own instead of its `Room`.
+ */
+type HostRoomPart = Pick<
+  Room,
+  | "roomId"
+  | "on"
+  | "off"
+  | "getMembersWithMembership"
+  | "getLiveTimeline"
+  | "getVersion"
+  | "hasMembershipState"
+  | "_unstable_getStickyEvents"
+  | "name"
+  | "getMxcAvatarUrl"
+  | "getJoinRule"
+  | "relations"
+>;
+
 export interface ElementCallProps {
   /**
    * The client to place the call with. Element Call does not authenticate
    * anyone or manage a session of its own; this one is the host's.
+   *
+   * Typed with the host's own js-sdk, as only what Element Call calls on it: by
+   * the call's backend, and by the rest of the call through its context. A
+   * js-sdk too old for Element Call fails to type-check rather than failing
+   * once a call is shown.
    */
-  client: MatrixClient;
-  /** The room to call in. The host's client must already know about it. */
-  roomId: string;
+  client: HostClientPart & SuppliedClient;
+  /**
+   * The room to call in, from the host's client. Typed like `client`: only what
+   * Element Call reads of it.
+   */
+  room: HostRoomPart;
   /**
    * What the user asked for — whether they started the call or joined one that
    * was already running, and whether it is a call in a group or a DM. Element

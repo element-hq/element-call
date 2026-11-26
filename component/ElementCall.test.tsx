@@ -51,7 +51,7 @@ afterEach(() => {
 });
 
 test("calls in the room, leaving the session to the call", async () => {
-  render(<ElementCall client={mockClient()} roomId={roomId} />);
+  render(<ElementCall client={mockClient()} room={room} />);
 
   await screen.findByText("call");
   const props = callView.mock.lastCall?.[0];
@@ -59,16 +59,10 @@ test("calls in the room, leaving the session to the call", async () => {
   expect(props).not.toHaveProperty("rtcSession");
 });
 
-test("shows no call in a room the host's client does not know", () => {
-  render(<ElementCall client={mockClient(null)} roomId={roomId} />);
-  expect(screen.queryByText("call")).toBeNull();
-});
-
 // No `matrixRTC`: the host's session manager is not ours to use
-function mockClient(knownRoom: Room | null = room): MatrixClient {
+function mockClient(): MatrixClient {
   return {
     ...mockEmitter(),
-    getRoom: (id: string) => (id === roomId ? knownRoom : null),
     // What the call view's client is made from
     baseUrl: "https://matrix.example.org",
     getUserId: () => "@alice:example.org",
