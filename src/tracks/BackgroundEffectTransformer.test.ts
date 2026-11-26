@@ -26,6 +26,7 @@ describe("BackgroundEffectTransformer", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
   });
 
   it("loads a background chosen before it was built", async () => {
@@ -94,6 +95,48 @@ describe("BackgroundEffectTransformer", () => {
 
     expect(resolve).toHaveBeenCalledWith("https://cdn.example.org/mediapipe");
     expect(create.mock.calls[0][0]).toBe(served);
+  });
+
+  it("runs MediaPipe from where the build serves it, if it does", async () => {
+    vi.stubEnv("VITE_PACKAGE", "full");
+    vi.stubEnv("VITE_MEDIAPIPE_WASM_URL", "https://cdn.example.org/build");
+    vi.spyOn(VideoTransformer.prototype, "init").mockResolvedValue();
+    const create = vi
+      .spyOn(ImageSegmenter, "createFromOptions")
+      .mockResolvedValue({} as ImageSegmenter);
+    const served = {
+      wasmLoaderPath: "https://cdn.example.org/build/vision_wasm_internal.js",
+      wasmBinaryPath: "https://cdn.example.org/build/vision_wasm_internal.wasm",
+    };
+    const resolve = vi
+      .spyOn(FilesetResolver, "forVisionTasks")
+      .mockResolvedValue(served);
+
+    await new BackgroundEffectTransformer({ backgroundDisabled: true }).init(
+      {} as VideoTransformerInitOptions,
+    );
+
+    expect(resolve).toHaveBeenCalledWith("https://cdn.example.org/build");
+    expect(create.mock.calls[0][0]).toBe(served);
+  });
+
+  it("runs MediaPipe from its own bundle when embedded, wherever the build serves it", async () => {
+    vi.stubEnv("VITE_PACKAGE", "embedded");
+    vi.stubEnv("VITE_MEDIAPIPE_WASM_URL", "https://cdn.example.org/build");
+    vi.spyOn(VideoTransformer.prototype, "init").mockResolvedValue();
+    const create = vi
+      .spyOn(ImageSegmenter, "createFromOptions")
+      .mockResolvedValue({} as ImageSegmenter);
+    const resolve = vi.spyOn(FilesetResolver, "forVisionTasks");
+
+    await new BackgroundEffectTransformer({ backgroundDisabled: true }).init(
+      {} as VideoTransformerInitOptions,
+    );
+
+    expect(resolve).not.toHaveBeenCalled();
+    expect(create.mock.calls[0][0].wasmBinaryPath).toMatch(
+      /vision_wasm_internal\.wasm/,
+    );
   });
 
   it("reports the first frame carrying an effect, once", async () => {

@@ -16,12 +16,6 @@ import {
 import { logger } from "matrix-js-sdk/lib/logger";
 import { FilesetResolver, ImageSegmenter } from "@mediapipe/tasks-vision";
 
-// Only the SIMD build of MediaPipe's runtime: every browser Element Call
-// supports has WebAssembly SIMD. As files rather than data URLs, so that a
-// host's bundler serves them as assets of its own, and a browser fetches them
-// only when an effect is first switched on.
-import wasmLoaderPath from "@mediapipe/tasks-vision/vision_wasm_internal.js?url&no-inline";
-import wasmBinaryPath from "@mediapipe/tasks-vision/vision_wasm_internal.wasm?url&no-inline";
 import modelAssetPath from "../mediapipe/imageSegmenter/selfie_segmenter.tflite?url&no-inline";
 
 interface WasmFileset {
@@ -31,12 +25,39 @@ interface WasmFileset {
   wasmBinaryPath: string;
 }
 
-const bundledFileset: WasmFileset = { wasmLoaderPath, wasmBinaryPath };
+/**
+ * MediaPipe's runtime as this build serves it: from VITE_MEDIAPIPE_WASM_URL,
+ * or from a copy of its own where that is unset or the build is embedded, as
+ * an embedded build has to work without reaching anything but its host.
+ *
+ * Kept a condition on the build's environment, in place, so that the bundler
+ * drops the copy (11 MB of Wasm) from every build that does not need it.
+ */
+async function buildFileset(): Promise<WasmFileset> {
+  if (
+    import.meta.env.VITE_PACKAGE !== "embedded" &&
+    import.meta.env.VITE_MEDIAPIPE_WASM_URL
+  ) {
+    return FilesetResolver.forVisionTasks(
+      import.meta.env.VITE_MEDIAPIPE_WASM_URL,
+    );
+  }
+  // Only the SIMD build of MediaPipe's runtime: every browser Element Call
+  // supports has WebAssembly SIMD. As files rather than data URLs, so that a
+  // host's bundler serves them as assets of its own, and a browser fetches them
+  // only when an effect is first switched on.
+  const [{ default: wasmLoaderPath }, { default: wasmBinaryPath }] =
+    await Promise.all([
+      import("@mediapipe/tasks-vision/vision_wasm_internal.js?url&no-inline"),
+      import("@mediapipe/tasks-vision/vision_wasm_internal.wasm?url&no-inline"),
+    ]);
+  return { wasmLoaderPath, wasmBinaryPath };
+}
 
 export interface BackgroundEffectTransformerSources {
   /**
-   * Where to fetch MediaPipe's runtime from instead of the bundled copy: a
-   * directory holding its `vision_wasm_internal.js` and `.wasm` files.
+   * Where to fetch MediaPipe's runtime from instead of where the build serves
+   * it: a directory holding its `vision_wasm_internal.js` and `.wasm` files.
    * Consulted only when the runtime is about to load, so a transformer can be
    * built before the deployment's config has arrived.
    */
@@ -160,7 +181,7 @@ async function createSegmenter(
   const wasmBaseUrl = sources.wasmBaseUrl?.();
   const fileset =
     wasmBaseUrl === undefined
-      ? bundledFileset
+      ? await buildFileset()
       : await FilesetResolver.forVisionTasks(wasmBaseUrl);
   const build = async (delegate: "GPU" | "CPU"): Promise<ImageSegmenter> =>
     ImageSegmenter.createFromOptions(fileset, {
