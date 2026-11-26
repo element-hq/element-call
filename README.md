@@ -245,9 +245,10 @@ the build (`allowBuilds` in its `pnpm-workspace.yaml`).
 
 ##### Use
 
-1. Provide the externals yourself: `react`, `react-dom`, `matrix-js-sdk`,
+1. Provide the externals yourself: `react`, `react-dom`,
    `@vector-im/compound-web`, `@vector-im/compound-design-tokens`, and
-   Compound's stylesheet.
+   Compound's stylesheet. The component bundles its own `matrix-js-sdk`; the
+   host's client can be on any version that has the methods it wraps.
 2. Import `@element-hq/element-call-component/style.css`.
 3. Await `initializeElementCall(config)` once before rendering.
 4. Render the component with `client`, `roomId` and an `intent`; optionally

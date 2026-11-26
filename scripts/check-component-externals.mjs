@@ -9,11 +9,11 @@ Please see LICENSE in the repository root for full details.
  * Checks that the library builds leave the packages a host must supply to the
  * host.
  *
- * A host application already has React, the Matrix SDK and Compound,
- * and a second copy of any of them is worse than dead weight: React would hold
- * two sets of hooks, the Matrix client would run two sync loops, and a second
- * Compound would style the tooltips it floats into the host's body with class
- * names the host's stylesheet does not know. So each library build lists them
+ * A host application already has React and Compound (and, for the SDK build,
+ * the Matrix SDK), and a second copy of any of them is worse than dead weight:
+ * React would hold two sets of hooks, and a second Compound would style the
+ * tooltips it floats into the host's body with class names the host's
+ * stylesheet does not know. So each library build lists them
  * as external — but that list has to name every subpath, since the bundler
  * silently ignores the pattern and callback forms of the option, and an import
  * it does not cover is bundled with no warning at all. That is the failure
@@ -47,10 +47,10 @@ const TARGETS = [
     // `sdk` too: the build resolves `@element-hq/matrixrtc-sdk` to its source
     sources: ["src", "component", "sdk"],
     excluded: ["component/dev", "sdk/dev"],
+    // Not the Matrix SDK: the component bundles its own (see the build config)
     mustBeExternal: [
       "react",
       "react-dom",
-      "matrix-js-sdk",
       "@vector-im/compound-web",
       "@vector-im/compound-design-tokens",
     ],
