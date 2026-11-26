@@ -325,7 +325,9 @@ export const useLoadGroupCall = (
       );
       await client.waitUntilRoomReadyForGroupCalls(room.roomId);
       logger.info(`${roomIdOrAlias}, is ready for group calls`);
-      return room;
+      // `joinRoom` hands back a detached room when the sync has not brought the
+      // room in yet; only  the client's own copy is kept up to date
+      return client.getRoom(room.roomId) ?? room;
     };
 
     const fetchOrCreateGroupCall = async (): Promise<
