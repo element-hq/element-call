@@ -206,8 +206,11 @@ export class TestHelpers {
             await expect(dialog).toBeHidden({ timeout: 5000 });
           }
           // The same element shows the next toast a moment after the click, so
-          // reading it straight away acts on the dismissed one a second time
-          await expect(toastTitle).not.toHaveText(title, { timeout: 5000 });
+          // reading it straight away acts on the dismissed one a second time.
+          // Counted rather than read, as the last toast leaves no title behind.
+          await expect(toastTitle.filter({ hasText: title })).toHaveCount(0, {
+            timeout: 5000,
+          });
         } else {
           // Unknown toast. We don't want to act on unknown toasts
           break;
