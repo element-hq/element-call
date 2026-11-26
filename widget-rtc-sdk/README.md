@@ -1,3 +1,11 @@
+> [!CAUTION]
+> This widget specific sdk should be treated as deprecated.
+> The VoIP team will keep it here while it is low maintainance.
+> But we might remove it at any time (Or preferrably move this folder
+> into its own repository.)
+> Our recommendation for any web rtc solution (inlcuding widgets)
+> is to build it directly on the `/sdk` folder of EC.
+
 # Widget RTC SDK
 
 A single JavaScript bundle for widget pages: it connects to the host (for
