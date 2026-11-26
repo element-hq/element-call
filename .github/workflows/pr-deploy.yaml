@@ -7,6 +7,8 @@ on:
     types:
       - completed
 
+permissions: {}
+
 jobs:
   prdetails:
     # Logic:
@@ -18,6 +20,8 @@ jobs:
       github.event.workflow_run.event == 'pull_request' &&
       github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-24.04
+    permissions:
+      pull-requests: read
     outputs:
       pr_number: ${{ steps.prdetails.outputs.pr_id }}
       pr_data_json: ${{ steps.prdetails.outputs.data }}
@@ -33,7 +37,7 @@ jobs:
     needs: prdetails
     permissions:
       deployments: write
-    uses: ./.github/workflows/deploy-to-netlify.yaml
+    uses: $/.github/workflows/deploy-to-netlify.yaml
     with:
       artifact_run_id: ${{ github.event.workflow_run.id || github.run_id }}
       pr_number: ${{ needs.prdetails.outputs.pr_number }}
@@ -50,7 +54,7 @@ jobs:
     needs: prdetails
     permissions:
       deployments: write
-    uses: ./.github/workflows/deploy-to-netlify.yaml
+    uses: $/.github/workflows/deploy-to-netlify.yaml
     with:
       artifact_run_id: ${{ github.event.workflow_run.id || github.run_id }}
       pr_number: ${{ needs.prdetails.outputs.pr_number }}
@@ -68,7 +72,7 @@ jobs:
     if: ${{ needs.prdetails.outputs.pr_data_json && contains(fromJSON(needs.prdetails.outputs.pr_data_json).labels.*.name, 'storybook build') }}
     permissions:
       deployments: write
-    uses: ./.github/workflows/deploy-to-netlify.yaml
+    uses: $/.github/workflows/deploy-to-netlify.yaml
     with:
       artifact_run_id: ${{ github.event.workflow_run.id || github.run_id }}
       pr_number: ${{ needs.prdetails.outputs.pr_number }}
@@ -88,8 +92,10 @@ jobs:
       contents: write
       packages: write
       id-token: write
-    uses: ./.github/workflows/build-and-publish-docker.yaml
-    secrets: inherit
+    uses: $/.github/workflows/build-and-publish-docker.yaml
+    secrets:
+      TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+      TS_AUDIENCE: ${{ secrets.TS_AUDIENCE }}
     with:
       artifact_run_id: ${{ github.event.workflow_run.id || github.run_id }}
       docker_tags: |

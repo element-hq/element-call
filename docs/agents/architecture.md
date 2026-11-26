@@ -78,6 +78,27 @@ and widget behaviour.
   `AudioOutput`. Intent presets set it on non-desktop; standalone leaves it off.
 - URL params are a published contract: change one, update `docs/url_params.md`.
 
+## Element Call on the SDK
+
+`sdk/` is `@element-hq/matrixrtc-sdk`; its design is
+[`sdk/SdkArchitecture.md`](../../sdk/SdkArchitecture.md). Read it before touching
+`sdk/`.
+
+- MatrixRTC and media logic lives in `sdk/`; UI, configuration, settings and host
+  concerns stay in `src/`. The dependency points Element Call → SDK, never back:
+  `element-call/sdk-import-boundary` rejects `src/`, React, i18n or Compound
+  under `sdk/`.
+- The SDK assumes no host — no widget, URL params or config file. It is designed for any
+  matrix rtc application/type. What only makes sense for a call stays in `CallViewModel`;
+  the SDK doc lists it under [Call-specific things kept out of the client](../../sdk/SdkArchitecture.md#call-specific-things-kept-out-of-the-client).
+- Element Call imports the SDK from `@element-hq/matrixrtc-sdk` only — never a
+  path into `sdk/src/`, never a copy of what the SDK already does. Missing
+  something? Extend the SDK's API.
+- Every `api.ts` is a contract: `sdk/src/api.ts`, `sdk/src/media-api.ts`, the
+  internal `sdk/src/media-backend/api.ts` and `component/api.ts`. A PR that
+  changes one lists the change in its body.
+- SDK and Element Call changes go in separate commits.
+
 ## Build targets
 
 Code that builds in only one is a bug.
@@ -87,7 +108,7 @@ Code that builds in only one is a bug.
 - `build:sdk` — `@element-hq/matrixrtc-sdk`, sources in `sdk/`, entry `sdk/index.ts`.
   Packaged exactly like the component (own pnpm project, run pnpm from the repo
   root, types from `sdk/tsconfig.build.json`, externals checked by
-  `pnpm lint:externals`). Interface only so far; the design is `sdk-plan.md`.
+  `pnpm lint:externals`).
 - `build:widget-rtc-sdk` — a single bundle for widget pages that wraps the
   `sdk/` package and the widget API, nothing of `src/`; entry
   `widget-rtc-sdk/main.ts`. CI builds it as the `widget-rtc-sdk` package
