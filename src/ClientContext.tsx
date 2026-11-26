@@ -170,7 +170,7 @@ export type SuppliedClient = Pick<
   MatrixClient,
   // The disconnected banner, and stopping a client opened elsewhere
   | "on"
-  | "removeListener"
+  | "off"
   | "stopClient"
   // Analytics, through `window.matrixclient`
   | "getCrypto"
@@ -410,7 +410,7 @@ export const ClientProvider: FC<Props> = ({
 
     return (): void => {
       if (initClientState.client) {
-        initClientState.client.removeListener(ClientEvent.Sync, onSync);
+        initClientState.client.off(ClientEvent.Sync, onSync);
       }
     };
   }, [initClientState, onSync, hostBridge]);
