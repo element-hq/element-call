@@ -12,7 +12,7 @@ import {
   RoomStateEvent,
   UNSTABLE_ELEMENT_FUNCTIONAL_USERS,
 } from "matrix-js-sdk";
-import { filter, fromEvent, map, type Observable } from "rxjs";
+import { filter, fromEvent, map } from "rxjs";
 import { type Behavior, type ObservableScope } from "@element-hq/matrixrtc-sdk";
 
 /**
@@ -22,13 +22,15 @@ import { type Behavior, type ObservableScope } from "@element-hq/matrixrtc-sdk";
  */
 export function createFunctionalMembers$(
   scope: ObservableScope,
-  matrixRoom: MatrixRoom,
+  matrixRoom: Pick<MatrixRoom, "getLiveTimeline" | "on" | "off">,
 ): Behavior<Set<string>> {
   return scope.behavior(
-    (
-      fromEvent(matrixRoom, RoomStateEvent.Events) as Observable<[MatrixEvent]>
+    fromEvent(
+      matrixRoom,
+      RoomStateEvent.Events,
+      (event: MatrixEvent) => event,
     ).pipe(
-      filter(([event]) =>
+      filter((event) =>
         UNSTABLE_ELEMENT_FUNCTIONAL_USERS.matches(event.getType()),
       ),
       map(() => functionalMembers(matrixRoom)),
@@ -37,7 +39,9 @@ export function createFunctionalMembers$(
   );
 }
 
-function functionalMembers(matrixRoom: MatrixRoom): Set<string> {
+function functionalMembers(
+  matrixRoom: Pick<MatrixRoom, "getLiveTimeline">,
+): Set<string> {
   const serviceMembers: unknown = matrixRoom
     .getLiveTimeline()
     .getState(EventTimeline.FORWARDS)

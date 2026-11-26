@@ -200,6 +200,7 @@ export interface CallViewModelProps {
     | "roomId"
     | "getMembersWithMembership"
     | "_unstable_getStickyEvents"
+    | "getLiveTimeline"
     | "on"
     | "off"
   >;

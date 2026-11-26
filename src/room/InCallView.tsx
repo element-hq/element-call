@@ -174,10 +174,13 @@ export interface ActiveCallProps extends Omit<
     | "getMembersWithMembership"
     // Call notifications, for the call view model
     | "_unstable_getStickyEvents"
+    // Functional members, for the call view model
+    | "getLiveTimeline"
     // Raised hands already in the room, for the reactions reader
     | "relations"
     // `on`/`off`, to listen for:
     // - `RoomStateEvent.Members` (call view model members)
+    // - `RoomStateEvent.Events` (call view model functional members)
     // - `RoomEvent.Timeline` and `RoomStickyEventsEvent.Update` (call notifications)
     // - `RoomEvent.Timeline`, `RoomEvent.Redaction` and
     //   `RoomEvent.LocalEchoUpdated` (reactions and raised hands)

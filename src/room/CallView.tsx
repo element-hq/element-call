@@ -223,12 +223,14 @@ interface LoadedProps extends Omit<Props, "rtcSession" | "backend"> {
     | "getJoinRule"
     | "getMembersWithMembership"
     | "_unstable_getStickyEvents"
+    | "getLiveTimeline"
     | "relations"
     // `on`/`off`, to listen for:
     // - `RoomEvent.Name` (room name)
     // - `RoomStateEvent.Update` and `RoomEvent.CurrentStateUpdated` (avatar
     //   and join rule hooks)
     // - `RoomStateEvent.Members` (call view model members)
+    // - `RoomStateEvent.Events` (call view model functional members)
     // - `RoomEvent.Timeline` and `RoomStickyEventsEvent.Update` (call notifications)
     // - `RoomEvent.Timeline`, `RoomEvent.Redaction` and
     //   `RoomEvent.LocalEchoUpdated` (reactions and raised hands)
