@@ -8,6 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { afterEach, expect, test, vi } from "vitest";
 import {
   ClientEvent,
+  ConnectionError,
   EventType,
   type MatrixClient,
   SyncState,
@@ -53,6 +54,35 @@ test("sends the RTC session's encrypted events with the host's crypto", async ()
   expect(host._unstable_sendStickyEvent).toHaveBeenCalledOnce();
   expect(host.encryptAndSendToDevice).toHaveBeenCalledOnce();
 });
+
+test.each([
+  "sendEvent",
+  "redactEvent",
+  "decryptEventIfNeeded",
+  "_unstable_sendStickyEvent",
+  "_unstable_sendStickyDelayedEvent",
+  "encryptAndSendToDevice",
+  "sendStateEvent",
+  "setDisplayName",
+  "setAvatarUrl",
+  "uploadContent",
+  "doesServerSupportUnstableFeature",
+] as const)(
+  "the host's %s fails with errors our js-sdk recognises",
+  async (method) => {
+    const host = mockHost();
+    // A ConnectionError of the host's own js-sdk: not ours, but shaped like it
+    const hostError = Object.assign(new Error("fetch failed"), {
+      name: "ConnectionError",
+    });
+    vi.mocked(host[method]).mockRejectedValue(hostError);
+    const client = createComponentLocalJsClient(host);
+
+    await expect(
+      (client[method] as () => Promise<unknown>)(),
+    ).rejects.toBeInstanceOf(ConnectionError);
+  },
+);
 
 test("takes its credentials from the host", () => {
   const client = createComponentLocalJsClient(mockHost());

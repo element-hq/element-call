@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { createClient, type MatrixClient } from "matrix-js-sdk";
 import type { createCallMatrixBackend } from "../src/CallMatrixBackend";
+import { adoptingHostErrors } from "./hostErrors";
 
 /**
  * The client for Element Call in Component mode.
@@ -46,19 +47,29 @@ export function createComponentLocalJsClient(
     getUser: host.getUser.bind(host),
     // Own never inits crypto, and a second one on the device would corrupt it
     getCrypto: host.getCrypto.bind(host),
+    // Every one of the host's methods that can fail rejects with our error
+    // classes, which ours can recognise (see hostErrors.ts)
+
     // Own has no rooms: `encryptEventIfNeeded`'s `if (!room) return` skips E2EE
-    sendEvent: host.sendEvent.bind(host),
+    sendEvent: adoptingHostErrors(host.sendEvent.bind(host)),
     // Not encrypted, but the local echo goes to `getRoom()`: only the host's
-    redactEvent: host.redactEvent.bind(host),
+    redactEvent: adoptingHostErrors(host.redactEvent.bind(host)),
     // `attemptDecryption` only runs `if (this.getCrypto())`: a no-op on own
-    decryptEventIfNeeded: host.decryptEventIfNeeded.bind(host),
+    decryptEventIfNeeded: adoptingHostErrors(
+      host.decryptEventIfNeeded.bind(host),
+    ),
     // Like `sendEvent`: on own, `if (!room) return` sends it in plaintext
-    _unstable_sendStickyEvent: host._unstable_sendStickyEvent.bind(host),
+    _unstable_sendStickyEvent: adoptingHostErrors(
+      host._unstable_sendStickyEvent.bind(host),
+    ),
     // Like `sendEvent`: delayed, but still `encryptEventIfNeeded(event, room)`
-    _unstable_sendStickyDelayedEvent:
+    _unstable_sendStickyDelayedEvent: adoptingHostErrors(
       host._unstable_sendStickyDelayedEvent.bind(host),
+    ),
     // `if (!this.cryptoBackend) throw`: own has no crypto
-    encryptAndSendToDevice: host.encryptAndSendToDevice.bind(host),
+    encryptAndSendToDevice: adoptingHostErrors(
+      host.encryptAndSendToDevice.bind(host),
+    ),
 
     // Static: own was created with the host's user id
     getUserId: own.getUserId.bind(own),
@@ -94,15 +105,16 @@ export function createComponentLocalJsClient(
       own._unstable_sendScheduledDelayedEvent.bind(own),
 
     // Plain HTTP, either client works; a stable API, so the host's
-    sendStateEvent: host.sendStateEvent.bind(host),
+    sendStateEvent: adoptingHostErrors(host.sendStateEvent.bind(host)),
     // Updates the `User` in the host's store, which `useProfile` listens to
-    setDisplayName: host.setDisplayName.bind(host),
+    setDisplayName: adoptingHostErrors(host.setDisplayName.bind(host)),
     // Like `setDisplayName`: updates the `User` in the host's store
-    setAvatarUrl: host.setAvatarUrl.bind(host),
+    setAvatarUrl: adoptingHostErrors(host.setAvatarUrl.bind(host)),
     // Plain HTTP, either client works; a stable API, so the host's
-    uploadContent: host.uploadContent.bind(host),
+    uploadContent: adoptingHostErrors(host.uploadContent.bind(host)),
     // Reads the host's /versions, which it has already fetched
-    doesServerSupportUnstableFeature:
+    doesServerSupportUnstableFeature: adoptingHostErrors(
       host.doesServerSupportUnstableFeature.bind(host),
+    ),
   };
 }
