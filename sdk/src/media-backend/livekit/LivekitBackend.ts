@@ -18,6 +18,7 @@ import {
   filter,
   firstValueFrom,
   map,
+  NEVER,
   type Observable,
   of,
   switchMap,
@@ -41,12 +42,7 @@ import {
   type MediaBackendContext,
   type TransportCapabilities,
 } from "../api";
-import {
-  chooseAuthFlow,
-  CsApiSupport,
-  delegateDelayedLeave,
-  type TransportLocator,
-} from "./auth";
+import { delegateDelayedLeave, type TransportLocator } from "./auth";
 import { type Connection } from "./Connection";
 import { ConnectionMap, createConnectionMap$ } from "./ConnectionMap";
 import {
@@ -61,6 +57,16 @@ import {
   participantSourcesEqual,
 } from "./LivekitMemberMedia";
 import { createLivekitLocalMedia } from "./LocalMedia";
+
+/** The transport we publish on, with what is fixed for its connection map. */
+interface LocalTransport extends TransportLocator {
+  /**
+   * Whether a transport naming both a `url` and a `livekit_service_url` is
+   * reached through the client-server API: where ours names a `url`, until
+   * a connection finds the API missing.
+   */
+  csApiUsable: boolean;
+}
 
 export interface LivekitBackendOptions {
   /**
@@ -99,17 +105,20 @@ export function createLivekitBackend(
     : [requestsOrMedia.requests, requestsOrMedia];
   const keyProvider = createKeyProvider(encryptionSystem, mediaKeys$, logger);
   const transports = createTransportRegistry(scope);
-  const localTransport$ = new BehaviorSubject<TransportLocator | null>(null);
+  const localTransport$ = new BehaviorSubject<LocalTransport | null>(null);
   const audioOutputDeviceId$ = new BehaviorSubject<string | undefined>(
     undefined,
   );
-  // Track whether the client-server API authentication flow is supported
-  // per session. We need to infer this from the first authentication request
-  // because the MSC doesn't define an unstable feature flag.
-  const csApiSupport = new CsApiSupport();
   const connectionFactory = new LivekitConnectionFactory(
     client,
-    csApiSupport,
+    // The MSC defines no unstable feature flag, so a homeserver that
+    // advertises a `url` without the API shows in a token request. Where our
+    // transport names a JWT service too, start over without the API.
+    () => {
+      const local = localTransport$.value;
+      if (local?.csApiUsable && "livekit_service_url" in local.transport)
+        localTransport$.next({ ...local, csApiUsable: false });
+    },
     roomId,
     slotId,
     publish,
@@ -119,7 +128,8 @@ export function createLivekitBackend(
   );
 
   // A new map, in a scope of its own, whenever the local transport changes:
-  // the publisher role sits on one connection, and which one is fixed per map
+  // the publisher role sits on one connection, and which one is fixed per map,
+  // as is whether the client-server API is usable
   const connectionMap$ = scope.behavior<Epoch<ConnectionMap>>(
     mapScoped(scope, localTransport$, (mapScope, localTransport) =>
       createConnectionMap$({
@@ -127,7 +137,7 @@ export function createLivekitBackend(
         connectionFactory,
         localTransport,
         remoteTransports$: transports.transports$,
-        csApiUsable$: csApiSupport.usable$,
+        csApiUsable: localTransport.csApiUsable,
         logger,
         ownMembershipIdentity,
       }),
@@ -157,12 +167,13 @@ export function createLivekitBackend(
       ownMembershipIdentity.userId,
     );
     const locator: TransportLocator = { transport, serverName };
-    localTransport$.next(locator);
+    // A homeserver with the client-server API advertises a `url`
+    localTransport$.next({ ...locator, csApiUsable: "url" in transport });
     // The membership is only sent once the publisher connection holds its
     // token, so that the LiveKit room exists before anyone subscribes to it:
     // a subscriber lacks the permission to create it and would fail without
     // retrying
-    await authenticated(localMedia_.connection$);
+    const { flow } = await authenticated(localMedia_.connection$);
     if (serverName !== ownServerName) {
       // Our homeserver only takes over leaves for its own SFUs
       logger.info(
@@ -170,9 +181,7 @@ export function createLivekitBackend(
       );
       return { canDelegateDelayedLeave: false };
     }
-    // Now that we are authenticated, check which flow was used so that we can
-    // use the same flow for delegation.
-    const flow = chooseAuthFlow(transport, csApiSupport.usable);
+    // Delegation goes through the flow that authenticated us
     if (flow.kind === "csApi") {
       // If the client-server authentication endpoint is available, the delegation
       // endpoint is available, too. Both have been released together in lk-jwt-service.
@@ -190,14 +199,13 @@ export function createLivekitBackend(
   };
 
   const delegateLeave = async (delayId: string): Promise<void> => {
-    const local = localTransport$.value;
-    if (local === null)
+    const connection = localMedia_.connection$.value;
+    if (connection === null)
       throw new MatrixRTCError("No local transport to delegate the leave to");
     await delegateDelayedLeave({
       client,
-      csApiSupport,
       membership: ownMembershipIdentity,
-      transport: local.transport,
+      flow: connection.flow,
       roomId,
       slotId,
       delayId,
@@ -291,27 +299,31 @@ export function createLivekitBackend(
   };
 }
 
-/** Resolves once the connection holds its token; rejects with its error otherwise. */
+/** Resolves with the connection once it holds its token; rejects with its error otherwise. */
 async function authenticated(
   connection$: Behavior<Connection | null>,
-): Promise<void> {
-  const state = await firstValueFrom(
+): Promise<Connection> {
+  const { connection, state } = await firstValueFrom(
     connection$.pipe(
-      switchMap((connection) => connection?.state$ ?? of(null)),
+      switchMap(
+        (connection) =>
+          connection?.state$.pipe(map((state) => ({ connection, state }))) ??
+          NEVER,
+      ),
       filter(
-        (state) =>
-          state !== null &&
-          (state.state === "authenticated" ||
-            state.state === "error" ||
-            state.state === "stopped"),
+        ({ state }) =>
+          state.state === "authenticated" ||
+          state.state === "error" ||
+          state.state === "stopped",
       ),
     ),
   );
-  if (state?.state === "error") throw state.error;
-  if (state?.state === "stopped")
+  if (state.state === "error") throw state.error;
+  if (state.state === "stopped")
     throw new MatrixRTCError(
       "The local connection stopped before it was authenticated",
     );
+  return connection;
 }
 
 function backendConnection$(

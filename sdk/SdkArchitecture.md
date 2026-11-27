@@ -602,14 +602,24 @@ a publisher uses `/sfu/get`, the only endpoint that assigns the legacy
 the hashed one.
 
 The JWT service stands in only where our homeserver has no MSC4195 endpoints.
-The backend learns that from a token request answered with a 404,
-`M_NOT_FOUND` or `M_UNRECOGNIZED` (`isEndpointUnsupported`) and holds it for
-the session in `CsApiSupport`. If that request fails, the re-keying described
-below gets its transport a token through the JWT service. A transport with a
-`url` alone has no fallback and fails with `NoMatrix2AuthorizationService`.
-The MatrixRTC mode plays no part in the choice.
+A homeserver that has them advertises a `url`, so whether the API is usable is
+read off our own transport: `prepareLocalTransport` stores it with the local
+transport, and it is the one input, next to a transport's shape, to
+`chooseAuthFlow`. Where ours names only a JWT service, transports naming both
+go through that service from the start.
 
-The delayed leave is delegated through the flow that issued the publisher's
+A homeserver may advertise a `url` and still lack the endpoints, as may a
+widget host. A token request is then answered with a 404, `M_NOT_FOUND` or
+`M_UNRECOGNIZED` (`isCsApiUnavailable`) and fails with
+`NoMatrix2AuthorizationService`, which the connection reports to the backend
+before the error surfaces. Where our transport names a JWT service too, the
+backend stores the local transport again with the API ruled out; the failed
+connection is stopped with its map and never shows as an error. A transport
+with a `url` alone has no fallback and fails the join. The MatrixRTC mode
+plays no part in the choice.
+
+A connection is created with its flow and keeps it for life. The delayed leave
+is delegated through the publisher connection's flow, the one that issued its
 token, so that the service watches for the identity we publish under. A
 homeserver that issued the token is assumed to delegate. Only a JWT service is
 probed, before the join.
@@ -623,9 +633,9 @@ homeservers advertising the same one share a connection.
 Connections are keyed on the flow and what it authenticates against: the `url`
 plus the server name for the client-server API, the service URL for the JWT
 service. Transports with the same key would get us the same identity on the
-same SFU, so they share a connection. A transport naming both shares with the
-`url` transports of its homeserver, and is re-keyed onto the JWT service's
-connection once the API is found missing, at most once per session.
+same SFU, so they share a connection. A connection map is built per local
+transport, so whether the API is usable is fixed for the life of a map and of
+every key in it; ruling the API out replaces the map.
 
 ## Media: `tracks$` and `MediaTrack`
 

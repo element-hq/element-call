@@ -21,7 +21,7 @@ import { testJWTToken } from "../../utils/test-fixtures";
 import {
   type ClientGetTokenParts,
   type ClientOpenIDParts,
-  CsApiSupport,
+  chooseAuthFlow,
 } from "./auth";
 import {
   LivekitConnectionFactory,
@@ -54,7 +54,7 @@ function create(
 ): { connection: ResolvedConnection; options: RoomOptions } {
   const factory = new LivekitConnectionFactory(
     client(),
-    new CsApiSupport(),
+    () => {},
     "!room:example.org",
     "m.call#ROOM",
     publish,
@@ -67,6 +67,7 @@ function create(
     "subscriber",
     transport,
     "example.org",
+    chooseAuthFlow(transport, true),
     ownMemberMock,
     logger,
   ) as ResolvedConnection;

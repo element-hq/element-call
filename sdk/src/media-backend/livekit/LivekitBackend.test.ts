@@ -168,7 +168,7 @@ describe("createLivekitBackend", () => {
     participants$: BehaviorSubject<RemoteParticipant[]>;
     state$: BehaviorSubject<ConnectionState>;
   }[];
-  let csApiSupport: auth.CsApiSupport;
+  let onCsApiMissing: () => void;
   const connected: ConnectionState = {
     state: "authenticated",
     livekitState: LivekitConnectionState.Connected,
@@ -177,14 +177,15 @@ describe("createLivekitBackend", () => {
   /** Stands in for the factory: connections whose state and participants the test drives. */
   function stubFactory(initialState: ConnectionState): void {
     vi.spyOn(connectionFactory, "LivekitConnectionFactory").mockImplementation(
-      function (this: unknown, _client, support) {
-        csApiSupport = support;
+      function (this: unknown, _client, onMissing) {
+        onCsApiMissing = onMissing;
         return {
           createConnection: (
             scope: ObservableScope,
             role: auth.ConnectionRole,
             transport: UnstableLivekitTransport,
             serverName: string,
+            flow: auth.AuthFlow,
           ): Connection => {
             const participants$ = new BehaviorSubject<RemoteParticipant[]>([]);
             const state$ = new BehaviorSubject<ConnectionState>(initialState);
@@ -192,6 +193,7 @@ describe("createLivekitBackend", () => {
               role,
               transport,
               serverName,
+              flow,
               state$,
               remoteParticipants$: scope.behavior(participants$),
               livekitRoom: fakeLivekitRoom(),
@@ -303,6 +305,19 @@ describe("createLivekitBackend", () => {
     await expect(preparing).rejects.toBe(error);
   });
 
+  it.each([
+    ["names no JWT service", urlTransport],
+    ["names no url", exampleTransport],
+  ])(
+    "keeps its connections where the CS API is found missing and our transport %s",
+    async (_what, transport) => {
+      fetchMock.post(`${exampleServiceUrl}/delegate_delayed_leave`, 404);
+      await backend().prepareLocalTransport(transport);
+      onCsApiMissing();
+      expect(connections).toHaveLength(1);
+    },
+  );
+
   it("moves the publisher to the JWT service where the CS API is found missing", async () => {
     fetchMock.post(`${exampleServiceUrl}/delegate_delayed_leave`, 401);
     const delegate = vi.spyOn(auth, "delegateDelayedLeave").mockResolvedValue();
@@ -316,12 +331,14 @@ describe("createLivekitBackend", () => {
     });
     await flushPromises();
     expect(connections).toHaveLength(1);
+    expect(connections[0].connection.flow.kind).toBe("csApi");
 
-    // Simulate the first connection reporting that its token request found no API.
-    csApiSupport.ruleOut();
+    // The publisher's token request finds no API.
+    onCsApiMissing();
     expect(connections).toHaveLength(2);
     expect(connections[1].connection.role).toBe("publisher");
     expect(connections[1].connection.transport).toEqual(bothTransport);
+    expect(connections[1].connection.flow.kind).toBe("openID");
 
     // The replaced connection winding down is not the preparation failing.
     connections[0].state$.next({ state: "stopped" });
@@ -335,7 +352,10 @@ describe("createLivekitBackend", () => {
     ).toBe(true);
 
     await b.delegateDelayedLeave("delay-1");
-    expect(delegate.mock.calls[0][0].csApiSupport.usable).toBe(false);
+    expect(delegate.mock.calls[0][0].flow).toEqual({
+      kind: "openID",
+      serviceUrl: exampleServiceUrl,
+    });
   });
 
   it("delegates the leave through the flow that authenticated the publisher", async () => {
@@ -352,7 +372,7 @@ describe("createLivekitBackend", () => {
       expect.objectContaining({
         client,
         membership: ownMemberMock,
-        transport: urlTransport,
+        flow: { kind: "csApi", url: "wss://sfu.example.org" },
         roomId: "!room:example.org",
         slotId: "m.call#ROOM",
         delayId: "delay-1",
@@ -423,6 +443,30 @@ describe("createLivekitBackend", () => {
         expect(media.tracks$.value).toEqual([]);
       },
     );
+
+    it("reaches a url + livekit_service_url member through the JWT service where our transport names no url", async () => {
+      fetchMock.post(`${exampleServiceUrl}/delegate_delayed_leave`, 404);
+      const b = backend();
+      await b.prepareLocalTransport(exampleTransport);
+      const media = b.mediaFor(
+        testScope(),
+        bob(bothTransport, [hashedId, legacyId]),
+      );
+      await flushPromises();
+      // Bob names our JWT service, so no connection of his own, and none
+      // through a client-server API our homeserver does not have
+      expect(connections).toHaveLength(1);
+      expect(connections[0].connection.flow.kind).toBe("openID");
+
+      connections[0].participants$.next([
+        mockRemoteParticipant({
+          identity: hashedId,
+          trackPublications: new Map(),
+        }),
+      ]);
+      await flushPromises();
+      expect(media.tracks$.value).toEqual([]);
+    });
 
     it("does not match a member with two candidate identities to anyone else", async () => {
       const b = await prepared();
@@ -495,10 +539,11 @@ describe("createLivekitBackend", () => {
         (c) => c.connection.role === "subscriber",
       );
       expect(remote?.connection.transport).toEqual(otherTransport);
-      expect(b.connections$.value.map(({ transport }) => transport)).toEqual([
-        bothTransport,
-        otherTransport,
-      ]);
+      const transports = b.connections$.value.map(({ transport }) => transport);
+      expect(transports).toHaveLength(2);
+      expect(transports).toEqual(
+        expect.arrayContaining([bothTransport, otherTransport]),
+      );
 
       transport$.next(bob(bothTransport, [legacyId]).transport$.value);
       await flushPromises();
