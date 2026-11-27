@@ -32,6 +32,7 @@ import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/En
 import {
   type ClientGetTokenParts,
   type ClientOpenIDParts,
+  type AuthFlow,
   type ConnectionRole,
   getSFUConfig,
   type SFUConfig,
@@ -42,6 +43,7 @@ import {
   MatrixRTCError,
   InsufficientCapacityError,
   LivekitConnectionError,
+  NoMatrix2AuthorizationService,
   PeerConnectionTimeoutError,
   SFURoomCreationRestrictedError,
   UnknownRTCError,
@@ -58,6 +60,10 @@ export interface ConnectionOpts {
   serverName: string;
   /** The Matrix client, for the token exchange. */
   client: ClientGetTokenParts & ClientOpenIDParts;
+  /** The flow to authenticate with, for as long as the connection lives. */
+  flow: AuthFlow;
+  /** Called when the client-server API flow finds the API missing. */
+  onCsApiMissing: () => void;
   /** The Matrix room the session is in. */
   roomId: string;
   /** The MatrixRTC slot the session is in. */
@@ -106,6 +112,9 @@ export class Connection {
   /** The homeserver the transport belongs to. */
   public readonly serverName: string;
 
+  /** The flow that issues this connection's tokens. */
+  public readonly flow: AuthFlow;
+
   public readonly livekitRoom: LivekitRoom;
 
   private scope: ObservableScope;
@@ -134,6 +143,7 @@ export class Connection {
   protected stopped = false;
 
   private readonly client: ClientGetTokenParts & ClientOpenIDParts;
+  private readonly onCsApiMissing: () => void;
   private readonly roomId: string;
   private readonly slotId: string;
   private readonly logger: Logger;
@@ -161,6 +171,8 @@ export class Connection {
     this.transport = transport;
     this.serverName = serverName;
     this.client = client;
+    this.flow = opts.flow;
+    this.onCsApiMissing = opts.onCsApiMissing;
 
     this.remoteParticipants$ = scope.behavior(
       // Only tracks remote participants
@@ -401,16 +413,23 @@ export class Connection {
   }
 
   protected async getSFUConfig(): Promise<SFUConfig> {
-    return await getSFUConfig({
-      client: this.client,
-      membership: this.ownMembershipIdentity,
-      role: this.role,
-      transport: this.transport,
-      serverName: this.serverName,
-      roomId: this.roomId,
-      slotId: this.slotId,
-      logger: this.logger,
-    });
+    try {
+      return await getSFUConfig({
+        client: this.client,
+        membership: this.ownMembershipIdentity,
+        role: this.role,
+        flow: this.flow,
+        serverName: this.serverName,
+        roomId: this.roomId,
+        slotId: this.slotId,
+        logger: this.logger,
+      });
+    } catch (e) {
+      // Reported before the error surfaces: where there is a fallback, this
+      // connection is stopped and replaced, so it never shows as failed
+      if (e instanceof NoMatrix2AuthorizationService) this.onCsApiMissing();
+      throw e;
+    }
   }
 
   /**

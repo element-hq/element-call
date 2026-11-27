@@ -18,6 +18,7 @@ import {
   filter,
   firstValueFrom,
   map,
+  NEVER,
   type Observable,
   of,
   switchMap,
@@ -41,18 +42,9 @@ import {
   type MediaBackendContext,
   type TransportCapabilities,
 } from "../api";
-import {
-  chooseAuthFlow,
-  delegateDelayedLeave,
-  type TransportLocator,
-} from "./auth";
+import { delegateDelayedLeave, type TransportLocator } from "./auth";
 import { type Connection } from "./Connection";
-import {
-  ConnectionMap,
-  createConnectionMap$,
-  keyFor,
-  type TransportKey,
-} from "./ConnectionMap";
+import { ConnectionMap, createConnectionMap$ } from "./ConnectionMap";
 import {
   LivekitConnectionFactory,
   ResolvedConnection,
@@ -66,10 +58,20 @@ import {
 } from "./LivekitMemberMedia";
 import { createLivekitLocalMedia } from "./LocalMedia";
 
+/** The transport we publish on, with what is fixed for its connection map. */
+interface LocalTransport extends TransportLocator {
+  /**
+   * Whether a transport naming both a `url` and a `livekit_service_url` is
+   * reached through the client-server API: where ours names a `url`, until
+   * a connection finds the API missing.
+   */
+  csApiUsable: boolean;
+}
+
 export interface LivekitBackendOptions {
   /**
    * `getOpenIdToken` for the JWT service flow, the MSC4195 methods for the
-   * client-server API flow, `baseUrl` for the delegation probe and handover.
+   * client-server API flow, `baseUrl` for the delegation handover.
    */
   client: Pick<
     MatrixClient,
@@ -103,12 +105,20 @@ export function createLivekitBackend(
     : [requestsOrMedia.requests, requestsOrMedia];
   const keyProvider = createKeyProvider(encryptionSystem, mediaKeys$, logger);
   const transports = createTransportRegistry(scope);
-  const localTransport$ = new BehaviorSubject<TransportLocator | null>(null);
+  const localTransport$ = new BehaviorSubject<LocalTransport | null>(null);
   const audioOutputDeviceId$ = new BehaviorSubject<string | undefined>(
     undefined,
   );
   const connectionFactory = new LivekitConnectionFactory(
     client,
+    // The MSC defines no unstable feature flag, so a homeserver that
+    // advertises a `url` without the API shows in a token request. Where our
+    // transport names a JWT service too, start over without the API.
+    () => {
+      const local = localTransport$.value;
+      if (local?.csApiUsable && "livekit_service_url" in local.transport)
+        localTransport$.next({ ...local, csApiUsable: false });
+    },
     roomId,
     slotId,
     publish,
@@ -118,7 +128,8 @@ export function createLivekitBackend(
   );
 
   // A new map, in a scope of its own, whenever the local transport changes:
-  // the publisher role sits on one connection, and which one is fixed per map
+  // the publisher role sits on one connection, and which one is fixed per map,
+  // as is whether the client-server API is usable
   const connectionMap$ = scope.behavior<Epoch<ConnectionMap>>(
     mapScoped(scope, localTransport$, (mapScope, localTransport) =>
       createConnectionMap$({
@@ -126,6 +137,7 @@ export function createLivekitBackend(
         connectionFactory,
         localTransport,
         remoteTransports$: transports.transports$,
+        csApiUsable: localTransport.csApiUsable,
         logger,
         ownMembershipIdentity,
       }),
@@ -143,13 +155,6 @@ export function createLivekitBackend(
     logger,
   });
 
-  // Probed once: the answer cannot change within a session
-  const homeserverSupportsDelegation = supportsDelegation(
-    `${client.baseUrl}/_matrix/client/unstable/io.element.msc4195/rtc/livekit/delegate_delayed_leave`,
-    "homeserver",
-    logger,
-  );
-
   const ownServerName = serverNameOf(ownMembershipIdentity.userId);
 
   const prepareLocalTransport = async (
@@ -162,45 +167,45 @@ export function createLivekitBackend(
       ownMembershipIdentity.userId,
     );
     const locator: TransportLocator = { transport, serverName };
-    let canDelegate: Promise<boolean>;
+    // A homeserver with the client-server API advertises a `url`
+    localTransport$.next({ ...locator, csApiUsable: "url" in transport });
+    // The membership is only sent once the publisher connection holds its
+    // token, so that the LiveKit room exists before anyone subscribes to it:
+    // a subscriber lacks the permission to create it and would fail without
+    // retrying
+    const { flow } = await authenticated(localMedia_.connection$);
     if (serverName !== ownServerName) {
       // Our homeserver only takes over leaves for its own SFUs
       logger.info(
         `Publishing on a remote SFU of ${serverName}, delegation is not possible`,
       );
-      canDelegate = Promise.resolve(false);
-    } else {
-      // Check for support using the same auth flow that we intend to use later
-      const flow = chooseAuthFlow(transport);
-      canDelegate =
-        flow.kind === "openID"
-          ? supportsDelegation(
-              `${flow.serviceUrl}/delegate_delayed_leave`,
-              `transport ${flow.serviceUrl}`,
-              logger,
-            )
-          : homeserverSupportsDelegation;
+      return { canDelegateDelayedLeave: false };
     }
-    localTransport$.next(locator);
-    // The membership is only sent once the publisher connection holds its
-    // token, so that the LiveKit room exists before anyone subscribes to it:
-    // a subscriber lacks the permission to create it and would fail without
-    // retrying
-    const [, canDelegateDelayedLeave] = await Promise.all([
-      authenticated(localMedia_.connection$),
-      canDelegate,
-    ]);
-    return { canDelegateDelayedLeave };
+    // Delegation goes through the flow that authenticated us
+    if (flow.kind === "csApi") {
+      // If the client-server authentication endpoint is available, the delegation
+      // endpoint is available, too. Both have been released together in lk-jwt-service.
+      return { canDelegateDelayedLeave: true };
+    }
+    // The OpenID flow was used but the lk-jwt-instance may still predate delegation. Check
+    // if the delegation endpoint is supported.
+    return {
+      canDelegateDelayedLeave: await supportsDelegation(
+        `${flow.serviceUrl}/delegate_delayed_leave`,
+        `transport ${flow.serviceUrl}`,
+        logger,
+      ),
+    };
   };
 
   const delegateLeave = async (delayId: string): Promise<void> => {
-    const local = localTransport$.value;
-    if (local === null)
+    const connection = localMedia_.connection$.value;
+    if (connection === null)
       throw new MatrixRTCError("No local transport to delegate the leave to");
     await delegateDelayedLeave({
       client,
       membership: ownMembershipIdentity,
-      transport: local.transport,
+      flow: connection.flow,
       roomId,
       slotId,
       delayId,
@@ -225,7 +230,9 @@ export function createLivekitBackend(
               }
             : undefined;
         }),
-        distinctUntilChanged((a, b) => (a && keyFor(a)) === (b && keyFor(b))),
+        distinctUntilChanged(
+          (a, b) => (a && registryKeyFor(a)) === (b && registryKeyFor(b)),
+        ),
       ),
     );
     transports.follow(memberScope, locator$);
@@ -292,27 +299,31 @@ export function createLivekitBackend(
   };
 }
 
-/** Resolves once the connection holds its token; rejects with its error otherwise. */
+/** Resolves with the connection once it holds its token; rejects with its error otherwise. */
 async function authenticated(
   connection$: Behavior<Connection | null>,
-): Promise<void> {
-  const state = await firstValueFrom(
+): Promise<Connection> {
+  const { connection, state } = await firstValueFrom(
     connection$.pipe(
-      switchMap((connection) => connection?.state$ ?? of(null)),
+      switchMap(
+        (connection) =>
+          connection?.state$.pipe(map((state) => ({ connection, state }))) ??
+          NEVER,
+      ),
       filter(
-        (state) =>
-          state !== null &&
-          (state.state === "authenticated" ||
-            state.state === "error" ||
-            state.state === "stopped"),
+        ({ state }) =>
+          state.state === "authenticated" ||
+          state.state === "error" ||
+          state.state === "stopped",
       ),
     ),
   );
-  if (state?.state === "error") throw state.error;
-  if (state?.state === "stopped")
+  if (state.state === "error") throw state.error;
+  if (state.state === "stopped")
     throw new MatrixRTCError(
       "The local connection stopped before it was authenticated",
     );
+  return connection;
 }
 
 function backendConnection$(
@@ -329,6 +340,19 @@ function backendConnection$(
       resolved,
     })),
   );
+}
+
+/**
+ * The key used for a transport locator in the transport registry.
+ *
+ * Note that this is *not* the key used for folding locators into connections.
+ */
+function registryKeyFor({ transport, serverName }: TransportLocator): string {
+  return JSON.stringify([
+    "url" in transport ? transport.url : null,
+    "livekit_service_url" in transport ? transport.livekit_service_url : null,
+    serverName,
+  ]);
 }
 
 export interface TransportRegistry {
@@ -350,7 +374,7 @@ export function createTransportRegistry(
   scope: ObservableScope,
 ): TransportRegistry {
   const counts = new Map<
-    TransportKey,
+    string,
     { locator: TransportLocator; count: number }
   >();
   const transports = new BehaviorSubject<TransportLocator[]>([]);
@@ -358,7 +382,7 @@ export function createTransportRegistry(
     transports.next([...counts.values()].map(({ locator }) => locator));
 
   const register = (locator: TransportLocator): (() => void) => {
-    const key = keyFor(locator);
+    const key = registryKeyFor(locator);
     const entry = counts.get(key) ?? { locator, count: 0 };
     entry.count++;
     if (entry.count === 1) {

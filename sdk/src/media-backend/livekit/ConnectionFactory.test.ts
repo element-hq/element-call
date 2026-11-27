@@ -18,7 +18,11 @@ import { type PublishRequest } from "../../media-api";
 import { constant } from "../../reactive/Behavior";
 import { ownMemberMock, testScope } from "../../utils/test";
 import { testJWTToken } from "../../utils/test-fixtures";
-import { type ClientGetTokenParts, type ClientOpenIDParts } from "./auth";
+import {
+  type ClientGetTokenParts,
+  type ClientOpenIDParts,
+  chooseAuthFlow,
+} from "./auth";
 import {
   LivekitConnectionFactory,
   type ResolvedConnection,
@@ -50,6 +54,7 @@ function create(
 ): { connection: ResolvedConnection; options: RoomOptions } {
   const factory = new LivekitConnectionFactory(
     client(),
+    () => {},
     "!room:example.org",
     "m.call#ROOM",
     publish,
@@ -62,6 +67,7 @@ function create(
     "subscriber",
     transport,
     "example.org",
+    chooseAuthFlow(transport, true),
     ownMemberMock,
     logger,
   ) as ResolvedConnection;

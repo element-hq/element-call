@@ -16,11 +16,7 @@ import {
   mapEpoch,
   ObservableScope,
 } from "../../reactive/ObservableScope";
-import {
-  createConnectionMap$,
-  ConnectionMap,
-  keyFor,
-} from "./ConnectionMap.ts";
+import { createConnectionMap$, ConnectionMap } from "./ConnectionMap.ts";
 import { type ConnectionFactory } from "./ConnectionFactory.ts";
 import { type Connection } from "./Connection.ts";
 import { ownMemberMock, withTestScheduler } from "../../utils/test";
@@ -42,6 +38,33 @@ const TRANSPORT_2: TransportLocator = {
   },
   serverName: "sample.com",
 };
+
+const SERVICE_URL_TRANSPORT: TransportLocator = {
+  transport: {
+    type: "livekit",
+    livekit_service_url: "https://jwt.example.org",
+  },
+  serverName: "example.org",
+};
+
+const URL_TRANSPORT: TransportLocator = {
+  transport: { type: "livekit", url: "wss://sfu.example.org" },
+  serverName: "example.org",
+};
+
+/** Names the same SFU as URL_TRANSPORT and the same service as SERVICE_URL_TRANSPORT. */
+const URL_AND_SERVICE_URL_TRANSPORT: TransportLocator = {
+  transport: {
+    type: "livekit",
+    url: "wss://sfu.example.org",
+    livekit_service_url: "https://jwt.example.org",
+  },
+  serverName: "example.org",
+};
+
+/** Tells the locators used here apart; not the key the map folds them by. */
+const keyFor = ({ transport, serverName }: TransportLocator): string =>
+  JSON.stringify([transport, serverName]);
 
 function findConnection(
   transport: TransportLocator,
@@ -102,6 +125,7 @@ describe("connections$ stream", () => {
           a: new Epoch([TRANSPORT_1, TRANSPORT_2], 0),
         }),
         logger: logger,
+        csApiUsable: true,
         ownMembershipIdentity: ownMemberMock,
       });
 
@@ -139,6 +163,7 @@ describe("connections$ stream", () => {
           a: new Epoch([TRANSPORT_2], 0),
         }),
         logger: logger,
+        csApiUsable: true,
         ownMembershipIdentity: ownMemberMock,
       });
 
@@ -150,6 +175,7 @@ describe("connections$ stream", () => {
             "publisher",
             TRANSPORT_1.transport,
             TRANSPORT_1.serverName,
+            { kind: "openID", serviceUrl: "https://lk.example.org" },
             ownMemberMock,
             expect.anything(),
           );
@@ -158,6 +184,7 @@ describe("connections$ stream", () => {
             "subscriber",
             TRANSPORT_2.transport,
             TRANSPORT_2.serverName,
+            { kind: "openID", serviceUrl: "https://lk.sample.com" },
             ownMemberMock,
             expect.anything(),
           );
@@ -181,6 +208,7 @@ describe("connections$ stream", () => {
           a: new Epoch([sameServiceElsewhere], 0),
         }),
         logger: logger,
+        csApiUsable: true,
         ownMembershipIdentity: ownMemberMock,
       });
 
@@ -198,6 +226,7 @@ describe("connections$ stream", () => {
             "publisher",
             TRANSPORT_1.transport,
             "example.org",
+            { kind: "openID", serviceUrl: "https://lk.example.org" },
             expect.anything(),
             expect.anything(),
           );
@@ -225,6 +254,7 @@ describe("connections$ stream", () => {
           a: new Epoch([sameUrlElsewhere], 0),
         }),
         logger: logger,
+        csApiUsable: true,
         ownMembershipIdentity: ownMemberMock,
       });
 
@@ -243,42 +273,43 @@ describe("connections$ stream", () => {
     });
   });
 
-  test("Shares connection between local livekit_service_url transport and remote url + livekit_service_url transport", () => {
-    withTestScheduler(({ behavior, expectObservable, scope }) => {
-      const serviceUrlTransport: TransportLocator = {
-        transport: {
-          type: "livekit",
-          livekit_service_url: "https://jwt.example.org",
-        },
-        serverName: "example.org",
-      };
-      const urlAndServiceUrlTransport: TransportLocator = {
-        transport: {
-          type: "livekit",
-          livekit_service_url: "https://jwt.example.org",
-          url: "wss://sfu.elsewhere.org",
-        },
-        // Should pass even if local server != remote server
-        serverName: "elsewhere.org",
-      };
+  test("Shares connection between url transport and url + livekit_service_url transport", () => {
+    withTestScheduler(({ expectObservable, scope }) => {
       const connectionMap$ = createConnectionMap$({
         scope,
         connectionFactory: fakeConnectionFactory,
-        localTransport: serviceUrlTransport,
-        remoteTransports$: constant(new Epoch([urlAndServiceUrlTransport])),
+        localTransport: URL_AND_SERVICE_URL_TRANSPORT,
+        remoteTransports$: constant(
+          new Epoch([URL_TRANSPORT, SERVICE_URL_TRANSPORT]),
+        ),
+        csApiUsable: true,
         logger,
         ownMembershipIdentity: ownMemberMock,
       });
 
-      expectObservable(
-        connectionMap$.pipe(mapEpoch((d) => d.getConnections())),
-      ).toBe("a", {
-        a: expect.toSatisfy(({ value: cs }: Epoch<Connection[]>) => {
-          // One connection total, since local and remote connections are shared
-          expect(cs.length).toBe(1);
-          expect(findConnection(serviceUrlTransport, cs)).toBeDefined();
-          expect(findConnection(serviceUrlTransport, cs)).toBe(
-            findConnection(urlAndServiceUrlTransport, cs),
+      expectObservable(connectionMap$).toBe("a", {
+        a: expect.toSatisfy(({ value: map }: Epoch<ConnectionMap>) => {
+          // Both get the CS API flow, and with it the same identity on the
+          // same SFU. The JWT service assigns another, so it may stay apart.
+          expect(map.getConnections().length).toBe(2);
+          const shared = map.getConnectionForTransport(
+            URL_AND_SERVICE_URL_TRANSPORT,
+          );
+          expect(shared).not.toBeNull();
+          expect(map.getConnectionForTransport(URL_TRANSPORT)).toBe(shared);
+          expect(map.getConnectionForTransport(SERVICE_URL_TRANSPORT)).not.toBe(
+            shared,
+          );
+          expect(
+            vi.mocked(fakeConnectionFactory).createConnection,
+          ).toHaveBeenCalledWith(
+            expect.anything(),
+            "publisher",
+            URL_AND_SERVICE_URL_TRANSPORT.transport,
+            "example.org",
+            { kind: "csApi", url: "wss://sfu.example.org" },
+            ownMemberMock,
+            expect.anything(),
           );
           return true;
         }),
@@ -286,49 +317,64 @@ describe("connections$ stream", () => {
     });
   });
 
-  test("Shares connection between remote livekit_service_url transport and remote url + livekit_service_url transport", () => {
-    withTestScheduler(({ behavior, expectObservable, scope }) => {
-      const serviceUrlTransport: TransportLocator = {
-        transport: {
-          type: "livekit",
-          livekit_service_url: "https://jwt.example.org",
-        },
-        serverName: "example.org",
-      };
-      const urlAndServiceUrlTransport: TransportLocator = {
-        transport: {
-          type: "livekit",
-          livekit_service_url: "https://jwt.example.org",
-          url: "wss://sfu.elsewhere.org",
-        },
-        // Should pass even if local server != remote server
-        serverName: "elsewhere.org",
-      };
+  test("Shares connection between livekit_service_url transport and url + livekit_service_url transport without the CS API", () => {
+    withTestScheduler(({ expectObservable, scope }) => {
       const connectionMap$ = createConnectionMap$({
         scope,
         connectionFactory: fakeConnectionFactory,
-        localTransport: TRANSPORT_2,
+        localTransport: SERVICE_URL_TRANSPORT,
         remoteTransports$: constant(
-          new Epoch([serviceUrlTransport, urlAndServiceUrlTransport]),
+          new Epoch([
+            {
+              ...URL_AND_SERVICE_URL_TRANSPORT,
+              // Should pass even if local server != remote server
+              serverName: "elsewhere.org",
+            },
+          ]),
         ),
+        csApiUsable: false,
         logger,
         ownMembershipIdentity: ownMemberMock,
       });
 
-      expectObservable(
-        connectionMap$.pipe(mapEpoch((d) => d.getConnections())),
-      ).toBe("a", {
-        a: expect.toSatisfy(({ value: cs }: Epoch<Connection[]>) => {
-          // Two connections total: a local connection and a shared remote connection
-          expect(cs.length).toBe(2);
-          expect(findConnection(serviceUrlTransport, cs)).toBeDefined();
-          expect(findConnection(serviceUrlTransport, cs)).toBe(
-            findConnection(urlAndServiceUrlTransport, cs),
+      expectObservable(connectionMap$).toBe("a", {
+        a: expect.toSatisfy(({ value: map }: Epoch<ConnectionMap>) => {
+          // One connection total, since both go through the same JWT service
+          expect(map.getConnections().length).toBe(1);
+          expect(
+            map.getConnectionForTransport(SERVICE_URL_TRANSPORT),
+          ).not.toBeNull();
+          expect(map.getConnectionForTransport(SERVICE_URL_TRANSPORT)).toBe(
+            map.getConnectionForTransport(URL_AND_SERVICE_URL_TRANSPORT),
           );
           return true;
         }),
       });
     });
+  });
+
+  test("Publishes on a url + livekit_service_url transport through the JWT service without the CS API", () => {
+    createConnectionMap$({
+      scope: testScope,
+      connectionFactory: fakeConnectionFactory,
+      localTransport: URL_AND_SERVICE_URL_TRANSPORT,
+      remoteTransports$: constant(new Epoch([])),
+      csApiUsable: false,
+      logger,
+      ownMembershipIdentity: ownMemberMock,
+    });
+
+    expect(
+      vi.mocked(fakeConnectionFactory).createConnection,
+    ).toHaveBeenCalledExactlyOnceWith(
+      expect.anything(),
+      "publisher",
+      URL_AND_SERVICE_URL_TRANSPORT.transport,
+      "example.org",
+      { kind: "openID", serviceUrl: "https://jwt.example.org" },
+      ownMemberMock,
+      expect.anything(),
+    );
   });
 
   test("Should start connection only once", () => {
@@ -346,6 +392,7 @@ describe("connections$ stream", () => {
           f: new Epoch([TRANSPORT_1, TRANSPORT_2], 5),
         }),
         logger: logger,
+        csApiUsable: true,
         ownMembershipIdentity: ownMemberMock,
       });
 
@@ -386,6 +433,7 @@ describe("connections$ stream", () => {
           c: new Epoch([TRANSPORT_1], 2),
         }),
         logger: logger,
+        csApiUsable: true,
         ownMembershipIdentity: ownMemberMock,
       });
 
@@ -424,7 +472,7 @@ describe("connections$ stream", () => {
 describe("ConnectionMap", () => {
   test("warns when a second connection to the same URL is merged", () => {
     const warn = vi.spyOn(logger, "warn").mockImplementation(() => {});
-    const data = new ConnectionMap(logger);
+    const data = new ConnectionMap(true, logger);
     const connection = TRANSPORT_1 as unknown as Connection;
     const p = (identity: string): RemoteParticipant =>
       ({ identity }) as unknown as RemoteParticipant;
@@ -525,6 +573,7 @@ describe("connectionMap$", () => {
           a: new Epoch([TRANSPORT_1, TRANSPORT_2], 0),
         }),
         logger,
+        csApiUsable: true,
         ownMembershipIdentity: ownMemberMock,
       });
 

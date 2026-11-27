@@ -42,7 +42,11 @@ import {
 } from "./Connection.ts";
 import { ObservableScope } from "../../reactive/ObservableScope";
 import { type ClientGetTokenParts, type ClientOpenIDParts } from "./auth";
-import { LivekitConnectionError, MatrixRTCError } from "../../errors";
+import {
+  LivekitConnectionError,
+  MatrixRTCError,
+  NoMatrix2AuthorizationService,
+} from "../../errors";
 import { testJWTToken } from "../../utils/test-fixtures";
 import { ownMemberMock } from "../../utils/test";
 import { mockRemoteParticipant } from "./test";
@@ -63,15 +67,15 @@ const FIREFOX_USER_AGENT =
 const CHROME_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36";
 
-const transport: UnstableLivekitTransport = {
-  type: "livekit",
-  url: "wss://matrix-rtc.m.localhost/livekit/sfu",
-};
+const url = "wss://matrix-rtc.m.localhost/livekit/sfu";
+const transport: UnstableLivekitTransport = { type: "livekit", url };
 
 /** The options of a subscriber connection to `transport`. */
 function connectionOpts(): ConnectionOpts {
   return {
     client,
+    flow: { kind: "csApi", url },
+    onCsApiMissing: vi.fn(),
     roomId: ROOM_ID,
     slotId: SLOT_ID,
     role: "subscriber",
@@ -372,6 +376,7 @@ describe("Start connection states", () => {
         ...connectionOpts(),
         role: "publisher",
         transport: { type: "livekit", livekit_service_url: serviceUrl },
+        flow: { kind: "openID", serviceUrl },
       },
       logger,
     );
@@ -385,6 +390,49 @@ describe("Start connection states", () => {
       testJWTToken,
     );
     expect(connection.livekitAlias).toBe("!example_room_id");
+  });
+
+  it("reports the CS API missing where the homeserver lacks the endpoint", async () => {
+    setupTest();
+    const opts = connectionOpts();
+    client.getLivekitToken.mockRejectedValue(
+      new MatrixError({ errcode: "M_UNRECOGNIZED" }, 404),
+    );
+    const connection = new Connection(opts, logger);
+
+    await expect(connection.start()).rejects.toThrow(
+      expect.any(NoMatrix2AuthorizationService),
+    );
+    expect(opts.onCsApiMissing).toHaveBeenCalledOnce();
+  });
+
+  it("does not show as failed when reporting the CS API missing gets it stopped", async () => {
+    setupTest();
+    fakeLivekitRoom.disconnect.mockResolvedValue(undefined);
+    client.getLivekitToken.mockRejectedValue(
+      new MatrixError({ errcode: "M_UNRECOGNIZED" }, 404),
+    );
+    const connection: Connection = new Connection(
+      { ...connectionOpts(), onCsApiMissing: () => void connection.stop() },
+      logger,
+    );
+
+    await connection.start();
+    await vi.waitFor(() =>
+      expect(connection.state$.value).toEqual({ state: "stopped" }),
+    );
+  });
+
+  it("does not report the CS API missing where the homeserver refuses the request", async () => {
+    setupTest();
+    const opts = connectionOpts();
+    client.getLivekitToken.mockRejectedValue(
+      new MatrixError({ errcode: "M_FORBIDDEN" }, 403),
+    );
+    const connection = new Connection(opts, logger);
+
+    await expect(connection.start()).rejects.toThrow();
+    expect(opts.onCsApiMissing).not.toHaveBeenCalled();
   });
 
   it("retries a join that failed on the WebSocket in Firefox", async () => {

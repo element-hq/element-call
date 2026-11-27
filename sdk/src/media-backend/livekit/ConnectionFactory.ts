@@ -24,6 +24,7 @@ import { type PublishRequest } from "../../media-api";
 import { type Behavior } from "../../reactive/Behavior";
 import { type ObservableScope } from "../../reactive/ObservableScope";
 import {
+  type AuthFlow,
   type ClientGetTokenParts,
   type ClientOpenIDParts,
   type ConnectionRole,
@@ -44,6 +45,7 @@ export interface ConnectionFactory {
     role: ConnectionRole,
     transport: UnstableLivekitTransport,
     serverName: string,
+    flow: AuthFlow,
     ownMembershipIdentity: CallMembershipIdentityParts,
     logger: Logger,
   ): Connection;
@@ -102,6 +104,7 @@ function resolvedTransport(config: SFUConfig): ResolvedTransport {
 export class LivekitConnectionFactory implements ConnectionFactory {
   public constructor(
     private readonly client: ClientGetTokenParts & ClientOpenIDParts,
+    private readonly onCsApiMissing: () => void,
     private readonly roomId: string,
     private readonly slotId: string,
     private readonly publish: PublishRequest[],
@@ -115,6 +118,7 @@ export class LivekitConnectionFactory implements ConnectionFactory {
     role: ConnectionRole,
     transport: UnstableLivekitTransport,
     serverName: string,
+    flow: AuthFlow,
     ownMembershipIdentity: CallMembershipIdentityParts,
     logger: Logger,
   ): Connection {
@@ -125,7 +129,9 @@ export class LivekitConnectionFactory implements ConnectionFactory {
         role,
         transport,
         serverName,
+        flow,
         client: this.client,
+        onCsApiMissing: this.onCsApiMissing,
         scope,
         livekitRoomFactory: () =>
           new LivekitRoom(

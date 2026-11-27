@@ -6,13 +6,10 @@ Please see LICENSE in the repository root for full details.
 */
 
 /**
- * Authentication with a LiveKit transport: the MSC4195 client-server API
- * through our homeserver for a transport with an SFU `url`, the OpenID flow
- * against the JWT service for one with a `livekit_service_url`, and the
- * choice between them where a transport carries both.
+ * Authentication with a LiveKit transport.
  */
 
-import { ConnectionError, MatrixError } from "matrix-js-sdk";
+import { MatrixError } from "matrix-js-sdk";
 import { type Logger } from "matrix-js-sdk/lib/logger";
 import { type UnstableLivekitTransport } from "matrix-js-sdk/lib/matrixrtc";
 import { type CallMembershipIdentityParts } from "matrix-js-sdk/lib/matrixrtc/EncryptionManager";
@@ -28,35 +25,66 @@ export type * from "./types";
 
 /**
  * Whether an error means the homeserver does not implement the MSC4195
- * endpoints. The MSC says `M_NOT_FOUND`; a homeserver without support answers
- * with whatever it uses for unknown routes (Synapse: 404 with
- * `M_UNRECOGNIZED`), so any 404 counts.
+ * endpoints. Such a homeserver answers with whatever it uses for unknown
+ * routes (Synapse: 404 with `M_UNRECOGNIZED`), so any 404 counts.
  */
-function isEndpointUnsupported(e: unknown): boolean {
+export function isCsApiUnavailable(e: unknown): boolean {
+  const answer = unwrapErrorDetails(e);
   return (
-    e instanceof MatrixError &&
-    (e.httpStatus === 404 ||
-      e.errcode === "M_NOT_FOUND" ||
-      e.errcode === "M_UNRECOGNIZED")
+    answer !== undefined &&
+    (answer.status === 404 ||
+      answer.errcode === "M_NOT_FOUND" ||
+      answer.errcode === "M_UNRECOGNIZED")
   );
 }
 
 /**
- * Whether an error means the MSC4195 client-server API cannot be used from
- * here: the homeserver does not implement it, or the request never reached
- * the homeserver because a widget host does not expose the endpoint
- * (MSC4533), which the widget API reports as a plain error. A connection
- * error is neither: the endpoint may well exist.
+ * Tries to unwrap the details from an unknown error object, regardless of whether
+ * it came from the Widget API or not.
  */
-export function isCsApiUnavailable(e: unknown): boolean {
-  if (isEndpointUnsupported(e)) return true;
-  return !(e instanceof MatrixError) && !(e instanceof ConnectionError);
+function unwrapErrorDetails(
+  e: unknown,
+): { status?: number; errcode?: string } | undefined {
+  // If the error is an instance of `MatrixError`, take its details directly.
+  if (e instanceof MatrixError) {
+    return { status: e.httpStatus, errcode: e.errcode };
+  }
+
+  // If the error originated from the widget API, try to extract the bundled
+  // Matrix API error. We identify the widget's `WidgetApiResponseError` by
+  // the shape of its payload to avoid making the SDK dependent on the widget
+  // API. This isn't great, but we'll drop this branch anyway once we eliminate
+  // usage.
+  if (e instanceof Error && "data" in e) {
+    const relayed = (
+      e as {
+        data?: {
+          matrix_api_error?: {
+            http_status?: unknown;
+            response?: { errcode?: unknown };
+          };
+        };
+      }
+    ).data?.matrix_api_error;
+    if (typeof relayed === "object" && relayed !== null) {
+      const { http_status: status, response } = relayed;
+      const errcode = response?.errcode;
+      return {
+        status: typeof status === "number" ? status : undefined,
+        errcode: typeof errcode === "string" ? errcode : undefined,
+      };
+    }
+  }
+
+  // We're not able to extract any details from this error.
+  return undefined;
 }
 
 export interface GetSFUConfigParams {
   client: csApi.ClientGetTokenParts & openID.ClientOpenIDParts;
   membership: CallMembershipIdentityParts;
-  transport: UnstableLivekitTransport;
+  /** The flow to authenticate with, as chosen by {@link chooseAuthFlow}. */
+  flow: AuthFlow;
   /** The homeserver the transport belongs to. */
   serverName: string;
   roomId: string;
@@ -66,20 +94,23 @@ export interface GetSFUConfigParams {
 }
 
 /**
- * Gets an {@link SFUConfig} appropriate for connecting to a given transport,
- * using whichever auth flow is appropriate.
+ * Gets an {@link SFUConfig} for connecting to a transport through the given
+ * auth flow.
+ *
+ * @throws {@link NoMatrix2AuthorizationService} if the client-server API flow
+ * finds the API missing. The MSC defines no unstable feature flag, so this is
+ * how a caller learns to choose its flows without the API from then on.
  */
 export async function getSFUConfig({
   client,
   membership,
-  transport,
+  flow,
   serverName,
   roomId,
   slotId,
   role,
   logger,
 }: GetSFUConfigParams): Promise<SFUConfig> {
-  const flow = chooseAuthFlow(transport);
   if (flow.kind === "openID") {
     return await openID.getSFUConfig({
       client,
@@ -101,10 +132,14 @@ export async function getSFUConfig({
         slotId,
       });
     } catch (e) {
-      if (isEndpointUnsupported(e)) {
-        logger.error(
+      if (isCsApiUnavailable(e)) {
+        logger.warn(
           `Homeserver does not support the MSC4195 get_token endpoint, cannot get token for transport ${flow.url}`,
         );
+        // This is our own homeserver's answer: as per MSC4195, only 403 /
+        // M_FORBIDDEN and 400 / M_INVALID_PARAM are forwarded from the remote
+        // server. Any other remote error becomes 502 / M_UNKNOWN on the
+        // client-server API.
         throw new NoMatrix2AuthorizationService(e as Error);
       }
       throw e;
@@ -112,11 +147,40 @@ export async function getSFUConfig({
   }
 }
 
+export type AuthenticateWithTransportParams = Omit<
+  GetSFUConfigParams,
+  "flow"
+> & { transport: UnstableLivekitTransport };
+
+/**
+ * Authenticates with a transport once, outside any session. This automatically
+ * falls back from the client-server API flow to the OpenID flow if needed and
+ * possible.
+ *
+ * @throws {@link NoMatrix2AuthorizationService} if the client-server API is missing
+ * but the transport does not allow falling back to the OpenID flow.
+ */
+export async function authenticateWithTransport({
+  transport,
+  ...params
+}: AuthenticateWithTransportParams): Promise<SFUConfig> {
+  try {
+    const flow = chooseAuthFlow(transport, true);
+    return await getSFUConfig({ ...params, flow });
+  } catch (e) {
+    const flow = chooseAuthFlow(transport, false);
+    // Nothing else to try unless the API is missing and there is a JWT service
+    if (!(e instanceof NoMatrix2AuthorizationService) || flow.kind !== "openID")
+      throw e;
+    return await getSFUConfig({ ...params, flow });
+  }
+}
+
 export interface DelegateDelayedLeaveParams {
   client: csApi.ClientDelegationParts & openID.ClientOpenIDParts;
   membership: CallMembershipIdentityParts;
-  /** The transport we publish on. */
-  transport: UnstableLivekitTransport;
+  /** The flow that issued the token we publish with. */
+  flow: AuthFlow;
   roomId: string;
   slotId: string;
   delayId: string;
@@ -133,14 +197,13 @@ export interface DelegateDelayedLeaveParams {
 export async function delegateDelayedLeave({
   client,
   membership,
-  transport,
+  flow,
   roomId,
   slotId,
   delayId,
   delayTimeoutMs,
   logger,
 }: DelegateDelayedLeaveParams): Promise<void> {
-  const flow = chooseAuthFlow(transport);
   if (flow.kind === "csApi") {
     try {
       await csApi.delegateDelayedLeave({
@@ -152,7 +215,7 @@ export async function delegateDelayedLeave({
         delayId,
       });
     } catch (e) {
-      if (isEndpointUnsupported(e))
+      if (isCsApiUnavailable(e))
         logger.error(
           "Server misconfigured: transport contains a 'url' field but server does not support the MSC4195 delegate_delayed_leave endpoint",
         );
@@ -181,18 +244,21 @@ export type AuthFlow =
   | { kind: "openID"; serviceUrl: string };
 
 /**
- * Chooses which auth flow to use for a given transport. For now this returns a
- * single auth flow, with no provision for a fallback behavior.
+ * Chooses which auth flow to use for a given transport.
  */
-export function chooseAuthFlow(transport: UnstableLivekitTransport): AuthFlow {
+export function chooseAuthFlow(
+  transport: UnstableLivekitTransport,
+  csApiUsable: boolean,
+): AuthFlow {
+  // If we only have url, we have no choice but to use the CS API.
   if ("url" in transport && !("livekit_service_url" in transport))
     return { kind: "csApi", url: transport.url };
-  // All other transports use the OpenID flow, even if they contain a `url`.
-  // This is necessary since the auth flow determines the participant identity
-  // format, and we still have older clients out in the wild which would not yet
-  // know to look for a hashed participant identity in case `url` is present in
-  // someone else's transport.
-  // TODO: Once users have updated their clients, choose the CS API flow if
-  // available, keeping OpenID as a fallback.
+
+  // If we have both url and livekit_service_url, prefer the CS API if it is usable.
+  if ("url" in transport && csApiUsable)
+    return { kind: "csApi", url: transport.url };
+
+  // If the CS API is not usable or we only have livekit_service_url, fall back
+  // to using the OpenID flow.
   return { kind: "openID", serviceUrl: transport.livekit_service_url };
 }
