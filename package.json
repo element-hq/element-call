@@ -105,7 +105,7 @@
     "i18next": "^26.0.0",
     "i18next-browser-languagedetector": "^8.0.0",
     "i18next-cli": "^1.61.0",
-    "jsdom": "^26.0.0",
+    "jsdom": "^31.0.0",
     "knip": "^5.86.0",
     "livekit-client": "^2.18.1",
     "lodash-es": "^4.17.21",

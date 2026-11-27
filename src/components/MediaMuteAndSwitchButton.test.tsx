@@ -291,7 +291,7 @@ describe("MediaMuteAndSwitchButton", () => {
     // After clicking, plannedSelection="mic2" but selectedOption is still "mic1",
     // so mic2 should be in an activating state
     screen.getByRole("menuitemradio", {
-      name: "Microphone 2 Activating…",
+      name: /^Microphone 2\s*Activating…$/,
       checked: false,
     });
 

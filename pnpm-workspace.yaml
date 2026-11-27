@@ -28,8 +28,8 @@ overrides:
   # - https://github.com/advisories/GHSA-7r86-cg39-jmmj
   # - https://github.com/advisories/GHSA-23c5-xmqv-rm74
   "minimatch": "^11.0.0"
-  # Security fix: https://github.com/element-hq/element-call/security/dependabot/109
-  "glob": "^10.5.0"
+  # The v8 line is deprecated.
+  "eslint": "^9.0.0"
   # Security fix: https://github.com/advisories/GHSA-6pq8-jhm2-2vcw
   "qs": ">=6.16.1"
   # Security fix: https://github.com/advisories/GHSA-2883-xcg3-v3hh

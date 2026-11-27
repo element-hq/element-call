@@ -108,7 +108,6 @@ exports[`InCallView > rendering > renders 1`] = `
     </div>
     <div
       class="_fixedGrid_4e7ff8 _grid_b0d1cd"
-      style="inset-block-start: NaNpx;"
     >
       <div />
     </div>
