@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type FC } from "react";
-import { BigIcon, Button, Heading, Text } from "@vector-im/compound-web";
+import { BigIcon, Button, Heading } from "@vector-im/compound-web";
 import { VoiceCallIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { useTranslation } from "react-i18next";
 
@@ -27,7 +27,6 @@ export const EarpieceOverlay: FC<Props> = ({ show, onBackToVideoPressed }) => {
       <Heading as="h2" weight="semibold" size="md">
         {t("handset.overlay_title")}
       </Heading>
-      <Text>{t("handset.overlay_description")}</Text>
       <Button
         kind="primary"
         size="md"
