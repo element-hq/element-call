@@ -24,11 +24,13 @@ import {
   vitest,
 } from "vitest";
 import {
+  type EventTimeline,
   EventType,
   MatrixEvent,
   type Room as MatrixRoom,
   type Room,
   type RoomMember,
+  type RoomState,
   TypedEventEmitter,
 } from "matrix-js-sdk";
 import {
@@ -291,8 +293,26 @@ export function mockMatrixRoomMember(
   } as RoomMember;
 }
 
+/**
+ * A room's `getLiveTimeline`, whose forwards state looks up single state
+ * events with the given function.
+ */
+export function mockLiveTimeline(
+  getStateEvent: (type: string, stateKey: string) => MatrixEvent | null,
+): () => EventTimeline {
+  const state = {
+    getStateEvents: getStateEvent,
+  } as Partial<RoomState> as RoomState;
+  return () =>
+    ({ getState: () => state }) as Partial<EventTimeline> as EventTimeline;
+}
+
 export function mockMatrixRoom(room: Partial<MatrixRoom>): MatrixRoom {
-  return { ...mockEmitter(), ...room } as Partial<MatrixRoom> as MatrixRoom;
+  return {
+    ...mockEmitter(),
+    getLiveTimeline: mockLiveTimeline(() => null),
+    ...room,
+  } as Partial<MatrixRoom> as MatrixRoom;
 }
 
 /**
@@ -475,6 +495,7 @@ export function mockRTCMember(
     userId: membership.userId,
     deviceId: membership.deviceId,
     memberId: membership.memberId,
+    matrixEventId$: constant(membership.eventId),
     displayName$: constant(member.rawDisplayName ?? membership.userId),
     avatarUrl$: constant(member.getMxcAvatarUrl()),
     transport$: constant(transport),
@@ -506,14 +527,21 @@ export interface MockParticipationInputs {
  */
 export function mockRTCParticipation(
   scope: ObservableScope,
+  inputs: MockParticipationInputs = {},
+): RTCParticipation {
+  return mockSlotWithParticipation(scope, inputs).participation;
+}
+
+function mockSlotWithParticipation(
+  scope: ObservableScope,
   {
     localMember$ = constant(null),
     remoteMembers$ = constant([]),
     state$ = constant<ParticipationState>({ kind: "connected" }),
     keyRotationSuppressed$ = constant(false),
     connectedTransports$ = constant([]),
-  }: MockParticipationInputs = {},
-): RTCParticipation {
+  }: MockParticipationInputs,
+): { slot: RTCSlot; participation: RTCParticipation } {
   const members$ = scope.behavior<RTCMember[]>(
     combineLatest([localMember$, remoteMembers$], (local, remote) =>
       local === null ? remote : [local, ...remote],
@@ -550,7 +578,7 @@ export function mockRTCParticipation(
     data$: NEVER,
   };
   participation$.next(participation);
-  return participation;
+  return { slot, participation };
 }
 
 /** The slot of a `mockRTCParticipation`, whose `join()` returns that participation. */
@@ -558,7 +586,7 @@ export function mockRTCSlot(
   scope: ObservableScope,
   inputs: MockParticipationInputs = {},
 ): RTCSlot {
-  return mockRTCParticipation(scope, inputs).slot;
+  return mockSlotWithParticipation(scope, inputs).slot;
 }
 
 export function mockConfig(
@@ -603,6 +631,10 @@ export class MockRTCSession extends TypedEventEmitter<
     .fn()
     .mockResolvedValue(undefined);
 
+  public stop: ReturnType<typeof vitest.fn> = vitest
+    .fn()
+    .mockResolvedValue(undefined);
+
   public constructor(
     public readonly room: Room,
     public memberships: CallMembership[] = [],
@@ -613,6 +645,13 @@ export class MockRTCSession extends TypedEventEmitter<
   public joined = true;
   public isJoined(): boolean {
     return this.joined;
+  }
+
+  public slotDescription = { application: "m.call", id: "ROOM" };
+  /** The slot event's content; undefined while the room has none. */
+  public rtcSlot: ReturnType<MatrixRTCSession["getRtcSlot"]> = undefined;
+  public getRtcSlot(): ReturnType<MatrixRTCSession["getRtcSlot"]> {
+    return this.rtcSlot;
   }
 
   public isKeyRotationSuppressed = false;

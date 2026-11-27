@@ -63,44 +63,57 @@ export type CallNotificationWrapper = {
   event_id: string;
 } & IRTCNotificationContent;
 
+/**
+ * The call notifications the session sends with our join: what a host hands
+ * the call as `sentCallNotification$`.
+ */
+export function observeSentCallNotification$(
+  matrixRTCSession: Pick<MatrixRTCSession, "on" | "off">,
+): Observable<CallNotificationWrapper> {
+  return fromEvent(
+    matrixRTCSession,
+    MatrixRTCSessionEvent.DidSendCallNotification,
+    (notification: CallNotificationWrapper) => notification,
+  );
+}
+
 export function createSentCallNotification$(
   scope: ObservableScope,
-  matrixRTCSession: MatrixRTCSession,
+  sentCallNotification$: Observable<CallNotificationWrapper>,
 ): Behavior<CallNotificationWrapper | null> {
-  const sentCallNotification$ = scope.behavior(
-    fromEvent(matrixRTCSession, MatrixRTCSessionEvent.DidSendCallNotification),
+  return scope.behavior<CallNotificationWrapper | null>(
+    sentCallNotification$,
     null,
-  ) as Behavior<CallNotificationWrapper | null>;
-  return sentCallNotification$;
+  );
 }
 
 export function createReceivedDecline$(
-  matrixRoom: MatrixRoom,
+  matrixRoom: Pick<MatrixRoom, "_unstable_getStickyEvents" | "on" | "off">,
 ): Observable<MatrixEvent> {
   // A decline is sticky, so after a gappy sync it arrives only in the sticky
   // section, which never reaches the timeline. Racing for the first outcome
   // makes a decline seen in both places harmless.
-  const timeline$ = (
-    fromEvent(matrixRoom, RoomEvent.Timeline) as Observable<
-      Parameters<EventTimelineSetHandlerMap[RoomEvent.Timeline]>
-    >
-  ).pipe(map(([event]) => event));
+  const timeline$ = fromEvent(
+    matrixRoom,
+    RoomEvent.Timeline,
+    (...[event]: Parameters<EventTimelineSetHandlerMap[RoomEvent.Timeline]>) =>
+      event,
+  );
   // The decline can arrive via sync before the send of our notification
   // resolves, which is when we start listening. To guard against this, we
   // include what is already in the sticky section.
   const currentSticky$ = defer(() =>
     from(matrixRoom._unstable_getStickyEvents()),
   );
-  const sticky$ = (
-    fromEvent(matrixRoom, RoomStickyEventsEvent.Update) as Observable<
-      Parameters<RoomStickyEventsMap[RoomStickyEventsEvent.Update]>
-    >
-  ).pipe(
-    mergeMap(([added, updated]) => [
-      ...added,
-      ...updated.map(({ current }) => current),
-    ]),
-  );
+  const sticky$ = fromEvent(
+    matrixRoom,
+    RoomStickyEventsEvent.Update,
+    (
+      ...[added, updated]: Parameters<
+        RoomStickyEventsMap[RoomStickyEventsEvent.Update]
+      >
+    ) => [...added, ...updated.map(({ current }) => current)],
+  ).pipe(mergeMap((events) => events));
   return merge(currentSticky$, sticky$, timeline$).pipe(
     filter((event) => event.getType() === EventType.RTCDecline),
   );
@@ -110,8 +123,12 @@ export interface Props {
   scope: ObservableScope;
   /** The user ids of the session's members, ours included. */
   memberUserIds$: Behavior<string[]>;
-  /** The user ids of the room's members, ours included. */
-  roomMemberUserIds$: Behavior<string[]>;
+  /**
+   * The user ids of the room's human members, ours included. Functional
+   * members (bots) must be excluded: the ring recipient is the first one that
+   * is not us.
+   */
+  humanRoomMemberUserIds$: Behavior<string[]>;
   sentCallNotification$: Observable<CallNotificationWrapper | null>;
   receivedDecline$: Observable<MatrixEvent>;
   options: { waitForCallPickup?: boolean; autoLeaveWhenOthersLeft?: boolean };
@@ -121,7 +138,7 @@ export interface Props {
 export function createCallNotificationLifecycle$({
   scope,
   memberUserIds$,
-  roomMemberUserIds$,
+  humanRoomMemberUserIds$,
   sentCallNotification$,
   receivedDecline$,
   options,
@@ -153,8 +170,7 @@ export function createCallNotificationLifecycle$({
       ),
       switchMap((notificationEvent) => {
         // We assume that there is only one other user in the room when ringing
-        // TODO: Respect io.element.functional_members
-        const recipient = roomMemberUserIds$.value.find(
+        const recipient = humanRoomMemberUserIds$.value.find(
           (userId) => userId !== localUser.userId,
         );
         if (recipient === undefined) {

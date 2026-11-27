@@ -9,6 +9,11 @@ on:
         required: false
         type: string
         default: ${{ github.run_id }}
+    secrets:
+      TS_OAUTH_CLIENT_ID:
+        required: true
+      TS_AUDIENCE:
+        required: true
 
 env:
   REGISTRY: ghcr.io

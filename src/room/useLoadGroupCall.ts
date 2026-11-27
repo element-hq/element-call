@@ -38,6 +38,7 @@ import { useUrlParams } from "../UrlParams";
 
 export type GroupCallLoaded = {
   kind: "loaded";
+  room: Room;
   rtcSession: MatrixRTCSession;
 };
 
@@ -324,16 +325,20 @@ export const useLoadGroupCall = (
       );
       await client.waitUntilRoomReadyForGroupCalls(room.roomId);
       logger.info(`${roomIdOrAlias}, is ready for group calls`);
-      return room;
+      // `joinRoom` hands back a detached room when the sync has not brought the
+      // room in yet; only  the client's own copy is kept up to date
+      return client.getRoom(room.roomId) ?? room;
     };
 
-    const fetchOrCreateGroupCall = async (): Promise<MatrixRTCSession> => {
+    const fetchOrCreateGroupCall = async (): Promise<
+      Pick<GroupCallLoaded, "room" | "rtcSession">
+    > => {
       const room = await fetchOrCreateRoom();
       activeRoom.current = room;
       logger.debug(`Fetched / joined room ${roomIdOrAlias}`);
 
       const rtcSession = client.matrixRTC.getRoomSession(room);
-      return rtcSession;
+      return { room, rtcSession };
     };
 
     const waitForClientSyncing = async (): Promise<void> => {
@@ -367,7 +372,9 @@ export const useLoadGroupCall = (
       logger.log("Start loading group call");
       waitForClientSyncing()
         .then(fetchOrCreateGroupCall)
-        .then((rtcSession) => setState({ kind: "loaded", rtcSession }))
+        .then(({ room, rtcSession }) =>
+          setState({ kind: "loaded", room, rtcSession }),
+        )
         .then(observeMyMembership)
         .catch((error) => setState({ kind: "failed", error }));
     }

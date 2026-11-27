@@ -20,7 +20,7 @@ import {
 const mockClient = (userId = "@alice:example.org"): MatrixClient =>
   ({
     on: vi.fn(),
-    removeListener: vi.fn(),
+    off: vi.fn(),
     getUserId: () => userId,
     getDeviceId: () => "AAAA",
     stopClient: vi.fn(),

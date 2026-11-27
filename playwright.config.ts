@@ -97,14 +97,23 @@ export default defineConfig({
       // Element Call as a widget in Element Web, on Chromium. This uses its
       // own project so that it can be sharded on CI.
       name: "widget",
-      dependencies: ["build-embedded", "build-widget-rtc-sdk"],
+      dependencies: ["build-embedded"],
       testMatch: "**/widget/**/*.@(spec|test).ts",
+      testIgnore: "**/widget/widget-rtc-sdk.spec.ts",
+      use: desktopChrome,
+    },
+    {
+      // The widget RTC SDK's example widget in Element Web. CI does not run
+      // this project; see widget-rtc-sdk/README.md for running it by hand.
+      name: "widget-rtc-sdk",
+      dependencies: ["build-widget-rtc-sdk"],
+      testMatch: "**/widget/widget-rtc-sdk.spec.ts",
       use: desktopChrome,
     },
     {
       name: "firefox",
-      dependencies: ["build-embedded", "build-widget-rtc-sdk"],
-      testIgnore: "**/mobile/**",
+      dependencies: ["build-embedded"],
+      testIgnore: ["**/mobile/**", "**/widget/widget-rtc-sdk.spec.ts"],
       use: {
         ...devices["Desktop Firefox"],
         ignoreHTTPSErrors: true,

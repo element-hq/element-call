@@ -10,13 +10,13 @@ import { expect, test } from "vitest";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { userEvent } from "@testing-library/user-event";
 import { type ReactNode } from "react";
+import { type MatrixClient, type Room } from "matrix-js-sdk";
 
 import { ReactionToggleButton } from "./ReactionToggleButton";
 import { ElementCallReactionEventType } from "../reactions";
 import { type CallViewModel } from "../state/CallViewModel/CallViewModel";
 import { getBasicCallViewModelEnvironment } from "../utils/test-viewmodel";
 import { alice, local, localRtcMember } from "../utils/test-fixtures";
-import { type MockRTCSession } from "../utils/test";
 import { ReactionsSenderProvider } from "../reactions/useReactionsSender";
 import { initializeWidget } from "../widget";
 initializeWidget();
@@ -24,18 +24,17 @@ initializeWidget();
 const localIdent = `${localRtcMember.userId}:${localRtcMember.deviceId}`;
 
 function TestComponent({
-  rtcSession,
+  matrixRoom,
+  client,
   vm,
 }: {
-  rtcSession: MockRTCSession;
+  matrixRoom: Room;
+  client: MatrixClient;
   vm: CallViewModel;
 }): ReactNode {
   return (
     <TooltipProvider>
-      <ReactionsSenderProvider
-        vm={vm}
-        rtcSession={rtcSession.asMockedSession()}
-      >
+      <ReactionsSenderProvider vm={vm} room={matrixRoom} client={client}>
         <ReactionToggleButton
           reactionData={{
             reactions$: vm.reactions$,
@@ -50,9 +49,9 @@ function TestComponent({
 
 test("Can open menu", async () => {
   const user = userEvent.setup();
-  const { vm, rtcSession } = getBasicCallViewModelEnvironment([alice]);
+  const { vm, matrixRoom, client } = getBasicCallViewModelEnvironment([alice]);
   const { getByLabelText, container } = render(
-    <TestComponent vm={vm} rtcSession={rtcSession} />,
+    <TestComponent vm={vm} matrixRoom={matrixRoom} client={client} />,
   );
   await user.click(getByLabelText("Reactions"));
   expect(container).toMatchSnapshot();
@@ -60,15 +59,15 @@ test("Can open menu", async () => {
 
 test("Can raise hand", async () => {
   const user = userEvent.setup();
-  const { vm, rtcSession, handRaisedSubject$ } =
+  const { vm, matrixRoom, client, handRaisedSubject$ } =
     getBasicCallViewModelEnvironment([local, alice]);
   const { getByLabelText, container } = render(
-    <TestComponent vm={vm} rtcSession={rtcSession} />,
+    <TestComponent vm={vm} matrixRoom={matrixRoom} client={client} />,
   );
   await user.click(getByLabelText("Reactions"));
   await user.click(getByLabelText("Raise hand"));
-  expect(rtcSession.room.client.sendEvent).toHaveBeenCalledWith(
-    rtcSession.room.roomId,
+  expect(client.sendEvent).toHaveBeenCalledWith(
+    matrixRoom.roomId,
     "m.reaction",
     {
       "m.relates_to": {
@@ -94,10 +93,10 @@ test("Can raise hand", async () => {
 test("Can lower hand", async () => {
   const reactionEventId = "$my-reaction-event:example.org";
   const user = userEvent.setup();
-  const { vm, rtcSession, handRaisedSubject$ } =
+  const { vm, matrixRoom, client, handRaisedSubject$ } =
     getBasicCallViewModelEnvironment([local, alice]);
   const { getByLabelText, container } = render(
-    <TestComponent vm={vm} rtcSession={rtcSession} />,
+    <TestComponent vm={vm} matrixRoom={matrixRoom} client={client} />,
   );
   await user.click(getByLabelText("Reactions"));
   await user.click(getByLabelText("Raise hand"));
@@ -112,8 +111,8 @@ test("Can lower hand", async () => {
   });
   await user.click(getByLabelText("Reactions"));
   await user.click(getByLabelText("Lower hand"));
-  expect(rtcSession.room.client.redactEvent).toHaveBeenCalledWith(
-    rtcSession.room.roomId,
+  expect(client.redactEvent).toHaveBeenCalledWith(
+    matrixRoom.roomId,
     reactionEventId,
   );
   act(() => {
@@ -125,14 +124,17 @@ test("Can lower hand", async () => {
 
 test("Can react with emoji", async () => {
   const user = userEvent.setup();
-  const { vm, rtcSession } = getBasicCallViewModelEnvironment([local, alice]);
+  const { vm, matrixRoom, client } = getBasicCallViewModelEnvironment([
+    local,
+    alice,
+  ]);
   const { getByLabelText, getByText } = render(
-    <TestComponent vm={vm} rtcSession={rtcSession} />,
+    <TestComponent vm={vm} matrixRoom={matrixRoom} client={client} />,
   );
   await user.click(getByLabelText("Reactions"));
   await user.click(getByText("🐶"));
-  expect(rtcSession.room.client.sendEvent).toHaveBeenCalledWith(
-    rtcSession.room.roomId,
+  expect(client.sendEvent).toHaveBeenCalledWith(
+    matrixRoom.roomId,
     ElementCallReactionEventType,
     {
       "m.relates_to": {
@@ -147,16 +149,19 @@ test("Can react with emoji", async () => {
 
 test("Can fully expand emoji picker", async () => {
   const user = userEvent.setup();
-  const { vm, rtcSession } = getBasicCallViewModelEnvironment([local, alice]);
+  const { vm, matrixRoom, client } = getBasicCallViewModelEnvironment([
+    local,
+    alice,
+  ]);
   const { getByLabelText, container, getByText } = render(
-    <TestComponent vm={vm} rtcSession={rtcSession} />,
+    <TestComponent vm={vm} matrixRoom={matrixRoom} client={client} />,
   );
   await user.click(getByLabelText("Reactions"));
   await user.click(getByLabelText("Show more"));
   expect(container).toMatchSnapshot();
   await user.click(getByText("🦗"));
-  expect(rtcSession.room.client.sendEvent).toHaveBeenCalledWith(
-    rtcSession.room.roomId,
+  expect(client.sendEvent).toHaveBeenCalledWith(
+    matrixRoom.roomId,
     ElementCallReactionEventType,
     {
       "m.relates_to": {
@@ -171,9 +176,12 @@ test("Can fully expand emoji picker", async () => {
 
 test("Can close reaction dialog", async () => {
   const user = userEvent.setup();
-  const { vm, rtcSession } = getBasicCallViewModelEnvironment([local, alice]);
+  const { vm, matrixRoom, client } = getBasicCallViewModelEnvironment([
+    local,
+    alice,
+  ]);
   const { getByLabelText, container } = render(
-    <TestComponent vm={vm} rtcSession={rtcSession} />,
+    <TestComponent vm={vm} matrixRoom={matrixRoom} client={client} />,
   );
   await user.click(getByLabelText("Reactions"));
   await user.click(getByLabelText("Show more"));

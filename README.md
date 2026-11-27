@@ -245,12 +245,15 @@ the build (`allowBuilds` in its `pnpm-workspace.yaml`).
 
 ##### Use
 
-1. Provide the externals yourself: `react`, `react-dom`, `matrix-js-sdk`,
+1. Provide the externals yourself: `react`, `react-dom`,
    `@vector-im/compound-web`, `@vector-im/compound-design-tokens`, and
-   Compound's stylesheet.
+   Compound's stylesheet. The component bundles its own `matrix-js-sdk`; the
+   host's client and room can be on any version that has what the `client`
+   and `room` props pick from them, which the host's type check enforces.
 2. Import `@element-hq/element-call-component/style.css`.
 3. Await `initializeElementCall(config)` once before rendering.
-4. Render the component with `client`, `roomId` and an `intent`; optionally
+4. Render the component with `client`, `room` (from that client) and an
+   `intent`; optionally
    pass `config`, `hostBridge`, `language` and `theme` (both can change
    mid-call). Control it through the `ref` handle (`join`, `hangUp`,
    `setDeviceMute`).
@@ -275,7 +278,11 @@ API is in `component/index.tsx`, `component/api.ts` and `component/host.ts`.
 
 ##### Develop
 
-- `pnpm build:component` builds the library into `component/dist`.
+- `pnpm build:component` builds the library into `component/dist`. It ends
+  with `scripts/check-component-bundle.mjs`, which fails the build on what a
+  host must not be handed: an asset inlined as a data URL, a file referenced
+  by an absolute path, the standalone app's client store worker, or a module
+  over its size budget.
 - `pnpm dev:component` serves a test host on `https://localhost:3001`: two
   calls side by side in resizable boxes, with host messages logged at the
   bottom. It uses the development backend, `public/config.json` if present,

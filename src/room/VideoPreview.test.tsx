@@ -19,7 +19,6 @@ describe("VideoPreview", () => {
     roomId: "",
     roomName: "",
     e2eeSystem: { kind: E2eeType.NONE },
-    roomAlias: null,
     roomAvatar: null,
   };
 

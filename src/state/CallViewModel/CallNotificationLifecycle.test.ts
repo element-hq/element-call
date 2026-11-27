@@ -53,7 +53,7 @@ function mockRingEvent(
 
 const defaultProps = {
   memberUserIds$: constant<string[]>([]),
-  roomMemberUserIds$: constant([alice.userId]),
+  humanRoomMemberUserIds$: constant([alice.userId]),
   receivedDecline$: NEVER,
   options: {
     waitForCallPickup: true,

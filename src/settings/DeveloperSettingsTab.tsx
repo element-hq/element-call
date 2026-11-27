@@ -111,8 +111,20 @@ const KeyRotationStatus: FC<{ info: KeyRotationInfo }> = ({ info }) => (
   </p>
 );
 
+export type DeveloperSettingsClientParts = Pick<
+  MatrixClient,
+  | "doesServerSupportUnstableFeature"
+  | "getCrypto"
+  | "getUserId"
+  | "getDeviceId"
+  | "getDomain"
+  // To authenticate with a transport
+  | "getLivekitToken"
+  | "getOpenIdToken"
+>;
+
 interface Props {
-  client: MatrixClient;
+  client: DeveloperSettingsClientParts;
   roomId?: string;
   /** The transports the client is connected to, while in a call. */
   transports?: TransportInfo[];

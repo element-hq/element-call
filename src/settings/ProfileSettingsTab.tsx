@@ -6,17 +6,16 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type FC, useCallback, useEffect, useMemo, useRef } from "react";
-import { type MatrixClient } from "matrix-js-sdk";
 import { useTranslation } from "react-i18next";
 import { logger } from "matrix-js-sdk/lib/logger";
 
-import { useProfile } from "../profile/useProfile";
+import { type ProfileClientParts, useProfile } from "../profile/useProfile";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { AvatarInputField } from "../input/AvatarInputField";
 import styles from "./ProfileSettingsTab.module.css";
 
 interface Props {
-  client: MatrixClient;
+  client: ProfileClientParts;
 }
 export const ProfileSettingsTab: FC<Props> = ({ client }) => {
   const { t } = useTranslation();

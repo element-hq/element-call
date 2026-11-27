@@ -28,6 +28,7 @@ import {
 } from "@element-hq/matrixrtc-sdk";
 import {
   KnownMembership,
+  type MatrixClient,
   type Room as MatrixRoom,
   type RoomMember,
   RoomStateEvent,
@@ -114,6 +115,7 @@ import {
   createCallNotificationLifecycle$,
   createReceivedDecline$,
 } from "./CallNotificationLifecycle.ts";
+import { createFunctionalMembers$ } from "./FunctionalMembers.ts";
 import {
   type LayoutSwitchViewModel,
   createLayoutSwitchViewModel,
@@ -193,7 +195,16 @@ export function initialPublishRequests(
 export interface CallViewModelProps {
   rtcParticipation: RTCParticipation;
   /** A call is permanently tied to a single Matrix room. */
-  matrixRoom: MatrixRoom;
+  matrixRoom: Pick<
+    MatrixRoom,
+    | "roomId"
+    | "getMembersWithMembership"
+    | "_unstable_getStickyEvents"
+    | "getLiveTimeline"
+    | "on"
+    | "off"
+  >;
+  client: Pick<MatrixClient, "getUserId" | "getDeviceId">;
   mediaDevices: MediaDevices;
   muteStates: MuteStates;
   encryptionSystem: EncryptionSystem;
@@ -492,6 +503,7 @@ export function createCallViewModel$(
   {
     rtcParticipation,
     matrixRoom,
+    client,
     mediaDevices,
     muteStates,
     encryptionSystem,
@@ -502,7 +514,6 @@ export function createCallViewModel$(
   options: CallViewModelOptions = {},
 ): CallViewModel {
   const logger = rootLogger.getChild("[CallViewModel]");
-  const client = matrixRoom.client;
   const userId = client.getUserId();
   const deviceId = client.getDeviceId();
   if (!(userId && deviceId))
@@ -655,6 +666,14 @@ export function createCallViewModel$(
     ),
     roomMembers(matrixRoom),
   );
+  const functionalMembers$ = createFunctionalMembers$(scope, matrixRoom);
+  const humanRoomMembers$ = scope.behavior(
+    combineLatest([matrixRoomMembers$, functionalMembers$]).pipe(
+      map(([members, functional]) =>
+        members.filter((m) => !functional.has(m.userId)),
+      ),
+    ),
+  );
 
   // TODO if we are in "unknown" state we need a loading rendering (or empty screen)
   // Otherwise it looks like we already connected and only than the ringing starts which is weird.
@@ -663,8 +682,8 @@ export function createCallViewModel$(
     memberUserIds$: scope.behavior(
       members$.pipe(map((members) => members.map((m) => m.userId))),
     ),
-    roomMemberUserIds$: scope.behavior(
-      matrixRoomMembers$.pipe(map((members) => members.map((m) => m.userId))),
+    humanRoomMemberUserIds$: scope.behavior(
+      humanRoomMembers$.pipe(map((members) => members.map((m) => m.userId))),
     ),
     sentCallNotification$,
     receivedDecline$: createReceivedDecline$(matrixRoom),
@@ -1120,18 +1139,21 @@ export function createCallViewModel$(
     layoutMedia$.pipe(
       switchMap((l) =>
         l.type === "pip" || l.type === "one-on-one-mobile"
-          ? matrixRoomMembers$.pipe(
+          ? combineLatest([
+              humanRoomMembers$,
+              members$,
+              functionalMembers$,
+            ]).pipe(
               map(
-                (members) =>
+                ([humanMembers, callMembers, functional]) =>
                   // Hide name tags by default in these layouts. For safety we
                   // still need to show them in case it wouldn't be clear who
-                  // the spotlight media belongs to.
-                  // TODO: Respect io.element.functional_members (while still
-                  // being careful to never show a functional member's media
-                  // without a name tag!)
+                  // the spotlight media belongs to: a third person in the room,
+                  // or a functional member in the call.
                   // TODO: Only hide name tags in DMs, not group chats that just
                   // happen to have only 2 users
-                  members.length > 2,
+                  humanMembers.length > 2 ||
+                  callMembers.some((m) => functional.has(m.userId)),
               ),
             )
           : of(true),
@@ -1646,7 +1668,9 @@ function isPermissionDenied(e: unknown): boolean {
 }
 
 /** The members a call can be with: those in the room and those invited. */
-function roomMembers(room: MatrixRoom): RoomMember[] {
+function roomMembers(
+  room: Pick<MatrixRoom, "getMembersWithMembership">,
+): RoomMember[] {
   return room
     .getMembersWithMembership(KnownMembership.Join)
     .concat(room.getMembersWithMembership(KnownMembership.Invite));

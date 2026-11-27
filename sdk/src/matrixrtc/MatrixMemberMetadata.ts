@@ -23,7 +23,9 @@ export type RoomMemberMap = Map<
   string,
   Pick<RoomMember, "userId" | "getMxcAvatarUrl" | "rawDisplayName">
 >;
-export function roomToMembersMap(matrixRoom: MatrixRoom): RoomMemberMap {
+export function roomToMembersMap(
+  matrixRoom: Pick<MatrixRoom, "getMembersWithMembership">,
+): RoomMemberMap {
   const members = matrixRoom
     .getMembersWithMembership(KnownMembership.Join)
     .concat(matrixRoom.getMembersWithMembership(KnownMembership.Invite));
@@ -37,9 +39,10 @@ export function roomToMembersMap(matrixRoom: MatrixRoom): RoomMemberMap {
   }, new Map());
 }
 
+/** Listens for `RoomStateEvent.Members` on the room. */
 export function createRoomMembers$(
   scope: ObservableScope,
-  matrixRoom: MatrixRoom,
+  matrixRoom: Pick<MatrixRoom, "getMembersWithMembership" | "on" | "off">,
 ): Behavior<RoomMemberMap> {
   return scope.behavior(
     fromEvent(matrixRoom, RoomStateEvent.Members).pipe(

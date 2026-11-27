@@ -6,7 +6,14 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, useEffect, useState, type ReactNode, useRef } from "react";
+import {
+  type FC,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+  useRef,
+} from "react";
 import { type MatrixError } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { Trans, useTranslation } from "react-i18next";
@@ -27,6 +34,7 @@ import { Link } from "../button/Link";
 import { ErrorView } from "../ErrorView";
 import { usePageTitle } from "../usePageTitle";
 import { useRoomName } from "./useRoomName";
+import { createCallMatrixBackend } from "../CallMatrixBackend";
 
 export const RoomPage: FC = (): ReactNode => {
   const urlParams = useUrlParams();
@@ -51,9 +59,14 @@ export const RoomPage: FC = (): ReactNode => {
   // The page title is the page's to set, not the call's: a host embedding the
   // call has a title of its own. So it is set here, for whichever room we have
   // got as far as knowing about.
-  const roomName = useRoomName(
-    groupCallState.kind === "loaded" ? groupCallState.rtcSession.room : null,
+  const loadedRoom =
+    groupCallState.kind === "loaded" ? groupCallState.room : null;
+  const backend = useMemo(
+    () =>
+      client && loadedRoom ? createCallMatrixBackend(client, loadedRoom) : null,
+    [client, loadedRoom],
   );
+  const roomName = useRoomName(loadedRoom);
   usePageTitle(
     roomName ??
       (groupCallState.kind === "canKnock" ||
@@ -90,6 +103,18 @@ export const RoomPage: FC = (): ReactNode => {
     if (optInAnalytics === null && setOptInAnalytics) setOptInAnalytics(true);
   }, [optInAnalytics, setOptInAnalytics]);
 
+  useEffect(() => {
+    // Sanity check the room object
+    if (
+      client &&
+      loadedRoom !== null &&
+      client.getRoom(loadedRoom.roomId) !== loadedRoom
+    )
+      logger.warn(
+        `We've ended up with multiple rooms for the same ID (${loadedRoom.roomId}). This indicates a bug in the group call loading code, and may lead to incomplete room state.`,
+      );
+  }, [client, loadedRoom]);
+
   const wasInWaitForInviteState = useRef<boolean>(false);
 
   useEffect(() => {
@@ -103,7 +128,7 @@ export const RoomPage: FC = (): ReactNode => {
       case "loaded":
         return (
           <CallView
-            client={client!}
+            backend={backend!}
             rtcSession={groupCallState.rtcSession}
             isPasswordlessUser={passwordlessUser}
             confineToRoom={confineToRoom}

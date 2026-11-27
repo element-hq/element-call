@@ -142,7 +142,7 @@ interface Props {
    * itself — from the widget API, or by restoring or creating a session of its
    * own.
    */
-  client?: MatrixClient;
+  client?: SuppliedClient;
   /**
    * How Element Call finds a client when none is supplied: the standalone app
    * restores or creates a session of its own. Stable, as a hook dependency.
@@ -162,6 +162,37 @@ interface Props {
 }
 
 /**
+ * What is read of a supplied client under a call, and by this provider and
+ * analytics. Stable methods only, so a host's client, from the host's own copy
+ * of matrix-js-sdk, will do.
+ */
+export type SuppliedClient = Pick<
+  MatrixClient,
+  // The disconnected banner, and stopping a client opened elsewhere
+  | "on"
+  | "off"
+  | "stopClient"
+  // Analytics, through `window.matrixclient`
+  | "getCrypto"
+  | "isGuest"
+  | "getAccountDataFromServer"
+  | "setAccountData"
+  // The room's encryption system
+  | "getRoom"
+  // Avatars
+  | "mxcUrlToHttp"
+  | "getAccessToken"
+  // Rageshakes: who sends them, their crypto state, and asking others for theirs
+  | "getUserId"
+  | "getUser"
+  | "credentials"
+  | "deviceId"
+  | "secretStorage"
+  | "isKeyBackupKeyStored"
+  | "sendEvent"
+>;
+
+/**
  * Restores or creates a session of Element Call's own, kept where the given
  * functions keep it. Resolves to null when no one is signed in.
  */
@@ -170,7 +201,14 @@ export type ClientLoader = (
   clearSession: () => void,
 ) => Promise<InitResult | null>;
 
-export const ClientProvider: FC<Props> = ({ children, client, loadClient }) => {
+export const ClientProvider: FC<Props> = ({
+  children,
+  client: suppliedClient,
+  loadClient,
+}) => {
+  // STOP GAP: held as a whole client, as the standalone and widget pages need
+  // one. A component host's client is only read through `SuppliedClient`.
+  const client = suppliedClient as MatrixClient | undefined;
   const leaveToHome = useLeaveToHome();
   const hostBridge = useHostBridge();
 
@@ -372,7 +410,7 @@ export const ClientProvider: FC<Props> = ({ children, client, loadClient }) => {
 
     return (): void => {
       if (initClientState.client) {
-        initClientState.client.removeListener(ClientEvent.Sync, onSync);
+        initClientState.client.off(ClientEvent.Sync, onSync);
       }
     };
   }, [initClientState, onSync, hostBridge]);

@@ -147,11 +147,13 @@ export const RegisterPage: FC = () => {
     }
   }, [loading, navigate, authenticated, passwordlessUser, registering]);
 
-  if (loading) {
-    return <LoadingPage />;
-  } else {
-    PosthogAnalytics.instance.eventSignup.cacheSignupStart(new Date());
-  }
+  useEffect(() => {
+    if (!loading) {
+      PosthogAnalytics.instance.eventSignup.cacheSignupStart(new Date());
+    }
+  }, [loading]);
+
+  if (loading) return <LoadingPage />;
 
   return (
     <>

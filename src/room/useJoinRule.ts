@@ -5,14 +5,27 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { useCallback } from "react";
+import { useCallback, useSyncExternalStore } from "react";
+import {
+  type JoinRule,
+  type Room,
+  RoomEvent,
+  RoomStateEvent,
+} from "matrix-js-sdk";
+import { fromEvent, merge } from "rxjs";
 
-import type { JoinRule, Room } from "matrix-js-sdk";
-import { useRoomState } from "./useRoomState";
-
-export function useJoinRule(room: Room): JoinRule {
-  return useRoomState(
-    room,
-    useCallback((state) => state.getJoinRule(), []),
+export function useJoinRule(
+  room: Pick<Room, "getJoinRule" | "on" | "off">,
+): JoinRule {
+  const subscribe = useCallback(
+    (onChange: () => void) => {
+      const s = merge(
+        fromEvent(room, RoomStateEvent.Update),
+        fromEvent(room, RoomEvent.CurrentStateUpdated),
+      ).subscribe(onChange);
+      return (): void => s.unsubscribe();
+    },
+    [room],
   );
+  return useSyncExternalStore(subscribe, () => room.getJoinRule());
 }

@@ -1,3 +1,11 @@
+> [!CAUTION]
+> This widget specific sdk should be treated as deprecated.
+> The VoIP team will keep it here while it is low maintainance.
+> But we might remove it at any time (Or preferrably move this folder
+> into its own repository.)
+> Our recommendation for any web rtc solution (inlcuding widgets)
+> is to build it directly on the `/sdk` folder of EC.
+
 # Widget RTC SDK
 
 A single JavaScript bundle for widget pages: it connects to the host (for
@@ -69,6 +77,22 @@ Serve it with CORS, so a page on another origin can import it (for example
 
 `build:widget-rtc-sdk:production` (what CI deploys) minifies and leaves out
 source maps; `build:widget-rtc-sdk:development` does neither.
+
+## End-to-end test
+
+`playwright/widget/widget-rtc-sdk.spec.ts` opens `index.html` as a widget in
+two Element Webs and sends data from one to the other. CI does not run it for
+now, so run it by hand when you change the bundle or the `sdk/` package. With
+the Playwright backend running (`pnpm backend-playwright`), in the repository
+root:
+
+```
+pnpm exec playwright test --project=widget-rtc-sdk
+```
+
+The `widget-rtc-sdk` project builds the example into
+`dist-widget-rtc-sdk-example/` and Playwright serves it on
+https://localhost:3003. Add `--ui` to watch it run.
 
 ## Widget url
 

@@ -18,6 +18,7 @@ nothing in Element Call's `src/`.
 ```ts
 import {
   createRTCSlot,
+  createSdkMatrixBackend,
   E2eeType,
   MatrixRTCMode,
   ObservableScope,
@@ -27,15 +28,15 @@ import {
 const scope = new ObservableScope();
 const slot = createRTCSlot(
   scope,
-  client, // a matrix-js-sdk MatrixClient, logged in and syncing
-  room, // the matrix-js-sdk Room, from client.getRoom() once the join has synced
-  {
-    encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
-    matrixRTCMode: MatrixRTCMode.Compatibility,
-  },
+  createSdkMatrixBackend(
+    client, // a matrix-js-sdk MatrixClient, logged in and syncing
+    room, // the matrix-js-sdk Room, from client.getRoom() once the join has synced
+  ),
+  { encryptionSystem: { kind: E2eeType.PER_PARTICIPANT } }, // the room's call, m.call#ROOM
 );
 const participation = slot.join({
   publish: [{ source: "microphone" }, { source: "camera" }],
+  matrixRTCMode: MatrixRTCMode.Compatibility,
 });
 
 // A <video> for each remote member's camera and an <audio> for its microphone.
@@ -98,6 +99,7 @@ own only so that a host can install it as a git dependency (see
 ```sh
 pnpm dev:sdk              # the harness, https://localhost:3002
 pnpm build:sdk            # dist/matrixrtc-sdk.js and dist/types
+pnpm build:sdk:development   # the same, unminified
 pnpm test:playwright playwright/sdk   # needs `pnpm backend`
 ```
 

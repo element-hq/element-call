@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { defineConfig } from "vite";
 import { posix } from "node:path";
 
-import { vitePluginsConfig } from "./vite.config.ts";
+import { vitePluginsConfig, withoutMatrixCrypto } from "./vite.config.ts";
 import { scopeStylesToRoot } from "./component/build/scopeStylesToRoot.ts";
 
 // Config for Element Call as a React component, to be imported by an
@@ -20,6 +20,7 @@ export default defineConfig(({ mode }) => {
   const base = vitePluginsConfig({ mode, html: false });
   return {
     ...base,
+    plugins: [...(base.plugins ?? []), withoutMatrixCrypto()],
     resolve: {
       ...base.resolve,
       alias: {
@@ -94,21 +95,22 @@ export default defineConfig(({ mode }) => {
               : "assets/[name]-[hash][extname]",
         },
         // The host already has these, and a second copy of any of them does not
-        // merely bloat the bundle: React would hold two sets of hooks, the
-        // Matrix client would run two sync loops, and a second Compound would
-        // bring a second stylesheet with class names of its own — so that what
-        // it floats into the host's body, tooltips and menus, would match the
-        // host's Compound stylesheet only when the two happened to be the same
-        // version.
+        // merely bloat the bundle: React would hold two sets of hooks, and a
+        // second Compound would bring a second stylesheet with class names of
+        // its own — so that what it floats into the host's body, tooltips and
+        // menus, would match the host's Compound stylesheet only when the two
+        // happened to be the same version.
         //
-        // Every subpath has to be named. Element Call reaches most of the Matrix
-        // SDK as `matrix-js-sdk/lib/…`, and a bare "matrix-js-sdk" would not
-        // catch those — while the pattern and callback forms of this option are
-        // silently ignored by the bundler, so they cannot be used to cover them.
-        // `pnpm lint:externals` reads this list and fails if the source imports
-        // one of these packages by a path it does not name; a few entries below
-        // are there only because the standalone app imports them, which costs
-        // nothing.
+        // The Matrix SDK is not among them: the component bundles its own, so
+        // that a host on an older or newer js-sdk still gets the MatrixRTC
+        // implementation Element Call was built against. It only ever wraps the
+        // host's client (see component/componentLocalJsClient.ts) and never
+        // starts a client, sync loop or crypto of its own.
+        //
+        // Every subpath has to be named, while the pattern and callback forms of
+        // this option are silently ignored by the bundler. `pnpm lint:externals`
+        // reads this list and fails if the source imports one of these packages
+        // by a path it does not name.
         external: [
           "react",
           "react/jsx-runtime",
@@ -117,28 +119,6 @@ export default defineConfig(({ mode }) => {
           "react/compiler-runtime",
           "react-dom",
           "react-dom/client",
-          "matrix-js-sdk",
-          "matrix-js-sdk/lib/@types/event",
-          "matrix-js-sdk/lib/browser-index",
-          "matrix-js-sdk/lib/client",
-          "matrix-js-sdk/lib/crypto-api",
-          "matrix-js-sdk/lib/indexeddb-worker",
-          "matrix-js-sdk/lib/logger",
-          "matrix-js-sdk/lib/matrix",
-          "matrix-js-sdk/lib/matrixrtc",
-          "matrix-js-sdk/lib/matrixrtc/EncryptionManager",
-          "matrix-js-sdk/lib/matrixrtc/IKeyTransport",
-          "matrix-js-sdk/lib/matrixrtc/IMembershipManager",
-          "matrix-js-sdk/lib/models/event",
-          "matrix-js-sdk/lib/models/relations-container",
-          "matrix-js-sdk/lib/models/room",
-          "matrix-js-sdk/lib/models/room-state",
-          "matrix-js-sdk/lib/models/room-sticky-events",
-          "matrix-js-sdk/lib/models/typed-event-emitter",
-          "matrix-js-sdk/lib/randomstring",
-          "matrix-js-sdk/lib/sync",
-          "matrix-js-sdk/lib/types",
-          "matrix-js-sdk/lib/utils",
           "@vector-im/compound-web",
           "@vector-im/compound-design-tokens/assets/web/icons",
         ],
