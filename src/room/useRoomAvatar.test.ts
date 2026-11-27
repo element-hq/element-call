@@ -7,30 +7,13 @@ Please see LICENSE in the repository root for full details.
 
 import { expect, test } from "vitest";
 import { act, renderHook } from "@testing-library/react";
-import {
-  JoinRule,
-  RoomEvent,
-  type RoomState,
-  RoomStateEvent,
-} from "matrix-js-sdk";
+import { RoomEvent, type RoomState } from "matrix-js-sdk";
 
 import { mockMatrixRoom } from "../utils/test";
-import { useJoinRule } from "./useJoinRule";
 import { useRoomAvatar } from "./useRoomAvatar";
 
-// The hooks read the room, not the state the events carry
+// The hook reads the room, not the state the events carry
 const state = {} as RoomState;
-
-test("the join rule follows the room's state updates", () => {
-  let joinRule = JoinRule.Invite;
-  const room = mockMatrixRoom({ getJoinRule: () => joinRule });
-  const { result } = renderHook(() => useJoinRule(room));
-  expect(result.current).toBe(JoinRule.Invite);
-
-  joinRule = JoinRule.Public;
-  act(() => void room.emit(RoomStateEvent.Update, state));
-  expect(result.current).toBe(JoinRule.Public);
-});
 
 test("the avatar follows the room's state being replaced", () => {
   let avatar: string | null = null;

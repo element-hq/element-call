@@ -5,23 +5,22 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { useCallback } from "react";
-import { type Room } from "matrix-js-sdk";
-
-import { useRoomState } from "./useRoomState";
+import { useCallback, useSyncExternalStore } from "react";
+import { type Room, RoomEvent, RoomStateEvent } from "matrix-js-sdk";
+import { fromEvent, merge } from "rxjs";
 
 export function useRoomAvatar(
-  room: Pick<
-    Room,
-    // The avatar itself
-    | "getMxcAvatarUrl"
-    // `on`/`off` for its changes, for `useRoomState`
-    | "on"
-    | "off"
-  >,
+  room: Pick<Room, "getMxcAvatarUrl" | "on" | "off">,
 ): string | null {
-  return useRoomState(
-    room,
-    useCallback(() => room.getMxcAvatarUrl(), [room]),
+  const subscribe = useCallback(
+    (onChange: () => void) => {
+      const s = merge(
+        fromEvent(room, RoomStateEvent.Update),
+        fromEvent(room, RoomEvent.CurrentStateUpdated),
+      ).subscribe(onChange);
+      return (): void => s.unsubscribe();
+    },
+    [room],
   );
+  return useSyncExternalStore(subscribe, () => room.getMxcAvatarUrl());
 }
