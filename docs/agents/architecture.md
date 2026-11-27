@@ -108,7 +108,8 @@ Code that builds in only one is a bug.
 - `build:sdk` — `@element-hq/matrixrtc-sdk`, sources in `sdk/`, entry `sdk/index.ts`.
   Packaged exactly like the component (own pnpm project, run pnpm from the repo
   root, types from `sdk/tsconfig.build.json`, externals checked by
-  `pnpm lint:externals`).
+  `pnpm lint:externals`). Minified by default (`build:sdk:production`),
+  unminified with `build:sdk:development`; source maps in both.
 - `build:widget-rtc-sdk` — a single bundle for widget pages that wraps the
   `sdk/` package and the widget API, nothing of `src/`; entry
   `widget-rtc-sdk/main.ts`. CI builds it as the `widget-rtc-sdk` package
