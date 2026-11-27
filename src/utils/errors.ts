@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type ConnectionError } from "livekit-client";
+import { UnsupportedStickyEventsEndpointError } from "matrix-js-sdk";
 import {
   ErrorCode as RTCErrorCode,
   FailToGetOpenIdToken as RTCFailToGetOpenIdToken,
@@ -28,7 +29,6 @@ export enum ErrorCode {
    */
   MISSING_MATRIX_RTC_TRANSPORT = "MISSING_MATRIX_RTC_TRANSPORT",
   CONNECTION_LOST_ERROR = "CONNECTION_LOST_ERROR",
-  INTERNAL_MEMBERSHIP_MANAGER = "INTERNAL_MEMBERSHIP_MANAGER",
   FAILED_TO_START_LIVEKIT = "FAILED_TO_START_LIVEKIT",
   /** LiveKit indicates that the server has hit its track limits */
   INSUFFICIENT_CAPACITY_ERROR = "INSUFFICIENT_CAPACITY_ERROR",
@@ -46,7 +46,6 @@ export enum ErrorCategory {
   NETWORK_CONNECTIVITY = "NETWORK_CONNECTIVITY",
   CLIENT_CONFIGURATION = "CLIENT_CONFIGURATION",
   UNKNOWN = "UNKNOWN",
-  SYSTEM_FAILURE = "SYSTEM_FAILURE",
   // SYSTEM_FAILURE / FEDERATION_FAILURE ..
 }
 
@@ -113,27 +112,6 @@ export class ConnectionLostError extends ElementCallError {
       ErrorCode.CONNECTION_LOST_ERROR,
       ErrorCategory.NETWORK_CONNECTIVITY,
       i18n.t("error.connection_lost_description"),
-    );
-  }
-}
-
-/**
- * Error indicating a failure in the membership manager causing the join call
- * operation to fail.
- */
-export class MembershipManagerError extends ElementCallError {
-  /**
-   * Creates an instance of MembershipManagerError.
-   *
-   * @param error - The underlying error that caused the membership manager failure.
-   */
-  public constructor(error: Error) {
-    super(
-      i18n.t("error.membership_manager"),
-      ErrorCode.INTERNAL_MEMBERSHIP_MANAGER,
-      ErrorCategory.SYSTEM_FAILURE,
-      i18n.t("error.membership_manager_description"),
-      error,
     );
   }
 }
@@ -314,7 +292,10 @@ export function fromMatrixRTCError(error: MatrixRTCError): ElementCallError {
   if (error instanceof RTCTransportMissingError)
     return new MatrixRTCTransportMissingError(error.domain);
   if (error instanceof RTCMembershipManagerError)
-    return new MembershipManagerError(causeOf(error));
+    // The membership manager wraps what made it stop
+    return causeOf(error).cause instanceof UnsupportedStickyEventsEndpointError
+      ? new StickyEventsRequiredError()
+      : new ConnectionLostError();
   if (error instanceof RTCFailToGetOpenIdToken)
     return new FailToGetOpenIdToken(causeOf(error));
   if (error instanceof RTCNoMatrix2AuthorizationService)

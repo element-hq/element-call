@@ -32,6 +32,7 @@ import {
 import {
   type Behavior,
   createRTCSlot,
+  createSdkMatrixBackend,
   type DelayedLeaveTimings,
   E2eeType,
   type LocalRTCMember,
@@ -197,17 +198,16 @@ export async function createMatrixRTCSdk(
   if (room === null) throw new Error("No room: the url needs a joined roomId");
 
   const scope = new ObservableScope();
-  const slot = createRTCSlot(scope, client, room, {
+  const slot = createRTCSlot(scope, createSdkMatrixBackend(client, room), {
     encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
-    matrixRTCMode: config.matrix_rtc_mode ?? MatrixRTCMode.Compatibility,
-    application,
-    id,
+    slotDescription: { application, id },
   });
   const session = config.matrix_rtc_session;
   const sendNotificationType = params.get("sendNotificationType");
   const participationOptions: RTCParticipationOptions = {
     // A data-only participation: nothing is published
     publish: [],
+    matrixRTCMode: config.matrix_rtc_mode ?? MatrixRTCMode.Compatibility,
     sendNotificationType:
       sendNotificationType === "ring" || sendNotificationType === "notification"
         ? sendNotificationType

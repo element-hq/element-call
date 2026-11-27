@@ -6,13 +6,12 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type FC, type FormEventHandler, useCallback, useState } from "react";
-import { type MatrixClient } from "matrix-js-sdk";
 import { Trans, useTranslation } from "react-i18next";
 import { Button, Heading, Text } from "@vector-im/compound-web";
 
 import styles from "./CallEndedView.module.css";
 import feedbackStyle from "../input/FeedbackInput.module.css";
-import { useProfile } from "../profile/useProfile";
+import { type ProfileClientParts, useProfile } from "../profile/useProfile";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { FieldRow, InputField } from "../input/Input";
@@ -22,7 +21,7 @@ import { LeaveToHomeLink } from "../button/LeaveToHomeLink";
 import { useLeaveToHome } from "../LeaveToHomeContext";
 
 interface Props {
-  client: MatrixClient;
+  client: ProfileClientParts;
   isPasswordlessUser: boolean;
   hideHeader: boolean;
   confineToRoom: boolean;

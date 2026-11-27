@@ -18,7 +18,7 @@ import {
   type ReactNode,
 } from "react";
 import useMeasure from "react-use-measure";
-import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
+import { type Observable } from "rxjs";
 import classNames from "classnames";
 import { logger as rootLogger } from "matrix-js-sdk/lib/logger";
 import { useTranslation } from "react-i18next";
@@ -31,7 +31,11 @@ import { useRootElement } from "../RootElementContext";
 import { observeElementSize$ } from "../utils/elementSize";
 import styles from "./InCallView.module.css";
 import { GridTile } from "../tile/GridTile";
-import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
+import {
+  SettingsModal,
+  type SettingsClientParts,
+  defaultSettingsTab,
+} from "../settings/SettingsModal";
 import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
 import { useWakeLock } from "../useWakeLock";
@@ -70,9 +74,8 @@ import { ReactionsAudioRenderer } from "./ReactionAudioRenderer";
 import { ReactionsOverlay } from "./ReactionsOverlay";
 import { CallEventAudioRenderer } from "./CallEventAudioRenderer";
 import {
-  createRTCSlot,
   type RTCParticipationOptions,
-  type RTCSlotOptions,
+  type RTCSlot,
   constant,
 } from "@element-hq/matrixrtc-sdk";
 import {
@@ -94,7 +97,10 @@ import {
   screenShareResolution,
 } from "../settings/settings";
 import { Config } from "../config/Config";
-import { createSentCallNotification$ } from "../state/CallViewModel/CallNotificationLifecycle.ts";
+import {
+  type CallNotificationWrapper,
+  createSentCallNotification$,
+} from "../state/CallViewModel/CallNotificationLifecycle.ts";
 import { ReactionsReader } from "../reactions/ReactionsReader";
 import { MemberAudioRenderer } from "../tracks/MemberAudioRenderer.tsx";
 import { muteAllAudio$ } from "../state/MuteAllAudioModel.ts";
@@ -132,6 +138,59 @@ export interface ActiveCallProps extends Omit<
   InCallViewProps,
   "vm" | "footerVm" | "developerSettingsVm"
 > {
+  client: Pick<
+    MatrixClient,
+    // Our own identity: call view model, footer, settings
+    | "getUserId"
+    | "getDeviceId"
+    // Developer settings: the local transport and authenticating with it,
+    // `getOpenIdToken` for the JWT service flow, `getLivekitToken` for the
+    // client-server API flow (MSC4195)
+    | "getDomain"
+    | "getOpenIdToken"
+    | "getLivekitToken"
+    // Reactions and raised hands: sending, lowering, and decrypting
+    | "sendEvent"
+    | "redactEvent"
+    | "decryptEventIfNeeded"
+    // `on`/`off`, to listen for `MatrixEventEvent.Decrypted` (reactions once
+    // decrypted)
+    | "on"
+    | "off"
+    // Profile: display name and avatar, for the settings and the call ended view
+    | "getUser"
+    | "setDisplayName"
+    | "setAvatarUrl"
+    | "uploadContent"
+    // Developer settings
+    | "doesServerSupportUnstableFeature"
+    | "getCrypto"
+  >;
+  matrixRoom: Pick<
+    MatrixRoom,
+    // Call view model and reactions
+    | "roomId"
+    // Joined and invited members, for the call view model
+    | "getMembersWithMembership"
+    // Call notifications, for the call view model
+    | "_unstable_getStickyEvents"
+    // Functional members, for the call view model
+    | "getLiveTimeline"
+    // Raised hands already in the room, for the reactions reader
+    | "relations"
+    // `on`/`off`, to listen for:
+    // - `RoomStateEvent.Members` (call view model members)
+    // - `RoomStateEvent.Events` (call view model functional members)
+    // - `RoomEvent.Timeline` and `RoomStickyEventsEvent.Update` (call notifications)
+    // - `RoomEvent.Timeline`, `RoomEvent.Redaction` and
+    //   `RoomEvent.LocalEchoUpdated` (reactions and raised hands)
+    | "on"
+    | "off"
+  >;
+  /** The slot to join; the call leaves it again when it ends. */
+  slot: RTCSlot;
+  /** The call notifications sent with our join, so the call can show it ringing. */
+  sentCallNotification$: Observable<CallNotificationWrapper>;
   e2eeSystem: EncryptionSystem;
   /** The tracks the lobby opened, for the join to publish. */
   media: LocalMedia;
@@ -159,18 +218,17 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
   useEffect(() => {
     rootLogger.info("START CALL VIEW SCOPE");
     const scope = new ObservableScope();
-    const reactionsReader = new ReactionsReader(scope, props.rtcSession);
+    const reactionsReader = new ReactionsReader(
+      scope,
+      props.slot.members$,
+      props.matrixRoom,
+      props.client,
+    );
     const { autoLeaveWhenOthersLeft, waitForCallPickup, sendNotificationType } =
       urlParams;
 
     const capture = captureSettings();
-    const slot = createRTCSlot(
-      scope,
-      props.client,
-      props.matrixRoom,
-      rtcSlotOptions(props.e2eeSystem),
-    );
-    const rtcParticipation = slot.join({
+    const rtcParticipation = props.slot.join({
       ...rtcParticipationOptions(urlParams),
       // Without a lobby nothing was captured and the join captures itself
       publish:
@@ -189,6 +247,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       {
         rtcParticipation,
         matrixRoom: props.matrixRoom,
+        client: props.client,
         mediaDevices,
         muteStates: props.muteStates,
         encryptionSystem: props.e2eeSystem,
@@ -205,7 +264,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
         waitForCallPickup: waitForCallPickup && sendNotificationType === "ring",
         sentCallNotification$: createSentCallNotification$(
           scope,
-          props.rtcSession,
+          props.sentCallNotification$,
         ),
       },
     );
@@ -214,10 +273,13 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     vm.leave$.pipe(scope.bind()).subscribe(props.onLeft);
 
     return (): void => {
+      // The slot outlives the call, and joins again only once this has left
+      rtcParticipation.leave();
       scope.end();
     };
   }, [
-    props.rtcSession,
+    props.slot,
+    props.sentCallNotification$,
     props.matrixRoom,
     props.muteStates,
     props.e2eeSystem,
@@ -251,7 +313,6 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       scope.end();
     };
   }, [
-    props.rtcSession,
     props.matrixRoom,
     props.muteStates,
     props.e2eeSystem,
@@ -268,7 +329,11 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
   if (developerSettingsVm === null) return null;
 
   return (
-    <ReactionsSenderProvider vm={vm} rtcSession={props.rtcSession}>
+    <ReactionsSenderProvider
+      vm={vm}
+      room={props.matrixRoom}
+      client={props.client}
+    >
       <InCallView
         {...props}
         vm={vm}
@@ -280,13 +345,12 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
 };
 
 export interface InCallViewProps {
-  client: MatrixClient;
+  client: SettingsClientParts;
   vm: CallViewModel;
   footerVm: ViewModel<FooterSnapshot>;
   developerSettingsVm: ViewModel<DeveloperSettingsSnapshot>;
   matrixInfo: MatrixInfo;
-  rtcSession: MatrixRTCSession;
-  matrixRoom: MatrixRoom;
+  matrixRoom: Pick<MatrixRoom, "roomId">;
   muteStates: MuteStates;
   onShareClick: (() => void) | null;
 }
@@ -797,30 +861,22 @@ export function captureSettings(): CaptureSettings {
 }
 
 /**
- * What the client needs from Element Call's configuration, settings and URL:
+ * What the join needs from Element Call's configuration, settings and URL:
  * the SDK reads none of them itself. What to publish depends on the mute
  * switches and the devices, so the caller adds that.
  */
-export function rtcSlotOptions(
-  encryptionSystem: EncryptionSystem,
-): RTCSlotOptions {
-  return {
-    encryptionSystem,
-    // matrix_rtc_mode in config.json overrides the user's Developer Settings
-    // choice. We merely sample the current mode here, so the user would need
-    // to manually rejoin to switch to a different one.
-    matrixRTCMode:
-      (Config.get().matrix_rtc_mode as MatrixRTCMode | undefined) ??
-      matrixRTCModeSetting.value$.value,
-  };
-}
-
 export function rtcParticipationOptions(
   urlParams: ReturnType<typeof useUrlParams>,
 ): Omit<RTCParticipationOptions, "publish"> {
   const config = Config.get();
   const session = config.matrix_rtc_session;
   return {
+    // matrix_rtc_mode in config.json overrides the user's Developer Settings
+    // choice. We merely sample the current mode here, so the user would need
+    // to manually rejoin to switch to a different one.
+    matrixRTCMode:
+      (config.matrix_rtc_mode as MatrixRTCMode | undefined) ??
+      matrixRTCModeSetting.value$.value,
     sendNotificationType: urlParams.sendNotificationType,
     callIntent: urlParams.callIntent,
     timings: {

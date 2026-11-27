@@ -91,7 +91,6 @@ const matrixInfo = {
   avatarUrl: "",
   roomId: "!room:example.org",
   roomName: "Test Room",
-  roomAlias: null,
   roomAvatar: null,
   e2eeSystem: { kind: E2eeType.NONE } satisfies EncryptionSystem,
 };

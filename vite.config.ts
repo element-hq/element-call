@@ -196,16 +196,16 @@ export default ({
 };
 
 /**
- * Leaves the Matrix SDK's own end-to-end encryption out of a build that only
- * runs as a widget: the host's client encrypts and decrypts for it, so the Rust
- * crypto chunk and its WASM (about 10 MB) would only be shipped, never loaded.
- * The SDK imports it dynamically, from `initRustCrypto` and `preloadRustCrypto`;
- * here those reject instead.
+ * Leaves the Matrix SDK's own end-to-end encryption out of a build whose
+ * client is the host's, as a widget or as the component: the host's client
+ * encrypts and decrypts for it, so the Rust crypto chunk and its WASM (about
+ * 10 MB) would only be shipped, never loaded. The SDK imports it dynamically,
+ * from `initRustCrypto` and `preloadRustCrypto`; here those reject instead.
  */
 export function withoutMatrixCrypto(): Plugin {
   const crypto = "\0without-matrix-crypto";
   const unavailable =
-    "new Error('This build runs as a widget only: the host does the crypto')";
+    "new Error('This build uses the client of its host, which does the crypto')";
   return {
     name: "without-matrix-crypto",
     enforce: "pre",

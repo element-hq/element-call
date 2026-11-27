@@ -99,6 +99,7 @@ const Pane: FC<{
   log: (pane: string, message: string) => void;
 }> = ({ session, roomId, theme, language, log }): ReactNode => {
   const [mounted, setMounted] = useState(true);
+  const room = session.client.getRoom(roomId);
 
   const bridge = useMemo(
     () =>
@@ -159,11 +160,12 @@ const Pane: FC<{
       {/* Resizable, because how Element Call copes with the size it is given is
       one of the things we cannot find out from the standalone app */}
       <div className={styles.paneCall} data-testid="call-container">
-        {mounted && (
+        {mounted && room === null && <p>This client does not know {roomId}</p>}
+        {mounted && room !== null && (
           <ElementCall
             ref={handle}
             client={session.client}
-            roomId={roomId}
+            room={room}
             hostBridge={bridge}
             theme={theme}
             language={language}

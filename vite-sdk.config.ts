@@ -47,6 +47,7 @@ export default defineConfig(({ mode }) => {
           "matrix-js-sdk/lib/logger",
           "matrix-js-sdk/lib/matrix",
           "matrix-js-sdk/lib/matrixrtc",
+          "matrix-js-sdk/lib/matrixrtc/CallIntent",
           "matrix-js-sdk/lib/matrixrtc/EncryptionManager",
           "matrix-js-sdk/lib/matrixrtc/IKeyTransport",
           "matrix-js-sdk/lib/matrixrtc/IMembershipManager",

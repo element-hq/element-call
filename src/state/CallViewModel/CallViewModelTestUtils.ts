@@ -36,7 +36,10 @@ import {
   createCallViewModel$,
   type CallViewModelOptions,
 } from "./CallViewModel";
-import { createSentCallNotification$ } from "./CallNotificationLifecycle";
+import {
+  createSentCallNotification$,
+  observeSentCallNotification$,
+} from "./CallNotificationLifecycle";
 import {
   mockConfig,
   mockLiveTimeline,
@@ -284,6 +287,7 @@ export function withCallViewModel(mode: MatrixRTCMode) {
       {
         rtcParticipation,
         matrixRoom: room,
+        client: room.client,
         mediaDevices,
         muteStates,
         encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
@@ -295,7 +299,7 @@ export function withCallViewModel(mode: MatrixRTCMode) {
         autoLeaveWhenOthersLeft: false,
         sentCallNotification$: createSentCallNotification$(
           scope,
-          rtcSession.asMockedSession(),
+          observeSentCallNotification$(rtcSession.asMockedSession()),
         ),
         ...options,
       },

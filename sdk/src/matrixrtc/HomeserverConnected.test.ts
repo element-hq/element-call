@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { EventEmitter } from "events";
-import { ClientEvent, SyncState } from "matrix-js-sdk";
+import { ClientEvent, type MatrixClient, SyncState } from "matrix-js-sdk";
 import { MembershipManagerEvent, Status } from "matrix-js-sdk/lib/matrixrtc";
 
 import { ObservableScope } from "../reactive/ObservableScope";
@@ -20,7 +20,7 @@ import { testScope, withTestScheduler } from "../utils/test";
  ```
   createHomeserverConnected$(
      scope: ObservableScope,
-     client: NodeStyleEventEmitter & Pick<MatrixClient, "getSyncState">,
+     client: Pick<MatrixClient, "getSyncState" | "on" | "off">,
      matrixRTCSession: NodeStyleEventEmitter &
        Pick<MatrixRTCSession, "membershipStatus" | "probablyLeft">,
  )
@@ -34,11 +34,14 @@ class MockMatrixClient extends EventEmitter {
   }
   public setSyncState(state: SyncState): void {
     this.syncState = state;
-    // Matrix's Sync event in createHomeserverConnected$ expects [SyncState]
-    this.emit(ClientEvent.Sync, [state]);
+    this.emit(ClientEvent.Sync, state);
   }
   public getSyncState(): SyncState {
     return this.syncState;
+  }
+  /** `MatrixClient`'s `on`/`off` return the client itself, which no mock is. */
+  public get asClient(): Pick<MatrixClient, "getSyncState" | "on" | "off"> {
+    return this as unknown as Pick<MatrixClient, "getSyncState" | "on" | "off">;
   }
 }
 
@@ -47,7 +50,7 @@ class MockMatrixClient extends EventEmitter {
  ```
   createHomeserverConnected$(
      scope: ObservableScope,
-     client: NodeStyleEventEmitter & Pick<MatrixClient, "getSyncState">,
+     client: Pick<MatrixClient, "getSyncState" | "on" | "off">,
      matrixRTCSession: NodeStyleEventEmitter &
        Pick<MatrixRTCSession, "membershipStatus" | "probablyLeft">,
  )
@@ -99,18 +102,33 @@ describe("createHomeserverConnected$", () => {
   // easy enough to read them so I think they can stay.
   // Note: gracePeriodMs is set to 0 to avoid debouncing delays in tests
   it("reports syncing reason when sync state is not Syncing", () => {
-    const hsConnected = createHomeserverConnected$(scope, client, session, 0);
+    const hsConnected = createHomeserverConnected$(
+      scope,
+      client.asClient,
+      session,
+      0,
+    );
     expect(hsConnected.disconnectReason$.value).toEqual("sync");
   });
 
   it("reports membership reason when sync is Syncing but membership is not Connected", () => {
-    const hsConnected = createHomeserverConnected$(scope, client, session, 0);
+    const hsConnected = createHomeserverConnected$(
+      scope,
+      client.asClient,
+      session,
+      0,
+    );
     client.setSyncState(SyncState.Syncing);
     expect(hsConnected.disconnectReason$.value).toEqual("membership");
   });
 
   it("reports probablyLeft reason when membership transitions to Connected but ProbablyLeft is true", () => {
-    const hsConnected = createHomeserverConnected$(scope, client, session, 0);
+    const hsConnected = createHomeserverConnected$(
+      scope,
+      client.asClient,
+      session,
+      0,
+    );
     // Make sync loop OK
     client.setSyncState(SyncState.Syncing);
     // Indicate probable leave before connection
@@ -120,7 +138,12 @@ describe("createHomeserverConnected$", () => {
   });
 
   it("becomes null (connected) only when all three conditions are satisfied", () => {
-    const hsConnected = createHomeserverConnected$(scope, client, session, 0);
+    const hsConnected = createHomeserverConnected$(
+      scope,
+      client.asClient,
+      session,
+      0,
+    );
     // 1. Sync loop connected
     client.setSyncState(SyncState.Syncing);
     expect(hsConnected.disconnectReason$.value).toEqual("membership"); // not yet membership connected
@@ -130,7 +153,12 @@ describe("createHomeserverConnected$", () => {
   });
 
   it("returns syncing reason when sync loop leaves Syncing", () => {
-    const hsConnected = createHomeserverConnected$(scope, client, session, 0);
+    const hsConnected = createHomeserverConnected$(
+      scope,
+      client.asClient,
+      session,
+      0,
+    );
     // Reach connected state
     client.setSyncState(SyncState.Syncing);
     session.setMembershipStatus(Status.Connected);
@@ -142,7 +170,12 @@ describe("createHomeserverConnected$", () => {
   });
 
   it("returns membershipConnected reason when membership status becomes disconnected", () => {
-    const hsConnected = createHomeserverConnected$(scope, client, session, 0);
+    const hsConnected = createHomeserverConnected$(
+      scope,
+      client.asClient,
+      session,
+      0,
+    );
     client.setSyncState(SyncState.Syncing);
     session.setMembershipStatus(Status.Connected);
     expect(hsConnected.disconnectReason$.value).toEqual(null);
@@ -152,7 +185,12 @@ describe("createHomeserverConnected$", () => {
   });
 
   it("returns certainlyConnected reason when ProbablyLeft is emitted", () => {
-    const hsConnected = createHomeserverConnected$(scope, client, session, 0);
+    const hsConnected = createHomeserverConnected$(
+      scope,
+      client.asClient,
+      session,
+      0,
+    );
     client.setSyncState(SyncState.Syncing);
     session.setMembershipStatus(Status.Connected);
     expect(hsConnected.disconnectReason$.value).toEqual(null);
@@ -162,7 +200,12 @@ describe("createHomeserverConnected$", () => {
   });
 
   it("recovers to null (connected) if ProbablyLeft becomes false again while other conditions remain true", () => {
-    const hsConnected = createHomeserverConnected$(scope, client, session, 0);
+    const hsConnected = createHomeserverConnected$(
+      scope,
+      client.asClient,
+      session,
+      0,
+    );
     client.setSyncState(SyncState.Syncing);
     session.setMembershipStatus(Status.Connected);
     expect(hsConnected.disconnectReason$.value).toEqual(null);
@@ -176,7 +219,12 @@ describe("createHomeserverConnected$", () => {
   });
 
   it("composite sequence reflects each individual failure reason", () => {
-    const hsConnected = createHomeserverConnected$(scope, client, session, 0);
+    const hsConnected = createHomeserverConnected$(
+      scope,
+      client.asClient,
+      session,
+      0,
+    );
 
     // Initially: sync error + membership disconnected → syncing wins (highest priority)
     expect(hsConnected.disconnectReason$.value).toEqual("sync");
@@ -225,7 +273,7 @@ describe("createHomeserverConnected$ - disconnectReason$ reason values", () => {
   it("is null when all three conditions are satisfied", () => {
     const { disconnectReason$ } = createHomeserverConnected$(
       scope,
-      client,
+      client.asClient,
       session,
       0,
     );
@@ -237,7 +285,7 @@ describe("createHomeserverConnected$ - disconnectReason$ reason values", () => {
   it("reports syncing when sync loop is not Syncing", () => {
     const { disconnectReason$ } = createHomeserverConnected$(
       scope,
-      client,
+      client.asClient,
       session,
       0,
     );
@@ -248,7 +296,7 @@ describe("createHomeserverConnected$ - disconnectReason$ reason values", () => {
   it("reports membershipConnected when sync is fine but membership is not Connected", () => {
     const { disconnectReason$ } = createHomeserverConnected$(
       scope,
-      client,
+      client.asClient,
       session,
       0,
     );
@@ -260,7 +308,7 @@ describe("createHomeserverConnected$ - disconnectReason$ reason values", () => {
   it("reports certainlyConnected when probablyLeft is true", () => {
     const { disconnectReason$ } = createHomeserverConnected$(
       scope,
-      client,
+      client.asClient,
       session,
       0,
     );
@@ -273,7 +321,7 @@ describe("createHomeserverConnected$ - disconnectReason$ reason values", () => {
   it("prioritises syncing over membershipConnected when both fail", () => {
     const { disconnectReason$ } = createHomeserverConnected$(
       scope,
-      client,
+      client.asClient,
       session,
       0,
     );
@@ -284,7 +332,7 @@ describe("createHomeserverConnected$ - disconnectReason$ reason values", () => {
   it("updates reason as conditions change", () => {
     const { disconnectReason$ } = createHomeserverConnected$(
       scope,
-      client,
+      client.asClient,
       session,
       0,
     );
@@ -329,7 +377,7 @@ describe("createHomeserverConnected$ - Grace Period", () => {
       });
       const hsConnected = createHomeserverConnected$(
         testScope(),
-        client,
+        client.asClient,
         session,
         GRACE_PERIOD,
       );

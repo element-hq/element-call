@@ -29,7 +29,7 @@ import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { QrCode } from "../QrCode";
 
 interface Props {
-  room: Room;
+  room: Pick<Room, "roomId" | "name">;
   open: boolean;
   onDismiss: () => void;
 }

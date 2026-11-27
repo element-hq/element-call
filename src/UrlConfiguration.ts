@@ -18,11 +18,17 @@ Please see LICENSE in the repository root for full details.
  */
 
 import {
-  RTC_CALL_INTENT_AUDIO,
-  RTC_CALL_INTENT_VIDEO,
   type RTCCallIntent,
   type RTCNotificationType,
 } from "matrix-js-sdk/lib/matrixrtc";
+// Not from the `matrixrtc` index above. Those are not type imports,
+// So those two imports would add a whole copy of "matrix-js-sdk/lib/matrixrtc"
+// The "api.ts" file is meant to be the only thing loaded by EW on pageload.
+// Everything beyond it should be lazy loaded on first call start.
+import {
+  RTC_CALL_INTENT_AUDIO,
+  RTC_CALL_INTENT_VIDEO,
+} from "matrix-js-sdk/lib/matrixrtc/CallIntent";
 
 import { platform } from "./Platform";
 

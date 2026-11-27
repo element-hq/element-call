@@ -12,9 +12,11 @@ import { useCallback, useSyncExternalStore } from "react";
  * The room's name, kept up to date. Null when there is no room yet, for a
  * caller that only sometimes has one.
  */
-export function useRoomName(room: Room): string;
-export function useRoomName(room: Room | null): string | null;
-export function useRoomName(room: Room | null): string | null {
+type RoomNameParts = Pick<Room, "name" | "on" | "off">;
+
+export function useRoomName(room: RoomNameParts): string;
+export function useRoomName(room: RoomNameParts | null): string | null;
+export function useRoomName(room: RoomNameParts | null): string | null {
   const subscribe = useCallback(
     (onChange: () => void) => {
       if (room === null) return (): void => {};

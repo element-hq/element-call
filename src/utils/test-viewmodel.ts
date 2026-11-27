@@ -17,7 +17,8 @@ import {
   SyncState,
 } from "matrix-js-sdk";
 
-import { E2eeType } from "@element-hq/matrixrtc-sdk";
+import { E2eeType, type RTCMember } from "@element-hq/matrixrtc-sdk";
+import { type Behavior } from "../state/Behavior";
 import {
   type CallViewModel,
   createCallViewModel$,
@@ -39,7 +40,10 @@ import { type RaisedHandInfo, type ReactionInfo } from "../reactions";
 import { constant } from "@element-hq/matrixrtc-sdk";
 import { map } from "rxjs";
 import { createCallFooterViewModel } from "../components/CallFooterViewModel";
-import { createSentCallNotification$ } from "../state/CallViewModel/CallNotificationLifecycle";
+import {
+  createSentCallNotification$,
+  observeSentCallNotification$,
+} from "../state/CallViewModel/CallNotificationLifecycle";
 import { HeaderStyle } from "../UrlParams";
 import { type FooterSnapshot } from "../components/CallFooter";
 import { type ViewModel } from "../state/ViewModel";
@@ -54,43 +58,47 @@ export function getBasicRTCSession(
 ): {
   rtcSession: MockRTCSession;
   matrixRoom: Room;
+  client: MatrixClient;
   rtcMemberships$: BehaviorSubject<CallMembership[]>;
+  /** The memberships as the slot's members. */
+  members$: Behavior<RTCMember[]>;
 } {
   const matrixRoomId = "!myRoomId:example.com";
   const matrixRoomMembers = new Map(members.map((p) => [p.userId, p]));
 
   const roomEmitter = new EventEmitter();
   const clientEmitter = new EventEmitter();
+  const client = {
+    getUserId: () => localRtcMember.userId,
+    getDeviceId: () => localRtcMember.deviceId,
+    getSyncState: () => SyncState.Syncing,
+    getDomain: () => "example.com",
+    getAccessToken: () => "fake-token",
+    sendEvent: vitest.fn().mockResolvedValue({ event_id: "$fake:event" }),
+    redactEvent: vitest.fn().mockResolvedValue({ event_id: "$fake:event" }),
+    decryptEventIfNeeded: vitest.fn().mockResolvedValue(undefined),
+    on: vitest
+      .fn()
+      .mockImplementation(
+        (eventName: string, fn: (...args: unknown[]) => void) => {
+          clientEmitter.on(eventName, fn);
+        },
+      ),
+    emit: (eventName: string, ...args: unknown[]) =>
+      clientEmitter.emit(eventName, ...args),
+    off: vitest
+      .fn()
+      .mockImplementation(
+        (eventName: string, fn: (...args: unknown[]) => void) => {
+          clientEmitter.off(eventName, fn);
+        },
+      ),
+  } as Partial<MatrixClient> as MatrixClient;
   const matrixRoom = mockMatrixRoom({
     relations: {
       getChildEventsForEvent: vitest.fn(),
     } as Partial<RelationsContainer> as RelationsContainer,
-    client: {
-      getUserId: () => localRtcMember.userId,
-      getDeviceId: () => localRtcMember.deviceId,
-      getSyncState: () => SyncState.Syncing,
-      getDomain: () => "example.com",
-      getAccessToken: () => "fake-token",
-      sendEvent: vitest.fn().mockResolvedValue({ event_id: "$fake:event" }),
-      redactEvent: vitest.fn().mockResolvedValue({ event_id: "$fake:event" }),
-      decryptEventIfNeeded: vitest.fn().mockResolvedValue(undefined),
-      on: vitest
-        .fn()
-        .mockImplementation(
-          (eventName: string, fn: (...args: unknown[]) => void) => {
-            clientEmitter.on(eventName, fn);
-          },
-        ),
-      emit: (eventName: string, ...args: unknown[]) =>
-        clientEmitter.emit(eventName, ...args),
-      off: vitest
-        .fn()
-        .mockImplementation(
-          (eventName: string, fn: (...args: unknown[]) => void) => {
-            clientEmitter.off(eventName, fn);
-          },
-        ),
-    } as Partial<MatrixClient> as MatrixClient,
+    client,
     getMember: (userId) => matrixRoomMembers.get(userId) ?? null,
     getMembers: () => Array.from(matrixRoomMembers.values()),
     getMembersWithMembership: () => Array.from(matrixRoomMembers.values()),
@@ -122,10 +130,29 @@ export function getBasicRTCSession(
     rtcMemberships$,
   );
 
+  const members$ = testScope().behavior(
+    rtcMemberships$.pipe(
+      map((memberships) =>
+        memberships.map((membership) => {
+          const inputs = {
+            membership,
+            roomMember: matrixRoomMembers.get(membership.userId),
+          };
+          return membership.userId === localRtcMember.userId &&
+            membership.deviceId === localRtcMember.deviceId
+            ? mockRTCMember(true, inputs)
+            : mockRTCMember(false, inputs);
+        }),
+      ),
+    ),
+  );
+
   return {
     rtcSession: fakeRtcSession,
     matrixRoom,
+    client,
     rtcMemberships$,
+    members$,
   };
 }
 
@@ -146,13 +173,13 @@ export function getBasicCallViewModelEnvironment(
   developerSettingsVm: ViewModel<DeveloperSettingsSnapshot>;
   rtcMemberships$: BehaviorSubject<CallMembership[]>;
   rtcSession: MockRTCSession;
+  matrixRoom: Room;
+  client: MatrixClient;
   handRaisedSubject$: BehaviorSubject<Record<string, RaisedHandInfo>>;
   reactionsSubject$: BehaviorSubject<Record<string, ReactionInfo>>;
 } {
-  const { rtcSession, matrixRoom, rtcMemberships$ } = getBasicRTCSession(
-    members,
-    initialRtcMemberships,
-  );
+  const { rtcSession, matrixRoom, client, rtcMemberships$ } =
+    getBasicRTCSession(members, initialRtcMemberships);
   const handRaisedSubject$ = new BehaviorSubject({});
   const reactionsSubject$ = new BehaviorSubject({});
 
@@ -199,6 +226,7 @@ export function getBasicCallViewModelEnvironment(
     {
       rtcParticipation,
       matrixRoom,
+      client,
       mediaDevices,
       muteStates,
       encryptionSystem: { kind: E2eeType.PER_PARTICIPANT },
@@ -209,7 +237,7 @@ export function getBasicCallViewModelEnvironment(
     {
       sentCallNotification$: createSentCallNotification$(
         scope,
-        rtcSession.asMockedSession(),
+        observeSentCallNotification$(rtcSession.asMockedSession()),
       ),
       ...callViewModelOptions,
     },
@@ -229,6 +257,8 @@ export function getBasicCallViewModelEnvironment(
     developerSettingsVm: createDeveloperSettingsTabViewModel(testScope(), vm),
     rtcMemberships$,
     rtcSession,
+    matrixRoom,
+    client,
     handRaisedSubject$: handRaisedSubject$,
     reactionsSubject$: reactionsSubject$,
   };

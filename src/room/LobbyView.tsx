@@ -7,7 +7,6 @@ Please see LICENSE in the repository root for full details.
 
 import { type FC, useCallback, useState, type JSX, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { type MatrixClient } from "matrix-js-sdk";
 import { Button } from "@vector-im/compound-web";
 import classNames from "classnames";
 import { logger } from "matrix-js-sdk/lib/logger";
@@ -23,7 +22,11 @@ import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import { type MatrixInfo, VideoPreview } from "./VideoPreview";
 import { type MuteStates } from "../state/MuteStates";
 import { InviteButton } from "../button/InviteButton";
-import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
+import {
+  SettingsModal,
+  type SettingsClientParts,
+  defaultSettingsTab,
+} from "../settings/SettingsModal";
 import { useRootSizeMatches } from "../useRootSize";
 import { E2eeType } from "../e2ee/e2eeType";
 import { LeaveToHomeLink } from "../button/LeaveToHomeLink";
@@ -46,7 +49,7 @@ import { captureSettings } from "./InCallView";
 const noVideoTrack = constant<LocalVideoMediaTrack | null>(null);
 
 interface Props {
-  client: MatrixClient;
+  client: SettingsClientParts;
   matrixInfo: MatrixInfo;
   /** The media to open the devices on; the join takes it over. */
   media: LocalMedia;
