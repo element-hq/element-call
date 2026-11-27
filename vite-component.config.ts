@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { defineConfig } from "vite";
 import { posix } from "node:path";
 
-import { vitePluginsConfig } from "./vite.config.ts";
+import { vitePluginsConfig, withoutMatrixCrypto } from "./vite.config.ts";
 import { scopeStylesToRoot } from "./component/build/scopeStylesToRoot.ts";
 
 // Config for Element Call as a React component, to be imported by an
@@ -20,6 +20,7 @@ export default defineConfig(({ mode }) => {
   const base = vitePluginsConfig({ mode, html: false });
   return {
     ...base,
+    plugins: [...(base.plugins ?? []), withoutMatrixCrypto()],
     resolve: {
       ...base.resolve,
       alias: {
