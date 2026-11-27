@@ -201,9 +201,17 @@ export default ({
  * encrypts and decrypts for it, so the Rust crypto chunk and its WASM (about
  * 10 MB) would only be shipped, never loaded. The SDK imports it dynamically,
  * from `initRustCrypto` and `preloadRustCrypto`; here those reject instead.
+ *
+ * With `withoutStoreWorker`, the worker behind the standalone client's sync
+ * store goes too, for a build that contains the standalone client's code but
+ * never runs it. The worker is a second copy of the SDK with the crypto, and
+ * the bundler emits it as soon as anything imports it.
  */
-export function withoutMatrixCrypto(): Plugin {
+export function withoutMatrixCrypto({
+  withoutStoreWorker = false,
+}: { withoutStoreWorker?: boolean } = {}): Plugin {
   const crypto = "\0without-matrix-crypto";
+  const worker = "\0without-matrix-store-worker";
   const unavailable =
     "new Error('This build uses the client of its host, which does the crypto')";
   return {
@@ -215,6 +223,8 @@ export function withoutMatrixCrypto(): Plugin {
         /(^|\/)rust-crypto\/index(\.js)?$/.test(source)
       )
         return crypto;
+      if (withoutStoreWorker && source.endsWith("/IndexedDBWorker?worker"))
+        return worker;
       return null;
     },
     load(id): string | null {
@@ -223,6 +233,8 @@ export function withoutMatrixCrypto(): Plugin {
           `export async function initRustCrypto() { throw ${unavailable}; }`,
           `export async function preloadRustCrypto() { throw ${unavailable}; }`,
         ].join("\n");
+      if (id === worker)
+        return `export default class { constructor() { throw ${unavailable}; } }`;
       return null;
     },
   };

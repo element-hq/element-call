@@ -64,8 +64,12 @@ const SentryRoute = Sentry.withSentryReactRouterV7Routing(Route);
 // - Imported on demand, as it was before, so that a widget, which gets its
 //   client from the host, never downloads it.
 // - Module-level, so that the provider's effect sees one stable loader.
-const loadStandaloneClient: ClientLoader = async (...args) =>
-  (await import("./utils/spa")).initSPA(...args);
+// - None in the embedded package, which only runs as a widget: the constant
+//   condition lets its build drop the client setup and the store worker.
+export const loadStandaloneClient: ClientLoader | undefined =
+  import.meta.env.VITE_PACKAGE === "embedded"
+    ? undefined
+    : async (...args) => (await import("./utils/spa")).initSPA(...args);
 
 interface SimpleProviderProps {
   children: JSX.Element;
