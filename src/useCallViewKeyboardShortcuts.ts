@@ -102,31 +102,36 @@ export function useCallViewKeyboardShortcuts(
     "keydown",
     useCallback(
       (event: KeyboardEvent) => {
-        logger.info("Keydown event", event);
         if (focusIsClaimed()) return;
         if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)
           return;
 
         if (event.key === "m") {
           event.preventDefault();
+          logger.info("Keyboard shortcut: toggle audio");
           toggleAudio?.();
         } else if (event.key === "v") {
           event.preventDefault();
+          logger.info("Keyboard shortcut: toggle video");
           toggleVideo?.();
         } else if (event.key === " " && mayReceiveSpaceKeyEvents()) {
           event.preventDefault();
           if (!spacebarHeld.current) {
             spacebarHeld.current = true;
+            logger.info("Keyboard shortcut: push to talk pressed");
             setAudioEnabled?.(true);
           }
         } else if (event.key === "h") {
           event.preventDefault();
+          logger.info("Keyboard shortcut: toggle raised hand");
           toggleHandRaised?.();
         } else if (KeyToReactionMap[event.key]) {
           event.preventDefault();
-          sendReaction?.(KeyToReactionMap[event.key]);
+          const reaction = KeyToReactionMap[event.key];
+          logger.info(`Keyboard shortcut: send reaction ${reaction.name}`);
+          sendReaction?.(reaction);
         } else if (event.key === "Escape") {
-          logger.info("Escape key pressed, triggering onBackButtonPressed");
+          logger.info("Keyboard shortcut: back");
           window.controls.onBackButtonPressed?.();
         }
       },
@@ -151,6 +156,8 @@ export function useCallViewKeyboardShortcuts(
       (event: KeyboardEvent) => {
         if (focusIsClaimed() || !mayReceiveSpaceKeyEvents()) return;
         if (event.key === " ") {
+          if (spacebarHeld.current)
+            logger.info("Keyboard shortcut: push to talk released");
           spacebarHeld.current = false;
           setAudioEnabled?.(false);
         }
